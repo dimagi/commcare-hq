@@ -3,11 +3,13 @@ import StringIO
 from datetime import datetime
 import json
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import DeleteView
+from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
@@ -328,3 +330,29 @@ def change_runner_date_to_last_migration(request, domain):
     last_run.end = checkpoint.date
     last_run.save()
     return HttpResponse('OK')
+
+
+class ReportRunListView(ListView, DomainViewMixin):
+    context_object_name = 'runs'
+    template_name = 'ilsgateway/report_run_list.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(ReportRunListView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return ReportRun.objects.filter(domain=self.domain).order_by('pk')
+
+
+class ReportRunDeleteView(DeleteView, DomainViewMixin):
+    model = ReportRun
+    success_url = reverse_lazy('report_run_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(ReportRunDeleteView, self).dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('report_run_list', args=[self.domain])
