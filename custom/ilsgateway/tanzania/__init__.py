@@ -209,6 +209,30 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     exportable = False
     base_template = 'ilsgateway/base_template.html'
 
+    @classmethod
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+
+        url = super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
+        request = kwargs.get('request')
+        user = getattr(request, 'couch_user', None)
+
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
+            if dm.program_id:
+                program_id = dm.program_id
+            else:
+                program_id = 'all'
+
+            url = '%s?location_id=%s&filter_by_program=%s' % (
+                url,
+                dm.location_id if dm.location_id else SQLLocation.objects.get(
+                    domain=domain, location_type__name='MOHSW'
+                ).location_id,
+                program_id if program_id else ''
+            )
+
+        return url
+
     @property
     def location(self):
         if hasattr(self, 'request') and self.request.GET.get('location_id', ''):
