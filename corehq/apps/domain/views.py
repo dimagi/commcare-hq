@@ -1012,7 +1012,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
-        except Exception, e:
+        except Exception as e:
             return json_response({'error': {'message': e}})
 
         return json_response({'success': True})
@@ -1024,10 +1024,10 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]
-        products = [{'type': product_type[0],
-                     'amount': Decimal(request.POST.get(product_type[0], 0))}
-                    for product_type in SoftwareProductType.CHOICES
-                    if Decimal(request.POST.get(product_type[0], 0)) > 0]
+        products = [{'type': pt[0],
+                     'amount': Decimal(request.POST.get(pt[0], 0))}
+                    for pt in SoftwareProductType.CHOICES
+                    if Decimal(request.POST.get(pt[0], 0)) > 0]
 
         return products + features
 
