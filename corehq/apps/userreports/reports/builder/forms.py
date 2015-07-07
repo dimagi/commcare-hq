@@ -915,6 +915,26 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     @memoized
+    def initial_columns(self):
+        columns = super(ConfigureTableReportForm, self).initial_columns
+
+        # Remove the aggregation indicator from the columns
+        # It gets removed because we want it to be a column in the report,
+        # but we don't want it to appear in the builder.
+        if self.existing_report:
+            keepers = []
+            agg_properties = [
+                self._get_property_from_column(c)
+                for c in self.existing_report.aggregation_columns
+            ]
+            for col in columns:
+                if col.property not in agg_properties:
+                    keepers.append(col)
+            return keepers
+        return columns
+
+    @property
+    @memoized
     def _report_aggregation_cols(self):
         # we want the bar chart behavior, which is reproduced here:
         return [
