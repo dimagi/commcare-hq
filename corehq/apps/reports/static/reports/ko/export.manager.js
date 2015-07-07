@@ -1,3 +1,42 @@
+var NewExportManager = function (o) {
+    var self = this;
+    self.selected_exports = ko.observableArray();
+    self.bulk_download_notice_text = o.bulk_download_notice_text || '';
+
+    self.requestBulkDownload = function() {
+        console.log('self.requestBulkDownload');
+    };
+
+    self.toggleSelectAllExports = function (data, event) {
+        var $toggleBtn = $(event.srcElement || event.currentTarget),
+            check_class = '.select-export';
+        if ($toggleBtn.data('all')) {
+            $.each($(check_class), function () {
+                $(this).attr('checked', true);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
+        } else {
+            $.each($(check_class), function () {
+                $(this).attr('checked', false);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
+        }
+    };
+
+    self.updateSelectedExports = function (data, event) {
+        var $checkbox = $(event.srcElement || event.currentTarget);
+        var add_to_list = ($checkbox.attr('checked') === 'checked'),
+            export_id = $checkbox.attr('value');
+        if (add_to_list) {
+            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+            self.selected_exports.push(export_id);
+        } else {
+            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+            self.selected_exports.splice(self.selected_exports().indexOf(export_id), 1);
+        }
+    };
+};
+
 var ExportManager = function (o) {
     var self = this;
     self.selected_exports = ko.observableArray();
@@ -24,6 +63,8 @@ var ExportManager = function (o) {
     self.xmlns_formdesigner = o.xmlns_formdesigner || 'formdesigner';
 
     self.sheet_names = ko.observable(new Object());
+
+    self.selectedExportsData = o.selectedExportsData || {};
 
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
@@ -205,22 +246,29 @@ var ExportManager = function (o) {
         if (self.is_custom)
             prepareExport = new Array();
 
-        for (var i in self.selected_exports()) {
-            var curExpButton = self.selected_exports()[i];
+        for (var export_id in self.selectedExportsData) {
+//            var curExpButton = self.selected_exports()[i];
+//
+//            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
+//                xmlns = curExpButton.data('xmlns'),
+//                module = curExpButton.data('modulename'),
+//                export_type = curExpButton.data('exporttype'),
+//                form = curExpButton.data('formname');
 
-            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
-                xmlns = curExpButton.data('xmlns'),
-                module = curExpButton.data('modulename'),
-                export_type = curExpButton.data('exporttype'),
-                form = curExpButton.data('formname');
+            var export_data = self.selectedExportsData[export_id];
+            var xmlns = export_data['xmlns'],
+                module = export_data['modulename'],
+                export_type = export_data['exporttype'],
+                form = export_data['formname'],
+                _id = export_id;
 
             var sheetName = "sheet";
-            if (self.is_custom) {
-                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
-                if($sheetNameElem.data('duplicate'))
-                    break;
-                sheetName = curExpButton.parent().parent().find('.sheetname').val();
-            } else
+//            if (self.is_custom) {
+//                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
+//                if($sheetNameElem.data('duplicate'))
+//                    break;
+//                sheetName = curExpButton.parent().parent().find('.sheetname').val();
+//            } else
                 sheetName = getSheetName(module, form, xmlns);
 
             var export_tag;
