@@ -6,7 +6,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, domain_has_apps
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -23,18 +23,11 @@ from django_prbac.utils import has_privilege
 
 @login_and_domain_required
 def dashboard_default(request, domain):
-    apps = ApplicationBase.get_db().view(
-        'app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        limit=1,
-    ).all()
-
     couch_user = getattr(request, 'couch_user', None)
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return HttpResponseRedirect(reverse('saved_reports', args=[domain]))
 
-    if len(apps) < 1:
+    if not domain_has_apps(domain):
         return HttpResponseRedirect(
             reverse('default_app', args=[domain]))
     return HttpResponseRedirect(

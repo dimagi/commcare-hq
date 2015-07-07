@@ -16,7 +16,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models import ApplicationBase, domain_has_apps
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
@@ -351,14 +351,7 @@ class DashboardTab(UITab):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
-                apps = ApplicationBase.get_db().view(
-                    'app_manager/applications_brief',
-                    reduce=False,
-                    startkey=[self.domain],
-                    endkey=[self.domain, {}],
-                    limit=1,
-                ).all()
-                return len(apps) > 0
+                return domain_has_apps(self.domain)
         return False
 
 
