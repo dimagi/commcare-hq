@@ -29,6 +29,15 @@ var ExportManager = function (o) {
 
     self.selectedExportsData = o.selectedExportsData || {};
 
+    if(self.isNewExporter) {
+        self.bulkDownloadPageUrlRoot = o.bulkDownloadPageUrlRoot;
+        self.bulkDownloadPageUrl = ko.computed(function() {
+            return self.bulkDownloadPageUrlRoot + '?' + self.selected_exports().map(
+                function(export_id) { return "export_id=" + export_id; }
+            ).join('&');
+        });
+    }
+
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
             self.$modal.find(self.exportModalLoadedData).empty();

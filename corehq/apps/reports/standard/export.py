@@ -403,6 +403,7 @@ class DataExportInterface(GenericReportView):
             'bulk_download_notice_text': ugettext_noop('Form Export'),
             'bulk_export_format': self.bulk_export_format,
             'saved_exports': self.saved_exports,
+            'download_page_url_root': FormExportReport.get_url(domain=self.domain),
         })
         return context
 
