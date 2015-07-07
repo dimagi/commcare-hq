@@ -79,6 +79,7 @@
     <script>
         $(document).ajaxStop(function () {
             $('#group_location_async select').first().css('display', 'none');
+            $('#group_location_async select').last().css('display', 'none');
             if ($('#paramSelectorForm fieldset').children().length === 1) {
                 $('#reportFilters').css('display', 'none');
                 $('#toggle-report-filters').css('display', 'none');
