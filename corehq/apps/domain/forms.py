@@ -1348,27 +1348,27 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         advanced_trial_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
+        kwargs = {
+            'date_end': self.cleaned_data['end_date'],
+            'is_trial': True,
+            'do_not_invoice': False,
+            'auto_generate_credits': False,
+            'web_user': self.web_user,
+        }
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                web_user=self.web_user,
                 account=self.next_account,
                 transfer_credits=self.current_subscription.account == self.next_account,
+                **kwargs
             )
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                is_active=True,
-                web_user=self.web_user,
+                **kwargs
             )
-        new_subscription.is_trial = True
-        new_subscription.do_not_invoice = False
-        new_subscription.auto_generate_credits = False
-        new_subscription.save()
 
     @property
     def account_name(self):
