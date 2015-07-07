@@ -4,3 +4,7 @@ class InactiveTransferDomainException(Exception):
 
 class NameUnavailableException(Exception):
     pass
+
+
+class DomainDeleteException(Exception):
+    pass

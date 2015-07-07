@@ -54,7 +54,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                       initial=True,
                                       label="",
                                       help_text=_("Opt into emails about new features and other CommCare updates."))
-    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=True)
+    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -69,7 +69,11 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         if not kwargs.get('initial', {}).get('create_domain', True):
-            self.fields['hr_name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
+            self.fields['hr_name'].required = False
+            if kwargs.get('initial', {}).get('hr_name'):
+                self.fields['hr_name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
+            else:
+                self.fields['hr_name'].widget = forms.HiddenInput()
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()

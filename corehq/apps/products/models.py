@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
@@ -13,7 +14,7 @@ from django.utils.translation import ugettext as _
 import json_field
 
 # move these too
-from corehq.apps.commtrack.exceptions import InvalidProductException
+from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
 
 
 class Product(Document):
@@ -41,6 +42,29 @@ class Product(Document):
         if last_modified and dt_no_Z_re.match(last_modified):
             data['last_modified'] += 'Z'
         return super(Product, cls).wrap(data)
+
+    @classmethod
+    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False, codes_by_domain=None):
+        from corehq.apps.commtrack.util import generate_code
+
+        codes_by_domain = codes_by_domain or {}
+
+        def get_codes(domain):
+            if domain not in codes_by_domain:
+                codes_by_domain[domain] = SQLProduct.objects.filter(domain=domain)\
+                    .values_list('code', flat=True).distinct()
+            return codes_by_domain[domain]
+
+        for doc in docs:
+            if not doc['code_']:
+                doc['code_'] = generate_code(
+                    doc['name'],
+                    get_codes(doc['domain'])
+                )
+
+        super(Product, cls).save_docs(docs, use_uuids, all_or_nothing)
+
+    bulk_save = save_docs
 
     def sync_to_sql(self):
         properties_to_sync = [
@@ -200,7 +224,7 @@ class Product(Document):
             ('unit', unicode),
             'description',
             'category',
-            'program_id',
+            ('program_id', str),
             ('cost', lambda a: Decimal(a) if a else None),
         ]
 
@@ -241,6 +265,9 @@ class Product(Document):
         Unarchive a product, causing it (and its data) to show
         up in Couch and SQL views again.
         """
+        if self.code:
+            if SQLProduct.objects.filter(code=self.code, is_archived=False).exists():
+                raise DuplicateProductCodeException()
         self.is_archived = False
         self.save()
 
@@ -251,7 +278,12 @@ class Product(Document):
 
         id = row.get('id')
         if id:
-            p = cls.get(id)
+            try:
+                p = cls.get(id)
+            except ResourceNotFound:
+                raise InvalidProductException(
+                    _("Product with ID '{product_id}' could not be found!").format(product_id=id)
+                )
         else:
             p = cls()
 

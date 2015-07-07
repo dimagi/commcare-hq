@@ -7,6 +7,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.util.timezones.conversions import \
     USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
@@ -16,7 +17,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
@@ -709,15 +710,13 @@ class Domain(Document, SnapshotMixin):
 
         ignore = ignore if ignore is not None else []
 
+        db = Domain.get_db()
+        new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
 
         with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
             new_domain_name = Domain.generate_name(new_domain_name)
-
-            db = Domain.get_db()
-
-            new_id = db.copy_doc(self.get_id)['id']
             new_domain = Domain.get(new_id)
             new_domain.name = new_domain_name
             new_domain.hr_name = new_hr_name
@@ -979,6 +978,14 @@ class Domain(Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
     def delete(self):
+        from corehq.apps.domain.signals import commcare_domain_pre_delete
+
+        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
+        for result in results:
+            if result[1]:
+                raise DomainDeleteException(
+                    u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
+                )
         # delete all associated objects
         db = self.get_db()
         related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
@@ -987,8 +994,47 @@ class Domain(Document, SnapshotMixin):
             include_docs=False,
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        self._delete_web_users_from_domain()
+        self._delete_sql_objects()
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+
+    def _delete_web_users_from_domain(self):
+        from corehq.apps.users.models import WebUser
+        web_users = WebUser.by_domain(self.name)
+        for web_user in web_users:
+            web_user.delete_domain_membership(self.name)
+
+    def _delete_sql_objects(self):
+        from casexml.apps.stock.models import DocDomainMapping
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        from corehq.apps.products.models import SQLProduct
+
+        cursor = connection.cursor()
+
+        """
+            We use raw queries instead of ORM because Django queryset delete needs to
+            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+            if we have a millions of rows in stock data tables.
+        """
+        cursor.execute(
+            "DELETE FROM stock_stocktransaction "
+            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM commtrack_stockstate"
+            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+        )
+
+        SQLProduct.objects.filter(domain=self.name).delete()
+        SQLLocation.objects.filter(domain=self.name).delete()
+        LocationType.objects.filter(domain=self.name).delete()
+        DocDomainMapping.objects.filter(domain_name=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia

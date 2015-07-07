@@ -13,27 +13,45 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
-
 logger = logging.getLogger('phone.models')
 
 
 class User(object):
-    """ 
+    """
     This is a basic user model that's used for OTA restore to properly
     find cases and generate the user XML.
     """
-    
-    def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None,
-                 loadtest_factor=1):
+    # todo: this model is now useless since casexml and HQ are no longer separate repos.
+    # we should remove this abstraction layer and switch all the restore code to just
+    # work off CouchUser objects
+
+    def __init__(self, user_id, username, password, date_joined, first_name=None,
+                 last_name=None, phone_number=None, user_data=None,
+                 additional_owner_ids=None, domain=None, loadtest_factor=1):
         self.user_id = user_id
         self.username = username
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number = phone_number
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
         self.loadtest_factor = loadtest_factor
+
+    @property
+    def user_session_data(self):
+        # todo: this is redundant with the implementation in CouchUser.
+        # this will go away when the two are reconciled
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        session_data = copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def get_owner_ids(self):
         ret = [self.user_id]
@@ -45,7 +63,7 @@ class User(object):
         return cls(user_id=str(django_user.pk), username=django_user.username,
                    password=django_user.password, date_joined=django_user.date_joined,
                    user_data={})
-    
+
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
@@ -384,27 +402,6 @@ class SyncLog(AbstractSyncLog):
             if cs and case_id in self.get_footprint_of_cases_on_phone():
                 return True
             return False
-
-    def reconcile_cases(self):
-        """
-        Goes through the cases expected to be on the phone and reconciles
-        any duplicate records.
-
-        Return True if any duplicates were found.
-        """
-        num_cases_on_phone_before = len(self.cases_on_phone)
-        num_dependent_cases_before = len(self.dependent_cases_on_phone)
-
-        self.cases_on_phone = list(set(self.cases_on_phone))
-        self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
-
-        if num_cases_on_phone_before != len(self.cases_on_phone) \
-                or num_dependent_cases_before != len(self.dependent_cases_on_phone):
-            self._case_state_map.reset_cache(self)
-            self._dependent_case_state_map.reset_cache(self)
-            return True
-
-        return False
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
