@@ -93,7 +93,7 @@ class ILSData(object):
             for key in self.vals_config[data.title]:
                 if getattr(data, key, None):
                     entry = {}
-                    entry['value'] = float(getattr(data, key)) * 100 / float((sum_all or 1))
+                    entry['value'] = round(float(getattr(data, key)) * 100 / float((sum_all or 1)), 1)
                     colors.append(self.chart_config[key]['color'])
                     entry['label'] = self.chart_config[key]['display']
                     params = (
@@ -101,7 +101,7 @@ class ILSData(object):
                         getattr(data, key), entry['label'],
                         self.config['startdate'].strftime("%b %Y")
                     )
-                    entry['description'] = "%.2f%% (%d) %s (%s)" % params
+                    entry['description'] = "%.1f%% (%d) %s (%s)" % params
 
                     ret.append(entry)
         chart = PieChart('', '', ret, color=colors)
@@ -174,7 +174,7 @@ class MonthQuarterYearMixin(object):
             2 - quarter
             3 - year
         """
-        if 'datespan_type' in self.request_params:
+        if self.request_params.get('datespan_type'):
             return int(self.request_params['datespan_type'])
         else:
             return 1
@@ -186,14 +186,14 @@ class MonthQuarterYearMixin(object):
             If we choose type 2 we get quarter [1-4]
             This property is unused when we choose type 3
         """
-        if 'datespan_first' in self.request_params:
+        if self.request_params.get('datespan_first'):
             return int(self.request_params['datespan_first'])
         else:
             return datetime.utcnow().month
 
     @property
     def second(self):
-        if 'datespan_second' in self.request_params:
+        if self.request_params.get('datespan_second'):
             return int(self.request_params['datespan_second'])
         else:
             return datetime.utcnow().year
@@ -421,9 +421,9 @@ class DetailsReport(MultiReport):
         return make_url(cls, self.domain, params, (
             self.request.GET.get('location_id'),
             self.request.GET.get('filter_by_program'),
-            self.request.GET.get('datespan_type'),
-            self.request.GET.get('datespan_first'),
-            self.request.GET.get('datespan_second'),
+            self.request.GET.get('datespan_type', ''),
+            self.request.GET.get('datespan_first', ''),
+            self.request.GET.get('datespan_second', ''),
         ))
 
 
