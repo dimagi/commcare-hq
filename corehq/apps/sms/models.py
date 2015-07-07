@@ -6,8 +6,7 @@ from dimagi.ext.couchdbkit import *
 from datetime import datetime
 from django.db import models
 from corehq.apps.app_manager.models import Form
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
@@ -895,8 +894,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
     def create_subevent(self, reminder_definition, reminder, recipient):
-        from corehq.apps.reminders.models import CASE_CRITERIA
-
         recipient_type = MessagingEvent.get_recipient_type(recipient)
         content_type, form_unique_id, form_name = self.get_content_info_from_reminder(
             reminder_definition, reminder, parent=self)
@@ -931,8 +928,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def create_event_for_adhoc_sms(cls, domain, recipient=None,
-        content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER
-    ):
+            content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER):
         if recipient:
             recipient_type = cls.get_recipient_type(recipient)
             recipient_id = recipient.get_id
@@ -980,7 +976,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_source_from_reminder(cls, reminder_definition):
         from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
-            REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_DEFAULT)
+            REMINDER_TYPE_DEFAULT)
 
         default = (cls.SOURCE_OTHER, None)
         return {
@@ -1040,8 +1036,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def create_from_reminder(cls, reminder_definition, reminder, recipient):
-        from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
-
         if reminder_definition.messaging_event_id:
             return cls.objects.get(pk=reminder_definition.messaging_event_id)
 
@@ -1156,13 +1150,12 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         # unless the source was a keyword in which case the recipient
         # listed should always be the keyword initiator.
         if (parent.source != MessagingEvent.SOURCE_KEYWORD and
-            parent.recipient_id != self.recipient_id and
-            parent.recipient_type not in (
-                MessagingEvent.RECIPIENT_USER_GROUP,
-                MessagingEvent.RECIPIENT_CASE_GROUP,
-                MessagingEvent.RECIPIENT_VARIOUS,
-            )
-        ):
+                parent.recipient_id != self.recipient_id and
+                parent.recipient_type not in (
+                    MessagingEvent.RECIPIENT_USER_GROUP,
+                    MessagingEvent.RECIPIENT_CASE_GROUP,
+                    MessagingEvent.RECIPIENT_VARIOUS,
+                )):
             parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
             parent.recipient_id = None
             parent.save()

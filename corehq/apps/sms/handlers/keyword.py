@@ -298,7 +298,7 @@ def get_app_module_form(form_unique_id, logged_subevent=None):
 
 
 def start_session_with_error_handling(domain, contact, app, module, form,
-    case_id, keyword, logged_subevent=None):
+        case_id, keyword, logged_subevent=None):
     """
     Returns (session, responses, error, error_code)
     """
@@ -325,8 +325,8 @@ def start_session_with_error_handling(domain, contact, app, module, form,
 
 
 def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
-    verified_number, text, send_response=False, msg=None, case=None,
-    text_args=None, logged_event=None):
+        verified_number, text, send_response=False, msg=None, case=None,
+        text_args=None, logged_event=None):
 
     case_id = get_case_id(contact, case)
     logged_subevent = None
@@ -432,8 +432,8 @@ def add_keyword_metadata(msg, session):
 
 
 def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-    verified_number=None, send_response=False, logged_event=None,
-    logged_subevent=None):
+        verified_number=None, send_response=False, logged_event=None,
+        logged_subevent=None):
 
     session = refresh_and_close_session(session)
     metadata = add_keyword_metadata(msg, session)

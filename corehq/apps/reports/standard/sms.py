@@ -363,9 +363,8 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
         # If survey without error, short circuit to the survey status display
         if (isinstance(event, MessagingSubEvent) and
-            event.status == MessagingEvent.STATUS_COMPLETED and
-            event.xforms_session_id
-        ):
+                event.status == MessagingEvent.STATUS_COMPLETED and
+                event.xforms_session_id):
             return _(event.xforms_session.status)
 
         status = event.status

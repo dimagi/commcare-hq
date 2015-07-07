@@ -14,10 +14,9 @@ from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
 from corehq.apps.smsforms.util import form_requires_input
-from corehq.apps.ivr.api import (format_ivr_response, get_input_length,
-    log_error, GatewayConnectionError, set_first_ivr_response)
+from corehq.apps.ivr.api import (log_error, GatewayConnectionError,
+    set_first_ivr_response)
 from corehq.apps.app_manager.models import Form
-from touchforms.formplayer.api import TouchformsError
 
 
 API_ID = "KOOKOO"
@@ -75,11 +74,11 @@ def invoke_kookoo_outbound_api(phone_number, api_key, is_test=False):
 
     url_base = get_url_base()
     params = urlencode({
-        'phone_no' : phone_number,
-        'api_key' : kwargs['api_key'],
-        'outbound_version' : '2',
-        'url' : url_base + reverse('corehq.apps.kookoo.views.ivr'),
-        'callback_url' : url_base + reverse('corehq.apps.kookoo.views.ivr_finished'),
+        'phone_no': phone_number,
+        'api_key': kwargs['api_key'],
+        'outbound_version': '2',
+        'url': url_base + reverse('corehq.apps.kookoo.views.ivr'),
+        'callback_url': url_base + reverse('corehq.apps.kookoo.views.ivr_finished'),
     })
     url = 'http://www.kookoo.in/outbound/outbound.php?%s' % params
 

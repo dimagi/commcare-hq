@@ -210,9 +210,9 @@ def answer_question(call_log_entry, recipient, input_data, logged_subevent=None)
 
 
 def handle_known_call_session(call_log_entry, backend_module, ivr_event,
-    input_data=None, logged_subevent=None):
+        input_data=None, logged_subevent=None):
     if (ivr_event == IVR_EVENT_NEW_CALL and
-        call_log_entry.use_precached_first_response):
+            call_log_entry.use_precached_first_response):
         # This means we precached the first IVR response when we
         # initiated the call, so all we need to do is return that
         # response.
@@ -248,7 +248,7 @@ def handle_known_call_session(call_log_entry, backend_module, ivr_event,
         call_log_entry.current_question_retry_count = 0
 
     if (call_log_entry.max_question_retries is not None and
-        call_log_entry.current_question_retry_count > call_log_entry.max_question_retries):
+            call_log_entry.current_question_retry_count > call_log_entry.max_question_retries):
         # We have retried to current question too many times without
         # getting a valid answer, so force a hang-up.
         ivr_responses = []
@@ -297,7 +297,7 @@ def log_call(phone_number, gateway_session_id, backend_module=None):
 
 
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None,
-    duration=None):
+        duration=None):
     """
     The main entry point for all incoming IVR requests.
     """
@@ -340,7 +340,7 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
 
 
 def log_error(error, call_log_entry=None, logged_subevent=None,
-    additional_error_text=None):
+        additional_error_text=None):
     if call_log_entry:
         call_log_entry.error = True
         call_log_entry.error_message = dict(MessagingEvent.ERROR_MESSAGES).get(error)

@@ -132,7 +132,8 @@ def get_custom_content_handler(handler, logged_event):
     if handler.custom_content_handler:
         if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
             try:
-                content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
+                content_handler = to_function(
+                    settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
             except Exception:
                 logged_event.error(MessagingEvent.ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER)
         else:
@@ -185,7 +186,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
             elif (isinstance(recipient, CommCareCase) and unverified_number and
-                domain_obj.send_to_duplicated_case_numbers):
+                    domain_obj.send_to_duplicated_case_numbers):
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
             else:
@@ -318,8 +319,8 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 # Start the new session
                 try:
                     session, responses = start_session(reminder.domain, recipient,
-                        app, module, form, case_id, case_for_case_submission=
-                        handler.force_surveys_to_use_triggered_case)
+                        app, module, form, case_id,
+                        case_for_case_submission=handler.force_surveys_to_use_triggered_case)
                 except TouchformsError as e:
                     human_readable_message = e.response_data.get('human_readable_message', None)
 
