@@ -1230,6 +1230,12 @@ class InternalSubscriptionManagementForm(forms.Form):
         except BillingContactInfo.DoesNotExist:
             return None
 
+    @property
+    def subscription_default_fields(self):
+        return {
+            'web_user': self.web_user,
+        }
+
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
         self.domain = domain
@@ -1270,16 +1276,12 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         enterprise_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, SoftwarePlanEdition.ENTERPRISE
         ).plan.get_version()
-        kwargs = {
-            'do_not_invoice': True,
-            'web_user': self.web_user,
-        }
         if self.current_subscription:
             self.current_subscription.change_plan(
                 enterprise_plan_version,
                 account=self.next_account,
                 transfer_credits=self.current_subscription.account == self.next_account,
-                **kwargs
+                **self.subscription_default_fields
             )
         else:
             Subscription.new_domain_subscription(
@@ -1287,8 +1289,16 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
                 self.domain,
                 enterprise_plan_version,
                 is_active=True,
-                **kwargs
+                **self.subscription_default_fields
             )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
+        fields.update({
+            'do_not_invoice': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1351,27 +1361,31 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         advanced_trial_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
-        kwargs = {
-            'date_end': self.cleaned_data['end_date'],
-            'is_trial': True,
-            'do_not_invoice': False,
-            'auto_generate_credits': False,
-            'web_user': self.web_user,
-        }
         if self.current_subscription:
             self.current_subscription.change_plan(
                 advanced_trial_plan_version,
                 account=self.next_account,
                 transfer_credits=self.current_subscription.account == self.next_account,
-                **kwargs
+                **self.subscription_default_fields
             )
         else:
             Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 advanced_trial_plan_version,
-                **kwargs
+                **self.subscription_default_fields
             )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': False,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'is_trial': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1490,14 +1504,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        kwargs = {
-            'auto_generate_credits': True,
-            'date_end': self.cleaned_data['end_date'],
-            'do_not_invoice': False,
-            'internal_change': True,
-            'service_type': SubscriptionType.CONTRACTED,
-            'web_user': self.web_user,
-        }
         revert_current_subscription_end_date = None
         if self.current_subscription and (
             not self.current_subscription.date_end
@@ -1513,14 +1519,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     self.domain,
                     new_plan_version,
                     date_start=self.cleaned_data['start_date'],
-                    **kwargs
+                    **self.subscription_default_fields
                 )
             else:
                 new_subscription = self.current_subscription.change_plan(
                     new_plan_version,
                     transfer_credits=self.current_subscription.account == self.next_account,
                     account=self.next_account,
-                    **kwargs
+                    **self.subscription_default_fields
                 )
         except:
             # If the entire transaction did not go through, rollback saved changes
@@ -1543,6 +1549,18 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(ContractedPartnerForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': True,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'internal_change': True,
+            'service_type': SubscriptionType.CONTRACTED,
+        })
+        return fields
 
     @property
     def account_name(self):
