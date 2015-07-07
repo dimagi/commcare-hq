@@ -257,9 +257,10 @@ var ExportManager = function (o) {
 
             var export_data = self.selectedExportsData[export_id];
             var xmlns = export_data['xmlns'],
-                module = export_data['module'],
+                module = export_data['modulename'],
                 export_type = export_data['exporttype'],
-                form = export_data['formname'];
+                form = export_data['formname'],
+                _id = export_id;
 
             var sheetName = "sheet";
 //            if (self.is_custom) {
