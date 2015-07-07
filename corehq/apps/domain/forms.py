@@ -1289,7 +1289,6 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
                 self.next_account,
                 self.domain,
                 enterprise_plan_version,
-                is_active=True,
                 **self.subscription_default_fields
             )
 
