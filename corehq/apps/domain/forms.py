@@ -1490,6 +1490,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
+        kwargs = {
+            'auto_generate_credits': True,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'internal_change': True,
+            'service_type': SubscriptionType.CONTRACTED,
+            'web_user': self.web_user,
+        }
         revert_current_subscription_end_date = None
         if self.current_subscription and (
             not self.current_subscription.date_end
@@ -1505,23 +1513,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     self.domain,
                     new_plan_version,
                     date_start=self.cleaned_data['start_date'],
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
-                    do_not_invoice=False,
-                    auto_generate_credits=True,
-                    service_type=SubscriptionType.CONTRACTED,
-                    internal_change=True,
+                    **kwargs
                 )
             else:
                 new_subscription = self.current_subscription.change_plan(
                     new_plan_version,
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
                     transfer_credits=self.current_subscription.account == self.next_account,
                     account=self.next_account,
-                    do_not_invoice=False,
-                    auto_generate_credits=True,
-                    service_type=SubscriptionType.CONTRACTED
+                    **kwargs
                 )
         except:
             # If the entire transaction did not go through, rollback saved changes
