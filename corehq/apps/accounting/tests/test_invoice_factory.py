@@ -1,7 +1,16 @@
 import datetime
+from decimal import Decimal
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.models import DefaultProductPlan, BillingAccount, Subscription, SubscriptionAdjustment
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    BillingAccount,
+    Subscription,
+    SubscriptionAdjustment,
+    Invoice,
+    SubscriptionType,
+    SMALL_INVOICE_THRESHOLD,
+)
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils import get_previous_month_date_range
 
@@ -29,6 +38,21 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     def _clean_subs(self):
         SubscriptionAdjustment.objects.all().delete()
         Subscription.objects.all().delete()
+
+    def _make_subscription_and_invoice(self):
+        some_plan = generator.arbitrary_subscribable_plan()
+        subscription = Subscription.new_domain_subscription(
+            self.account, self.domain, some_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end + datetime.timedelta(days=1),
+        )
+        invoice, _ = Invoice.objects.get_or_create(
+            subscription=subscription,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end,
+            is_hidden=subscription.do_not_invoice,
+        )
+        return subscription, invoice
 
     def test_feature_charges(self):
         domain_under_limits = generator.arbitrary_domain()
@@ -108,8 +132,25 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 1)
 
+    def test_should_send_email(self):
+        subscription, invoice = self._make_subscription_and_invoice()
+        self.assertTrue(self.invoice_factory.should_send_email(invoice, subscription))
 
+    def test_should_send_email_contracted(self):
+        subscription, invoice = self._make_subscription_and_invoice()
+        subscription.service_type = SubscriptionType.CONTRACTED
+        self.assertFalse(self.invoice_factory.should_send_email(invoice, subscription))
 
+        invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD - 1)
+        self.assertTrue(self.invoice_factory.should_send_email(invoice, subscription))
 
+        invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
+        self.assertFalse(self.invoice_factory.should_send_email(invoice, subscription))
 
+    def test_should_send_email_autogenerate_credits(self):
+        subscription, invoice = self._make_subscription_and_invoice()
+        subscription.auto_generate_credits = True
+        self.assertFalse(self.invoice_factory.should_send_email(invoice, subscription))
 
+        invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
+        self.assertTrue(self.invoice_factory.should_send_email(invoice, subscription))
