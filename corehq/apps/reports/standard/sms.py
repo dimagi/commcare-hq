@@ -336,17 +336,22 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
-    def get_source_display(self, event):
+    def get_source_display(self, event, display_only=False):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
         if event.source in (
             MessagingEvent.SOURCE_OTHER,
             MessagingEvent.SOURCE_UNRECOGNIZED,
             MessagingEvent.SOURCE_FORWARDED,
         ):
-            return self._fmt(_(source))
+            result = _(source)
         else:
             content_type = dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)
-            return self._fmt('%s | %s' % (_(source), _(content_type)))
+            result = '%s | %s' % (_(source), _(content_type))
+
+        if display_only:
+            return result
+        else:
+            return self._fmt(result)
 
     def get_status_display(self, event, sms=None):
         """
@@ -577,10 +582,20 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     emailable = False
     exportable = False
     hide_filters = True
+    report_template_path = "reports/messaging/event_detail.html"
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
+
+    @property
+    def template_context(self):
+        event = self.get_messaging_event()
+        date = ServerTime(event.date).user_time(self.timezone).done()
+        return {
+            'messaging_event_date': date.strftime(SERVER_DATETIME_FORMAT),
+            'messaging_event_type': self.get_source_display(event, display_only=True),
+        }
 
     @property
     def headers(self):
@@ -594,6 +609,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Status')),
         )
 
+    @memoized
     def get_messaging_event(self):
         messaging_event_id = self.request.GET.get('id', None)
 
