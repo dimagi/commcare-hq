@@ -163,7 +163,8 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
-
+    is_rendered_as_email = False
+    
     @property
     @memoized
     def active_location(self):
