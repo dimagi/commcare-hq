@@ -2,7 +2,8 @@ from datetime import timedelta
 from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import SQLProduct
+from corehq.apps.products.models import SQLProduct, Product
+from corehq.apps.programs.models import Program
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
@@ -16,7 +17,8 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, Inven
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id, first_item
+from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id, first_item, \
+    ews_date_format
 
 
 class ProductAvailabilityData(EWSData):
@@ -380,6 +382,7 @@ class StockStatus(MultiReport):
     split = False
     exportable = True
     is_exportable = True
+    is_rendered_as_email = False
 
     @property
     def report_config(self):

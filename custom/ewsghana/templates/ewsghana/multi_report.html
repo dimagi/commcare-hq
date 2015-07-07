@@ -11,6 +11,9 @@
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>
     {% endif %}
+    {% if subtitle %}
+        {{ subtitle }}
+    {% endif %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
