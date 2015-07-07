@@ -1353,8 +1353,9 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
                 advanced_trial_plan_version,
                 date_end=self.cleaned_data['end_date'],
                 web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
             )
-            new_subscription.account = self.next_account
         else:
             new_subscription = Subscription.new_domain_subscription(
                 self.next_account,
