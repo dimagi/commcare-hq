@@ -651,6 +651,7 @@ def _handle_known_error(e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance._id, error_message))
+    instance.__class__ = XFormError
     instance.doc_type = 'XFormError'
     instance.problem = error_message
     return instance
