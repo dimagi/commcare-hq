@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 from itertools import chain
+import json
 from urllib import urlencode
 import uuid
 from django import forms
@@ -73,7 +74,7 @@ class QuestionSelect(Widget):
 
         return format_html(
             '<input{0} data-bind="'
-            '   questionsSelect: [{1}],'
+            '   questionsSelect: {1},'
             '   value: \'{2}\','
             '   optionsCaption: \' \''
             '"/>',
@@ -83,10 +84,9 @@ class QuestionSelect(Widget):
         )
 
     def render_options(self, choices):
-        objs = []
-        for value, label in chain(self.choices, choices):
-            objs.append("{{'value': '{0}', 'label': '{1}'}}".format(value, label))
-        return ", ".join(objs)
+        return json.dumps(
+            [{'value': v, 'label': l} for v, l in chain(self.choices, choices)]
+        )
 
 
 class DataSourceBuilder(object):
