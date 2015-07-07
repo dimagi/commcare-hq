@@ -129,6 +129,7 @@ class ProductAvailabilityData(EWSData):
                 sql_product.code: sql_product.name
                 for sql_product in SQLProduct.objects.filter(domain=self.domain)
             }
+            chart.is_rendered_as_email = self.config['is_rendered_as_email']
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
@@ -296,6 +297,7 @@ class StockoutsProduct(EWSData):
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
             chart.tooltipFormat = True
+            chart.is_rendered_as_email = self.config['is_rendered_as_email']
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]
