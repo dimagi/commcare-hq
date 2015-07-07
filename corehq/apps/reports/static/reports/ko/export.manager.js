@@ -224,54 +224,84 @@ var ExportManager = function (o) {
         if (self.is_custom)
             prepareExport = new Array();
 
-        for (var export_id in self.selectedExportsData) {
-//            var curExpButton = self.selected_exports()[i];
-//
-//            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
-//                xmlns = curExpButton.data('xmlns'),
-//                module = curExpButton.data('modulename'),
-//                export_type = curExpButton.data('exporttype'),
-//                form = curExpButton.data('formname');
+        if(self.isNewExporter) {
+            for (var export_id in self.selectedExportsData) {
+                var export_data = self.selectedExportsData[export_id];
+                var xmlns = export_data['xmlns'],
+                    module = export_data['modulename'],
+                    export_type = export_data['exporttype'],
+                    form = export_data['formname'],
+                    _id = export_id;
 
-            var export_data = self.selectedExportsData[export_id];
-            var xmlns = export_data['xmlns'],
-                module = export_data['modulename'],
-                export_type = export_data['exporttype'],
-                form = export_data['formname'],
-                _id = export_id;
+                var sheetName = getSheetName(module, form, xmlns);
 
-            var sheetName = "sheet";
-//            if (self.is_custom) {
-//                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
-//                if($sheetNameElem.data('duplicate'))
-//                    break;
-//                sheetName = curExpButton.parent().parent().find('.sheetname').val();
-//            } else
-                sheetName = getSheetName(module, form, xmlns);
+                var export_tag;
+                if (self.is_custom)
+                    export_tag = {
+                        domain: self.domain,
+                        xmlns: xmlns,
+                        sheet_name: sheetName,
+                        export_id: _id,
+                        export_type: export_type
+                    };
+                else
+                    export_tag = [self.domain, xmlns, sheetName];
 
-            var export_tag;
-            if (self.is_custom)
-                export_tag = {
-                    domain: self.domain,
-                    xmlns: xmlns,
-                    sheet_name: sheetName,
-                    export_id: _id,
-                    export_type: export_type
-                };
-            else
-                export_tag = [self.domain, xmlns, sheetName];
+                if (!_id)
+                    _id = "unknown_application";
 
-            if (!_id)
-                _id = "unknown_application";
+                if (self.is_custom)
+                    prepareExport.push(export_tag);
+                else {
+                    if (!prepareExport.hasOwnProperty(_id))
+                        prepareExport[_id] = new Array();
+                    prepareExport[_id].push(export_tag);
+                }
+            }
+        } else {
+            for (var i in self.selected_exports()) {
+                var curExpButton = self.selected_exports()[i];
 
-            if (self.is_custom)
-                prepareExport.push(export_tag);
-            else {
-                if (!prepareExport.hasOwnProperty(_id))
-                    prepareExport[_id] = new Array();
-                prepareExport[_id].push(export_tag);
+                var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
+                    xmlns = curExpButton.data('xmlns'),
+                    module = curExpButton.data('modulename'),
+                    export_type = curExpButton.data('exporttype'),
+                    form = curExpButton.data('formname');
+
+                var sheetName = "sheet";
+                if (self.is_custom) {
+                    var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
+                    if($sheetNameElem.data('duplicate'))
+                        break;
+                    sheetName = curExpButton.parent().parent().find('.sheetname').val();
+                } else
+                    sheetName = getSheetName(module, form, xmlns);
+
+                var export_tag;
+                if (self.is_custom)
+                    export_tag = {
+                        domain: self.domain,
+                        xmlns: xmlns,
+                        sheet_name: sheetName,
+                        export_id: _id,
+                        export_type: export_type
+                    };
+                else
+                    export_tag = [self.domain, xmlns, sheetName];
+
+                if (!_id)
+                    _id = "unknown_application";
+
+                if (self.is_custom)
+                    prepareExport.push(export_tag);
+                else {
+                    if (!prepareExport.hasOwnProperty(_id))
+                        prepareExport[_id] = new Array();
+                    prepareExport[_id].push(export_tag);
+                }
             }
         }
+
 
         if (self.is_custom && prepareExport.length == 0) {
             displayModalError('No valid sheets were available for Custom Bulk Export. Please check for duplicate sheet names.');

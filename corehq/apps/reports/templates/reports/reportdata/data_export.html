@@ -10,7 +10,8 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         var exportManager = new ExportManager({
-            bulk_download_notice_text: '{{ bulk_download_notice_text }}'
+            bulk_download_notice_text: '{{ bulk_download_notice_text }}',
+            is_new_exporter: true
         });
         ko.applyBindings(exportManager, $('#export-ui').get(0));
 
