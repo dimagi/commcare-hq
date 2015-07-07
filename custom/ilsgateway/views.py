@@ -266,6 +266,7 @@ def end_report_run(request, domain):
     try:
         rr = ReportRun.objects.get(domain=domain, complete=False)
         rr.complete = True
+        rr.has_error = True
         rr.save()
     except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
         pass
