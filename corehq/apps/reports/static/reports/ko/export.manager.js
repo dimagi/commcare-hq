@@ -1,44 +1,6 @@
-var NewExportManager = function (o) {
-    var self = this;
-    self.selected_exports = ko.observableArray();
-    self.bulk_download_notice_text = o.bulk_download_notice_text || '';
-
-    self.requestBulkDownload = function() {
-        console.log('self.requestBulkDownload');
-    };
-
-    self.toggleSelectAllExports = function (data, event) {
-        var $toggleBtn = $(event.srcElement || event.currentTarget),
-            check_class = '.select-export';
-        if ($toggleBtn.data('all')) {
-            $.each($(check_class), function () {
-                $(this).attr('checked', true);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-        } else {
-            $.each($(check_class), function () {
-                $(this).attr('checked', false);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-        }
-    };
-
-    self.updateSelectedExports = function (data, event) {
-        var $checkbox = $(event.srcElement || event.currentTarget);
-        var add_to_list = ($checkbox.attr('checked') === 'checked'),
-            export_id = $checkbox.attr('value');
-        if (add_to_list) {
-            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
-            self.selected_exports.push(export_id);
-        } else {
-            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
-            self.selected_exports.splice(self.selected_exports().indexOf(export_id), 1);
-        }
-    };
-};
-
 var ExportManager = function (o) {
     var self = this;
+    self.isNewExporter = o.is_new_exporter || false;
     self.selected_exports = ko.observableArray();
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
@@ -56,9 +18,10 @@ var ExportManager = function (o) {
     self.exportModalLoading = o.loadingIndicator || '.loading-indicator';
     self.exportModalLoadedData = o.loadedData || '.loaded-data';
 
-    self.bulk_download_notice_text = (self.is_custom) ?
-        "Custom Form Exports" :
-        "Full Form Exports";
+    self.bulk_download_notice_text = self.isNewExporter ? (
+        o.bulk_download_notice_text || ''): (self.is_custom ?
+        "Custom Form Exports" : "Full Form Exports"
+    );
 
     self.xmlns_formdesigner = o.xmlns_formdesigner || 'formdesigner';
 
@@ -180,18 +143,33 @@ var ExportManager = function (o) {
         }
     };
 
-    self.updateSelectedExports = function (data, event) {
-        var $checkbox = $(event.srcElement || event.currentTarget);
-        var add_to_list = ($checkbox.attr('checked') === 'checked'),
-            downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
-        if (add_to_list) {
-            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
-            self.selected_exports.push(downloadButton);
-        } else {
-            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
-            self.selected_exports.splice(self.selected_exports().indexOf(downloadButton), 1);
-        }
-    };
+    if(self.isNewExporter) {
+        self.updateSelectedExports = function (data, event) {
+            var $checkbox = $(event.srcElement || event.currentTarget);
+            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+                downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
+            if (add_to_list) {
+                $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+                self.selected_exports.push(downloadButton);
+            } else {
+                $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+                self.selected_exports.splice(self.selected_exports().indexOf(downloadButton), 1);
+            }
+        };
+    } else {
+        self.updateSelectedExports = function (data, event) {
+            var $checkbox = $(event.srcElement || event.currentTarget);
+            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+                export_id = $checkbox.attr('value');
+            if (add_to_list) {
+                $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+                self.selected_exports.push(export_id);
+            } else {
+                $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+                self.selected_exports.splice(self.selected_exports().indexOf(export_id), 1);
+            }
+        };
+    }
 
     self.downloadExport = function(params) {
         var displayDownloadError = function (response) {
@@ -410,20 +388,39 @@ var ExportManager = function (o) {
         return true;
     };
 
-    self.toggleSelectAllExports = function (data, event) {
-        var $toggleBtn = $(event.srcElement || event.currentTarget),
-            check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
-        if ($toggleBtn.data('all'))
-            $.each($(check_class), function () {
-                $(this).attr('checked', true);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-        else
-            $.each($(check_class), function () {
-                $(this).attr('checked', false);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-    };
+    if(self.isNewExporter) {
+        self.toggleSelectAllExports = function (data, event) {
+            var $toggleBtn = $(event.srcElement || event.currentTarget),
+                check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
+            if ($toggleBtn.data('all'))
+                $.each($(check_class), function () {
+                    $(this).attr('checked', true);
+                    self.updateSelectedExports({}, {srcElement: this})
+                });
+            else
+                $.each($(check_class), function () {
+                    $(this).attr('checked', false);
+                    self.updateSelectedExports({}, {srcElement: this})
+                });
+        };
+    } else {
+        self.toggleSelectAllExports = function (data, event) {
+            var $toggleBtn = $(event.srcElement || event.currentTarget),
+                check_class = '.select-export';
+            if ($toggleBtn.data('all')) {
+                $.each($(check_class), function () {
+                    $(this).attr('checked', true);
+                    self.updateSelectedExports({}, {srcElement: this})
+                });
+            } else {
+                $.each($(check_class), function () {
+                    $(this).attr('checked', false);
+                    self.updateSelectedExports({}, {srcElement: this})
+                });
+            }
+        };
+    }
+
 
 },
     getFormattedSheetName = function (a, b) {
