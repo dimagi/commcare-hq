@@ -405,9 +405,9 @@ def set_first_ivr_response(call_log_entry, gateway_session_id, ivr_data, get_res
 
 
 def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
-    include_case_side_effects, max_question_retries, messaging_event_id,
-    verified_number=None, unverified_number=None, case_id=None,
-    case_for_case_submission=False, timestamp=None):
+        include_case_side_effects, max_question_retries, messaging_event_id,
+        verified_number=None, unverified_number=None, case_id=None,
+        case_for_case_submission=False, timestamp=None):
     """
     Returns False if an error occurred and the call should be retried.
     Returns True if the call should not be retried (either because it was
