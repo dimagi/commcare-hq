@@ -23,7 +23,8 @@
             selectedExportsData: {{ selected_exports_data|JSON }},
             is_custom: true,
             is_deid_form_report: {{ is_deid_form_report|JSON }},
-            is_new_exporter: true
+            is_new_exporter: true,
+            bulk_download_notice_text: '{{ bulk_download_notice_text }}'
         } );
 
         ko.applyBindings(singleOrBulkExportManager, $('#downloads')[0]);

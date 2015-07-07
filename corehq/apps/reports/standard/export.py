@@ -448,6 +448,7 @@ class FormExportReport(FormExportReportBase):
                 } for export_id in self.export_ids)
             ),
             'selected_exports_data': self.selected_exports_data,
+            'bulk_download_notice_text': ugettext_noop('Form Exports'),
         })
         return context
 
