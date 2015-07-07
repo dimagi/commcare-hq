@@ -120,7 +120,7 @@
         },
         "show": false
       },
-      "media_image": "jr:\/\/file\/commcare\/image\/module0.png",
+      "media_image": {"default": "jr://file/commcare/image/module0.png"},
       "parent_select": {
         "active": false,
         "module_id": null,
@@ -248,7 +248,7 @@
           },
           "version": null,
           "no_vellum": false,
-          "media_image": "jr:\/\/file\/commcare\/image\/module0_form0.png",
+          "media_image": {"default": "jr://file/commcare/image/module0_form0.png"},
           "form_links": [
           ],
           "post_form_workflow": "default",
