@@ -15,17 +15,18 @@
 
         var filterParams = '{{ get_filter_params.urlencode|safe }}';
         var jsonFilterParams = {{ get_filter_params|JSON }};
-        var customExportManager = new ExportManager( {
+        var singleOrBulkExportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: filterParams,
             jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
             selectedExportsData: {{ selected_exports_data|JSON }},
             is_custom: true,
-            is_deid_form_report: {{ is_deid_form_report|JSON }}
+            is_deid_form_report: {{ is_deid_form_report|JSON }},
+            is_new_exporter: true
         } );
 
-        ko.applyBindings(customExportManager, $('#downloads')[0]);
+        ko.applyBindings(singleOrBulkExportManager, $('#downloads')[0]);
     </script>
 {% endblock %}
 
