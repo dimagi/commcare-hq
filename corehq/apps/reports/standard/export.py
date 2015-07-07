@@ -439,6 +439,7 @@ class FormExportReport(FormExportReportBase):
     @property
     def template_context(self):
         context = super(FormExportReport, self).template_context
+        # TODO - seems redundant, cleanup at some point
         context.update({
             'export': self.exports[0],
             'exports': self.exports,
