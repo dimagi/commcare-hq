@@ -1678,6 +1678,15 @@ class BillingRecordBase(models.Model):
     def text_template(self):
         return self.INVOICE_TEXT_TEMPLATE
 
+    @property
+    def should_send_email(self):
+        subscription = self.invoice.subscription
+        autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
+                            subscription.service_type == SubscriptionType.CONTRACTED)
+        hidden = self.invoice.is_hidden
+        return not (autogenerate or small_contracted or hidden)
+
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
@@ -1685,7 +1694,6 @@ class BillingRecordBase(models.Model):
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
         record._pdf = invoice_pdf
-        record.skipped_email = invoice.is_hidden
         record.save()
         return record
 
@@ -1736,8 +1744,11 @@ class BillingRecordBase(models.Model):
         raise NotImplementedError()
 
     def send_email(self, contact_emails=None):
-        if self.skipped_email:
+        if not self.should_send_email:
+            self.skipped_email = True
+            self.save()
             return
+
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),

@@ -203,23 +203,13 @@ class DomainInvoiceFactory(object):
 
         record = BillingRecord.generate_record(invoice)
         try:
-            if self.should_send_email(invoice, subscription):
-                record.send_email()
-            else:
-                record.skipped_email = True
-                record.save()
+            record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
                 self.logged_throttle_error = True
 
         return invoice
-
-    def should_send_email(self, invoice, subscription):
-        autogenerate = (subscription.auto_generate_credits and not invoice.balance)
-        small_contracted = (invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.CONTRACTED)
-        return not (autogenerate or small_contracted)
 
     def generate_line_items(self, invoice, subscription):
         for product_rate in subscription.plan_version.product_rates.all():
