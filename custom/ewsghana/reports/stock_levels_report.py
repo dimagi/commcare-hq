@@ -151,7 +151,7 @@ class FacilityReportData(EWSData):
 
             yield {
                 'commodity': values['commodity'],
-                'current_stock': int(values['current_stock']),
+                'current_stock': int(values['current_stock']) if values['current_stock'] else '--',
                 'monthly_consumption': monthly_consumption,
                 'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],

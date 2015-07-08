@@ -5,14 +5,13 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import MultiProductFilter, EWSDateFilter
-from custom.ewsghana.reports import MonthWeekMixin
 from custom.ewsghana.utils import ews_date_format
 
 
 class StockTransactionReport(CustomProjectReport, GenericTabularReport,
-                             ProjectReportParametersMixin, MonthWeekMixin):
+                             ProjectReportParametersMixin, DatespanMixin):
     name = "Stock Transaction"
     slug = "export_stock_transaction"
     exportable = True

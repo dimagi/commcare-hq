@@ -11,7 +11,8 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
@@ -153,74 +154,7 @@ class ReportingRatesData(EWSData):
                           self.config['enddate'].strftime("%Y-%m-%d"))
 
 
-class EWSDateSpan(DateSpan):
-
-    @classmethod
-    def get_date(cls, type=None, month_or_week=None, year=None, format=ISO_DATE_FORMAT,
-                 inclusive=True, timezone=pytz.utc):
-        if month_or_week is None:
-            month_or_week = datetime.datetime.date.today().month
-        if year is None:
-            year = datetime.datetime.date.today().year
-        if type == 2:
-            days = month_or_week.split('|')
-            start = force_to_datetime(days[0])
-            end = force_to_datetime(days[1])
-        else:
-            start = datetime(year, month_or_week, 1, 0, 0, 0)
-            end = start + relativedelta(months=1) - relativedelta(days=1)
-        return DateSpan(start, end, format, inclusive, timezone)
-
-
-class MonthWeekMixin(object):
-    _datespan = None
-
-    @property
-    def datespan(self):
-        if self._datespan is None:
-            datespan = EWSDateSpan.get_date(self.type, self.first, self.second)
-            self.request.datespan = datespan
-            self.context.update(dict(datespan=datespan))
-            self._datespan = datespan
-        return self._datespan
-
-    @property
-    def type(self):
-        """
-            We have a 3 possible type:
-            1 - month
-            2 - quarter
-            3 - year
-        """
-        if 'datespan_type' in self.request_params:
-            return int(self.request_params['datespan_type'])
-        else:
-            return 1
-
-    @property
-    def first(self):
-        """
-            If we choose type 1 in this we get a month [00-12]
-            If we choose type 2 we get quarter [1-4]
-            This property is unused when we choose type 3
-        """
-        if 'datespan_first' in self.request_params:
-            try:
-                return int(self.request_params['datespan_first'])
-            except ValueError:
-                return self.request_params['datespan_first']
-        else:
-            return datetime.utcnow().month
-
-    @property
-    def second(self):
-        if 'datespan_second' in self.request_params:
-            return int(self.request_params['datespan_second'])
-        else:
-            return datetime.utcnow().year
-
-
-class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin):
+class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
@@ -229,11 +163,41 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
     printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
+    is_rendered_as_email = False
+
+    @property
+    @memoized
+    def active_location(self):
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return SQLLocation.objects.get(location_id=loc_id)
 
     @property
     @memoized
     def report_location(self):
         return SQLLocation.objects.get(location_id=self.report_config['location_id'])
+
+    @property
+    def report_subtitles(self):
+        if self.is_rendered_as_email:
+            program = self.request.GET.get('filter_by_program')
+            products = self.request.GET.getlist('filter_by_product')
+            return """
+            <br>For Filters:<br>
+            Location: {0}<br>
+            Program: {1}<br>
+            Product: {2}<br>
+            Date range: {3} - {4}
+            """.format(
+                self.report_location.name,
+                Program.get(program).name if program != ALL_OPTION else ALL_OPTION.title(),
+                ", ".join(
+                    [p.name for p in SQLProduct.objects.filter(product_id__in=products)]
+                ) if products != ALL_OPTION and products else ALL_OPTION.title(),
+                ews_date_format(self.datespan.startdate_utc),
+                ews_date_format(self.datespan.enddate_utc)
+            )
+        return None
 
     def get_stock_transactions(self):
         return StockTransaction.objects.filter(
@@ -297,12 +261,16 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
+            'subtitle': self.report_subtitles,
             'split': self.split,
             'r_filters': self.report_filters(),
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
+            'emailable': self.emailable,
             'location_id': self.request.GET.get('location_id'),
-            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
+            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain),
+            'startdate': self.datespan.startdate,
+            'enddate': self.datespan.enddate,
         }
         return context
 

@@ -382,6 +382,7 @@ class StockStatus(MultiReport):
     split = False
     exportable = True
     is_exportable = True
+    is_rendered_as_email = False
 
     @property
     def report_config(self):
