@@ -53,7 +53,6 @@ class FormData(BaseDataIndex):
     Data about a form submission.
     See XFormInstance class
     """
-    doc_type = models.CharField(max_length=255, db_index=True)
     domain = models.CharField(max_length=255, db_index=True)
     received_on = models.DateTimeField(db_index=True)
 
@@ -111,7 +110,6 @@ class FormData(BaseDataIndex):
                     instance_id)
             )
 
-        self.doc_type = instance.doc_type
         self.domain = instance.domain
         self.received_on = instance.received_on
 
@@ -128,7 +126,6 @@ class FormData(BaseDataIndex):
 
     def matches_exact(self, instance):
         return (
-            self.doc_type == instance.doc_type and
             self.domain == instance.domain and
             self.instance_id == instance.get_id and
             self.time_start == instance.metadata.timeStart and

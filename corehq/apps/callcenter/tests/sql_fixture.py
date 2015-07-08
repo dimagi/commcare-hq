@@ -17,7 +17,6 @@ def get_table(mapping):
 def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     now = datetime.utcnow()
     return FormData(
-        doc_type='XFormInstance',
         domain=domain,
         user_id=user_id,
         time_end=now - timedelta(days=days_ago),

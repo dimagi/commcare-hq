@@ -402,7 +402,6 @@ class CallCenterIndicators(object):
             .filter(
                 xmlns=xmlns,
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data) \
             .filter(**self._date_filters('time_end', lower, upper)) \
             .annotate(count=aggregation)
@@ -421,7 +420,6 @@ class CallCenterIndicators(object):
             .filter(**self._date_filters('time_end', lower, upper)) \
             .filter(
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data
             )\
             .annotate(count=Count('instance_id'))
