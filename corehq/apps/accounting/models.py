@@ -1004,7 +1004,7 @@ class Subscription(models.Model):
             date_start=new_start_date,
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
-            is_active=self.is_active,
+            is_active=is_active_subscription(new_start_date, date_end),
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
