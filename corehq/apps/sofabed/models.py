@@ -148,9 +148,9 @@ class CaseData(BaseDataIndex):
     See CommCareCase class
     """
     case_id = models.CharField(unique=True, primary_key=True, max_length=128)
-    doc_type = models.CharField(max_length=128, db_index=True)
+    doc_type = models.CharField(max_length=128)
     domain = models.CharField(max_length=128, db_index=True)
-    version = models.CharField(max_length=10, db_index=True, null=True)
+    version = models.CharField(max_length=10, null=True)
     type = models.CharField(max_length=128, db_index=True, null=True)
     closed = models.BooleanField(db_index=True)
     user_id = models.CharField(max_length=128, db_index=True, null=True)
@@ -160,7 +160,7 @@ class CaseData(BaseDataIndex):
     closed_on = models.DateTimeField(db_index=True, null=True)
     closed_by = models.CharField(max_length=128, db_index=True, null=True)
     modified_on = models.DateTimeField(db_index=True)
-    modified_by = models.CharField(max_length=128, db_index=True, null=True)
+    modified_by = models.CharField(max_length=128, null=True)
     server_modified_on = models.DateTimeField(db_index=True, null=True)
     name = models.CharField(max_length=CASE_NAME_LEN, null=True)
     external_id = models.CharField(max_length=128, null=True)
