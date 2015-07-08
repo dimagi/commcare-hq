@@ -32,3 +32,7 @@ class MALTRow(models.Model):
 
     class Meta:
         unique_together = ('month', 'domain_name', 'user_id', 'app_id')
+
+    @classmethod
+    def get_unique_fields(cls):
+        return list(cls._meta.unique_together[0])
