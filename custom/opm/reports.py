@@ -23,6 +23,7 @@ from sqlagg.filters import RawFilter, IN, EQFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
+from custom.opm.utils import numeric_fn
 
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
@@ -526,7 +527,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
-    is_cacheable = True
+    # is_cacheable = True
 
     _debug_data = []
     @property
@@ -605,8 +606,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def headers(self):
         headers = []
         for t in self.model.method_map:
-            if len(t) == 3:
-                headers.append(DataTablesColumn(name=t[1], visible=t[2]))
+            if self.model == Worker or self.model == Beneficiary:
+                headers.append(DataTablesColumn(name=t[1], visible=t[2], sort_type=t[3]))
             else:
                 headers.append(DataTablesColumn(name=t[1]))
         return DataTablesHeader(*headers)
@@ -814,7 +815,7 @@ class CaseReportMixin(object):
         from operator import attrgetter
         sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
         for count, row in enumerate(sorted_rows, 1):
-            row.serial_number = count
+            row.serial_number = numeric_fn(count)
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -1220,7 +1221,7 @@ class UsersIdsData(SqlData):
         ]
 
 
-class IncentivePaymentReport(BaseReport, CaseReportMixin):
+class IncentivePaymentReport(CaseReportMixin, BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker

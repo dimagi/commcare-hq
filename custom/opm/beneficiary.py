@@ -11,6 +11,7 @@ from django.template.defaultfilters import yesno
 from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
     MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
+from custom.opm.utils import numeric_fn
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -174,7 +175,7 @@ class OPMCaseRow(object):
 
     @property
     def preg_month_display(self):
-        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+        return numeric_fn(self.preg_month) if self.preg_month is not None else EMPTY_FIELD
 
     @property
     @memoized
@@ -191,7 +192,7 @@ class OPMCaseRow(object):
 
     @property
     def child_age_display(self):
-        return self.child_age if self.child_age is not None else EMPTY_FIELD
+        return numeric_fn(self.child_age) if self.child_age is not None else EMPTY_FIELD
 
     def _adjust_for_vhnd_presence(self, non_adjusted_month, anchor_date_to_check):
         """
@@ -824,7 +825,7 @@ class ConditionsMet(OPMCaseRow):
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
+        self.awc_code = numeric_fn(awc_codes.get(self.awc_name, EMPTY_FIELD))
         self.issue = ''
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
@@ -894,16 +895,16 @@ class Beneficiary(OPMCaseRow):
         ('owner_id', _("Owner ID"), False, None),
         ('closed_date', _("Closed On"), True, None),
         ('vhnd_available_display', _('VHND organised this month'), True, None),
-        ('payment_last_month', _('Payment last month'), True, None),
+        ('payment_last_month', _('Payment last month'), True, DTSortType.NUMERIC),
         ('issues', _("Issues"), True, None),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(Beneficiary, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.child_count = 0 if self.status == "pregnant" else 1
+        self.child_count = numeric_fn(0 if self.status == "pregnant" else 1)
 
         # Show only cases that require payment
         if self.total_cash == 0:
             raise InvalidRow("Case does not require payment")
 
-        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
+        self.payment_last_month = numeric_fn(self.last_month_row.total_cash if self.last_month_row else 0)
