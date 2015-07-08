@@ -1,7 +1,9 @@
+from datetime import datetime
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
+from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
 
 
 class LocationSet(object):
@@ -27,12 +29,27 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, location_db):
+def fixture_last_modified(user):
+    """
+    Return when the fixture was last modified
+    """
+    try:
+        return UserFixtureStatus.objects.get(
+            user_id=user._id, fixture_type=UserFixtureType.LOCATION).last_modified
+    except UserFixtureStatus.DoesNotExist:
+        return datetime(1970, 1, 1)
+
+
+def should_sync_locations(last_sync, location_db, user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
     """
-    if not last_sync or not last_sync.date:
+    if (
+        not last_sync or
+        not last_sync.date or
+        fixture_last_modified(user) >= last_sync.date
+    ):
         return True
 
     for location in location_db.by_id.values():
@@ -82,7 +99,7 @@ class LocationFixtureProvider(object):
 
         location_db = _location_footprint(locations)
 
-        if not should_sync_locations(last_sync, location_db):
+        if not should_sync_locations(last_sync, location_db, user):
             return []
 
         root = Element('fixture',

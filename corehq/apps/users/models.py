@@ -1766,12 +1766,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return None
 
+    def _update_fixture_status(self, fixture_type):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+        now = datetime.utcnow()
+        user_fixture_sync, new = UserFixtureStatus.objects.get_or_create(
+            user_id=self._id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': now},
+        )
+        if not new:
+            user_fixture_sync.last_modified = now
+            user_fixture_sync.save()
+
     def set_location(self, location):
         """
         Set the location, and all important user data, for
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.fixtures.models import UserFixtureType
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1801,17 +1814,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         })
 
         self.location_id = location._id
+        self._update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     def unset_location(self):
         """
         Unset the location and remove all associated user data and cases
         """
+        from corehq.apps.fixtures.models import UserFixtureType
+
         self.user_data.pop('commcare_location_id', None)
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
         self.clear_location_delegates()
+        self._update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     @property

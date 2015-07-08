@@ -1,6 +1,7 @@
 from decimal import Decimal
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from django.db import models
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
@@ -522,3 +523,22 @@ class FixtureOwnership(Document):
         ).all()
 
         return ownerships
+
+
+class UserFixtureType(object):
+    LOCATION = "LOCATION"
+    CHOICES = (
+        (LOCATION, "Location")
+    )
+
+
+class UserFixtureStatus(models.Model):
+    """
+    Keeps track of when a user needs to re-sync a fixture
+    """
+    user_id = models.CharField(max_length=100, db_index=True)
+    fixture_type = models.CharField(max_length=50)
+    last_modified = models.DateTimeField()
+
+    class Meta(object):
+        unique_together = ("user_id", "fixture_type")

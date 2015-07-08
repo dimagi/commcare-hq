@@ -2,20 +2,31 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.apps.locations.models import SQLLocation, LocationType
 from casexml.apps.phone.models import SyncLog
-from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
+from corehq.apps.users.models import CouchUser, CommCareUser
+from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations, fixture_last_modified
+from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
 
 
 class LocationFixturesTest(TestCase):
     def setUp(self):
+        self.domain = "Erebor"
+        self.username = "Durins Bane"
         self.location_type = LocationType(
-            domain="test-domain",
+            domain=self.domain,
             name="state",
             code="state",
         )
+        password = "What have I got in my pocket"
+        self.user = CommCareUser.create(self.domain, self.username, password)
+        self.user.save()
 
     def tearDown(self):
+        all_users = CouchUser.all()
+        for user in all_users:
+            user.delete()
         SQLLocation.objects.all().delete()
         LocationType.objects.all().delete()
+        UserFixtureStatus.objects.all().delete()
 
     def test_metadata(self):
         location = SQLLocation(
@@ -59,7 +70,7 @@ class LocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
-        self.assertFalse(should_sync_locations(SyncLog(date=yesterday), location_db))
+        self.assertFalse(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
 
         self.location_type.shares_cases = True
         self.location_type.save()
@@ -67,4 +78,20 @@ class LocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
-        self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db))
+        self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+
+    def test_fixture_last_modified(self):
+        """
+        Should return the epoch if there are no previous changes
+        """
+        then = datetime(1970, 1, 1)
+        now = datetime.now()
+        self.assertEqual(fixture_last_modified(self.user), then)
+
+        UserFixtureStatus(
+            user_id=self.user._id,
+            fixture_type=UserFixtureType.LOCATION,
+            last_modified=now,
+        ).save()
+
+        self.assertEqual(fixture_last_modified(self.user), now)
