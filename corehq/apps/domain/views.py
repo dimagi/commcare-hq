@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
+from django.db.models import Sum
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -824,6 +825,20 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return Paginator(self.invoices, self.limit)
 
     @property
+    def total_balance(self):
+        """
+        Returns the total balance of unpaid, unhidden invoices.
+        Doesn't take into account the view settings on the page.
+        """
+        invoices = (Invoice.objects
+                    .filter(subscription__subscriber__domain=self.domain)
+                    .filter(date_paid__exact=None)
+                    .filter(is_hidden=False))
+        return invoices.aggregate(
+            total_balance=Sum('balance')
+        ).get('total_balance', 0.00)
+
+    @property
     def column_names(self):
         return [
             _("Statement No."),
@@ -853,6 +868,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 args=[self.domain],
             ),
             'stripe_cards': self.stripe_cards,
+            'total_balance': self.total_balance,
         })
         return pagination_context
 
