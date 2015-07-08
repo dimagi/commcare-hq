@@ -51,19 +51,19 @@ class ReportingRates(ReportingRatesData):
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
-            chart_data = [
-                dict(value=reported_percent,
-                     label=_('Reporting'),
-                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
-                                                                self.datetext())),
-                     color='green'),
+            chart_data = sorted([
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
-            ]
-        pie_chart = EWSPieChart('', '', chart_data, ['green', 'red'])
+                dict(value=reported_percent,
+                     label=_('Reporting'),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
+                     color='green'),
+            ], key=lambda x: x['value'], reverse=True)
+        pie_chart = EWSPieChart('', '', chart_data, [chart_data[0]['color'], chart_data[1]['color']])
         pie_chart.tooltips = False
         return [pie_chart]
 

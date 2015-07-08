@@ -281,34 +281,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 

@@ -11,10 +11,14 @@
             var totalValues= {};
             $(bodyRows).each(function(id) {
                 $(this).children().each(function(idx) {
-                    var cell;
+                    var cell = [0, 0];
                     if (idx >= begin) {
                         if (id === 0) totalValues[idx] = [0, 0];
-                        cell = $(this).text().trim().split('/').map(function(x){return parseFloat(x)});
+                        if ($(this).text().trim() != 'NA') {
+                            cell = $(this).text().trim().split('/').map(function (x) {
+                                return parseFloat(x)
+                            });
+                        }
                         if (cell.length === 2) {
                             totalValues[idx][0] += cell[0];
                             totalValues[idx][1] += cell[1];

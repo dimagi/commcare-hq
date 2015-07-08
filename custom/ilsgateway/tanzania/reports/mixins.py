@@ -79,9 +79,9 @@ class DistrictSummaryData(ILSData):
                 "processing_total": processing_numbers['total'],
                 "processing_complete": processing_numbers['complete'],
                 "submitting_total": rr_total,
-                "submitting_complete": rr_complete,
+                "submitting_complete": int(rr_complete),
                 "delivery_total": delivery_total,
-                "delivery_complete": delivery_complete,
+                "delivery_complete": int(delivery_complete),
                 "delivery_group": delivery_group,
                 "submitting_group": submitting_group,
                 "processing_group": processing_group,
@@ -192,7 +192,8 @@ class ProductAvailabilitySummary(ILSData):
                 ret_data.append({'color': chart_config.label_color[k], 'label': k, 'data': datalist})
             return ret_data
 
-        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', format='d'))
+        chart.tooltipFormat = ' on '
         chart.rotateLabels = -45
         chart.marginBottom = 120
         chart.marginRight = 10

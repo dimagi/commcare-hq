@@ -50,7 +50,7 @@ def set_cleanliness_flags_for_domain(domain, force_full=False):
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        if owner_id not in WEIRD_USER_IDS:
+        if owner_id and owner_id not in WEIRD_USER_IDS:
             set_cleanliness_flags(domain, owner_id, force_full=force_full)
 
 
@@ -58,6 +58,7 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
+    assert owner_id, "Can't set cleanliness flags for null or blank owner ids"
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,

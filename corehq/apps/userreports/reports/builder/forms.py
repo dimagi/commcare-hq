@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 from itertools import chain
+import json
 from urllib import urlencode
 import uuid
 from django import forms
@@ -73,7 +74,7 @@ class QuestionSelect(Widget):
 
         return format_html(
             '<input{0} data-bind="'
-            '   questionsSelect: [{1}],'
+            '   questionsSelect: {1},'
             '   value: \'{2}\','
             '   optionsCaption: \' \''
             '"/>',
@@ -83,10 +84,9 @@ class QuestionSelect(Widget):
         )
 
     def render_options(self, choices):
-        objs = []
-        for value, label in chain(self.choices, choices):
-            objs.append("{{'value': '{0}', 'label': '{1}'}}".format(value, label))
-        return ", ".join(objs)
+        return json.dumps(
+            [{'value': v, 'label': l} for v, l in chain(self.choices, choices)]
+        )
 
 
 class DataSourceBuilder(object):
@@ -911,6 +911,22 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         for c in columns:
             if c['field'] != agg_field_id:
                 c['aggregation'] = "expand"
+        return columns
+
+    @property
+    @memoized
+    def initial_columns(self):
+        columns = super(ConfigureTableReportForm, self).initial_columns
+
+        # Remove the aggregation indicator from the columns.
+        # It gets removed because we want it to be a column in the report,
+        # but we don't want it to appear in the builder.
+        if self.existing_report:
+            agg_properties = [
+                self._get_property_from_column(c)
+                for c in self.existing_report.aggregation_columns
+            ]
+            return [c for c in columns if c.property not in agg_properties]
         return columns
 
     @property

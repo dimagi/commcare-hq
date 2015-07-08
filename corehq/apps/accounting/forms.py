@@ -1876,6 +1876,38 @@ class ResendEmailForm(forms.Form):
         record.send_email(contact_emails=contact_emails)
 
 
+class SuppressInvoiceForm(forms.Form):
+    submit_kwarg = 'suppress_invoice'
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(SuppressInvoiceForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Suppress invoice from all reports and user-facing statements',
+                crispy.Div(
+                    crispy.HTML('Warning: this can only be undone by a developer.'),
+                    css_class='alert alert-error',
+                )
+            ),
+            FormActions(
+                StrictButton(
+                    'Suppress Invoice',
+                    css_class='btn-danger',
+                    name=self.submit_kwarg,
+                    type='submit',
+                ),
+            ),
+        )
+
+    def suppress_invoice(self):
+        self.invoice.is_hidden_to_ops = True
+        self.invoice.save()
+
+
 class CreateAdminForm(forms.Form):
     username = forms.CharField(
         required=False,
