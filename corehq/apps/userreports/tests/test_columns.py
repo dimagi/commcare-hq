@@ -76,6 +76,14 @@ class TestFieldColumn(SimpleTestCase):
 
 class ChoiceListColumnDbTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = get_engine()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.engine.dispose()
+
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
@@ -96,7 +104,7 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(get_engine(), data_source_config)
+        adapter = IndicatorSqlAdapter(self.engine, data_source_config)
         adapter.rebuild_table()
         # ensure we can save data to the table.
         adapter.save({
