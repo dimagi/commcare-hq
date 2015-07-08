@@ -32,7 +32,6 @@ from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,
@@ -838,16 +837,6 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 
 class EditBillingAccountInfoForm(forms.ModelForm):
-    billing_admins = forms.CharField(
-        required=False,
-        label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe(
-            "<p>These are the Web Users that will be able to access and "
-            "modify your account's subscription and billing information.</p> "
-            "<p>Your logged in account is already a Billing Administrator."
-            "</p>"
-        )),
-    )
 
     class Meta:
         model = BillingContactInfo
@@ -872,17 +861,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        other_admins = self.account.billing_admins.filter(
-            domain=self.domain).exclude(web_user=self.creating_user).all()
-        self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
-
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -910,22 +891,6 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             ),
         )
 
-    def clean_billing_admins(self):
-        data = self.cleaned_data['billing_admins']
-        all_admins = data.split(',')
-        result = []
-        for admin in all_admins:
-            if admin and admin != u'':
-                result.append(BillingAccountAdmin.objects.get_or_create(
-                    web_user=admin,
-                    domain=self.domain,
-                )[0])
-        result.append(BillingAccountAdmin.objects.get_or_create(
-            web_user=self.creating_user,
-            domain=self.domain,
-        )[0])
-        return result
-
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
         parsed_number = None
@@ -944,14 +909,6 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
-        billing_admins = self.cleaned_data['billing_admins']
-        other_domain_admins = copy.copy(self.account.billing_admins.exclude(
-            domain=self.domain).all())
-        self.account.billing_admins.clear()
-        for other_admin in other_domain_admins:
-            self.account.billing_admins.add(other_admin)
-        for admin in billing_admins:
-            self.account.billing_admins.add(admin)
         self.account.save()
         return True
 
@@ -971,10 +928,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1072,10 +1025,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1281,6 +1230,13 @@ class InternalSubscriptionManagementForm(forms.Form):
         except BillingContactInfo.DoesNotExist:
             return None
 
+    @property
+    def subscription_default_fields(self):
+        return {
+            'internal_change': True,
+            'web_user': self.web_user,
+        }
+
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
         self.domain = domain
@@ -1322,21 +1278,27 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
             self.domain, SoftwarePlanEdition.ENTERPRISE
         ).plan.get_version()
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 enterprise_plan_version,
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 enterprise_plan_version,
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = True
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
+        fields.update({
+            'do_not_invoice': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1400,24 +1362,30 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = False
-        new_subscription.auto_generate_credits = False
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': False,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'is_trial': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1551,28 +1519,15 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     self.domain,
                     new_plan_version,
                     date_start=self.cleaned_data['start_date'],
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
-                    do_not_invoice=False,
-                    auto_generate_credits=True,
-                    service_type=SubscriptionType.CONTRACTED,
-                    internal_change=True,
+                    **self.subscription_default_fields
                 )
             else:
                 new_subscription = self.current_subscription.change_plan(
                     new_plan_version,
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
                     transfer_credits=self.current_subscription.account == self.next_account,
                     account=self.next_account,
-                    do_not_invoice=False,
-                    auto_generate_credits=True,
-                    service_type=SubscriptionType.CONTRACTED
+                    **self.subscription_default_fields
                 )
-                if (new_subscription.date_start <= datetime.date.today()
-                   and datetime.date.today() < new_subscription.date_end):
-                    new_subscription.is_active = True
-                    new_subscription.save()
         except:
             # If the entire transaction did not go through, rollback saved changes
             if revert_current_subscription_end_date:
@@ -1594,6 +1549,17 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(ContractedPartnerForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': True,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'service_type': SubscriptionType.CONTRACTED,
+        })
+        return fields
 
     @property
     def account_name(self):

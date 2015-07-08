@@ -142,8 +142,6 @@ def _get_default_tile_configurations():
     )
 
     is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
-    data_url_generator = lambda urlname, request: reverse(urlname,
-        args=[request.domain, ExcelExportReport.slug])
 
     return [
         TileConfiguration(
@@ -179,8 +177,7 @@ def _get_default_tile_configurations():
             slug='data',
             icon='fcc fcc-data',
             context_processor_class=IconContext,
-            urlname=DataInterfaceDispatcher.name(),
-            url_generator=data_url_generator,
+            urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),
         ),

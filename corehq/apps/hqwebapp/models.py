@@ -11,7 +11,7 @@ from django.core.cache import cache
 
 from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
+from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
@@ -1243,15 +1243,13 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            user_is_billing_admin, billing_account =\
-                BillingAccountAdmin.get_admin_status_and_account(
-                    self.couch_user, self.domain)
-            if user_is_billing_admin or self.couch_user.is_superuser:
+            if user_is_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
+                billing_account = BillingAccount.get_account_by_domain(self.domain)
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,

@@ -17,7 +17,7 @@ from corehq.apps.users.signals import couch_user_post_save
 @receiver(couch_user_post_save)
 def user_save_callback(sender, **kwargs):
     couch_user = kwargs.get("couch_user", None)
-    if couch_user and couch_user.is_web_user:
+    if couch_user and couch_user.is_web_user():
         update_subscription_properties_by_user(couch_user)
 
 

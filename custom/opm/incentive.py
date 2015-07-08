@@ -4,7 +4,7 @@ Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
 
-from .constants import *
+from custom.opm.constants import get_fixture_data
 
 
 class Worker(object):
@@ -42,16 +42,14 @@ class Worker(object):
 
         if case_data:
             self.women_registered = len(case_data)
-            self.children_registered = sum([c.num_children for c in case_data if not c.is_secondary])
+            self.children_registered = sum([c.raw_num_children for c in case_data if not c.is_secondary])
             for opm_case in case_data:
                 dates = opm_case.data_provider.get_dates_in_range(opm_case.owner_id,
                                                                   opm_case.reporting_window_start,
                                                                   opm_case.reporting_window_end)
 
                 self.service_forms_count = 'yes' if dates else 'no'
-            self.growth_monitoring_count = len([opm_case.child_growth_calculated
-                                                for opm_case in case_data
-                                                if opm_case.child_growth_calculated])
+            self.growth_monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
         else:
             self.women_registered = None
             self.children_registered = None

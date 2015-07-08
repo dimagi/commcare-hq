@@ -104,6 +104,7 @@ class DashboardReport(MultiReport):
     def data_providers(self):
         config = self.report_config
         if self.is_reporting_type():
+            self.emailable = True
             self.split = True
             if self.is_rendered_as_email:
                 return [FacilityReportData(config)]
@@ -117,6 +118,7 @@ class DashboardReport(MultiReport):
                     ProductSelectionPane(config, hide_columns=False)
                 ]
         self.split = False
+        self.emailable = False
         config.update(self.data())
         return [
             DashboardReportProductAvailability(config=config),
