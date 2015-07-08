@@ -1276,6 +1276,7 @@ def download_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
+@require_can_edit_form_location
 def edit_form_instance(request, domain, instance_id):
     if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
         raise Http404()
@@ -1411,6 +1412,7 @@ def unarchive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@require_can_edit_form_location
 def resave_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
