@@ -1804,7 +1804,7 @@ class BillingRecord(BillingRecordBase):
             is_hidden=False,
             subscription__subscriber__domain=self.invoice.get_domain(),
         ))
-        is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+        is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")
                           if self.invoice.is_paid or total_balance == 0
                           else _("Payment Required"))
@@ -1813,7 +1813,7 @@ class BillingRecord(BillingRecordBase):
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
-            'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
+            'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
