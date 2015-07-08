@@ -241,38 +241,6 @@ class Currency(models.Model):
         return default
 
 
-class BillingAccountAdmin(models.Model):
-    web_user = models.CharField(max_length=80, db_index=True)
-    domain = models.CharField(
-        max_length=256, null=True, blank=True, db_index=True
-    )
-    last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return "Billing Admin %(web_user)s for domain %(domain)s" % {
-            'web_user': self.web_user,
-            'domain': self.domain,
-        }
-
-    @classmethod
-    def get_admin_status_and_account(cls, web_user, domain):
-        if not isinstance(web_user, WebUser):
-            return False, None
-        account = BillingAccount.get_account_by_domain(domain)
-        is_domain_admin = web_user.is_domain_admin(domain)
-        if account is None:
-            return is_domain_admin, None
-        admins = account.billing_admins.filter(domain=domain)
-        if not admins.exists():
-            # BillingAccountAdmins for this domain have NOT been
-            # specified. This was likely an account created
-            # from the accounting admin side.
-            return is_domain_admin, account
-        # BillingAccountAdmins for this domain have been specified
-        admins = admins.filter(web_user=web_user.username)
-        return (admins.count() > 0 and is_domain_admin), account
-
-
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -288,7 +256,6 @@ class BillingAccount(models.Model):
     created_by = models.CharField(max_length=80)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     dimagi_contact = models.CharField(max_length=80, null=True, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
