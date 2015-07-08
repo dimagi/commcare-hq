@@ -57,7 +57,7 @@
 
             $(standardHQReport.filterAccordion).on('hidden', function (data) {
                 if (!(data.target && $(data.target).hasClass('modal'))) {
-                    _setShowFilterCookie(false);
+                    _setShowFilterCookie(true);
                     $(standardHQReport.toggleFiltersButton).button('open');
                 }
             });
