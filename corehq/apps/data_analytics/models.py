@@ -6,15 +6,15 @@ class MALTRow(models.Model):
         Specifies a row for 'Monthly Aggregate Lite Table (MALT)'
         See https://docs.google.com/document/d/1QQ3tzFPs6TWiPiah6YUBCrFILKih6OcJV7444i50o1U/edit
     """
-    month = models.DateField()
+    month = models.DateField(db_index=True)
 
     # Using TextField instead of CharField, because...
-    # postgres doesn't differentiate between Char/Text and there is hard max-length limit
+    # postgres doesn't differentiate between Char/Text and there is no hard max-length limit
     user_id = models.TextField()
     username = models.TextField()
     email = models.EmailField()
     is_web_user = models.BooleanField()
-    domain_name = models.TextField()
+    domain_name = models.TextField(db_index=True)
     num_of_forms = models.TextField()
 
     YES = 'yes'

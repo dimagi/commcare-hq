@@ -10,17 +10,17 @@ from corehq.apps.sofabed.models import FormData
 class MALTTableGenerator(object):
     """
         Populates SQL table with data for given datespan
-        See MALTRow
+        See .models.MALTRow
     """
     _wam_pam_cache = {}
 
     def __init__(self, datespan_object):
         self.datespan = datespan_object
 
-    @transaction.atomic
     def build_table(self):
 
         for domain in Domain.get_all():
+            malt_rows_to_save = []
             for user in domain.all_users():
                 forms_query = self.get_forms_queryset(user._id, domain.name)
                 num_of_forms = forms_query.count()
@@ -41,7 +41,8 @@ class MALTTableGenerator(object):
                         wam=wam,
                         pam=pam
                     )
-                    db_row.save()
+                    malt_rows_to_save.append(db_row)
+            MALTRow.objects.bulk_create(malt_rows_to_save)
             self._destroy_wam_pam_cache(domain.name)
 
     def get_forms_queryset(self, user_id, domain_name):
