@@ -738,7 +738,7 @@ class CaseReportMixin(object):
 
     @memoized
     def column_index(self, key):
-        for i, (k, _, _, _) in enumerate(self.model.method_map):
+        for i, (k, _, __, ___) in enumerate(self.model.method_map):
             if k == key:
                 return i
 
