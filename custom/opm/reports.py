@@ -738,7 +738,7 @@ class CaseReportMixin(object):
 
     @memoized
     def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
+        for i, (k, _, _, _) in enumerate(self.model.method_map):
             if k == key:
                 return i
 
@@ -798,7 +798,7 @@ class CaseReportMixin(object):
         sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
         for row in sorted_objects:
             rows.append([getattr(row, method) for
-                        method, header, visible in self.model.method_map])
+                        method, header, visible, sotr_type in self.model.method_map])
 
         if self.debug:
             def _debug_item_to_row(debug_val):
@@ -959,12 +959,13 @@ class MetReport(CaseReportMixin, BaseReport):
     def headers(self):
         if not self.is_rendered_as_email:
             return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+                DataTablesColumn(name=header, visible=visible, sort_type=sort_type)
+                for method, header, visible, sort_type in self.model.method_map
             ])
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible, sort_type
                     in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 

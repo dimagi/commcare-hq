@@ -10,22 +10,22 @@ from custom.opm.constants import get_fixture_data
 class Worker(object):
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', "List of AWWs", True),
-        ('awc_name', "AWC Name", True),
-        ('awc_code', "AWC Code", True),
-        ('bank_name', "AWW Bank Name", True),
-        ('ifs_code', "IFS Code", True),
-        ('account_number', "AWW Bank Account Number", True),
-        ('block', "Block Name", True),
-        ('women_registered', "No. of women registered under BCSP", True),
-        ('children_registered', "No. of children registered under BCSP", True),
-        ('service_forms_count', "Service Availability Form Submitted", True),
-        ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children", True),
-        ('service_forms_cash', "Payment for Service Availability Form (in Rs.)", True),
-        ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True),
-        ('month_total', "Total Payment Made for the month (in Rs.)", True),
-        ('last_month_total', "Amount of AWW incentive paid last month", True),
-        ('owner_id', 'Owner ID', False)
+        ('name', "List of AWWs", True, None),
+        ('awc_name', "AWC Name", True, None),
+        ('awc_code', "AWC Code", True, None),
+        ('bank_name', "AWW Bank Name", True, None),
+        ('ifs_code', "IFS Code", True, None),
+        ('account_number', "AWW Bank Account Number", True, None),
+        ('block', "Block Name", True, None),
+        ('women_registered', "No. of women registered under BCSP", True, None),
+        ('children_registered', "No. of children registered under BCSP", True, None),
+        ('service_forms_count', "Service Availability Form Submitted", True, None),
+        ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children", True, None),
+        ('service_forms_cash', "Payment for Service Availability Form (in Rs.)", True, None),
+        ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True, None),
+        ('month_total', "Total Payment Made for the month (in Rs.)", True, None),
+        ('last_month_total', "Amount of AWW incentive paid last month", True, None),
+        ('owner_id', 'Owner ID', False, None)
     ]
 
     # remove form_data parameter when all data will correct on HQ

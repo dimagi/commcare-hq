@@ -8,6 +8,7 @@ import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
     MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
@@ -794,28 +795,28 @@ class OPMCaseRow(object):
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
-        ('serial_number', _("Serial number"), True),
-        ('name', _("List of Beneficiaries"), True),
-        ('awc_name', _("AWC Name"), True),
-        ('awc_code', _("AWC Code"), True),
-        ('block_name', _("Block Name"), True),
-        ('husband_name', _("Husband Name"), True),
-        ('readable_status', _("Current status"), True),
-        ('preg_month_display', _('Pregnancy Month'), True),
-        ('child_name', _("Child Name"), True),
-        ('child_age_display', _("Child Age"), True),
-        ('window', _("Window"), True),
-        ('one', _("Condition 1"), True),
-        ('two', _("Condition 2"), True),
-        ('three', _("Condition 3"), True),
-        ('four', _("Condition 4"), True),
-        ('five', _("Condition 5"), True),
-        ('cash', _("Payment amount this month (Rs.)"), True),
-        ('payment_last_month', _("Payment amount last month (Rs.)"), True),
-        ('cash_received_last_month', _("Cash received last month"), True),
-        ('case_id', _('Case ID'), True),
-        ('closed_date', _("Closed On"), True),
-        ('issue', _('Issues'), True)
+        ('serial_number', _("Serial number"), True, DTSortType.NUMERIC),
+        ('name', _("List of Beneficiaries"), True, None),
+        ('awc_name', _("AWC Name"), True, None),
+        ('awc_code', _("AWC Code"), True, DTSortType.NUMERIC),
+        ('block_name', _("Block Name"), True, None),
+        ('husband_name', _("Husband Name"), True, None),
+        ('readable_status', _("Current status"), True, None),
+        ('preg_month_display', _('Pregnancy Month'), True, DTSortType.NUMERIC),
+        ('child_name', _("Child Name"), True, None),
+        ('child_age_display', _("Child Age"), True, DTSortType.NUMERIC),
+        ('window', _("Window"), True, None),
+        ('one', _("Condition 1"), True, None),
+        ('two', _("Condition 2"), True, None),
+        ('three', _("Condition 3"), True, None),
+        ('four', _("Condition 4"), True, None),
+        ('five', _("Condition 5"), True, None),
+        ('cash', _("Payment amount this month (Rs.)"), True, None),
+        ('payment_last_month', _("Payment amount last month (Rs.)"), True, None),
+        ('cash_received_last_month', _("Cash received last month"), True, None),
+        ('case_id', _('Case ID'), True, None),
+        ('closed_date', _("Closed On"), True, None),
+        ('issue', _('Issues'), True, None)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
@@ -874,27 +875,27 @@ class Beneficiary(OPMCaseRow):
     """
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', _("List of Beneficiaries"), True),
-        ('husband_name', _("Husband Name"), True),
-        ('awc_name', _("AWC Name"), True),
-        ('bank_name', _("Bank Name"), True),
-        ('bank_branch_name', _("Bank Branch Name"), True),
-        ('ifs_code', _("IFS Code"), True),
-        ('account_number', _("Bank Account Number"), True),
-        ('block_name', _("Block Name"), True),
-        ('village', _("Village Name"), True),
-        ('child_count', _("Number of Children"), True),
-        ('bp1_cash', _("Birth Preparedness Form 1"), True),
-        ('bp2_cash', _("Birth Preparedness Form 2"), True),
-        ('child_cash', _("Child Followup Form"), True),
-        ('year_end_bonus_cash', _("Bonus Payment"), True),
-        ('total_cash', _("Amount to be paid to beneficiary"), True),
-        ('case_id', _('Case ID'), True),
-        ('owner_id', _("Owner ID"), False),
-        ('closed_date', _("Closed On"), True),
-        ('vhnd_available_display', _('VHND organised this month'), True),
-        ('payment_last_month', _('Payment last month'), True),
-        ('issues', _("Issues"), True),
+        ('name', _("List of Beneficiaries"), True, None),
+        ('husband_name', _("Husband Name"), True, None),
+        ('awc_name', _("AWC Name"), True, None),
+        ('bank_name', _("Bank Name"), True, None),
+        ('bank_branch_name', _("Bank Branch Name"), True, None),
+        ('ifs_code', _("IFS Code"), True, None),
+        ('account_number', _("Bank Account Number"), True, None),
+        ('block_name', _("Block Name"), True, None),
+        ('village', _("Village Name"), True, None),
+        ('child_count', _("Number of Children"), True, DTSortType.NUMERIC),
+        ('bp1_cash', _("Birth Preparedness Form 1"), True, None),
+        ('bp2_cash', _("Birth Preparedness Form 2"), True, None),
+        ('child_cash', _("Child Followup Form"), True, None),
+        ('year_end_bonus_cash', _("Bonus Payment"), True, None),
+        ('total_cash', _("Amount to be paid to beneficiary"), True, None),
+        ('case_id', _('Case ID'), True, None),
+        ('owner_id', _("Owner ID"), False, None),
+        ('closed_date', _("Closed On"), True, None),
+        ('vhnd_available_display', _('VHND organised this month'), True, None),
+        ('payment_last_month', _('Payment last month'), True, None),
+        ('issues', _("Issues"), True, None),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
