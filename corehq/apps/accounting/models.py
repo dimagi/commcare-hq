@@ -1506,9 +1506,6 @@ class WirePrepaymentInvoice(WireInvoice):
     def is_prepayment(self):
         return True
 
-    def add_items(self, items):
-        self.items = items
-
 
 class Invoice(InvoiceBase):
     """

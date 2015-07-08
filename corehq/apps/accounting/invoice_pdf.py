@@ -149,7 +149,7 @@ class InvoiceTemplate(object):
             self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
-        if (not self.is_wire) or self.is_prepayment:
+        if not self.is_wire or self.is_prepayment:
             self.draw_table()
         self.draw_footer()
 
