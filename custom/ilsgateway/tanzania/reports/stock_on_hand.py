@@ -165,7 +165,7 @@ class SohPercentageTableData(ILSData):
                 ]
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        location_id=org_summary[0].location_id,
+                        location_id=loc.location_id,
                         product=product,
                         date__range=(self.config['startdate'], self.config['enddate'])
                     ).aggregate(without_stock=Avg('without_stock'), total=Max('total'))
