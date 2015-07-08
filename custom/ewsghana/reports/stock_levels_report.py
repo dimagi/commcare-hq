@@ -10,10 +10,9 @@ from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
@@ -322,7 +321,7 @@ class UsersData(EWSData):
 
 class StockLevelsReport(MultiReport):
     title = "Aggregate Stock Report"
-    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True
