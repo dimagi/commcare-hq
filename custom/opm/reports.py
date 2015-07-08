@@ -798,7 +798,7 @@ class CaseReportMixin(object):
         sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
         for row in sorted_objects:
             rows.append([getattr(row, method) for
-                        method, header, visible, sotr_type in self.model.method_map])
+                        method, header, visible, sort_type in self.model.method_map])
 
         if self.debug:
             def _debug_item_to_row(debug_val):
