@@ -23,14 +23,13 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponseRedirect,
-    HttpResponseBadRequest, Http404, HttpResponseForbidden)
+from django.http import (HttpResponseRedirect, HttpResponseBadRequest, Http404,
+                         HttpResponseForbidden)
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import (require_http_methods,
-    require_POST)
+from django.views.decorators.http import require_http_methods, require_POST
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
@@ -55,7 +54,7 @@ from couchexport.exceptions import (
 )
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
-    export_response)
+                                   export_response)
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
@@ -64,7 +63,8 @@ from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
+from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
+                                  string_to_datetime, json_format_date)
 from dimagi.utils.web import json_request, json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
@@ -83,11 +83,12 @@ import couchforms.views as couchforms_views
 from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types
 from corehq.apps.reports.templatetags.xform_tags import render_form
-from filters.users import UserTypeFilter
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
+from corehq.apps.locations.permissions import require_can_edit_form_location
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
@@ -1345,6 +1346,7 @@ def download_attachment(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@require_can_edit_form_location
 def archive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
@@ -1390,6 +1392,7 @@ def archive_form(request, domain, instance_id):
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
+@require_can_edit_form_location
 def unarchive_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert instance.domain == domain

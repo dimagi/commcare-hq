@@ -1,8 +1,12 @@
 from functools import wraps
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from .models import SQLLocation
+from couchforms.models import XFormInstance
+from corehq import toggles, Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from .models import SQLLocation
+from .util import get_xform_location
 
 
 def locations_access_required(view_fn):
@@ -98,3 +102,22 @@ def can_edit_location_types(view_fn):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
+
+
+def can_edit_form_location(domain, user, instance_id):
+    if not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain):
+        return True
+
+    location = get_xform_location(XFormInstance.get(instance_id))
+    if not location:
+        return True
+    return user_can_edit_location(user, location, Domain.get_by_name(domain))
+
+
+def require_can_edit_form_location(view_fn):
+    @wraps(view_fn)
+    def _inner(request, domain, instance_id):
+        if not can_edit_form_location(domain, request.couch_user, instance_id):
+            raise PermissionDenied()
+        return view_fn(request, domain, instance_id)
+    return _inner
