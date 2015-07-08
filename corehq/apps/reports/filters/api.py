@@ -63,7 +63,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def get_locations(self, query, start, size):
         for loc in self.get_locations_query(query)[start:size]:
             group = loc.reporting_group_object()
-            yield (group._id, group.name + ' [group]')
+            yield self.utils.location_group_tuple(group)
 
     def get_locations_size(self, query):
         return self.get_locations_query(query).count()

@@ -72,7 +72,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
             )
             for loc in locs:
                 loc_group = loc.case_sharing_group_object()
-                selected.append(self.sharing_location_tuple(loc_group))
+                selected.append(self.utils.sharing_location_tuple(loc_group))
         return selected
 
     def selected_group_entries(self, request):
@@ -130,7 +130,7 @@ class CaseListFilterOptions(EmwfOptionsView):
     def get_sharing_locations(self, query, start, size):
         for loc in self.get_sharing_locations_query(query)[start:size]:
             group = loc.case_sharing_group_object()
-            yield (group._id, group.name + ' [case sharing]')
+            yield self.utils.sharing_location_tuple(group)
 
     def get_sharing_locations_size(self, query):
         return self.get_sharing_locations_query(query).count()
