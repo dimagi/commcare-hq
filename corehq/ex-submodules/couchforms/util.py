@@ -505,7 +505,11 @@ class SubmissionPost(object):
                             return response, instance, cases
                         except Exception as e:
                             # handle / log the error and reraise so the phone knows to resubmit
-                            _handle_unexpected_error(e, instance)
+                            # note that in the case of edit submissions this won't flag the previous
+                            # submission as having been edited. this is intentional, since we should treat
+                            # this use case as if the edit "failed"
+                            instance = _handle_unexpected_error(e, instance)
+                            instance.save()
                             raise
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub(
@@ -681,7 +685,7 @@ def _handle_unexpected_error(e, instance):
         # this is necessary for errors that come from editing submissions
         del instance['_rev']
     instance.problem = error_message
-    instance.save()
+    return instance
 
 
 def fetch_and_wrap_form(doc_id):
