@@ -28,3 +28,7 @@ class MALTRow(models.Model):
     app_id = models.TextField()
     wam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
     pam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
+    is_app_deleted = models.BooleanField()
+
+    class Meta:
+        unique_together = ('month', 'domain_name', 'user_id', 'app_id')

@@ -26,7 +26,7 @@ class MALTTableGenerator(object):
                                       forms_query.values_list('app_id').distinct()]
 
                 for app_id in apps_submitted_for:
-                    wam, pam = self._wam_pams(domain.name, app_id)
+                    wam, pam, is_app_deleted = self._app_data(domain.name, app_id)
                     db_row = MALTRow(
                         month=self.datespan.startdate,
                         user_id=user._id,
@@ -37,7 +37,8 @@ class MALTTableGenerator(object):
                         num_of_forms=num_of_forms,
                         app_id=app_id,
                         wam=wam,
-                        pam=pam
+                        pam=pam,
+                        is_app_deleted=is_app_deleted,
                     )
                     malt_rows_to_save.append(db_row)
             MALTRow.objects.bulk_create(malt_rows_to_save)
@@ -54,9 +55,9 @@ class MALTTableGenerator(object):
 
     @classmethod
     @quickcache(['domain', 'app_id'])
-    def _wam_pams(cls, domain, app_id):
+    def _app_data(cls, domain, app_id):
 
         app = Application.get(app_id)
-        wam, pam = (getattr(app, 'amplifies_workers', 'not_set'),
-                    getattr(app, 'amplifies_project', 'not_set'))
-        return wam, pam
+        return (getattr(app, 'amplifies_workers', 'not_set'),
+                getattr(app, 'amplifies_project', 'not_set'),
+                app.is_deleted())
