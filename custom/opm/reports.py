@@ -23,6 +23,7 @@ from sqlagg.filters import RawFilter, IN, EQFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
+from custom.opm.utils import numeric_fn
 
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
@@ -605,8 +606,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def headers(self):
         headers = []
         for t in self.model.method_map:
-            if len(t) == 3:
-                headers.append(DataTablesColumn(name=t[1], visible=t[2]))
+            if self.model == Worker or self.model == Beneficiary:
+                headers.append(DataTablesColumn(name=t[1], visible=t[2], sort_type=t[3]))
             else:
                 headers.append(DataTablesColumn(name=t[1]))
         return DataTablesHeader(*headers)
@@ -738,7 +739,7 @@ class CaseReportMixin(object):
 
     @memoized
     def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
+        for i, (k, _1, _2, _3) in enumerate(self.model.method_map):
             if k == key:
                 return i
 
@@ -798,7 +799,7 @@ class CaseReportMixin(object):
         sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
         for row in sorted_objects:
             rows.append([getattr(row, method) for
-                        method, header, visible in self.model.method_map])
+                        method, header, visible, sort_type in self.model.method_map])
 
         if self.debug:
             def _debug_item_to_row(debug_val):
@@ -814,7 +815,7 @@ class CaseReportMixin(object):
         from operator import attrgetter
         sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
         for count, row in enumerate(sorted_rows, 1):
-            row.serial_number = count
+            row.serial_number = numeric_fn(count)
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -959,12 +960,13 @@ class MetReport(CaseReportMixin, BaseReport):
     def headers(self):
         if not self.is_rendered_as_email:
             return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+                DataTablesColumn(name=header, visible=visible, sort_type=sort_type)
+                for method, header, visible, sort_type in self.model.method_map
             ])
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible, sort_type
                     in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
@@ -1219,7 +1221,7 @@ class UsersIdsData(SqlData):
         ]
 
 
-class IncentivePaymentReport(BaseReport, CaseReportMixin):
+class IncentivePaymentReport(CaseReportMixin, BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
