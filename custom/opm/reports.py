@@ -527,7 +527,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
-    # is_cacheable = True
+    is_cacheable = True
 
     _debug_data = []
     @property
