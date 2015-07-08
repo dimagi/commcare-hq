@@ -70,6 +70,19 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 ),
                 is_deleted=generic_delete,
             )
+    elif doc_type.startswith('CommCareCaseGroup'):
+        # This has to go before CommCareCase otherwise it won't get picked
+        # up because we're using startswith() to check the doc_type
+        from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
+        doc_info = DocInfo(
+            type_display=_('Case Group'),
+            display=doc['name'],
+            link=reverse(
+                CaseGroupCaseManagementView.urlname,
+                args=[domain, doc_id],
+            ),
+            is_deleted=generic_delete,
+        )
     elif doc_type.startswith('CommCareCase'):
         doc_info = DocInfo(
             display=doc['name'],
@@ -133,17 +146,6 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 kwargs={'domain' : doc['name']}
             ),
             is_deleted=generic_delete,
-        )
-    elif doc_type in ('CommCareCaseGroup',):
-        from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
-        doc_info = DocInfo(
-            type_display=_('Case Group'),
-            display=doc['name'],
-            link=reverse(
-                CaseGroupCaseManagementView.urlname,
-                args=[domain, doc_id],
-            ),
-            is_deleted=is_deleted,
         )
     elif doc_type == 'Location':
         from corehq.apps.locations.views import EditLocationView

@@ -1042,7 +1042,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         source, source_id = cls.get_source_from_reminder(reminder_definition)
         content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
             reminder_definition, reminder)
-        recipient_type = cls.get_recipient_type(recipient)
+
+        if isinstance(recipient, list):
+            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+        else:
+            recipient_type = cls.get_recipient_type(recipient)
+            recipient_id = recipient.get_id if recipient_type else None
 
         return cls.objects.create(
             domain=reminder_definition.domain,
@@ -1054,7 +1060,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             form_name=form_name,
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
-            recipient_id=recipient.get_id if recipient_type else None
+            recipient_id=recipient_id
         )
 
     @classmethod
