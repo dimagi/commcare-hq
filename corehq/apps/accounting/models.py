@@ -1680,12 +1680,7 @@ class BillingRecordBase(models.Model):
 
     @property
     def should_send_email(self):
-        subscription = self.invoice.subscription
-        autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
-        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.CONTRACTED)
-        hidden = self.invoice.is_hidden
-        return not (autogenerate or small_contracted or hidden)
+        raise NotImplementedError("should_send_email is required")
 
     @classmethod
     def generate_record(cls, invoice):
@@ -1800,6 +1795,11 @@ class WireBillingRecord(BillingRecordBase):
     INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
 
+    @property
+    def should_send_email(self):
+        hidden = self.invoice.is_hidden
+        return not hidden
+
     def is_email_throttled(self):
         return False
 
@@ -1832,6 +1832,15 @@ class BillingRecord(BillingRecordBase):
             return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
         else:
             return self.INVOICE_TEXT_TEMPLATE
+
+    @property
+    def should_send_email(self):
+        subscription = self.invoice.subscription
+        autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
+                            subscription.service_type == SubscriptionType.CONTRACTED)
+        hidden = self.invoice.is_hidden
+        return not (autogenerate or small_contracted or hidden)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
