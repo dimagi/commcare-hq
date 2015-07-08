@@ -1,5 +1,3 @@
-from django.db import transaction
-
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
