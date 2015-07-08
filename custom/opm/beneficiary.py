@@ -644,6 +644,11 @@ class OPMCaseRow(object):
     def num_children(self):
         if self.status == 'pregnant':
             return 0
+        return self.raw_num_children
+
+    @property
+    def raw_num_children(self):
+        # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
 
     def add_extra_children(self):

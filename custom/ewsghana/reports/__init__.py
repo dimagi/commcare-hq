@@ -1,25 +1,21 @@
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template.loader import render_to_string
-import pytz
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
+
+from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
-from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
 from casexml.apps.stock.models import StockTransaction
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def get_url(view_name, text, domain):
@@ -254,7 +250,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         return [f.slug for f in self.fields]
 
     def fpr_report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]]
 
     @property
     def report_context(self):
