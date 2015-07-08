@@ -1,0 +1,26 @@
+{% load field_tags %}
+
+<div class="control-group{% if field.errors %} error{% endif %}">
+    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+    <div class="controls">
+        {% if field|is_checkbox %}
+            <label class="checkbox">
+                {{ field }} {{ field.help_text }}
+            </label>
+            {% for error in field.errors %}
+                <span class="help-inline">{{ error }}</span>
+            {% endfor %}
+        {% else %}
+            {{ field }}
+            {% for error in field.errors %}
+                <span class="help-inline">{{ error }}</span>
+            {% endfor %}
+            {% if field.help_text %}
+                <p class="help-block">
+                    {{ field.help_text }}
+                </p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
