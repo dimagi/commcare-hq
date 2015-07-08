@@ -37,7 +37,6 @@ def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
     date_ago = now - timedelta(days=case_info.days_ago)
     return CaseData(
         case_id=case_info.id,
-        doc_type='CommCareCase',
         type=case_info.case_type,
         domain=domain,
         owner_id=owner_id,

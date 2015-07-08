@@ -310,8 +310,7 @@ class CallCenterIndicators(object):
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain,
-                doc_type='CommCareCase') \
+                domain=self.domain) \
             .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
             .filter(**{
                 '{}_by__in'.format(opened_or_closed): self.users_needing_data
@@ -326,7 +325,6 @@ class CallCenterIndicators(object):
             .exclude(type=self.cc_case_type) \
             .filter(
                 domain=self.domain,
-                doc_type='CommCareCase',
                 closed=False,
                 user_id__in=self.users_needing_data) \
             .annotate(count=Count('case_id'))

@@ -148,7 +148,6 @@ class CaseData(BaseDataIndex):
     See CommCareCase class
     """
     case_id = models.CharField(unique=True, primary_key=True, max_length=128)
-    doc_type = models.CharField(max_length=128)
     domain = models.CharField(max_length=128, db_index=True)
     version = models.CharField(max_length=10, null=True)
     type = models.CharField(max_length=128, db_index=True, null=True)
@@ -191,7 +190,6 @@ class CaseData(BaseDataIndex):
             name = case.name
 
         self.case_id = case_id
-        self.doc_type = case.doc_type
         self.domain = case.domain
         self.version = case.version
         self.type = case.type
@@ -225,7 +223,6 @@ class CaseData(BaseDataIndex):
             self.closed_by == case.closed_by and
             self.server_modified_on == case.server_modified_on and
             self.case_id == case.case_id and
-            self.doc_type == case.doc_type and
             self.domain == case.domain and
             self.version == case.version and
             self.type == case.type and
