@@ -25,7 +25,7 @@
         multibar_chart.tooltips(chart_config.tooltips);
         // Customize tooltip message
         {% if chart.tooltipFormat %}
-            multibar_chart.tooltipContent(function(key, y, e, graph) { return e+ '{{ chart.tooltipFormat }}' +y });
+            multibar_chart.tooltipContent(function(key, y, e, graph) { return '<h3>' + key + '</h3><p>' + parseInt(e) + ' {{ chart.tooltipFormat }} ' +  y + '</p>    ' });
         {% endif %}
         multibar_chart.stacked(chart_config.stacked);
         multibar_chart.margin(chart_config.margin);

@@ -3,6 +3,7 @@ from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.products.fixtures import product_fixture_generator_json
+from corehq.apps.programs.fixtures import program_fixture_generator_json
 
 
 def item_lists_by_domain(domain):
@@ -21,17 +22,26 @@ def item_lists_by_domain(domain):
                 'no_option': True
             }
 
+        uri = 'jr://fixture/%s:%s' % (ItemListsProvider.id, data_type.tag)
         ret.append({
-            'sourceUri': 'jr://fixture/%s:%s' % (ItemListsProvider.id, data_type.tag),
-            'defaultId': data_type.tag,
-            'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
+            'id': data_type.tag,
+            'uri': uri,
+            'path': "/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': structure,
+
+            # DEPRECATED PROPERTIES
+            'sourceUri': uri,
+            'defaultId': data_type.tag,
+            'initialQuery': "instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
         })
 
     products = product_fixture_generator_json(domain)
     if products:
         ret.append(products)
+    programs = program_fixture_generator_json(domain)
+    if programs:
+        ret.append(programs)
     return ret
 
 

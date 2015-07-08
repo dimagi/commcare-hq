@@ -10,6 +10,7 @@ from PIL import Image
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -44,6 +45,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    EntryPoint,
 )
 from corehq.apps.app_manager.models import (Application, RemoteApp,
                                             FormBase, get_apps_in_domain)
@@ -1189,6 +1191,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
+                entry_point=EntryPoint.CONTRACTED,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1227,6 +1230,13 @@ class InternalSubscriptionManagementForm(forms.Form):
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
+
+    @property
+    def subscription_default_fields(self):
+        return {
+            'internal_change': True,
+            'web_user': self.web_user,
+        }
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1269,21 +1279,27 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
             self.domain, SoftwarePlanEdition.ENTERPRISE
         ).plan.get_version()
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 enterprise_plan_version,
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 enterprise_plan_version,
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = True
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
+        fields.update({
+            'do_not_invoice': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1347,24 +1363,30 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = False
-        new_subscription.auto_generate_credits = False
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': False,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'is_trial': True,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1483,44 +1505,24 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        revert_current_subscription_end_date = None
-        if self.current_subscription and (
-            not self.current_subscription.date_end
-            or self.cleaned_data['start_date'] < self.current_subscription.date_end
-        ):
-            revert_current_subscription_end_date = self.current_subscription.date_end
-            self.current_subscription.date_end = self.cleaned_data['start_date']
-            self.current_subscription.save()
-        try:
+        # I remember being worried about exceptions here,
+        # so let's ensure atomicity of the transaction
+        with transaction.atomic():
             if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
                 new_subscription = Subscription.new_domain_subscription(
                     self.next_account,
                     self.domain,
                     new_plan_version,
                     date_start=self.cleaned_data['start_date'],
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
+                    **self.subscription_default_fields
                 )
             else:
                 new_subscription = self.current_subscription.change_plan(
                     new_plan_version,
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
                     transfer_credits=self.current_subscription.account == self.next_account,
+                    account=self.next_account,
+                    **self.subscription_default_fields
                 )
-                new_subscription.account = self.next_account
-            if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
-                new_subscription.is_active = True
-            new_subscription.do_not_invoice = False
-            new_subscription.auto_generate_credits = True
-            new_subscription.service_type = SubscriptionType.CONTRACTED
-            new_subscription.save()
-        except:
-            # If the entire transaction did not go through, rollback saved changes
-            if revert_current_subscription_end_date:
-                self.current_subscription.date_end = revert_current_subscription_end_date
-                self.current_subscription.save()
-            raise
 
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],
@@ -1536,6 +1538,17 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(ContractedPartnerForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': True,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'service_type': SubscriptionType.CONTRACTED,
+        })
+        return fields
 
     @property
     def account_name(self):

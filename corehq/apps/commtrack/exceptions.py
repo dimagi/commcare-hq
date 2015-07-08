@@ -10,6 +10,10 @@ class InvalidProductException(Exception):
     pass
 
 
+class DuplicateProductCodeException(InvalidProductException):
+    pass
+
+
 class NoDefaultLocationException(Exception):
     pass
 

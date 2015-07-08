@@ -5,8 +5,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from custom.ewsghana.filters import EWSDateFilter
+from custom.ewsghana.filters import EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
 from custom.ewsghana.utils import get_supply_points, get_country_id, ews_date_format
@@ -152,7 +151,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 
 class StockSummaryReport(MultiReport):
-    fields = [AsyncLocationFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, EWSDateFilter]
     name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False

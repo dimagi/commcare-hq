@@ -7,6 +7,19 @@ from django.db import connection
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        """
+        Django doesn't allow joins within mass-update queries, so doing something like
+        `orm['accounting.paymentmethod'].all().update(web_user=F('billing_admin__web_user')`
+        throws a FieldError.
+        Even though this is a small table, I left this query like this instead of
+        looping and saving each entry alone.
+
+        The second query takes each duplicate paymentmethod and adds -duplicate to it.
+        In the current model, payment methods are unique per billingaccount.
+        With this change, we allow domain admins to make payments for any account they
+        have access to.
+        """
+
         sql = """
             UPDATE accounting_paymentmethod
             SET web_user = accounting_billingaccountadmin.web_user

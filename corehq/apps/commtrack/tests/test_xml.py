@@ -363,9 +363,10 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     def test_blank_product_id(self):
         initial = float(100)
         balances = [('', initial)]
-        with self.assertRaises(MissingProductId):
-            # todo: if we ever want to fail more gracefully we can catch this exception and change this test
-            self.submit_xml_form(balance_submission(balances))
+        instance_id = self.submit_xml_form(balance_submission(balances))
+        instance = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', instance.doc_type)
+        self.assertTrue('MissingProductId' in instance.problem)
 
 
 class BugSubmissionsTest(CommTrackSubmissionTest):

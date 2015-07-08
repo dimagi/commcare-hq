@@ -29,16 +29,22 @@ def product_fixture_generator_json(domain):
         for f in custom_fields.fields:
             fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
+    uri = 'jr://fixture/{}'.format(ProductFixturesProvider.id)
     return {
-        'sourceUri': 'jr://fixture/{}'.format(ProductFixturesProvider.id),
-        'defaultId': 'products',
-        'initialQuery': "instance('products')/products/product",
+        'id': 'products',
+        'uri': uri,
+        'path': '/products/product',
         'name': 'Products',
         'structure': {
             f: {
                 'name': f,
                 'no_option': True
             } for f in fields},
+
+        # DEPRECATED PROPERTIES
+        'sourceUri': uri,
+        'defaultId': 'products',
+        'initialQuery': "instance('products')/products/product",
     }
 
 

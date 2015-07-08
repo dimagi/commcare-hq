@@ -133,7 +133,6 @@ class BillingContactInfoResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = BillingContactInfo.objects.all()
-        print queryset
         fields = ['id', 'first_name', 'last_name', 'emails', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country', 'last_modified']
         resource_name = 'billing_contact_info'

@@ -10,7 +10,13 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain
-from corehq.apps.accounting.exceptions import LineItemError, InvoiceError, InvoiceEmailThrottledError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import (
+    LineItemError,
+    InvoiceError,
+    InvoiceEmailThrottledError,
+    BillingContactInfoError,
+    InvoiceAlreadyCreatedError,
+)
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
@@ -162,13 +168,15 @@ class DomainInvoiceFactory(object):
         else:
             invoice_end = self.date_end
 
-        invoice = Invoice(
+        invoice, is_new_invoice = Invoice.objects.get_or_create(
             subscription=subscription,
             date_start=invoice_start,
             date_end=invoice_end,
             is_hidden=subscription.do_not_invoice,
         )
-        invoice.save()
+
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         if subscription.subscriptionadjustment_set.count() == 0:
             # record that the subscription was created
@@ -196,11 +204,7 @@ class DomainInvoiceFactory(object):
 
         record = BillingRecord.generate_record(invoice)
         try:
-            if subscription.auto_generate_credits and not invoice.balance:
-                record.skipped_email = True
-                record.save()
-            else:
-                record.send_email()
+            record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)

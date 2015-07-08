@@ -172,7 +172,8 @@ class TableuDeBoardReport(MultiReport):
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
                 NombreData(config=config),
-                GestionDeLIPMTauxDeRuptures(config=config)
+                GestionDeLIPMTauxDeRuptures(config=config),
+                RecouvrementDesCouts(config=config)
             ]
         else:
             return [
