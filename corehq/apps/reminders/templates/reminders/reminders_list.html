@@ -33,17 +33,12 @@
     <div class="btn-group">
         <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
             <i class="icon-plus"></i>
-            {% trans 'Add Reminder' %}</a>
-        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li><a href="{% url "create_reminder_schedule" domain %}">
-                {% trans 'Add Reminder' %}
-            </a></li>
-            <li><a href="{% url "create_complex_reminder_schedule" domain %}">
-                {% trans 'Add Multi Event Reminder' %}</a></li>
-        </ul>
+            {% trans 'Add Reminder' %}
+        </a>
+        <a href="{% url "create_complex_reminder_schedule" domain %}" class="btn btn-success">
+            <i class="icon-plus"></i>
+            {% trans 'Add Multi Event Reminder' %}
+        </a>
     </div>
     <div id="reminders-list">
         <div data-bind="template: {
