@@ -921,7 +921,7 @@ class PaymentRecordInterface(GenericTabularReport):
     def payment_records(self):
         return PaymentRecord.objects.filter(**self.filters)
 
-    def account(self, payment_record):
+    def get_account(self, payment_record):
         return (CreditAdjustment.objects
                 .filter(payment_record_id=payment_record.id)
                 .latest('last_modified')
@@ -937,8 +937,8 @@ class PaymentRecordInterface(GenericTabularReport):
                     text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                self.account(record).name,
-                self.account(record).created_by_domain,
+                self.get_account(record).name,
+                self.get_account(record).created_by_domain,
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(

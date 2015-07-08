@@ -159,7 +159,7 @@ class EWSDateFilter(BaseReportFilter):
             {
                 'text': 'Week (Friday - Thursday)',
                 'val': 2,
-                'firstOptions': weeks,
+                'firstOptions': weeks[:-1],
                 'secondOptions': []
             },
             {
@@ -173,13 +173,10 @@ class EWSDateFilter(BaseReportFilter):
 
     @property
     def default_week(self):
-        now = datetime.now()
-        if now.weekday() == 4:
-            return '{0}|{1}'.format(now.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
-        else:
-            week_ago = (now - relativedelta(weeks=1))
-            days = relativedelta(days=(4 - week_ago.weekday()) % 7)
-            return '{0}|{1}'.format((week_ago + days).strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
+        now = datetime.utcnow()
+        date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
+        return '{0}|{1}'.format((date - relativedelta(days=7)).strftime("%Y-%m-%d"), date.strftime("%Y-%m-%d"))
+
 
     @property
     def filter_context(self):

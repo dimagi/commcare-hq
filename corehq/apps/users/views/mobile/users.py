@@ -46,6 +46,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -232,6 +233,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
+        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
+            return False
         try:
             ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
         except PermissionDenied:

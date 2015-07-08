@@ -38,6 +38,7 @@ def send_confirmation_email(invitation):
 
 class InvitationView():
     # todo cleanup this view so it properly inherits from BaseSectionPageView
+    inv_id = None
     inv_type = Invitation
     template = ""
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
@@ -77,6 +78,7 @@ class InvitationView():
         logging.warning("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
+        self.inv_id = invitation_id
         for k, v in kwargs.iteritems():
             if k in self.need:
                 setattr(self, k, v)
@@ -154,6 +156,9 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
+                if CouchUser.get_by_username(invitation.email) and isinstance(invitation, DomainInvitation):
+                    return HttpResponseRedirect(reverse("login") + '?next=' +
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
                 form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})

@@ -4,7 +4,8 @@ Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
 
-from .constants import *
+from custom.opm.constants import get_fixture_data
+
 
 class Worker(object):
     method_map = [
@@ -27,7 +28,8 @@ class Worker(object):
         ('owner_id', 'Owner ID', False)
     ]
 
-    def __init__(self, worker, report, case_sql_data=None, form_sql_data=None):
+    # remove form_data parameter when all data will correct on HQ
+    def __init__(self, worker, report, case_data=None, form_data=None):
 
         self.name = worker.get('name')
         self.awc_name = worker.get('awc')
@@ -38,23 +40,25 @@ class Worker(object):
         self.block = worker.get('block')
         self.owner_id = worker.get('doc_id')
 
-        if case_sql_data:
-            self.women_registered = str(case_sql_data.get('women_registered_total', None))
-            self.children_registered = str(case_sql_data.get('children_registered_total', None))
+        if case_data:
+            self.women_registered = len(case_data)
+            self.children_registered = sum([c.num_children for c in case_data if not c.is_secondary])
+            for opm_case in case_data:
+                dates = opm_case.data_provider.get_dates_in_range(opm_case.owner_id,
+                                                                  opm_case.reporting_window_start,
+                                                                  opm_case.reporting_window_end)
+
+                self.service_forms_count = 'yes' if dates else 'no'
+            self.growth_monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
         else:
             self.women_registered = None
             self.children_registered = None
-
-        if form_sql_data:
-            self.service_forms_count = 'yes' if form_sql_data.get('service_forms_total') else 'no'
-            self.growth_monitoring_count = int(0 if form_sql_data.get('growth_monitoring_total') is None else form_sql_data.get('growth_monitoring_total'))
-        else:
             self.service_forms_count = 'no'
             self.growth_monitoring_count = 0
 
         FIXTURES = get_fixture_data()
         self.service_forms_cash = FIXTURES['service_form_submitted'] \
-                if self.service_forms_count == 'yes' else 0
+            if self.service_forms_count == 'yes' else 0
         self.growth_monitoring_cash = self.growth_monitoring_count * FIXTURES['child_growth_monitored']
         self.month_total = self.service_forms_cash + self.growth_monitoring_cash
         if report.last_month_totals is not None:

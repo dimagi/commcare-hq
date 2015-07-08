@@ -281,34 +281,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 
@@ -500,7 +474,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report filters
+## Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -566,6 +540,18 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
     {"value": "doctor", display:"Doctor"},
     {"value": "nurse"}
   ]
+}
+```
+
+### Internationalization
+
+Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+```json
+{
+    "type": "choice_list",
+    "slug": "state",
+    "display": {"en": "State", "fr": "État"},
+    ...
 }
 ```
 
@@ -759,6 +745,16 @@ Rounds decimal and floating point numbers to two decimal places.
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
+}
+```
+
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
 }
 ```
 

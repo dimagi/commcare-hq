@@ -7,11 +7,12 @@ from couchdbkit import ResourceNotFound
 import datetime
 from django.db.models import Q
 import redis
+from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
 from casexml.apps.case.signals import cases_received, case_post_save
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases, get_reverse_indexed_cases
+from casexml.apps.case.util import iter_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
@@ -131,10 +132,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    if config.reconcile:
-        for c in cases:
-            c.reconcile_actions(rebuild=True)
-
     # attach domain and export tag
     domain = xform.domain
 
@@ -162,9 +159,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
-
-        if config.reconcile and relevant_log.reconcile_cases():
-            relevant_log.save()
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -199,14 +193,12 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 
 class CaseProcessingConfig(object):
-    def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
-        self.reconcile = reconcile
+    def __init__(self, strict_asserts=True, case_id_blacklist=None):
         self.strict_asserts = strict_asserts
         self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
 
     def __repr__(self):
-        return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
-            reconcile=self.reconcile,
+        return 'strict: {strict}, ids: {ids}'.format(
             strict=self.strict_asserts,
             ids=", ".join(self.case_id_blacklist)
         )

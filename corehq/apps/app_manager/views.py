@@ -90,6 +90,8 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     get_all_case_properties,
+    get_casedb_schema,
+    get_session_schema,
     add_odk_profile_after_build,
     ParentCasePropertyBuilder,
     commtrack_ledger_sections,
@@ -99,7 +101,8 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
-    get_usercase_properties, 
+    advanced_actions_use_usercase,
+    get_usercase_properties,
     prefix_usercase_properties,
     get_per_type_defaults
 )
@@ -129,6 +132,7 @@ from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
@@ -1046,10 +1050,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
         context.update(module_context)
-    else:
+    elif app:
         template = "app_manager/app_view.html"
-        if app:
-            context.update(get_app_view_context(request, app))
+        context.update(get_app_view_context(request, app))
+    else:
+        template = "dashboard/dashboard_new_user.html"
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -1263,6 +1268,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
+    if toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain):
+        vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
@@ -1282,6 +1289,78 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     })
     return render(request, 'app_manager/form_designer.html', context)
 
+
+@require_GET
+@require_can_edit_apps
+def get_data_schema(request, domain, app_id=None, form_unique_id=None):
+    """Get data schema
+
+    One of `app_id` or `form_unique_id` is required. `app_id` is ignored
+    if `form_unique_id` is provided.
+
+    :returns: A list of data source schema definitions. A data source schema
+    definition is a dictionary with the following format:
+    ```
+    {
+        "id": string (default instance id)
+        "uri": string (instance src)
+        "path": string (path of root nodeset, not including `instance(...)`)
+        "name": string (human readable name)
+        "structure": {
+            element: {
+                "name": string (optional human readable name)
+                "structure": {
+                    nested-element: { ... }
+                },
+            },
+            ref-element: {
+                "reference": {
+                    "source": string (optional data source id, defaults to this data source)
+                    "subset": string (optional subset id)
+                    "key": string (referenced property)
+                }
+            },
+            @attribute: { },
+            ...
+        },
+        "subsets": [
+            {
+                "id": string (unique identifier for this subset)
+                "key": string (unique identifier property name)
+                "name": string (optional human readable name)
+                "structure": { ... }
+                "related": {
+                    string (relationship): string (related subset name),
+                    ...
+                }
+            },
+            ...
+        ]
+    }
+    ```
+    A structure may contain nested structure elements. A nested element
+    may contain one of "structure" (a concrete structure definition) or
+    "reference" (a link to some other structure definition). Any
+    structure item may have a human readable "name".
+    """
+    data = []
+    if form_unique_id is None:
+        app = get_app(domain, app_id)
+        form = None
+    else:
+        try:
+            form, app = Form.get_form(form_unique_id, and_app=True)
+        except ResourceConflict:
+            raise Http404()
+        data.append(get_session_schema(form))
+    if app.domain != domain:
+        raise Http404()
+    data.append(get_casedb_schema(app))  # TODO use domain instead of app
+    data.extend(item_lists_by_domain(domain))
+    kw = {}
+    if "pretty" in request.GET:
+        kw["indent"] = 2
+    return HttpResponse(json.dumps(data, **kw))
 
 
 @no_conflict_require_POST
@@ -2048,6 +2127,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+        enable_usercase(domain)
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -2530,6 +2611,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    files = None
     try:
         files = _download_index_files(request.app)
     except Exception:

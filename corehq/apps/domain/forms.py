@@ -44,6 +44,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    EntryPoint,
 )
 from corehq.apps.app_manager.models import (Application, RemoteApp,
                                             FormBase, get_apps_in_domain)
@@ -1189,6 +1190,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
+                entry_point=EntryPoint.CONTRACTED,
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1450,10 +1452,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
                     'up the subscription in CommCareHQ to one of our standard '
                     'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email %(accounts_email)s.</p>' % {
+                    'please email %(accounts_email)s.</p>') % {
                         'accounts_email': settings.ACCOUNTS_EMAIL,
                     }
-                )),
+                ),
                 self.form_actions
             )
         else:
@@ -1500,6 +1502,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     date_start=self.cleaned_data['start_date'],
                     date_end=self.cleaned_data['end_date'],
                     web_user=self.web_user,
+                    do_not_invoice=False,
+                    auto_generate_credits=True,
+                    service_type=SubscriptionType.CONTRACTED,
+                    internal_change=True,
                 )
             else:
                 new_subscription = self.current_subscription.change_plan(
@@ -1507,14 +1513,15 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     date_end=self.cleaned_data['end_date'],
                     web_user=self.web_user,
                     transfer_credits=self.current_subscription.account == self.next_account,
+                    account=self.next_account,
+                    do_not_invoice=False,
+                    auto_generate_credits=True,
+                    service_type=SubscriptionType.CONTRACTED
                 )
-                new_subscription.account = self.next_account
-            if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
-                new_subscription.is_active = True
-            new_subscription.do_not_invoice = False
-            new_subscription.auto_generate_credits = True
-            new_subscription.service_type = SubscriptionType.CONTRACTED
-            new_subscription.save()
+                if (new_subscription.date_start <= datetime.date.today()
+                   and datetime.date.today() < new_subscription.date_end):
+                    new_subscription.is_active = True
+                    new_subscription.save()
         except:
             # If the entire transaction did not go through, rollback saved changes
             if revert_current_subscription_end_date:

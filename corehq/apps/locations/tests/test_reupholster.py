@@ -1,90 +1,8 @@
 from django.test import TestCase
 
-from corehq.apps.commtrack.tests.util import bootstrap_location_types
-from corehq.apps.domain.shortcuts import create_domain
-
-from ..models import Location, SQLLocation
+from ..models import Location, LocationType
 from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
-
-
-class TestReupholster(TestCase):
-    """
-    These tests were written to drive removal of sepecific queries. It
-    is safe to delete this when the reuholstering of Location is done
-    and somone has written test coverage for the methods used in here.
-    """
-    @classmethod
-    def setUpClass(cls):
-        delete_all_locations()
-        cls.domain = create_domain('locations-test')
-        cls.domain.locations_enabled = True
-        bootstrap_location_types(cls.domain.name)
-
-        cls.state = make_loc("Florida", type='state')
-        cls.district = make_loc("Duval", type='district', parent=cls.state)
-        cls.block = make_loc("Jacksonville", type='block', parent=cls.district)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_locations()
-
-    def test_replace_all_ids(self):
-        original_result = set([r['id'] for r in Location.get_db().view(
-            'locations/by_name',
-            reduce=False,
-        ).all()])
-
-        new_result = set(SQLLocation.objects.location_ids())
-
-        self.assertEqual(original_result, new_result)
-
-    def test_all_for_domain_by_type(self):
-        original_result = [r['id'] for r in Location.get_db().view(
-            'locations/by_type',
-            reduce=False,
-            startkey=[self.domain.name],
-            endkey=[self.domain.name, {}],
-        ).all()]
-
-        new_result = SQLLocation.objects.filter(domain=self.domain.name).location_ids()
-
-        self.assertEqual(set(original_result), set(new_result))
-
-    def _blocks_by_type(self, loc_id, reduce=False):
-        return Location.get_db().view('locations/by_type',
-            reduce=reduce,
-            startkey=[self.domain.name, 'block', loc_id],
-            endkey=[self.domain.name, 'block', loc_id, {}],
-        )
-
-    def test_count_by_type(self):
-        from custom.intrahealth.report_calcs import _locations_per_type
-        original_result = (self._blocks_by_type(self.state._id, reduce=True)
-                           .one()['value'])
-        new_result = _locations_per_type(self.domain.name, 'block', self.state)
-        self.assertEqual(original_result, new_result)
-
-    def test_filter_by_type(self):
-        original_result = [r['id'] for r in self._blocks_by_type(self.state._id)]
-
-        new_result = (self.state.sql_location
-                      .get_descendants(include_self=True)
-                      .filter(domain=self.domain.name,
-                              location_type__name='block')
-                      .location_ids())
-
-        self.assertEqual(original_result, list(new_result))
-
-    def test_filter_by_type_no_root(self):
-        original_result = [r['id'] for r in self._blocks_by_type(None)]
-
-        new_result = (SQLLocation.objects
-                      .filter(domain=self.domain.name,
-                              location_type__name='block')
-                      .location_ids())
-
-        self.assertEqual(original_result, list(new_result))
 
 
 class TestPath(LocationTestBase):
@@ -99,3 +17,72 @@ class TestPath(LocationTestBase):
             parent = make_loc(name, type=type_, parent=parent)
         boston = parent
         self.assertEqual(boston.path, boston.sql_location.path)
+
+
+class TestNoCouchLocationTypes(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        LocationType.objects.create(domain='test-domain', name='test-type')
+
+    @classmethod
+    def tearDownClass(cls):
+        LocationType.objects.all().delete()
+
+    def setUp(self):
+        self.loc = Location(
+            domain='test-domain',
+            name='test-type',
+            location_type='test-type',
+        )
+        self.loc.save()
+
+    def tearDown(self):
+        delete_all_locations()
+
+    def test_change_location_type_name(self):
+        loc_type = LocationType.objects.create(domain='test-domain',
+                                               name='old-name')
+        loc = Location(
+            domain='test-domain',
+            name='Somewhere',
+            location_type='old-name'
+        )
+        loc.save()
+        loc_type.name = 'new-name'
+        loc_type.save()
+        # You need to look up the location from the db again, because the
+        # in-memory version stores the location_type it was created with
+        self.assertEqual(Location.get(loc._id).location_type, 'new-name')
+
+    def test_no_location_type(self):
+        with self.assertRaises(LocationType.DoesNotExist):
+            loc = Location(name="Something")
+            loc.save()
+
+    def test_type_set_correctly(self):
+        self.assertEqual(self.loc.location_type, 'test-type')
+        self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')
+
+    def test_get_and_save(self):
+        # Get a location from the db, wrap it, access location_type, and save
+        loc = Location.get(self.loc._id)
+        self.assertEqual(loc.location_type, 'test-type')
+        loc.save()
+
+    def test_change_type_later(self):
+        new_type = LocationType.objects.create(domain='test-domain',
+                                               name='new-type')
+        self.loc.location_type = 'new-type'
+        self.loc.save()
+        self.assertEqual(self.loc.location_type, 'new-type')
+        self.assertEqual(self.loc.sql_location.location_type, new_type)
+        # pull the loc from the db again
+        self.assertEqual(Location.get(self.loc._id).location_type, 'new-type')
+        new_type.delete()
+
+    def test_change_to_nonexistent_type(self):
+        with self.assertRaises(LocationType.DoesNotExist):
+            self.loc.location_type = 'nonexistent-type'
+            self.loc.save()
+        self.assertEqual(self.loc.location_type, 'test-type')
+        self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')

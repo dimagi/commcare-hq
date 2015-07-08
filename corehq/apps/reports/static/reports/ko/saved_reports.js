@@ -178,10 +178,6 @@ var ReportConfigsViewModel = function (options) {
             for (var filter_name in filters) {
                 var val = filters[filter_name];
                 $('[name="' + filter_name + '"]').val(val);
-                var select2 = $('#' + filter_name).find('.select2-chosen')[0];
-                if (select2) {
-                    select2.textContent = val;
-                }
             }
         };
 

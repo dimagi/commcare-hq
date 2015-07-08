@@ -563,7 +563,6 @@ class SubscriptionForm(forms.Form):
         date_end = self.cleaned_data['end_date']
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
@@ -574,7 +573,6 @@ class SubscriptionForm(forms.Form):
             date_end=date_end,
             date_delay_invoicing=date_delay_invoicing,
             salesforce_contract_id=salesforce_contract_id,
-            is_active=is_active,
             do_not_invoice=do_not_invoice,
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
@@ -1876,6 +1874,38 @@ class ResendEmailForm(forms.Form):
         else:
             record = BillingRecord.generate_record(self.invoice)
         record.send_email(contact_emails=contact_emails)
+
+
+class SuppressInvoiceForm(forms.Form):
+    submit_kwarg = 'suppress_invoice'
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(SuppressInvoiceForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Suppress invoice from all reports and user-facing statements',
+                crispy.Div(
+                    crispy.HTML('Warning: this can only be undone by a developer.'),
+                    css_class='alert alert-error',
+                )
+            ),
+            FormActions(
+                StrictButton(
+                    'Suppress Invoice',
+                    css_class='btn-danger',
+                    name=self.submit_kwarg,
+                    type='submit',
+                ),
+            ),
+        )
+
+    def suppress_invoice(self):
+        self.invoice.is_hidden_to_ops = True
+        self.invoice.save()
 
 
 class CreateAdminForm(forms.Form):

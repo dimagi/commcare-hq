@@ -122,6 +122,7 @@ class ESQuery(object):
             filters.term,
             filters.OR,
             filters.AND,
+            filters.NOT,
             filters.range_filter,
             filters.date_range,
             filters.exists,
@@ -186,7 +187,6 @@ class ESQuery(object):
     def _query(self):
         return self.es_query['query']['filtered']['query']
 
-    @property
     def set_query(self, query):
         """
         Add a query.  Most stuff we want is better done with filters, but

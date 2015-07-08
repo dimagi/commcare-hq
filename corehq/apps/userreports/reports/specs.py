@@ -14,6 +14,7 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
+from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
@@ -31,7 +32,7 @@ class ReportFilter(JsonObject):
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
-    display = StringProperty()
+    display = DefaultProperty()
     compare_as_string = BooleanProperty(default=False)
 
     def create_filter_value(self, value):
@@ -71,11 +72,14 @@ class ReportColumn(JsonObject):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
-        if isinstance(self.display, basestring) or self.display is None:
-            return self.display
-        return self.display.get(
-            lang, self.display.get("en", self.display.values()[0])
-        )
+        return localize(self.display, lang)
+
+    def get_column_ids(self):
+        """
+        Used as an abstraction layer for columns that can contain more than one data column
+        (for example, PercentageColumns).
+        """
+        return [self.column_id]
 
 
 class FieldColumn(ReportColumn):
@@ -204,10 +208,15 @@ class PercentageColumn(ReportColumn):
 
     def get_format_fn(self):
         NO_DATA_TEXT = '--'
+        CANT_CALCULATE_TEXT = '?'
 
         def _pct(data):
             if data['denom']:
-                return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                try:
+                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                except (ValueError, TypeError):
+                    return CANT_CALCULATE_TEXT
+
             return NO_DATA_TEXT
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
@@ -217,6 +226,10 @@ class PercentageColumn(ReportColumn):
             'fraction': _fraction,
             'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
         }[self.format]
+
+    def get_column_ids(self):
+        # override this to include the columns for the numerator and denominator as well
+        return [self.column_id, self.numerator.column_id, self.denominator.column_id]
 
 
 def _add_column_id_if_missing(obj):
@@ -240,8 +253,9 @@ class FilterSpec(JsonObject):
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
-    display = StringProperty()
+    display = DefaultProperty()
     required = BooleanProperty(default=False)
+    datatype = DataTypeProperty(default='string')
 
     def get_display(self):
         return self.display or self.slug
@@ -254,6 +268,7 @@ class DateFilterSpec(FilterSpec):
 class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
     choices = ListProperty(FilterChoice)
 
 

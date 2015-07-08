@@ -1,61 +1,99 @@
 {
     "doc_type":"ReportConfiguration",
-    "domain":"abt-test-2",
-    "config_id":"0ff37d5a88231f873d4d98b410a2b341",
+    "domain":"airs",
+    "config_id":"32062419c0d0ec4a49f4b7034e28a786",
     "description":"",
     "title":"Supervisory Report",
-    "filters":[
+    "sort_expression":[
+        {
+            "field":"form_name",
+            "order":"ASC"
+        },
+        {
+            "field":"level_4",
+            "order":"ASC"
+        },
         {
             "field":"timeEnd",
+            "order":"DESC"
+        }
+    ],
+    "filters":[
+        {
+            "compare_as_string":false,
             "required":false,
+            "display":{
+                "fra":"Date soumis",
+                "en":"Date submitted"
+            },
+            "field":"timeEnd",
             "type":"date",
-            "slug":"timeEnd",
-            "display":"Date soumis"
+            "slug":"timeEnd"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "slug":"country",
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
             "field":"country",
             "type":"dynamic_choice_list",
-            "display":"Pays"
+            "slug":"country"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "slug":"level_1",
+            "display":{
+                "fra":"Niveau 1",
+                "en":"Level 1"
+            },
             "field":"level_1",
             "type":"dynamic_choice_list",
-            "display":"Niveau 1"
+            "slug":"level_1"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "slug":"level_2",
+            "display":{
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
             "field":"level_2",
             "type":"dynamic_choice_list",
-            "display":"Niveau 2"
+            "slug":"level_2"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "slug":"level_3",
+            "display":{
+                "fra":"Niveau 3",
+                "en":"Level 3"
+            },
             "field":"level_3",
             "type":"dynamic_choice_list",
-            "display":"Niveau 3"
+            "slug":"level_3"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "slug":"level_4",
+            "display":{
+                "fra":"Niveau 4",
+                "en":"Level 4"
+            },
             "field":"level_4",
             "type":"dynamic_choice_list",
-            "display":"Niveau 4"
+            "slug":"level_4"
         }
     ],
     "visible":true,
@@ -66,7 +104,7 @@
     "configured_charts":[
 
     ],
-    "_id":"c7aa5c6682a54a8c3bc55dcad96b488c",
+    "_id":"4ac24169c7cf30e14174a508bd13a86a",
     "report_meta":{
         "doc_type":"ReportMeta",
         "builder_report_type":null,
@@ -78,12 +116,16 @@
             "field":"timeEnd",
             "format":"default",
             "transform":{
-
+                "type": "date_format",
+                "format": "%Y-%m-%d %H:%M"
             },
             "column_id":"timeEnd",
             "alias":null,
             "type":"field",
-            "display":"Date et heure soumis",
+            "display":{
+                "fra":"Date et heure soumis",
+                "en":"Date and Time Submitted"
+            },
             "aggregation":"simple"
         },
         {
@@ -96,7 +138,10 @@
             "column_id":"username",
             "alias":null,
             "type":"field",
-            "display":"Nom d'utilisateur",
+            "display":{
+                "fra":"Nom d'utilisateur",
+                "en":"Username"
+            },
             "aggregation":"simple"
         },
         {
@@ -109,7 +154,10 @@
             "column_id":"country",
             "alias":null,
             "type":"field",
-            "display":"Pays",
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
             "aggregation":"simple"
         },
         {
@@ -122,7 +170,10 @@
             "column_id":"level_1",
             "alias":null,
             "type":"field",
-            "display":"Niveau 1",
+            "display":{
+                "fra":"Niveau 1",
+                "en":"Level 1"
+            },
             "aggregation":"simple"
         },
         {
@@ -135,7 +186,10 @@
             "column_id":"level_2",
             "alias":null,
             "type":"field",
-            "display":"Niveau 2",
+            "display": {
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
             "aggregation":"simple"
         },
         {
@@ -148,7 +202,10 @@
             "column_id":"level_3",
             "alias":null,
             "type":"field",
-            "display":"Niveau 3",
+            "display":{
+                "fra":"Niveau 3",
+                "en":"Level 3"
+            },
             "aggregation":"simple"
         },
         {
@@ -161,7 +218,10 @@
             "column_id":"level_4",
             "alias":null,
             "type":"field",
-            "display":"Niveau 4",
+            "display":{
+                "fra":"Niveau 4",
+                "en":"Level 4"
+            },
             "aggregation":"simple"
         },
         {
@@ -174,7 +234,10 @@
             "column_id":"inspector_names",
             "alias":null,
             "type":"field",
-            "display":"Noms de Inspecteurs/Superviseurs",
+            "display":{
+                "fra":"Noms de Inspecteurs/Superviseurs",
+                "en":"Inspector names"
+            },
             "aggregation":"simple"
         },
         {
@@ -187,7 +250,10 @@
             "column_id":"form_name",
             "alias":null,
             "type":"field",
-            "display":"Nom du formulaire",
+            "display":{
+                "fra":"Nom du formulaire",
+                "en":"Form Name"
+            },
             "aggregation":"simple"
         },
         {
@@ -200,7 +266,10 @@
             "column_id":"flag",
             "alias":null,
             "type":"field",
-            "display":"Question",
+            "display":{
+                "fra":"Question",
+                "en":"Form Question"
+            },
             "aggregation":"simple"
         },
         {
@@ -213,7 +282,10 @@
             "column_id":"warning",
             "alias":null,
             "type":"field",
-            "display":"Avertissement",
+            "display":{
+                "fra":"Avertissement",
+                "en":"Red Flag Warning"
+            },
             "aggregation":"simple"
         },
         {
@@ -226,7 +298,10 @@
             "column_id":"comments",
             "alias":null,
             "type":"field",
-            "display":"Commentaires",
+            "display":{
+                "fra":"Commentaires",
+                "en":"Comments"
+            },
             "aggregation":"simple"
         }
     ]

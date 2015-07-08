@@ -129,6 +129,7 @@ class ProductAvailabilityData(EWSData):
                 sql_product.code: sql_product.name
                 for sql_product in SQLProduct.objects.filter(domain=self.domain)
             }
+            chart.is_rendered_as_email = self.config['is_rendered_as_email']
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
@@ -144,11 +145,15 @@ class MonthOfStockProduct(EWSData):
     show_chart = False
     show_table = True
     use_datatables = True
+    default_rows = 25
 
     @property
     def title(self):
         if not self.location:
             return ""
+
+        if self.config['export']:
+            return "Current MOS by Product"
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
@@ -170,7 +175,8 @@ class MonthOfStockProduct(EWSData):
             if location.location_type.name == 'country':
                 supply_points = SQLLocation.objects.filter(
                     Q(parent__location_id=self.config['location_id'], is_archived=False) |
-                    Q(location_type__name='Regional Medical Store', domain=self.config['domain'])
+                    Q(location_type__name='Regional Medical Store', domain=self.config['domain']) |
+                    Q(location_type__name='Teaching Hospital', domain=self.config['domain'])
                 ).order_by('name').exclude(supply_point_id__isnull=True)
             else:
                 supply_points = SQLLocation.objects.filter(
@@ -181,10 +187,12 @@ class MonthOfStockProduct(EWSData):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Location')])
+        headers = DataTablesHeader(DataTablesColumn('Location'))
         for product in self.unique_products(self.get_supply_points, all=(not self.config['export'])):
-            headers.add_column(DataTablesColumn(product.code))
-
+            if not self.config['export']:
+                headers.add_column(DataTablesColumn(product.code))
+            else:
+                headers.add_column(DataTablesColumn(u'{} ({})'.format(product.name, product.code)))
         return headers
 
     @property
@@ -289,6 +297,7 @@ class StockoutsProduct(EWSData):
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
             chart.tooltipFormat = True
+            chart.is_rendered_as_email = self.config['is_rendered_as_email']
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]
@@ -305,6 +314,8 @@ class StockoutTable(EWSData):
     def title(self):
         if not self.location:
             return ""
+        if self.config['export']:
+            return 'Stockouts'
 
         location_type = self.location.location_type.name.lower()
         if location_type == 'country':
@@ -316,10 +327,10 @@ class StockoutTable(EWSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[
-            DataTablesColumn('Medical Store'),
+        return DataTablesHeader(
+            DataTablesColumn('Location'),
             DataTablesColumn('Stockouts')
-        ])
+        )
 
     @property
     def rows(self):
@@ -371,6 +382,7 @@ class StockStatus(MultiReport):
     split = False
     exportable = True
     is_exportable = True
+    is_rendered_as_email = False
 
     @property
     def report_config(self):
