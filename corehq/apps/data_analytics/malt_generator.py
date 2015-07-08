@@ -1,3 +1,5 @@
+import logging
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
@@ -6,6 +8,9 @@ from corehq.apps.sofabed.models import FormData
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
+
+
+logger = logging.getLogger(__name__)
 
 
 class MALTTableGenerator(object):
@@ -22,12 +27,16 @@ class MALTTableGenerator(object):
         for domain in Domain.get_all():
             malt_rows_to_save = []
             for user in domain.all_users():
-                malt_rows_to_save.extend(self.get_malt_row_dicts(user, domain.name))
-            self.save_to_db(malt_rows_to_save)
+                try:
+                    malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name))
+                except Exception as ex:
+                    logger.info("Failed to get rows for user {id}. Exception is {ex}".format
+                                (id=user._id, ex=str(ex)))
+            self._save_to_db(malt_rows_to_save, domain._id)
 
-    def get_malt_row_dicts(self, user, domain_name):
+    def _get_malt_row_dicts(self, user, domain_name):
         malt_row_dicts = []
-        forms_query = self.get_forms_queryset(user._id, domain_name)
+        forms_query = self._get_forms_queryset(user._id, domain_name)
         num_of_forms = forms_query.count()
         apps_submitted_for = [app_id for (app_id,) in
                               forms_query.values_list('app_id').distinct()]
@@ -51,7 +60,7 @@ class MALTTableGenerator(object):
         return malt_row_dicts
 
     @classmethod
-    def save_to_db(cls, malt_rows_to_save):
+    def _save_to_db(cls, malt_rows_to_save, domain_id):
         try:
             MALTRow.objects.bulk_create(
                 [MALTRow(**malt_dict) for malt_dict in malt_rows_to_save]
@@ -69,8 +78,11 @@ class MALTTableGenerator(object):
                     prev_obj.save()
                 except MALTRow.DoesNotExist:
                     MALTRow(**malt_dict).save()
+        except Exception as ex:
+            logger.info("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
+                        id=domain_id, ex=str(ex)))
 
-    def get_forms_queryset(self, user_id, domain_name):
+    def _get_forms_queryset(self, user_id, domain_name):
         start_date = self.datespan.startdate
         end_date = self.datespan.enddate
 
