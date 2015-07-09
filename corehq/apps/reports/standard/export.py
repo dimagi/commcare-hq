@@ -482,7 +482,7 @@ class CaseExportInterface(DataExportInterface):
 
 class FormExportReport(FormExportReportBase):
     base_template = 'reports/standard/export_download.html'
-    report_template_path = 'reports/partials/download_export.html'
+    report_template_path = 'reports/partials/download_form_export.html'
     name = ugettext_noop('Download Forms')
     section_name = ugettext_noop("Export Data")
     slug = 'form_export'
