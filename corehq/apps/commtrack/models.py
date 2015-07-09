@@ -1063,6 +1063,12 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
+    # todo: in the worst case, this function makes
+    # - three calls to couch (for the case, domain, and commtrack config)
+    # - three postgres queries (product, location, and state)
+    # - one postgres write (to save the state)
+    # and that doesn't even include the consumption calc, which can do a whole
+    # bunch more work and hit the database.
     try:
         domain_name = instance.domain
     except AttributeError:
