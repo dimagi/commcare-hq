@@ -14,6 +14,7 @@ from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
+    CaseExportInterface,
     CaseExportReport,
     FormExportInterface,
     ExcelExportReport,
@@ -58,14 +59,17 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def export_home_url(self):
-        if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-            return FormExportInterface.get_url(domain=self.domain)
         return self.report_class.get_url(domain=self.domain)
 
     @property
     @memoized
     def report_class(self):
         try:
+            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+                return {
+                    'form': FormExportInterface,
+                    'case': CaseExportInterface,
+                }[self.export_type]
             return {
                 'form': ExcelExportReport,
                 'case': CaseExportReport
