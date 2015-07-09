@@ -111,8 +111,7 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
         # only soh reports that have changed the stock create inferred transactions
         if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
             amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
-            exclude_invalid_periods = should_exclude_invalid_periods(instance.report.domain)
-            if not exclude_invalid_periods or amt < 0:
+            if not should_exclude_invalid_periods(instance.report.domain) or amt < 0:
                 StockTransaction.objects.create(
                     report=instance.report,
                     case_id=instance.case_id,
