@@ -4,16 +4,30 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
+from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.apps.reports.standard.inspect import SubmitHistory
+from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
+from corehq.apps.reports.filters.base import (
+    BaseReportFilter, BaseSingleOptionFilter
+)
+from corehq.apps.users.models import CouchUser
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
+from corehq.elastic import ADD_TO_ES_FILTER
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from corehq.util.view_utils import absolute_reverse
+
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -81,8 +95,100 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         return context
 
 
-class BulkArchiveFormInterface(DataInterface, SubmitHistory):
+class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
+    # ToDo. Move to a better place
+    slug = 'archive'
+    default_text = ugettext_noop("Select...")
+    placeholder = ''
+    label = _('Archived Form')
+
+    @property
+    def options(self):
+        return [('normal', _('Normal Forms')), ('archived', _('Archived Forms'))]
+
+    @property
+    def selected(self):
+        return 'normal'
+
+
+class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Archive Forms")
-    slug = "arhive_forms"
+    slug = "bulk_archive_forms"
 
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
+
+    def __init__(self, request, **kwargs):
+        super(BulkArchiveFormInterface, self).__init__(request, **kwargs)
+        self.fields = self.fields + ['corehq.apps.data_interfaces.interfaces.ArchiveOrNormalFormFilter']
+
+    @property
+    def restore_mode(self):
+        return True if self.request.GET.get('archive') == 'archived' else False
+
+    def _es_xform_filter(self):
+        if self.restore_mode:
+            return ADD_TO_ES_FILTER['archived_forms']
+        else:
+            return ADD_TO_ES_FILTER['forms']
+
+    @property
+    def headers(self):
+        h = [
+            DataTablesColumn(mark_safe('Select  <a class="select-all btn btn-mini btn-inverse">all</a> <a class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
+            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(
+                _("Submission Time") if self.by_submission_time
+                else _("Completion Time"),
+                prop_name=self.time_field
+            ),
+            DataTablesColumn(_("Form"), prop_name='form.@name'),
+        ]
+        h.extend([DataTablesColumn(field) for field in self.other_fields])
+        return DataTablesHeader(*h)
+
+    @property
+    def rows(self):
+        # ToDo - refactor following into FormDisplay to use in SubmitHistoryMixin and here
+        def form_data_link(instance_id):
+            return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
+                "url": absolute_reverse('render_form_data', args=[self.domain, instance_id]),
+                "text": _("View Form")
+            }
+
+        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        for form in submissions:
+            uid = form["form"]["meta"]["userID"]
+            username = form["form"]["meta"].get("username")
+            try:
+                if username not in ['demo_user', 'admin']:
+                    full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                    name = '"%s"' % full_name if full_name else ""
+                else:
+                    name = ""
+            except (ResourceNotFound, IncompatibleDocument):
+                name = "<b>[unregistered]</b>"
+
+            time = iso_string_to_datetime(safe_index(form, self.time_field.split('.')))
+            if self.by_submission_time:
+                user_time = ServerTime(time).user_time(self.timezone)
+            else:
+                user_time = PhoneTime(time, self.timezone).user_time(self.timezone)
+
+            checkbox = mark_safe(
+                """<input type="checkbox" class="xform-checkbox"
+                value="{form_id}" name="xform_ids"/>""")
+
+            init_cells = [
+                checkbox.format(form_id=form["_id"]),
+                form_data_link(form["_id"]),
+                (username or _('No data for username')) + (" %s" % name if name else ""),
+                user_time.ui_string(USER_DATETIME_FORMAT_WITH_SEC),
+                xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
+            ]
+
+            def cell(field):
+                return form["form"].get(field)
+            init_cells.extend([cell(field) for field in self.other_fields])
+            yield init_cells
