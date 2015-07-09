@@ -392,39 +392,71 @@ class DeidExportReport(FormExportReportBase):
 class DataExportInterface(GenericReportView):
     base_template = 'reports/reportdata/data_export.html'
     dispatcher = DataExportInterfaceDispatcher
-    name = ugettext_noop('Export Forms')
     section_name = "Export Data"
-    slug = 'export_forms'
 
     @property
     def template_context(self):
         context = super(DataExportInterface, self).template_context
         context.update({
-            'bulk_download_notice_text': ugettext_noop('Form Export'),
+            'bulk_download_notice_text': self.bulk_download_notice_text,
             'bulk_export_format': self.bulk_export_format,
             'saved_exports': self.saved_exports,
-            'download_page_url_root': FormExportReport.get_url(domain=self.domain),
+            'download_page_url_root': self.download_page_url_root,
         })
         return context
+
+    @property
+    @memoized
+    def saved_exports(self):
+        exports = filter(lambda x: x.type == self.export_type, self.get_exports)
+        for export in exports:
+            export.download_url = (
+                self.download_page_url_root + '?export_id=' + export._id
+            )
+        return sorted(exports, key=lambda x: x.name)
 
     @property
     def bulk_export_format(self):
         return Format.XLS_2007
 
     @property
+    def bulk_download_notice_text(self):
+        raise NotImplementedError
+
+    @property
+    def download_page_url_root(self):
+        raise NotImplementedError
+
+    @property
+    def export_type(self):
+        raise NotImplementedError
+
+    @property
     @memoized
-    def saved_exports(self):
-        exports = get_form_exports(self.domain)
-        exports = filter(lambda x: x.type == "form", exports)
-        # TODO - implement or remove
-        # if not self.can_view_deid:
-        #     exports = filter(lambda x: not x.is_safe, exports)
-        for export in exports:
-            export.download_url = (
-                FormExportReport.get_url(domain=self.domain)
-                + '?export_id=' + export._id
-            )
-        return sorted(exports, key=lambda x: x.name)
+    def get_exports(self):
+        raise NotImplementedError
+
+
+class FormExportInterface(DataExportInterface):
+    name = ugettext_noop('Export Forms')
+    slug = 'forms'
+
+    @property
+    def bulk_download_notice_text(self):
+        return ugettext_noop('Form Export')
+
+    @property
+    def download_page_url_root(self):
+        return FormExportReport.get_url(domain=self.domain)
+
+    @property
+    def export_type(self):
+        return 'form'
+
+    @property
+    @memoized
+    def get_exports(self):
+        return get_form_exports(self.domain)
 
 
 class FormExportReport(FormExportReportBase):
