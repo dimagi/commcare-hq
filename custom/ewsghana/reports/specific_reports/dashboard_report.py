@@ -7,29 +7,7 @@ from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRa
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
     InventoryManagementData, UsersData
-from custom.ewsghana.utils import get_country_id, calculate_last_period, get_supply_points
-
-
-class DashboardReportProductAvailability(ProductAvailabilityData):
-
-    @property
-    def rows(self):
-        rows = []
-        if self.config['location_id']:
-            locations = get_supply_points(self.config['location_id'], self.config['domain'])
-            unique_products = self.unique_products(locations, all=True).order_by('code')
-
-            for product in unique_products:
-                with_stock = self.config['with_stock'].get(product.product_id, 0)
-                without_stock = self.config['without_stock'].get(product.product_id, 0)
-                without_data = self.config['all'] - with_stock - without_stock
-                rows.append({"product_code": product.code,
-                             "product_name": product.name,
-                             "total": self.config['all'],
-                             "with_stock": with_stock,
-                             "without_stock": without_stock,
-                             "without_data": without_data})
-        return rows
+from custom.ewsghana.utils import get_country_id, calculate_last_period
 
 
 class DashboardReport(MultiReport):
@@ -121,7 +99,7 @@ class DashboardReport(MultiReport):
         self.emailable = False
         config.update(self.data())
         return [
-            DashboardReportProductAvailability(config=config),
+            ProductAvailabilityData(config=config),
             ReportingRates(config=config),
             ReportingDetails(config=config)
         ]
