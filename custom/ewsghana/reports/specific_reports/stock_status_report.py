@@ -1,8 +1,10 @@
 from datetime import timedelta
 from django.db.models.aggregates import Count
+from django.http import HttpResponse
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
 from dimagi.utils.decorators.memoized import memoized
@@ -211,7 +213,9 @@ class MonthOfStockProduct(EWSData):
                     (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
                     self.config['enddate'].date(), self.config['report_type']))
 
-                row = [link_format(sp.name, url)]
+                row = [
+                    link_format(sp.name, url) if not self.config.get('is_rendered_as_email', False) else sp.name
+                ]
                 products = self.unique_products(self.get_supply_points, all=(not self.config['export']))
 
                 transactions = list(StockTransaction.objects.filter(
@@ -362,14 +366,17 @@ class StockoutTable(EWSData):
                 ).order_by('product_id', '-report__date').distinct('product_id').values_list('product_id',
                                                                                              flat=True)
                 if stockout:
-                    url = make_url(
+                    url = link_format(supply_point.name, make_url(
                         StockLevelsReport,
                         self.config['domain'],
                         '?location_id=%s&startdate=%s&enddate=%s',
                         (supply_point.location_id, self.config['startdate'], self.config['enddate'])
-                    )
+                    ))
                     rows.append(
-                        [link_format(supply_point.name, url), ', '.join(product_map[id] for id in stockout)]
+                        [
+                            url if not self.config.get('is_rendered_as_email') else supply_point.name,
+                            ', '.join(product_map[id] for id in stockout)
+                        ]
                     )
         return rows
 
@@ -480,3 +487,14 @@ class StockStatus(MultiReport):
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, self._report_info + table]
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "ewsghana/stock_status_print_report.html"
+        return HttpResponse(self._async_context()['report'])
