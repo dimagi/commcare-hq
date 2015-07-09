@@ -463,22 +463,15 @@ class CaseExportInterface(DataExportInterface):
     name = ugettext_noop('Export Cases')
     slug = 'cases'
 
-    @property
-    def bulk_download_notice_text(self):
-        return ugettext_noop('Case Export')
+    bulk_download_notice_text = ugettext_noop('Case Export')
+    edit_export_view_name = 'edit_custom_export_case'
+    export_schema = CaseExportSchema
+    export_type = 'case'
 
     @property
     def download_page_url_root(self):
         raise NotImplementedError
         # return FormExportReport.get_url(domain=self.domain)
-
-    @property
-    def export_schema(self):
-        return CaseExportSchema
-
-    @property
-    def export_type(self):
-        return 'case'
 
 
 class FormExportReport(FormExportReportBase):
