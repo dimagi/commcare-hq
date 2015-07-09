@@ -1,3 +1,4 @@
+import traceback
 import requests
 import json
 from copy import deepcopy
@@ -18,24 +19,34 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
     try:
         unwrapped = cls.get_db().get(doc_id)
-    except ResourceNotFound:
-        raise Http404("Document {} of class {} not found!".format(doc_id, cls.__name__))
+    except ResourceNotFound as e:
+        tb = traceback.format_exc()
+        raise Http404("Document {} of class {} not found!\n\n{}".format(
+            doc_id,
+            cls.__name__,
+            tb
+        ))
 
     if ((unwrapped.get('domain', None) != domain and
          domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
-        raise Http404("Document {} of class {} not in domain {}!".format(
+
+        tb = traceback.format_exc()
+        raise Http404("Document {} of class {} not in domain {}!\n\n{}!".format(
             doc_id,
             cls.__name__,
-            domain
+            domain,
+            tb
         ))
 
     try:
         return cls.wrap(unwrapped)
     except WrappingAttributeError:
-        raise Http404("Issue wrapping document {} of class {}!".format(
+        tb = traceback.format_exc()
+        raise Http404("Issue wrapping document {} of class {}!\n\n{}".format(
             doc_id,
-            cls.__name__
+            cls.__name__,
+            tb
         ))
 
 
