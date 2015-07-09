@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.test import TestCase
+from mock import MagicMock
 
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser, CommCareUser
