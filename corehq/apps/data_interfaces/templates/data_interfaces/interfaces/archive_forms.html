@@ -50,7 +50,7 @@
             <div class="row-fluid">
                 <div>{% trans 'Selected Forms' %}</div>
                 <label for="select_all">{% trans 'Select all Forms' %}</label>
-                <input type="checkbox" name="select_all">
+                <input type="checkbox" name="select_all" value="{{ filters_as_es_query|escapejs }}">
                 <button>{% trans 'Archive or Restore' %}</button>
             </div>
             {{ block.super }}

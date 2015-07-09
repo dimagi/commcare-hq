@@ -122,27 +122,30 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     def _es_xform_filter(self):
             ADD_TO_ES_FILTER['forms']
 
+    def filters_as_es_query(self):
+        return {
+            'query': {
+                'range': {
+                    self.time_field: {
+                        'from': self.datespan.startdate_param,
+                        'to': self.datespan.enddate_param,
+                        'include_upper': False,
+                    }
+                }
+            },
+            'filter': {
+                'and': (self._es_xform_filter() +
+                        list(self._es_extra_filters()))
+            },
+            'sort': self.get_sorting_block(),
+        }
+
     @property
     @memoized
     def es_results(self):
         return es_query(
             params={'domain.exact': self.domain},
-            q={
-                'query': {
-                    'range': {
-                        self.time_field: {
-                            'from': self.datespan.startdate_param,
-                            'to': self.datespan.enddate_param,
-                            'include_upper': False,
-                        }
-                    }
-                },
-                'filter': {
-                    'and': (self._es_xform_filter() +
-                            list(self._es_extra_filters()))
-                },
-                'sort': self.get_sorting_block(),
-            },
+            q=self.filters_as_es_query(),
             es_url=XFORM_INDEX + '/xform/_search',
             start_at=self.pagination.start,
             size=self.pagination.count,

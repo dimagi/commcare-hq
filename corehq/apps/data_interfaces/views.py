@@ -483,7 +483,16 @@ class XFormManagementView(BaseXFormManagementView):
 
     def _get_xform_ids(self, request):
         # Todo - scan ids from POST and validate them
-        return self.request.POST.getlist('xform_ids')
+        if 'select_all' not in self.request.POST:
+            return self.request.POST.getlist('xform_ids')
+        else:
+            import json
+            es_query = json.loads(self.request.POST.get('select_all'))
+            # ToDO
+            # passing ESQuery vs subclassing SubmitHistoryMixin
+            # need to find ALL xform_ids, could be heavy on ES. How to throttle.
+            # Performance checks.
+            return
 
     def post(self, request, *args, **kwargs):
         xform_ids = self._get_xform_ids(request)

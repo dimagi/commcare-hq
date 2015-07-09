@@ -122,6 +122,13 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
         self.fields = self.fields + ['corehq.apps.data_interfaces.interfaces.ArchiveOrNormalFormFilter']
 
     @property
+    def template_context(self):
+        context = super(BulkArchiveFormInterface, self).template_context
+        import json
+        context.update(filters_as_es_query=json.dumps(self.filters_as_es_query()))
+        return context
+
+    @property
     def restore_mode(self):
         return True if self.request.GET.get('archive') == 'archived' else False
 
