@@ -119,6 +119,8 @@ class QuickCache(object):
         elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
+        elif value is None:
+            return 'N'
         else:
             raise ValueError('Bad type "{}": {}'.format(type(value), value))
 
