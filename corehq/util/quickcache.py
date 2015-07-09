@@ -272,7 +272,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
     memoize_timeout = memoize_timeout or 10
 
     if cache is None:
-        cache = TieredCache([get_cache('locmem://', timeout=memoize_timeout),
+        cache = TieredCache([get_cache('django.core.cache.backends.locmem.LocMemCache', timeout=memoize_timeout),
                              get_cache('default', timeout=timeout)])
 
     def decorator(fn):
