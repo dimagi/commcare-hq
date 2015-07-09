@@ -1,13 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
-from functools import partial
 import itertools
 import celery
 from celery.canvas import chain
 from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
+from casexml.apps.stock.stockstate import update_stock_state_for_transaction
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation, Location
