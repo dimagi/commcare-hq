@@ -3,11 +3,13 @@ import StringIO
 from datetime import datetime
 import json
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import DeleteView
+from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
@@ -29,6 +31,7 @@ from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 from custom.ilsgateway.tasks import clear_report_data
 from casexml.apps.stock.models import StockTransaction
+from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
@@ -263,6 +266,7 @@ def end_report_run(request, domain):
     try:
         rr = ReportRun.objects.get(domain=domain, complete=False)
         rr.complete = True
+        rr.has_error = True
         rr.save()
     except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
         pass
@@ -317,3 +321,38 @@ def save_ils_note(request, domain):
 def fix_groups_in_location(request, domain):
     fix_groups_in_location_task.delay(domain)
     return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def change_runner_date_to_last_migration(request, domain):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    last_run = ReportRun.last_success(domain)
+    last_run.end = checkpoint.date
+    last_run.save()
+    return HttpResponse('OK')
+
+
+class ReportRunListView(ListView, DomainViewMixin):
+    context_object_name = 'runs'
+    template_name = 'ilsgateway/report_run_list.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(ReportRunListView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return ReportRun.objects.filter(domain=self.domain).order_by('pk')
+
+
+class ReportRunDeleteView(DeleteView, DomainViewMixin):
+    model = ReportRun
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(ReportRunDeleteView, self).dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('report_run_list', args=[self.domain])

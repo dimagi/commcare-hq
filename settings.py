@@ -303,6 +303,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
@@ -1077,6 +1078,7 @@ COUCHDB_APPS = [
     'penn_state',
     'care_benin',
     'gsid',
+    'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
     'pathindia',
@@ -1148,8 +1150,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error',
-    messages.ERROR: 'alert-error',
+    messages.WARNING: 'alert-error alert-danger',
+    messages.ERROR: 'alert-error alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1372,6 +1374,8 @@ DOMAIN_MODULE_MAP = {
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
+    'hsph-dev': 'hsph',
+    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',

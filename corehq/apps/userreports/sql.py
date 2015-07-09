@@ -87,8 +87,10 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 
 
 def column_to_sql(column):
+    # we have to explicitly truncate the column IDs otherwise postgres will do it
+    # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
     return sqlalchemy.Column(
-        column.id,
+        truncate_value(column.id),
         _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
@@ -104,6 +106,17 @@ def rebuild_table(engine, table):
         table.drop(connection, checkfirst=True)
         table.create(connection)
     engine.dispose()
+
+
+def truncate_value(value, max_length=63):
+    """
+    Truncate a value (typically a column name) to a certain number of characters,
+    using a hash to ensure uniqueness.
+    """
+    if len(value) > max_length:
+        short_hash = hashlib.sha1(value).hexdigest()[:8]
+        return '{}_{}'.format(value[-54:], short_hash)
+    return value
 
 
 def get_column_name(path):

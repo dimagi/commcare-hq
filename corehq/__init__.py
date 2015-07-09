@@ -200,6 +200,12 @@ EXPORT_DATA_INTERFACES = (
     )),
 )
 
+DATA_DOWNLOAD_INTERFACES = (
+    ('', (
+        export.FormExportReport,
+    )),
+)
+
 
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 

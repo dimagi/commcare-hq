@@ -103,7 +103,7 @@ COMMTRACK = FeaturePreview(
         "goods and materials, from medication to food to bednets. <br/>"
         "Note: You must also enable CommCare Supply on any CommCare Supply "
         "application's settings page."),
-    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
+    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
     save_fn=commtrackify,
 )
 

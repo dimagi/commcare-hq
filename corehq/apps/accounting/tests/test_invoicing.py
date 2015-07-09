@@ -54,6 +54,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(BaseInvoiceTestCase, self).tearDown()
 
 
 class TestInvoice(BaseInvoiceTestCase):
