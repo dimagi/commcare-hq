@@ -18,6 +18,9 @@
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
             downloadUrl: '{% url "download_cases" domain %}',
             is_new_exporter: true,
+            bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
+            bulk_download_notice_text: '{{ bulk_download_notice_text }}',
+            selectedExportsData: {{ selected_exports_data|JSON }},
             export_type: "case"
         } );
         ko.applyBindings(caseExportManager, $('#case-download')[0]);
@@ -27,6 +30,7 @@
 {% block reportcontent %}
     <div id="case-download">
         <a data-toggle="modal"
+           {% if use_bulk %}data-bind="click: requestBulkDownload"{% endif %}
            href="#export-download-status"
            data-backdrop="static"
            data-formname="{{ export.name }}"

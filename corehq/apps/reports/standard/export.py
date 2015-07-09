@@ -545,14 +545,14 @@ class NewCaseExportReport(CaseExportReport):
         context.update({
             'export': self.exports[0],
             # 'exports': self.exports,
-            # "use_bulk": len(self.export_ids) > 1,
+            "use_bulk": len(self.export_ids) > 1,
             'additional_params': mark_safe(
                 '&'.join('export_id=%(export_id)s' % {
                     'export_id': export_id,
                 } for export_id in self.export_ids)
             ),
-            # 'selected_exports_data': self.selected_exports_data,
-            # 'bulk_download_notice_text': ugettext_noop('Case Exports'),
+            'selected_exports_data': self.selected_exports_data,
+            'bulk_download_notice_text': ugettext_noop('Case Exports'),
         })
         return context
 
@@ -568,4 +568,11 @@ class NewCaseExportReport(CaseExportReport):
 
     @property
     def selected_exports_data(self):
-        return {}
+        return {
+            export._id: {
+                'formname': export.name,
+                'modulename': export.name,
+                'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+                'exporttype': 'form',
+            } for export in self.exports
+        }
