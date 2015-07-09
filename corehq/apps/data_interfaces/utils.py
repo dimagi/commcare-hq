@@ -39,10 +39,12 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
 
 
 def archive_forms(domain, user, uploaded_data):
+    # todo convert this to Async friendly view
     response = {
         'errors': [],
-        'success': [],
+        'success': ['Done yo'],
     }
+    return response
 
     form_ids = [row.get('form_id') for row in uploaded_data]
     missing_forms = set(form_ids)
@@ -73,3 +75,8 @@ def archive_forms(domain, user, uploaded_data):
             _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     return response
+
+
+def restore_forms():
+    # Todo - actually implement this
+    pass

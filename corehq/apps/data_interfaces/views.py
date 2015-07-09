@@ -16,7 +16,8 @@ from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
+from corehq.apps.data_interfaces.tasks import (
+    bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -27,9 +28,12 @@ from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseServerError
+from django.shortcuts import render
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 
 
 @login_and_domain_required
@@ -169,8 +173,9 @@ class ArchiveFormView(DataInterfaceSection):
 
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
-        if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
-            raise Http404()
+        # ToDo, remove this after test
+        # if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
+        #     raise Http404()
         return super(ArchiveFormView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -450,3 +455,90 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 return HttpResponseRedirect(self.page_url)
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
+
+
+class BaseXFormManagementView(DataInterfaceSection):
+    def _archive_mode(request):
+        return True  # Todo
+
+    def archive_or_restore_progress_title(self):
+        archive_txt = _("Bulk Form Archive Status")
+        restore_txt = _("Bulk Form Restore Status")
+        return archive_txt if self._archive_mode else restore_txt
+
+    def archive_or_restore_progress_text(self):
+        archive_txt = _("Restoring Forms. This may take some time...")
+        restore_txt = _("Restoring Forms. This may take some time...")
+        return archive_txt if self._archive_mode else restore_txt
+
+    def archive_or_restore_task_title(self):
+        archive_txt = _("Bulk Archive Forms")
+        restore_txt = _("Bulk Restore Forms")
+        return archive_txt if self._archive_mode else restore_txt
+
+
+class XFormManagementView(BaseXFormManagementView):
+    urlname = 'xform_management'
+    page_title = ugettext_noop('Form Management')
+
+    def _get_xform_ids(self, request):
+        # Todo - scan ids from POST and validate them
+        return self.request.POST.getlist('xform_ids')
+
+    def post(self, request, *args, **kwargs):
+        xform_ids = self._get_xform_ids(request)
+        task_ref = expose_cached_download(None, expiry=1*60*60)
+        task = bulk_form_management_async.delay(
+            self._archive_mode(),
+            self.domain,
+            self.request.user,
+            xform_ids
+        )
+        task_ref.set_task(task)
+
+        return HttpResponseRedirect(
+            reverse(
+                XFormManagementStatusView.urlname,
+                args=[self.domain, task_ref.download_id]
+            )
+        )
+
+
+class XFormManagementStatusView(BaseXFormManagementView):
+
+    urlname = 'xform_management_status'
+    page_title = ugettext_noop('Form Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(XFormManagementStatusView, self).main_context
+
+        # Todo - cleanup
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("XForm Archive Or Restore?"),
+            'progress_text': _("Archiving/Restoring Forms This may take some time......"),
+            'error_text': _("Problem restoring/archive data! Please try again or report an issue."),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+# ToDo permission decorator
+def xform_management_job_poll(request, domain, download_id, template="data_interfaces/partials/xform_management_status.html"):
+    print "yooo"
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    context.update({
+        'on_complete_short': _('Change this text'),
+        'on_complete_long': _('Change this text'),
+
+    })
+    print context
+    return render(request, template, context)

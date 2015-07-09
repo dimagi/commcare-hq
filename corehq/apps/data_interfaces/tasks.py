@@ -4,10 +4,10 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from soil import CachedDownload
+from soil import CachedDownload, DownloadBase
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms
+from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms, restore_forms
 from dimagi.utils.django.email import send_HTML_email
 
 logger = get_task_logger('data_interfaces')
@@ -31,3 +31,28 @@ def bulk_archive_forms(domain, user, uploaded_data):
 
     html_content = render_to_string('data_interfaces/archive_email.html', response)
     send_HTML_email(_('Your archived forms'), user.email, html_content)
+
+
+@task
+def bulk_form_management_async(archive_or_restore, domain, user, xform_ids):
+    task = bulk_form_management_async
+    if archive_or_restore:
+        print "consider archived"
+        manage_method = archive_forms
+        message = "Archive Forms"
+    else:
+        manage_method = restore_forms
+        message = "Restore Forms"
+
+    print "setting 0"
+    DownloadBase.set_progress(task, 0, 100)
+    print "set to 0"
+
+    print "yeah we returned this"
+    # response = manage_method(domain, user, xform_ids)
+    DownloadBase.set_progress(task, 100, 100)
+    return {'messages': {'errors': ['done done']}}
+
+    for msg_type in ('success', 'error'):
+        for msg in response[msg_type]:
+            logger.info("[Data interfaces][{manage_mode}] {msg}".format(manage_mode=message, msg=msg))
