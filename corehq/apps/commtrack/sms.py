@@ -12,19 +12,15 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, RequisitionTransaction, RequisitionCase
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
-    NotAUserClassError,
-    InvalidSMSAction)
-import uuid
+    NotAUserClassError)
 import re
 
 logger = logging.getLogger('commtrack.sms')
@@ -130,7 +126,9 @@ class StockReportParser(object):
             RequisitionActions.RECEIPTS
         ]:
             # dropped support for this
-            raise InvalidSMSAction("You can no longer use requisitions!")
+            raise SMSError(_(
+                "You can no longer use requisitions! Please contact your project supervisor for help"
+            ))
 
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
             # multiple action stock report
