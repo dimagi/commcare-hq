@@ -883,12 +883,6 @@ class RequisitionCase(CommCareCase):
         ]
 
 
-class RequisitionTransaction(StockTransaction):
-    @property
-    def category(self):
-        return 'requisition'
-
-
 class ActiveManager(models.Manager):
     """
     Filter any object that is associated to an archived product.

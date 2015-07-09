@@ -24,3 +24,10 @@ class MultipleSupplyPointException(Exception):
 
 class MissingProductId(Exception):
     pass
+
+
+class InvalidSMSAction(Exception):
+    """
+    For SMS things that have been deprecated/removed
+    """
+    pass
