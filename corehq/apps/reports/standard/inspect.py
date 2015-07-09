@@ -119,6 +119,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 'term': {'__props_for_querying': prop.lower()}
             }
 
+    def _es_xform_filter(self):
+            ADD_TO_ES_FILTER['forms']
+
     @property
     @memoized
     def es_results(self):
@@ -135,7 +138,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                     }
                 },
                 'filter': {
-                    'and': (ADD_TO_ES_FILTER['forms'] +
+                    'and': (self._es_xform_filter() +
                             list(self._es_extra_filters()))
                 },
                 'sort': self.get_sorting_block(),
