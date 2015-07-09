@@ -23,11 +23,11 @@ class StockProcessingResult(object):
     processing so that they can be made more atomic
     """
 
-    def __init__(self, domain, xform, relevant_cases, stock_reports):
-        self.domain = domain
+    def __init__(self, xform, relevant_cases=None, stock_reports=None):
+        self.domain = xform.domain
         self.xform = xform
-        self.relevant_cases = relevant_cases
-        self.stock_reports = stock_reports
+        self.relevant_cases = relevant_cases or []
+        self.stock_reports = stock_reports or []
 
     @transaction.atomic
     def commit(self):
@@ -52,7 +52,7 @@ def process_stock(xform, case_db=None):
     case_db = case_db or CaseDbCache()
     assert isinstance(case_db, CaseDbCache)
     if is_device_report(xform):
-        return []
+        return StockProcessingResult(xform)
 
     domain = xform.domain
     config = CommtrackConfig.for_domain(domain)
@@ -64,7 +64,7 @@ def process_stock(xform, case_db=None):
     # omitted: normalize_transactions (used for bulk requisitions?)
 
     if not transactions:
-        return []
+        return StockProcessingResult(xform)
 
     # validate product ids
     is_empty = lambda product_id: product_id is None or product_id == ''
@@ -96,7 +96,6 @@ def process_stock(xform, case_db=None):
         case_db.mark_changed(case)
 
     return StockProcessingResult(
-        domain=domain,
         xform=xform,
         relevant_cases=relevant_cases,
         stock_reports=stock_reports,
