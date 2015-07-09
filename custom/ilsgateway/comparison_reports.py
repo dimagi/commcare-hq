@@ -166,6 +166,8 @@ class ProductAvailabilityReport(GenericTabularReport, CustomProjectReport, Proje
     name = 'Product Availability'
     slug = 'product_availability'
     fields = [AsyncLocationFilter]
+    emailable = False
+    exportable = True
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
