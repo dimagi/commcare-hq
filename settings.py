@@ -463,6 +463,7 @@ FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
+BILLING_SUPPORT_EMAIL = 'zapier+billing-support@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
