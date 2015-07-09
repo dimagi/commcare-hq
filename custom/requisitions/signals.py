@@ -2,9 +2,10 @@ from collections import defaultdict
 import itertools
 from django.dispatch import Signal
 from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE, RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
+from custom.requisitions.models import RequisitionCase
 from custom.requisitions.utils import get_notification_recipients, get_notification_message
 from dimagi.utils import create_unique_filter
 

@@ -2,12 +2,12 @@ import os
 import json
 from django.test import TestCase
 from casexml.apps.case.tests import delete_all_cases
-from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.openlmis.api import Program, Product as LMISProduct
 from custom.openlmis.commtrack import bootstrap_domain, sync_openlmis_program, sync_openlmis_product, sync_requisition_from_openlmis
 from custom.openlmis.tests import MockOpenLMISEndpoint
+from custom.requisitions.models import RequisitionCase
 
 TEST_DOMAIN = 'openlmis-commtrack-program-test'
 
