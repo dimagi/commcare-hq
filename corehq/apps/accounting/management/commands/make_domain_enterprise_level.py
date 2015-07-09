@@ -28,15 +28,13 @@ class Command(BaseCommand):
             return
 
         if subscription:
-            subscription.plan_version = self.enterprise_plan_version
+            subscription.change_plan(self.enterprise_plan_version)
         else:
             try:
                 self.make_new_enterprise_subscription(domain)
             except NewSubscriptionError as e:
                 print e.message
                 return
-        subscription.is_active = True
-        subscription.save()
         print 'Domain %s has been upgraded to enterprise level.' % domain.name
 
     def make_new_enterprise_subscription(self, domain):
@@ -45,7 +43,7 @@ class Command(BaseCommand):
             account_type=BillingAccountType.CONTRACT,
             created_by="management command",
         )
-        return Subscription.new_domain_subscription(
+        Subscription.new_domain_subscription(
             account,
             domain.name,
             self.enterprise_plan_version,
