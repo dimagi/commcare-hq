@@ -207,6 +207,7 @@ EXPORT_DATA_INTERFACES = (
 DATA_DOWNLOAD_INTERFACES = (
     ('', (
         export.FormExportReport,
+        export.NewCaseExportReport,
     )),
 )
 
