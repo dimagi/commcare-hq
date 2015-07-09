@@ -365,6 +365,9 @@ class NewStockReport(object):
 
     @transaction.atomic
     def create_models(self, domain=None):
+        """
+        Save stock report and stock transaction models to the database.
+        """
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
