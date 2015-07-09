@@ -38,10 +38,10 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
-class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
-                    ProjectReportParametersMixin,
-                    CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
-                    DatespanMixin):
+class SubmitHistoryMixin(ElasticProjectInspectionReport,
+                         ProjectReportParametersMixin,
+                         CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
+                         DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
@@ -63,33 +63,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
                 'corehq.apps.reports.filters.forms.FormDataFilter',
                 'corehq.apps.reports.filters.forms.CustomFieldFilter',
             ]
-        super(SubmitHistory, self).__init__(request, **kwargs)
-
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+        super(SubmitHistoryMixin, self).__init__(request, **kwargs)
 
     @property
     def other_fields(self):
         return filter(None, self.request.GET.get('custom_field', "").split(","))
-
-    @property
-    def headers(self):
-        h = [
-            DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
-            DataTablesColumn(
-                _("Submission Time") if self.by_submission_time
-                else _("Completion Time"),
-                prop_name=self.time_field
-            ),
-            DataTablesColumn(_("Form"), prop_name='form.@name'),
-        ]
-        h.extend([DataTablesColumn(field) for field in self.other_fields])
-        return DataTablesHeader(*h)
 
     @property
     def default_datespan(self):
@@ -168,7 +146,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
         )
 
     def get_sorting_block(self):
-        sorting_block = super(SubmitHistory, self).get_sorting_block()
+        sorting_block = super(SubmitHistoryMixin, self).get_sorting_block()
         if sorting_block:
             return sorting_block
         else:
@@ -181,6 +159,31 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     @property
     def total_records(self):
         return int(self.es_results['hits']['total'])
+
+
+class SubmitHistory(SubmitHistoryMixin, ProjectReport):
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
+    @property
+    def headers(self):
+        h = [
+            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(
+                _("Submission Time") if self.by_submission_time
+                else _("Completion Time"),
+                prop_name=self.time_field
+            ),
+            DataTablesColumn(_("Form"), prop_name='form.@name'),
+        ]
+        h.extend([DataTablesColumn(field) for field in self.other_fields])
+        return DataTablesHeader(*h)
 
     @property
     def rows(self):
