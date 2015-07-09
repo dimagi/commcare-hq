@@ -6,13 +6,18 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from corehq import toggle_enabled, toggles
 from corehq.apps.app_manager.models import Application, get_apps_in_domain
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
+from corehq.apps.reports.standard.export import (
+    CaseExportReport,
+    DataExportInterface,
+    ExcelExportReport,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -53,6 +58,8 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def export_home_url(self):
+        if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+            return DataExportInterface.get_url(domain=self.domain)
         return self.report_class.get_url(domain=self.domain)
 
     @property
