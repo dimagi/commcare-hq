@@ -108,7 +108,7 @@ An optional `"datatype"` attribute may be specified, which will attempt to cast 
 This expression returns `doc["child"]["age"]`:
 ```
 {
-    "type": "property_name",
+    "type": "property_path",
     "property_path": ["child", "age"]
 }
 ```
