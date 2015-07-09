@@ -193,10 +193,10 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.export import DataExportInterface
+from corehq.apps.reports.standard.export import FormExportInterface
 EXPORT_DATA_INTERFACES = (
     (_('Export Data'), (
-        DataExportInterface,
+        FormExportInterface,
     )),
 )
 

@@ -15,7 +15,7 @@ from corehq.apps.export.forms import CreateFormExportForm
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
-    DataExportInterface,
+    FormExportInterface,
     ExcelExportReport,
 )
 from corehq.apps.settings.views import BaseProjectDataView
@@ -59,7 +59,7 @@ class BaseExportView(BaseProjectDataView):
     @property
     def export_home_url(self):
         if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-            return DataExportInterface.get_url(domain=self.domain)
+            return FormExportInterface.get_url(domain=self.domain)
         return self.report_class.get_url(domain=self.domain)
 
     @property
