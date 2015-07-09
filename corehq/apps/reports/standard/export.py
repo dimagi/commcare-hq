@@ -477,8 +477,7 @@ class CaseExportInterface(DataExportInterface):
 
     @property
     def download_page_url_root(self):
-        raise NotImplementedError
-        # return FormExportReport.get_url(domain=self.domain)
+        return NewCaseExportReport.get_url(domain=self.domain)
 
 
 class FormExportReport(FormExportReportBase):
@@ -528,3 +527,45 @@ class FormExportReport(FormExportReportBase):
                 'exporttype': 'form',
             } for export in self.exports
         }
+
+
+class NewCaseExportReport(CaseExportReport):
+    base_template = 'reports/standard/export_download.html'
+    report_template_path = 'reports/partials/download_case_export.html'
+    name = ugettext_noop('Download Cases')
+    section_name = ugettext_noop('Export Data')
+    slug = 'case_export'
+
+    dispatcher = DataDownloadInterfaceDispatcher
+
+    @property
+    def template_context(self):
+        context = super(NewCaseExportReport, self).template_context
+        # TODO - seems redundant, cleanup at some point
+        context.update({
+            'export': self.exports[0],
+            # 'exports': self.exports,
+            # "use_bulk": len(self.export_ids) > 1,
+            'additional_params': mark_safe(
+                '&'.join('export_id=%(export_id)s' % {
+                    'export_id': export_id,
+                } for export_id in self.export_ids)
+            ),
+            # 'selected_exports_data': self.selected_exports_data,
+            # 'bulk_download_notice_text': ugettext_noop('Case Exports'),
+        })
+        return context
+
+    @property
+    def export_ids(self):
+        return self.request.GET.getlist('export_id')
+
+    @property
+    def exports(self):
+        return [
+            SavedExportSchema.get(export_id) for export_id in self.export_ids
+        ]
+
+    @property
+    def selected_exports_data(self):
+        return {}
