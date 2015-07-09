@@ -8,7 +8,7 @@ from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain

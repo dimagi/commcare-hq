@@ -14,7 +14,7 @@ from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext
+from django.utils.translation import ugettext_noop, ugettext_lazy as _
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
@@ -1452,7 +1452,7 @@ class EnterprisePlanContactForm(forms.Form):
                 ),
                 crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
                             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
-                            'title': ugettext("Select different plan"),
+                            'title': _("Select different plan"),
                 }),
             )
         )

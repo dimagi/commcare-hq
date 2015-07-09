@@ -13,7 +13,7 @@ from custom.ewsghana.reports.stock_levels_report import FacilityReportData, Stoc
 from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
