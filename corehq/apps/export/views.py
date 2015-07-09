@@ -287,9 +287,9 @@ def create_basic_form_checkpoint(index):
 
 
 class CreateFormExportView(BaseProjectDataView):
-    urlname = 'create_export_form'
+    urlname = 'create_form_export'
     page_title = ugettext_noop("Create Form Export")
-    template_name = 'export/create_export.html'
+    template_name = 'export/create_form_export.html'
 
     @property
     def main_context(self):

@@ -455,7 +455,7 @@ class FormExportInterface(DataExportInterface):
     slug = 'forms'
 
     bulk_download_notice_text = ugettext_noop('Form Export')
-    create_export_view_name = 'create_export_form'
+    create_export_view_name = 'create_form_export'
     edit_export_view_name = 'edit_custom_export_form'
     export_schema = FormExportSchema
     export_type = 'form'
