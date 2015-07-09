@@ -75,10 +75,6 @@ def process_stock(xform, case_db=None):
     for report in stock_reports:
         report.create_models(domain)
 
-    # TODO make this a signal
-    from corehq.apps.commtrack.signals import send_notifications, raise_events
-    send_notifications(xform, relevant_cases)
-    raise_events(xform, relevant_cases)
     return relevant_cases
 
 
