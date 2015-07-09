@@ -470,6 +470,7 @@ class CaseExportInterface(DataExportInterface):
     slug = 'cases'
 
     bulk_download_notice_text = ugettext_noop('Case Export')
+    create_export_view_name = 'create_case_export'
     edit_export_view_name = 'edit_custom_export_case'
     export_schema = CaseExportSchema
     export_type = 'case'
