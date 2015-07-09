@@ -1114,7 +1114,8 @@ def update_stock_state_for_transaction(instance):
         consumption_calc
     )
     # so you don't have to look it up again in the signal receivers
-    state.domain = domain
+    if domain:
+        state.domain = domain.name
     state.save()
 
 
