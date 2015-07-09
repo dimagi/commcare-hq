@@ -551,10 +551,10 @@ class SubmissionPost(object):
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
+                        case_result.commit_dirtiness_flags()
+
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
-
-                        case_result.commit_dirtiness_flags()
 
                     responses, errors = self.process_signals(instance)
                     if errors:
