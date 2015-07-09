@@ -25,10 +25,8 @@ def get_application_media(app):
     }
 
     def _add_menu_media(item):
-        if item.media_image:
-            menu_media['icons'].add(item.media_image.strip())
-        if item.media_audio:
-            menu_media['audio'].add(item.media_audio.strip())
+        menu_media['icons'].update(set(image.strip() for image in item.all_image_paths() if image))
+        menu_media['audio'].update(set(audio.strip() for audio in item.all_audio_paths() if audio))
 
     for m in app.get_modules():
         _add_menu_media(m)
