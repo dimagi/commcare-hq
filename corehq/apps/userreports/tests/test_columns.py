@@ -76,20 +76,24 @@ class TestFieldColumn(SimpleTestCase):
 
 class ChoiceListColumnDbTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = get_engine()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.engine.dispose()
+
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
-            "property_path": [
-                "form",
-                "previous_lesson_review",
-                "practicing_lessons"
-            ],
+            "property_name": "long_column",
             "choices": [
                 "duplicate_choice_1",
                 "duplicate_choice_2",
             ],
             "select_style": "multiple",
-            "column_id": "a_very_long_base_selection_column_name_with_limted_room",
+            "column_id": "a_very_long_base_selection_column_name_with_limited_room",
             "type": "choice_list",
         }
         data_source_config = DataSourceConfiguration(
@@ -100,11 +104,18 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(get_engine(), data_source_config)
+        adapter = IndicatorSqlAdapter(self.engine, data_source_config)
         adapter.rebuild_table()
-        # ensure we can query the table
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'long_column': 'duplicate_choice_1',
+        })
+        # and query it back
         q = Session.query(adapter.get_table())
-        self.assertEqual(0, q.count())
+        self.assertEqual(1, q.count())
 
 
 class TestExpandedColumn(TestCase):

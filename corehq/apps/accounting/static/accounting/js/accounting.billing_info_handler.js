@@ -10,13 +10,11 @@ var BillingContactInfoHandler = function (valid_email_text) {
         };
         callback(data);
     };
-    self.billing_admins = new AsyncSelect2Handler('billing_admins', true);
     self.emails = new EmailSelect2Handler('emails', valid_email_text);
     self.active_accounts = new AsyncSelect2Handler('active_accounts');
 
     self.init = function () {
         self.country.init();
-        self.billing_admins.init();
         self.emails.init();
         self.active_accounts.init();
     };

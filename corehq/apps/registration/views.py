@@ -74,18 +74,36 @@ def register_user(request, domain_type=None):
                 track_workflow.delay(new_user.email, "Requested new account")
                 meta = {
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
-                    'REMOTE_ADDR': request.META.get('REMOTE_ADDR')
+                    'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+                    'opt_into_emails': form.cleaned_data['email_opt_in'],
                 }
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
-                return redirect(
-                    'registration_domain', domain_type=domain_type)
+                requested_domain = form.cleaned_data['hr_name']
+                if form.cleaned_data['create_domain']:
+                    org = None
+                    try:
+                        requested_domain = request_new_domain(
+                            request, form, org, new_user=True, domain_type=domain_type)
+                    except NameUnavailableException:
+                        context.update({
+                            'error_msg': _('Project name already taken - please try another'),
+                            'show_homepage_link': 1
+                        })
+                        return render(request, 'error.html', context)
+
+                context = get_domain_context(form.cleaned_data['domain_type']).update({
+                    'alert_message': _("An email has been sent to %s.") % request.user.username,
+                    'requested_domain': requested_domain,
+                    'track_domain_registration': True,
+                })
+                return render(request, 'registration/confirmation_sent.html', context)
         else:
             form = NewWebUserRegistrationForm(
-                initial={'domain_type': domain_type, 'email': prefilled_email})
+                initial={'domain_type': domain_type, 'email': prefilled_email, 'create_domain': True})
 
         context.update({
             'form': form,
-            'domain_type': domain_type
+            'domain_type': domain_type,
         })
         return render(request, 'registration/create_new_user.html', context)
 

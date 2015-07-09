@@ -205,9 +205,9 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10)
-    send_subscription_reminder_emails(1)
+    send_subscription_reminder_emails(30, exclude_trials=True)
+    send_subscription_reminder_emails(10, exclude_trials=True)
+    send_subscription_reminder_emails(1, exclude_trials=True)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -223,7 +223,7 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
     if exclude_trials:
-        ending_subscriptions.filter(is_trial=False)
+        ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
@@ -247,7 +247,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 def send_purchase_receipt(payment_record, core_product,
                           template_html, template_plaintext,
                           additional_context):
-    email = payment_record.payment_method.billing_admin.web_user
+    email = payment_record.payment_method.web_user
 
     try:
         web_user = WebUser.get_by_username(email)
@@ -262,7 +262,7 @@ def send_purchase_receipt(payment_record, core_product,
     context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': payment_record.payment_method.billing_admin.domain,
+        'project': payment_record.creditadjustment_set.last().credit_line.account.created_by_domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,

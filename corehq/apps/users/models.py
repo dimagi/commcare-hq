@@ -877,6 +877,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def get_email(self):
         return self.email
 
+    def is_commcare_user(self):
+        return self._get_user_type() == 'commcare'
+
+    def is_web_user(self):
+        return self._get_user_type() == 'web'
+
+    def _get_user_type(self):
+        if self.doc_type == 'WebUser':
+            return 'web'
+        elif self.doc_type == 'CommCareUser':
+            return 'commcare'
+        else:
+            raise NotImplementedError()
+
     @property
     def projects(self):
         return map(Domain.get_by_name, self.get_domains())
