@@ -38,15 +38,18 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     return response
 
 
-def archive_forms(domain, user, uploaded_data):
+def archive_forms_old(domain, user, uploaded_data):
+    form_ids = [row.get('form_id') for row in uploaded_data]
+    return archive_or_restore_forms(domain, user, form_ids, 'archive')
+
+
+def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
     # todo convert this to Async friendly view
     response = {
         'errors': [],
-        'success': ['Done yo'],
+        'success': [],
     }
-    return response
 
-    form_ids = [row.get('form_id') for row in uploaded_data]
     missing_forms = set(form_ids)
 
     for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
@@ -64,7 +67,12 @@ def archive_forms(domain, user, uploaded_data):
             username=user.username)
 
         try:
-            xform.archive(user=user.username)
+            if archive_or_restore == 'archive':
+                print "archiving"
+                xform.archive(user=user.username)
+            else:
+                xform.unarchive(user=user.username)
+                print "unarchiving"
             response['success'].append(_(u"Successfully archived {form}").format(form=xform_string))
         except Exception as e:
             response['errors'].append(_(u"Could not archive {form}: {error}").format(
@@ -75,8 +83,3 @@ def archive_forms(domain, user, uploaded_data):
             _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     return response
-
-
-def restore_forms():
-    # Todo - actually implement this
-    pass

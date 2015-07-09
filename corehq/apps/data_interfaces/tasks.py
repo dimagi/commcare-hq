@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from soil import CachedDownload, DownloadBase
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms, restore_forms
+from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
 from dimagi.utils.django.email import send_HTML_email
 
 logger = get_task_logger('data_interfaces')
@@ -22,7 +22,7 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 
 @task(ignore_result=True)
 def bulk_archive_forms(domain, user, uploaded_data):
-    response = archive_forms(domain, user, uploaded_data)
+    response = archive_forms_old(domain, user, uploaded_data)
 
     for msg in response['success']:
         logger.info("[Data interfaces] %s", msg)
@@ -35,21 +35,22 @@ def bulk_archive_forms(domain, user, uploaded_data):
 
 @task
 def bulk_form_management_async(archive_or_restore, domain, user, xform_ids):
+    # ToDo refactor archive_or_restore
     task = bulk_form_management_async
     if archive_or_restore:
-        print "consider archived"
-        manage_method = archive_forms
         message = "Archive Forms"
+        mode = "archive"
     else:
-        manage_method = restore_forms
         message = "Restore Forms"
+        mode = "restore"
 
     print "setting 0"
     DownloadBase.set_progress(task, 0, 100)
     print "set to 0"
 
     print "yeah we returned this"
-    # response = manage_method(domain, user, xform_ids)
+    response = archive_or_restore_forms(domain, user, xform_ids, mode)
+    print response
     DownloadBase.set_progress(task, 100, 100)
     return {'messages': {'errors': ['done done']}}
 
