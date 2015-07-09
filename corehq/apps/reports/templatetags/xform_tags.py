@@ -171,7 +171,7 @@ def render_form(form, domain, options):
     )
     show_edit_options = (
         user_can_edit
-        and can_edit_form_location(domain, user, form._id)
+        and can_edit_form_location(domain, user, form)
     )
     show_edit_submission = (
         user_can_edit

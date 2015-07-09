@@ -21,6 +21,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.http import (HttpResponseRedirect, HttpResponseBadRequest, Http404,
@@ -88,7 +89,7 @@ from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
-from corehq.apps.locations.permissions import require_can_edit_form_location
+from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
@@ -1198,9 +1199,8 @@ def download_cases(request, domain):
     return generate_payload(payload_func)
 
 
-def _get_form_context(request, domain, instance_id):
+def _get_form_context(request, domain, instance):
     timezone = get_timezone_for_user(request.couch_user, domain)
-    instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
     except AssertionError:
@@ -1233,22 +1233,29 @@ def _get_form_or_404(id):
     return doc_type.wrap(xform_json)
 
 
+def _get_form_to_edit(domain, user, instance_id):
+    form = _get_form_or_404(instance_id)
+    if not can_edit_form_location(domain, user, form):
+        raise PermissionDenied()
+    return form
+
+
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
-    context = _get_form_context(request, domain, instance_id)
-    instance = context['instance']
+    instance = _get_form_or_404(instance_id)
+    context = _get_form_context(request, domain, instance)
     context['form_meta'] = FormType(domain, instance.xmlns, instance.app_id).metadata
     try:
-        form_name = context['instance'].form["@name"]
+        form_name = instance.form["@name"]
     except KeyError:
         form_name = "Untitled Form"
 
     context.update({
         "slug": inspect.SubmitHistory.slug,
         "form_name": form_name,
-        "form_received_on": context['instance'].received_on
+        "form_received_on": instance.received_on
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
@@ -1258,10 +1265,11 @@ def form_data(request, domain, instance_id):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    context = _get_form_context(request, domain, xform_id)
+    instance = _get_form_or_404(xform_id)
+    context = _get_form_context(request, domain, instance)
     context['case_id'] = case_id
     context['side_pane'] = True
-    return HttpResponse(render_form(context['instance'], domain, options=context))
+    return HttpResponse(render_form(instance, domain, options=context))
 
 
 @require_form_view_permission
@@ -1276,13 +1284,12 @@ def download_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
-@require_can_edit_form_location
 def edit_form_instance(request, domain, instance_id):
     if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
         raise Http404()
 
-    context = _get_form_context(request, domain, instance_id)
-    instance = context['instance']
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    context = _get_form_context(request, domain, instance)
     if not instance.app_id or not instance.build_id:
         messages.error(request, _('Could not detect the application/form for this submission.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
@@ -1347,9 +1354,8 @@ def download_attachment(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-@require_can_edit_form_location
 def archive_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance":
         instance.archive(user=request.couch_user._id)
@@ -1393,9 +1399,8 @@ def archive_form(request, domain, instance_id):
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
-@require_can_edit_form_location
 def unarchive_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
         instance.unarchive(user=request.couch_user._id)
@@ -1412,9 +1417,8 @@ def unarchive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-@require_can_edit_form_location
 def resave_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     XFormInstance.get_db().save_doc(instance.to_json())
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
