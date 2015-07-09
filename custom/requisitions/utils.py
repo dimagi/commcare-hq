@@ -1,5 +1,6 @@
-from corehq.apps.commtrack.const import UserRequisitionRoles, notification_template
+from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.users.cases import get_owning_users, get_owner_id
+from custom.requisitions.const import UserRequisitionRoles
 
 
 def should_notify_user(user, next_action_type):
@@ -26,3 +27,13 @@ def get_notification_message(next_action, requisitions):
         loc=guessed_location.site_code if guessed_location else "<loc code>",
         keyword=next_action.keyword,
     )
+
+
+def notification_template(action):
+    # this had to be a method to do translations
+    from django.utils.translation import ugettext as _
+    return {
+        RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword} {loc}" to approve.'),
+        RequisitionActions.FULFILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword} {loc}" to confirm the order.'),
+        RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
+    }[action]
