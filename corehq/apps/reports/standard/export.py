@@ -401,6 +401,7 @@ class DataExportInterface(GenericReportView):
         context.update({
             'bulk_download_notice_text': self.bulk_download_notice_text,
             'bulk_export_format': self.bulk_export_format,
+            'create_export_view_name': self.create_export_view_name,
             'download_page_url_root': self.download_page_url_root,
             'edit_export_view_name': self.edit_export_view_name,
             'saved_exports': self.saved_exports,
@@ -429,6 +430,10 @@ class DataExportInterface(GenericReportView):
         raise NotImplementedError
 
     @property
+    def create_export_view_name(self):
+        raise NotImplementedError
+
+    @property
     def download_page_url_root(self):
         raise NotImplementedError
 
@@ -450,6 +455,7 @@ class FormExportInterface(DataExportInterface):
     slug = 'forms'
 
     bulk_download_notice_text = ugettext_noop('Form Export')
+    create_export_view_name = 'create_export_form'
     edit_export_view_name = 'edit_custom_export_form'
     export_schema = FormExportSchema
     export_type = 'form'
