@@ -62,7 +62,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_form_exports(self.domain)
+        exports = get_exports(self.domain)
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
