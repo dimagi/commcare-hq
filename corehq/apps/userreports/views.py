@@ -24,6 +24,7 @@ from corehq.apps.app_manager.models import(
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
@@ -112,8 +113,50 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             "domain": self.domain,
             "report": {
                 "title": _("Create New Report")
-            }
+            },
+            "tiles": self.tiles,
         }
+
+    @property
+    def tiles(self):
+        return [
+            TileConfiguration(
+                title=_('Chart'),
+                slug='chart',
+                icon='fcc fcc-piegraph-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
+                help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
+                            ' You choose the property to graph.'),
+            ),
+            TileConfiguration(
+                title=_('Form or Case List'),
+                slug='form-or-case-list',
+                icon='fcc fcc-form-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'list']),
+                help_text=_('A list of cases or form submissions.'
+                            ' You choose which properties will be columns.'),
+            ),
+            TileConfiguration(
+                title=_('Worker Report'),
+                slug='worker-report',
+                icon='fcc fcc-user-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
+                help_text=_('A table of your mobile workers.'
+                            ' You choose which properties will be the columns.'),
+            ),
+            TileConfiguration(
+                title=_('Data Table'),
+                slug='data-table',
+                icon='fcc fcc-datatable-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'table']),
+                help_text=_('A table of aggregated data from form submissions or case properties.'
+                            ' You choose the columns and rows.'),
+            ),
+        ]
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
