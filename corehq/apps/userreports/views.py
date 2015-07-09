@@ -167,7 +167,7 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = ReportConfiguration.get(report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             view_class = {
                 'chart': ConfigureChartReport,
