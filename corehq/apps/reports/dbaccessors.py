@@ -1,13 +1,13 @@
 import json
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.models import HQExportSchema
 
 
-def get_form_exports(domain):
+def get_exports(domain):
     # add saved exports. because of the way in which the key is stored
     # (serialized json) this is a little bit hacky, but works.
     startkey = json.dumps([domain, ""])[:-3]
     endkey = "%s{" % startkey
-    return FormExportSchema.view(
+    return HQExportSchema.view(
         "couchexport/saved_export_schemas",
         startkey=startkey,
         endkey=endkey,
