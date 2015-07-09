@@ -37,38 +37,37 @@
         {% include 'app_manager/partials/new_app_buttons.html' %}
     {% else %}
         <div class="row-fluid">
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "chart" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Chart' %}
-                        <span class="hq-help-template" data-content="{% trans "A bar graph or a pie chart to show data from your cases or forms. You choose the property to graph." %}"></span>
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "list" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Form or Case List' %}
-                        <span class="hq-help-template" data-content="{% trans "A list of cases or form submissions. You choose which properties will be columns."%}"></span>
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "worker" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Worker Report' %}
-                        <span class="hq-help-template" data-content="{% trans "A table of your mobile workers. You choose which properties will be the columns." %}"></span>
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "table" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Data Table' %}
-                        <span class="hq-help-template" data-content="{% trans "A table of aggregated data from form submissions or case properties. You choose the columns and rows." %}"></span>
-                    </button>
-                </a>
-            </div>
+            {% for tile in tiles %}
+            <tile-{{ tile.ng_directive }}
+                    slug="{{ tile.slug }}"
+                    title="{{ tile.title }}">
+                <div class="col-md-3">
+                    <div class="panel panel-dashboard panel-dashboard-medium">
+                        <div class="panel-heading">
+                            <a href="{{ tile.url }}"
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.helpText }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="bottom"
+                               title="">{{ tile.title }}</a>
+                        </div>
+                        <div class="panel-body">
+                            <a href="{{ tile.url }}"
+                               class="dashboard-link"
+                               track-analytics=""
+                               process-external-link=""
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.helpText }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="top"
+                               title="">
+                                <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </tile-{{ tile.ng_directive }}>
+            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}
