@@ -1,15 +1,12 @@
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import (
-    CommtrackConfig, CommtrackActionConfig, RequisitionActions,
-    CommtrackRequisitionConfig, SupplyPointCase, RequisitionCase
-)
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location
 import itertools
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from calendar import monthrange
 import math
 import bisect
@@ -286,12 +283,7 @@ def get_commtrack_location_id(user, domain):
 def get_case_wrapper(data):
     return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase,
     }.get(data.get('type'), CommCareCase)
-
-
-def wrap_commtrack_case(case_json):
-    return get_case_wrapper(case_json).wrap(case_json)
 
 
 def unicode_slug(text):
