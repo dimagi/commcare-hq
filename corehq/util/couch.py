@@ -31,12 +31,10 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
          domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
 
-        tb = traceback.format_exc()
-        raise Http404("Document {} of class {} not in domain {}!\n\n{}!".format(
+        raise Http404("Document {} of class {} not in domain {}!".format(
             doc_id,
             cls.__name__,
             domain,
-            tb
         ))
 
     try:
