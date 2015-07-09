@@ -129,7 +129,7 @@ class ProductAvailabilityData(EWSData):
                 sql_product.code: sql_product.name
                 for sql_product in SQLProduct.objects.filter(domain=self.domain)
             }
-            chart.is_rendered_as_email = self.config['is_rendered_as_email']
+            chart.is_rendered_as_email = self.config.get('is_rendered_as_email', False)
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1], 'name': r[2]}
