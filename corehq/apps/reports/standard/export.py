@@ -459,6 +459,21 @@ class FormExportInterface(DataExportInterface):
         return FormExportReport.get_url(domain=self.domain)
 
 
+class CaseExportInterface(DataExportInterface):
+    name = ugettext_noop('Export Cases')
+    slug = 'cases'
+
+    bulk_download_notice_text = ugettext_noop('Case Export')
+    edit_export_view_name = 'edit_custom_export_case'
+    export_schema = CaseExportSchema
+    export_type = 'case'
+
+    @property
+    def download_page_url_root(self):
+        raise NotImplementedError
+        # return FormExportReport.get_url(domain=self.domain)
+
+
 class FormExportReport(FormExportReportBase):
     base_template = 'reports/standard/export_download.html'
     report_template_path = 'reports/partials/download_export.html'
