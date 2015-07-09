@@ -26,7 +26,7 @@ def recalculate_domain_consumption(domain):
                 update_stock_state_for_transaction(filtered_transactions[0])
 
 
-@quickcache(['domain'])
+@quickcache(['domain'], timeout=30 * 60)
 def should_exclude_invalid_periods(domain):
     """
     Whether the domain's consumption calculation should exclude invalid periods
