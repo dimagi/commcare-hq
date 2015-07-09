@@ -426,21 +426,15 @@ def process_transfers(E, transfers):
             'section-id': 'stock',
         }
 
-        if transfers[0].action == const.RequisitionActions.RECEIPTS:
-            attr['src'] = transfers[0].case_id
-            sp = Location.get(transfers[0].location_id).linked_supply_point()
-            attr['dest'] = sp._id
+        if transfers[0].action in [
+            const.StockActions.RECEIPTS,
+            const.RequisitionActions.FULFILL
+        ]:
+            here, there = ('dest', 'src')
         else:
-            if transfers[0].action in [
-                const.StockActions.RECEIPTS,
-                const.RequisitionActions.FULFILL
-            ]:
-                here, there = ('dest', 'src')
-            else:
-                here, there = ('src', 'dest')
+            here, there = ('src', 'dest')
 
-            attr[here] = transfers[0].case_id
-            # there not supported yet
+        attr[here] = transfers[0].case_id
 
         if transfers[0].subaction:
             attr['type'] = transfers[0].subaction
