@@ -12,7 +12,7 @@ class Migration(SchemaMigration):
         db.create_table(u'fixtures_userfixturestatus', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('user_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('fixture_type', self.gf('django.db.models.fields.CharField')(max_length=50)),
+            ('fixture_type', self.gf('django.db.models.fields.PositiveSmallIntegerField')()),
             ('last_modified', self.gf('django.db.models.fields.DateTimeField')()),
         ))
         db.send_create_signal(u'fixtures', ['UserFixtureStatus'])
@@ -32,7 +32,7 @@ class Migration(SchemaMigration):
     models = {
         u'fixtures.userfixturestatus': {
             'Meta': {'unique_together': "(('user_id', 'fixture_type'),)", 'object_name': 'UserFixtureStatus'},
-            'fixture_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'fixture_type': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_modified': ('django.db.models.fields.DateTimeField', [], {}),
             'user_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})

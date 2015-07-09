@@ -526,9 +526,9 @@ class FixtureOwnership(Document):
 
 
 class UserFixtureType(object):
-    LOCATION = "LOCATION"
+    LOCATION = 1
     CHOICES = (
-        (LOCATION, "Location")
+        (LOCATION, "Location"),
     )
 
 
@@ -537,7 +537,7 @@ class UserFixtureStatus(models.Model):
     Keeps track of when a user needs to re-sync a fixture
     """
     user_id = models.CharField(max_length=100, db_index=True)
-    fixture_type = models.CharField(max_length=50)
+    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
     last_modified = models.DateTimeField()
 
     class Meta(object):
