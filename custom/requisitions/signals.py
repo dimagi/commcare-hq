@@ -5,6 +5,7 @@ from corehq.apps.commtrack.const import REQUISITION_CASE_TYPE, RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase, CommtrackConfig
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
+from custom.requisitions.utils import get_notification_recipients, get_notification_message
 from dimagi.utils import create_unique_filter
 
 
@@ -15,9 +16,6 @@ def send_notifications(xform, cases):
     # todo: this should be removed with requisitions. the only things that depend on it currently
     # are custom code
     # TODO: fix circular imports
-    from corehq.apps.commtrack.requisitions import get_notification_recipients
-    from corehq.apps.commtrack.requisitions import get_notification_message
-
     # for now the only notifications are for requisitions that were touched.
     # todo: if we wanted to include previously requested items we could do so
     # by either polling for other open requisitions here, or by ensuring that
