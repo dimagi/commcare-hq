@@ -30,7 +30,7 @@
 {% block reportcontent %}
     <div id="case-download">
         <a data-toggle="modal"
-           {% if use_bulk %}data-bind="click: requestBulkDownload"{% endif %}
+           {% if use_bulk %}data-bind="click: requestCaseDownload"{% endif %}
            href="#export-download-status"
            data-backdrop="static"
            data-formname="{{ export.name }}"
