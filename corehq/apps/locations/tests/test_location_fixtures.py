@@ -1,31 +1,34 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tests.util import delete_all_locations
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.users.models import CouchUser, CommCareUser
-from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations, fixture_last_modified
-from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
+from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
+from corehq.apps.fixtures.models import UserFixtureStatus
 
 
 class LocationFixturesTest(TestCase):
-    def setUp(self):
-        self.domain = "Erebor"
-        self.username = "Durins Bane"
-        self.location_type = LocationType(
-            domain=self.domain,
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "Erebor"
+        cls.username = "Durins Bane"
+        cls.location_type = LocationType(
+            domain=cls.domain,
             name="state",
             code="state",
         )
         password = "What have I got in my pocket"
-        self.user = CommCareUser.create(self.domain, self.username, password)
-        self.user.save()
+        cls.user = CommCareUser.create(cls.domain, cls.username, password)
+        cls.user.save()
+        cls.location_type.save()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         all_users = CouchUser.all()
         for user in all_users:
             user.delete()
-        SQLLocation.objects.all().delete()
-        LocationType.objects.all().delete()
+        delete_all_locations()
         UserFixtureStatus.objects.all().delete()
 
     def test_metadata(self):
@@ -47,13 +50,10 @@ class LocationFixturesTest(TestCase):
     def test_should_sync_locations_change_location_type(self):
         """
         When location_type gets changed, we should resync locations
-        Had to force update last_modified because it has the auto_now
-        property set
         """
-        self.location_type.save()
         yesterday = datetime.today() - timedelta(1)
         day_before_yesterday = yesterday - timedelta(1)
-        LocationType.objects.all().update(last_modified=day_before_yesterday)
+        LocationType.objects.all().update(last_modified=day_before_yesterday)  # Force update because of auto_now
         self.location_type = LocationType.objects.last()
 
         location = SQLLocation(
@@ -79,19 +79,3 @@ class LocationFixturesTest(TestCase):
         location_db = _location_footprint([location])
 
         self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
-
-    def test_fixture_last_modified(self):
-        """
-        Should return the epoch if there are no previous changes
-        """
-        then = datetime(1970, 1, 1)
-        now = datetime.now()
-        self.assertEqual(fixture_last_modified(self.user), then)
-
-        UserFixtureStatus(
-            user_id=self.user._id,
-            fixture_type=UserFixtureType.LOCATION,
-            last_modified=now,
-        ).save()
-
-        self.assertEqual(fixture_last_modified(self.user), now)

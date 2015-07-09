@@ -1,9 +1,8 @@
-from datetime import datetime
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
-from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
+from corehq.apps.fixtures.models import UserFixtureType
 
 
 class LocationSet(object):
@@ -30,14 +29,8 @@ class LocationSet(object):
 
 
 def fixture_last_modified(user):
-    """
-    Return when the fixture was last modified
-    """
-    try:
-        return UserFixtureStatus.objects.get(
-            user_id=user._id, fixture_type=UserFixtureType.LOCATION).last_modified
-    except UserFixtureStatus.DoesNotExist:
-        return datetime(1970, 1, 1)
+    """Return when the fixture was last modified"""
+    return user.fixture_status(UserFixtureType.LOCATION)
 
 
 def should_sync_locations(last_sync, location_db, user):

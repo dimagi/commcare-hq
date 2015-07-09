@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
@@ -533,12 +534,12 @@ class UserFixtureType(object):
 
 
 class UserFixtureStatus(models.Model):
-    """
-    Keeps track of when a user needs to re-sync a fixture
-    """
+    """Keeps track of when a user needs to re-sync a fixture"""
     user_id = models.CharField(max_length=100, db_index=True)
     fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
     last_modified = models.DateTimeField()
+
+    DEFAULT_LAST_MODIFIED = datetime.min
 
     class Meta(object):
         unique_together = ("user_id", "fixture_type")
