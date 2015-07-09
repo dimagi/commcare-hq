@@ -19,17 +19,24 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     try:
         unwrapped = cls.get_db().get(doc_id)
     except ResourceNotFound:
-        raise Http404()
+        raise Http404("Document {} of class {} not found!".format(doc_id, cls.__name__))
 
     if ((unwrapped.get('domain', None) != domain and
          domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
-        raise Http404()
+        raise Http404("Document {} of class {} not in domain {}!".format(
+            doc_id,
+            cls.__name__,
+            domain
+        ))
 
     try:
         return cls.wrap(unwrapped)
     except WrappingAttributeError:
-        raise Http404()
+        raise Http404("Issue wrapping document {} of class {}!".format(
+            doc_id,
+            cls.__name__
+        ))
 
 
 def categorize_bulk_save_errors(error):
