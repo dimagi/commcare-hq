@@ -359,18 +359,17 @@ def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node,
 
     def _txn(action, case_id, section_id, quantity):
         # warning: here be closures
-        quantity = Decimal(str(quantity)) if quantity is not None else None
-        data = {
-            'timestamp': timestamp,
-            'product_id': product_id,
-            'quantity': quantity,
-            'action': action,
-            'case_id': case_id,
-            'section_id': section_id,
-            'subaction': subaction if subaction and subaction != action else None
+        return StockTransactionHelper(
+            config=config,
+            timestamp=timestamp,
+            product_id=product_id,
+            quantity=Decimal(str(quantity)) if quantity is not None else None,
+            action=action,
+            case_id=case_id,
+            section_id=section_id,
+            subaction=subaction if subaction and subaction != action else None
             # note: no location id
-        }
-        return StockTransactionHelper(config=config, **data)
+        )
 
     def _yield_txns(section_id, quantity):
         # warning: here be closures
