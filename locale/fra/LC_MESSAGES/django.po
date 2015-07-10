@@ -3899,7 +3899,7 @@ msgstr "Afficher"
 #: corehq/apps/sms/templates/sms/list_backends.html:111
 #: corehq/apps/sms/templates/sms/list_forwarding_rules.html:34
 #: corehq/apps/sms/templates/sms/list_forwarding_rules.html:46
-#: corehq/apps/style/templates/style/base.html:205
+#: corehq/apps/style/templates/style/bootstrap3/base.html:205
 #: corehq/apps/users/templates/users/web_users.b3.html:347
 #: corehq/apps/users/templates/users/web_users.html:178
 #: corehq/apps/users/templates/users/partial/basic_info_form.html:83
@@ -5865,7 +5865,7 @@ msgid "Form successfully saved"
 msgstr "Formulaire enregistré"
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:51
-#: corehq/apps/style/templates/style/base.html:199
+#: corehq/apps/style/templates/style/bootstrap3/base.html:199
 msgid "Saving..."
 msgstr "En train d'enregistrer"
 
@@ -9603,7 +9603,7 @@ msgstr "Mot de passe oublié ?"
 #: corehq/apps/domain/templates/login_and_password/partials/login_form.html:50
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:81
 #: corehq/apps/prelogin/templates/prelogin/base.html:74
-#: corehq/apps/style/templates/style/base.html:95
+#: corehq/apps/style/templates/style/bootstrap3/base.html:95
 msgid "Sign In"
 msgstr "Connexion"
 
@@ -9912,7 +9912,7 @@ msgstr "Me permettre d'identifier les données sensibles"
 #: corehq/apps/reports/templates/reports/base_template.html:86
 #: corehq/apps/sms/forms.py:450
 #: corehq/apps/sms/templates/sms/backend_map.html:97
-#: corehq/apps/style/templates/style/base.html:198
+#: corehq/apps/style/templates/style/bootstrap3/base.html:198
 #: corehq/apps/userreports/templates/userreports/configurable_report.html:144
 #: corehq/apps/users/templates/users/web_users.b3.html:60
 #: custom/ewsghana/templates/ewsghana/partials/users_tables.html:102
@@ -9932,8 +9932,8 @@ msgid "Saving"
 msgstr "Enregistrement"
 
 #: corehq/apps/export/templates/export/customize_export.html:703
-#: corehq/apps/style/templates/style/base.html:201
-#: corehq/apps/style/templates/style/base.html:208
+#: corehq/apps/style/templates/style/bootstrap3/base.html:201
+#: corehq/apps/style/templates/style/bootstrap3/base.html:208
 msgid "Try Again"
 msgstr "Essayer de nouveau"
 
@@ -12042,7 +12042,7 @@ msgid "General Settings"
 msgstr "Paramètres généraux"
 
 #: corehq/apps/hqwebapp/models.py:992 corehq/apps/hqwebapp/models.py:1051
-#: corehq/apps/style/templates/style/base.html:207
+#: corehq/apps/style/templates/style/bootstrap3/base.html:207
 msgid "Deleted"
 msgstr "Supprimé"
 
@@ -12595,33 +12595,33 @@ msgid "This is a snapshot of "
 msgstr "Voici un instantané de "
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:152
-#: corehq/apps/style/templates/style/base.html:151
+#: corehq/apps/style/templates/style/bootstrap3/base.html:151
 msgid "Submit an Idea"
 msgstr "Soumettre une idée"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:154
-#: corehq/apps/style/templates/style/base.html:158
+#: corehq/apps/style/templates/style/bootstrap3/base.html:158
 msgid "Report an Issue"
 msgstr "Signaler un problème"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:155
-#: corehq/apps/style/templates/style/base.html:160
+#: corehq/apps/style/templates/style/bootstrap3/base.html:160
 msgid "https://wiki.commcarehq.org/display/commcarepublic/Home"
 msgstr "https://wiki.commcarehq.org/display/commcarepublic/Home"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:155
-#: corehq/apps/style/templates/style/base.html:164
+#: corehq/apps/style/templates/style/bootstrap3/base.html:164
 #: corehq/apps/users/views/mobile/users.py:700
 msgid "CommCare Help Site"
 msgstr "Site d'aide de CommCare"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:156
-#: corehq/apps/style/templates/style/base.html:166
+#: corehq/apps/style/templates/style/bootstrap3/base.html:166
 msgid "http://groups.google.com/group/commcare-users/subscribe"
 msgstr "http://groups.google.com/group/commcare-users/subscribe"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:156
-#: corehq/apps/style/templates/style/base.html:170
+#: corehq/apps/style/templates/style/bootstrap3/base.html:170
 msgid "Mailing List"
 msgstr "Liste de Distribution"
 
@@ -12630,32 +12630,32 @@ msgid "is copyright"
 msgstr "est protégé par droit d'auteur"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:164
-#: corehq/apps/style/templates/style/base.html:133
+#: corehq/apps/style/templates/style/bootstrap3/base.html:133
 msgid "http://www.commcarehq.org/home"
 msgstr "http://www.commcarehq.org/home"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:164
-#: corehq/apps/style/templates/style/base.html:133
+#: corehq/apps/style/templates/style/bootstrap3/base.html:133
 msgid "Learn more about CommCare HQ"
 msgstr "En savoir davantage sur CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:167
-#: corehq/apps/style/templates/style/base.html:136
+#: corehq/apps/style/templates/style/bootstrap3/base.html:136
 msgid "Read CommCare HQ's End User License Agreement"
 msgstr "Lire le Contrat de licence d'utilisateur final de CommCare HQ"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:169
-#: corehq/apps/style/templates/style/base.html:138
+#: corehq/apps/style/templates/style/bootstrap3/base.html:138
 msgid "http://www.dimagi.com/policy"
 msgstr "http://www.dimagi.com/policy"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:169
-#: corehq/apps/style/templates/style/base.html:138
+#: corehq/apps/style/templates/style/bootstrap3/base.html:138
 msgid "Privacy"
 msgstr "Confidentialité"
 
 #: corehq/apps/hqwebapp/templates/style/bootstrap2/base.html:171
-#: corehq/apps/style/templates/style/base.html:140
+#: corehq/apps/style/templates/style/bootstrap3/base.html:140
 msgid "Product Subscription Agreement"
 msgstr "Accord d'abonnement au produit"
 
@@ -21345,7 +21345,7 @@ msgstr "Sélectionnez un code pays"
 msgid "REQUIRED"
 msgstr "REQUIS"
 
-#: corehq/apps/style/templates/style/base.html:126
+#: corehq/apps/style/templates/style/bootstrap3/base.html:126
 msgid ""
 "\n"
 "                            <a href=\"http://www.commcarehq.org/\">CommCare "
@@ -21354,21 +21354,21 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/style/templates/style/base.html:200
+#: corehq/apps/style/templates/style/bootstrap3/base.html:200
 #: corehq/apps/users/templates/users/web_users.b3.html:69
 #: corehq/apps/users/templates/users/web_users.b3.html:265
 msgid "Saved"
 msgstr "Enregistré"
 
-#: corehq/apps/style/templates/style/base.html:202
+#: corehq/apps/style/templates/style/bootstrap3/base.html:202
 msgid "There was an error saving"
 msgstr "Une erreur est survenue au cours de l'enregistrement"
 
-#: corehq/apps/style/templates/style/base.html:206
+#: corehq/apps/style/templates/style/bootstrap3/base.html:206
 msgid "Deleting..."
 msgstr "En cours de suppression"
 
-#: corehq/apps/style/templates/style/base.html:209
+#: corehq/apps/style/templates/style/bootstrap3/base.html:209
 msgid "There was an error deleting"
 msgstr ""
 
