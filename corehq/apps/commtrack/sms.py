@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.models import StockTransaction, CommtrackConfig
+from corehq.apps.commtrack.models import StockTransactionHelper, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
@@ -120,7 +120,7 @@ class StockReportParser(object):
             # TODO: support single-action by product, as well as by action?
             self.verify_location_registration()
             self.case_id = self.location['case']._id
-            _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
+            _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransactionHelper))
         elif action and action.action in [
             RequisitionActions.REQUEST,
             RequisitionActions.FULFILL,
@@ -133,7 +133,7 @@ class StockReportParser(object):
 
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
             # multiple action stock report
-            _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransaction))
+            _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransactionHelper))
         else:
             # initial keyword not recognized; delegate to another handler
             return None
@@ -327,7 +327,7 @@ class StockAndReceiptParser(StockReportParser):
         self.verify_location_registration()
         self.case_id = self.location['case']._id
         action = self.C.action_by_keyword('soh')
-        _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
+        _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransactionHelper))
 
         return self.unpack_transactions(_tx)
 

@@ -5,7 +5,7 @@ import string
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_state
-from corehq.apps.commtrack.models import StockReportHelper, SQLProduct, StockTransaction as STrans
+from corehq.apps.commtrack.models import StockReportHelper, SQLProduct, StockTransactionHelper as STrans
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction

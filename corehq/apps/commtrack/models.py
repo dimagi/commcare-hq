@@ -360,7 +360,7 @@ class StockReportHelper(object):
         timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
         products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
         transactions = [t for prod_entry in products for t in
-                        StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
+                        StockTransactionHelper.from_xml(config, timestamp, tag, elem, prod_entry)]
 
         return cls(form, timestamp, tag, transactions)
 
@@ -401,7 +401,7 @@ class StockReportHelper(object):
             db_txn.save()
 
 
-class StockTransaction(object):
+class StockTransactionHelper(object):
     """
     Helper class for transactions
     """
