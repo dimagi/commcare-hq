@@ -67,6 +67,8 @@ submodules:
     # just so we always get latest master
     branches: []
   submodules/bootstrap3_crispy:
-    - b3-migration-prep # BB 7/10
+    branches:
+      - b3-migration-prep # BB 7/10
   submodules/ctable-src:
-    - b3-migration-prep # BB 7/10
+    branches:
+      - b3-migration-prep # BB 7/10
