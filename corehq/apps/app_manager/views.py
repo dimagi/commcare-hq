@@ -3015,7 +3015,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
-    @method_decorator(use_bootstrap3)
+    @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
