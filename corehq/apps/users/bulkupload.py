@@ -33,7 +33,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'location-sms-code',
+    'uncategorized_data', 'user_id', 'is_active', 'location-sms-code',
 ]) | required_headers
 
 
@@ -364,6 +364,20 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                 'username': raw_username(username) if username else None,
                 'row': row,
             }
+
+            is_active = row.get('is_active')
+            if type(is_active) in (unicode, str):
+                active_string = is_active.lower().strip()
+                if active_string in ('true', 'false'):
+                    is_active = active_string == 'true'
+                else:
+                    ret['rows'].append({
+                        'username': username,
+                        'row': row,
+                        'flag': _("'is_active' column can only contain 'true' or 'false'"),
+                    })
+                    continue
+
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
             elif not username and not user_id:
@@ -426,6 +440,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         user.language = language
                     if email:
                         user.email = email
+                    if is_active is not None:
+                        user.is_active = is_active
+
                     user.save()
                     if location_code:
                         loc = location_cache.get(location_code)
