@@ -5551,8 +5551,8 @@ msgstr "Vous devez spécifier un nom pour le nouveau projet"
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:7
 #: corehq/apps/domain/views.py:1583 corehq/apps/hqwebapp/models.py:1200
 #: corehq/apps/hqwebapp/models.py:1576
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:19
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:34
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:19
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:34
 msgid "CommCare Exchange"
 msgstr "CommCare Exchange"
 
@@ -7734,7 +7734,7 @@ msgstr "Désolé, vous n'avez pas accès à %(feature_name)s"
 #: corehq/apps/domain/views.py:265 corehq/apps/hqwebapp/models.py:1138
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/global_navigation_bar.html:91
 #: corehq/apps/ota/views.py:121
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:6
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:6
 msgid "Project Settings"
 msgstr "Paramètres de projet"
 
@@ -8678,9 +8678,9 @@ msgstr "Soumettre la demande"
 
 #: corehq/apps/domain/templates/domain/select.html:5
 #: corehq/apps/domain/templates/domain/select.html:13
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:9
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:9
 #: corehq/apps/settings/views.py:160
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:20
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:20
 msgid "My Projects"
 msgstr "Mes projets"
 
@@ -12927,16 +12927,16 @@ msgstr ""
 msgid "Upload your updated file."
 msgstr "Uploader votre fichier mis-à-jour."
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:5
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:14
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:5
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:14
 msgid "Back to My Projects"
 msgstr "Retour à Mes projets"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:14
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:14
 msgid "No Projects"
 msgstr "Pas de Projets"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:18
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:18
 msgid "New Project"
 msgstr "Nouveau projet"
 
@@ -13895,7 +13895,7 @@ msgid "Add an existing project to "
 msgstr "Ajouter un projet existant à "
 
 #: corehq/apps/orgs/templates/orgs/orgs_landing.html:204
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:29
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:29
 msgid "Add Project"
 msgstr "Ajouter un projet"
 

@@ -5483,8 +5483,8 @@ msgstr "Vous devez préciser un nom pour le nouveau projet"
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:7
 #: corehq/apps/domain/views.py:1583 corehq/apps/hqwebapp/models.py:1200
 #: corehq/apps/hqwebapp/models.py:1576
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:19
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:34
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:19
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:34
 #, fuzzy
 msgid "CommCare Exchange"
 msgstr "Version de CommCare"
@@ -7667,7 +7667,7 @@ msgstr ""
 #: corehq/apps/domain/views.py:265 corehq/apps/hqwebapp/models.py:1138
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/global_navigation_bar.html:91
 #: corehq/apps/ota/views.py:121
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:6
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:6
 #, fuzzy
 msgid "Project Settings"
 msgstr "Informations du projet"
@@ -8642,9 +8642,9 @@ msgstr "Envoyer l'historique"
 
 #: corehq/apps/domain/templates/domain/select.html:5
 #: corehq/apps/domain/templates/domain/select.html:13
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:9
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:9
 #: corehq/apps/settings/views.py:160
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:20
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:20
 #, fuzzy
 msgid "My Projects"
 msgstr "Informations du projet"
@@ -12843,18 +12843,18 @@ msgstr "Voulez-vous vraiment supprimer cette exportation ?"
 msgid "Upload your updated file."
 msgstr "Fichiers multimédias"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:5
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:14
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:5
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:14
 #, fuzzy
 msgid "Back to My Projects"
 msgstr "Informations du projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:14
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:14
 #, fuzzy
 msgid "No Projects"
 msgstr "Informations du projet"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/domain_list_dropdown.html:18
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/partials/domain_list_dropdown.html:18
 #, fuzzy
 msgid "New Project"
 msgstr "Créer un nouveau projet"
@@ -13858,7 +13858,7 @@ msgid "Add an existing project to "
 msgstr "Importer dans le projet existant"
 
 #: corehq/apps/orgs/templates/orgs/orgs_landing.html:204
-#: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:29
+#: corehq/apps/style/templates/style/bootstrap3/partials/domain_list_dropdown.html:29
 #, fuzzy
 msgid "Add Project"
 msgstr "Informations du projet"
