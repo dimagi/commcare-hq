@@ -16,7 +16,7 @@ class PublicSMSRateCalculatorForm(forms.Form):
         super(PublicSMSRateCalculatorForm, self).__init__(*args, **kwargs)
 
         isd_codes = []
-        for country_shortcode, country_name in COUNTRIES:
+        for country_shortcode, country_name in COUNTRIES.iteritems():
             country_isd_code = country_code_for_region(country_shortcode)
             isd_codes.append((country_isd_code, country_name))
 

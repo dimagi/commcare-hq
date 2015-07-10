@@ -15,6 +15,5 @@ def get_global_backends_by_class(backend_class):
 
 
 def country_name_from_isd_code_or_empty(isd_code):
-    countries = dict(COUNTRIES)
     cc = COUNTRY_CODE_TO_REGION_CODE.get(isd_code)
-    return force_unicode(countries.get(cc[0])) if cc else ''
+    return force_unicode(COUNTRIES.get(cc[0])) if cc else ''

@@ -59,5 +59,5 @@ class DomainPillow(HQPillow):
         if sub:
             doc_ret['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
-            doc_ret['deployment']['countries'].append(COUNTRIES[country])
+            doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
         return doc_ret

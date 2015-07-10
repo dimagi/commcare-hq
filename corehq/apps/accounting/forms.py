@@ -288,7 +288,7 @@ class BillingAccountContactForm(forms.ModelForm):
                 crispy.Field(
                     'country',
                     css_class="input-xlarge",
-                    data_countryname=dict(COUNTRIES).get(
+                    data_countryname=COUNTRIES.get(
                         args[0].get('country') if len(args) > 0
                         else account.billingcontactinfo.country,
                         ''

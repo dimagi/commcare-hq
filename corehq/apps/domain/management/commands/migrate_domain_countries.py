@@ -10,7 +10,7 @@ class Command(LabelCommand):
     def handle(self, *args, **options):
         print "Migrating Domain countries"
 
-        country_lookup = {x[1].lower(): x[0] for x in COUNTRIES}
+        country_lookup = {v.lower(): k for k, v in COUNTRIES.iteritems()}
         #Special cases
         country_lookup["USA"] = country_lookup["united states"]
         country_lookup["California"] = country_lookup["united states"]
