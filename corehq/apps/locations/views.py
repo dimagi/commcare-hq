@@ -59,6 +59,10 @@ class BaseLocationView(BaseDomainView):
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
+    @method_decorator(locations_access_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
+
     @property
     def main_context(self):
         context = super(BaseLocationView, self).main_context
