@@ -86,6 +86,6 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_case_list_icon_dynamic_width(self):
         """
-        In 2.23 and higher, case list icon column is sized based on actual image width.
+        In 2.22 and higher, case list icon column is sized based on actual image width.
         """
-        return self._require_minimum_version('2.23')
+        return self._require_minimum_version('2.22')
