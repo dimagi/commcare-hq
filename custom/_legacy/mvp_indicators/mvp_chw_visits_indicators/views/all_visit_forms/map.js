@@ -47,10 +47,7 @@ function(doc) {
             var age = get_age_from_dob(indicators.child_dob.value, visit_date);
             var not_immunized = false;
             if (age < 1825*MS_IN_DAY) {
-                indicator_entries['child under5'] = case_id;
                 if (age < 365*MS_IN_DAY) {
-                    indicator_entries['child under1'] = case_id;
-
                     if (indicators.vaccination_status && indicators.vaccination_status.value) {
                         var is_immunized = (indicators.vaccination_status.value === 'yes');
                         if (is_immunized && indicators.vaccination_status_6weeks) {
@@ -135,21 +132,29 @@ function(doc) {
                     if (not_immunized) {
                         indicator_entries['child under1 not_immunized'] = case_id;
                     }
-
-                    if (age < 180*MS_IN_DAY) {
-                        indicator_entries['child under6mo'] = case_id;
-                        if (indicators.exclusive_breastfeeding
-                            && indicators.exclusive_breastfeeding.value === 'yes') {
-                            indicator_entries['child under6mo_ex_breast'] = case_id;
+                    if (isChildWelfareForm(doc)) {
+                        indicator_entries['child under1_welfare'] = case_id;
+                    }
+                    if (isChildVisitForm(doc)) {
+                        indicator_entries['child under1'] = case_id;
+                        if (age < 180*MS_IN_DAY) {
+                            indicator_entries['child under6mo'] = case_id;
+                            if (indicators.exclusive_breastfeeding
+                                && indicators.exclusive_breastfeeding.value === 'yes') {
+                                indicator_entries['child under6mo_ex_breast'] = case_id;
+                            }
+                        }
+                        if (age < 29*MS_IN_DAY) {
+                            // This under5 child is also neonate
+                            indicator_entries["child neonate"] = case_id;
+                        }
+                        if (age < 8*MS_IN_DAY) {
+                            indicator_entries["child 7days"] = case_id;
                         }
                     }
-                    if (age < 29*MS_IN_DAY) {
-                        // This under5 child is also neonate
-                        indicator_entries["child neonate"] = case_id;
-                    }
-                    if (age < 8*MS_IN_DAY) {
-                        indicator_entries["child 7days"] = case_id;
-                    }
+                }
+                if (isChildVisitForm(doc)) {
+                    indicator_entries['child under5'] = case_id;
                 }
             }
         }
@@ -181,9 +186,10 @@ function(doc) {
 
         if (isHomeVisitForm(doc)) {
             indicator_entries['household'] = case_id;
-            if (indicators.num_bednets_observed && indicators.num_bednets_observed.value) {
+            if (indicators.num_bednets_observed && indicators.num_bednets_observed.value &&
+                indicators.num_sleeping_site && indicators.num_sleeping_site.value) {
                 indicator_entries['household bednet'] = case_id;
-                if (indicators.num_bednets_observed.value > 0) {
+                if (indicators.num_bednets_observed.value >= indicators.num_sleeping_site.value) {
                     indicator_entries['household atleastonebednet'] = case_id;
                 }
             }

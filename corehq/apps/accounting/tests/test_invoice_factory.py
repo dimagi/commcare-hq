@@ -1,7 +1,12 @@
 import datetime
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.models import DefaultProductPlan, BillingAccount, Subscription, SubscriptionAdjustment
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    BillingAccount,
+    Subscription,
+    SubscriptionAdjustment,
+)
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils import get_previous_month_date_range
 
@@ -107,9 +112,3 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(len(subscriptions), 0)
         community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 1)
-
-
-
-
-
-

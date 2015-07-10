@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta, datetime
 from django.conf import settings
 
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
@@ -399,9 +400,16 @@ class DataExportInterface(GenericReportView):
     def template_context(self):
         context = super(DataExportInterface, self).template_context
         context.update({
+            'bulk_download_notice_text': ugettext_noop('Form Export'),
+            'bulk_export_format': self.bulk_export_format,
             'saved_exports': self.saved_exports,
+            'download_page_url_root': FormExportReport.get_url(domain=self.domain),
         })
         return context
+
+    @property
+    def bulk_export_format(self):
+        return Format.XLS_2007
 
     @property
     @memoized
@@ -431,11 +439,38 @@ class FormExportReport(FormExportReportBase):
     @property
     def template_context(self):
         context = super(FormExportReport, self).template_context
-        export_id = self.request.GET.get('export_id')
+        # TODO - seems redundant, cleanup at some point
         context.update({
-            'export': SavedExportSchema.get(export_id),
-            'additional_params': 'export_id=%(export_id)s' % {
-                'export_id': export_id,
-            },
+            'export': self.exports[0],
+            'exports': self.exports,
+            "use_bulk": len(self.export_ids) > 1,
+            'additional_params': mark_safe(
+                '&'.join('export_id=%(export_id)s' % {
+                    'export_id': export_id,
+                } for export_id in self.export_ids)
+            ),
+            'selected_exports_data': self.selected_exports_data,
+            'bulk_download_notice_text': ugettext_noop('Form Exports'),
         })
         return context
+
+    @property
+    def export_ids(self):
+        return self.request.GET.getlist('export_id')
+
+    @property
+    def exports(self):
+        return [
+            SavedExportSchema.get(export_id) for export_id in self.export_ids
+        ]
+
+    @property
+    def selected_exports_data(self):
+        return {
+            export._id: {
+                'formname': export.name,
+                'modulename': export.name,
+                'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+                'exporttype': 'form',
+            } for export in self.exports
+        }

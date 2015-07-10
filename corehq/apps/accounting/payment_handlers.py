@@ -154,6 +154,7 @@ class BaseStripePaymentHandler(object):
             'success': True,
             'card': card,
             'wasSaved': save_card,
+            'changedBalance': amount,
         }
 
     def get_email_context(self):
