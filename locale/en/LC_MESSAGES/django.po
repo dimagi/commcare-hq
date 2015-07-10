@@ -11868,7 +11868,7 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_paginated_crud.html:68
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/base_paginated_crud.html:68
 #: corehq/apps/products/templates/products/manage/products.html:84
 #: corehq/apps/programs/templates/programs/manage/program.html:55
 #: corehq/apps/sms/templates/sms/chat_contacts.html:61
