@@ -10,7 +10,6 @@ class MVPExpressionSpec(JsonObject):
     type = TypeProperty('mvp_expression')
 
     def _treatment_place_name(self, form, doc):
-        death_place = ""
         treatment_place_name = ""
         if form == NEONATE_FORM:
             try:
