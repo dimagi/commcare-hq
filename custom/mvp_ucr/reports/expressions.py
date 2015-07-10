@@ -65,61 +65,62 @@ class MVPExpressionSpec(JsonObject):
     def _death_cause(self, form, doc):
         death_cause = ""
         if form == NEONATE_FORM:
-            if doc.has_key('birth_asphyxia') and int(doc['birth_asphyxia']) == 1:
+            if 'birth_asphyxia' in doc and int(doc['birth_asphyxia']) == 1:
                 death_cause += "Birth asphyxia <br>"
-            if doc.has_key('birth_trauma') and int(doc['birth_trauma']) == 1:
+            if 'birth_trauma' in doc and int(doc['birth_trauma']) == 1:
                 death_cause += "Birth trauma  <br>"
-            if doc.has_key('congenital_abnormality') and int(doc['congenital_abnormality']) == 1:
+            if 'congenital_abnormality' in doc and int(doc['congenital_abnormality']) == 1:
                 death_cause += "Congenital abnormality <br>"
-            if doc.has_key('diarrhea_dysentery') and int(doc['diarrhea_dysentery']) == 1:
+            if 'diarrhea_dysentery' in doc and int(doc['diarrhea_dysentery']) == 1:
                 death_cause += "Diarrhea/Dysentery <br>"
-            if doc.has_key('low_birthweight_sev_malnutr_or_preterm') and int(doc['low_birthweight_sev_malnutr_or_preterm']) == 1:
-                death_cause += "Low birthweight/Severe malnutrition/Preterm <br>"
-            if doc.has_key('pneumonia_ari') and int(doc['pneumonia_ari']) == 1:
+            if 'low_birthweight_sev_malnutr_or_preterm' in doc and \
+               int(doc['low_birthweight_sev_malnutr_or_preterm']) == 1:
+                    death_cause += "Low birthweight/Severe malnutrition/Preterm <br>"
+            if 'pneumonia_ari' in doc and int(doc['pneumonia_ari']) == 1:
                 death_cause += "Pneumonia/ari <br>"
-            if doc.has_key('tetanus') and int(doc['tetanus']) == 1:
+            if 'tetanus' in doc and int(doc['tetanus']) == 1:
                 death_cause += "Tetanus <br>"
             if len(death_cause) < 1:
                 death_cause += "Unknown"
 
         if form == CHILD_FORM:
-            if doc.has_key('Accident') and int(doc['Accident']) == 1:
+            if 'Accident' in doc and int(doc['Accident']) == 1:
                 death_cause += "Child Accident <br>"
-            if doc.has_key('Diarrhea_Dysentery_Any') and int(doc['Diarrhea_Dysentery_Any']) == 1:
+            if 'Diarrhea_Dysentery_Any' in doc and int(doc['Diarrhea_Dysentery_Any']) == 1:
                 death_cause += "Any Diarrhea/Dysentry <br>"
-            if doc.has_key('Diarrhea_Dysenter_Persistent') and int(doc['Diarrhea_Dysenter_Persistent']) == 1:
+            if 'Diarrhea_Dysenter_Persistent' in doc and int(doc['Diarrhea_Dysenter_Persistent']) == 1:
                 death_cause += "Persistent Diarrhea_Dysentry <br>"
-            if doc.has_key('Diarrhea_Acute') and int(doc['Diarrhea_Acute']) == 1:
+            if 'Diarrhea_Acute' in doc and int(doc['Diarrhea_Acute']) == 1:
                 death_cause += "Acute Diarrhea <br>"
-            if doc.has_key('Dysentery_Acute') and int(doc['Dysentery_Acute']) == 1:
+            if 'Dysentery_Acute' in doc and int(doc['Dysentery_Acute']) == 1:
                 death_cause += "Acute Dysentry <br>"
-            if doc.has_key('Malaria') and int(doc['Malaria']) == 1:
+            if 'Malaria' in doc and int(doc['Malaria']) == 1:
                 death_cause += "Malaria <br>"
-            if doc.has_key('Malnutrition') and int(doc['Malnutrition']) == 1:
+            if 'Malnutrition' in doc and int(doc['Malnutrition']) == 1:
                 death_cause += "Malnutrition <br>"
-            if doc.has_key('Measles') and int(doc['Measles']) == 1:
+            if 'Measles' in doc and int(doc['Measles']) == 1:
                 death_cause += "Measles <br>"
-            if doc.has_key('Meningitis') and int(doc['Meningitis']) == 1:
+            if 'Meningitis' in doc and int(doc['Meningitis']) == 1:
                 death_cause += "Meningitis <br>"
-            if doc.has_key('Pneumonia_ARI') and int(doc['Pneumonia_ARI']) == 1:
+            if 'Pneumonia_ARI' in doc and int(doc['Pneumonia_ARI']) == 1:
                 death_cause += "Pneumonia/ari <br>"
             if len(death_cause) < 1:
                 death_cause += "Unknown"
 
         if form == ADULT_FORM:
-            if doc.has_key('Abortion') and int(doc['Abortion']) == 1:
+            if 'Abortion' in doc and int(doc['Abortion']) == 1:
                 death_cause += "Abortion <br>"
-            if doc.has_key('Accident') and int(doc['Accident']) == 1:
+            if 'Accident' in doc and int(doc['Accident']) == 1:
                 death_cause += "Accident <br>"
-            if doc.has_key('Antepartum_Haemorrhage') and int(doc['Antepartum_Haemorrhage']) == 1:
+            if 'Antepartum_Haemorrhage' in doc and int(doc['Antepartum_Haemorrhage']) == 1:
                 death_cause += "Antepartum Haemorrhage <br>"
-            if doc.has_key('Postpartum_Haemorrhage') and int(doc['Postpartum_Haemorrhage']) == 1:
+            if 'Postpartum_Haemorrhage' in doc and int(doc['Postpartum_Haemorrhage']) == 1:
                 death_cause += "Postpartum Haemorrhage <br>"
-            if doc.has_key('Eclampsia') and int(doc['Eclampsia']) == 1:
+            if 'Eclampsia' in doc and int(doc['Eclampsia']) == 1:
                 death_cause += "Eclampsia <br>"
-            if doc.has_key('Obstructed_Labour') and int(doc['Obstructed_Labour']) == 1:
+            if 'Obstructed_Labour' in doc and int(doc['Obstructed_Labour']) == 1:
                 death_cause += "Obstructed Labour <br>"
-            if doc.has_key('Puereral_Sepsis') and int(doc['Puereral_Sepsis']) == 1:
+            if 'Puereral_Sepsis' in doc and int(doc['Puereral_Sepsis']) == 1:
                 death_cause += "Peural Sepsis <br>"
             if len(death_cause) < 1:
                 death_cause += "Unknown"
@@ -141,22 +142,22 @@ class MVPExpressionSpec(JsonObject):
                 parent_node = False
 
         if parent_node:
-            if parent_node.has_key('q1006_1') and int(parent_node['q1006_1']) == 1:
+            if 'q1006_1' in parent_node and int(parent_node['q1006_1']) == 1:
                 treatment_providers += "CHW at home <br>"
-            if parent_node.has_key('q1006_2') and int(parent_node['q1006_2']) == 1:
+            if 'q1006_2' in parent_node and int(parent_node['q1006_2']) == 1:
                 treatment_providers += "Friend/Relative at home <br>"
-            if parent_node.has_key('q1006_3') and int(parent_node['q1006_3']) == 1:
+            if 'q1006_3' in parent_node and int(parent_node['q1006_3']) == 1:
                 treatment_providers += "Traditional healer <br>"
-            if parent_node.has_key('q1006_4') and int(parent_node['q1006_4']) == 1:
+            if 'q1006_4' in parent_node and int(parent_node['q1006_4']) == 1:
                 treatment_providers += "Health clinic/Post <br>"
-            if parent_node.has_key('q1006_5') and int(parent_node['q1006_5']) == 1:
+            if 'q1006_5' in parent_node and int(parent_node['q1006_5']) == 1:
                 treatment_providers += "Hospital <br>"
-            if parent_node.has_key('q1006_6') and int(parent_node['q1006_6']) == 1:
+            if 'q1006_6' in parent_node and int(parent_node['q1006_6']) == 1:
                 treatment_providers += "Pharmacy/drug seller/store <br>"
-            if parent_node.has_key('q1006_7') and int(parent_node['q1006_7']) == 1:
-                if parent_node.has_key('q1006_96'):
+            if 'q1006_7' in parent_node and int(parent_node['q1006_7']) == 1:
+                if 'q1006_96' in parent_node:
                     treatment_providers += parent_node['q1006_96']
-                if parent_node.has_key('q1006_7_96'):
+                if 'q1006_7_96' in parent_node:
                     treatment_providers += parent_node['q1006_7_96']
 
         if form == ADULT_FORM:
