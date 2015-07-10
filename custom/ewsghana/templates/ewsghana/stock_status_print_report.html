@@ -18,10 +18,22 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function() {
-            setTimeout(function() {
-                $('.hq-loading').hide();
-                window.print();
-            }, 4000);
+            if (!document.hidden) {
+                setTimeout(function() {
+                    $('.hq-loading').hide();
+                    window.print();
+                }, 4000);
+            } else {
+                $(document).one('visibilitychange', function() {
+                    if (!document.hidden) {
+                        setTimeout(function() {
+                            $('.hq-loading').hide();
+                            window.print();
+                        }, 4000);
+                    }
+                });
+            }
+
         });
     </script>
 {% endblock %}
