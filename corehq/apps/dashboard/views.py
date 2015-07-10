@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
@@ -18,6 +19,7 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.style.decorators import use_bootstrap3
 from django_prbac.utils import has_privilege
 
 
@@ -45,8 +47,8 @@ def dashboard_default(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
+    @method_decorator(use_bootstrap3)
     def dispatch(self, request, *args, **kwargs):
-        request.preview_bootstrap3 = True
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
