@@ -78,7 +78,8 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 
 
 def enable_commtrack_previews(domain):
-    COMMTRACK.set(domain.name, True, NAMESPACE_DOMAIN)
+    for toggle_class in [COMMTRACK, LOCATIONS]:
+        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
 
 
 def commtrackify(domain_name, checked):
@@ -125,6 +126,16 @@ CALLCENTER = FeaturePreview(
     save_fn=enable_callcenter,
 )
 
+
+LOCATIONS = FeaturePreview(
+    slug='locations',
+    label=_("Locations"),
+    description=_(
+        'Enable locations for this project. This must be enabled for '
+        'CommCare Supply to work properly'
+    ),
+    help_link='https://help.commcarehq.org/display/commtrack/Locations',
+)
 
 MODULE_FILTER = FeaturePreview(
     slug='module_filter',
