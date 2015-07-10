@@ -18,7 +18,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
     compute_daily_consumption)
-from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
+from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.commtrack import const
@@ -372,14 +372,14 @@ class StockReportHelper(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(
+        report = StockReport.objects.create(
             form_id=self.form_id,
             date=self.timestamp,
             type=self.tag,
             domain=self._form.domain,
         )
         for txn in self.transactions:
-            db_txn = DbStockTransaction(
+            db_txn = StockTransaction(
                 report=report,
                 case_id=txn.case_id,
                 section_id=txn.section_id,
@@ -925,7 +925,7 @@ def sync_location_supply_point(loc):
             pass
 
 
-@receiver(post_save, sender=DbStockTransaction)
+@receiver(post_save, sender=StockTransaction)
 def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
     update_stock_state_for_transaction(instance)
 
@@ -987,9 +987,9 @@ def update_stock_state_for_transaction(instance):
     state.save()
 
 
-@receiver(post_delete, sender=DbStockTransaction)
+@receiver(post_delete, sender=StockTransaction)
 def stock_state_deleted(sender, instance, *args, **kwargs):
-    qs = DbStockTransaction.objects.filter(
+    qs = StockTransaction.objects.filter(
         section_id=instance.section_id,
         case_id=instance.case_id,
         product_id=instance.product_id,
@@ -1034,7 +1034,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    DbStockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform._id).delete()
 
 
 @receiver(xform_unarchived)
