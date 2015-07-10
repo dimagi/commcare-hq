@@ -682,7 +682,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
-        choices=COUNTRIES.items(),
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8')),
         required=False,
     )
     commtrack_domain = ChoiceField(
