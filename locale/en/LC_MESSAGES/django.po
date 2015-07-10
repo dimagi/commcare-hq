@@ -11860,11 +11860,11 @@ msgid ""
 "                                "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:23
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/base_mobile.html:23
 msgid "CommCare HQ Mobile is Copyright"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:25
+#: corehq/apps/hqwebapp/templates/style/bootstrap2/base_mobile.html:25
 msgid "Logout"
 msgstr ""
 
