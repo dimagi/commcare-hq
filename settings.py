@@ -1299,6 +1299,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', 'mvp_ucr', 'reports', 'data_sources', 'va_datasource.json'),
 ]
 
 
@@ -1353,6 +1354,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('mvp_expression', 'custom.mvp_ucr.reports.expressions.mvp_expression'),
 ]
 
 CUSTOM_MODULES = [
