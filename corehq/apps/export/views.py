@@ -114,8 +114,9 @@ class BaseCreateCustomExportView(BaseExportView):
         return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export created!"))
+        return export_id
 
     def get(self, request, *args, **kwargs):
         # just copying what was in the old django view here. don't want to mess too much with exports just yet.
@@ -194,8 +195,9 @@ class BaseModifyCustomExportView(BaseExportView):
 class BaseEditCustomExportView(BaseModifyCustomExportView):
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export saved!"))
+        return export_id
 
 
 class EditCustomFormExportView(BaseEditCustomExportView):
