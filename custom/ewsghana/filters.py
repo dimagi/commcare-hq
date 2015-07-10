@@ -155,7 +155,10 @@ class EWSDateFilter(BaseReportFilter):
         for idx, val in enumerate(fridays):
             try:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), fridays[idx + 1].strftime("%Y-%m-%d"))
-                text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(fridays[idx + 1]))
+                text = '{0} - {1}'.format(
+                    ews_date_format(val),
+                    ews_date_format(fridays[idx + 1] - relativedelta(days=1))
+                )
             except IndexError:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
                 text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(now))

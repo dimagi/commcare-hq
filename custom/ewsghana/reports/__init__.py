@@ -375,8 +375,12 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rendered_content(self):
-        locations = get_descendants(self.config['location_id'])
-        products = self.unique_products(locations, all=True)
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        if location.location_type.administrative:
+            locations = get_descendants(self.config['location_id'])
+            products = self.unique_products(locations, all=True)
+        else:
+            products = location.products
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []
         if 'report_type' in self.config:
@@ -404,7 +408,6 @@ class ProductSelectionPane(EWSData):
 
         for _, product_dict in result.iteritems():
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
-
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
             'is_rendered_as_email': self.config.get('is_rendered_as_email', False),
