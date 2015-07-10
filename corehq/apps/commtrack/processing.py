@@ -6,7 +6,7 @@ from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack.exceptions import MissingProductId
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, NewStockReport
+from corehq.apps.commtrack.models import CommtrackConfig, StockReportHelper
 from dimagi.utils.couch.loosechange import map_reduce
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
@@ -114,4 +114,4 @@ def unpack_commtrack(xform, config):
                     yield e
 
     for elem in commtrack_nodes(xml):
-        yield NewStockReport.from_xml(xform, config, elem)
+        yield StockReportHelper.from_xml(xform, config, elem)

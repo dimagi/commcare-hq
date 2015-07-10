@@ -340,7 +340,8 @@ class StringDataSchema(DocumentSchema):
     def wrap(cls, data):
         raise NotImplementedError()
 
-class NewStockReport(object):
+
+class StockReportHelper(object):
     """
     Intermediate class for dealing with stock XML
     """
