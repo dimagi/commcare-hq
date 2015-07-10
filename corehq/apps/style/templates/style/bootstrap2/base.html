@@ -18,11 +18,7 @@
                       media="all"
                       href="{% static 'style/less/font-commcare.less' %}" />
         {% endcompress %}
-        {% compress css %}
-        {% block stylesheets %}
-        {% endblock %}
-        {% endcompress %}
-        {% block uncompressed-stylesheets %}{% endblock %}
+        {% block stylesheets %}{% endblock %}
 
         {# this should eventually be moved to the end of the page #}
         {% if formdesigner %}
