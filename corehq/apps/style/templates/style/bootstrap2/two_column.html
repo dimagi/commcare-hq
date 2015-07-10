@@ -1,0 +1,55 @@
+{% extends 'style/bootstrap2/base.html' %}
+{% load menu_tags %}
+{% load hq_shared_tags %}
+
+{# stuff to override old styles -- remove when everything is migrated over #}
+{% block oldstyle_tag %}{% endblock %}
+{% block oldstyle_imports %}{% endblock %}
+{% block oldstyle_hack_start %}{% endblock %}
+{% block oldstyle_hack_end %}{% endblock %}
+
+{% block layout_style %}hq-double-col{% endblock %}
+
+{% block keyboard_shortcuts %}{{ block.super }}
+    <script>
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+        function gen_sidebar_elements() {
+            return $('.sidebar .nav-list a');
+        }
+        var sidebar_navigator = new KeyboardNavigator();
+        sidebar_navigator.init({
+            name: 'sidebar',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: gen_sidebar_elements,
+            reset_index: false
+        });
+
+        function gen_tab_elements() {
+            return $("[data-toggle='tab']");
+        }
+        var tab_navigator = new KeyboardNavigator();
+        tab_navigator.init({
+            name: 'tabs',
+            nav_key: nav_key,
+            action_key: 'enter',
+            element_list_generator: gen_tab_elements,
+            reset_index: false
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="row-fluid">
+        <div class="sidebar span2">
+            {% block sidebar %}
+            {% format_sidebar %}
+            {% endblock %}
+        </div>
+        <div class="hq-content span10 {% block column_style %}{% endblock %} ">
+            {% block main_column %}{% endblock %}
+        </div>
+    </div>
+{% endblock content %}
