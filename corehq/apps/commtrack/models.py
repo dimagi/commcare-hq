@@ -365,6 +365,9 @@ class NewStockReport(object):
 
     @transaction.atomic
     def create_models(self, domain=None):
+        """
+        Save stock report and stock transaction models to the database.
+        """
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -1060,6 +1063,12 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
+    # todo: in the worst case, this function makes
+    # - three calls to couch (for the case, domain, and commtrack config)
+    # - three postgres queries (product, location, and state)
+    # - one postgres write (to save the state)
+    # and that doesn't even include the consumption calc, which can do a whole
+    # bunch more work and hit the database.
     try:
         domain_name = instance.domain
     except AttributeError:
@@ -1105,7 +1114,8 @@ def update_stock_state_for_transaction(instance):
         consumption_calc
     )
     # so you don't have to look it up again in the signal receivers
-    state.domain = domain
+    if domain:
+        state.domain = domain.name
     state.save()
 
 
@@ -1162,8 +1172,9 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    for case in process_stock(xform):
-        case.save()
+    result = process_stock(xform)
+    result.commit()
+    CommCareCase.get_db().bulk_save(result.relevant_cases)
 
 
 # import signals
