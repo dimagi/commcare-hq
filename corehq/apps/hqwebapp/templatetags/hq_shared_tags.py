@@ -158,7 +158,7 @@ def domains_for_user(context, request, selected_domain=None):
     template = {
         style_utils.BOOTSTRAP_2: 'hqwebapp/partials/domain_list_dropdown.html',
         style_utils.BOOTSTRAP_3: 'style/includes/domain_list_dropdown.html',
-    }[style_utils.bootstrap_version(request)]
+    }[style_utils.get_bootstrap_version()]
     return mark_safe(render_to_string(template, ctxt))
 
 

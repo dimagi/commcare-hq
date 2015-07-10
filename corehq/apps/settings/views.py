@@ -110,7 +110,7 @@ class MyAccountSettingsView(BaseMyAccountView):
         template = {
             style_utils.BOOTSTRAP_2: 'settings/edit_my_account.b2.html',
             style_utils.BOOTSTRAP_3: 'settings/edit_my_account.html',
-        }[style_utils.bootstrap_version(self.request)]
+        }[style_utils.get_bootstrap_version()]
         return template
 
     @property

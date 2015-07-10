@@ -69,7 +69,7 @@ class MainMenuNode(template.Node):
         template = {
             style_utils.BOOTSTRAP_2: 'hqwebapp/partials/main_menu.html',
             style_utils.BOOTSTRAP_3: 'style/includes/menu_main.html',
-        }[style_utils.bootstrap_version(request)]
+        }[style_utils.get_bootstrap_version()]
         return mark_safe(render_to_string(template, {
             'tabs': visible_tabs,
         }))
@@ -141,7 +141,7 @@ def format_sidebar(context):
     template = {
         style_utils.BOOTSTRAP_2: 'hqwebapp/partials/sidebar.html',
         style_utils.BOOTSTRAP_3: 'style/includes/navigation_left_sidebar.html',
-    }[style_utils.bootstrap_version(request)]
+    }[style_utils.get_bootstrap_version()]
     return mark_safe(render_to_string(template, {
         'sections': sections
     }))
