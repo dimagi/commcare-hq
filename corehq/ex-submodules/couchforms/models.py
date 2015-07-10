@@ -29,7 +29,6 @@ from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
-from .exceptions import BadOperationException
 
 
 def doc_types():
@@ -340,7 +339,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def archive(self, user=None):
         if self.is_archived:
-            raise BadOperationException("This form is already archived")
+            return
         self.doc_type = "XFormArchived"
         self.history.append(XFormOperation(
             user=user,
@@ -351,7 +350,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def unarchive(self, user=None):
         if not self.is_archived:
-            raise BadOperationException("This form is already restored or never archived")
+            return
         self.doc_type = "XFormInstance"
         self.history.append(XFormOperation(
             user=user,

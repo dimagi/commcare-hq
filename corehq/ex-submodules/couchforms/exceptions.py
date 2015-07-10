@@ -11,7 +11,3 @@ class XMLSyntaxError(CouchFormException):
 
 class DuplicateError(CouchFormException):
     pass
-
-
-class BadOperationException(CouchFormException):
-    pass
