@@ -9,8 +9,10 @@ from corehq.apps.fixtures.models import UserFixtureStatus
 
 
 class LocationFixturesTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
+        cls._delete_everything()
         cls.domain = "Erebor"
         cls.username = "Durins Bane"
         cls.location_type = LocationType(
@@ -25,6 +27,10 @@ class LocationFixturesTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls._delete_everything()
+
+    @classmethod
+    def _delete_everything(cls):
         all_users = CouchUser.all()
         for user in all_users:
             user.delete()

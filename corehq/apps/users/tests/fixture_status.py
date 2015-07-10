@@ -11,10 +11,7 @@ from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
 class TestFixtureStatus(TestCase):
 
     def setUp(self):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
-        User.objects.all().delete()
+        self._delete_everything()
         self.username = "joe@my-domain.commcarehq.org"
         password = "password"
         self.domain = Domain(name='my-domain')
@@ -23,6 +20,13 @@ class TestFixtureStatus(TestCase):
         self.couch_user.save()
 
     def tearDown(self):
+        self._delete_everything()
+
+    def _delete_everything(self):
+        all_users = CouchUser.all()
+        for user in all_users:
+            user.delete()
+        User.objects.all().delete()
         UserFixtureStatus.objects.all().delete()
 
     def test_get_statuses(self):
