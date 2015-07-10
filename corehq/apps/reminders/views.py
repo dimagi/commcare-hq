@@ -154,7 +154,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
-    return render(request, "reminders/partial/list_reminders.html", {
+    return render(request, "reminders/list_broadcasts.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
