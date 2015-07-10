@@ -20,14 +20,14 @@
                                 <ul class="dropdown-menu">
                                 {% for second_sub in sub.submenu %}
                                     {% with second_sub as submenu %}
-                                        {% include 'hqwebapp/partials/main_submenu.html' %}
+                                        {% include 'style/bootstrap2/partials/menu_submenu.html' %}
                                     {% endwith %}
                                 {% endfor %}
                                 </ul>
                             </li>
                         {% else %}
                             {% with sub as submenu %}
-                            {% include 'hqwebapp/partials/main_submenu.html' %}
+                            {% include 'hqwebapp/bootstrap2/partials/menu_submenu.html' %}
                             {% endwith %}
                         {% endif %}
                     {% endfor %}
