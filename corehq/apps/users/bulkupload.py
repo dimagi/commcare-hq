@@ -18,6 +18,7 @@ from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
 
 from .forms import CommCareAccountForm
 from .models import CommCareUser, CouchUser
@@ -538,6 +539,7 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
             'username': user.raw_username,
             'language': user.language,
             'user_id': user._id,
+            'is_active': str(user.is_active),
             'location-sms-code': location_cache.get(user.location_id),
         }
 
@@ -552,7 +554,7 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'location-sms-code'
+        'language', 'user_id', 'is_active', 'location-sms-code'
     ]
     user_data_fields = [f.slug for f in user_data_model.fields]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -629,7 +631,7 @@ def dump_users_and_groups(response, domain):
 
     user_headers, user_rows = parse_users(
         group_memoizer,
-        CommCareUser.by_domain(domain),
+        get_all_commcare_users_by_domain(domain),
         user_data_model,
         location_cache
     )
