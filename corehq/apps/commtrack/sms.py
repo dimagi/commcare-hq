@@ -156,8 +156,9 @@ class StockReportParser(object):
                         domain=self.domain.name,
                         location_id=self.location['location']._id,
                         case_id=self.case_id,
-                        product=self.product_from_code(prod_code),
-                        action_def=action,
+                        product_id=self.product_from_code(prod_code).get_id,
+                        action=action.action,
+                        subaction=action.subaction,
                         quantity=0,
                     )
 
@@ -185,8 +186,9 @@ class StockReportParser(object):
                         domain=self.domain.name,
                         location_id=self.location['location']._id,
                         case_id=self.case_id,
-                        product=p,
-                        action_def=action,
+                        product_id=p.get_id,
+                        action=action.action,
+                        subaction=action.subaction,
                         quantity=value,
                     )
                 products = []
@@ -241,8 +243,9 @@ class StockReportParser(object):
                     domain=self.domain.name,
                     location_id=self.location['location']._id,
                     case_id=self.case_id,
-                    product=product,
-                    action_def=action,
+                    product_id=product.get_id,
+                    action=action.action,
+                    subaction=action.subaction,
                     quantity=value,
                 )
                 continue
@@ -365,7 +368,7 @@ class StockAndReceiptParser(StockReportParser):
                         domain=self.domain.name,
                         location_id=self.location['location']._id,
                         case_id=self.case_id,
-                        product=p,
+                        product_id=p.get_id,
                         action=const.StockActions.RECEIPTS,
                         quantity=value.split('.')[1]
                     )
@@ -373,7 +376,7 @@ class StockAndReceiptParser(StockReportParser):
                         domain=self.domain.name,
                         location_id=self.location['location']._id,
                         case_id=self.case_id,
-                        product=p,
+                        product_id=p.get_id,
                         action=const.StockActions.STOCKONHAND,
                         quantity=value.split('.')[0]
                     )

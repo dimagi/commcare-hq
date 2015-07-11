@@ -480,9 +480,8 @@ class StockTransactionHelper(object):
     Helper class for transactions
     """
 
-    def __init__(self, product=None, product_id=None,
-                 action_def=None, action=None, subaction=None, domain=None,
-                 quantity=None, location_id=None, timestamp=None,
+    def __init__(self, product_id=None, action=None, subaction=None,
+                 domain=None, quantity=None, location_id=None, timestamp=None,
                  case_id=None, section_id=None):
         self.quantity = quantity
         self.location_id = location_id
@@ -490,17 +489,9 @@ class StockTransactionHelper(object):
         self.case_id = case_id
         self.section_id = section_id
         self.domain = domain
-        if action_def:
-            self.action = action_def.action
-            self.subaction = action_def.subaction
-        else:
-            self.action = action
-            self.subaction = subaction
-
-        if product:
-            self.product_id = product._id
-        else:
-            self.product_id = product_id
+        self.action = action
+        self.subaction = subaction
+        self.product_id = product_id
 
     @property
     def relative_quantity(self):

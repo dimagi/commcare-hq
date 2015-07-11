@@ -130,7 +130,7 @@ class InputStockView(BaseDomainView):
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.RECEIPTS,
                             quantity=form.cleaned_data['receipts']
                         ),
@@ -141,7 +141,7 @@ class InputStockView(BaseDomainView):
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.STOCKONHAND,
                             quantity=form.cleaned_data['stock_on_hand']
                         ),
