@@ -120,7 +120,7 @@ class StockReportParser(object):
             # TODO: support single-action by product, as well as by action?
             self.verify_location_registration()
             self.case_id = self.location['case']._id
-            _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransactionHelper))
+            _tx = self.single_action_transactions(action, args)
         elif action and action.action in [
             RequisitionActions.REQUEST,
             RequisitionActions.FULFILL,
@@ -133,7 +133,7 @@ class StockReportParser(object):
 
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
             # multiple action stock report
-            _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransactionHelper))
+            _tx = self.multiple_action_transactions(args)
         else:
             # initial keyword not recognized; delegate to another handler
             return None
@@ -147,12 +147,15 @@ class StockReportParser(object):
                   "  Please register a default location for this user.")
             )
 
-    def single_action_transactions(self, action, args, make_tx):
+    def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
         if action.action == const.StockActions.STOCKOUT:
             if all(self.looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield make_tx(
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location']._id,
+                        case_id=self.case_id,
                         product=self.product_from_code(prod_code),
                         action_def=action,
                         quantity=0,
@@ -178,18 +181,25 @@ class StockReportParser(object):
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action_def=action, quantity=value)
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location']._id,
+                        case_id=self.case_id,
+                        product=p,
+                        action_def=action,
+                        quantity=value,
+                    )
                 products = []
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
-    def multiple_action_transactions(self, args, make_tx):
+    def multiple_action_transactions(self, args):
         action = None
-        product = None
 
         # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
 
         _args = iter(args)
+
         def next():
             return _args.next()
 
@@ -227,18 +237,17 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise SMSError('quantity expected for product "%s"' % product.code)
 
-                yield make_tx(product=product, action_def=action, quantity=value)
+                yield StockTransactionHelper(
+                    domain=self.domain.name,
+                    location_id=self.location['location']._id,
+                    case_id=self.case_id,
+                    product=product,
+                    action_def=action,
+                    quantity=value,
+                )
                 continue
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
-
-    def transaction_factory(self, baseclass):
-        return lambda **kwargs: baseclass(
-            domain=self.domain.name,
-            location_id=self.location['location']._id,
-            case_id=self.case_id,
-            **kwargs
-        )
 
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
@@ -327,11 +336,11 @@ class StockAndReceiptParser(StockReportParser):
         self.verify_location_registration()
         self.case_id = self.location['case']._id
         action = self.C.action_by_keyword('soh')
-        _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransactionHelper))
+        _tx = self.single_action_transactions(action, args)
 
         return self.unpack_transactions(_tx)
 
-    def single_action_transactions(self, action, args, make_tx):
+    def single_action_transactions(self, action, args):
         products = []
         for arg in args:
             if self.looks_like_prod_code(arg):
@@ -352,12 +361,18 @@ class StockAndReceiptParser(StockReportParser):
                     # for EWS we have to do two transactions, one being a receipt
                     # and second being a transaction (that's reverse of the order
                     # the user provides them)
-                    yield make_tx(
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location']._id,
+                        case_id=self.case_id,
                         product=p,
                         action=const.StockActions.RECEIPTS,
                         quantity=value.split('.')[1]
                     )
-                    yield make_tx(
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location']._id,
+                        case_id=self.case_id,
                         product=p,
                         action=const.StockActions.STOCKONHAND,
                         quantity=value.split('.')[0]
