@@ -6,7 +6,7 @@ from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack.exceptions import MissingProductId
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, xml_to_stock_report_helper
+from corehq.apps.commtrack.models import xml_to_stock_report_helper
 from dimagi.utils.couch.loosechange import map_reduce
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
