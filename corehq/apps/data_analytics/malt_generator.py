@@ -1,14 +1,14 @@
 import logging
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
-
+from jsonobject.exceptions import WrappingAttributeError
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,10 @@ class MALTTableGenerator(object):
         start_date = self.datespan.startdate
         end_date = self.datespan.enddate
 
-        return FormData.objects.exclude(device_id=COMMCONNECT_DEVICE_ID).filter(
+        return FormData.objects.exclude(
+            device_id=COMMCONNECT_DEVICE_ID,
+            app_id=MISSING_APP_ID
+        ).filter(
             user_id=user_id,
             domain=domain_name,
             received_on__range=(start_date, end_date)
@@ -96,7 +99,10 @@ class MALTTableGenerator(object):
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
 
-        app = Application.get(app_id)
+        try:
+            app = Application.get(app_id)
+        except WrappingAttributeError:
+            app = RemoteApp.get(app_id)
         return (getattr(app, 'amplifies_workers', 'not_set'),
                 getattr(app, 'amplifies_project', 'not_set'),
                 app.is_deleted())
