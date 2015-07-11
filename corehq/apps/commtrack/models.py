@@ -341,18 +341,18 @@ class StringDataSchema(DocumentSchema):
         raise NotImplementedError()
 
 
-def xml_to_stock_report_helper(form, config, elem):
+def xml_to_stock_report_helper(form, elem):
     tag = elem.tag
     tag = tag[tag.find('}')+1:] # strip out ns
     timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
     products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
     transactions = [t for prod_entry in products for t in
-                    _xml_to_stock_transaction_helper(config, timestamp, tag, elem, prod_entry)]
+                    _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem, prod_entry)]
 
     return StockReportHelper(form, timestamp, tag, transactions)
 
 
-def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node, product_node):
+def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node, product_node):
     action_type = action_node.attrib.get('type')
     subaction = action_type
     product_id = product_node.attrib.get('id')
@@ -360,7 +360,7 @@ def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node,
     def _txn(action, case_id, section_id, quantity):
         # warning: here be closures
         return StockTransactionHelper(
-            config=config,
+            domain=domain,
             timestamp=timestamp,
             product_id=product_id,
             quantity=Decimal(str(quantity)) if quantity is not None else None,
@@ -391,13 +391,13 @@ def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node,
                 yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
                            section_id=section_id, quantity=quantity)
 
-    def _quantity_or_none(value, config, section_id):
+    def _quantity_or_none(value, section_id):
         try:
             return float(value)
         except (ValueError, TypeError):
             logging.error((
                 "Non-numeric quantity submitted on domain %s for "
-                "a %s ledger" % (config.domain, section_id)
+                "a %s ledger" % (domain, section_id)
             ))
             return None
 
@@ -406,7 +406,6 @@ def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node,
     if grouped_entries:
         quantity = _quantity_or_none(
             product_node.attrib.get('quantity'),
-            config,
             section_id
         )
         # make sure quantity is not an empty, unset node value
@@ -419,7 +418,6 @@ def _xml_to_stock_transaction_helper(config, timestamp, action_tag, action_node,
             section_id = value.attrib.get('section-id')
             quantity = _quantity_or_none(
                 value.attrib.get('quantity'),
-                config,
                 section_id
             )
             # make sure quantity is not an empty, unset node value
@@ -481,48 +479,28 @@ class StockTransactionHelper(object):
     """
     Helper class for transactions
     """
-    action = None
-    subaction = None
-    quantity = None
-    location_id = None
-    product = None
-    timestamp = None
 
-    def __init__(self, **kwargs):
-        def _action_def(val):
-            return {
-                'action': val.action,
-                'subaction': val.subaction,
-            }
-        def _product(val):
-            # FIXME want to store product in memory object (but not persist to couch...
-            # is this possible in jsonobject?)
-            #self.product = val
-            return {
-                'product_id': val._id,
-            }
-        def _inferred(val):
-            return {
-                'subaction': stockconst.TRANSACTION_SUBTYPE_INFERRED,
-            }
-        def _config(val):
-            ret = {
-                'processing_order': STOCK_ACTION_ORDER.index(kwargs['action']),
-            }
-            if not kwargs.get('domain'):
-                ret['domain'] = val.domain
-            return ret
+    def __init__(self, product=None, product_id=None,
+                 action_def=None, action=None, subaction=None, domain=None,
+                 quantity=None, location_id=None, timestamp=None,
+                 case_id=None, section_id=None):
+        self.quantity = quantity
+        self.location_id = location_id
+        self.timestamp = timestamp
+        self.case_id = case_id
+        self.section_id = section_id
+        self.domain = domain
+        if action_def:
+            self.action = action_def.action
+            self.subaction = action_def.subaction
+        else:
+            self.action = action
+            self.subaction = subaction
 
-        for name, var in locals().iteritems():
-            if hasattr(var, '__call__') and name.startswith('_'):
-                attr = name[1:]
-                if kwargs.get(attr):
-                    val = kwargs[attr]
-                    del kwargs[attr]
-                    kwargs.update(var(val))
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        if product:
+            self.product_id = product._id
+        else:
+            self.product_id = product_id
 
     @property
     def relative_quantity(self):
