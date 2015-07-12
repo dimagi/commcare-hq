@@ -1,6 +1,6 @@
 import logging
 
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application, RemoteApp, get_app
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
@@ -8,7 +8,6 @@ from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
-from jsonobject.exceptions import WrappingAttributeError
 
 logger = logging.getLogger(__name__)
 
