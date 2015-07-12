@@ -98,11 +98,7 @@ class MALTTableGenerator(object):
     @classmethod
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
-
-        try:
-            app = Application.get(app_id)
-        except WrappingAttributeError:
-            app = RemoteApp.get(app_id)
+        app = get_app(domain, app_id)
         return (getattr(app, 'amplifies_workers', 'not_set'),
                 getattr(app, 'amplifies_project', 'not_set'),
                 app.is_deleted())
