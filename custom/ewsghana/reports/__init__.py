@@ -2,6 +2,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -172,7 +173,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         if self.is_rendered_as_email:
             program = self.request.GET.get('filter_by_program')
             products = self.request.GET.getlist('filter_by_product')
-            return """
+            return mark_safe("""
             <br>For Filters:<br>
             Location: {0}<br>
             Program: {1}<br>
@@ -186,7 +187,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
                 ) if products != ALL_OPTION and products else ALL_OPTION.title(),
                 ews_date_format(self.datespan.startdate_utc),
                 ews_date_format(self.datespan.enddate_utc)
-            )
+            ))
         return None
 
     def get_stock_transactions(self):
