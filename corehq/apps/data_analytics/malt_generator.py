@@ -1,6 +1,6 @@
 import logging
 
-from corehq.apps.app_manager.models import Application, RemoteApp, get_app
+from corehq.apps.app_manager.models import get_app
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
