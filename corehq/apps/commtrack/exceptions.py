@@ -24,3 +24,4 @@ class MultipleSupplyPointException(Exception):
 
 class MissingProductId(Exception):
     pass
+

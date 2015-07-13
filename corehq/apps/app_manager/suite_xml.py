@@ -1464,9 +1464,26 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.require_instance(*instances)
 
     def get_userdata_autoselect(self, key, session_id, mode):
+        base_xpath = session_var('data', path='user')
         xpath = session_var(key, path='user/data')
-        datum = SessionDatum(id=session_id, function=xpath)
-        assertions = self.get_auto_select_assertions(xpath, mode, [key])
+        protected_xpath = XPath.if_(
+            XPath.and_(base_xpath.count().eq(1), xpath.count().eq(1)),
+            xpath,
+            XPath.empty_string(),
+        )
+        datum = SessionDatum(id=session_id, function=protected_xpath)
+        assertions = [
+            self.get_assertion(
+                XPath.and_(base_xpath.count().eq(1),
+                           xpath.count().eq(1)),
+                'case_autoload.{0}.property_missing'.format(mode),
+                [key],
+            ),
+            self.get_assertion(
+                CaseIDXPath(xpath).case().count().eq(1),
+                'case_autoload.{0}.case_missing'.format(mode),
+            )
+        ]
         return datum, assertions
 
     @property
@@ -1490,6 +1507,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'careplan_form': self.configure_entry_careplan_form,
                 }[form.form_type]
                 config_entry(module, e, form)
+
+                if (
+                    self.app.commtrack_enabled and
+                    session_var('supply_point_id') in getattr(form, 'source', "")
+                ):
+                    from .models import AUTO_SELECT_LOCATION
+                    datum, assertions = self.get_userdata_autoselect(
+                        'commtrack-supply-point',
+                        'supply_point_id',
+                        AUTO_SELECT_LOCATION,
+                    )
+                    e.datums.append(datum)
+                    e.assertions.extend(assertions)
 
                 results.append(e)
 

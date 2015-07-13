@@ -247,12 +247,20 @@ function addStackedAreaGraph(selector, xname, data) {
 
 var linebreak_txt = " -- ";
 function formatChart(chart, selector, xname, data, margin_left) {
+    var si_prefix_formatter = d3.format('.3s'),
+        integer_formatter = d3.format(',.1d');
+
     chart.xAxis
         .axisLabel('Date')
         .tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
 
     chart.yAxis
-        .tickFormat(d3.format(',.1d'))
+        .tickFormat(function(d){
+            if(d >= Math.pow(10,4)){
+                return si_prefix_formatter(d);
+            }
+            return integer_formatter(d);
+        })
         .axisLabel(xname);
 
     d3.select(selector)

@@ -3,14 +3,14 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (2.1.4 available)
 ├── Caret.js#0.2.2
-├── MediaUploader#8146915116
+├── MediaUploader#0b9546e43b
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
 ├── chai#3.0.0
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 2.1.4)
 ├── jsdiff#1.4.0
-├─┬ jstree#110b6681ff
+├─┬ jstree#3.1.1
 │ └── jquery#1.11.3 (2.1.4 available)
 ├── langcodes#27dcfc401e
 ├── markdown-it#4.2.2 (latest is 4.3.0)

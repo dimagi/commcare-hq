@@ -19,31 +19,24 @@
 
 {% for line in tb_list %}
 {% if forloop.counter0 == 0 %}
-<div>
-    <h3>{{ line }}</h3>
-</div>
+<h3>{{ line }}</h3>
 {% elif 'site-packages' in line %}
-<div>
-    <small>{{ line }}</small>
-</div>
+<pre style="color: #DDDDDD">{{ line }}</pre>
 {% else %}
-<div>
-    <b>{{ line }}</b>
-    <br>
-</div>
+<pre style="background-color: #FFFFE0">{{ line }}</pre>
 {% endif %}
 {% endfor %}
 
 <h3>Parameters</h3>
 
-<div><b>GET</b></div>
+<h4>GET</h4>
 {% if get %}
 <table>
     <tbody>
         {% for key, value in get.items %}
         <tr>
-            <td>{{ key }}</td>
-            <td>{{ value }}</td>
+            <td><pre>{{ key }}</pre></td>
+            <td><pre>{{ value }}</pre></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -52,14 +45,14 @@
     Nothing found.
 {% endif %}
 
-<div><b>POST</b></div>
+<h4>POST</h4>
 {% if post %}
 <table>
     <tbody>
         {% for key, value in post.items %}
         <tr>
-            <td>{{ key }}</td>
-            <td>{{ value }}</td>
+            <td><pre>{{ key }}</pre></td>
+            <td><pre>{{ value }}</pre></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -69,7 +62,7 @@
 {% endif %}
 
 <h3>Request</h3>
-{{ request_repr }}
+<pre>{{ request_repr }}</pre>
 
 </body>
 </html>

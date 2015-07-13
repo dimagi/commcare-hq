@@ -10,10 +10,9 @@ from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
@@ -127,7 +126,7 @@ class FacilityReportData(EWSData):
                     state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
 
         for values in state_grouping.values():
-            if values['monthly_consumption'] is not None:
+            if values['monthly_consumption'] is not None or values['current_stock'] == 0:
                 months_until_stockout = get_months_until_stockout_icon(
                     values['months_until_stockout'] if values['months_until_stockout'] else 0.0, loc
                 )
@@ -151,7 +150,7 @@ class FacilityReportData(EWSData):
 
             yield {
                 'commodity': values['commodity'],
-                'current_stock': int(values['current_stock']),
+                'current_stock': int(values['current_stock']) if values['current_stock'] is not None else '--',
                 'monthly_consumption': monthly_consumption,
                 'months_until_stockout': months_until_stockout,
                 'stockout_duration': values['stockout_duration'],
@@ -322,7 +321,7 @@ class UsersData(EWSData):
 
 class StockLevelsReport(MultiReport):
     title = "Aggregate Stock Report"
-    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True

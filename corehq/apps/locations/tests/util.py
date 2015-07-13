@@ -1,5 +1,4 @@
 from dimagi.utils.couch.database import iter_bulk_delete
-from couchdbkit.exceptions import BulkSaveError
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import Location, SQLLocation
@@ -17,16 +16,12 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 @unit_testing_only
 def delete_all_locations():
-    to_delete = [(Location, 'locations/by_name'),
-                 (SupplyPointCase, 'commtrack/supply_point_by_loc')]
-    for model, view in to_delete:
-        ids = [
-            doc['id'] for doc in
-            model.get_db().view(view, reduce=False).all()
-        ]
-        try:
-            iter_bulk_delete(model.get_db(), ids)
-        except BulkSaveError:
-            pass
+    ids = [
+        doc['id'] for doc in
+        SupplyPointCase.get_db().view('commtrack/supply_point_by_loc', reduce=False).all()
+    ]
+    iter_bulk_delete(SupplyPointCase.get_db(), ids)
+
+    iter_bulk_delete(Location.get_db(), SQLLocation.objects.location_ids())
 
     SQLLocation.objects.all().delete()

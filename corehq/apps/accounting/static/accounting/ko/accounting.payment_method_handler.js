@@ -307,6 +307,10 @@ var Invoice = function (initData) {
 
     self.reset = function (response) {
         self.paginatedList.refreshList(self.paginatedItem);
+        if(response.success){
+            var oldBalance = self.paginatedList.totalDue();
+            self.paginatedList.totalDue(oldBalance - response.changedBalance);
+        }
     };
 };
 

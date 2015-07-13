@@ -2,6 +2,7 @@
 {% load proptable_tags %}
 {% load xform_tags %}
 {% load hq_shared_tags %}
+{% load humanize %}
 {% comment %}
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
@@ -104,6 +105,22 @@ requires imports/proptable.html to be included in the main template
 {% endif %}
 </div>
 {% endif %}
+{% if edit_info.was_edited %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
+    {% blocktrans %}
+    This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+    {% endblocktrans %}
+</div>
+{% endif %}
+{% if edit_info.is_edit %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
+    {% blocktrans with when=edit_info.edit_on|naturaltime %}
+        This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
+    {% endblocktrans %}
+</div>
+{% endif %}
 <div class="pull-right">
     {% if auth_context.authenticated %}
         <i class="icon-lock"></i>
@@ -172,9 +189,9 @@ requires imports/proptable.html to be included in the main template
                 </a>
             </p>
             {% endif %}
-            {% if user.can_edit_data %}
+            {% if show_edit_options %}
             <p>
-                {% if not is_archived %}
+                {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
                       id="archive-form">
                     <span class="hq-help-template"
@@ -187,7 +204,8 @@ requires imports/proptable.html to be included in the main template
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
-                {% else %}
+                {% endif %}
+                {% if is_archived %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
                       id="unarchive-form">
                     <span class="hq-help-template"
