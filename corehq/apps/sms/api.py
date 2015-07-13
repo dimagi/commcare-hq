@@ -44,7 +44,7 @@ class MessageMetadata(object):
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
         self.reminder_id = kwargs.get("reminder_id", None)
         self.chat_user_id = kwargs.get("chat_user_id", None)
-        self.ignore_opt_out = kwargs.get("ignore_opt_out", False)
+        self.ignore_opt_out = kwargs.get("ignore_opt_out", None)
         self.location_id = kwargs.get('location_id', None)
         self.messaging_subevent_id = kwargs.get('messaging_subevent_id', None)
 

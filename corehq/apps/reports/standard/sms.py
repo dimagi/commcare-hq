@@ -175,14 +175,14 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         doc = None
         if recipient_id not in [None, ""]:
             try:
-                if recipient_doc_type.startswith('CommCareCase'):
+                if recipient_doc_type.startswith('CommCareCaseGroup'):
+                    doc = CommCareCaseGroup.get(recipient_id)
+                elif recipient_doc_type.startswith('CommCareCase'):
                     doc = CommCareCase.get(recipient_id)
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
                     doc = CouchUser.get_by_user_id(recipient_id)
                 elif recipient_doc_type.startswith('Group'):
                     doc = Group.get(recipient_id)
-                elif recipient_doc_type.startswith('CommCareCaseGroup'):
-                    doc = CommCareCaseGroup.get(recipient_id)
             except Exception:
                 pass
 
@@ -336,6 +336,11 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
+    @property
+    def export_table(self):
+        # Ignore the BaseCommConnectLogReport export
+        return super(BaseCommConnectLogReport, self).export_table
+
     def get_source_display(self, event, display_only=False):
         source = dict(MessagingEvent.SOURCE_CHOICES).get(event.source)
         if event.source in (

@@ -830,11 +830,10 @@ class CaseReminderHandler(Document):
 
     def fire(self, reminder):
         """
-        Sends the message associated with the given CaseReminder's current event.
-        
-        reminder    The CaseReminder which to fire.
-        
-        return      True on success, False on failure
+        Sends the content associated with the given CaseReminder's current event.
+
+        reminder - The CaseReminder which to fire.
+        return - True to move to the next event, False to not move to the next event.
         """
         # Prevent circular import
         from .event_handlers import EVENT_HANDLER_MAP
