@@ -440,7 +440,7 @@ class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
         in the root module.
         """
         module = self.app.add_module(Module.new_module('New Module', lang='en'))
-        module.case_type = 'test_case_type'
+        module.case_type = 'guppy'
         form = module.new_form("Untitled Form", "en", self.get_xml('original'))
 
         form.requires = 'case'
@@ -449,7 +449,7 @@ class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
 
         root_module = self.app.add_module(Module.new_module('root module', None))
         root_module.unique_id = 'm_root'
-        root_module.case_type = module.case_type
+        root_module.case_type = 'test_case_type'
 
         root_module_form = root_module.new_form('root module form', None)
         root_module_form.requires = 'case'

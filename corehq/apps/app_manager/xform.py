@@ -1276,6 +1276,13 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
+            elif module.parent_select.active:
+                case_id = '_'.join((CASE_ID, form.get_case_type()))  # TODO: Don't guess! Could have "_n" suffix
+                session_case_id = CaseIDXPath(session_var(case_id))
+                self.add_bind(
+                    nodeset="case/@case_id",
+                    calculate=session_case_id,
+                )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
