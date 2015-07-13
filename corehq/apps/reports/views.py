@@ -168,12 +168,9 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
     good_configs = []
     for config in all_configs:
-        if config.is_configurable_report:
-            try:
-                config.configurable_report.spec
-            # todo: there's got to be a better thing to raise in this situation
-            except Http404:
-                continue
+        if config.is_configurable_report and not config.configurable_report:
+            continue
+
         good_configs.append(config)
 
     def _is_valid(rn):
