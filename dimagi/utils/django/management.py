@@ -1,4 +1,3 @@
-
 import csv
 from django.http import HttpResponse
 
@@ -28,13 +27,21 @@ def export_as_csv_action(description="Export selected objects as CSV file",
     'fields' and 'exclude' work like in django ModelForm
     'header' is whether or not to output the column names as the first row
     """
+    def safe_utf8(value):
+        if isinstance(value, bytes):
+            # This will needlessly decode, and then re-encode UTF-8 strings.
+            # All other encodings will be converted to UTF-8 (the conversion
+            # is potentially lossy).
+            return value.decode('utf-8', 'replace').encode('utf-8')
+        return unicode(value).encode('utf-8')
+
     def export_as_csv(modeladmin, request, queryset):
         """
         Generic csv export admin action.
         based on http://djangosnippets.org/snippets/1697/
         """
         opts = modeladmin.model._meta
-        field_names = set([field.name for field in opts.fields])
+        field_names = set(field.name for field in opts.fields)
         if fields:
             fieldset = set(fields)
             field_names = field_names & fieldset
@@ -43,13 +50,14 @@ def export_as_csv_action(description="Export selected objects as CSV file",
             field_names = field_names - excludeset
 
         response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=%s.csv' % unicode(opts).replace('.', '_')
+        response['Content-Disposition'] = u'attachment; filename=%s.csv' % unicode(opts).replace('.', '_')
 
         writer = csv.writer(response)
         if header:
             writer.writerow(list(field_names))
         for obj in queryset:
-            writer.writerow([unicode(getattr(obj, field)).encode("utf-8", "replace") for field in field_names])
+            writer.writerow([safe_utf8(getattr(obj, field)) for field in field_names])
         return response
+
     export_as_csv.short_description = description
     return export_as_csv
