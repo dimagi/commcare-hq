@@ -1,3 +1,4 @@
+// TODO - after old usage is removed, refactor into two separate entities
 var ExportManager = function (o) {
     var self = this;
     self.isNewExporter = o.is_new_exporter || false;

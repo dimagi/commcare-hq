@@ -18,7 +18,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
     compute_daily_consumption)
-from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
+from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.commtrack import const
@@ -31,7 +31,7 @@ from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, DAYS_IN_MONTH
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
@@ -340,7 +340,93 @@ class StringDataSchema(DocumentSchema):
     def wrap(cls, data):
         raise NotImplementedError()
 
-class NewStockReport(object):
+
+def xml_to_stock_report_helper(form, elem):
+    tag = elem.tag
+    tag = tag[tag.find('}')+1:] # strip out ns
+    timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
+    products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
+    transactions = [t for prod_entry in products for t in
+                    _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem, prod_entry)]
+
+    return StockReportHelper(form, timestamp, tag, transactions)
+
+
+def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node, product_node):
+    action_type = action_node.attrib.get('type')
+    subaction = action_type
+    product_id = product_node.attrib.get('id')
+
+    def _txn(action, case_id, section_id, quantity):
+        # warning: here be closures
+        return StockTransactionHelper(
+            domain=domain,
+            timestamp=timestamp,
+            product_id=product_id,
+            quantity=Decimal(str(quantity)) if quantity is not None else None,
+            action=action,
+            case_id=case_id,
+            section_id=section_id,
+            subaction=subaction if subaction and subaction != action else None
+            # note: no location id
+        )
+
+    def _yield_txns(section_id, quantity):
+        # warning: here be closures
+        if action_tag == 'balance':
+            case_id = action_node.attrib['entity-id']
+            yield _txn(
+                action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
+                case_id=case_id,
+                section_id=section_id,
+                quantity=quantity,
+            )
+        elif action_tag == 'transfer':
+            src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
+            assert src or dst
+            if src is not None:
+                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
+                           section_id=section_id, quantity=quantity)
+            if dst is not None:
+                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
+                           section_id=section_id, quantity=quantity)
+
+    def _quantity_or_none(value, section_id):
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            logging.error((
+                "Non-numeric quantity submitted on domain %s for "
+                "a %s ledger" % (domain, section_id)
+            ))
+            return None
+
+    section_id = action_node.attrib.get('section-id', None)
+    grouped_entries = section_id is not None
+    if grouped_entries:
+        quantity = _quantity_or_none(
+            product_node.attrib.get('quantity'),
+            section_id
+        )
+        # make sure quantity is not an empty, unset node value
+        if quantity is not None:
+            for txn in _yield_txns(section_id, quantity):
+                yield txn
+    else:
+        values = [child for child in product_node]
+        for value in values:
+            section_id = value.attrib.get('section-id')
+            quantity = _quantity_or_none(
+                value.attrib.get('quantity'),
+                section_id
+            )
+            # make sure quantity is not an empty, unset node value
+            if quantity is not None:
+                for txn in _yield_txns(section_id, quantity):
+                    yield txn
+
+
+class StockReportHelper(object):
     """
     Intermediate class for dealing with stock XML
     """
@@ -352,17 +438,6 @@ class NewStockReport(object):
         self.tag = tag
         self.transactions = transactions
 
-    @classmethod
-    def from_xml(cls, form, config, elem):
-        tag = elem.tag
-        tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
-        products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
-        transactions = [t for prod_entry in products for t in
-                        StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
-
-        return cls(form, timestamp, tag, transactions)
-
     @transaction.atomic
     def create_models(self, domain=None):
         """
@@ -371,14 +446,14 @@ class NewStockReport(object):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
-        report = DbStockReport.objects.create(
+        report = StockReport.objects.create(
             form_id=self.form_id,
             date=self.timestamp,
             type=self.tag,
             domain=self._form.domain,
         )
         for txn in self.transactions:
-            db_txn = DbStockTransaction(
+            db_txn = StockTransaction(
                 report=report,
                 case_id=txn.case_id,
                 section_id=txn.section_id,
@@ -400,52 +475,23 @@ class NewStockReport(object):
             db_txn.save()
 
 
-class StockTransaction(object):
+class StockTransactionHelper(object):
     """
     Helper class for transactions
     """
-    action = None
-    subaction = None
-    quantity = None
-    location_id = None
-    product = None
-    timestamp = None
 
-    def __init__(self, **kwargs):
-        def _action_def(val):
-            return {
-                'action': val.action,
-                'subaction': val.subaction,
-            }
-        def _product(val):
-            # FIXME want to store product in memory object (but not persist to couch...
-            # is this possible in jsonobject?)
-            #self.product = val
-            return {
-                'product_id': val._id,
-            }
-        def _inferred(val):
-            return {
-                'subaction': stockconst.TRANSACTION_SUBTYPE_INFERRED,
-            }
-        def _config(val):
-            ret = {
-                'processing_order': STOCK_ACTION_ORDER.index(kwargs['action']),
-            }
-            if not kwargs.get('domain'):
-                ret['domain'] = val.domain
-            return ret
-
-        for name, var in locals().iteritems():
-            if hasattr(var, '__call__') and name.startswith('_'):
-                attr = name[1:]
-                if kwargs.get(attr):
-                    val = kwargs[attr]
-                    del kwargs[attr]
-                    kwargs.update(var(val))
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, product_id=None, action=None, subaction=None,
+                 domain=None, quantity=None, location_id=None, timestamp=None,
+                 case_id=None, section_id=None):
+        self.quantity = quantity
+        self.location_id = location_id
+        self.timestamp = timestamp
+        self.case_id = case_id
+        self.section_id = section_id
+        self.domain = domain
+        self.action = action
+        self.subaction = subaction
+        self.product_id = product_id
 
     @property
     def relative_quantity(self):
@@ -469,83 +515,6 @@ class StockTransaction(object):
     def date(self):
         if self.timestamp:
             return dateparse.json_format_datetime(self.timestamp)
-
-    @classmethod
-    def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
-        action_type = action_node.attrib.get('type')
-        subaction = action_type
-        product_id = product_node.attrib.get('id')
-
-        def _txn(action, case_id, section_id, quantity):
-            # warning: here be closures
-            quantity = Decimal(str(quantity)) if quantity is not None else None
-            data = {
-                'timestamp': timestamp,
-                'product_id': product_id,
-                'quantity': quantity,
-                'action': action,
-                'case_id': case_id,
-                'section_id': section_id,
-                'subaction': subaction if subaction and subaction != action else None
-                # note: no location id
-            }
-            return cls(config=config, **data)
-
-        def _yield_txns(section_id, quantity):
-            # warning: here be closures
-            if action_tag == 'balance':
-                case_id = action_node.attrib['entity-id']
-                yield _txn(
-                    action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
-                    case_id=case_id,
-                    section_id=section_id,
-                    quantity=quantity,
-                )
-            elif action_tag == 'transfer':
-                src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
-                assert src or dst
-                if src is not None:
-                    yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
-                               section_id=section_id, quantity=quantity)
-                if dst is not None:
-                    yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
-                               section_id=section_id, quantity=quantity)
-
-        def _quantity_or_none(value, config, section_id):
-            try:
-                return float(value)
-            except (ValueError, TypeError):
-                logging.error((
-                    "Non-numeric quantity submitted on domain %s for "
-                    "a %s ledger" % (config.domain, section_id)
-                ))
-                return None
-
-        section_id = action_node.attrib.get('section-id', None)
-        grouped_entries = section_id is not None
-        if grouped_entries:
-            quantity = _quantity_or_none(
-                product_node.attrib.get('quantity'),
-                config,
-                section_id
-            )
-            # make sure quantity is not an empty, unset node value
-            if quantity is not None:
-                for txn in _yield_txns(section_id, quantity):
-                    yield txn
-        else:
-            values = [child for child in product_node]
-            for value in values:
-                section_id = value.attrib.get('section-id')
-                quantity = _quantity_or_none(
-                    value.attrib.get('quantity'),
-                    config,
-                    section_id
-                )
-                # make sure quantity is not an empty, unset node value
-                if quantity is not None:
-                    for txn in _yield_txns(section_id, quantity):
-                        yield txn
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -756,139 +725,6 @@ OVERSTOCK_THRESHOLD = 2.  # months
 DEFAULT_CONSUMPTION = 10.  # per month
 
 
-class RequisitionCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to requisitions.
-    """
-    class Meta:
-        # This is necessary otherwise syncdb will confuse this app with casexml
-        app_label = "commtrack"
-
-    requisition_status = StringProperty()
-
-    # TODO none of these properties are supported on mobile currently
-    # we need to discuss what will be eventually so we know what we need
-    # to support here
-    requested_on = DateTimeProperty()
-    approved_on = DateTimeProperty()
-    fulfilled_on = DateTimeProperty()
-    received_on = DateTimeProperty()
-    requested_by = StringProperty()
-    approved_by = StringProperty()
-    fulfilled_by = StringProperty()
-    received_by = StringProperty()
-
-    @memoized
-    def get_location(self):
-        try:
-            return SupplyPointCase.get(self.indices[0].referenced_id).location
-        except ResourceNotFound:
-            return None
-
-    @memoized
-    def get_requester(self):
-        # TODO this doesn't get set by mobile yet
-        # if self.requested_by:
-        #     return CommCareUser.get(self.requested_by)
-        return None
-
-    def sms_format(self):
-        if self.requisition_status == RequisitionStatus.REQUESTED:
-            section = 'ct-requested'
-        elif self.requisition_status == RequisitionStatus.APPROVED:
-            section = 'ct-approved'
-        else:
-            section = 'stock'
-
-        formatted_strings = []
-        states = StockState.objects.filter(
-            case_id=self._id,
-            section_id=section
-        )
-        for state in states:
-            product = Product.get(state.product_id)
-            formatted_strings.append(
-                '%s:%d' % (product.code, state.stock_on_hand)
-            )
-        return ' '.join(sorted(formatted_strings))
-
-    def get_next_action(self):
-        req_config = CommtrackConfig.for_domain(self.domain).requisition_config
-        return req_config.get_next_action(
-            RequisitionStatus.to_action_type(self.requisition_status)
-        )
-
-    @classmethod
-    def get_by_external_id(cls, domain, external_id):
-        # only used by openlmis
-        raise NotImplementedError()
-
-        # return cls.view('hqcase/by_domain_external_id',
-        #     key=[domain, external_id],
-        #     include_docs=True, reduce=False,
-        #     classes={'CommCareCase': RequisitionCase}
-        # ).all()
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Status"),
-                            "expr": "requisition_status"
-                        }
-                    ],
-                ]
-            },
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Requested On"),
-                            "expr": "requested_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("requested_by"),
-                            "expr": "requested_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Approved On"),
-                            "expr": "approved_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("approved_by"),
-                            "expr": "approved_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Received On"),
-                            "expr": "received_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("received_by"),
-                            "expr": "received_by"
-                        }
-                    ]
-                ]
-            }
-        ]
-
-
-class RequisitionTransaction(StockTransaction):
-    @property
-    def category(self):
-        return 'requisition'
-
-
 class ActiveManager(models.Manager):
     """
     Filter any object that is associated to an archived product.
@@ -1057,7 +893,7 @@ def sync_location_supply_point(loc):
             pass
 
 
-@receiver(post_save, sender=DbStockTransaction)
+@receiver(post_save, sender=StockTransaction)
 def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
     update_stock_state_for_transaction(instance)
 
@@ -1119,9 +955,9 @@ def update_stock_state_for_transaction(instance):
     state.save()
 
 
-@receiver(post_delete, sender=DbStockTransaction)
+@receiver(post_delete, sender=StockTransaction)
 def stock_state_deleted(sender, instance, *args, **kwargs):
-    qs = DbStockTransaction.objects.filter(
+    qs = StockTransaction.objects.filter(
         section_id=instance.section_id,
         case_id=instance.case_id,
         product_id=instance.product_id,
@@ -1166,7 +1002,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    DbStockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform._id).delete()
 
 
 @receiver(xform_unarchived)

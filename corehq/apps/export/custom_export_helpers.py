@@ -155,6 +155,7 @@ class CustomExportHelper(object):
             HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
         else:
             HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
+        return self.custom_export.get_id
 
     def get_context(self):
         table_configuration = self.format_config_for_javascript(self.custom_export.table_configuration)

@@ -6,7 +6,7 @@ from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack.exceptions import MissingProductId
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import CommtrackConfig, NewStockReport
+from corehq.apps.commtrack.models import xml_to_stock_report_helper
 from dimagi.utils.couch.loosechange import map_reduce
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
@@ -54,11 +54,8 @@ def process_stock(xform, case_db=None):
     if is_device_report(xform):
         return StockProcessingResult(xform)
 
-    domain = xform.domain
-    config = CommtrackConfig.for_domain(domain)
-
     # these are the raw stock report objects from the xml
-    stock_reports = list(unpack_commtrack(xform, config))
+    stock_reports = list(unpack_commtrack(xform))
     # flattened transaction list spanning all stock reports in the form
     transactions = [t for r in stock_reports for t in r.transactions]
     # omitted: normalize_transactions (used for bulk requisitions?)
@@ -102,7 +99,7 @@ def process_stock(xform, case_db=None):
     )
 
 
-def unpack_commtrack(xform, config):
+def unpack_commtrack(xform):
     xml = xform.get_xml_element()
 
     def commtrack_nodes(node):
@@ -114,4 +111,4 @@ def unpack_commtrack(xform, config):
                     yield e
 
     for elem in commtrack_nodes(xml):
-        yield NewStockReport.from_xml(xform, config, elem)
+        yield xml_to_stock_report_helper(xform, elem)

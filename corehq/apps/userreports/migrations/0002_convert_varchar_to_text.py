@@ -73,7 +73,7 @@ def _sync_couch():
     sync_docs.sync(userreports_models, verbosity=2)
 
 
-@mock.patch('corehq.apps.userreports.sql._get_column_type', old_get_column_type)
+@mock.patch('corehq.apps.userreports.sql.columns._get_column_type', old_get_column_type)
 def _get_all_pre_migration_tables():
     return _get_all_tables()
 

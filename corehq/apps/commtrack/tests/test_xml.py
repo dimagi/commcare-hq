@@ -10,13 +10,8 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.dbaccessors import \
-    get_open_requisition_case_ids_for_location
-from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
-from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
@@ -28,7 +23,6 @@ from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
-from corehq.apps.commtrack.requisitions import get_notification_message
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -38,9 +32,6 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_both,
     balance_first,
     transfer_first,
-    create_requisition_xml,
-    create_fulfillment_xml,
-    create_received_xml,
     receipts_enumerated,
     balance_enumerated,
     products_xml, long_date)
@@ -396,97 +387,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         )
         self.assertEqual(0, StockTransaction.objects.count())
 
-
-class CommTrackRequisitionTest(CommTrackSubmissionTest):
-
-    def setUp(self):
-        self.requisitions_enabled = True
-        super(CommTrackRequisitionTest, self).setUp()
-
-    def expected_notification_message(self, req, amounts):
-        summary = sorted(
-            ['%s:%d' % (str(Product.get(p).code), amt) for p, amt in amounts]
-        )
-        return const.notification_template(req.get_next_action().action).format(
-            name='Unknown',  # TODO currently not storing requester
-            summary=' '.join(summary),
-            loc=self.sp.location.site_code,
-            keyword=req.get_next_action().keyword
-        )
-
-    def test_create_fulfill_and_receive_requisition(self):
-        amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
-
-        # ----------------
-        # Create a request
-        # ----------------
-
-        self.submit_xml_form(create_requisition_xml(amounts))
-        req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
-        self.assertEqual(1, len(req_cases))
-        req = RequisitionCase.get(req_cases[0]._id)
-        [index] = req.indices
-
-        self.assertEqual(req.requisition_status, 'requested')
-        self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
-        self.assertEqual(self.sp._id, index.referenced_id)
-        self.assertEqual('parent_id', index.identifier)
-        # TODO: these types of tests probably belong elsewhere
-        self.assertEqual(req.get_next_action().keyword, 'fulfill')
-        self.assertEqual(req.get_location()._id, self.sp.location._id)
-        self.assertEqual(len(get_open_requisition_case_ids_for_location(
-            self.sp.location)), 1)
-        self.assertEqual(
-            get_notification_message(
-                req.get_next_action(),
-                [req]
-            ),
-            self.expected_notification_message(req, amounts)
-        )
-
-        for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'ct-requested')
-
-        # ----------------
-        # Mark it fulfilled
-        # -----------------
-
-        self.submit_xml_form(create_fulfillment_xml(req, amounts))
-
-        req = RequisitionCase.get(req._id)
-
-        self.assertEqual(req.requisition_status, 'fulfilled')
-        self.assertEqual(req.get_next_action().keyword, 'rec')
-        self.assertEqual(
-            get_notification_message(
-                req.get_next_action(),
-                [req]
-            ),
-            self.expected_notification_message(req, amounts)
-        )
-
-        for product, amt in amounts:
-            # we are expecting two separate blocks to have come with the same
-            # values
-            self.check_stock_models(req, product, amt, amt, 'stock')
-            self.check_stock_models(req, product, amt, 0, 'ct-fulfilled')
-
-        # ----------------
-        # Mark it received
-        # ----------------
-
-        self.submit_xml_form(create_received_xml(req, amounts))
-
-        req = RequisitionCase.get(req._id)
-
-        self.assertEqual(req.requisition_status, 'received')
-        self.assertIsNone(req.get_next_action())
-        self.assertEqual(len(get_open_requisition_case_ids_for_location(
-            self.sp.location)), 0)
-
-        for product, amt in amounts:
-            self.check_stock_models(req, product, 0, -amt, 'stock')
-            self.check_stock_models(self.sp, product, amt, amt, 'stock')
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):

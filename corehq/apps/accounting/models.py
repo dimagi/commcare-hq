@@ -1840,7 +1840,7 @@ class BillingRecord(BillingRecordBase):
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
-                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_account': self.invoice.subscription.account.name,
                 'billing_contacts': self.invoice.contact_emails,
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
