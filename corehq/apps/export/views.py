@@ -302,7 +302,7 @@ def create_basic_form_checkpoint(index):
 
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_form_export'
-    page_title = ugettext_noop("Create Form Export")
+    page_title = ugettext_noop("Create Form Export: Select Form")
     template_name = 'export/create_form_export.html'
 
     @property
