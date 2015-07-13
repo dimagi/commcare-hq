@@ -2,6 +2,7 @@ from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
     BulkSaveError,
@@ -366,11 +367,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             }
 
             is_active = row.get('is_active')
-            if type(is_active) in (unicode, str):
-                active_string = is_active.lower().strip()
-                if active_string in ('true', 'false'):
-                    is_active = active_string == 'true'
-                else:
+            if isinstance(is_active, basestring):
+                try:
+                    is_active = string_to_boolean(is_active)
+                except ValueError:
                     ret['rows'].append({
                         'username': username,
                         'row': row,
