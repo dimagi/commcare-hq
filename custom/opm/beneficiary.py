@@ -8,8 +8,10 @@ import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
-    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, CaseOutOfRange
+    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
+from custom.opm.utils import numeric_fn
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -59,6 +61,7 @@ class OPMCaseRow(object):
         self.month = explicit_month or report.month
         self.year = explicit_year or report.year
         self.is_secondary = is_secondary
+        self.case_is_out_of_range = False
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s">' \
@@ -158,9 +161,8 @@ class OPMCaseRow(object):
             try:
                 non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
             except AssertionError:
-                raise CaseOutOfRange('Mother LMP ({}) was after the reporting window date ({})'.format(
-                    base_window_start, self.reporting_window_start
-                ))
+                self.case_is_out_of_range = True
+                non_adjusted_month = 0
 
             # the date to check one month after they first become eligible,
             # aka the end of their fourth month of pregnancy
@@ -168,12 +170,12 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, vhnd_date_to_check)
             if month < 4 or month > 9:
-                raise CaseOutOfRange('pregnancy month %s not valid' % month)
+                self.case_is_out_of_range = True
             return month
 
     @property
     def preg_month_display(self):
-        return self.preg_month if self.preg_month is not None else EMPTY_FIELD
+        return numeric_fn(self.preg_month) if self.preg_month is not None else EMPTY_FIELD
 
     @property
     @memoized
@@ -185,13 +187,12 @@ class OPMCaseRow(object):
 
             month = self._adjust_for_vhnd_presence(non_adjusted_month, anchor_date)
             if month < 1:
-                raise CaseOutOfRange('child month %s not valid' % month)
-
+                self.case_is_out_of_range = True
             return month
 
     @property
     def child_age_display(self):
-        return self.child_age if self.child_age is not None else EMPTY_FIELD
+        return numeric_fn(self.child_age) if self.child_age is not None else EMPTY_FIELD
 
     def _adjust_for_vhnd_presence(self, non_adjusted_month, anchor_date_to_check):
         """
@@ -242,7 +243,7 @@ class OPMCaseRow(object):
             raise InvalidRow("Window not found")
 
         if self.window > 14:
-            raise CaseOutOfRange(_('Child is past window 14 (was {}'.format(self.window)))
+            self.case_is_out_of_range = True
 
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
@@ -414,6 +415,17 @@ class OPMCaseRow(object):
                 form.xpath(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
             )
+
+    @property
+    def growth_calculated_aww(self):
+        """
+        For the AWW we don't factor in the month window into growth calculations
+        """
+        xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+        return any(
+            form.xpath(xpath) == '1'
+            for form in self.filtered_forms(CHILDREN_FORMS, 1)
+        )
 
     def child_growth_calculated_in_window(self, query_age):
         """
@@ -632,6 +644,11 @@ class OPMCaseRow(object):
     def num_children(self):
         if self.status == 'pregnant':
             return 0
+        return self.raw_num_children
+
+    @property
+    def raw_num_children(self):
+        # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
 
     def add_extra_children(self):
@@ -777,34 +794,35 @@ class OPMCaseRow(object):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
         ) + self.year_end_bonus_cash
-        assert amount == self.cash_amt, "The CMR and BPR disagree on payment!"
+        if not self.case_is_out_of_range:
+            assert amount == self.cash_amt, "The CMR and BPR disagree on payment!"
         return amount
 
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
-        ('serial_number', _("Serial number"), True),
-        ('name', _("List of Beneficiaries"), True),
-        ('awc_name', _("AWC Name"), True),
-        ('awc_code', _("AWC Code"), True),
-        ('block_name', _("Block Name"), True),
-        ('husband_name', _("Husband Name"), True),
-        ('readable_status', _("Current status"), True),
-        ('preg_month_display', _('Pregnancy Month'), True),
-        ('child_name', _("Child Name"), True),
-        ('child_age_display', _("Child Age"), True),
-        ('window', _("Window"), True),
-        ('one', _("Condition 1"), True),
-        ('two', _("Condition 2"), True),
-        ('three', _("Condition 3"), True),
-        ('four', _("Condition 4"), True),
-        ('five', _("Condition 5"), True),
-        ('cash_pay', _("Payment amount this month (Rs.)"), True),
-        ('payment_last_month', _("Payment amount last month (Rs.)"), True),
-        ('cash_received_last_month', _("Cash received last month"), True),
-        ('case_id', _('Case ID'), True),
-        ('closed_date', _("Closed On"), True),
-        ('issue', _('Issues'), True)
+        ('serial_number', _("Serial number"), True, DTSortType.NUMERIC),
+        ('name', _("List of Beneficiaries"), True, None),
+        ('awc_name', _("AWC Name"), True, None),
+        ('awc_code', _("AWC Code"), True, DTSortType.NUMERIC),
+        ('block_name', _("Block Name"), True, None),
+        ('husband_name', _("Husband Name"), True, None),
+        ('readable_status', _("Current status"), True, None),
+        ('preg_month_display', _('Pregnancy Month'), True, DTSortType.NUMERIC),
+        ('child_name', _("Child Name"), True, None),
+        ('child_age_display', _("Child Age"), True, DTSortType.NUMERIC),
+        ('window', _("Window"), True, None),
+        ('one', _("Condition 1"), True, None),
+        ('two', _("Condition 2"), True, None),
+        ('three', _("Condition 3"), True, None),
+        ('four', _("Condition 4"), True, None),
+        ('five', _("Condition 5"), True, None),
+        ('cash', _("Payment amount this month (Rs.)"), True, None),
+        ('payment_last_month', _("Payment amount last month (Rs.)"), True, None),
+        ('cash_received_last_month', _("Cash received last month"), True, None),
+        ('case_id', _('Case ID'), True, None),
+        ('closed_date', _("Closed On"), True, None),
+        ('issue', _('Issues'), True, None)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
@@ -812,9 +830,8 @@ class ConditionsMet(OPMCaseRow):
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
+        self.awc_code = numeric_fn(awc_codes.get(self.awc_name, EMPTY_FIELD))
         self.issue = ''
-        self.cash_pay = self.cash
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
@@ -864,35 +881,35 @@ class Beneficiary(OPMCaseRow):
     """
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', _("List of Beneficiaries"), True),
-        ('husband_name', _("Husband Name"), True),
-        ('awc_name', _("AWC Name"), True),
-        ('bank_name', _("Bank Name"), True),
-        ('bank_branch_name', _("Bank Branch Name"), True),
-        ('ifs_code', _("IFS Code"), True),
-        ('account_number', _("Bank Account Number"), True),
-        ('block_name', _("Block Name"), True),
-        ('village', _("Village Name"), True),
-        ('child_count', _("Number of Children"), True),
-        ('bp1_cash', _("Birth Preparedness Form 1"), True),
-        ('bp2_cash', _("Birth Preparedness Form 2"), True),
-        ('child_cash', _("Child Followup Form"), True),
-        ('year_end_bonus_cash', _("Bonus Payment"), True),
-        ('total_cash', _("Amount to be paid to beneficiary"), True),
-        ('case_id', _('Case ID'), True),
-        ('owner_id', _("Owner ID"), False),
-        ('closed_date', _("Closed On"), True),
-        ('vhnd_available_display', _('VHND organised this month'), True),
-        ('payment_last_month', _('Payment last month'), True),
-        ('issues', _("Issues"), True),
+        ('name', _("List of Beneficiaries"), True, None),
+        ('husband_name', _("Husband Name"), True, None),
+        ('awc_name', _("AWC Name"), True, None),
+        ('bank_name', _("Bank Name"), True, None),
+        ('bank_branch_name', _("Bank Branch Name"), True, None),
+        ('ifs_code', _("IFS Code"), True, None),
+        ('account_number', _("Bank Account Number"), True, None),
+        ('block_name', _("Block Name"), True, None),
+        ('village', _("Village Name"), True, None),
+        ('child_count', _("Number of Children"), True, DTSortType.NUMERIC),
+        ('bp1_cash', _("Birth Preparedness Form 1"), True, None),
+        ('bp2_cash', _("Birth Preparedness Form 2"), True, None),
+        ('child_cash', _("Child Followup Form"), True, None),
+        ('year_end_bonus_cash', _("Bonus Payment"), True, None),
+        ('total_cash', _("Amount to be paid to beneficiary"), True, None),
+        ('case_id', _('Case ID'), True, None),
+        ('owner_id', _("Owner ID"), False, None),
+        ('closed_date', _("Closed On"), True, None),
+        ('vhnd_available_display', _('VHND organised this month'), True, None),
+        ('payment_last_month', _('Payment last month'), True, DTSortType.NUMERIC),
+        ('issues', _("Issues"), True, None),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(Beneficiary, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.child_count = 0 if self.status == "pregnant" else 1
+        self.child_count = numeric_fn(0 if self.status == "pregnant" else 1)
 
         # Show only cases that require payment
         if self.total_cash == 0:
             raise InvalidRow("Case does not require payment")
 
-        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
+        self.payment_last_month = numeric_fn(self.last_month_row.total_cash if self.last_month_row else 0)

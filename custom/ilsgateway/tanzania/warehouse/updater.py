@@ -172,7 +172,8 @@ def update_product_availability_facility_data(org_summary):
             previous_reports = ProductAvailabilityData.objects.filter(
                 product=p.product_id,
                 location_id=facility._id,
-                date__lt=org_summary.date
+                date__lt=org_summary.date,
+                total=1
             )
             if previous_reports.count():
                 prev = previous_reports.latest('date')
@@ -186,7 +187,7 @@ def update_product_availability_facility_data(org_summary):
                 product_data.without_data = 1
             product_data.save()
         assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
-            "bad product data config"
+            "bad product data config for %s" % product_data
 
 
 def default_start_date():

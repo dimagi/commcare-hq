@@ -309,33 +309,36 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
-def _login(req, domain, template_name):
+def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
-        if not domain:
+        if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST['username'] = format_username(req.POST['username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain:
+    if domain_name:
+        domain = Domain.get_by_name(domain_name)
         context.update({
-            'domain': domain,
+            'domain': domain_name,
+            'hr_name': domain.hr_name if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 
+    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        authentication_form=authentication_form,
                         extra_context=context)
 
 

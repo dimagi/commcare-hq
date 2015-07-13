@@ -10,6 +10,10 @@ class InvalidProductException(Exception):
     pass
 
 
+class DuplicateProductCodeException(InvalidProductException):
+    pass
+
+
 class NoDefaultLocationException(Exception):
     pass
 
@@ -20,3 +24,4 @@ class MultipleSupplyPointException(Exception):
 
 class MissingProductId(Exception):
     pass
+

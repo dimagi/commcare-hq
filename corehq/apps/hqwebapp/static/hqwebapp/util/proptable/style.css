@@ -3,6 +3,10 @@
     margin-right: 18px;
 }
 
+.inherit-float {
+    float: inherit !important;
+}
+
 /* partially lifted from bootstrap docs */
 .table-tab {
     top: -26px;

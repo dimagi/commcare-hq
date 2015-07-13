@@ -72,7 +72,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
             )
             for loc in locs:
                 loc_group = loc.case_sharing_group_object()
-                selected.append(self.sharing_location_tuple(loc_group))
+                selected.append(self.utils.sharing_location_tuple(loc_group))
         return selected
 
     def selected_group_entries(self, request):
@@ -95,47 +95,42 @@ class CaseListFilterOptions(EmwfOptionsView):
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
-    def group_es_call(self, group_type=None, **kwargs):
-        # Valid group_types are "reporting" and "case_sharing"
-        if group_type is None:
-            type_filter = {"or": [
-                {"term": {"reporting": "true"}},
-                {"term": {"case_sharing": "true"}}
-            ]}
-        else:
-            type_filter = {"term": {group_type: "true"}}
-        return es_wrapper('groups', domain=self.domain, q=self.group_query,
-                          filters=[type_filter], doc_type='Group', **kwargs)
+    @property
+    def data_sources(self):
+        return [
+            (self.get_static_options_size, self.get_static_options),
+            (self.get_groups_size, self.get_groups),
+            (self.get_sharing_groups_size, self.get_sharing_groups),
+            (self.get_locations_size, self.get_locations),
+            (self.get_sharing_locations_size, self.get_sharing_locations),
+            (self.get_users_size, self.get_users),
+        ]
 
-    def get_groups(self, start, size):
-        def wrap_group(group):
-            if group.get('case_sharing', None):
-                return self.utils.sharing_group_tuple(group)
-            return self.utils.reporting_group_tuple(group)
+    def get_sharing_groups_size(self, query):
+        return self.group_es_call(query, group_type="case_sharing", size=0,
+                                  return_count=True)[0]
 
+    def get_sharing_groups(self, query, start, size):
         fields = ['_id', 'name']
-        groups = self.group_es_call(
+        sharing_groups = self.group_es_call(
+            query,
+            group_type="case_sharing",
             fields=fields,
             sort_by="name.exact",
             order="asc",
             start_at=start,
             size=size,
         )
-        return map(wrap_group, groups)
+        return map(self.utils.sharing_group_tuple, sharing_groups)
 
-    @property
-    def case_sharing_locations_query(self):
-        return self.locations_query.filter(location_type__shares_cases=True)
+    def get_sharing_locations_query(self, query):
+        return (self.get_locations_query(query)
+                    .filter(location_type__shares_cases=True))
 
-    def get_location_groups(self):
-        for location in super(CaseListFilterOptions, self).get_location_groups():
-            yield location
-
-        # filter out any non case share type locations for this part
-        for loc in self.case_sharing_locations_query:
+    def get_sharing_locations(self, query, start, size):
+        for loc in self.get_sharing_locations_query(query)[start:size]:
             group = loc.case_sharing_group_object()
-            yield (group._id, group.name + ' [case sharing]')
+            yield self.utils.sharing_location_tuple(group)
 
-    def get_locations_size(self):
-        return (self.locations_query.count() +
-                self.case_sharing_locations_query.count())
+    def get_sharing_locations_size(self, query):
+        return self.get_sharing_locations_query(query).count()

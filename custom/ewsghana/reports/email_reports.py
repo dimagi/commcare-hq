@@ -5,11 +5,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from custom.ewsghana.filters import EWSDateFilter
+from custom.ewsghana.filters import EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
-from custom.ewsghana.utils import get_supply_points, get_country_id, ews_date_format
+from custom.ewsghana.utils import get_descendants, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -85,7 +84,7 @@ class StockSummaryReportData(EmailReportData):
     slug = 'stock_summary'
 
     def get_locations(self, loc_id, domain):
-        return get_supply_points(loc_id, domain)
+        return get_descendants(loc_id)
 
 
 class CMSRMSReportData(EmailReportData):
@@ -137,7 +136,7 @@ class EmailReportingData(EWSData):
 
 class StockSummaryReportingData(EmailReportingData):
     def get_locations(self, loc_id, domain):
-        return [loc.supply_point_id for loc in get_supply_points(loc_id, domain)]
+        return [loc.supply_point_id for loc in get_descendants(loc_id, domain)]
 
 
 class CMSRMSSummaryReportingData(EmailReportingData):
@@ -152,7 +151,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 
 class StockSummaryReport(MultiReport):
-    fields = [AsyncLocationFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, EWSDateFilter]
     name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False

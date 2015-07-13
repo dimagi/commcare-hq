@@ -194,34 +194,24 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.export import DataExportInterface
+from corehq.apps.reports.standard.export import (
+    FormExportInterface,
+    CaseExportInterface,
+)
 EXPORT_DATA_INTERFACES = (
     (_('Export Data'), (
-        DataExportInterface,
+        FormExportInterface,
+        CaseExportInterface,
     )),
 )
 
-
-from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-
-ADM_SECTIONS = (
-    (_('Supervisor Report'), (
-        SupervisorReportsADMSection,
+DATA_DOWNLOAD_INTERFACES = (
+    ('', (
+        export.FormExportReport,
+        export.NewCaseExportReport,
     )),
 )
 
-from corehq.apps.adm.admin import columns, reports
-
-ADM_ADMIN_INTERFACES = (
-    (_("ADM Default Columns"), (
-        columns.ReducedADMColumnInterface,
-        columns.DaysSinceADMColumnInterface,
-        columns.ConfigurableADMColumnInterface
-    )),
-    (_("ADM Default Reports"), (
-        reports.ADMReportAdminInterface,
-    ))
-)
 
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 

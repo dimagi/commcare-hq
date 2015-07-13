@@ -3,8 +3,8 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
+from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import MultiProductFilter, EWSDateFilter
 from custom.ewsghana.utils import ews_date_format
@@ -16,7 +16,7 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
     slug = "export_stock_transaction"
     exportable = True
     is_exportable = True
-    fields = [AsyncLocationFilter, MultiProductFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, MultiProductFilter, EWSDateFilter]
 
     @property
     def location(self):
@@ -45,10 +45,12 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
 
     @property
     def rows(self):
-        supply_points = self.location.get_descendants().filter(
-            location_type__administrative=False,
-            is_archived=False).exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
-
+        if self.location.location_type.administrative:
+            supply_points = self.location.get_descendants().filter(
+                location_type__administrative=False,
+                is_archived=False).exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+        else:
+            supply_points = [self.location.supply_point_id]
         transactions = StockTransaction.objects.filter(
             case_id__in=supply_points,
             sql_product__in=self.products,

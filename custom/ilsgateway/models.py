@@ -1,7 +1,9 @@
 from datetime import datetime
+from django.dispatch.dispatcher import receiver
+from corehq.apps.domain.signals import commcare_domain_pre_delete
 
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
-from django.db import models
+from django.db import models, connection
 
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
@@ -149,6 +151,7 @@ class SupplyPointStatus(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
     class Meta:
@@ -175,6 +178,7 @@ class DeliveryGroupReport(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
 
@@ -322,6 +326,11 @@ class ProductAvailabilityData(ReportingModel):
         del obj['id']
         return cls(**obj)
 
+    def __str__(self):
+        return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
+               'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
+                                         self.without_stock, self.without_data)
+
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L85
@@ -460,3 +469,47 @@ class ILSNotes(models.Model):
     user_phone = models.CharField(max_length=20, null=True)
     date = models.DateTimeField()
     text = models.TextField()
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    domain_name = domain.name
+    locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
+    if locations_ids:
+        DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
+        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
+
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM ilsgateway_alert WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+        cursor.execute(
+            "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
+            "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
+            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+        cursor.execute(
+            "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
+            "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+        )
+
+    ReportRun.objects.filter(domain=domain_name).delete()
+    ILSNotes.objects.filter(domain=domain_name).delete()
+    SupervisionDocument.objects.filter(domain=domain_name).delete()

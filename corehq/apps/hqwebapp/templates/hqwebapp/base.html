@@ -358,7 +358,7 @@
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
-                    {% if request.is_billing_admin %}
+                    {% if request.is_domain_admin %}
                         <p>
                             <a class="btn btn-primary" href="{% url 'domain_select_plan' request.domain %}">
                                 {% blocktrans %}

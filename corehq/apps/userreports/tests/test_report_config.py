@@ -34,6 +34,27 @@ class ReportConfigurationTest(SimpleTestCase):
         with self.assertRaises(BadSpecError):
             wrapped.validate()
 
+    def test_duplicate_column_ids_pct_columns(self):
+        spec = self.config._doc
+        spec['columns'].append({
+            'type': 'percent',
+            'column_id': 'pct',
+            'numerator': {
+                "aggregation": "sum",
+                "field": "pct_numerator",
+                "type": "field",
+                "column_id": "pct_numerator",
+            },
+            'denominator': {
+                "aggregation": "sum",
+                "field": spec['columns'][-1]["field"],
+                "type": "field",
+            },
+        })
+        wrapped = ReportConfiguration.wrap(spec)
+        with self.assertRaises(BadSpecError):
+            wrapped.validate()
+
     def test_group_by_missing_from_columns(self):
         report_config = ReportConfiguration(
             domain='somedomain',
