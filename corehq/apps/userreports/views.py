@@ -11,16 +11,18 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
+from django.views.generic import TemplateView, View
+
 from corehq.apps.app_manager.models import(
     Application,
     Form,
     get_apps_in_domain
 )
-from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, View
 
 from sqlalchemy import types, exc
+from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
@@ -574,7 +576,10 @@ def choice_list_api(request, domain, report_id, filter_id):
             query = query.filter(sql_column.contains(search_term))
 
         offset = page * limit
-        return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
+        try:
+            return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
+        except ProgrammingError:
+            return []
 
     return json_response(get_choices(
         report.config,
