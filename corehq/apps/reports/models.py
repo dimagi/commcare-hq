@@ -198,7 +198,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, **kwargs):
+                            stale=True, skip=None, limit=None):
         if stale:
             #kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
@@ -209,8 +209,22 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+        kwargs = {}
+        if skip is not None:
+            kwargs['skip'] = skip
+        if limit is not None:
+            kwargs['limit'] = limit
+
+        result = cache_core.cached_view(
+            db,
+            "reportconfig/configs_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=key,
+            endkey=key + [{}],
+            wrapper=cls.wrap,
+            **kwargs
+        )
         return result
 
     @classmethod
