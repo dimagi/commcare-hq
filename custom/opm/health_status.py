@@ -330,7 +330,7 @@ class AWCHealthStatus(object):
 
     @property
     def children(self):
-        return sum([c.num_children for c in self.primary_cases])
+        return sum([c.raw_num_children for c in self.primary_cases])
 
     @property
     @memoized

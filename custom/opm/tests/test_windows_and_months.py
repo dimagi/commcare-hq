@@ -39,7 +39,8 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             forms=[],
             edd=self._offset_date(6),
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
 
     def test_not_yet_in_range_by_a_lot(self):
         # 12 or more months in the future you also don't count
@@ -47,7 +48,8 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             forms=[],
             edd=self._offset_date(12),
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
 
     def test_past_range(self):
         # anytime after the period you don't count
@@ -55,14 +57,18 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             forms=[],
             edd=self._offset_date(-1),
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
+
 
     def test_child_first_month_not_valid(self):
         case = OPMCase(
             forms=[],
             dod=self.report_date,
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
+
 
     def test_valid_child_month(self):
         for i in range(1, 18):
@@ -75,12 +81,13 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             self.assertEqual(i, row.child_age)
 
     def test_child_outside_window(self):
-        with self.assertRaises(InvalidRow):
-            case = OPMCase(
-                forms=[],
-                dod=self._offset_date(-50),
-            )
-            MockCaseRow(case, self.report)
+        case = OPMCase(
+            forms=[],
+            dod=self._offset_date(-50),
+        )
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
+
 
 
 class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
@@ -119,7 +126,8 @@ class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
             edd=date(2014, 11, 15),
         )
         data_provider = MockDataProvider(default_date=date(2014, 6, 5))
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+        mock_case = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertTrue(mock_case.case_is_out_of_range)
 
         # the next month should actually start window 4
         row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)
@@ -164,7 +172,8 @@ class TestChildFirstMonthWindow(OPMCaseReportTestBase):
             dod=date(2014, 5, 15),
         )
         data_provider = MockDataProvider(default_date=date(2014, 6, 5))
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report, data_provider)
+        mock_case = MockCaseRow(case, self.report, data_provider=data_provider)
+        self.assertTrue(mock_case.case_is_out_of_range)
 
         # the next month should actually start window 1
         row = MockCaseRow(case, Report(month=7, year=2014, block="Atri"), data_provider=data_provider)

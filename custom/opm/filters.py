@@ -109,15 +109,16 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
 
 class HierarchyFilter(OpmBaseDrilldownOptionFilter):
+    single_option_select = 0
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
     @property
-    def selected(self):
-        selected = super(OpmBaseDrilldownOptionFilter, self).selected
-        if selected:
-            return selected
-        return [[ALL_OPTION]]
+    def drilldown_map(self):
+        hierarchy = super(HierarchyFilter, self).drilldown_map
+        all_hierarchy = [x for x in hierarchy
+                         if x['val'].lower() != 'all']
+        return all_hierarchy
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):

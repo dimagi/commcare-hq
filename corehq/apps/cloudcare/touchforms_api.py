@@ -110,12 +110,12 @@ def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, 
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
 
 
-def get_user_contributions_to_touchforms_session(couch_user):
+def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
     return {
-        'username': couch_user.raw_username,
-        'user_id': couch_user.get_id,
+        'username': couch_user_or_commconnect_case.raw_username,
+        'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
         # a CommConnectCase, in which case there is no user_data.
-        'user_data': (couch_user.user_session_data
-            if isinstance(couch_user, CouchUser) else {}),
+        'user_data': (couch_user_or_commconnect_case.user_session_data
+            if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

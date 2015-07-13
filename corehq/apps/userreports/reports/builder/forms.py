@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 from itertools import chain
+import json
 from urllib import urlencode
 import uuid
 from django import forms
@@ -21,7 +22,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
-
+from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -73,7 +74,7 @@ class QuestionSelect(Widget):
 
         return format_html(
             '<input{0} data-bind="'
-            '   questionsSelect: [{1}],'
+            '   questionsSelect: {1},'
             '   value: \'{2}\','
             '   optionsCaption: \' \''
             '"/>',
@@ -83,10 +84,9 @@ class QuestionSelect(Widget):
         )
 
     def render_options(self, choices):
-        objs = []
-        for value, label in chain(self.choices, choices):
-            objs.append("{{'value': '{0}', 'label': '{1}'}}".format(value, label))
-        return ", ".join(objs)
+        return json.dumps(
+            [{'value': v, 'label': l} for v, l in chain(self.choices, choices)]
+        )
 
 
 class DataSourceBuilder(object):
@@ -262,6 +262,16 @@ class DataSourceBuilder(object):
         ).one()
 
 
+def _legend(title, subtext):
+    """
+    Return a string to be used in a crispy form Fieldset legend.
+    This function is just a light wrapped around some simple templating.
+    """
+    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+        title=title, subtext=subtext
+    )
+
+
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
     chart_type = forms.ChoiceField(
@@ -279,6 +289,11 @@ class DataSourceForm(forms.Form):
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
+        report_source_help_texts = {
+            "source_type": _("Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option."),
+            "application": _("Which application should the data come from?"),
+            "source": _("For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on."),
+        }
         self.fields.update(report_source_fields)
 
         self.fields['chart_type'].required = self.report_type == "chart"
@@ -286,15 +301,28 @@ class DataSourceForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
+
+        chart_type_crispy_field = None
+        if self.report_type == 'chart':
+            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is."))
+        report_source_crispy_fields = []
+        for k in report_source_fields.keys():
+            if k in report_source_help_texts:
+                report_source_crispy_fields.append(FieldWithHelpBubble(
+                    k, help_bubble_text=report_source_help_texts[k]
+                ))
+            else:
+                report_source_crispy_fields.append(k)
+
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('{} Report'.format(self.report_type.capitalize())),
-                'report_name',
-                'chart_type' if self.report_type == 'chart' else None
+                FieldWithHelpBubble('report_name', help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report')),
+                chart_type_crispy_field
             ),
             crispy.Fieldset(
-                _('Data'),
-                *report_source_fields.keys()
+                _('Data'), *report_source_crispy_fields
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -461,7 +489,10 @@ class ConfigureNewReportBase(forms.Form):
         report filters.
         """
         return crispy.Fieldset(
-            _("Filters"),
+            _legend(
+                _("Filters"),
+                _("Add filters to your report to allow viewers to select which data the report will display. These filters will be displayed at the top of your report.")
+            ),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
             ),
@@ -686,8 +717,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-
-    group_by = forms.ChoiceField(label="Property")
+    group_by = forms.ChoiceField(label="Group by")
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -708,8 +738,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
-            _('Categories'),
-            'group_by',
+            _('Chart'),
+            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shown as bars in the chart.")),
             self.filter_fieldset
         )
 
@@ -761,6 +791,14 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
+    def container_fieldset(self):
+        return crispy.Fieldset(
+            _('Chart'),
+            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shows as the sections of the pie chart.")),
+            self.filter_fieldset
+        )
+
+    @property
     def _report_charts(self):
         agg = self.data_source_properties[self.aggregation_field]['column_id']
         return [{
@@ -773,6 +811,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
     columns = JsonField(required=True)
+    column_legend_fine_print = _("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -785,7 +824,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     def column_fieldset(self):
         return crispy.Fieldset(
-            _("Columns"),
+            _legend(_("Columns"), self.column_legend_fine_print),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
@@ -829,6 +868,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
+    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     @property
     def container_fieldset(self):
@@ -836,7 +876,10 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             "",
             self.column_fieldset,
             crispy.Fieldset(
-                _('Rows'),
+                _legend(
+                    _("Rows"),
+                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no"'),
+                ),
                 'group_by',
             ),
             self.filter_fieldset
@@ -872,6 +915,22 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     @memoized
+    def initial_columns(self):
+        columns = super(ConfigureTableReportForm, self).initial_columns
+
+        # Remove the aggregation indicator from the columns.
+        # It gets removed because we want it to be a column in the report,
+        # but we don't want it to appear in the builder.
+        if self.existing_report:
+            agg_properties = [
+                self._get_property_from_column(c)
+                for c in self.existing_report.aggregation_columns
+            ]
+            return [c for c in columns if c.property not in agg_properties]
+        return columns
+
+    @property
+    @memoized
     def _report_aggregation_cols(self):
         # we want the bar chart behavior, which is reproduced here:
         return [
@@ -882,6 +941,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
+    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)

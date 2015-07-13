@@ -3,6 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
+from corehq.db import Session
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -12,7 +13,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
+from corehq.apps.userreports.sql import _expand_column, _get_distinct_values, IndicatorSqlAdapter, get_engine
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -71,6 +72,50 @@ class TestFieldColumn(SimpleTestCase):
                 "format": "default_",
                 "type": "field",
             })
+
+
+class ChoiceListColumnDbTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = get_engine()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.engine.dispose()
+
+    def test_column_uniqueness_when_truncated(self):
+        problem_spec = {
+            "display_name": "practicing_lessons",
+            "property_name": "long_column",
+            "choices": [
+                "duplicate_choice_1",
+                "duplicate_choice_2",
+            ],
+            "select_style": "multiple",
+            "column_id": "a_very_long_base_selection_column_name_with_limited_room",
+            "type": "choice_list",
+        }
+        data_source_config = DataSourceConfiguration(
+            domain='test',
+            display_name='foo',
+            referenced_doc_type='CommCareCase',
+            table_id=uuid.uuid4().hex,
+            configured_filter={},
+            configured_indicators=[problem_spec],
+        )
+        adapter = IndicatorSqlAdapter(self.engine, data_source_config)
+        adapter.rebuild_table()
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'long_column': 'duplicate_choice_1',
+        })
+        # and query it back
+        q = Session.query(adapter.get_table())
+        self.assertEqual(1, q.count())
 
 
 class TestExpandedColumn(TestCase):
