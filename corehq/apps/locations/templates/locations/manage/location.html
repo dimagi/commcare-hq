@@ -27,6 +27,34 @@
             $("#id_products-selected_ids").width(800).height(400).multiselect();
         });
     </script>
+
+    <script>
+        {# TODO Move this to a separate file #}
+        $("#new_user").on('show', function() {
+
+            var url = "{% url "new_mobile_worker_modal" domain %}";
+            var form_node = $("#new_user form");
+
+            $.get(url, function(data) {
+                form_node.html(data['form_html']);
+            });
+
+            var handle_submission = function(event) {
+                event.preventDefault();
+                $.post(url, form_node.serialize(), function(data) {
+                    console.log(data);
+                    if (data['status'] === 'success') {
+                        console.log("submission succeeded!");
+                    } else {
+                        console.log("submission failed, re-rendering form");
+                        form_node.html(data['form_html']);
+                    }
+                });
+            };
+
+            form_node.submit(handle_submission);
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -157,6 +185,10 @@
             {% crispy users_per_location_form %}
             <input type="hidden" name="form_type" value="location-users" />
           </form>
+          {# TODO javascript callback function? #}
+          <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
+            {% trans "Create new user at this location" %}
+          </a>
         </div>
       </div>
     {% endif %}
@@ -198,5 +230,15 @@
   </form>
 </div>
 
-{% endblock %}
+<div id="new_user" class="modal hide fade">
+  <div class="modal-header">
+    <h3>{% trans "New User" %}</h3>
+  </div>
+  <div class="modal-body">
+    <form class="form form-horizontal" method="post" id="add_commcare_account_form">
+      <i class="icon-refresh icon-spin"></i>
+    </form>
+  </div>
+</div>
 
+{% endblock %}

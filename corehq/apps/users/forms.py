@@ -287,6 +287,8 @@ class CommCareAccountForm(forms.Form):
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
 
+    password_format = 'a'
+
     def __init__(self, *args, **kwargs):
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
