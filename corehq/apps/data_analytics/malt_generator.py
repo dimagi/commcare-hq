@@ -18,19 +18,24 @@ class MALTTableGenerator(object):
         See .models.MALTRow
     """
 
-    def __init__(self, datespan_object):
-        self.datespan = datespan_object
+    def __init__(self, datespan_object_list):
+        self.datespan_list = datespan_object_list
+
+    def _reset_datespan(self, datespan):
+        self.datespan = datespan
 
     def build_table(self):
 
         for domain in Domain.get_all():
             malt_rows_to_save = []
             for user in domain.all_users():
-                try:
-                    malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name))
-                except Exception as ex:
-                    logger.info("Failed to get rows for user {id}. Exception is {ex}".format
-                                (id=user._id, ex=str(ex)))
+                for datespan in self.datespan_list:
+                    self._reset_datespan(datespan)
+                    try:
+                        malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name))
+                    except Exception as ex:
+                        logger.info("Failed to get rows for user {id}. Exception is {ex}".format
+                                    (id=user._id, ex=str(ex)))
             self._save_to_db(malt_rows_to_save, domain._id)
 
     def _get_malt_row_dicts(self, user, domain_name):
