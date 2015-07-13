@@ -5,7 +5,7 @@ from StringIO import StringIO
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
@@ -40,6 +40,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def spec(self):
         return get_document_or_not_found(
+            ReportConfiguration, self.domain, self.report_config_id)
+
+    def get_spec_or_404(self):
+        return get_document_or_404(
             ReportConfiguration, self.domain, self.report_config_id)
 
     def has_viable_configuration(self):
@@ -100,8 +104,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         self.lang = self.request.couch_user.language
         user = request.couch_user
         if self.has_permissions(self.domain, user):
-            if not self.has_viable_configuration():
-                raise Http404()
+            self.get_spec_or_404()
             if kwargs.get('render_as') == 'email':
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
