@@ -2,7 +2,7 @@ from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
-from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
+from corehq.apps.userreports.sql import create_engine, IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.logging import notify_error
 from fluff.signals import get_migration_context, get_tables_to_rebuild
@@ -24,7 +24,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         # todo: copy pasted from fluff - cleanup
         engine = getattr(cls, '_engine', None)
         if not engine:
-            cls._engine = get_engine()
+            cls._engine = create_engine()
         return cls._engine
 
     def get_all_configs(self):

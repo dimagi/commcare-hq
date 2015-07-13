@@ -13,7 +13,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, create_engine
 from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
@@ -79,7 +79,7 @@ class ChoiceListColumnDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = get_engine()
+        cls.engine = create_engine()
 
     @classmethod
     def tearDownClass(cls):

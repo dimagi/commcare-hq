@@ -40,7 +40,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     CustomDataSourceConfiguration,
 )
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, create_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -411,7 +411,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(get_engine(), config)
+    adapter = IndicatorSqlAdapter(create_engine(), config)
     adapter.drop_table()
     config.delete()
     if request:
