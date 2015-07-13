@@ -343,16 +343,21 @@ class StringDataSchema(DocumentSchema):
 
 def xml_to_stock_report_helper(form, elem):
     tag = elem.tag
-    tag = tag[tag.find('}')+1:] # strip out ns
-    timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
+    tag = tag[tag.find('}') + 1:]  # strip out ns
+    timestamp = force_to_datetime(
+        elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
     products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
-    transactions = [t for prod_entry in products for t in
-                    _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem, prod_entry)]
+    transactions = [
+        t for prod_entry in products for t in
+        _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem,
+                                         prod_entry)
+    ]
 
     return StockReportHelper(form, timestamp, tag, transactions)
 
 
-def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node, product_node):
+def _xml_to_stock_transaction_helper(domain, timestamp, action_tag,
+                                     action_node, product_node):
     action_type = action_node.attrib.get('type')
     subaction = action_type
     product_id = product_node.attrib.get('id')
@@ -376,7 +381,8 @@ def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node,
         if action_tag == 'balance':
             case_id = action_node.attrib['entity-id']
             yield _txn(
-                action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
+                action=(const.StockActions.STOCKONHAND if quantity > 0
+                        else const.StockActions.STOCKOUT),
                 case_id=case_id,
                 section_id=section_id,
                 quantity=quantity,
@@ -469,7 +475,8 @@ class StockTransactionHelper(object):
             return self.quantity
 
     def action_config(self, commtrack_config):
-        action = CommtrackActionConfig(action=self.action, subaction=self.subaction)
+        action = CommtrackActionConfig(action=self.action,
+                                       subaction=self.subaction)
         for a in commtrack_config.all_actions:
             if a.name == action.name:
                 return a
@@ -486,7 +493,8 @@ class StockTransactionHelper(object):
 
         return E.entry(
             id=self.product_id,
-            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT
+                         else 0),
         )
 
     @property
@@ -498,7 +506,8 @@ class StockTransactionHelper(object):
         A short string representation of this to be used in sms correspondence
         """
         if self.quantity is not None:
-            quant = int(self.quantity) if self.quantity == int(self.quantity) else self.quantity
+            quant = (int(self.quantity) if self.quantity == int(self.quantity)
+                     else self.quantity)
         else:
             quant = ''
         # FIXME product fetch here is inefficient

@@ -53,7 +53,6 @@ def create_models_for_stock_report(domain, stock_report_helper):
     """
     assert stock_report_helper._form.domain == domain
     domain = domain
-    # todo: this function should probably move to somewhere in casexml.apps.stock
     if stock_report_helper.tag not in stockconst.VALID_REPORT_TYPES:
         return
     report = StockReport.objects.create(
@@ -81,7 +80,10 @@ def create_models_for_stock_report(domain, stock_report_helper):
             assert stock_report_helper.tag == stockconst.REPORT_TYPE_TRANSFER
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.quantity = txn.relative_quantity
-            db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
+            db_txn.stock_on_hand = db_txn.quantity + (
+                previous_transaction.stock_on_hand
+                if previous_transaction else 0
+            )
         db_txn.save()
 
 
@@ -107,7 +109,8 @@ def process_stock(xform, case_db=None):
     # validate product ids
     is_empty = lambda product_id: product_id is None or product_id == ''
     if any([is_empty(tx.product_id) for tx in transactions]):
-        raise MissingProductId(_('Product IDs must be set for all ledger updates!'))
+        raise MissingProductId(
+            _('Product IDs must be set for all ledger updates!'))
     # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
                             lambda v: sorted(v, key=lambda tx: tx.timestamp),
