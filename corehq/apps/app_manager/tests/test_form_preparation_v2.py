@@ -403,6 +403,9 @@ class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
     def test_child_module_adjusted_datums_advanced_module(self):
         """
         Testing that the session variable name for the case_id is correct since
