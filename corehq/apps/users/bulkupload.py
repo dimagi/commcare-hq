@@ -567,7 +567,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_data_keys = set()
     user_groups_length = 0
     user_dicts = []
-    for user in CommCareUser.by_domain(domain):
+    for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
         user_dicts.append(_make_user_dict(user, group_names, location_cache))
         user_data_keys.update(user.user_data.keys() if user.user_data else [])
@@ -575,7 +575,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'is_active', 'location-sms-code'
+        'language', 'user_id', 'is_active',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location-sms-code')
@@ -654,7 +654,7 @@ def dump_users_and_groups(response, domain):
 
     user_headers, user_rows = parse_users(
         group_memoizer,
-        get_all_commcare_users_by_domain(domain),
+        domain,
         user_data_model,
         location_cache
     )
