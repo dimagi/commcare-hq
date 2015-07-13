@@ -40,7 +40,7 @@ class ConnectionManager(object):
         """
         Dispose all engines associated with this. Useful for tests.
         """
-        for engine_id in self._engines:
+        for engine_id in self._engines.keys():
             self.dispose_engine(engine_id)
 
     def _get_connection_string(self, engine_id):
