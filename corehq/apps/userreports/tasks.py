@@ -22,7 +22,7 @@ def rebuild_indicators(indicator_config_id):
         config.meta.build.initiated = datetime.datetime.utcnow()
         config.save()
 
-    adapter = IndicatorSqlAdapter(create_engine(), config)
+    adapter = IndicatorSqlAdapter(config)
     adapter.rebuild_table()
 
     couchdb = _get_db(config.referenced_doc_type)
@@ -35,7 +35,6 @@ def rebuild_indicators(indicator_config_id):
             adapter.save(doc)
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
-    adapter.engine.dispose()
 
     if not is_static:
         config.meta.build.finished = True

@@ -3,6 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.userreports.sql.connection import connection_manager, DEFAULT_ENGINE_ID
 from corehq.db import Session
 
 from corehq.apps.userreports import tasks
@@ -79,11 +80,11 @@ class ChoiceListColumnDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine()
+        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     @classmethod
     def tearDownClass(cls):
-        cls.engine.dispose()
+        connection_manager.dispose_all()
 
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
@@ -105,7 +106,7 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(self.engine, data_source_config)
+        adapter = IndicatorSqlAdapter(data_source_config)
         adapter.rebuild_table()
         # ensure we can save data to the table.
         adapter.save({

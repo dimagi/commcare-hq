@@ -411,7 +411,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(create_engine(), config)
+    adapter = IndicatorSqlAdapter(config)
     adapter.drop_table()
     config.delete()
     if request:

@@ -2,6 +2,7 @@ import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.sql.columns import column_to_sql
+from corehq.apps.userreports.sql.connection import connection_manager, get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 
@@ -11,9 +12,9 @@ metadata = sqlalchemy.MetaData()
 
 class IndicatorSqlAdapter(object):
 
-    def __init__(self, engine, config):
-        self.engine = engine
+    def __init__(self, config):
         self.config = config
+        self.engine = connection_manager.get_engine(get_engine_id(config))
 
     @memoized
     def get_table(self):

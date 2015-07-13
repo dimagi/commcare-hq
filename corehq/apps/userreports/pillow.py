@@ -21,7 +21,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
     @classmethod
     def get_sql_engine(cls):
-        # todo: copy pasted from fluff - cleanup
+        # todo: switch to connection_manager
         engine = getattr(cls, '_engine', None)
         if not engine:
             cls._engine = create_engine()
@@ -39,7 +39,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
+        self.tables = [IndicatorSqlAdapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
 
