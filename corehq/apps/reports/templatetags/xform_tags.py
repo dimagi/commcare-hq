@@ -179,9 +179,9 @@ def render_form(form, domain, options):
         and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)
         and form.doc_type != 'XFormDeprecated'
     )
-    # stuffing this in the same flag as case rebuild
+
     show_resave = (
-        user_can_edit and toggle_enabled(request, toggles.CASE_REBUILD)
+        user_can_edit and toggle_enabled(request, toggles.SUPPORT)
     )
 
     def _get_edit_info(instance):

@@ -945,7 +945,7 @@ def case_details(request, domain, case_id):
             "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
-        "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
+        "show_case_rebuild": toggles.SUPPORT.enabled(request.user.username),
         'is_usercase': case.type == USERCASE_TYPE,
     })
 
