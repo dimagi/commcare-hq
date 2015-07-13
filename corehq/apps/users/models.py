@@ -26,6 +26,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
+from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -875,6 +876,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def get_email(self):
         return self.email
+
+    def is_commcare_user(self):
+        return self._get_user_type() == 'commcare'
+
+    def is_web_user(self):
+        return self._get_user_type() == 'web'
+
+    def _get_user_type(self):
+        if self.doc_type == 'WebUser':
+            return 'web'
+        elif self.doc_type == 'CommCareUser':
+            return 'commcare'
+        else:
+            raise NotImplementedError()
 
     @property
     def projects(self):
@@ -1772,6 +1787,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.fixtures.models import UserFixtureType
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1801,17 +1817,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         })
 
         self.location_id = location._id
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     def unset_location(self):
         """
         Unset the location and remove all associated user data and cases
         """
+        from corehq.apps.fixtures.models import UserFixtureType
+
         self.user_data.pop('commcare_location_id', None)
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
         self.clear_location_delegates()
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     @property
@@ -1986,6 +2006,39 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return CommCareCase.get(location_map_case_id(self))
         except ResourceNotFound:
             return None
+
+    @property
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def fixture_statuses(self):
+        """Returns all of the last modified times for each fixture type"""
+        return self.get_fixture_statuses()
+
+    def get_fixture_statuses(self):
+        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                          for choice in UserFixtureType.CHOICES}
+        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
+            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+        return last_modifieds
+
+    def fixture_status(self, fixture_type):
+        try:
+            return self.fixture_statuses[fixture_type]
+        except KeyError:
+            from corehq.apps.fixtures.models import UserFixtureStatus
+            return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+    def update_fixture_status(self, fixture_type):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+        now = datetime.utcnow()
+        user_fixture_sync, new = UserFixtureStatus.objects.get_or_create(
+            user_id=self._id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': now},
+        )
+        if not new:
+            user_fixture_sync.last_modified = now
+            user_fixture_sync.save()
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(

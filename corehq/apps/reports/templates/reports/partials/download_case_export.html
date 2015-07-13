@@ -1,0 +1,41 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+        var exportDownloader = new HQExportDownloader({
+            domain: '{{ domain }}'
+        });
+        exportDownloader.init();
+
+        var caseExportManager = new ExportManager({
+            domain: '{{ domain }}',
+            exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            downloadUrl: '{% url "download_cases" domain %}',
+            is_new_exporter: true,
+            export_type: "case"
+        } );
+        ko.applyBindings(caseExportManager, $('#case-download')[0]);
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    <div id="case-download">
+        <a data-toggle="modal"
+           href="#export-download-status"
+           data-backdrop="static"
+           data-formname="{{ export.name }}"
+           data-dlocation='{% url "export_custom_data" domain export.get_id %}?type=case&{{ get_filter_params.urlencode|safe }}&async=true'
+           data-caseType="{{ export.index.1|escapejs}}"
+           class="btn btn-primary export-action-download"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
+    </div>
+{% endblock reportcontent %}
+
+{% block modals %}
+{% include 'reports/partials/export_download_modal.html' %}
+{% endblock %}

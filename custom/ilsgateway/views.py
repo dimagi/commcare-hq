@@ -23,6 +23,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
+from custom.ilsgateway.comparison_reports import ProductAvailabilityReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
 from custom.ilsgateway.stock_data import ILSStockDataSynchronization
 from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
@@ -36,7 +37,8 @@ from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes, \
+    ProductAvailabilityData
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
@@ -348,6 +350,7 @@ class ReportRunListView(ListView, DomainViewMixin):
 
 class ReportRunDeleteView(DeleteView, DomainViewMixin):
     model = ReportRun
+    template_name = 'ilsgateway/confirm_delete.html'
 
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
@@ -356,3 +359,19 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
 
     def get_success_url(self):
         return reverse_lazy('report_run_list', args=[self.domain])
+
+
+class ProductAvailabilityDeleteView(DeleteView, DomainViewMixin):
+    model = ProductAvailabilityData
+
+    template_name = 'ilsgateway/confirm_delete.html'
+
+    def get_success_url(self):
+        return ProductAvailabilityReport.get_url(
+            domain=self.domain
+        ) + '?location_id=%s' % self.object.location_id
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(ProductAvailabilityDeleteView, self).dispatch(request, *args, **kwargs)
