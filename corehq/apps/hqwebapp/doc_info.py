@@ -158,6 +158,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 EditLocationView.urlname,
                 args=[domain, doc_id],
             ),
+            is_deleted=generic_delete,
         )
     else:
         doc_info = DocInfo(
