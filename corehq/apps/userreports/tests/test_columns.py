@@ -13,7 +13,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import _expand_column, _get_distinct_values, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
