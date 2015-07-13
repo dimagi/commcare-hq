@@ -289,15 +289,13 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: []})
 
-    @run_with_all_restore_configs
+    # @run_with_all_restore_configs
     def test_delete_one_of_multiple_indices(self):
-        # make IDs both human readable and globally unique to this test
-        uid = uuid.uuid4().hex
-        child_id = 'child_id-{}'.format(uid)
-        parent_id_1 = 'parent_id={}'.format(uid)
-        index_id_1 = 'parent_index_id-{}'.format(uid)
-        parent_id_2 = 'parent_id_2-{}'.format(uid)
-        index_id_2 = 'parent_index_id_2-{}'.format(uid)
+        child_id = "child_id"
+        parent_id_1 = "parent_id"
+        index_id_1 = 'parent_index_id'
+        parent_id_2 = "parent_id_2"
+        index_id_2 = 'parent_index_id_2'
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
