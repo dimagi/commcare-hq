@@ -430,49 +430,13 @@ class StockReportHelper(object):
     """
     Intermediate class for dealing with stock XML
     """
-    # todo: fix name, remove old stock report class
+
     def __init__(self, form, timestamp, tag, transactions):
         self._form = form
         self.form_id = form._id
         self.timestamp = timestamp
         self.tag = tag
         self.transactions = transactions
-
-    @transaction.atomic
-    def create_models(self, domain=None):
-        """
-        Save stock report and stock transaction models to the database.
-        """
-        # todo: this function should probably move to somewhere in casexml.apps.stock
-        if self.tag not in stockconst.VALID_REPORT_TYPES:
-            return
-        report = StockReport.objects.create(
-            form_id=self.form_id,
-            date=self.timestamp,
-            type=self.tag,
-            domain=self._form.domain,
-        )
-        for txn in self.transactions:
-            db_txn = StockTransaction(
-                report=report,
-                case_id=txn.case_id,
-                section_id=txn.section_id,
-                product_id=txn.product_id,
-            )
-            if domain:
-                # set this as a shortcut for post save signal receivers
-                db_txn.domain = domain
-            db_txn.type = txn.action
-            db_txn.subtype = txn.subaction
-            if self.tag == stockconst.REPORT_TYPE_BALANCE:
-                db_txn.stock_on_hand = txn.quantity
-                db_txn.quantity = 0
-            else:
-                assert self.tag == stockconst.REPORT_TYPE_TRANSFER
-                previous_transaction = db_txn.get_previous_transaction()
-                db_txn.quantity = txn.relative_quantity
-                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
-            db_txn.save()
 
 
 class StockTransactionHelper(object):
