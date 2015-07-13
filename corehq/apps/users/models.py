@@ -2309,6 +2309,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
                 yield web_user
 
     @classmethod
+    def get_users_by_permission(cls, domain, permission):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            web_user = cls.wrap(user_doc)
+            if web_user.has_permission(domain, permission):
+                yield web_user
+
+    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
@@ -2388,15 +2396,34 @@ class DomainRequest(Document):
     doc_type = "DomainRequest"
     email = StringProperty()
     full_name = StringProperty()
-    is_accepted = BooleanProperty(default=False)
+    is_approved = BooleanProperty(default=False)
     domain = StringProperty()
 
     @classmethod
-    def get_requests(self, domain):
-        raise NotImplementedError
+    def by_domain(cls, domain):
+        return cls.view("users/open_requests_by_domain",
+            reduce=False,
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True,
+        ).all()
 
     def send_request_email(self):
-        raise NotImplementedError
+        domain = Domain.get_by_name(self.domain)
+        domain_name = domain.hr_name if domain else self.domain
+        params = {
+            'full_name': self.full_name,
+            'email': self.email,
+            'domain_name': domain_name,
+            'url': absolute_reverse("web_users", args=[self.domain]),
+        }
+        recipients = {u.get_email() for u in WebUser.get_users_by_permission(self.domain, Permissions.edit_web_users)}
+        text_content = render_to_string("users/email/approve_domain_request.txt", params)
+        html_content = render_to_string("users/email/approve_domain_request.html", params)
+        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        send_HTML_email(subject, recipients, html_content, text_content=text_content,
+                        email_from=settings.DEFAULT_FROM_EMAIL)
+
 
 class Invitation(Document):
     email = StringProperty()

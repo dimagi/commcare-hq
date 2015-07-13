@@ -41,7 +41,7 @@ from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm, UpdateMyAccountInfoForm,
                                      UpdateUserPermissionForm, UpdateUserRoleForm)
-from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
+from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
@@ -820,6 +820,7 @@ class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = ugettext_noop("Request Access")
     template_name = "users/web_user_request.html"
+    request_form = None
 
     @property
     def page_url(self):
@@ -828,14 +829,26 @@ class DomainRequestView(BasePageView):
     @property
     def page_context(self):
         domain = Domain.get_by_name(self.request.domain)
+        if self.request_form is None:
+            self.request_form = DomainRequestForm(initial={'domain': domain.name})
         return {
             'domain': domain.name,
             'domain_name': domain.display_name(),
-            'request_form': DomainRequestForm(),
+            'request_form': self.request_form
         }
 
     def post(self, request, *args, **kwargs):
-        raise NotImplementedError
+        self.request_form = DomainRequestForm(request.POST)
+        if self.request_form.is_valid():
+            domain_request = DomainRequest(
+                email=request.POST['email'],
+                full_name=request.POST['full_name'],
+                domain=request.POST['domain'],
+            )
+            domain_request.send_request_email()
+            domain_request.save()
+            messages.success(request, _("Request created. You will receive an email when your request is approved."))
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST
