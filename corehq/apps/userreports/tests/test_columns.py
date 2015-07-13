@@ -120,6 +120,11 @@ class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
 
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+        super(TestExpandedColumn, cls).tearDownClass()
+
     def _new_case(self, properties):
         id = uuid.uuid4().hex
         case_block = CaseBlock(
