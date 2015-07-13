@@ -491,7 +491,7 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
-                            process_stock(instance, case_db)
+                            stock_result = process_stock(instance, case_db)
                         except (IllegalCaseId, UsesReferrals, MissingProductId) as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
@@ -551,10 +551,10 @@ class SubmissionPost(object):
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
+                        case_result.commit_dirtiness_flags()
+                        stock_result.commit()
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
-
-                        case_result.commit_dirtiness_flags()
 
                     responses, errors = self.process_signals(instance)
                     if errors:

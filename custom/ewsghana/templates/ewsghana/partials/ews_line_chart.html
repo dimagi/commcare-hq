@@ -129,9 +129,11 @@
             if (line_chart_id.slice(-2) === '51') {
                 addUnderstockOverstockLabels(line_chart_id, line_chart_data);
             }
-            var $chart = $(line_chart_id + ' svg');
-            $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
-            $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
+            {% if chart.is_rendered_as_email %}
+                var $chart = $(line_chart_id + ' svg');
+                $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
+                $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
+            {% endif %}
         });
     }
     {% if not chart.is_rendered_as_email %}

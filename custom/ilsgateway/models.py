@@ -326,6 +326,11 @@ class ProductAvailabilityData(ReportingModel):
         del obj['id']
         return cls(**obj)
 
+    def __str__(self):
+        return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
+               'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
+                                         self.without_stock, self.without_data)
+
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L85

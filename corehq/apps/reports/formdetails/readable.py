@@ -322,8 +322,10 @@ def pop_from_form_data(relative_data, absolute_data, path):
         try:
             if path:
                 data = data[key]
-            else:
+            elif hasattr(data, 'pop'):
                 return data.pop(key)
+            else:
+                return None
         except KeyError:
             return None
 
