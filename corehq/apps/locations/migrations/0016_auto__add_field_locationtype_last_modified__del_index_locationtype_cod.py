@@ -1,31 +1,38 @@
-# encoding: utf-8
-from south.v2 import DataMigration
+# -*- coding: utf-8 -*-
+from south.utils import datetime_utils as datetime
+from south.db import db
+from south.v2 import SchemaMigration
+from django.db import models
 
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        """call the save method on all relevant location types"""
-        for loc_type in orm.LocationType.objects.iterator():
-            loc_type.save()
+        # Adding field 'LocationType.last_modified'
+        db.add_column(u'locations_locationtype', 'last_modified',
+                      self.gf('django.db.models.fields.DateTimeField')(auto_now=True, default=datetime.datetime(1970, 1, 1, 0, 0), blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        # Deleting field 'LocationType.last_modified'
+        db.delete_column(u'locations_locationtype', 'last_modified')
 
 
     models = {
         u'locations.locationtype': {
             'Meta': {'object_name': 'LocationType'},
             'administrative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True'}),
+            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True', 'db_index': 'False'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'emergency_level': ('django.db.models.fields.DecimalField', [], {'default': '0.5', 'max_digits': '10', 'decimal_places': '1'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'overstock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '3.0', 'max_digits': '10', 'decimal_places': '1'}),
             'parent_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
-            'understock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '1.5', 'max_digits': '10', 'decimal_places': '1'}),
             'shares_cases': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'understock_threshold': ('django.db.models.fields.DecimalField', [], {'default': '1.5', 'max_digits': '10', 'decimal_places': '1'}),
             'view_descendants': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'locations.sqllocation': {
@@ -41,7 +48,7 @@ class Migration(DataMigration):
             u'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             u'lft': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             'location_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'location_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']", 'null': 'True'}),
+            'location_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.LocationType']"}),
             'longitude': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '10'}),
             'metadata': ('json_field.fields.JSONField', [], {'default': '{}'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
@@ -58,7 +65,7 @@ class Migration(DataMigration):
             'code': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
             'cost': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '5'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100', 'null': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'default': "''", 'null': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
