@@ -493,6 +493,7 @@ class DomainRequestForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.show_form_errors = True
         self.helper.layout = crispy.Layout(
             crispy.Field('full_name'),
             crispy.Field('email'),
