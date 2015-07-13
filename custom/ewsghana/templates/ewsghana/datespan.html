@@ -2,6 +2,8 @@
 {% load hq_shared_tags %}
 {% block filter_content %}
 <div id="0">
+    <input type="hidden" name="startdate" data-bind="value: startdate">
+    <input type="hidden" name="enddate" data-bind="value: enddate">
     <div>
         <select id="date_span_type"
             class="{{ css_class }}"
@@ -43,6 +45,7 @@
 
 {% endblock %}
 {% block filter_js %}
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
 <script type="text/javascript">
     $(function () {
         ko.bindingHandlers.select2 = {
@@ -62,11 +65,29 @@
             }
         };
 
+
+
     var dateSpanModel = {
         select_params: {{ select_options|JSON }},
         selectedType: ko.observable({{ selected_type }}),
         first_selected: ko.observable('{{ selected_first }}'),
         second_selected: ko.observable('{{ selected_second }}')
+    };
+
+    var getDateFromWeek = function(idx) {
+        return dateSpanModel.first_selected().split("|")[idx];
+    };
+
+    var getDateFromMonth = function(start_or_end) {
+        var month = dateSpanModel.first_selected();
+        var year = dateSpanModel.second_selected();
+        var date = year + "-" + month + "-01";
+        var dateobj = moment(date, "YYYY-MM-DD");
+        if (start_or_end === 1) {
+            return dateobj.format("YYYY-MM-DD")
+        } else {
+            return dateobj.endOf("month").format("YYYY-MM-DD")
+        }
     };
 
     dateSpanModel.firstOptions =  ko.computed(function() {
@@ -86,6 +107,22 @@
             });
 
             return type.secondOptions;
+        }
+    });
+
+    dateSpanModel.startdate = ko.computed(function() {
+        if(dateSpanModel.selectedType() === 2) {
+            return getDateFromWeek(0)
+        } else {
+            return getDateFromMonth(1)
+        }
+    });
+
+    dateSpanModel.enddate = ko.computed(function() {
+        if(dateSpanModel.selectedType() === 2) {
+            return getDateFromWeek(1)
+        } else {
+            return getDateFromMonth(2)
         }
     });
 

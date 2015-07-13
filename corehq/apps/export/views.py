@@ -6,13 +6,19 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from corehq import toggle_enabled, toggles
 from corehq.apps.app_manager.models import Application, get_apps_in_domain
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
-from corehq.apps.export.forms import CreateFormExportForm
+from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
+from corehq.apps.reports.standard.export import (
+    CaseExportInterface,
+    CaseExportReport,
+    FormExportInterface,
+    ExcelExportReport,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -59,6 +65,11 @@ class BaseExportView(BaseProjectDataView):
     @memoized
     def report_class(self):
         try:
+            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+                return {
+                    'form': FormExportInterface,
+                    'case': CaseExportInterface,
+                }[self.export_type]
             return {
                 'form': ExcelExportReport,
                 'case': CaseExportReport
@@ -276,9 +287,9 @@ def create_basic_form_checkpoint(index):
 
 
 class CreateFormExportView(BaseProjectDataView):
-    urlname = 'create_export_form'
+    urlname = 'create_form_export'
     page_title = ugettext_noop("Create Form Export")
-    template_name = 'export/create_export.html'
+    template_name = 'export/create_form_export.html'
 
     @property
     def main_context(self):
@@ -300,7 +311,7 @@ class CreateFormExportView(BaseProjectDataView):
                 reverse(
                     CreateCustomFormExportView.urlname,
                     args=[self.domain],
-                ) + ('?' + 'export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
+                ) + ('?export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
                     'app_id': app_id,
                     'export_tag': [
                         form for form in Application.get(app_id).get_forms()
@@ -336,4 +347,52 @@ class CreateFormExportView(BaseProjectDataView):
             } for form in module.get_forms()]
             for app in get_apps_in_domain(self.domain)
             for module in app.modules
+        }
+
+
+class CreateCaseExportView(BaseProjectDataView):
+    urlname = 'create_case_export'
+    page_title = ugettext_noop('Create Case Export')
+    template_name = 'export/create_case_export.html'
+
+    @property
+    def main_context(self):
+        context = super(CreateCaseExportView, self).main_context
+        context.update({
+            'create_export_form': self.create_export_form,
+            'app_to_case_type_options': self.app_to_case_type_options,
+            'case_type_prompt': _('Select Case Type...'),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.create_export_form.is_valid():
+            case_type = self.create_export_form.cleaned_data['case_type']
+            return HttpResponseRedirect(
+                reverse(
+                    CreateCustomCaseExportView.urlname,
+                    args=[self.domain],
+                ) + ('?export_tag="%(export_tag)s"' % {
+                    'export_tag': case_type,
+                })
+            )
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        if self.request.method == 'POST':
+            return CreateCaseExportForm(self.domain, self.request.POST)
+        return CreateCaseExportForm(self.domain)
+
+    @property
+    def app_to_case_type_options(self):
+        return {
+            app._id: [{
+                'text': case_type,
+                'value': case_type,
+            } for case_type in set(
+                module.case_type for module in app.modules if module.case_type
+            )]
+            for app in get_apps_in_domain(self.domain)
         }

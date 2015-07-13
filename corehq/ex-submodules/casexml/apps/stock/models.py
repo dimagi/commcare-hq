@@ -103,20 +103,15 @@ class DocDomainMapping(models.Model):
 # signal catchers
 @receiver(pre_save, sender=StockTransaction)
 def create_reconciliation_transaction(sender, instance, *args, **kwargs):
+    from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
+
     creating = instance.pk is None
     if creating and instance.type == const.TRANSACTION_TYPE_STOCKONHAND:
         previous_transaction = instance.get_previous_transaction()
         # only soh reports that have changed the stock create inferred transactions
         if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
             amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
-            domain = instance.report.domain
-            exclude_invalid_periods = False
-            if domain:
-                from corehq.apps.commtrack.models import CommtrackConfig
-                config = CommtrackConfig.for_domain(domain)
-                if config:
-                    exclude_invalid_periods = config.consumption_config.exclude_invalid_periods
-            if not domain or not exclude_invalid_periods or amt < 0:
+            if not should_exclude_invalid_periods(instance.report.domain) or amt < 0:
                 StockTransaction.objects.create(
                     report=instance.report,
                     case_id=instance.case_id,

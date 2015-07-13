@@ -1,4 +1,5 @@
 import logging
+from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.xform import is_device_report, CaseDbCache
@@ -16,6 +17,33 @@ logger = logging.getLogger('commtrack.incoming')
 COMMTRACK_LEGACY_REPORT_XMLNS = 'http://commtrack.org/legacy/stock_report'
 
 
+class StockProcessingResult(object):
+    """
+    An object used to collect the changes that are made during stock
+    processing so that they can be made more atomic
+    """
+
+    def __init__(self, xform, relevant_cases=None, stock_reports=None):
+        self.domain = xform.domain
+        self.xform = xform
+        self.relevant_cases = relevant_cases or []
+        self.stock_reports = stock_reports or []
+
+    @transaction.atomic
+    def commit(self):
+        """
+        Commit changes to the database
+        """
+        # if cases were changed we should purge the sync token cache
+        # this ensures that ledger updates will sync back down
+        if self.relevant_cases and self.xform.get_sync_token():
+            self.xform.get_sync_token().invalidate_cached_payloads()
+
+        # create the django models
+        for report in self.stock_reports:
+            report.create_models(self.domain)
+
+
 @log_exception()
 def process_stock(xform, case_db=None):
     """
@@ -24,7 +52,7 @@ def process_stock(xform, case_db=None):
     case_db = case_db or CaseDbCache()
     assert isinstance(case_db, CaseDbCache)
     if is_device_report(xform):
-        return []
+        return StockProcessingResult(xform)
 
     domain = xform.domain
     config = CommtrackConfig.for_domain(domain)
@@ -36,7 +64,7 @@ def process_stock(xform, case_db=None):
     # omitted: normalize_transactions (used for bulk requisitions?)
 
     if not transactions:
-        return []
+        return StockProcessingResult(xform)
 
     # validate product ids
     is_empty = lambda product_id: product_id is None or product_id == ''
@@ -67,19 +95,11 @@ def process_stock(xform, case_db=None):
         case.actions.append(case_action)
         case_db.mark_changed(case)
 
-    # also purge the sync token cache for the same reason
-    if relevant_cases and xform.get_sync_token():
-        xform.get_sync_token().invalidate_cached_payloads()
-
-    # create the django models
-    for report in stock_reports:
-        report.create_models(domain)
-
-    # TODO make this a signal
-    from corehq.apps.commtrack.signals import send_notifications, raise_events
-    send_notifications(xform, relevant_cases)
-    raise_events(xform, relevant_cases)
-    return relevant_cases
+    return StockProcessingResult(
+        xform=xform,
+        relevant_cases=relevant_cases,
+        stock_reports=stock_reports,
+    )
 
 
 def unpack_commtrack(xform, config):

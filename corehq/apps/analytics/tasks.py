@@ -76,7 +76,8 @@ def _link_account_with_cookie(webuser, cookies, meta):
             'email': webuser.username,
             'firstname': webuser.first_name,
             'lastname': webuser.last_name,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)})
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
+            'opt_into_emails': meta.get('opt_into_emails', False),
         }
         req = requests.post(
             url,

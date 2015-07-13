@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.dbaccessors import \
-    get_open_requisition_case_ids_for_location
+from corehq.apps.commtrack.models import StockTransaction, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
@@ -14,19 +13,15 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, RequisitionTransaction, RequisitionCase
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
-    NotAUserClassError,
-)
-import uuid
+    NotAUserClassError)
 import re
 
 logger = logging.getLogger('commtrack.sms')
@@ -100,16 +95,6 @@ class StockReportParser(object):
 
         self.C = domain.commtrack_settings
 
-    def get_req_id(self):
-        reqs = get_open_requisition_case_ids_for_location(
-            self.location['location'])
-        if reqs:
-            # only support one open requisition per location
-            assert(len(reqs) == 1)
-            return reqs[0]
-        else:
-            return uuid.uuid4().hex
-
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
@@ -141,12 +126,11 @@ class StockReportParser(object):
             RequisitionActions.FULFILL,
             RequisitionActions.RECEIPTS
         ]:
-            self.case_id = self.get_req_id()
-            _tx = self.single_action_transactions(
-                action,
-                args,
-                self.transaction_factory(RequisitionTransaction)
-            )
+            # dropped support for this
+            raise SMSError(_(
+                "You can no longer use requisitions! Please contact your project supervisor for help"
+            ))
+
         elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
             # multiple action stock report
             _tx = self.multiple_action_transactions(args, self.transaction_factory(StockTransaction))
@@ -441,21 +425,15 @@ def process_transfers(E, transfers):
             'section-id': 'stock',
         }
 
-        if transfers[0].action == const.RequisitionActions.RECEIPTS:
-            attr['src'] = transfers[0].case_id
-            sp = Location.get(transfers[0].location_id).linked_supply_point()
-            attr['dest'] = sp._id
+        if transfers[0].action in [
+            const.StockActions.RECEIPTS,
+            const.RequisitionActions.FULFILL
+        ]:
+            here, there = ('dest', 'src')
         else:
-            if transfers[0].action in [
-                const.StockActions.RECEIPTS,
-                const.RequisitionActions.FULFILL
-            ]:
-                here, there = ('dest', 'src')
-            else:
-                here, there = ('src', 'dest')
+            here, there = ('src', 'dest')
 
-            attr[here] = transfers[0].case_id
-            # there not supported yet
+        attr[here] = transfers[0].case_id
 
         if transfers[0].subaction:
             attr['type'] = transfers[0].subaction

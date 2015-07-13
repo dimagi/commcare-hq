@@ -98,6 +98,8 @@ class MultiProductFilter(BaseMultipleOptionFilter):
 
 
 class EWSLocationFilter(AsyncLocationFilter):
+    template = "reports/filters/location_async.html"
+
     def reporting_types(self):
         return [
             location_type.name
@@ -115,6 +117,10 @@ class EWSLocationFilter(AsyncLocationFilter):
         context['hierarchy'] = hierarchy
 
         return context
+
+
+class EWSRestrictionLocationFilter(AsyncLocationFilter):
+    template = "reports/filters/location_async.html"
 
 
 class EWSDateFilter(BaseReportFilter):
@@ -149,7 +155,10 @@ class EWSDateFilter(BaseReportFilter):
         for idx, val in enumerate(fridays):
             try:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), fridays[idx + 1].strftime("%Y-%m-%d"))
-                text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(fridays[idx + 1]))
+                text = '{0} - {1}'.format(
+                    ews_date_format(val),
+                    ews_date_format(fridays[idx + 1] - relativedelta(days=1))
+                )
             except IndexError:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
                 text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(now))

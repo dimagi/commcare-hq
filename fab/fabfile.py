@@ -610,16 +610,17 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy():
+def record_successful_deploy(url):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
-            '"%(environment)s" --mail_admins'
+            '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
             'virtualenv_root': env.virtualenv_root,
             'user': env.user,
             'environment': env.environment,
+            'url': url,
         })
 
 
@@ -717,8 +718,8 @@ def _deploy_without_asking():
         raise
     else:
         _execute_with_timing(services_restart)
-        _tag_commit()
-        _execute_with_timing(record_successful_deploy)
+        url = _tag_commit()
+        _execute_with_timing(record_successful_deploy, url)
 
 
 @task
@@ -734,11 +735,19 @@ def _tag_commit():
     sh.git.fetch("origin", env.code_branch)
     deploy_time = datetime.datetime.utcnow()
     tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
+    pattern = "*{}*".format(env.environment)
+    last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
     branch = "origin/{}".format(env.code_branch)
     msg = getattr(env, "message", "")
     msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
     sh.git.tag(tag_name, "-m", msg, branch)
     sh.git.push("origin", tag_name)
+    diff_url = "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
+        last_tag,
+        tag_name
+    )
+    print "Here's a link to the changes you just deployed:\n{}".format(diff_url)
+    return diff_url
 
 
 @task

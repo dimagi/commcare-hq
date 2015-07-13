@@ -31,7 +31,7 @@ from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, DAYS_IN_MONTH
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
@@ -365,6 +365,9 @@ class NewStockReport(object):
 
     @transaction.atomic
     def create_models(self, domain=None):
+        """
+        Save stock report and stock transaction models to the database.
+        """
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -753,139 +756,6 @@ OVERSTOCK_THRESHOLD = 2.  # months
 DEFAULT_CONSUMPTION = 10.  # per month
 
 
-class RequisitionCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to requisitions.
-    """
-    class Meta:
-        # This is necessary otherwise syncdb will confuse this app with casexml
-        app_label = "commtrack"
-
-    requisition_status = StringProperty()
-
-    # TODO none of these properties are supported on mobile currently
-    # we need to discuss what will be eventually so we know what we need
-    # to support here
-    requested_on = DateTimeProperty()
-    approved_on = DateTimeProperty()
-    fulfilled_on = DateTimeProperty()
-    received_on = DateTimeProperty()
-    requested_by = StringProperty()
-    approved_by = StringProperty()
-    fulfilled_by = StringProperty()
-    received_by = StringProperty()
-
-    @memoized
-    def get_location(self):
-        try:
-            return SupplyPointCase.get(self.indices[0].referenced_id).location
-        except ResourceNotFound:
-            return None
-
-    @memoized
-    def get_requester(self):
-        # TODO this doesn't get set by mobile yet
-        # if self.requested_by:
-        #     return CommCareUser.get(self.requested_by)
-        return None
-
-    def sms_format(self):
-        if self.requisition_status == RequisitionStatus.REQUESTED:
-            section = 'ct-requested'
-        elif self.requisition_status == RequisitionStatus.APPROVED:
-            section = 'ct-approved'
-        else:
-            section = 'stock'
-
-        formatted_strings = []
-        states = StockState.objects.filter(
-            case_id=self._id,
-            section_id=section
-        )
-        for state in states:
-            product = Product.get(state.product_id)
-            formatted_strings.append(
-                '%s:%d' % (product.code, state.stock_on_hand)
-            )
-        return ' '.join(sorted(formatted_strings))
-
-    def get_next_action(self):
-        req_config = CommtrackConfig.for_domain(self.domain).requisition_config
-        return req_config.get_next_action(
-            RequisitionStatus.to_action_type(self.requisition_status)
-        )
-
-    @classmethod
-    def get_by_external_id(cls, domain, external_id):
-        # only used by openlmis
-        raise NotImplementedError()
-
-        # return cls.view('hqcase/by_domain_external_id',
-        #     key=[domain, external_id],
-        #     include_docs=True, reduce=False,
-        #     classes={'CommCareCase': RequisitionCase}
-        # ).all()
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Status"),
-                            "expr": "requisition_status"
-                        }
-                    ],
-                ]
-            },
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Requested On"),
-                            "expr": "requested_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("requested_by"),
-                            "expr": "requested_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Approved On"),
-                            "expr": "approved_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("approved_by"),
-                            "expr": "approved_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Received On"),
-                            "expr": "received_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("received_by"),
-                            "expr": "received_by"
-                        }
-                    ]
-                ]
-            }
-        ]
-
-
-class RequisitionTransaction(StockTransaction):
-    @property
-    def category(self):
-        return 'requisition'
-
-
 class ActiveManager(models.Manager):
     """
     Filter any object that is associated to an archived product.
@@ -1060,6 +930,12 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
+    # todo: in the worst case, this function makes
+    # - three calls to couch (for the case, domain, and commtrack config)
+    # - three postgres queries (product, location, and state)
+    # - one postgres write (to save the state)
+    # and that doesn't even include the consumption calc, which can do a whole
+    # bunch more work and hit the database.
     try:
         domain_name = instance.domain
     except AttributeError:
@@ -1105,7 +981,8 @@ def update_stock_state_for_transaction(instance):
         consumption_calc
     )
     # so you don't have to look it up again in the signal receivers
-    state.domain = domain
+    if domain:
+        state.domain = domain.name
     state.save()
 
 
@@ -1162,8 +1039,9 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    for case in process_stock(xform):
-        case.save()
+    result = process_stock(xform)
+    result.commit()
+    CommCareCase.get_db().bulk_save(result.relevant_cases)
 
 
 # import signals

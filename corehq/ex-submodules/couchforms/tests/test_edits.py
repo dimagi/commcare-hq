@@ -189,6 +189,32 @@ class EditFormTest(TestCase):
         for a in case.actions:
             self.assertEqual(form_id, a.xform_id)
 
+    def test_second_edit_fails(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            version=V2,
+        ).as_string(format_datetime=json_format_datetime)
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        # submit an edit form with a bad case update (for example a bad ID)
+        case_block = CaseBlock(
+            create=True,
+            case_id='',
+            case_type='person',
+            version=V2,
+        ).as_string(format_datetime=json_format_datetime)
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        form = XFormInstance.get(form_id)
+        self.assertEqual('XFormError', form.doc_type)
+
+        deprecated_form = XFormInstance.get(form.deprecated_form_id)
+        self.assertEqual('XFormDeprecated', deprecated_form.doc_type)
+
     def test_case_management_ordering(self):
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex

@@ -56,7 +56,7 @@ class IndicatorSqlAdapter(object):
                 delete = table.delete(table.c.doc_id == doc['_id'])
                 connection.execute(delete)
                 for indicator_row in indicator_rows:
-                    all_values = {i.column.id: i.value for i in indicator_row}
+                    all_values = {i.column.database_column_name: i.value for i in indicator_row}
                     insert = table.insert().values(**all_values)
                     try:
                         connection.execute(insert)
@@ -90,7 +90,7 @@ def column_to_sql(column):
     # we have to explicitly truncate the column IDs otherwise postgres will do it
     # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
     return sqlalchemy.Column(
-        truncate_value(column.id),
+        column.database_column_name,
         _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,

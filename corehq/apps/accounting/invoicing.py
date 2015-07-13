@@ -23,7 +23,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
-    SMALL_INVOICE_THRESHOLD,
+    SMALL_INVOICE_THRESHOLD, SubscriptionType,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -203,11 +203,7 @@ class DomainInvoiceFactory(object):
 
         record = BillingRecord.generate_record(invoice)
         try:
-            if subscription.auto_generate_credits and not invoice.balance:
-                record.skipped_email = True
-                record.save()
-            else:
-                record.send_email()
+            record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
                 logger.error("[BILLING] %s" % e)
