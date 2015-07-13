@@ -2008,7 +2008,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return None
 
     @property
-    @skippable_quickcache([], lambda _: settings.UNIT_TESTING)
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
         return self.get_fixture_statuses()
