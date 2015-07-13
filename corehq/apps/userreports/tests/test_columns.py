@@ -3,7 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.userreports.sql.connection import connection_manager, DEFAULT_ENGINE_ID
+from corehq.apps.userreports.sql.connection import connection_manager
 from corehq.db import Session
 
 from corehq.apps.userreports import tasks
@@ -14,7 +14,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, create_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
@@ -77,10 +77,6 @@ class TestFieldColumn(SimpleTestCase):
 
 
 class ChoiceListColumnDbTest(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
     @classmethod
     def tearDownClass(cls):
