@@ -497,6 +497,7 @@ class FormExportReport(FormExportReportBase):
             'export': self.exports[0],
             'exports': self.exports,
             "use_bulk": len(self.export_ids) > 1,
+            "filter_title": ugettext_noop("Export Filters"),
             'additional_params': mark_safe(
                 '&'.join('export_id=%(export_id)s' % {
                     'export_id': export_id,
