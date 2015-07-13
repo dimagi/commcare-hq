@@ -1768,17 +1768,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
-            return Location.get(self.location_id)
-        else:
-            return None
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                self.unset_location()
+        return None
 
     @property
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            return SQLLocation.objects.get(location_id=self.location_id)
-        else:
-            return None
+            try:
+                return SQLLocation.objects.get(location_id=self.location_id)
+            except SQLLocation.DoesNotExist:
+                self.unset_location()
+        return None
 
     def set_location(self, location):
         """
@@ -2273,17 +2277,24 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
+    def _get_location_or_clear(self, domain, db_get_call):
+        loc_id = self.get_location_id(domain)
+        if loc_id:
+            try:
+                return db_get_call(loc_id)
+            except (ResourceNotFound, SQLLocation.DoesNotExist):
+                self.get_domain_membership(domain).location_id = None
+        return None
+
     @memoized
     def get_sql_location(self, domain):
         from corehq.apps.locations.models import SQLLocation
-        loc_id = self.get_location_id(domain)
-        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
+        return self._get_location_or_clear(domain, SQLLocation.objects.get)
 
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        return Location.get(loc_id) if loc_id else None
+        return self._get_location_or_clear(domain, Location.get)
 
 
 class FakeUser(WebUser):
