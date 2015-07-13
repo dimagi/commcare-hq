@@ -2,9 +2,9 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from bootstrap3_crispy import layout as crispy
-from bootstrap3_crispy.helper import FormHelper
-from bootstrap3_crispy.layout import Submit
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField

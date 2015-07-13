@@ -1,5 +1,5 @@
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.style.decorators import check_preview_bootstrap3, use_select2
+from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -93,25 +93,12 @@ class MyAccountSettingsView(BaseMyAccountView):
     page_title = ugettext_lazy("My Information")
     api_key = None
 
-    @method_decorator(check_preview_bootstrap3())
-    @method_decorator(use_select2())
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
-
     def get_or_create_api_key(self):
         if not self.api_key:
             with CriticalSection(['get-or-create-api-key-for-%d' % self.request.user.id]):
                 api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
             self.api_key = api_key.key
         return self.api_key
-
-    @property
-    def template_name(self):
-        template = {
-            style_utils.BOOTSTRAP_2: 'settings/edit_my_account.b2.html',
-            style_utils.BOOTSTRAP_3: 'settings/edit_my_account.html',
-        }[style_utils.bootstrap_version(self.request)]
-        return template
 
     @property
     @memoized
