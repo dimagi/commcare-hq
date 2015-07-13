@@ -2,7 +2,7 @@ from django.conf.urls import *
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 
-from .views import (DefaultProjectUserSettingsView, EditWebUserView,
+from .views import (DefaultProjectUserSettingsView, DomainRequestView, EditWebUserView,
     EditMyAccountDomainView, ListWebUsersView, InviteWebUserView,
     NewListWebUsersView,
 )
@@ -36,6 +36,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
     url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.urlname),
     url(r'^web/reinvite/$', 'reinvite_web_user', name='reinvite_web_user'),
+    url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', 'delete_invitation', name='delete_invitation'),
     url(r'^web/location_restriction_for_users/$', 'location_restriction_for_users', name='location_restriction_for_users'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),

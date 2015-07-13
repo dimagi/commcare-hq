@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
-from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -87,7 +86,8 @@ def login_and_domain_required(view_func):
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
                 elif domain.allow_web_user_requests:
                     # jls: write test for this
-                    return render_to_response("users/web_user_request.html", {'domain_name': domain.display_name()})
+                    from corehq.apps.users.views import DomainRequestView
+                    return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
                     raise Http404
             else:
