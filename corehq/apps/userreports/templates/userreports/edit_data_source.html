@@ -1,13 +1,13 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags_b3 %}
+{% load crispy_forms_tags %}
 {% block main_column %}
     {% if read_only %}
         <div class="alert alert-info">
           {% trans "This datasource is read only, any changes made can not be saved." %}
         </div>
     {% endif %}
-    {% crispy_b3 form %}
+    {% crispy form %}
 {% if data_source.get_id %}
 {% if not read_only %}
 <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
