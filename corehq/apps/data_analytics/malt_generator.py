@@ -14,33 +14,29 @@ logger = logging.getLogger(__name__)
 
 class MALTTableGenerator(object):
     """
-        Populates SQL table with data for given datespan
+        Populates SQL table with data for given list of monthly-datespans
         See .models.MALTRow
     """
 
     def __init__(self, datespan_object_list):
-        self.datespan_list = datespan_object_list
-
-    def _reset_datespan(self, datespan):
-        self.datespan = datespan
+        self.monthspan_list = datespan_object_list
 
     def build_table(self):
 
         for domain in Domain.get_all():
             malt_rows_to_save = []
             for user in domain.all_users():
-                for datespan in self.datespan_list:
-                    self._reset_datespan(datespan)
+                for monthspan in self.monthspan_list:
                     try:
-                        malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name))
+                        malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name, monthspan))
                     except Exception as ex:
                         logger.info("Failed to get rows for user {id}. Exception is {ex}".format
                                     (id=user._id, ex=str(ex)))
             self._save_to_db(malt_rows_to_save, domain._id)
 
-    def _get_malt_row_dicts(self, user, domain_name):
+    def _get_malt_row_dicts(self, user, domain_name, monthspan):
         malt_row_dicts = []
-        forms_query = self._get_forms_queryset(user._id, domain_name)
+        forms_query = self._get_forms_queryset(user._id, domain_name, monthspan)
         num_of_forms = forms_query.count()
         apps_submitted_for = [app_id for (app_id,) in
                               forms_query.values_list('app_id').distinct()]
@@ -53,7 +49,7 @@ class MALTTableGenerator(object):
                             (id=user._id, app_id=app_id, ex=str(ex)))
 
             malt_dict = {
-                'month': self.datespan.startdate,
+                'month': monthspan.startdate,
                 'user_id': user._id,
                 'username': user.username,
                 'email': user.email,
@@ -91,9 +87,9 @@ class MALTTableGenerator(object):
             logger.info("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
                         id=domain_id, ex=str(ex)))
 
-    def _get_forms_queryset(self, user_id, domain_name):
-        start_date = self.datespan.startdate
-        end_date = self.datespan.enddate
+    def _get_forms_queryset(self, user_id, domain_name, monthspan):
+        start_date = monthspan.startdate
+        end_date = monthspan.enddate
 
         return FormData.objects.exclude(
             device_id=COMMCONNECT_DEVICE_ID,
