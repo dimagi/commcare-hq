@@ -47,6 +47,7 @@ class MALTTableGenerator(object):
             except Exception as ex:
                 logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
                             (id=user._id, app_id=app_id, ex=str(ex)))
+                continue
 
             malt_dict = {
                 'month': monthspan.startdate,
