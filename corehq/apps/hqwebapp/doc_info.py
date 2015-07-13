@@ -44,12 +44,16 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     doc_id = doc.get('_id')
     generic_delete = doc_type.endswith(DELETED_SUFFIX)
 
+    def has_doc_type(doc_type, expected_doc_type):
+        return (doc_type == expected_doc_type or
+            doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
+
     assert doc.get('domain') == domain or domain in doc.get('domains', ())
 
     if cache and doc_id in cache:
         return cache[doc_id]
 
-    if doc_type.startswith('Application') or doc_type.startswith('RemoteApp'):
+    if has_doc_type(doc_type, 'Application') or has_doc_type(doc_type, 'RemoteApp'):
         if doc.get('copy_of'):
             doc_info = DocInfo(
                 display=u'%s (#%s)' % (doc['name'], doc['version']),
@@ -70,9 +74,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 ),
                 is_deleted=generic_delete,
             )
-    elif doc_type.startswith('CommCareCaseGroup'):
-        # This has to go before CommCareCase otherwise it won't get picked
-        # up because we're using startswith() to check the doc_type
+    elif has_doc_type(doc_type, 'CommCareCaseGroup'):
         from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
         doc_info = DocInfo(
             type_display=_('Case Group'),
@@ -83,7 +85,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             ),
             is_deleted=generic_delete,
         )
-    elif doc_type.startswith('CommCareCase'):
+    elif has_doc_type(doc_type, 'CommCareCase'):
         doc_info = DocInfo(
             display=doc['name'],
             type_display=_('Case'),
@@ -93,7 +95,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             ),
             is_deleted=generic_delete,
         )
-    elif any([doc_type.startswith(d) for d in couchforms_models.doc_types().keys()]):
+    elif any([has_doc_type(doc_type, d) for d in couchforms_models.doc_types().keys()]):
         doc_info = DocInfo(
             type_display=_('Form'),
             link=reverse(
@@ -122,7 +124,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             ),
             is_deleted=doc.get('base_doc', '').endswith(DELETED_SUFFIX),
         )
-    elif doc_type in ('Group',):
+    elif has_doc_type(doc_type, 'Group'):
         from corehq.apps.users.views.mobile import EditGroupMembersView
         doc_info = DocInfo(
             type_display=_('Group'),
@@ -133,7 +135,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             ),
             is_deleted=generic_delete,
         )
-    elif doc_type in ('Domain',):
+    elif has_doc_type(doc_type, 'Domain'):
         if doc['is_snapshot'] and doc['published']:
             urlname = 'project_info'
         else:
@@ -147,7 +149,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             ),
             is_deleted=generic_delete,
         )
-    elif doc_type == 'Location':
+    elif has_doc_type(doc_type, 'Location'):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
             type_display=doc['location_type'],
