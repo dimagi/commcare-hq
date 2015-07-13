@@ -1,6 +1,6 @@
-from .adapter import get_table_name, get_indicator_table, IndicatorSqlAdapter, metadata
-from .columns import get_column_name, get_expanded_column_config, SqlColumnConfig
-from .util import truncate_value
+from .adapter import get_indicator_table, IndicatorSqlAdapter, metadata
+from .columns import get_expanded_column_config, SqlColumnConfig
+from .util import get_column_name, get_table_name, truncate_value
 
 
 import sqlalchemy
