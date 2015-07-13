@@ -38,6 +38,7 @@ from corehq.apps.sms.models import (
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
     WORKFLOW_DEFAULT,
+    WORKFLOW_FORWARD,
     INCOMING,
     OUTGOING,
     SMSLog,
@@ -403,7 +404,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             if sms.direction == INCOMING:
                 return _('Received')
             elif sms.direction == OUTGOING:
-                return _('Sent')
+                if sms.workflow == WORKFLOW_FORWARD:
+                    return _('Forwarded')
+                else:
+                    return _('Sent')
             else:
                 return _('Unknown')
 
