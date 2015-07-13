@@ -107,7 +107,10 @@ var PaymentMethodHandler = function (formId, opts) {
         return self.newCard();
     });
     self.hasAgreedToPrivacy = ko.computed(function() {
-        return self.selectedCard() && self.selectedCard().cardFormIsValid();
+        if(self.paymentMethod() === self.CREDIT_CARD){
+            return self.selectedCard() && self.selectedCard().cardFormIsValid();
+        }
+        return true;
     });
 
     if (opts.wire_email){
