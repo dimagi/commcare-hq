@@ -38,7 +38,9 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm, UpdateUserPermissionForm)
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm, UpdateMyAccountInfoForm,
+                                     UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -812,6 +814,28 @@ class InviteWebUserView(BaseManageWebUserView):
                 args=[self.domain]
             ))
         return self.get(request, *args, **kwargs)
+
+
+class DomainRequestView(BasePageView):
+    urlname = "domain_request"
+    page_title = ugettext_noop("Request Access")
+    template_name = "users/web_user_request.html"
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.request.domain])
+
+    @property
+    def page_context(self):
+        domain = Domain.get_by_name(self.request.domain)
+        return {
+            'domain': domain.name,
+            'domain_name': domain.display_name(),
+            'request_form': DomainRequestForm(),
+        }
+
+    def post(self, request, *args, **kwargs):
+        raise NotImplementedError
 
 
 @require_POST
