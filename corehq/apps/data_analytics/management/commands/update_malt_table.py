@@ -1,23 +1,25 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
-from dimagi.utils.dates import DateSpan, safe_strftime
+from dimagi.utils.dates import DateSpan
 
 import dateutil
 
 
 class Command(BaseCommand):
     """
-        Note: Expectes to be called, once, after the month ends,...
-        to avoid duplicates. If not, this will raise IntegrityError
+        Generates malt table for given list of months (at least one month required)
+        e.g. ./manage.py update_malt_table June-2015 May-2015
     """
-    help = 'Rebuilds MALT table for given month'
-    args = '<month_year>'
+    help = 'Rebuilds MALT table for given months'
+    args = '<month_year> <month_year> <month_year> ...'
 
     def handle(self, *args, **options):
-        month_year = dateutil.parser.parse(args[0])
-        datespan = DateSpan.from_month(month_year.month, month_year.year)
-        generator = MALTTableGenerator(datespan)
-        print "Building Malt table for {}...".format(safe_strftime(month_year, '%b-%Y'))
+        datespan_list = []
+        for arg in args:
+            month_year = dateutil.parser.parse(arg)
+            datespan_list.append(DateSpan.from_month(month_year.month, month_year.year))
+        generator = MALTTableGenerator(datespan_list)
+        print "Building Malt table..."
         generator.build_table()
         print "Finished!"
