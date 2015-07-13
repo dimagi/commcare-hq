@@ -40,7 +40,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     CustomDataSourceConfiguration,
 )
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, create_engine
+from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
