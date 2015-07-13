@@ -2335,6 +2335,24 @@ class InvalidUser(FakeUser):
 #
 # Django  models go here
 #
+class DomainRequest(Document):
+    '''
+    This could share code with OrgRequest, but as that's legacy code, I'm not going to
+    take on the testing burden that would come with touching it.
+    '''
+    doc_type = "DomainRequest"
+    email = StringProperty()
+    full_name = StringProperty()
+    is_accepted = BooleanProperty(default=False)
+    domain = StringProperty()
+
+    @classmethod
+    def get_requests(self, domain):
+        raise NotImplementedError
+
+    def send_request_email(self):
+        raise NotImplementedError
+
 class Invitation(Document):
     email = StringProperty()
     invited_by = StringProperty()
