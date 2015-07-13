@@ -162,13 +162,6 @@ DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range',
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
-    _extra_json_properties = [
-        'url',
-        'report_name',
-        'date_description',
-        'datespan_filters',
-        'has_ucr_datespan',
-    ]
 
     domain = StringProperty()
 
@@ -233,12 +226,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         }
 
     def to_complete_json(self):
-        json = super(ReportConfig, self).to_json()
-
-        for key in self._extra_json_properties:
-            json[key] = getattr(self, key)
-
-        return json
+        result = super(ReportConfig, self).to_json()
+        result.update({
+            'url': self.url,
+            'report_name': self.report_name,
+            'date_description': self.date_description,
+            'datespan_filters': self.datespan_filters,
+            'has_ucr_datespan': self.has_ucr_datespan,
+        })
+        return result
 
     @property
     @memoized
