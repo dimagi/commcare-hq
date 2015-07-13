@@ -46,7 +46,12 @@ class MALTTableGenerator(object):
                               forms_query.values_list('app_id').distinct()]
 
         for app_id in apps_submitted_for:
-            wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
+            try:
+                wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
+            except Exception as ex:
+                logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
+                            (id=user._id, app_id=app_id, ex=str(ex)))
+
             malt_dict = {
                 'month': self.datespan.startdate,
                 'user_id': user._id,
