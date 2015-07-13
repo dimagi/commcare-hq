@@ -84,3 +84,13 @@ def get_matching_users(awcs=None, gps=None, blocks=None):
         user for user in UserSqlData().get_data()
         if user[key] in selected
     ]
+
+
+def numeric_fn(val):
+    try:
+        sort_val = int(val)
+    except ValueError:
+        sort_val = -1
+    except TypeError:
+        sort_val = -1
+    return {'sort_key': sort_val, 'html': val}

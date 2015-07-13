@@ -1,11 +1,9 @@
-from datetime import timedelta
-from celery.task.base import periodic_task
 from celery.task import task
 from corehq import Domain
-from corehq.apps.commtrack.signals import send_notifications
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import bootstrap_domain, sync_requisition_from_openlmis
-import settings
+from custom.requisitions.signals import send_notifications
+
 
 # todo: no one uses this feature. If we ever need to enable it we should uncomment this line
 # @periodic_task(run_every=timedelta(hours=1),queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))

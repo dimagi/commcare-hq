@@ -40,7 +40,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     CustomDataSourceConfiguration,
 )
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -167,7 +167,7 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = ReportConfiguration.get(report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             view_class = {
                 'chart': ConfigureChartReport,
@@ -199,6 +199,9 @@ class ConfigureChartReport(ReportBuilderView):
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
             ],
+            'filter_property_help_text': _('Choose the property you would you like to add as a filter to this report'),
+            'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for viewers to understand.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/>Date: select this if the property is a date<br/>Choice: select this if the property is text or multiple choice<br/>Numeric: select this if the property is a number'),
         }
         return context
 
@@ -408,7 +411,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(get_engine(), config)
+    adapter = IndicatorSqlAdapter(config)
     adapter.drop_table()
     config.delete()
     if request:

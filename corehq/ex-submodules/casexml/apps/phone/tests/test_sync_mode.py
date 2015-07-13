@@ -291,11 +291,13 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
     # @run_with_all_restore_configs
     def test_delete_one_of_multiple_indices(self):
-        child_id = "child_id"
-        parent_id_1 = "parent_id"
-        index_id_1 = 'parent_index_id'
-        parent_id_2 = "parent_id_2"
-        index_id_2 = 'parent_index_id_2'
+        # make IDs both human readable and globally unique to this test
+        uid = uuid.uuid4().hex
+        child_id = 'child_id-{}'.format(uid)
+        parent_id_1 = 'parent_id={}'.format(uid)
+        index_id_1 = 'parent_index_id-{}'.format(uid)
+        parent_id_2 = 'parent_id_2-{}'.format(uid)
+        index_id_2 = 'parent_index_id_2-{}'.format(uid)
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,

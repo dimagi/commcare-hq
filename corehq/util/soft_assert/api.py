@@ -16,7 +16,7 @@ def _send_message(info, backend):
     )
 
 
-def soft_assert(to, notify_admins=False,
+def soft_assert(to=None, notify_admins=False,
                 fail_if_debug=False, exponential_backoff=True, skip_frames=0):
     """
     send an email with stack trace if assertion is not True

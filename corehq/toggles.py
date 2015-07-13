@@ -499,3 +499,10 @@ REVAMPED_EXPORTS = StaticToggle(
     'Revamped Form and Case exports',
     TAG_PRODUCT_PATH,
 )
+
+RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
+    'restrict_form_edit_by_location',
+    "Restrict ability to edit/archive forms by the web user's location",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)

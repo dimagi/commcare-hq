@@ -338,6 +338,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return to_return
 
     def archive(self, user=None):
+        if self.is_archived:
+            return
         self.doc_type = "XFormArchived"
         self.history.append(XFormOperation(
             user=user,
@@ -347,13 +349,19 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user=None):
+        if not self.is_archived:
+            return
         self.doc_type = "XFormInstance"
         self.history.append(XFormOperation(
             user=user,
             operation='unarchive',
         ))
-        XFormInstance.save(self) # subclasses explicitly set the doc type so force regular save
+        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
         xform_unarchived.send(sender="couchforms", xform=self)
+
+    @property
+    def is_archived(self):
+        return self.doc_type == "XFormArchived"
 
 
 class XFormError(XFormInstance):

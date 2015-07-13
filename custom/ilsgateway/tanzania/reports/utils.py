@@ -93,7 +93,7 @@ def make_url(report_class, domain, string_params, args):
 
 def format_percent(float_number):
     if float_number:
-        return '%.2f%%' % float_number
+        return '%.1f%%' % float_number
     else:
         return _('No Data')
 
