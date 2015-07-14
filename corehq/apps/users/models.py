@@ -2363,6 +2363,10 @@ class DomainRequest(Document):
             include_docs=True,
         ).all()
 
+    @classmethod
+    def exists(cls, domain, email):
+        return len(filter(lambda r: r.email == email, cls.by_domain(domain))) > 0
+
     def send_request_email(self):
         domain = Domain.get_by_name(self.domain)
         domain_name = domain.hr_name if domain else self.domain
