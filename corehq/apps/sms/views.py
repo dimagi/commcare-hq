@@ -294,7 +294,7 @@ def send_to_recipients(request, domain):
                         number,
                         user.raw_username if user else "<no username>"
                     ))
-                    logged_subevent.error(MessagingEvent.INTERNAL_SERVER_ERROR)
+                    logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
 
         logged_event.completed()
 
