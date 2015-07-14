@@ -19,6 +19,7 @@ var BillingHandler = function (formId, opts) {
     self.paymentIsNotComplete = ko.computed(function () {
         return ! self.paymentIsComplete();
     });
+    self.paymentProcessing = ko.observable(false);
 
     self.serverErrorMsg = ko.observable();
     self.showServerErrorMsg = ko.computed(function () {
@@ -125,7 +126,12 @@ var PaymentMethodHandler = function (formId, opts) {
     });
 
     self.isSubmitDisabled = ko.computed(function () {
-        return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
+        if (self.paymentMethod() === self.CREDIT_CARD){
+            return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
+        }
+        else{
+            return (self.paymentProcessing());
+        }
     });
 
     self.loadCards = function (cards) {
@@ -150,6 +156,7 @@ var PaymentMethodHandler = function (formId, opts) {
             self.selectedCard().process(self.submitForm);
         }
         else{
+            self.paymentProcessing(true);
             self.submitForm();
         }
     };
@@ -218,6 +225,7 @@ var PaymentMethodHandler = function (formId, opts) {
                   }
               }
               self.paymentIsComplete(true);
+              self.paymentProcessing(false);
           }
           self.handleProcessingErrors(response);
     };
