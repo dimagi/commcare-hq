@@ -2,10 +2,8 @@ from decimal import Decimal
 import uuid
 import logging
 from xml.etree import ElementTree
-from copy import copy
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.db import transaction
 from django.utils.translation import ugettext as _
 from django.dispatch import receiver
 from django.db import models
@@ -289,14 +287,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     def openlmis_enabled(self):
         return self.openlmis_config.enabled
 
-def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
-    extras = {"limit": limit} if limit else {}
-    startkey = [domain, location_id] if location_id else [domain]
-    endkey = copy(startkey) + [{}]
-    return CommCareCase.get_db().view(
-        view_name, startkey=startkey, endkey=endkey,
-        reduce=False, skip=skip, **extras)
-
 
 def force_int(value):
     if value is None:
@@ -319,26 +309,6 @@ def force_empty_string_to_null(value):
         return None
     else:
         return value
-
-
-class StringDataSchema(DocumentSchema):
-
-    @classmethod
-    def force_wrap(cls, data):
-        data = copy(data)
-        for property in cls.properties().values():
-            transform = {
-                IntegerProperty: force_int,
-                BooleanProperty: force_bool,
-                DateProperty: force_empty_string_to_null,
-                DateTimeProperty: force_empty_string_to_null,
-            }.get(property.__class__, lambda x: x)
-            data[property.name] = transform(data.get(property.name))
-        return super(StringDataSchema, cls).wrap(data)
-
-    @classmethod
-    def wrap(cls, data):
-        raise NotImplementedError()
 
 
 def xml_to_stock_report_helper(form, elem):
@@ -521,17 +491,6 @@ class StockTransactionHelper(object):
             location_id=self.location_id,
             product_id=self.product_id,
         )
-
-
-def _get_single_index(case, identifier, type, wrapper=None):
-    matching = filter(lambda i: i.identifier == identifier, case.indices)
-    if matching:
-        assert len(matching) == 1, 'should only be one parent index'
-        assert matching[0].referenced_type == type, \
-             ' parent had bad case type %s' % matching[0].referenced_type
-        ref_id = matching[0].referenced_id
-        return wrapper.get(ref_id) if wrapper else ref_id
-    return None
 
 
 class SupplyPointCase(CommCareCase):
