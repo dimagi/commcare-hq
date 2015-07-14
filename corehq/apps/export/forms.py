@@ -23,7 +23,7 @@ class CreateFormExportForm(forms.Form):
         ]
         self.fields['module'].choices = [
             (module.unique_id, module.name)
-            for app in apps
+            for app in apps if hasattr(app, 'modules')
             for module in app.modules
         ]
         self.fields['form'].choices = [
@@ -96,7 +96,7 @@ class CreateCaseExportForm(forms.Form):
         ]
         self.fields['case_type'].choices = [
             (module.case_type, module.case_type)
-            for app in apps
+            for app in apps if hasattr(app, 'modules')
             for module in app.modules
             if module.case_type
         ]
