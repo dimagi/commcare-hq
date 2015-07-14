@@ -10,6 +10,7 @@ from PIL import Image
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -29,7 +30,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -681,7 +682,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
-        choices=COUNTRIES,
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8')),
         required=False,
     )
     commtrack_domain = ChoiceField(
@@ -880,7 +881,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+                             data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             FormActions(
                 StrictButton(
@@ -944,7 +945,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             FormActions(
                 crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
@@ -1041,7 +1042,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(
                 _("Re-Confirm Product Agreement"),
@@ -1135,7 +1136,7 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.SUPPORT_EMAIL
+            recipient = settings.PROBONO_SUPPORT_EMAIL
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
@@ -1504,15 +1505,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        revert_current_subscription_end_date = None
-        if self.current_subscription and (
-            not self.current_subscription.date_end
-            or self.cleaned_data['start_date'] < self.current_subscription.date_end
-        ):
-            revert_current_subscription_end_date = self.current_subscription.date_end
-            self.current_subscription.date_end = self.cleaned_data['start_date']
-            self.current_subscription.save()
-        try:
+        # I remember being worried about exceptions here,
+        # so let's ensure atomicity of the transaction
+        with transaction.atomic():
             if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
                 new_subscription = Subscription.new_domain_subscription(
                     self.next_account,
@@ -1528,12 +1523,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     account=self.next_account,
                     **self.subscription_default_fields
                 )
-        except:
-            # If the entire transaction did not go through, rollback saved changes
-            if revert_current_subscription_end_date:
-                self.current_subscription.date_end = revert_current_subscription_end_date
-                self.current_subscription.save()
-            raise
 
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],

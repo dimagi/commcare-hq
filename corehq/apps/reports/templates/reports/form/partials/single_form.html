@@ -189,7 +189,7 @@ requires imports/proptable.html to be included in the main template
                 </a>
             </p>
             {% endif %}
-            {% if user.can_edit_data %}
+            {% if show_edit_options %}
             <p>
                 {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.get_id %}" method="POST"

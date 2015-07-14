@@ -28,7 +28,6 @@
         });
         var formOptions = ko.computed(function() {
             var forms = moduleToFormOptions[moduleId()];
-            console.log(forms);
             if(forms && forms.length > 1) {
                 return [{
                     text: '{{ form_prompt }}',

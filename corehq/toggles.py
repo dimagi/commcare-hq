@@ -185,12 +185,6 @@ OFFLINE_CLOUDCARE = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-CASE_REBUILD = StaticToggle(
-    'case_rebuild',
-    'Show UI-based case and form rebuild options (primarily for support team)',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
@@ -498,4 +492,17 @@ REVAMPED_EXPORTS = StaticToggle(
     'revamped_exports',
     'Revamped Form and Case exports',
     TAG_PRODUCT_PATH,
+)
+
+RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
+    'restrict_form_edit_by_location',
+    "Restrict ability to edit/archive forms by the web user's location",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+SUPPORT = StaticToggle(
+    'support',
+    'General toggle for support features',
+    TAG_EXPERIMENTAL,
 )

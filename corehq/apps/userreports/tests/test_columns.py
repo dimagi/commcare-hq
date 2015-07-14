@@ -3,6 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.userreports.sql.connection import connection_manager
 from corehq.db import Session
 
 from corehq.apps.userreports import tasks
@@ -13,7 +14,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import _expand_column, _get_distinct_values, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -76,20 +78,20 @@ class TestFieldColumn(SimpleTestCase):
 
 class ChoiceListColumnDbTest(TestCase):
 
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
-            "property_path": [
-                "form",
-                "previous_lesson_review",
-                "practicing_lessons"
-            ],
+            "property_name": "long_column",
             "choices": [
                 "duplicate_choice_1",
                 "duplicate_choice_2",
             ],
             "select_style": "multiple",
-            "column_id": "a_very_long_base_selection_column_name_with_limted_room",
+            "column_id": "a_very_long_base_selection_column_name_with_limited_room",
             "type": "choice_list",
         }
         data_source_config = DataSourceConfiguration(
@@ -100,16 +102,28 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(get_engine(), data_source_config)
+        adapter = IndicatorSqlAdapter(data_source_config)
         adapter.rebuild_table()
-        # ensure we can query the table
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'long_column': 'duplicate_choice_1',
+        })
+        # and query it back
         q = Session.query(adapter.get_table())
-        self.assertEqual(0, q.count())
+        self.assertEqual(1, q.count())
 
 
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
+
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+        super(TestExpandedColumn, cls).tearDownClass()
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex

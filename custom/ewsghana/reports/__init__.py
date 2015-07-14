@@ -2,6 +2,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -14,7 +15,8 @@ from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
-from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
+from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
+    get_products_for_locations_by_program, get_products_for_locations_by_products
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -94,18 +96,11 @@ class EWSData(object):
 
     def unique_products(self, locations, all=False):
         if self.config['products'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-            ).filter(pk__in=self.config['products']).exclude(is_archived=True)
+            return get_products_for_locations_by_products(locations, self.config['products'])
         elif self.config['program'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-                program_id=self.config['program']
-            ).exclude(is_archived=True)
+            return get_products_for_locations_by_program(locations, self.config['program'])
         else:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True)
-            ).exclude(is_archived=True)
+            return get_products_for_locations(locations)
 
 
 class ReportingRatesData(EWSData):
@@ -178,7 +173,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         if self.is_rendered_as_email:
             program = self.request.GET.get('filter_by_program')
             products = self.request.GET.getlist('filter_by_product')
-            return """
+            return mark_safe("""
             <br>For Filters:<br>
             Location: {0}<br>
             Program: {1}<br>
@@ -192,7 +187,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
                 ) if products != ALL_OPTION and products else ALL_OPTION.title(),
                 ews_date_format(self.datespan.startdate_utc),
                 ews_date_format(self.datespan.enddate_utc)
-            )
+            ))
         return None
 
     def get_stock_transactions(self):
@@ -381,8 +376,12 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rendered_content(self):
-        locations = get_supply_points(self.config['location_id'], self.config['domain'])
-        products = self.unique_products(locations, all=True)
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        if location.location_type.administrative:
+            locations = get_descendants(self.config['location_id'])
+            products = self.unique_products(locations, all=True)
+        else:
+            products = location.products
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []
         if 'report_type' in self.config:
@@ -410,7 +409,6 @@ class ProductSelectionPane(EWSData):
 
         for _, product_dict in result.iteritems():
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
-
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
             'is_rendered_as_email': self.config.get('is_rendered_as_email', False),

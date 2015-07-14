@@ -67,3 +67,7 @@ tr:nth-child(n+2) {
 #report_table_product_selection_pane td {
     padding: 0;
 }
+
+.nv-pieChart .nv-legendWrap {
+    display: none;
+}

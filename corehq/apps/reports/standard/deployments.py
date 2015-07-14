@@ -1,5 +1,6 @@
 # coding=utf-8
 from datetime import datetime, timedelta
+from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
@@ -222,7 +223,8 @@ class SyncHistoryReport(DeploymentsReport):
 
     @property
     def show_extra_columns(self):
-        return self.request.user and self.request.user.is_superuser
+        return self.request.user and toggles.SUPPORT.enabled(self.request.user.username)
+
 
 def _fmt_date(date):
     def _timedelta_class(delta):
