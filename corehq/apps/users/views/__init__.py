@@ -826,21 +826,24 @@ class DomainRequestView(BasePageView):
         return {
             'domain': domain.name,
             'domain_name': domain.display_name(),
-            'request_exists': DomainRequest.exists(domain.name, email),
             'request_form': self.request_form,
         }
 
     def post(self, request, *args, **kwargs):
         self.request_form = DomainRequestForm(request.POST)
         if self.request_form.is_valid():
-            domain_request = DomainRequest(
-                email=request.POST['email'],
-                full_name=request.POST['full_name'],
-                domain=request.POST['domain'],
-            )
-            domain_request.send_request_email()
-            domain_request.save()
-            messages.success(request, _("Request created."))
+            data = self.request_form.cleaned_data
+            if DomainRequest.exists(data['domain'], data['email']):
+                messages.error(request, _("A request already exists for this email. You will receive an email when the request is approved."))
+            else:
+                domain_request = DomainRequest(
+                    email=data['email'],
+                    full_name=data['full_name'],
+                    domain=data['domain'],
+                )
+                domain_request.send_request_email()
+                domain_request.save()
+                messages.success(request, _("Request created. You will receive an email when the request is approved."))
         return self.get(request, *args, **kwargs)
 
 
