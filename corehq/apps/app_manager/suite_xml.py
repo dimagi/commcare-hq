@@ -1970,6 +1970,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     # We can't set a new ID to an ID we already have. We need to rename current ID
                     datum = datum_ids_[parent_datum_.id]
                     new_id = '_'.join((parent_datum_.id, datum['case_type']))
+                    # It is possible for an advanced form to manage multiple cases with the same case type, so
+                    # just using case_type is not enough to ensure uniqueness. Add a suffix if necessary.
                     i = 0
                     while new_id in datum_ids_:
                         new_id = '_'.join((parent_datum_.id, datum['case_type'], str(i)))
