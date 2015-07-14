@@ -845,7 +845,7 @@ class DomainRequestView(BasePageView):
         if self.request_form.is_valid():
             data = self.request_form.cleaned_data
             if DomainRequest.exists(data['domain'], data['email']):
-                messages.error(request, _("A request already exists for this email. You will receive an email when the request is approved."))
+                messages.error(request, _("A request is pending for this email. You will receive an email when the request is approved."))
             else:
                 domain_request = DomainRequest(
                     email=data['email'],
