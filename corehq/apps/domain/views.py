@@ -1029,7 +1029,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         try:
             wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
         except Exception as e:
-            return json_response({'error': {'message': e}})
+            return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
 
