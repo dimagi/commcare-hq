@@ -8,7 +8,8 @@ from django.http.response import Http404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import StockState, StockTransactionHelper
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.commtrack.processing import StockTransactionHelper
 from corehq.apps.commtrack.sms import process
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView

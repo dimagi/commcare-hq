@@ -13,7 +13,6 @@ from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
     compute_daily_consumption)
 from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
@@ -30,9 +29,7 @@ from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_IN_MONTH
-from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
-from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -309,187 +306,6 @@ def force_empty_string_to_null(value):
         return None
     else:
         return value
-
-
-def xml_to_stock_report_helper(form, elem):
-    tag = elem.tag
-    tag = tag[tag.find('}') + 1:]  # strip out ns
-    timestamp = force_to_datetime(
-        elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
-    products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
-    transactions = [
-        t for prod_entry in products for t in
-        _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem,
-                                         prod_entry)
-    ]
-
-    return StockReportHelper(form, timestamp, tag, transactions)
-
-
-def _xml_to_stock_transaction_helper(domain, timestamp, action_tag,
-                                     action_node, product_node):
-    action_type = action_node.attrib.get('type')
-    subaction = action_type
-    product_id = product_node.attrib.get('id')
-
-    def _txn(action, case_id, section_id, quantity):
-        # warning: here be closures
-        return StockTransactionHelper(
-            domain=domain,
-            timestamp=timestamp,
-            product_id=product_id,
-            quantity=Decimal(str(quantity)) if quantity is not None else None,
-            action=action,
-            case_id=case_id,
-            section_id=section_id,
-            subaction=subaction if subaction and subaction != action else None
-            # note: no location id
-        )
-
-    def _yield_txns(section_id, quantity):
-        # warning: here be closures
-        if action_tag == 'balance':
-            case_id = action_node.attrib['entity-id']
-            yield _txn(
-                action=(const.StockActions.STOCKONHAND if quantity > 0
-                        else const.StockActions.STOCKOUT),
-                case_id=case_id,
-                section_id=section_id,
-                quantity=quantity,
-            )
-        elif action_tag == 'transfer':
-            src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
-            assert src or dst
-            if src is not None:
-                yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
-                           section_id=section_id, quantity=quantity)
-            if dst is not None:
-                yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
-                           section_id=section_id, quantity=quantity)
-
-    def _quantity_or_none(value, section_id):
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            logging.error((
-                "Non-numeric quantity submitted on domain %s for "
-                "a %s ledger" % (domain, section_id)
-            ))
-            return None
-
-    section_id = action_node.attrib.get('section-id', None)
-    grouped_entries = section_id is not None
-    if grouped_entries:
-        quantity = _quantity_or_none(
-            product_node.attrib.get('quantity'),
-            section_id
-        )
-        # make sure quantity is not an empty, unset node value
-        if quantity is not None:
-            for txn in _yield_txns(section_id, quantity):
-                yield txn
-    else:
-        values = [child for child in product_node]
-        for value in values:
-            section_id = value.attrib.get('section-id')
-            quantity = _quantity_or_none(
-                value.attrib.get('quantity'),
-                section_id
-            )
-            # make sure quantity is not an empty, unset node value
-            if quantity is not None:
-                for txn in _yield_txns(section_id, quantity):
-                    yield txn
-
-
-class StockReportHelper(object):
-    """
-    Intermediate class for dealing with stock XML
-    """
-
-    def __init__(self, form, timestamp, tag, transactions):
-        self._form = form
-        self.form_id = form._id
-        self.timestamp = timestamp
-        self.tag = tag
-        self.transactions = transactions
-
-
-class StockTransactionHelper(object):
-    """
-    Helper class for transactions
-    """
-
-    def __init__(self, product_id=None, action=None, subaction=None,
-                 domain=None, quantity=None, location_id=None, timestamp=None,
-                 case_id=None, section_id=None):
-        self.quantity = quantity
-        self.location_id = location_id
-        self.timestamp = timestamp
-        self.case_id = case_id
-        self.section_id = section_id
-        self.domain = domain
-        self.action = action
-        self.subaction = subaction
-        self.product_id = product_id
-
-    @property
-    def relative_quantity(self):
-        """
-        Gets the quantity of this transaction as a positive or negative number
-        depending on the action/context
-        """
-        if self.action == const.StockActions.CONSUMPTION:
-            return -self.quantity
-        else:
-            return self.quantity
-
-    def action_config(self, commtrack_config):
-        action = CommtrackActionConfig(action=self.action,
-                                       subaction=self.subaction)
-        for a in commtrack_config.all_actions:
-            if a.name == action.name:
-                return a
-        return None
-
-    @property
-    def date(self):
-        if self.timestamp:
-            return dateparse.json_format_datetime(self.timestamp)
-
-    def to_xml(self, E=None, **kwargs):
-        if not E:
-            E = XML()
-
-        return E.entry(
-            id=self.product_id,
-            quantity=str(self.quantity if self.action != StockActions.STOCKOUT
-                         else 0),
-        )
-
-    @property
-    def category(self):
-        return 'stock'
-
-    def fragment(self):
-        """
-        A short string representation of this to be used in sms correspondence
-        """
-        if self.quantity is not None:
-            quant = self.quantity
-        else:
-            quant = ''
-        # FIXME product fetch here is inefficient
-        return '%s%s' % (Product.get(self.product_id).code.lower(), quant)
-
-    def __repr__(self):
-        return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(
-            action=self.action,
-            subaction=self.subaction,
-            quantity=self.quantity,
-            location_id=self.location_id,
-            product_id=self.product_id,
-        )
 
 
 class SupplyPointCase(CommCareCase):
