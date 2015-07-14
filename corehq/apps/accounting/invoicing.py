@@ -292,34 +292,15 @@ class DomainWireInvoiceFactory(object):
         return wire_invoice
 
     def create_wire_credits_invoice(self, items, amount):
-        account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            created_by_invoicing=True,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
-
-        wire_invoice = WirePrepaymentInvoice.objects.create(
-            domain=self.domain.name,
-            date_start=datetime.datetime.utcnow(),
-            date_end=datetime.datetime.utcnow(),
-            date_due=None,
-            balance=amount,
-            account=account,
+        from corehq.apps.accounting.tasks import create_wire_credits_invoice
+        create_wire_credits_invoice.delay(
+            domain_name=self.domain.name,
+            account_created_by=self.__class__.__name__,
+            account_entry_point=EntryPoint.SELF_STARTED,
+            amount=amount,
+            invoice_items=items,
+            contact_emails=self.contact_emails
         )
-
-        wire_invoice.items = items
-        record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
-
-        try:
-            record.send_email(contact_emails=self.contact_emails)
-        except InvoiceEmailThrottledError as e:
-            # Currently wire invoices are never throttled
-            if not self.logged_throttle_error:
-                logger.error("[BILLING] %s" % e)
-                self.logged_throttle_error = True
-
-        return wire_invoice
 
 
 class LineItemFactory(object):

@@ -21,7 +21,9 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
-    SubscriptionAdjustmentMethod)
+    SubscriptionAdjustmentMethod,
+    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
+)
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -241,6 +243,36 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_dimagi_ending_reminder_email()
+
+
+@task(ignore_result=True)
+def create_wire_credits_invoice(domain_name,
+                                account_created_by,
+                                account_entry_point,
+                                amount,
+                                invoice_items,
+                                contact_emails):
+    account = BillingAccount.get_or_create_account_by_domain(
+        domain_name,
+        created_by=account_created_by,
+        created_by_invoicing=True,
+        entry_point=account_entry_point
+    )[0]
+    wire_invoice = WirePrepaymentInvoice.objects.create(
+        domain=domain_name,
+        date_start=datetime.datetime.utcnow(),
+        date_end=datetime.datetime.utcnow(),
+        date_due=None,
+        balance=amount,
+        account=account,
+    )
+    wire_invoice.items = invoice_items
+
+    record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
+    try:
+        record.send_email(contact_emails=contact_emails)
+    except Exception as e:
+        logger.error("[BILLING] %s" % e)
 
 
 @task(ignore_result=True)
