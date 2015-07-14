@@ -122,8 +122,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False, show_ad
         return ret
 
     locations = SQLLocation.root_locations(
-            domain, include_archive_ancestors=include_archived
-        )
+        domain, include_archive_ancestors=include_archived
+    )
 
     if not show_admin:
         locations = locations.filter(location_type__administrative=True)
@@ -176,8 +176,8 @@ class EWSRestrictionLocationFilter(AsyncLocationFilter):
 
         return {
             'api_root': api_root,
-            'control_name': self.label, # todo: cleanup, don't follow this structure
-            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'control_name': self.label,
+            'control_slug': self.slug,
             'loc_id': loc_id,
             'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
             'hierarchy': location_hierarchy_config(self.domain)
@@ -218,8 +218,8 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
 
         return {
             'api_root': api_root,
-            'control_name': self.label, # todo: cleanup, don't follow this structure
-            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'control_name': self.label,
+            'control_slug': self.slug,
             'loc_id': loc_id,
             'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
             'hierarchy': hierarchy

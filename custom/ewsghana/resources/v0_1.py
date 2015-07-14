@@ -6,7 +6,6 @@ from corehq.apps.locations.resources.v0_1 import LocationResource
 from corehq.util.quickcache import quickcache
 
 
-
 @quickcache(['project.name', 'show_administrative'], timeout=10)
 def _user_locations_ids(project, show_administrative):
     locations = SQLLocation.by_domain(project.name)
