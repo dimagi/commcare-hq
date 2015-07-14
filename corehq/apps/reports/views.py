@@ -165,7 +165,13 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
             or request.couch_user.get_viewable_reports()):
         raise Http404
 
-    configs = ReportConfig.by_domain_and_owner(domain, user._id)
+    all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
+    good_configs = []
+    for config in all_configs:
+        if config.is_configurable_report and not config.configurable_report:
+            continue
+
+        good_configs.append(config)
 
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
@@ -184,7 +190,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     context = dict(
         couch_user=request.couch_user,
         domain=domain,
-        configs=configs,
+        configs=good_configs,
         scheduled_reports=scheduled_reports,
         report=dict(
             title=_("My Saved Reports"),
