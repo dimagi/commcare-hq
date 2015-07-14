@@ -3,11 +3,14 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
 from django.utils.translation import ugettext_noop
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
     BaseMultipleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq import Domain
 from custom.ewsghana.utils import ews_date_format
@@ -97,8 +100,92 @@ class MultiProductFilter(BaseMultipleOptionFilter):
             .order_by('name')
 
 
-class EWSLocationFilter(AsyncLocationFilter):
-    template = "reports/filters/location_async.html"
+def load_locs_json(domain, selected_loc_id=None, include_archived=False, show_admin=True,
+        user=None):
+    """initialize a json location tree for drill-down controls on
+    the client. tree is only partially initialized and branches
+    will be filled in on the client via ajax.
+
+    what is initialized:
+    * all top level locs
+    * if a 'selected' loc is provided, that loc and its complete
+      ancestry
+    """
+    def loc_to_json(loc):
+        ret = {
+            'name': loc.name,
+            'location_type': loc.location_type.name,  # todo: remove when types aren't optional
+            'uuid': loc.location_id,
+            'is_archived': loc.is_archived,
+            'can_edit': True
+        }
+        return ret
+
+    locations = SQLLocation.root_locations(
+            domain, include_archive_ancestors=include_archived
+        )
+
+    if not show_admin:
+        locations = locations.filter(location_type__administrative=True)
+
+    loc_json = [loc_to_json(loc) for loc in locations]
+
+    # if a location is selected, we need to pre-populate its location hierarchy
+    # so that the data is available client-side to pre-populate the drop-downs
+    if selected_loc_id:
+        selected = SQLLocation.objects.get(
+            domain=domain,
+            location_id=selected_loc_id
+        )
+
+        lineage = selected.get_ancestors()
+
+        parent = {'children': loc_json}
+        for loc in lineage:
+            children = loc.child_locations(include_archive_ancestors=include_archived)
+            if not show_admin:
+                children = children.filter(location_type__administrative=True)
+            # find existing entry in the json tree that corresponds to this loc
+            this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            this_loc['children'] = [
+                loc_to_json(loc) for loc in
+                children
+            ]
+            parent = this_loc
+
+    return loc_json
+
+
+class EWSRestrictionLocationFilter(AsyncLocationFilter):
+    template = "ewsghana/partials/location_async.html"
+    show_administrative = True
+
+    @property
+    def filter_context(self):
+        api_root = reverse('api_dispatch_list',
+                           params={'show_administrative': True},
+                           kwargs={'domain': self.domain,
+                                   'resource_name': 'ews_location',
+                                   'api_name': 'v0.3'})
+        user = self.request.couch_user
+        loc_id = self.request.GET.get('location_id')
+        if not loc_id:
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership:
+                loc_id = domain_membership.location_id
+
+        return {
+            'api_root': api_root,
+            'control_name': self.label, # todo: cleanup, don't follow this structure
+            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'loc_id': loc_id,
+            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
+            'hierarchy': location_hierarchy_config(self.domain)
+        }
+
+
+class EWSLocationFilter(EWSRestrictionLocationFilter):
+    show_administrative = False
 
     def reporting_types(self):
         return [
@@ -109,18 +196,35 @@ class EWSLocationFilter(AsyncLocationFilter):
 
     @property
     def filter_context(self):
-        context = super(EWSLocationFilter, self).filter_context
+        api_root = reverse('api_dispatch_list',
+                           params={'show_administrative': False},
+                           kwargs={'domain': self.domain,
+                                   'resource_name': 'ews_location',
+                                   'api_name': 'v0.3'})
+        user = self.request.couch_user
+        loc_id = self.request.GET.get('location_id')
+        if not loc_id:
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership:
+                loc_id = domain_membership.location_id
+        location = SQLLocation.objects.get(location_id=loc_id)
+        if not location.location_type.administrative:
+            loc_id = location.parent.location_id
+        hier = location_hierarchy_config(self.domain)
         hierarchy = []
-        for h in context['hierarchy']:
+        for h in hier:
             if h[0] not in self.reporting_types():
                 hierarchy.append(h)
-        context['hierarchy'] = hierarchy
 
-        return context
+        return {
+            'api_root': api_root,
+            'control_name': self.label, # todo: cleanup, don't follow this structure
+            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'loc_id': loc_id,
+            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
+            'hierarchy': hierarchy
+        }
 
-
-class EWSRestrictionLocationFilter(AsyncLocationFilter):
-    template = "reports/filters/location_async.html"
 
 
 class EWSDateFilter(BaseReportFilter):
