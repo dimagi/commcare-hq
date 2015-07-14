@@ -633,7 +633,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "style/bootstrap2/base_section.html"
 
     @property
     def section_url(self):
@@ -955,7 +955,7 @@ def osdd(request, template='osdd.xml'):
     return response
 
 @require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
