@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 import pytz
 from corehq import Domain
 from corehq.apps import reports
+from corehq.apps.accounting.utils import get_previous_month_date_range
 from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -277,7 +278,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return {}
 
         import datetime
-        from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
         if date_range == 'since':
             start_date = self.start_date
@@ -286,8 +286,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             start_date = self.start_date
             end_date = self.end_date
         elif date_range == 'lastmonth':
-            end_date = today
-            start_date = today - relativedelta(months=1) + timedelta(days=1)  # add one day to handle inclusiveness
+            start_date, end_date = get_previous_month_date_range()
         else:
             end_date = today
 
