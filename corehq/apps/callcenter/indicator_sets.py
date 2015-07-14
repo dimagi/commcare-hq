@@ -344,7 +344,6 @@ class CallCenterIndicators(object):
             .filter(
                 case_owner__in=self.owners_needing_data,
                 domain=self.domain,
-                doc_type='CommCareCase',
                 opened_on__lt=upper) \
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
