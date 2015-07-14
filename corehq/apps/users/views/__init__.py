@@ -829,12 +829,16 @@ class DomainRequestView(BasePageView):
     @property
     def page_context(self):
         domain = Domain.get_by_name(self.request.domain)
+        email = None
         if self.request_form is None:
             self.request_form = DomainRequestForm(initial={'domain': domain.name})
+        else:
+            email = self.request_form.cleaned_data['email']
         return {
             'domain': domain.name,
             'domain_name': domain.display_name(),
-            'request_form': self.request_form
+            'request_exists': DomainRequest.exists(domain.name, email),
+            'request_form': self.request_form,
         }
 
     def post(self, request, *args, **kwargs):
@@ -847,7 +851,7 @@ class DomainRequestView(BasePageView):
             )
             domain_request.send_request_email()
             domain_request.save()
-            messages.success(request, _("Request created. You will receive an email when your request is approved."))
+            messages.success(request, _("Request created."))
         return self.get(request, *args, **kwargs)
 
 
