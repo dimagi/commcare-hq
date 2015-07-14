@@ -2,10 +2,8 @@ from decimal import Decimal
 import uuid
 import logging
 from xml.etree import ElementTree
-from copy import copy
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.db import transaction
 from django.utils.translation import ugettext as _
 from django.dispatch import receiver
 from django.db import models
@@ -289,14 +287,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     def openlmis_enabled(self):
         return self.openlmis_config.enabled
 
-def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
-    extras = {"limit": limit} if limit else {}
-    startkey = [domain, location_id] if location_id else [domain]
-    endkey = copy(startkey) + [{}]
-    return CommCareCase.get_db().view(
-        view_name, startkey=startkey, endkey=endkey,
-        reduce=False, skip=skip, **extras)
-
 
 def force_int(value):
     if value is None:
@@ -321,38 +311,23 @@ def force_empty_string_to_null(value):
         return value
 
 
-class StringDataSchema(DocumentSchema):
-
-    @classmethod
-    def force_wrap(cls, data):
-        data = copy(data)
-        for property in cls.properties().values():
-            transform = {
-                IntegerProperty: force_int,
-                BooleanProperty: force_bool,
-                DateProperty: force_empty_string_to_null,
-                DateTimeProperty: force_empty_string_to_null,
-            }.get(property.__class__, lambda x: x)
-            data[property.name] = transform(data.get(property.name))
-        return super(StringDataSchema, cls).wrap(data)
-
-    @classmethod
-    def wrap(cls, data):
-        raise NotImplementedError()
-
-
 def xml_to_stock_report_helper(form, elem):
     tag = elem.tag
-    tag = tag[tag.find('}')+1:] # strip out ns
-    timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
+    tag = tag[tag.find('}') + 1:]  # strip out ns
+    timestamp = force_to_datetime(
+        elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
     products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
-    transactions = [t for prod_entry in products for t in
-                    _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem, prod_entry)]
+    transactions = [
+        t for prod_entry in products for t in
+        _xml_to_stock_transaction_helper(form.domain, timestamp, tag, elem,
+                                         prod_entry)
+    ]
 
     return StockReportHelper(form, timestamp, tag, transactions)
 
 
-def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node, product_node):
+def _xml_to_stock_transaction_helper(domain, timestamp, action_tag,
+                                     action_node, product_node):
     action_type = action_node.attrib.get('type')
     subaction = action_type
     product_id = product_node.attrib.get('id')
@@ -376,7 +351,8 @@ def _xml_to_stock_transaction_helper(domain, timestamp, action_tag, action_node,
         if action_tag == 'balance':
             case_id = action_node.attrib['entity-id']
             yield _txn(
-                action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
+                action=(const.StockActions.STOCKONHAND if quantity > 0
+                        else const.StockActions.STOCKOUT),
                 case_id=case_id,
                 section_id=section_id,
                 quantity=quantity,
@@ -430,49 +406,13 @@ class StockReportHelper(object):
     """
     Intermediate class for dealing with stock XML
     """
-    # todo: fix name, remove old stock report class
+
     def __init__(self, form, timestamp, tag, transactions):
         self._form = form
         self.form_id = form._id
         self.timestamp = timestamp
         self.tag = tag
         self.transactions = transactions
-
-    @transaction.atomic
-    def create_models(self, domain=None):
-        """
-        Save stock report and stock transaction models to the database.
-        """
-        # todo: this function should probably move to somewhere in casexml.apps.stock
-        if self.tag not in stockconst.VALID_REPORT_TYPES:
-            return
-        report = StockReport.objects.create(
-            form_id=self.form_id,
-            date=self.timestamp,
-            type=self.tag,
-            domain=self._form.domain,
-        )
-        for txn in self.transactions:
-            db_txn = StockTransaction(
-                report=report,
-                case_id=txn.case_id,
-                section_id=txn.section_id,
-                product_id=txn.product_id,
-            )
-            if domain:
-                # set this as a shortcut for post save signal receivers
-                db_txn.domain = domain
-            db_txn.type = txn.action
-            db_txn.subtype = txn.subaction
-            if self.tag == stockconst.REPORT_TYPE_BALANCE:
-                db_txn.stock_on_hand = txn.quantity
-                db_txn.quantity = 0
-            else:
-                assert self.tag == stockconst.REPORT_TYPE_TRANSFER
-                previous_transaction = db_txn.get_previous_transaction()
-                db_txn.quantity = txn.relative_quantity
-                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
-            db_txn.save()
 
 
 class StockTransactionHelper(object):
@@ -505,7 +445,8 @@ class StockTransactionHelper(object):
             return self.quantity
 
     def action_config(self, commtrack_config):
-        action = CommtrackActionConfig(action=self.action, subaction=self.subaction)
+        action = CommtrackActionConfig(action=self.action,
+                                       subaction=self.subaction)
         for a in commtrack_config.all_actions:
             if a.name == action.name:
                 return a
@@ -522,7 +463,8 @@ class StockTransactionHelper(object):
 
         return E.entry(
             id=self.product_id,
-            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT
+                         else 0),
         )
 
     @property
@@ -534,7 +476,7 @@ class StockTransactionHelper(object):
         A short string representation of this to be used in sms correspondence
         """
         if self.quantity is not None:
-            quant = int(self.quantity) if self.quantity == int(self.quantity) else self.quantity
+            quant = self.quantity
         else:
             quant = ''
         # FIXME product fetch here is inefficient
@@ -548,17 +490,6 @@ class StockTransactionHelper(object):
             location_id=self.location_id,
             product_id=self.product_id,
         )
-
-
-def _get_single_index(case, identifier, type, wrapper=None):
-    matching = filter(lambda i: i.identifier == identifier, case.indices)
-    if matching:
-        assert len(matching) == 1, 'should only be one parent index'
-        assert matching[0].referenced_type == type, \
-             ' parent had bad case type %s' % matching[0].referenced_type
-        ref_id = matching[0].referenced_id
-        return wrapper.get(ref_id) if wrapper else ref_id
-    return None
 
 
 class SupplyPointCase(CommCareCase):

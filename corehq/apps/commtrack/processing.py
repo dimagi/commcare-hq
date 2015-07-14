@@ -4,12 +4,14 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.exceptions import MissingProductId
 from dimagi.utils.decorators.log_exception import log_exception
 from corehq.apps.commtrack.models import xml_to_stock_report_helper
 from dimagi.utils.couch.loosechange import map_reduce
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
+from casexml.apps.stock import const as stockconst
 
 
 logger = logging.getLogger('commtrack.incoming')
@@ -23,11 +25,11 @@ class StockProcessingResult(object):
     processing so that they can be made more atomic
     """
 
-    def __init__(self, xform, relevant_cases=None, stock_reports=None):
+    def __init__(self, xform, relevant_cases=None, stock_report_helpers=None):
         self.domain = xform.domain
         self.xform = xform
         self.relevant_cases = relevant_cases or []
-        self.stock_reports = stock_reports or []
+        self.stock_report_helpers = stock_report_helpers or []
 
     @transaction.atomic
     def commit(self):
@@ -40,8 +42,49 @@ class StockProcessingResult(object):
             self.xform.get_sync_token().invalidate_cached_payloads()
 
         # create the django models
-        for report in self.stock_reports:
-            report.create_models(self.domain)
+        for stock_report_helper in self.stock_report_helpers:
+            create_models_for_stock_report(self.domain, stock_report_helper)
+
+
+@transaction.atomic
+def create_models_for_stock_report(domain, stock_report_helper):
+    """
+    Save stock report and stock transaction models to the database.
+    """
+    assert stock_report_helper._form.domain == domain
+    domain = domain
+    if stock_report_helper.tag not in stockconst.VALID_REPORT_TYPES:
+        return
+    report = StockReport.objects.create(
+        form_id=stock_report_helper.form_id,
+        date=stock_report_helper.timestamp,
+        type=stock_report_helper.tag,
+        domain=domain,
+    )
+    for txn in stock_report_helper.transactions:
+        db_txn = StockTransaction(
+            report=report,
+            case_id=txn.case_id,
+            section_id=txn.section_id,
+            product_id=txn.product_id,
+        )
+        if domain:
+            # set this as a shortcut for post save signal receivers
+            db_txn.domain = domain
+        db_txn.type = txn.action
+        db_txn.subtype = txn.subaction
+        if stock_report_helper.tag == stockconst.REPORT_TYPE_BALANCE:
+            db_txn.stock_on_hand = txn.quantity
+            db_txn.quantity = 0
+        else:
+            assert stock_report_helper.tag == stockconst.REPORT_TYPE_TRANSFER
+            previous_transaction = db_txn.get_previous_transaction()
+            db_txn.quantity = txn.relative_quantity
+            db_txn.stock_on_hand = db_txn.quantity + (
+                previous_transaction.stock_on_hand
+                if previous_transaction else 0
+            )
+        db_txn.save()
 
 
 @log_exception()
@@ -66,7 +109,8 @@ def process_stock(xform, case_db=None):
     # validate product ids
     is_empty = lambda product_id: product_id is None or product_id == ''
     if any([is_empty(tx.product_id) for tx in transactions]):
-        raise MissingProductId(_('Product IDs must be set for all ledger updates!'))
+        raise MissingProductId(
+            _('Product IDs must be set for all ledger updates!'))
     # transactions grouped by case/product id
     grouped_tx = map_reduce(lambda tx: [((tx.case_id, tx.product_id),)],
                             lambda v: sorted(v, key=lambda tx: tx.timestamp),
@@ -95,7 +139,7 @@ def process_stock(xform, case_db=None):
     return StockProcessingResult(
         xform=xform,
         relevant_cases=relevant_cases,
-        stock_reports=stock_reports,
+        stock_report_helpers=stock_reports,
     )
 
 
