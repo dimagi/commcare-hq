@@ -835,16 +835,22 @@ class CaseReminderHandler(Document):
         reminder - The CaseReminder which to fire.
         return - True to move to the next event, False to not move to the next event.
         """
-        # Prevent circular import
         from .event_handlers import EVENT_HANDLER_MAP
 
         if self.deleted():
             reminder.retire()
             return False
 
-        # Retrieve the list of individual recipients
         recipient = reminder.recipient
-        logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
+
+        if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
+            # If we are on one of the timeout intervals, then do not create
+            # a new MessagingEvent. Instead, just resuse the one that was
+            # created last time.
+            logged_event = MessagingEvent.objects.get(pk=reminder.last_messaging_event_id)
+        else:
+            logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
+        reminder.last_messaging_event_id = logged_event.pk
 
         if isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
@@ -1329,7 +1335,11 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     event_initiation_timestamp = DateTimeProperty() # The date and time that the event was started (which is the same throughout all timeouts)
     error = BooleanProperty(default=False)
     error_msg = StringProperty()
-    
+
+    # This is the id of the MessagingEvent that was created the
+    # last time an event for this reminder fired.
+    last_messaging_event_id = IntegerProperty()
+
     @property
     def handler(self):
         return CaseReminderHandler.get(self.handler_id)
