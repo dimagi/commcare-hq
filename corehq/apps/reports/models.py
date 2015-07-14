@@ -162,13 +162,6 @@ DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range',
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
-    _extra_json_properties = [
-        'url',
-        'report_name',
-        'date_description',
-        'datespan_filters',
-        'has_ucr_datespan',
-    ]
 
     domain = StringProperty()
 
@@ -205,7 +198,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, **kwargs):
+                            stale=True, skip=None, limit=None):
         if stale:
             #kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
@@ -216,8 +209,22 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+        kwargs = {}
+        if skip is not None:
+            kwargs['skip'] = skip
+        if limit is not None:
+            kwargs['limit'] = limit
+
+        result = cache_core.cached_view(
+            db,
+            "reportconfig/configs_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=key,
+            endkey=key + [{}],
+            wrapper=cls.wrap,
+            **kwargs
+        )
         return result
 
     @classmethod
@@ -233,12 +240,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         }
 
     def to_complete_json(self):
-        json = super(ReportConfig, self).to_json()
-
-        for key in self._extra_json_properties:
-            json[key] = getattr(self, key)
-
-        return json
+        result = super(ReportConfig, self).to_json()
+        result.update({
+            'url': self.url,
+            'report_name': self.report_name,
+            'date_description': self.date_description,
+            'datespan_filters': self.datespan_filters,
+            'has_ucr_datespan': self.has_ucr_datespan,
+        })
+        return result
 
     @property
     @memoized
@@ -510,11 +520,17 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return set()
 
     @property
-    def datespan_filters(self):
+    @memoized
+    def configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
         return ConfigurableReport.get_report(
             self.domain, self.report_slug, self.subreport_slug
-        ).datespan_filters if self.is_configurable_report else []
+        )
+
+    @property
+    def datespan_filters(self):
+        return (self.configurable_report.datespan_filters
+                if self.is_configurable_report else [])
 
     @property
     def has_ucr_datespan(self):

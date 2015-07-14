@@ -3,6 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.userreports.sql.connection import connection_manager
 from corehq.db import Session
 
 from corehq.apps.userreports import tasks
@@ -13,7 +14,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import _expand_column, _get_distinct_values, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -77,12 +79,8 @@ class TestFieldColumn(SimpleTestCase):
 class ChoiceListColumnDbTest(TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        cls.engine = get_engine()
-
-    @classmethod
     def tearDownClass(cls):
-        cls.engine.dispose()
+        connection_manager.dispose_all()
 
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
@@ -104,7 +102,7 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(self.engine, data_source_config)
+        adapter = IndicatorSqlAdapter(data_source_config)
         adapter.rebuild_table()
         # ensure we can save data to the table.
         adapter.save({
@@ -121,6 +119,11 @@ class ChoiceListColumnDbTest(TestCase):
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
+
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+        super(TestExpandedColumn, cls).tearDownClass()
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex

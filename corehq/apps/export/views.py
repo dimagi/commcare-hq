@@ -57,6 +57,18 @@ class BaseExportView(BaseProjectDataView):
     def export_helper(self):
         raise NotImplementedError("You must implement export_helper!")
 
+    def redirect_url(self, export_id):
+        if self.request.body:
+            preview = json.loads(self.request.body).get('preview')
+            if preview:
+                return reverse(
+                    'export_custom_data',
+                    args=[self.domain, export_id],
+                ) + '?format=html&limit=50&type=%(type)s' % {
+                    'type': self.export_type,
+                }
+        return self.export_home_url
+
     @property
     def export_home_url(self):
         return self.report_class.get_url(domain=self.domain)
@@ -86,7 +98,7 @@ class BaseExportView(BaseProjectDataView):
 
     def post(self, request, *args, **kwargs):
         try:
-            self.commit(request)
+            export_id = self.commit(request)
         except Exception, e:
             if self.is_async:
                 # todo: this can probably be removed as soon as
@@ -104,9 +116,9 @@ class BaseExportView(BaseProjectDataView):
         else:
             if self.is_async:
                 return json_response({
-                    'redirect': self.export_home_url,
+                    'redirect': self.redirect_url(export_id),
                 })
-            return HttpResponseRedirect(self.export_home_url)
+            return HttpResponseRedirect(self.redirect_url(export_id))
 
 
 class BaseCreateCustomExportView(BaseExportView):
@@ -118,8 +130,9 @@ class BaseCreateCustomExportView(BaseExportView):
         return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export created!"))
+        return export_id
 
     def get(self, request, *args, **kwargs):
         # just copying what was in the old django view here. don't want to mess too much with exports just yet.
@@ -198,8 +211,9 @@ class BaseModifyCustomExportView(BaseExportView):
 class BaseEditCustomExportView(BaseModifyCustomExportView):
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export saved!"))
+        return export_id
 
 
 class EditCustomFormExportView(BaseEditCustomExportView):
@@ -288,7 +302,7 @@ def create_basic_form_checkpoint(index):
 
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_form_export'
-    page_title = ugettext_noop("Create Form Export")
+    page_title = ugettext_noop("Create Form Export: Select Form")
     template_name = 'export/create_form_export.html'
 
     @property
@@ -339,6 +353,13 @@ class CreateFormExportView(BaseProjectDataView):
         }
 
     @property
+    def breadcrumbs(self):
+        return [{
+            'link': FormExportInterface.get_url(domain=self.domain),
+            'title': ugettext_lazy("Form Exports")
+        }]
+
+    @property
     def module_to_form_options(self):
         return {
             module.unique_id: [{
@@ -348,6 +369,13 @@ class CreateFormExportView(BaseProjectDataView):
             for app in get_apps_in_domain(self.domain)
             for module in app.modules
         }
+
+    @property
+    def parent_pages(self):
+        return [{
+            'link': FormExportInterface.get_url(domain=self.domain),
+            'title': ugettext_lazy("Form Exports")
+        }]
 
 
 class CreateCaseExportView(BaseProjectDataView):
