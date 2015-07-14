@@ -528,6 +528,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     export_format_override = Format.UNZIPPED_CSV
     block = ''
     is_cacheable = True
+    include_out_of_range_cases = False
 
     _debug_data = []
     @property
@@ -646,7 +647,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         for row in self.get_rows():
             try:
                 case = self.get_row_data(row)
-                if not case.case_is_out_of_range:
+                if self.include_out_of_range_cases or not case.case_is_out_of_range:
                     rows.append(self.get_row_data(row))
                 else:
                     if self.debug:
@@ -1225,6 +1226,7 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
+    include_out_of_range_cases = True
 
     @property
     def fields(self):
