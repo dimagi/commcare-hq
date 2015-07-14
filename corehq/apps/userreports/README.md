@@ -807,7 +807,7 @@ Here's a sample spec:
 
 ### Multibar charts
 
-A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
 Field          | Description
 ---------------| -----------------------------------------------

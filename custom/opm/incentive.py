@@ -19,7 +19,7 @@ class Worker(object):
         ('ifs_code', "IFS Code", True, None),
         ('account_number', "AWW Bank Account Number", True, None),
         ('block', "Block Name", True, None),
-        ('women_registered', "No. of women registered under BCSP", True, DTSortType.NUMERIC),
+        ('beneficiaries_registered', "No. of beneficiaries registered under BCSP", True, DTSortType.NUMERIC),
         ('children_registered', "No. of children registered under BCSP", True, DTSortType.NUMERIC),
         ('service_forms_count', "Service Availability Form Submitted", True, None),
         ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children", True,
@@ -44,7 +44,7 @@ class Worker(object):
         self.owner_id = worker.get('doc_id')
 
         if case_data:
-            self.women_registered = numeric_fn(len(case_data))
+            self.beneficiaries_registered = numeric_fn(len(case_data))
             self.children_registered = numeric_fn(sum([c.raw_num_children for c
                                                        in case_data if not c.is_secondary]))
 
@@ -56,7 +56,7 @@ class Worker(object):
                 self.service_forms_count = 'yes' if dates else 'no'
             monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
         else:
-            self.women_registered = None
+            self.beneficiaries_registered = None
             self.children_registered = None
             self.service_forms_count = 'no'
             monitoring_count = 0
@@ -74,4 +74,3 @@ class Worker(object):
                 self.account_number, 0))
         else:
             self.last_month_total = numeric_fn(0)
-

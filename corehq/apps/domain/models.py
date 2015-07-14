@@ -9,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import \
     USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
@@ -565,7 +566,8 @@ class Domain(Document, SnapshotMixin):
                 if settings.DEBUG:
                     raise
                 else:
-                    notify_exception(None, '%r is not a valid domain name' % name)
+                    _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+                    _assert(False, '%r is not a valid domain name' % name)
                     return None
 
         def _get_by_name(stale=False):

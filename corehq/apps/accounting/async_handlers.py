@@ -159,10 +159,11 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
 
     @property
     def country_response(self):
-        from django_countries.countries import COUNTRIES
+        from django_countries.data import COUNTRIES
+        countries = sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8'))
         if self.search_string:
-            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), COUNTRIES)
-        return COUNTRIES
+            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), countries)
+        return countries
 
     @property
     def active_accounts_response(self):

@@ -23,7 +23,8 @@
             <td>
                 {% include "hqadmin/partials/commit.html" %}
             </td>
-            <td><a href="#{{ deploy.get_id }}" role="button" class="btn btn-small" data-toggle="modal">Details</a></td>
+            <td>{% if deploy.code_snapshot.diff_url %}<p><a href="{{ deploy.code_snapshot.diff_url  }}">diff with previous</a></p>{% endif %}
+                <a href="#{{ deploy.get_id }}" role="button" class="btn btn-small" data-toggle="modal">Details</a></td>
         </tr>
         {% endwith %}
     {% endfor %}

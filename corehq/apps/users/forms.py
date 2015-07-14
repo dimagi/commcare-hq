@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
@@ -24,9 +24,9 @@ from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
 
 # Bootstrap 3 Crispy Forms
-from bootstrap3_crispy import layout as cb3_layout
-from bootstrap3_crispy import helper as cb3_helper
-from bootstrap3_crispy import bootstrap as twbscrispy
+from crispy_forms import layout as cb3_layout
+from crispy_forms import helper as cb3_helper
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re
@@ -537,7 +537,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+                             data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             crispy.Field('confirm_product_agreement'),
             FormActions(

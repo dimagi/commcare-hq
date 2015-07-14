@@ -30,7 +30,7 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -688,7 +688,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
-        choices=COUNTRIES,
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8')),
         required=False,
     )
     commtrack_domain = ChoiceField(
@@ -887,7 +887,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+                             data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             FormActions(
                 StrictButton(
@@ -951,7 +951,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             FormActions(
                 crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
@@ -1048,7 +1048,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(
                 _("Re-Confirm Product Agreement"),

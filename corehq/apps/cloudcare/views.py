@@ -251,7 +251,7 @@ def get_cases_skip_arg(request, domain):
 
 
 @cloudcare_api
-@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=50 * 60)
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id

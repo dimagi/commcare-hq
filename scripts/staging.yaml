@@ -52,8 +52,11 @@ branches:
   - wire-prepay # Farid June 26
   - locations-for-robber-barons  # Ethan 5/7
   - index-phonelog-reportentry # Ben 6/8
-  - support-case-export # Nick P 7/9
+  - b3-migration-prep # BB 7/10
 submodules:
+  corehq/apps/prelogin:
+    branches:
+      - b3-migration-prep # BB 7/10
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -63,3 +66,8 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/bootstrap3_crispy:
+    trunk: b3-migration-prep # BB 7/10
+  submodules/ctable-src:
+    branches:
+      - b3-migration-prep # BB 7/10
