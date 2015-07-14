@@ -476,8 +476,7 @@ class StockTransactionHelper(object):
         A short string representation of this to be used in sms correspondence
         """
         if self.quantity is not None:
-            quant = (int(self.quantity) if self.quantity == int(self.quantity)
-                     else self.quantity)
+            quant = self.quantity
         else:
             quant = ''
         # FIXME product fetch here is inefficient
