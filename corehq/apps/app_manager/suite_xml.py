@@ -1638,8 +1638,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                         menu_locale_id=self.id_strings.case_list_locale(module),
                         media_image=bool(len(module.case_list.all_image_paths())),
                         media_audio=bool(len(module.case_list.all_audio_paths())),
-                        image_locale_id=self.id_strings.case_list_icon_locale(form),
-                        audio_locale_id=self.id_strings.case_list_audio_locale(form),
+                        image_locale_id=self.id_strings.case_list_icon_locale(module),
+                        audio_locale_id=self.id_strings.case_list_audio_locale(module),
                     )
                 else:
                     e.command = Command(

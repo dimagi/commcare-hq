@@ -207,6 +207,8 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         self.module.case_list.show = True
         self.module.case_list.set_icon('en', self.image_path)
         self.module.case_list.set_audio('en', self.audio_path)
+        self.form = self.app.new_form(0, "Form 2", None)
+
         self._assert_app_strings_available(self.app)
 
     def _assert_app_strings_available(self, app):
