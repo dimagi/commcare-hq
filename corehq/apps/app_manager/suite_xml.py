@@ -2025,12 +2025,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                         datums.insert(index, parent_datum_meta)
                     elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
                         avoid_duplicate_ids(action, this_datum, parent_datum, datum_ids, changed_ids_by_case_tag)
-                    elif (
-                        module.module_type == 'basic' and
-                        module.parent_select.active and
-                        module.parent_select.module_id == root_module.unique_id
-                    ):
-                        datums.insert(index, parent_datum_meta)
 
                 index += 1
 
