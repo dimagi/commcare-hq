@@ -8,7 +8,7 @@ from django.http.response import Http404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import StockState, StockTransaction
+from corehq.apps.commtrack.models import StockState, StockTransactionHelper
 from corehq.apps.commtrack.sms import process
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
@@ -126,22 +126,22 @@ class InputStockView(BaseDomainView):
                 product = Product.get(docid=form.cleaned_data['product_id'])
                 if form.cleaned_data['receipts']:
                     data.append(
-                        StockTransaction(
+                        StockTransactionHelper(
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.RECEIPTS,
                             quantity=form.cleaned_data['receipts']
                         ),
                     )
                 if form.cleaned_data['stock_on_hand'] is not None:
                     data.append(
-                        StockTransaction(
+                        StockTransactionHelper(
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.STOCKONHAND,
                             quantity=form.cleaned_data['stock_on_hand']
                         ),
