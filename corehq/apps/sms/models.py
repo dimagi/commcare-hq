@@ -933,7 +933,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type = cls.get_recipient_type(recipient)
             recipient_id = recipient.get_id
         else:
-            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_type = cls.RECIPIENT_UNKNOWN
             recipient_id = None
 
         obj = cls.objects.create(
@@ -972,6 +972,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=MessagingEvent.STATUS_IN_PROGRESS,
         )
         return obj
+
+    @property
+    def subevents(self):
+        return MessagingSubEvent.objects.filter(parent=self)
 
     @classmethod
     def get_source_from_reminder(cls, reminder_definition):
@@ -1156,12 +1160,12 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         # unless the source was a keyword in which case the recipient
         # listed should always be the keyword initiator.
         if (parent.source != MessagingEvent.SOURCE_KEYWORD and
-                parent.recipient_id != self.recipient_id and
+                (parent.recipient_id != self.recipient_id or self.recipient_id is None) and
                 parent.recipient_type not in (
                     MessagingEvent.RECIPIENT_USER_GROUP,
                     MessagingEvent.RECIPIENT_CASE_GROUP,
                     MessagingEvent.RECIPIENT_VARIOUS,
-                )):
+                ) and len(parent.subevents) > 1):
             parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
             parent.recipient_id = None
             parent.save()
