@@ -40,11 +40,14 @@ namespaces = dict(
 
 def _make_elem(tag, attr=None):
     attr = attr or {}
-    return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
+    return ET.Element(
+        tag.format(**namespaces),
+        {key.format(**namespaces): val for key, val in attr.items()}
+    )
 
 
 def make_case_elem(tag, attr=None):
-        return _make_elem(case_elem_tag(tag), attr)
+    return _make_elem(case_elem_tag(tag), attr)
 
 
 def case_elem_tag(tag):
@@ -52,24 +55,24 @@ def case_elem_tag(tag):
 
 
 def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
-        xpath = case_id_xpath or SESSION_CASE_ID
-        if parent_path:
-            for parent_name in parent_path.split('/'):
-                xpath = xpath.case().index_id(parent_name)
-        return xpath
+    xpath = case_id_xpath or SESSION_CASE_ID
+    if parent_path:
+        for parent_name in parent_path.split('/'):
+            xpath = xpath.case().index_id(parent_name)
+    return xpath
 
 
 def relative_path(from_path, to_path):
-            from_nodes = from_path.split('/')
-            to_nodes = to_path.split('/')
-            while True:
-                if to_nodes[0] == from_nodes[0]:
-                    from_nodes.pop(0)
-                    to_nodes.pop(0)
-                else:
-                    break
+    from_nodes = from_path.split('/')
+    to_nodes = to_path.split('/')
+    while True:
+        if to_nodes[0] == from_nodes[0]:
+            from_nodes.pop(0)
+            to_nodes.pop(0)
+        else:
+            break
 
-            return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
+    return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
 def requires_itext(on_fail_return=None):
@@ -1087,7 +1090,7 @@ class XForm(WrappedNode):
         # never add pollsensor to a pre-2.14 app
         if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
-                self.add_pollsensor(ref="/data/meta/location")
+                self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 
