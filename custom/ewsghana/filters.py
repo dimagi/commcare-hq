@@ -226,7 +226,6 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
         }
 
 
-
 class EWSDateFilter(BaseReportFilter):
 
     template = "ewsghana/datespan.html"
