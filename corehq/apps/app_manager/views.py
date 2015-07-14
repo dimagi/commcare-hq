@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from django.utils.decorators import method_decorator
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
 import os
@@ -173,6 +174,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege, has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
+from corehq.apps.style.decorators import use_bootstrap3
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
 
 logger = logging.getLogger(__name__)
@@ -3013,8 +3015,8 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
+    @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
-        request.preview_bootstrap3 = True
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property

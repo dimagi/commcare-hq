@@ -24,9 +24,9 @@ from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
 
 # Bootstrap 3 Crispy Forms
-from bootstrap3_crispy import layout as cb3_layout
-from bootstrap3_crispy import helper as cb3_helper
-from bootstrap3_crispy import bootstrap as twbscrispy
+from crispy_forms import layout as cb3_layout
+from crispy_forms import helper as cb3_helper
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re

@@ -197,7 +197,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
-    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
@@ -332,10 +331,10 @@ HQ_APPS = (
     'custom.world_vision',
     'custom.tdh',
     'custom.up_nrhm',
+    'crispy_forms',
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
 )
@@ -356,7 +355,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -429,7 +427,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
