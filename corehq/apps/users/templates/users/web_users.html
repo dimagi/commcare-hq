@@ -617,14 +617,12 @@
                  role="tabpanel"
                  aria-labelledby="adminEmailsHeading">
                 <div class="panel-body">
-                    {% for user in web_users %}
-                        {% if user.is_domain_admin %}
-                            {% if user.first_name or user.last_name %}
-                                "{{ user.first_name }} {{ user.last_name }}"
-                                &lt;{{ user.username }}&gt;,
-                            {% else %}
-                                {{ user.username }},
-                            {% endif %}
+                    {% for user in admins %}
+                        {% if user.first_name or user.last_name %}
+                            "{{ user.first_name }} {{ user.last_name }}"
+                            &lt;{{ user.username }}&gt;,
+                        {% else %}
+                            {{ user.username }},
                         {% endif %}
                     {% endfor %}
                 </div>

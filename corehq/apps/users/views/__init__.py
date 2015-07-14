@@ -442,7 +442,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
             def _fmt_result(domain, u):
                 return {
-                    'email': u.email,
+                    'email': u.get_email(),
                     'domain': domain,
                     'name': u.full_name,
                     'role': u.role_label(),
@@ -520,7 +520,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'domain_object': self.domain_object
+            'admins': WebUser.get_admins_by_domain(self.domain),
+            'domain_object': self.domain_object,
         }
 
 
