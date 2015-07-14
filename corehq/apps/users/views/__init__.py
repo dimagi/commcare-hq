@@ -526,6 +526,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
+            'requests': DomainRequest.by_domain(self.domain),
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
         }
