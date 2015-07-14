@@ -16,6 +16,7 @@ from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
 from corehq import CaseReassignmentInterface
+from .utils import es_xform_iterator
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
@@ -486,7 +487,7 @@ class XFormManagementView(BaseXFormManagementView):
         if 'select_all' in self.request.POST:
             import json
             #  Todo - validate user-submitted es-query. Danger zone
-            es_query = json.loads(self.request.POST.get('select_all'))
+            es_query_dict = json.loads(self.request.POST.get('select_all'))
             return
         else:
             return self.request.POST.getlist('xform_ids')

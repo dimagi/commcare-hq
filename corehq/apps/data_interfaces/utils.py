@@ -2,6 +2,8 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
+from corehq.elastic import es_query
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -36,6 +38,20 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         case_group.save()
 
     return response
+
+
+def es_xform_iterator(domain, es_query_dict):
+    query = es_query(
+        params={'domain.exact': domain},
+        q=es_query_dict,
+        es_url=XFORM_INDEX + '/xform/_search',
+    )
+    for res in query.get('hits', {}).get('hits', []):
+        yield res['_source']
+
+
+def couch_xform_iterator(form_ids):
+    return iter_docs(XFormInstance.get_db(), form_ids)
 
 
 def archive_forms_old(domain, user, uploaded_data):
