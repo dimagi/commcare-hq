@@ -146,8 +146,11 @@ var PaymentMethodHandler = function (formId, opts) {
     };
 
     self.processPayment = function () {
-        if (self.costItem().isValid()) {
+        if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
             self.selectedCard().process(self.submitForm);
+        }
+        else{
+            self.submitForm();
         }
     };
 
