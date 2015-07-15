@@ -6,7 +6,6 @@ from django.utils.translation import ugettext
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.profile import profile
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
@@ -282,7 +281,6 @@ class DataExportInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'data_export_interface'
     map_name = 'EXPORT_DATA_INTERFACES'
 
-    @profile('data_export_dispatcher.prof')
     def dispatch(self, request, *args, **kwargs):
         return super(DataExportInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
