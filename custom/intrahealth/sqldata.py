@@ -46,7 +46,7 @@ class BaseSqlData(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("date", "startdate", "enddate")]
+        filters = [BETWEEN("date", "startdate", "enddate"), NOT(EQ('product_code', 'empty_prd_code'))]
         if 'region_id' in self.config:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config:
