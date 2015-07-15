@@ -748,6 +748,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     CONTENT_NONE = 'NOP'
     CONTENT_SMS = 'SMS'
+    CONTENT_SMS_CALLBACK = 'CBK'
     CONTENT_SMS_SURVEY = 'SVY'
     CONTENT_IVR_SURVEY = 'IVR'
     CONTENT_PHONE_VERIFICATION = 'VER'
@@ -758,6 +759,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
         (CONTENT_SMS, ugettext_noop('SMS Message')),
+        (CONTENT_SMS_CALLBACK, ugettext_noop('SMS Expecting Callback')),
         (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
         (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
         (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
@@ -1004,7 +1006,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
         content_type = {
             METHOD_SMS: cls.CONTENT_SMS,
-            METHOD_SMS_CALLBACK: cls.CONTENT_SMS,
+            METHOD_SMS_CALLBACK: cls.CONTENT_SMS_CALLBACK,
             METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
         }.get(reminder_definition.method, cls.CONTENT_SMS)

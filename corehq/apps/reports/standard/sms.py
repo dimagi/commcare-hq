@@ -641,7 +641,8 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
                 messaging_subevent.recipient_id, contact_cache)
 
-            if messaging_subevent.content_type == MessagingEvent.CONTENT_SMS:
+            if messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS,
+                    MessagingEvent.CONTENT_SMS_CALLBACK):
                 messages = SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk)
                 if len(messages) == 0:
                     timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
