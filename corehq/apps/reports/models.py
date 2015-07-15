@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 from urllib import urlencode
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-import pytz
 from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.accounting.utils import get_previous_month_date_range
@@ -24,7 +23,6 @@ from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
@@ -578,24 +576,30 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return result
 
     @property
+    @memoized
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
             return [self.owner.get_email()]
 
         emails = []
-        if self.send_to_owner:
-            if self.owner.is_web_user():
-                emails.append(self.owner.username)
-            else:
-                email = self.owner.get_email()
-                try:
-                    validate_email(email)
-                    emails.append(email)
-                except Exception:
-                    pass
+        if self.send_to_owner and self.owner_email:
+            emails.append(self.owner_email)
         emails.extend(self.recipient_emails)
         return emails
+
+    @property
+    @memoized
+    def owner_email(self):
+        if self.owner.is_web_user():
+            return self.owner.username
+
+        email = self.owner.get_email()
+        try:
+            validate_email(email)
+            return email
+        except Exception:
+            pass
 
     @property
     @memoized
@@ -668,14 +672,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return
 
         if self.all_recipient_emails:
-            title = "Scheduled report from CommCare HQ"
+            title = _("Scheduled report from CommCare HQ")
             if hasattr(self, "attach_excel"):
                 attach_excel = self.attach_excel
             else:
                 attach_excel = False
-            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
+            body, excel_files = get_scheduled_report_response(
+                self.owner, self.domain, self._id, attach_excel=attach_excel
+            )
             for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
+                send_HTML_email(title, email, body.content,
+                                email_from=settings.DEFAULT_FROM_EMAIL,
+                                file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
