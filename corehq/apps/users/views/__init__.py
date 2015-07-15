@@ -706,9 +706,12 @@ class UserInvitationView(InvitationView):
         project = Domain.get_by_name(self.domain)
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
-        if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+
+        if project.commtrack_enabled:
             user.get_domain_membership(self.domain).program_id = invitation.program
+
+        if project.locations_enabled:
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
         user.save()
 
 
