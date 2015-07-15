@@ -327,10 +327,12 @@
                                 <div>
                                     <a href="#" class="resend-invite btn btn-default"
                                        data-invite={{ invitation.get_id }}>
+                                        <i class="fa fa-envelope-o"></i>
                                         {% trans "Resend Invitation" %}
                                     </a>
                                     <a href="#" class="btn btn-danger delete-invitation"
                                        data-id={{ invitation.get_id }}>
+                                        <i class="fa fa-trash"></i>
                                         {% trans "Delete Invitation" %}
                                     </a>
                                 </div>
@@ -370,12 +372,14 @@
                             </td>
                             <td>
                                 <div>
-                                    <a href="#" class="jls-resend-invite btn btn-default"
-                                       data-invite={{ req.get_id }}>
+                                    <a href="{% url "invite_web_user" domain %}?request_id={{ req.get_id }}"
+                                        class="approve-request btn btn-default">
+                                        <i class="fa fa-check-square-o"></i>
                                         {% trans "Approve Request" %}
                                     </a>
                                     <a href="#" class="btn btn-danger delete-request"
                                        data-id={{ req.get_id }}>
+                                        <i class="fa fa-trash"></i>
                                         {% trans "Delete Request" %}
                                     </a>
                                 </div>
@@ -457,7 +461,7 @@
                                 <i class="fa fa-edit"></i>
                                 {% trans "Edit Role" %}
                             </button>
-                            <button class="btn btn-default" data-bind="css: {disabled: !$data._id || $data.hasUsersAssigned}, click: $data._id ? $root.setRoleBeingDeleted : null">
+                            <button class="btn btn-danger" data-bind="css: {disabled: !$data._id || $data.hasUsersAssigned}, click: $data._id ? $root.setRoleBeingDeleted : null">
                                 <i class="fa fa-trash"></i>
                                 {% trans "Delete Role" %}
                             </button>
@@ -670,8 +674,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-<div id="modal-deletion"
-     class="modal fade">
+<div id="modal-deletion" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">

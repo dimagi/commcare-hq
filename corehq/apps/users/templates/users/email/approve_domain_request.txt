@@ -1,6 +1,6 @@
-{{ full_name }} ({{ email }}) has requested to access {{ domain_name }} as a web user.
+Your request to join {{ domain_name }} has been approved.
 
-To approve or delete this request, visit {{ url }}.
+You may now visit {{ url }}.
 
 Thanks,
 CommCareHQ

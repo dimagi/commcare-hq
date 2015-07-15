@@ -624,13 +624,8 @@ class UserInvitationView(InvitationView):
         return reverse("domain_homepage", args=[self.domain,])
 
     def invite(self, invitation, user):
-        project = Domain.get_by_name(self.domain)
-        user.add_domain_membership(domain=self.domain)
-        user.set_role(self.domain, invitation.role)
-        if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.get_domain_membership(self.domain).location_id = invitation.supply_point
-            user.get_domain_membership(self.domain).program_id = invitation.program
-        user.save()
+        user.add_as_web_user(self.domain, role=invitation.role,
+                             location_id=invitation.supply_point, program_id=invitation.program)
 
 
 @sensitive_post_parameters('password')
@@ -685,13 +680,17 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_noop("Invite Web User to Project")
+    page_title = ugettext_noop("Add Web User to Project")
 
     @property
     @memoized
     def invite_web_user_form(self):
         role_choices = UserRole.role_choices(self.domain)
         loc = None
+        domain_request = DomainRequest.get(self.request_id) if self.request_id else None
+        initial = {
+            'email': domain_request.email if domain_request else None,
+        }
         if 'location_id' in self.request.GET:
             from corehq.apps.locations.models import SQLLocation
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
@@ -704,25 +703,48 @@ class InviteWebUserView(BaseManageWebUserView):
                 role_choices=role_choices,
                 domain=self.domain
             )
-        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain, location=loc)
+        return AdminInvitesUserForm(initial=initial, role_choices=role_choices, domain=self.domain, location=loc)
+
+    @property
+    @memoized
+    def request_id(self):
+        if 'request_id' in self.request.GET:
+            return self.request.GET.get('request_id')
+        return None
 
     @property
     def page_context(self):
         return {
             'registration_form': self.invite_web_user_form,
+            'request_id': self.request_id,
         }
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
             data = self.invite_web_user_form.cleaned_data
-            # create invitation record
-            data["invited_by"] = request.couch_user.user_id
-            data["invited_on"] = datetime.utcnow()
-            data["domain"] = self.domain
-            invite = DomainInvitation(**data)
-            invite.save()
-            invite.send_activation_email()
-            messages.success(request, "Invitation sent to %s" % invite.email)
+            create_invitation = True
+            domain_request = DomainRequest.by_email(self.domain, data["email"])
+            if domain_request is not None:
+                domain_request.is_approved = True
+                domain_request.save()
+                domain_request.send_approval_email()
+                user = CouchUser.get_by_username(domain_request.email)
+                if user is not None:
+                    create_invitation = False
+                    user.add_as_web_user(self.domain, role=data["role"],
+                                         location_id=data["supply_point"], program_id=data["program"])
+                messages.success(request, "%s added." % data["email"])
+            else:
+                messages.success(request, "Invitation sent to %s" % invite.email)
+
+            if create_invitation:
+                # create invitation record
+                data["invited_by"] = request.couch_user.user_id
+                data["invited_on"] = datetime.utcnow()
+                data["domain"] = self.domain
+                invite = DomainInvitation(**data)
+                invite.save()
+                invite.send_activation_email()
             return HttpResponseRedirect(reverse(
                 ListWebUsersView.urlname,
                 args=[self.domain]
@@ -758,7 +780,7 @@ class DomainRequestView(BasePageView):
         self.request_form = DomainRequestForm(request.POST)
         if self.request_form.is_valid():
             data = self.request_form.cleaned_data
-            if DomainRequest.exists(data['domain'], data['email']):
+            if DomainRequest.by_email(data['domain'], data['email']) is not None:
                 messages.error(request, _("A request is pending for this email. You will receive an email when the request is approved."))
             else:
                 domain_request = DomainRequest(
