@@ -2,7 +2,10 @@
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
-        <title>{% block title %}{% endblock title %} - {{ SITE_NAME }}</title>
+        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+        <title>
+            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+        </title>
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
