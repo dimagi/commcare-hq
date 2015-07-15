@@ -1,6 +1,9 @@
 from django.test import TestCase
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_commcare_users_by_domain,
+    get_user_docs_by_username
+)
 from corehq.apps.domain.models import Domain
 
 
@@ -46,3 +49,11 @@ class AllCommCareUsersTest(TestCase):
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]
         self.assertItemsEqual(actual_usernames, expected_usernames)
+
+    def test_get_user_docs_by_username(self):
+        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
+        usernames = [u.username for u in users] + ['nonexistant@username.com']
+        self.assertItemsEqual(
+            get_user_docs_by_username(usernames),
+            [u.to_json() for u in users]
+        )
