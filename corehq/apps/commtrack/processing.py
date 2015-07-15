@@ -127,17 +127,19 @@ def process_stock(xform, case_db=None):
 
     # list of cases that had stock reports in the form
     # there is no need to wrap them by case type
-    relevant_cases = [case_db.get(case_id) for case_id in
-                      set(transaction_helper.case_id
-                          for transaction_helper in transaction_helpers)]
+    case_ids = list(set(transaction_helper.case_id
+                        for transaction_helper in transaction_helpers))
+    relevant_cases = [case_db.get(case_id) for case_id in case_ids]
 
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
 
     # touch every case for proper ota restore logic syncing to be preserved
-    for i, case in enumerate(relevant_cases):
+    for case_id, case in zip(case_ids, relevant_cases):
         if case is None:
-            raise IllegalCaseId(_('Ledger transaction references invalid Case ID "{}"'.format(case_ids[i])))
+            raise IllegalCaseId(
+                _('Ledger transaction references invalid Case ID "{}"')
+                .format(case_id))
 
         case_action = CommCareCaseAction.from_parsed_action(
             submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
