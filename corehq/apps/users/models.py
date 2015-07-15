@@ -539,6 +539,15 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
+    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+        project = Domain.get_by_name(domain)
+        self.add_domain_membership(domain=domain)
+        self.set_role(domain, role)
+        if project.commtrack_enabled and not project.location_restriction_for_users:
+            self.get_domain_membership(domain).location_id = location_id
+            self.get_domain_membership(domain).program_id = program_id
+        self.save()
+
     def delete_domain_membership(self, domain, create_record=False):
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
@@ -2409,8 +2418,24 @@ class DomainRequest(Document):
         ).all()
 
     @classmethod
-    def exists(cls, domain, email):
-        return len(filter(lambda r: r.email == email, cls.by_domain(domain))) > 0
+    def by_email(cls, domain, email):
+        requests = filter(lambda r: r.email == email, cls.by_domain(domain))
+        if len(requests) > 0:
+            return requests[0]
+        return None
+
+    def send_approval_email(self):
+        domain = Domain.get_by_name(self.domain)
+        domain_name = domain.hr_name if domain else self.domain
+        params = {
+            'domain_name': domain_name,
+            'url': absolute_reverse("domain_homepage", args=[self.domain]),
+        }
+        text_content = render_to_string("users/email/approve_domain_request.txt", params)
+        html_content = render_to_string("users/email/approve_domain_request.html", params)
+        subject = _('Request to join %s approved') % domain_name
+        send_HTML_email(subject, self.email, html_content, text_content=text_content,
+                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     def send_request_email(self):
         domain = Domain.get_by_name(self.domain)
@@ -2422,8 +2447,8 @@ class DomainRequest(Document):
             'url': absolute_reverse("web_users", args=[self.domain]),
         }
         recipients = {u.get_email() for u in WebUser.get_users_by_permission(self.domain, Permissions.edit_web_users)}
-        text_content = render_to_string("users/email/approve_domain_request.txt", params)
-        html_content = render_to_string("users/email/approve_domain_request.html", params)
+        text_content = render_to_string("users/email/request_domain_access.txt", params)
+        html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)
         send_HTML_email(subject, recipients, html_content, text_content=text_content,
                         email_from=settings.DEFAULT_FROM_EMAIL)
