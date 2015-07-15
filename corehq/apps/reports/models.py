@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 import logging
 from urllib import urlencode
@@ -16,7 +17,9 @@ from corehq.apps.reports.display import xmlns_to_name
 from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
@@ -661,26 +664,44 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         """Tuples for hour number and human-readable hour"""
         return tuple([(val, "%s:00" % val) for val in range(24)])
 
-    def send(self):
-        from dimagi.utils.django.email import send_HTML_email
-        from corehq.apps.reports.views import get_scheduled_report_response
+    @property
+    @memoized
+    def recipients_by_language(self):
+        user_languages = {
+            user['username']: user['language']
+            for user in get_user_docs_by_username(self.all_recipient_emails)
+            if 'username' in user and 'language' in user
+        }
+        fallback_language = user_languages.get(self.owner_email, 'en')
 
+        recipients = defaultdict(list)
+        for email in self.all_recipient_emails:
+            language = user_languages.get(email, fallback_language)
+            recipients[language].append(email)
+        return recipients
+
+    def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
         if not self.owner.is_member_of(self.domain):
             self.delete()
             return
 
-        if self.all_recipient_emails:
+        if self.recipients_by_language:
+            for language, emails in self.recipients_by_language.items():
+                self._get_and_send_report(language, emails)
+
+    def _get_and_send_report(self, language, emails):
+        from dimagi.utils.django.email import send_HTML_email
+        from corehq.apps.reports.views import get_scheduled_report_response
+
+        with localize(language):
             title = _("Scheduled report from CommCare HQ")
-            if hasattr(self, "attach_excel"):
-                attach_excel = self.attach_excel
-            else:
-                attach_excel = False
+            attach_excel = getattr(self, 'attach_excel', False)
             body, excel_files = get_scheduled_report_response(
                 self.owner, self.domain, self._id, attach_excel=attach_excel
             )
-            for email in self.all_recipient_emails:
+            for email in emails:
                 send_HTML_email(title, email, body.content,
                                 email_from=settings.DEFAULT_FROM_EMAIL,
                                 file_attachments=excel_files)
