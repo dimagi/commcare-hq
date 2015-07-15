@@ -2,10 +2,10 @@ from celery.utils.functional import memoize
 import dateutil.parser
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.listener import SQLPillow
 from couchforms.models import XFormInstance
 from phonelog.models import UserEntry, DeviceReportEntry
-from dimagi.ext.couchdbkit import DateTimeProperty
 
 
 def force_list(obj_or_list):
@@ -82,7 +82,7 @@ class PhoneLogPillow(SQLPillow):
                 msg=log["msg"],
                 # must accept either date or datetime string
                 date=dateutil.parser.parse(log["@date"]).replace(tzinfo=None),
-                server_date=DateTimeProperty.wrap(doc_dict['received_on']),
+                server_date=string_to_utc_datetime(doc_dict['received_on']),
                 app_version=form.get('app_version'),
                 device_id=form.get('device_id'),
                 username=logged_in_username,
