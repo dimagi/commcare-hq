@@ -7,8 +7,8 @@ from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.commtrack.parsing import xml_to_stock_report_helper
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import xml_to_stock_report_helper
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
 from casexml.apps.stock import const as stockconst
