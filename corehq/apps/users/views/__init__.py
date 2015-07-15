@@ -655,9 +655,16 @@ def reinvite_web_user(request, domain):
 @require_POST
 @require_can_edit_web_users
 def delete_invitation(request, domain):
-    invitation_id = request.POST['invite']
+    invitation_id = request.POST['id']
     invitation = DomainInvitation.get(invitation_id)
     invitation.delete()
+    return json_response({'status': 'ok'})
+
+
+@require_POST
+@require_can_edit_web_users
+def delete_request(request, domain):
+    DomainRequest.get(request.POST['id']).delete()
     return json_response({'status': 'ok'})
 
 
