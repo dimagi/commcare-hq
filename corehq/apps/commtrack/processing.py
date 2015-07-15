@@ -2,6 +2,7 @@ import logging
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction, StockReport
@@ -126,7 +127,10 @@ def process_stock(xform, case_db=None):
     submit_time = xform['received_on']
 
     # touch every case for proper ota restore logic syncing to be preserved
-    for case in relevant_cases:
+    for i, case in enumerate(relevant_cases):
+        if case is None:
+            raise IllegalCaseId(_('Ledger transaction references invalid Case ID "{}"'.format(case_ids[i])))
+
         case_action = CommCareCaseAction.from_parsed_action(
             submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
         )
