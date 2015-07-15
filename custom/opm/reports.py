@@ -1181,7 +1181,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     if denom != 'no_denom' and denom != 'one':
                         denom = getattr(awc, denom)
                         row.append(denom)
-                        row.append(float(value) / denom if denom != 0 else "")
+                        row.append(float(value) / denom if denom != 0 and value != "NA" else "")
                 yield row
 
         self.pagination.count = 1000000
