@@ -304,7 +304,7 @@ def confirm_domain(request, guid=None):
 
     send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
 
-    messages.success(request, 
+    messages.success(request,
             'Your account has been successfully activated.  Thank you for taking '
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
