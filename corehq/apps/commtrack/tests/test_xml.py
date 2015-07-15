@@ -362,6 +362,26 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
 
+    def test_submit_bad_case_id(self):
+        instance_id = uuid.uuid4().hex
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        xml_stub = balance_submission(amounts)
+        instance = submission_wrap(
+            instance_id,
+            self.products,
+            self.user,
+            'missing',
+            'missing-too',
+            xml_stub,
+        )
+        submit_form_locally(
+            instance=instance,
+            domain=self.domain.name,
+        )
+        form = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', form.doc_type)
+        self.assertTrue('IllegalCaseId' in form.problem)
+
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
