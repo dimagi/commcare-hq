@@ -5,40 +5,41 @@ from corehq.apps.domain.models import Domain
 
 
 class AllCommCareUsersTest(TestCase):
-    def setUp(self):
-        self.ccdomain = Domain(name='cc_user_domain')
-        self.ccdomain.save()
-        self.other_domain = Domain(name='other_domain')
-        self.other_domain.save()
+    def setUpClass(cls):
+        cls.ccdomain = Domain(name='cc_user_domain')
+        cls.ccdomain.save()
+        cls.other_domain = Domain(name='other_domain')
+        cls.other_domain.save()
 
-        self.ccuser_1 = CommCareUser.create(
-            domain=self.ccdomain.name,
+        cls.ccuser_1 = CommCareUser.create(
+            domain=cls.ccdomain.name,
             username='ccuser_1',
             password='secret',
             email='email@example.com',
         )
-        self.ccuser_2 = CommCareUser.create(
-            domain=self.ccdomain.name,
+        cls.ccuser_2 = CommCareUser.create(
+            domain=cls.ccdomain.name,
             username='ccuser_2',
             password='secret',
             email='email1@example.com',
         )
-        self.web_user = WebUser.create(
-            domain=self.ccdomain.name,
+        cls.web_user = WebUser.create(
+            domain=cls.ccdomain.name,
             username='webuser',
             password='secret',
             email='webuser@example.com',
         )
-        self.ccuser_other_domain = CommCareUser.create(
-            domain=self.other_domain.name,
+        cls.ccuser_other_domain = CommCareUser.create(
+            domain=cls.other_domain.name,
             username='cc_user_other_domain',
             password='secret',
             email='email_other_domain@example.com',
         )
 
-    def tearDown(self):
-        self.ccdomain.delete()
-        self.other_domain.delete()
+    def tearDownClass(cls):
+        cls.ccdomain.delete()
+        cls.other_domain.delete()
+        cls.web_user.delete()
 
     def test_get_all_commcare_users_by_domain(self):
         expected_users = [self.ccuser_2, self.ccuser_1]
