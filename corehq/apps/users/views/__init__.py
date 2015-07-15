@@ -727,9 +727,9 @@ class InviteWebUserView(BaseManageWebUserView):
             if domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
-                domain_request.send_approval_email()
                 user = CouchUser.get_by_username(domain_request.email)
                 if user is not None:
+                    domain_request.send_approval_email()
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
                                          location_id=data["supply_point"], program_id=data["program"])
