@@ -735,7 +735,7 @@ class InviteWebUserView(BaseManageWebUserView):
                                          location_id=data["supply_point"], program_id=data["program"])
                 messages.success(request, "%s added." % data["email"])
             else:
-                messages.success(request, "Invitation sent to %s" % invite.email)
+                messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
                 # create invitation record
