@@ -832,7 +832,7 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 def update_stock_state_for_transaction(instance):
     # todo: in the worst case, this function makes
     # - three calls to couch (for the case, domain, and commtrack config)
-    # - three postgres queries (product, location, and state)
+    # - four postgres queries (transacitons, product, location, and state)
     # - one postgres write (to save the state)
     # and that doesn't even include the consumption calc, which can do a whole
     # bunch more work and hit the database.
@@ -865,6 +865,20 @@ def update_stock_state_for_transaction(instance):
             sql_location=sql_location,
         )
 
+    # we may not be saving the latest transaction so make sure we use that
+    # todo: this should change to server date
+    latest_transaction = StockTransaction.latest(
+        case_id=instance.case_id,
+        section_id=instance.section_id,
+        product_id=instance.product_id
+    )
+    if latest_transaction != instance:
+        logging.warning(
+            'Just fired signal for a stale stock transaction. Domain: {}, instance: {},latest was {}'.format(
+                domain_name, instance, latest_transaction
+            )
+        )
+        instance = latest_transaction
     state.last_modified_date = instance.report.date
     state.stock_on_hand = instance.stock_on_hand
 
