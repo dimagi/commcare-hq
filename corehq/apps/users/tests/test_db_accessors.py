@@ -8,6 +8,7 @@ from corehq.apps.domain.models import Domain
 
 
 class AllCommCareUsersTest(TestCase):
+    @classmethod
     def setUpClass(cls):
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
@@ -39,6 +40,7 @@ class AllCommCareUsersTest(TestCase):
             email='email_other_domain@example.com',
         )
 
+    @classmethod
     def tearDownClass(cls):
         cls.ccdomain.delete()
         cls.other_domain.delete()
