@@ -120,7 +120,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             }
 
     def _es_xform_filter(self):
-            ADD_TO_ES_FILTER['forms']
+            return ADD_TO_ES_FILTER['forms']
 
     def filters_as_es_query(self):
         return {
