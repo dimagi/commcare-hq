@@ -185,8 +185,8 @@ class CommTrackSubmissionTest(CommTrackTest):
             instance_id,
             self.products,
             self.user,
-            self.sp,
-            self.sp2,
+            self.sp._id,
+            self.sp2._id,
             xml_method,
             timestamp=timestamp,
         )
