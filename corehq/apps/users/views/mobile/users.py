@@ -159,9 +159,9 @@ class EditCommCareUserView(BaseFullEditUserView):
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
-        if self.request.project.commtrack_enabled or self.domain_object.uses_locations:
+        if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
-                'commtrack_enabled': self.request.project.commtrack_enabled,
+                'commtrack_enabled': self.domain_object.commtrack_enabled,
                 'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
