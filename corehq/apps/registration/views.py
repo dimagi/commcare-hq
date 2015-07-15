@@ -260,45 +260,39 @@ def resend_confirmation(request):
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):
     # Did we get a guid?
-    vals = {}
     if guid is None:
-        vals['message_title'] = _('Missing Activation Key')
-        vals['message_subtitle'] = _('Account Activation Failed')
-        vals['message_body'] = _(
-            'An account activation key was not provided.  If you think this '
-            'is an error, please contact the system administrator.'
-        )
-        vals['is_error'] = True
-        return render(request, 'registration/confirmation_complete.html', vals)
+        context = {
+            'message_title': _('Missing Activation Key'),
+            'message_subtitle': _('Account Activation Failed'),
+            'message_body': _(
+                'An account activation key was not provided.  If you think this '
+                'is an error, please contact the system administrator.'
+            ),
+        }
+        return render(request, 'registration/confirmation_error.html', context)
 
     # Does guid exist in the system?
     req = RegistrationRequest.get_by_guid(guid)
     if not req:
-        vals['message_title'] = _('Invalid Activation Key')
-        vals['message_subtitle'] = _('Account Activation Failed')
-        vals['message_body'] = _(
-            'The account activation key "%s" provided is invalid. If you '
-            'think this is an error, please contact the system '
-            'administrator.'
-        ) % guid
-        vals['is_error'] = True
-        return render(request, 'registration/confirmation_complete.html', vals)
+        context = {
+            'message_title': _('Invalid Activation Key'),
+            'message_subtitle': _('Account Activation Failed'),
+            'message_body': _(
+                'The account activation key "%s" provided is invalid. If you '
+                'think this is an error, please contact the system '
+                'administrator.'
+            ) % guid,
+        }
+        return render(request, 'registration/confirmation_error.html', context)
 
     requested_domain = Domain.get_by_name(req.domain)
-    context = get_domain_context(requested_domain.domain_type)
-    context['requested_domain'] = req.domain
 
     # Has guid already been confirmed?
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
-        context['message_title'] = _('Already Activated')
-        context['message_body'] = _(
-            'Your account %s has already been activated. No further '
-            'validation is required.'
-        ) % req.new_user_username
-        context['is_error'] = False
-        return render(request, 'registration/confirmation_complete.html',
-                context)
+        messages.success(request, 'Your account %s has already been activated. '
+            'No further validation is required.' % req.new_user_username)
+        return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -310,18 +304,12 @@ def confirm_domain(request, guid=None):
 
     send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
 
-    context['message_title'] = _('Account Confirmed')
-    context['message_subtitle'] = _(
-        'Thank you for activating your account, %s!'
-    ) % requesting_user.first_name
-    context['message_body'] = _(
-        'Your account has been successfully activated.  Thank you for taking '
-        'the time to confirm your email address: %s.'
-    ) % requesting_user.username
-    context['is_error'] = False
-    context['valid_confirmation'] = True
+    messages.success(request, 
+            'Your account has been successfully activated.  Thank you for taking '
+            'the time to confirm your email address: %s.'
+        % (requesting_user.username))
     track_confirmed_account_on_hubspot.delay(requesting_user)
-    return render(request, 'registration/confirmation_complete.html', context)
+    return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 
 
 @retry_resource(3)
