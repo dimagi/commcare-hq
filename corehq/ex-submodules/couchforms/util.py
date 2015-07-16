@@ -121,16 +121,19 @@ def adjust_datetimes(data, parent=None, key=None):
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, basestring):
-        if re_loose_datetime.match(data):
+    if isinstance(data, basestring) and re_loose_datetime.match(data):
+        try:
+            matching_datetime = iso8601.parse_date(data)
+        except iso8601.ParseError:
+            pass
+        else:
             if phone_timezones_should_be_processed():
                 parent[key] = json_format_datetime(
-                    iso8601.parse_date(data).astimezone(pytz.utc)
-                    .replace(tzinfo=None)
+                    matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
                 )
             else:
                 parent[key] = json_format_datetime(
-                    iso8601.parse_date(data).replace(tzinfo=None))
+                    matching_datetime.replace(tzinfo=None))
 
     elif isinstance(data, dict):
         for key, value in data.items():
