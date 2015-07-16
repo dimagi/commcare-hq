@@ -15,8 +15,8 @@ class IndicatorSqlAdapter(object):
 
     def __init__(self, config):
         self.config = config
-        self.sesssion_factory = connection_manager.get_session_factory(get_engine_id(config))
-        self.engine = self.sesssion_factory.engine
+        self.session_helper = connection_manager.get_session_helper(get_engine_id(config))
+        self.engine = self.session_helper.engine
 
     @memoized
     def get_table(self):
@@ -36,7 +36,7 @@ class IndicatorSqlAdapter(object):
         """
         Get a sqlalchemy query object ready to query this table
         """
-        return self.sesssion_factory.Session.query(self.get_table())
+        return self.session_helper.Session.query(self.get_table())
 
     def save(self, doc):
         indicator_rows = self.config.get_all_values(doc)

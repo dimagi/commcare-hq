@@ -8,7 +8,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.db import Session
+from corehq.db import DEFAULT_ENGINE_ID, connection_manager
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.util import format_datatables_data
 
@@ -158,6 +158,10 @@ class SqlData(ReportDataSource):
     """The name of the table to run the query against."""
 
     @property
+    def engine_id(self):
+        return DEFAULT_ENGINE_ID
+
+    @property
     def columns(self):
         """
         Returns a list of Column objects. These are used to
@@ -251,7 +255,7 @@ class SqlData(ReportDataSource):
             if not slugs or c.slug in slugs:
                 qc.append_column(c.view)
 
-        session = Session()
+        session = connection_manager.get_scoped_session()
         try:
             return qc.resolve(session.connection(), self.filter_values)
         except:
