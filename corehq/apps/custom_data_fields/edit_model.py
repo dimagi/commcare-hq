@@ -142,7 +142,6 @@ class CustomDataModelMixin(object):
         return {
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
-            "multiple_choice_field_enabled": MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
         }
 
     @property
