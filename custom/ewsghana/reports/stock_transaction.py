@@ -3,10 +3,11 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from custom.ewsghana.filters import MultiProductFilter, EWSDateFilter
+from custom.ewsghana.filters import MultiProductFilter
 from custom.ewsghana.utils import ews_date_format
 
 
@@ -14,9 +15,10 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
                              ProjectReportParametersMixin, DatespanMixin):
     name = "Stock Transaction"
     slug = "export_stock_transaction"
+    base_template = 'ewsghana/stock_transaction.html'
     exportable = True
     is_exportable = True
-    fields = [EWSRestrictionLocationFilter, MultiProductFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, MultiProductFilter, DatespanFilter]
 
     @property
     def location(self):
