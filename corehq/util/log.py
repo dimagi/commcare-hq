@@ -22,35 +22,33 @@ class HqAdminEmailHandler(AdminEmailHandler):
         # avoid circular dependency
         from django.conf import settings
 
+        request = None
         try:
             request = record.request
-            subject = '%s (%s IP): %s' % (
-                record.levelname,
-                (request.META.get('REMOTE_ADDR') in settings.INTERNAL_IPS
-                 and 'internal' or 'EXTERNAL'),
-                record.getMessage()
-            )
             filter = get_exception_reporter_filter(request)
             request_repr = filter.get_request_repr(request)
         except Exception:
-            subject = '%s: %s' % (
-                record.levelname,
-                record.getMessage()
-            )
-            request = None
             request_repr = "Request repr() unavailable."
-        subject = self.format_subject(subject)
 
         tb_list = []
         if record.exc_info:
             exc_info = record.exc_info
             etype, value, tb = exc_info
             tb_list = ['Traceback (most recent call first):\n']
-            tb_list.extend(traceback.format_exception_only(etype, value))
+            formatted_exception = traceback.format_exception_only(etype, value)
+            tb_list.extend(formatted_exception)
             tb_list.extend(traceback.format_list(reversed(traceback.extract_tb(tb))))
             stack_trace = '\n'.join(tb_list)
+            subject = '%s: %s' % (record.levelname,
+                                  formatted_exception[0].strip() if formatted_exception else record.getMessage())
         else:
             stack_trace = 'No stack trace available'
+            subject = '%s: %s' % (
+                record.levelname,
+                record.getMessage()
+            )
+
+        subject = self.format_subject(subject)
 
         message = "%s\n\n%s" % (stack_trace, request_repr)
         details = getattr(record, 'details', None)

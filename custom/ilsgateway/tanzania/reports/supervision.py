@@ -19,21 +19,29 @@ class SupervisionSummaryData(ILSData):
 
     @property
     def rows(self):
-        super_data = []
         if self.config['org_summary']:
             data = GroupSummary.objects.filter(
                 title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                 org_summary__in=self.config['org_summary']
             ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
-            super_data.append(GroupSummary(
+            return [GroupSummary(
                 title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                 responded=data['responded__avg'],
                 on_time=data['on_time__avg'],
                 complete=data['complete__avg'],
                 total=data['total__max']
-            ))
-        return super_data
+            )]
+        else:
+            return [
+                GroupSummary(
+                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                    responded=0,
+                    on_time=0,
+                    complete=0,
+                    total=0
+                )
+            ]
 
 
 class SupervisionData(ILSData):

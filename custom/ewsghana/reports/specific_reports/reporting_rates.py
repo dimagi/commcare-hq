@@ -2,11 +2,10 @@ from django.db.models import Q
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
@@ -52,19 +51,19 @@ class ReportingRates(ReportingRatesData):
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
-            chart_data = [
-                dict(value=reported_percent,
-                     label=_('Reporting'),
-                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
-                                                                self.datetext())),
-                     color='green'),
+            chart_data = sorted([
                 dict(value=non_reported_percent,
                      label=_('Non-Reporting'),
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
-            ]
-        pie_chart = EWSPieChart('', '', chart_data, ['green', 'red'])
+                dict(value=reported_percent,
+                     label=_('Reporting'),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
+                     color='green'),
+            ], key=lambda x: x['value'], reverse=True)
+        pie_chart = EWSPieChart('', '', chart_data, [chart_data[0]['color'], chart_data[1]['color']])
         pie_chart.tooltips = False
         return [pie_chart]
 
@@ -315,7 +314,7 @@ class ReportingRatesReport(MultiReport):
     name = 'Reporting'
     title = 'Reporting'
     slug = 'reporting_page'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
+    fields = [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
 
@@ -434,7 +433,7 @@ class ReportingRatesReport(MultiReport):
         }
 
     def report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, EWSDateFilter]]
 
     @property
     def report_config(self):

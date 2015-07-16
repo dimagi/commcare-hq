@@ -1,13 +1,12 @@
 # encoding: utf-8
 from south.v2 import DataMigration
-from corehq.apps.locations.models import LocationType
 
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
         """call the save method on all relevant location types"""
-        for loc_type in LocationType.objects.iterator():
+        for loc_type in orm.LocationType.objects.iterator():
             loc_type.save()
 
     def backwards(self, orm):

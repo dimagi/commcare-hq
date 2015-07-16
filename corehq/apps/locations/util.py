@@ -3,8 +3,6 @@ from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import (user_can_edit_location,
-                                               user_can_view_location)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -28,6 +26,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     * if a 'selected' loc is provided, that loc and its complete
       ancestry
     """
+    from .permissions import user_can_edit_location, user_can_view_location
     def loc_to_json(loc, project):
         ret = {
             'name': loc.name,
@@ -236,3 +235,17 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
+
+
+def get_xform_location(xform):
+    """
+    Returns the sql location associated with the user who submitted an xform
+    """
+    from corehq.apps.users.models import CouchUser
+    user_id = getattr(xform.metadata, 'userID', None)
+    user = CouchUser.get_by_user_id(user_id)
+    if hasattr(user, 'get_sql_location'):
+        return user.get_sql_location(xform.domain)
+    elif hasattr(user, 'sql_location'):
+        return user.sql_location
+    return None

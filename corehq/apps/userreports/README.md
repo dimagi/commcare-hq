@@ -108,7 +108,7 @@ An optional `"datatype"` attribute may be specified, which will attempt to cast 
 This expression returns `doc["child"]["age"]`:
 ```
 {
-    "type": "property_name",
+    "type": "property_path",
     "property_path": ["child", "age"]
 }
 ```
@@ -281,34 +281,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 
@@ -833,7 +807,7 @@ Here's a sample spec:
 
 ### Multibar charts
 
-A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
 Field          | Description
 ---------------| -----------------------------------------------

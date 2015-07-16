@@ -147,8 +147,11 @@ class SupplyPointStatus(models.Model):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
     @classmethod
-    def wrap_from_json(cls, obj, location_id):
-        obj['location_id'] = location_id
+    def wrap_from_json(cls, obj, location):
+        try:
+            obj['location_id'] = location.location_id
+        except SQLLocation.DoesNotExist:
+            return None
         obj['external_id'] = obj['id']
         del obj['id']
         del obj['supply_point']
@@ -174,8 +177,12 @@ class DeliveryGroupReport(models.Model):
         ordering = ('-report_date',)
 
     @classmethod
-    def wrap_from_json(cls, obj, location_id):
-        obj['location_id'] = location_id
+    def wrap_from_json(cls, obj, location):
+        try:
+            obj['location_id'] = location.location_id
+        except SQLLocation.DoesNotExist:
+            return None
+
         obj['external_id'] = obj['id']
         del obj['id']
         del obj['supply_point']
@@ -325,6 +332,11 @@ class ProductAvailabilityData(ReportingModel):
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
+
+    def __str__(self):
+        return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
+               'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
+                                         self.without_stock, self.without_data)
 
 
 # Ported from:

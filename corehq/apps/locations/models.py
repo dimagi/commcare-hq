@@ -77,6 +77,7 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -330,7 +331,6 @@ def _filter_for_archived(locations, include_archive_ancestors):
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
-    location_type = StringProperty()
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
@@ -351,6 +351,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @classmethod
     def wrap(cls, data):
         last_modified = data.get('last_modified')
+        data.pop('location_type', None)  # Only store location type in SQL
         # if it's missing a Z because of the Aug. 2014 migration
         # that added this in iso_format() without Z, then add a Z
         # (See also Group class)
@@ -372,7 +373,10 @@ class Location(CachedCouchDocumentMixin, Document):
             kwargs['lineage'] = lineage
             del kwargs['parent']
 
+        location_type = kwargs.pop('location_type', None)
         super(Document, self).__init__(*args, **kwargs)
+        if location_type:
+            self.location_type = location_type
 
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
@@ -406,16 +410,6 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        # The location type must already exist
-        try:
-            location_type = LocationType.objects.get(
-                domain=self.domain,
-                name=self.location_type,
-            )
-        except LocationType.DoesNotExist:
-            msg = "You can't create a location without a real location type"
-            raise LocationType.DoesNotExist(msg)
-
         try:
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
@@ -423,6 +417,8 @@ class Location(CachedCouchDocumentMixin, Document):
                 domain=self.domain,
             )
 
+        # One of these will fail if you try to save a location without a type
+        location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
 
         for prop in properties_to_sync:
@@ -448,7 +444,26 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def sql_location(self):
-        return SQLLocation.objects.get(location_id=self._id)
+        return (SQLLocation.objects.prefetch_related('location_type')
+                                   .get(location_id=self._id))
+
+    @property
+    def location_type(self):
+        return self.location_type_object.name
+
+    _sql_location_type = None
+    @location_type.setter
+    def location_type(self, value):
+        msg = "You can't create a location without a real location type"
+        if not value:
+            raise LocationType.DoesNotExist(msg)
+        try:
+            self._sql_location_type = LocationType.objects.get(
+                domain=self.domain,
+                name=value,
+            )
+        except LocationType.DoesNotExist:
+            raise LocationType.DoesNotExist(msg)
 
     def _archive_single_location(self):
         """
@@ -649,4 +664,4 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        return self.sql_location.location_type
+        return self._sql_location_type or self.sql_location.location_type

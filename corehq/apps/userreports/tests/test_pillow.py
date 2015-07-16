@@ -8,7 +8,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests import get_sample_doc_and_indicators, get_sample_data_source
+from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.db import connection_manager, DEFAULT_ENGINE_ID
 
 
 class IndicatorPillowTest(TestCase):
@@ -16,15 +17,16 @@ class IndicatorPillowTest(TestCase):
     def setUp(self):
         self.config = get_sample_data_source()
         self.pillow = ConfigurableIndicatorPillow()
-        self.engine = self.pillow.get_sql_engine()
+        self.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
         self.pillow.bootstrap(configs=[self.config])
-        self.adapter = IndicatorSqlAdapter(self.engine, self.config)
+        self.adapter = IndicatorSqlAdapter(self.config)
         self.adapter.rebuild_table()
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
 
     def tearDown(self):
         self.adapter.drop_table()
-        self.engine.dispose()
+        # todo: remove this when pillow uses connection_manager
+        self.pillow.get_sql_engine().dispose()
 
     def test_filter(self):
         # note: this is a silly test now that python_filter always returns true

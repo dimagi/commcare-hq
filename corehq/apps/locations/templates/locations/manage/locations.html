@@ -118,6 +118,10 @@ $(function() {
                 <a class="btn btn-info" href="{% url "location_import" domain %}">
                     <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
                 </a>
+            {% else %}
+                <div class="btn btn-info disabled">
+                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
+                </div>
             {% endif %}
             <a class="btn" href="{% url "location_types" domain %}">
                 {% trans "Edit Location Types" %}

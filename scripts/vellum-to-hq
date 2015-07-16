@@ -106,9 +106,9 @@ def build_vellum(path, branch, test=True):
     return str(git("rev-parse", "HEAD"))
 
 
-def get_old_vellum_rev(git):
-    commit = str(git('log', '--oneline', '--grep', 'vellum:', '-n', '1'))
-    return re.search('[0-9a-f]+ vellum:([0-9a-f]+)', commit).group(1)
+def get_old_vellum_rev(path):
+    with open(join(path, "version.txt")) as fh:
+        return fh.read().strip()
 
 
 def print_vellum_changes(old_vellum_rev, path):
@@ -120,7 +120,6 @@ def print_vellum_changes(old_vellum_rev, path):
 def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git = get_git(path)
     require_clean_working_tree(git, path)
-    old_vellum_rev = get_old_vellum_rev(git)
 
     print("Checkout and fetch HQ {}".format(branch))
     git.checkout(branch)
@@ -133,6 +132,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
         assert hq_vellum.startswith(path), (path, hq_vellum)
     else:
         require_branch_up_to_date(git, "master", context=path)
+    old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
     sh.rm("-rf", hq_vellum)

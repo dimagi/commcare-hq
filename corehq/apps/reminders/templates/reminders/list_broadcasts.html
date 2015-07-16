@@ -1,0 +1,118 @@
+{% extends "reminders/reminders_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+
+{% include "imports/datatables.html" %}
+
+<style type="text/css">
+    #reminder_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            $("#table_1").dataTable({
+                "sPaginationType" : "bootstrap",
+                "bLengthChange" : false,
+                "bFilter" : false,
+                "oLanguage" : {"sEmptyTable": "{% trans 'No data available to display.' %}", "sInfoEmpty" : ""},
+                "bSort" : true,
+                "aaSorting" : [[0, "asc"]],
+                "iDisplayLength" : 5
+            });
+            $("#table_2").dataTable({
+                "sPaginationType" : "bootstrap",
+                "bLengthChange" : false,
+                "bFilter" : false,
+                "oLanguage" : {"sEmptyTable": "{% trans 'No data available to display.' %}", "sInfoEmpty" : ""},
+                "bSort" : true,
+                "aaSorting" : [[0, "desc"]],
+                "iDisplayLength" : 5
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">{% trans 'Broadcast Messages' %}</a>
+</li>
+{% endblock %}
+
+{% block main_column %}
+    {% include "hqwebapp/partials/time-notice.html" %}
+    <h4>{% trans 'Scheduled Broadcasts' %}</h4>
+    <table id="table_1" class="table table-striped datatable table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans 'When' %}</th>
+                <th>{% trans 'Recipient(s)' %}</th>
+                <th>{% trans 'Content' %}</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for handler in reminder_handlers %}
+                {% if not handler.sent %}
+                <tr>
+                    <td>{{ handler.start_datetime|date:"Y-m-d H:i" }}</td>
+                    <td>{{ handler.recipients }}</td>
+                    <td>{{ handler.content }}</td>
+                    <td><a href="{% url "edit_one_time_reminder" domain handler.handler.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+                    <td>
+                        <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ handler.handler.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                        <div id="delete_{{ handler.handler.get_id }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>{% trans 'Delete Broadcast Message?' %}</h3>
+                            </div>
+                            <form class="form form-horizontal" name="delete_handler" action="{% url "delete_reminder" domain handler.handler.get_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>{% trans 'Are you sure you want to delete this broadcast message?' %}</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> {% trans 'Delete' %}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url "add_one_time_reminder" domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i>{% trans 'New Broadcast' %}</span></a>
+    <h4 style="padding-top: 20px;">{% trans 'Previously Sent' %}</h4>
+    <table id="table_2" class="table table-striped datatable table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans 'When' %}</th>
+                <th>{% trans 'Recipient(s)' %}</th>
+                <th>{% trans 'Content' %}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for handler in reminder_handlers %}
+                {% if handler.sent %}
+                <tr>
+                    <td>{{ handler.start_datetime|date:"Y-m-d H:i" }}</td>
+                    <td>{{ handler.recipients }}</td>
+                    <td>{{ handler.content }}</td>
+                    <td><a href="{% url "copy_one_time_reminder" domain handler.handler.get_id %}"><span class="btn btn-primary">{% trans 'Copy' %}</span></a></td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

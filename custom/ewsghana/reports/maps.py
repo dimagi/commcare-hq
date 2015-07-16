@@ -116,7 +116,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     }
 
     fields = [
-        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'custom.ewsghana.filters.EWSRestrictionLocationFilter',
         'custom.ewsghana.filters.ProductFilter',
     ]
 

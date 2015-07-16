@@ -141,8 +141,7 @@ class RRReportingHistory(ILSData):
 
             contact = get_one_user_at_location(child.location_id)
 
-            if contact and contact['doc']:
-                contact = CommCareUser.wrap(contact['doc'])
+            if contact:
                 role = contact.user_data.get('role') or ""
                 args = (contact.first_name, contact.last_name, role, contact.default_phone_number)
                 contact_string = "%s %s (%s) %s" % args
