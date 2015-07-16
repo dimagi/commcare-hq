@@ -46,6 +46,7 @@ def get_domain_context(domain_type='commcare'):
 def registration_default(request):
     return redirect(register_user)
 
+
 @transaction.atomic
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
@@ -215,6 +216,7 @@ def register_domain(request, domain_type=None):
     })
     return render(request, 'registration/domain_request.html', context)
 
+
 @transaction.atomic
 @login_required
 def resend_confirmation(request):
@@ -256,6 +258,7 @@ def resend_confirmation(request):
         'requested_domain': dom_req.domain
     })
     return render(request, 'registration/confirmation_resend.html', context)
+
 
 @transaction.atomic
 def confirm_domain(request, guid=None):
