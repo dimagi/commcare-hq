@@ -23,6 +23,7 @@ from sqlagg.filters import RawFilter, IN, EQFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
+from custom.opm.utils import numeric_fn
 
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
@@ -526,6 +527,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
+    is_cacheable = True
+    include_out_of_range_cases = False
 
     _debug_data = []
     @property
@@ -604,8 +607,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     def headers(self):
         headers = []
         for t in self.model.method_map:
-            if len(t) == 3:
-                headers.append(DataTablesColumn(name=t[1], visible=t[2]))
+            if self.model == Worker or self.model == Beneficiary:
+                headers.append(DataTablesColumn(name=t[1], visible=t[2], sort_type=t[3]))
             else:
                 headers.append(DataTablesColumn(name=t[1]))
         return DataTablesHeader(*headers)
@@ -641,9 +644,18 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         """
         rows = []
         self._debug_data = []
-        for row in self.get_rows(self.datespan):
+        for row in self.get_rows():
             try:
-                rows.append(self.get_row_data(row))
+                case = self.get_row_data(row)
+                if self.include_out_of_range_cases or not case.case_is_out_of_range:
+                    rows.append(self.get_row_data(row))
+                else:
+                    if self.debug:
+                        self._debug_data.append({
+                            'case_id': row._id,
+                            'message': _('Reporting period incomplete'),
+                            'traceback': _('Reporting period incomplete'),
+                        })
             except InvalidRow as e:
                 if self.debug:
                     import sys, traceback
@@ -728,7 +740,7 @@ class CaseReportMixin(object):
 
     @memoized
     def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
+        for i, (k, _1, _2, _3) in enumerate(self.model.method_map):
             if k == key:
                 return i
 
@@ -741,7 +753,7 @@ class CaseReportMixin(object):
     def users_matching_filter(self):
         return get_matching_users(self.awcs, self.gp, self.block)
 
-    def get_rows(self, datespan):
+    def get_rows(self):
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -788,7 +800,7 @@ class CaseReportMixin(object):
         sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
         for row in sorted_objects:
             rows.append([getattr(row, method) for
-                        method, header, visible in self.model.method_map])
+                        method, header, visible, sort_type in self.model.method_map])
 
         if self.debug:
             def _debug_item_to_row(debug_val):
@@ -804,7 +816,7 @@ class CaseReportMixin(object):
         from operator import attrgetter
         sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
         for count, row in enumerate(sorted_rows, 1):
-            row.serial_number = count
+            row.serial_number = numeric_fn(count)
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -888,41 +900,46 @@ class MetReport(CaseReportMixin, BaseReport):
         awc_codes = {user['awc']: user['awc_code']
                      for user in UserSqlData().get_data()}
         total_payment = 0
-        for index, row in enumerate(self.get_rows(self.datespan), 1):
+        for index, row in enumerate(self.get_rows(), 1):
             try:
                 case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
-                total_payment += case_row.cash_amt
-                rows.append(case_row)
-            except CaseOutOfRange as e:
-                case_row.one = ''
-                case_row.two = ''
-                case_row.three = ''
-                case_row.four = ''
-                case_row.five = ''
-                case_row.cash_pay = '--'
-                case_row.payment_last_month = '--'
-                case_row.issue = _('Reporting period incomplete')
-                rows.append(case_row)
+                if not case_row.case_is_out_of_range:
+                    total_payment += case_row.cash_amt
+                    rows.append(case_row)
+                else:
+                    case_row.one = ''
+                    case_row.two = ''
+                    case_row.three = ''
+                    case_row.four = ''
+                    case_row.five = ''
+                    case_row.pay = '--'
+                    case_row.payment_last_month = '--'
+                    case_row.issue = _('Reporting period incomplete')
+                    rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
-                    import sys
-                    import traceback
-                    type, exc, tb = sys.exc_info()
-                    self._debug_data.append({
-                        'case_id': row._id,
-                        'message': repr(e),
-                        'traceback': ''.join(traceback.format_tb(tb)),
-                    })
+                    self.add_debug_data(row._id, e)
+
         self.total_row = ["" for __ in self.model.method_map]
         self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash_pay')] = "Rs. {}".format(total_payment)
+        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
+
+    def add_debug_data(self, row_id, e):
+        import sys
+        import traceback
+        type, exc, tb = sys.exc_info()
+        self._debug_data.append({
+            'case_id': row_id,
+            'message': repr(e),
+            'traceback': ''.join(traceback.format_tb(tb)),
+        })
 
     def get_row_data(self, row, **kwargs):
         return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
 
-    def get_rows(self, datespan):
-        result = super(MetReport, self).get_rows(datespan)
+    def get_rows(self):
+        result = super(MetReport, self).get_rows()
         result.sort(key=lambda case: [
             case.get_case_property(prop)
             for prop in ['block_name', 'village_name', 'awc_name']
@@ -944,12 +961,13 @@ class MetReport(CaseReportMixin, BaseReport):
     def headers(self):
         if not self.is_rendered_as_email:
             return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+                DataTablesColumn(name=header, visible=visible, sort_type=sort_type)
+                for method, header, visible, sort_type in self.model.method_map
             ])
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible, sort_type
                     in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
@@ -1043,6 +1061,15 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
+    def fields(self):
+        return [
+            HierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1122,7 +1149,12 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     def format_cell(self, val, denom):
         if denom is None:
             return val if val is not None else ""
-        pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        if val == "NA":
+            return "NA"
+        try:
+            pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        except TypeError:
+            return "NA"
         return "{} / {}{}".format(val, denom, pct)
 
     @property
@@ -1149,7 +1181,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     if denom != 'no_denom' and denom != 'one':
                         denom = getattr(awc, denom)
                         row.append(denom)
-                        row.append(float(value) / denom if denom != 0 else "")
+                        row.append(float(value) / denom if denom != 0 and value != "NA" else "")
                 yield row
 
         self.pagination.count = 1000000
@@ -1190,10 +1222,18 @@ class UsersIdsData(SqlData):
         ]
 
 
-class IncentivePaymentReport(BaseReport, CaseReportMixin):
+class IncentivePaymentReport(CaseReportMixin, BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
+    include_out_of_range_cases = True
+
+    @property
+    def headers(self):
+        headers = super(IncentivePaymentReport, self).headers
+        if self.debug:
+            headers.add_column(DataTablesColumn(name='Debug Info'))
+        return headers
 
     @property
     def fields(self):
@@ -1224,6 +1264,9 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     @property
     @memoized
     def awc_data(self):
+        """
+        Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
+        """
         case_objects = self.row_objects + self.extra_row_objects
         cases_by_owner = {}
         for case_object in case_objects:
@@ -1235,12 +1278,14 @@ class IncentivePaymentReport(BaseReport, CaseReportMixin):
     def rows(self):
         rows = []
         for user in self.users_matching_filter:
-            case_sql_data = self.awc_data.get(user['doc_id'], None)
+            user_case_list = self.awc_data.get(user['doc_id'], None)
             form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, case_sql_data, form_sql_data.data)
+            row = self.model(user, self, user_case_list, form_sql_data.data)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
+            if self.debug:
+                data.append(row.debug_info)
             rows.append(data)
         return rows
 
@@ -1322,7 +1367,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
         return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
                         start_at=self.pagination.start, size=self.pagination.count)
 
-    def get_rows(self, dataspan):
+    def get_rows(self):
         return self.es_results['hits'].get('hits', [])
 
     def get_row_data(self, row, **kwargs):

@@ -42,7 +42,8 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 3, 10),
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
 
     def test_due_in_period_not_delivered(self):
         case = OPMCase(
@@ -57,4 +58,6 @@ class TestPregnancyStatus(OPMCaseReportTestBase):
             forms=[],
             edd=date(2014, 5, 10),
         )
-        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+        mock_case = MockCaseRow(case, self.report)
+        self.assertTrue(mock_case.case_is_out_of_range)
+

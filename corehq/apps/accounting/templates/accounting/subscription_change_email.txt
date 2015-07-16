@@ -13,7 +13,7 @@ Billing Account Information
 Account name: {{ billing_account.name }}
 Contracted vs. Self-service: {{ billing_account.entry_point }}
 Dimagi Contact: {{ billing_account.dimagi_contact }}
-Billing Admins: {% for admin in billing_account.billing_admins.all %}{{ admin.web_user }}{% if not loop.last %}, {% endif %}{% endfor %}
+Billing Contacts: {{ billing_account.billingcontactinfo.emails }}
 {% else %}
 Not available
 {% endif %}

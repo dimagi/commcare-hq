@@ -1,0 +1,37 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        var appToCaseTypeOptions = {{ app_to_case_type_options|JSON }};
+
+        var appId = ko.observable();
+        var case_type = ko.observable();
+
+        var caseTypeOptions = ko.computed(function() {
+            var caseTypes = appToCaseTypeOptions[appId()] || [];
+            if(caseTypes.length != 1) {
+                return [{
+                    text: '{{ case_type_prompt }}',
+                    value: ""
+                }].concat(caseTypes);
+            }
+            return caseTypes;
+        });
+
+        ko.applyBindings({
+            appId: appId,
+            caseTypeOptions: caseTypeOptions
+        }, $("#create-export-form").get(0));
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    {% crispy create_export_form %}
+{% endblock %}

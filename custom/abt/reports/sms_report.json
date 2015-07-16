@@ -8,6 +8,10 @@
         {
             "field":"level_2",
             "order":"DESC"
+        },
+        {
+            "field":"date_of_data_collection",
+            "order":"ASC"
         }
     ],
     "filters":[
@@ -124,7 +128,8 @@
             "field":"timeEnd",
             "format":"default",
             "transform":{
-
+                "type": "date_format",
+                "format": "%Y-%m-%d %H:%M"
             },
             "column_id":"timeEnd",
             "alias":null,
@@ -366,46 +371,6 @@
             "display":{
                 "fra":"Taux de couverture",
                 "en":"Spray coverage"
-            },
-            "aggregation":"simple"
-        },
-        {
-            "description":null,
-            "format":"both",
-            "denominator":{
-                "description":null,
-                "format":"default",
-                "transform":{
-
-                },
-                "column_id":"spray_progress_denominator",
-                "field":"target_number",
-                "type":"field",
-                "display":null,
-                "aggregation":"simple"
-            },
-            "numerator":{
-                "description":null,
-                "format":"default",
-                "transform":{
-
-                },
-                "column_id":"spray_progress_numerators",
-                "field":"structures_sprayed",
-                "type":"field",
-                "display":null,
-                "aggregation":"simple"
-            },
-            "transform":{
-
-            },
-            "column_id":"spray_progress",
-            "field":"spray_progress",
-            "alias":null,
-            "type":"percent",
-            "display":{
-                "fra":"Progr\u00e8s de pulv\u00e9risation quotidien",
-                "en":"Daily spray progress"
             },
             "aggregation":"simple"
         }

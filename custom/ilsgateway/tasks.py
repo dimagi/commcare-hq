@@ -165,7 +165,10 @@ def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
-    end_date = datetime.utcnow()
+
+    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    # TODO Change this to datetime.utcnow() when project goes live
+    end_date = stock_data_checkpoint.date
 
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:

@@ -197,7 +197,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
-    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
@@ -214,6 +213,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -303,6 +303,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
@@ -330,10 +331,10 @@ HQ_APPS = (
     'custom.world_vision',
     'custom.tdh',
     'custom.up_nrhm',
+    'crispy_forms',
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
 )
@@ -354,7 +355,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -427,7 +427,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -455,6 +455,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+PROBONO_SUPPORT_EMAIL = 'zapier+billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -1077,6 +1078,7 @@ COUCHDB_APPS = [
     'penn_state',
     'care_benin',
     'gsid',
+    'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
     'pathindia',
@@ -1148,8 +1150,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error',
-    messages.ERROR: 'alert-error',
+    messages.WARNING: 'alert-error alert-danger',
+    messages.ERROR: 'alert-error alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1372,6 +1374,8 @@ DOMAIN_MODULE_MAP = {
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
+    'hsph-dev': 'hsph',
+    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',

@@ -1,6 +1,23 @@
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <style>
+        {% comment %}
+        TODO: Use select2's dropdownAutoWidth option instead.
+              (Couldn't get it to work properly at this time; messes up dropdown scrolling)
+        {% endcomment %}
+        .bigdrop {
+            width: 600px !important;
+        }
+    </style>
+{% endblock %}
 
 {% block main_column %}
     {% crispy form %}

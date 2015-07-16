@@ -31,6 +31,7 @@ from corehq.apps.accounting.exceptions import (
     SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
@@ -240,38 +241,6 @@ class Currency(models.Model):
         return default
 
 
-class BillingAccountAdmin(models.Model):
-    web_user = models.CharField(max_length=80, db_index=True)
-    domain = models.CharField(
-        max_length=256, null=True, blank=True, db_index=True
-    )
-    last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return "Billing Admin %(web_user)s for domain %(domain)s" % {
-            'web_user': self.web_user,
-            'domain': self.domain,
-        }
-
-    @classmethod
-    def get_admin_status_and_account(cls, web_user, domain):
-        if not isinstance(web_user, WebUser):
-            return False, None
-        account = BillingAccount.get_account_by_domain(domain)
-        is_domain_admin = web_user.is_domain_admin(domain)
-        if account is None:
-            return is_domain_admin, None
-        admins = account.billing_admins.filter(domain=domain)
-        if not admins.exists():
-            # BillingAccountAdmins for this domain have NOT been
-            # specified. This was likely an account created
-            # from the accounting admin side.
-            return is_domain_admin, account
-        # BillingAccountAdmins for this domain have been specified
-        admins = admins.filter(web_user=web_user.username)
-        return (admins.count() > 0 and is_domain_admin), account
-
-
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -287,7 +256,6 @@ class BillingAccount(models.Model):
     created_by = models.CharField(max_length=80)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     dimagi_contact = models.CharField(max_length=80, null=True, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
@@ -334,12 +302,6 @@ class BillingAccount(models.Model):
                 entry_point=entry_point,
             )
             account.save()
-            if not created_by_invoicing:
-                billing_admin = BillingAccountAdmin.objects.get_or_create(
-                    domain=domain, web_user=created_by,
-                )[0]
-                account.billing_admins.add(billing_admin)
-                account.save()
         return account, is_new
 
     @classmethod
@@ -823,6 +785,8 @@ class Subscriber(models.Model):
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
 
+        subscription_upgrade_or_downgrade.send_robust(self.domain, domain=self.domain)
+
 
 class Subscription(models.Model):
     """
@@ -985,7 +949,8 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True, internal_change=False):
+                    transfer_credits=True, internal_change=False, account=None,
+                    do_not_invoice=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -999,17 +964,18 @@ class Subscription(models.Model):
         new_start_date = today if self.date_start < today else self.date_start
 
         new_subscription = Subscription(
-            account=self.account,
+            account=account if account else self.account,
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=new_start_date,
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
-            is_active=self.is_active,
-            do_not_invoice=self.do_not_invoice,
+            is_active=is_active_subscription(new_start_date, date_end),
+            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            **kwargs
         )
         new_subscription.save()
 
@@ -1212,10 +1178,9 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_admins = self.account.billing_admins.filter(
-                domain=self.subscriber.domain
-            )
-            emails |= {admin.web_user for admin in billing_admins}
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
+            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
@@ -1520,11 +1485,26 @@ class WireInvoice(InvoiceBase):
     def is_wire(self):
         return True
 
+    @property
+    def is_prepayment(self):
+        return False
+
     def get_domain(self):
         return self.domain
 
     def get_total(self):
         return self.balance
+
+
+class WirePrepaymentInvoice(WireInvoice):
+    class Meta:
+        proxy = True
+
+    items = []
+
+    @property
+    def is_prepayment(self):
+        return True
 
 
 class Invoice(InvoiceBase):
@@ -1680,6 +1660,10 @@ class BillingRecordBase(models.Model):
     def text_template(self):
         return self.INVOICE_TEXT_TEMPLATE
 
+    @property
+    def should_send_email(self):
+        raise NotImplementedError("should_send_email is required")
+
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
@@ -1687,7 +1671,6 @@ class BillingRecordBase(models.Model):
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
         record._pdf = invoice_pdf
-        record.skipped_email = invoice.is_hidden
         record.save()
         return record
 
@@ -1738,8 +1721,11 @@ class BillingRecordBase(models.Model):
         raise NotImplementedError()
 
     def send_email(self, contact_emails=None):
-        if self.skipped_email:
+        if not self.should_send_email:
+            self.skipped_email = True
+            self.save()
             return
+
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),
@@ -1791,6 +1777,11 @@ class WireBillingRecord(BillingRecordBase):
     INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
 
+    @property
+    def should_send_email(self):
+        hidden = self.invoice.is_hidden
+        return not hidden
+
     def is_email_throttled(self):
         return False
 
@@ -1803,6 +1794,14 @@ class WireBillingRecord(BillingRecordBase):
 
     def email_from(self):
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
+
+
+class WirePrepaymentBillingRecord(WireBillingRecord):
+    class Meta:
+        proxy = True
+
+    def email_subject(self):
+        return _("Your prepayment invoice")
 
 
 class BillingRecord(BillingRecordBase):
@@ -1824,6 +1823,15 @@ class BillingRecord(BillingRecordBase):
         else:
             return self.INVOICE_TEXT_TEMPLATE
 
+    @property
+    def should_send_email(self):
+        subscription = self.invoice.subscription
+        autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
+                            subscription.service_type == SubscriptionType.CONTRACTED)
+        hidden = self.invoice.is_hidden
+        return not (autogenerate or small_contracted or hidden)
+
     def is_email_throttled(self):
         month = self.invoice.date_start.month
         year = self.invoice.date_start.year
@@ -1839,19 +1847,23 @@ class BillingRecord(BillingRecordBase):
             is_hidden=False,
             subscription__subscriber__domain=self.invoice.get_domain(),
         ))
-        is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+        is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
+        payment_status = (_("Paid")
+                          if self.invoice.is_paid or total_balance == 0
+                          else _("Payment Required"))
         context.update({
             'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
-            'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
+            'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
+            'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
-                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_account': self.invoice.subscription.account.name,
                 'billing_contacts': self.invoice.contact_emails,
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
@@ -1893,7 +1905,8 @@ class InvoicePdf(SafeSaveDocument):
             applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
-            is_wire=invoice.is_wire
+            is_wire=invoice.is_wire,
+            is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
         if not invoice.is_wire:
@@ -1910,6 +1923,17 @@ class InvoicePdf(SafeSaveDocument):
                         line_item.applied_credit,
                         line_item.total
                     )
+
+        if invoice.is_wire and invoice.is_prepayment:
+            unit_cost = 1
+            applied_credit = 0
+            for item in invoice.items:
+                template.add_item(item['type'],
+                                  item['amount'],
+                                  unit_cost,
+                                  item['amount'],
+                                  applied_credit,
+                                  item['amount'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)
@@ -2180,10 +2204,7 @@ class PaymentMethod(models.Model):
     :customer_id: is used by the API of the payment method we're using that
     uniquely identifies the payer on their end.
     """
-    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT,
-                                db_index=True)
-    billing_admin = models.ForeignKey(BillingAccountAdmin,
-                                      on_delete=models.PROTECT, db_index=True)
+    web_user = models.CharField(max_length=80, null=True, db_index=True)
     method_type = models.CharField(max_length=50,
                                    default=PaymentMethodType.STRIPE,
                                    choices=PaymentMethodType.CHOICES,

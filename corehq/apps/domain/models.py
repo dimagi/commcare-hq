@@ -9,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import \
     USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
@@ -22,6 +23,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.dates import iso_string_to_datetime
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -30,6 +32,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
@@ -37,7 +41,7 @@ from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq import toggles
 
-from .exceptions import InactiveTransferDomainException
+from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 lang_lookup = defaultdict(str)
 
@@ -561,7 +565,8 @@ class Domain(Document, SnapshotMixin):
                 if settings.DEBUG:
                     raise
                 else:
-                    notify_exception(None, '%r is not a valid domain name' % name)
+                    _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+                    _assert(False, '%r is not a valid domain name' % name)
                     return None
 
         def _get_by_name(stale=False):
@@ -623,6 +628,32 @@ class Domain(Document, SnapshotMixin):
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
+    @classmethod
+    def generate_name(cls, hr_name, max_length=25):
+        '''
+        Generate a URL-friendly name based on a given human-readable name.
+        Normalizes given name, then looks for conflicting domains, addressing
+        conflicts by adding "-1", "-2", etc. May return None if it fails to
+        generate a new, unique name. Throws exception if it can't figure out
+        a name, which shouldn't happen unless max_length is absurdly short.
+        '''
+
+        name = name_to_url(hr_name)
+        if Domain.get_by_name(name):
+            prefix = name
+            while len(prefix):
+                name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
+                if Domain.get_by_name(name):
+                    # should never happen
+                    raise NameUnavailableException
+                if len(name) <= max_length:
+                    return name
+                prefix = prefix[:-1]
+            raise NameUnavailableException
+
+        return name
+
+
     def password_format(self):
         """
         This was a performance hit, so for now we'll just return 'a' no matter what
@@ -641,6 +672,16 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_all_names(cls):
         return [d['key'] for d in Domain.get_all(include_docs=False)]
+
+    @classmethod
+    def get_names_by_prefix(cls, prefix):
+        return [d['key'] for d in Domain.view(
+            "domain/domains",
+            startkey=prefix,
+            endkey=prefix + u"zzz",
+            reduce=False,
+            include_docs=False
+        ).all()]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
@@ -663,74 +704,77 @@ class Domain(Document, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    def save_copy(self, new_domain_name=None, user=None, ignore=None,
-                  copy_by_id=None):
+    def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
+                  ignore=None, copy_by_id=None):
         from corehq.apps.app_manager.models import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
 
         ignore = ignore if ignore is not None else []
-        if new_domain_name is not None and Domain.get_by_name(new_domain_name):
-            return None
 
         db = Domain.get_db()
-
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
-        new_domain = Domain.get(new_id)
-        new_domain.name = new_domain_name
-        new_domain.hr_name = None
-        new_domain.copy_history = self.get_updated_history()
-        new_domain.is_snapshot = False
-        new_domain.snapshot_time = None
-        new_domain.organization = None  # TODO: use current user's organization (?)
 
-        # reset stuff
-        new_domain.cda.signed = False
-        new_domain.cda.date = None
-        new_domain.cda.type = None
-        new_domain.cda.user_id = None
-        new_domain.cda.user_ip = None
-        new_domain.is_test = "none"
-        new_domain.internal = InternalProperties()
-        new_domain.creating_user = user.username if user else None
+        with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
+            new_domain_name = Domain.generate_name(new_domain_name)
+            new_domain = Domain.get(new_id)
+            new_domain.name = new_domain_name
+            new_domain.hr_name = new_hr_name
+            new_domain.copy_history = self.get_updated_history()
+            new_domain.is_snapshot = False
+            new_domain.snapshot_time = None
+            new_domain.organization = None  # TODO: use current user's organization (?)
 
-        for field in self._dirty_fields:
-            if hasattr(new_domain, field):
-                delattr(new_domain, field)
+            # reset stuff
+            new_domain.cda.signed = False
+            new_domain.cda.date = None
+            new_domain.cda.type = None
+            new_domain.cda.user_id = None
+            new_domain.cda.user_ip = None
+            new_domain.is_test = "none"
+            new_domain.internal = InternalProperties()
+            new_domain.creating_user = user.username if user else None
 
-        new_comps = {}  # a mapping of component's id to it's copy
+            for field in self._dirty_fields:
+                if hasattr(new_domain, field):
+                    delattr(new_domain, field)
 
-        def copy_data_items(old_type_id, new_type_id):
-            for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-                comp = self.copy_component(item.doc_type, item._id,
-                                           new_domain_name, user=user)
-                comp.data_type_id = new_type_id
-                comp.save()
+            new_comps = {}  # a mapping of component's id to it's copy
 
-        for res in db.view('domain/related_to_domain', key=[self.name, True]):
-            if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                             'FixtureDataType')):
-                continue
-            if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-                app = get_app(self.name, res['value']['_id']).get_latest_saved()
-                if app:
-                    comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
-                else:
+            def copy_data_items(old_type_id, new_type_id):
+                for item in FixtureDataItem.by_data_type(self.name, old_type_id):
+                    comp = self.copy_component(item.doc_type, item._id,
+                                               new_domain_name, user=user)
+                    comp.data_type_id = new_type_id
+                    comp.save()
+
+            for res in db.view('domain/related_to_domain', key=[self.name, True]):
+                if (copy_by_id and res['value']['_id'] not in copy_by_id and
+                    res['value']['doc_type'] in ('Application', 'RemoteApp',
+                                                 'FixtureDataType')):
+                    continue
+                if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
+                    app = get_app(self.name, res['value']['_id']).get_latest_saved()
+                    if app:
+                        comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                    else:
+                        comp = self.copy_component(res['value']['doc_type'],
+                                                   res['value']['_id'],
+                                                   new_domain_name,
+                                                   user=user)
+                elif res['value']['doc_type'] not in ignore:
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-            elif res['value']['doc_type'] not in ignore:
-                comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                if res['value']['doc_type'] == 'FixtureDataType':
-                    copy_data_items(res['value']['_id'], comp._id)
-            else:
-                comp = None
+                    if res['value']['doc_type'] == 'FixtureDataType':
+                        copy_data_items(res['value']['_id'], comp._id)
+                else:
+                    comp = None
 
-            if comp:
-                new_comps[res['value']['_id']] = comp
+                if comp:
+                    new_comps[res['value']['_id']] = comp
 
-        new_domain.save()
+            new_domain.save()
 
         if user:
             def add_dom_to_user(user):
@@ -823,8 +867,9 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
-            if copy is None:
+            try:
+                copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
+            except NameUnavailableException:
                 return None
             copy.is_snapshot = True
             copy.snapshot_time = datetime.utcnow()

@@ -151,6 +151,7 @@ class SupplyPointStatus(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
     class Meta:
@@ -177,6 +178,7 @@ class DeliveryGroupReport(models.Model):
         obj['location_id'] = location_id
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
 
@@ -323,6 +325,11 @@ class ProductAvailabilityData(ReportingModel):
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
+
+    def __str__(self):
+        return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
+               'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
+                                         self.without_stock, self.without_data)
 
 
 # Ported from:

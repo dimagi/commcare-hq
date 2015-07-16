@@ -1,0 +1,8 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+
+{% block main_column %}
+    <form action="" method="post">{% csrf_token %}
+        <p>Are you sure you want to delete "{{ object }}"?</p>
+        <input type="submit" value="Confirm" />
+    </form>
+{% endblock %}

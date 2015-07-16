@@ -2,6 +2,7 @@
 couch models go here
 """
 from __future__ import absolute_import
+import copy
 from datetime import datetime
 import re
 
@@ -25,6 +26,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
+from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -875,6 +877,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def get_email(self):
         return self.email
 
+    def is_commcare_user(self):
+        return self._get_user_type() == 'commcare'
+
+    def is_web_user(self):
+        return self._get_user_type() == 'web'
+
+    def _get_user_type(self):
+        if self.doc_type == 'WebUser':
+            return 'web'
+        elif self.doc_type == 'CommCareUser':
+            return 'commcare'
+        else:
+            raise NotImplementedError()
+
     @property
     def projects(self):
         return map(Domain.get_by_name, self.get_domains())
@@ -899,6 +915,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         data = full_name.split()
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
+
+    @property
+    def user_session_data(self):
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+
+        session_data = copy.copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def delete(self):
         try:
@@ -1525,6 +1553,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_data=self.user_data,
             domain=self.domain,
             loadtest_factor=self.loadtest_factor,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            phone_number=self.phone_number,
         )
 
         def get_owner_ids():
@@ -1598,18 +1629,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups used to send location data in the restore
         payload.
         """
-        location_type = self.location.location_type_object
-        if location_type.shares_cases:
-            if location_type.view_descendants:
-                return [
-                    loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True).filter(
-                        location_type__shares_cases=True,
-                    )]
+        def get_sharing_id(loc):
+            return loc.case_sharing_group_object(self._id)._id
 
-            else:
-                return [self.sql_location.case_sharing_group_object(self._id)._id]
-
+        if self.sql_location.location_type.view_descendants:
+            locs = (self.sql_location.get_descendants(include_self=True)
+                                     .filter(location_type__shares_cases=True))
+            return map(get_sharing_id, locs)
+        elif self.sql_location.location_type.shares_cases:
+            return [get_sharing_id(self.sql_location)]
         else:
             return []
 
@@ -1759,6 +1787,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.fixtures.models import UserFixtureType
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1788,17 +1817,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         })
 
         self.location_id = location._id
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     def unset_location(self):
         """
         Unset the location and remove all associated user data and cases
         """
+        from corehq.apps.fixtures.models import UserFixtureType
+
         self.user_data.pop('commcare_location_id', None)
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
         self.clear_location_delegates()
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     @property
@@ -1974,6 +2007,39 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         except ResourceNotFound:
             return None
 
+    @property
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def fixture_statuses(self):
+        """Returns all of the last modified times for each fixture type"""
+        return self.get_fixture_statuses()
+
+    def get_fixture_statuses(self):
+        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                          for choice in UserFixtureType.CHOICES}
+        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
+            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+        return last_modifieds
+
+    def fixture_status(self, fixture_type):
+        try:
+            return self.fixture_statuses[fixture_type]
+        except KeyError:
+            from corehq.apps.fixtures.models import UserFixtureStatus
+            return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+    def update_fixture_status(self, fixture_type):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+        now = datetime.utcnow()
+        user_fixture_sync, new = UserFixtureStatus.objects.get_or_create(
+            user_id=self._id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': now},
+        )
+        if not new:
+            user_fixture_sync.last_modified = now
+            user_fixture_sync.save()
+
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
             class_name=self.__class__.__name__,
@@ -2067,6 +2133,7 @@ class OrgMembershipMixin(DocumentSchema):
             raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
                                      (self.username, org))
         om.is_admin = True
+
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?

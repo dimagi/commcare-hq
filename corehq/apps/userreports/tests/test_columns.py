@@ -3,6 +3,8 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.userreports.sql.connection import connection_manager
+from corehq.db import Session
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -12,7 +14,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import _expand_column, _get_distinct_values
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -73,9 +76,54 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
+class ChoiceListColumnDbTest(TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+
+    def test_column_uniqueness_when_truncated(self):
+        problem_spec = {
+            "display_name": "practicing_lessons",
+            "property_name": "long_column",
+            "choices": [
+                "duplicate_choice_1",
+                "duplicate_choice_2",
+            ],
+            "select_style": "multiple",
+            "column_id": "a_very_long_base_selection_column_name_with_limited_room",
+            "type": "choice_list",
+        }
+        data_source_config = DataSourceConfiguration(
+            domain='test',
+            display_name='foo',
+            referenced_doc_type='CommCareCase',
+            table_id=uuid.uuid4().hex,
+            configured_filter={},
+            configured_indicators=[problem_spec],
+        )
+        adapter = IndicatorSqlAdapter(data_source_config)
+        adapter.rebuild_table()
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'long_column': 'duplicate_choice_1',
+        })
+        # and query it back
+        q = Session.query(adapter.get_table())
+        self.assertEqual(1, q.count())
+
+
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
+
+    @classmethod
+    def tearDownClass(cls):
+        connection_manager.dispose_all()
+        super(TestExpandedColumn, cls).tearDownClass()
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex
@@ -225,6 +273,7 @@ class TestAggregateDateColumn(SimpleTestCase):
 
 
 class TestPercentageColumn(SimpleTestCase):
+
     def test_wrap(self):
         wrapped = ReportColumnFactory.from_spec({
             'type': 'percent',
@@ -295,7 +344,8 @@ class TestPercentageColumn(SimpleTestCase):
         spec = self._test_spec()
         spec['format'] = 'percent'
         wrapped = ReportColumnFactory.from_spec(spec)
-        self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': 0}))
+        for empty_value in [0, 0.0, None, '']:
+            self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': empty_value}))
 
     def test_format_fraction(self):
         spec = self._test_spec()
@@ -308,6 +358,15 @@ class TestPercentageColumn(SimpleTestCase):
         spec['format'] = 'both'
         wrapped = ReportColumnFactory.from_spec(spec)
         self.assertEqual('33% (1/3)', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
+
+    def test_format_pct_non_numeric(self):
+        spec = self._test_spec()
+        spec['format'] = 'percent'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        for unexpected_value in ['hello', object()]:
+            self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}),
+                             'non-numeric value failed for denominator {}'. format(unexpected_value))
+            self.assertEqual('?', wrapped.get_format_fn()({'num': unexpected_value, 'denom': 1}))
 
     def _test_spec(self):
         return {
