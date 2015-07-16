@@ -1,6 +1,5 @@
 from corehq.apps.userreports.specs import TypeProperty
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from corehq.apps.userreports.indicators.specs import DataTypeProperty
+from dimagi.ext.jsonobject import JsonObject
 
 NEONATE_FORM = "http://openrosa.org/formdesigner/5cd541d5a1034f02c922dc888416148a89b85ffa"
 CHILD_FORM = "http://openrosa.org/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d"
