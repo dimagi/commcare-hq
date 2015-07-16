@@ -159,6 +159,9 @@ class SqlData(ReportDataSource):
 
     @property
     def engine_id(self):
+        """
+        Subclasses can use this to override the engine used and refer to different databases
+        """
         return DEFAULT_ENGINE_ID
 
     @property
@@ -255,7 +258,7 @@ class SqlData(ReportDataSource):
             if not slugs or c.slug in slugs:
                 qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session()
+        session = connection_manager.get_scoped_session(self.engine_id)
         try:
             return qc.resolve(session.connection(), self.filter_values)
         except:
