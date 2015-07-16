@@ -6,7 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.utils import get_doc_ids
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.db import connection_manager, create_engine
+from corehq.db import create_engine
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
