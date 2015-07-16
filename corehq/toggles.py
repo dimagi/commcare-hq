@@ -487,6 +487,13 @@ REVAMPED_EXPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
 )
 
+MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
+    'multiple_choice_custom_field',
+    'Allow project to use multiple choice field in custom fields',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
     'restrict_form_edit_by_location',
     "Restrict ability to edit/archive forms by the web user's location",
@@ -498,4 +505,11 @@ SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',
     TAG_EXPERIMENTAL,
+)
+
+BASIC_CHILD_MODULE = StaticToggle(
+    'child_module',
+    'Basic modules can be child modules',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )

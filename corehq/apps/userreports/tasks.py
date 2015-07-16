@@ -5,7 +5,7 @@ from sqlalchemy.exc import DataError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.utils import get_doc_ids
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, create_engine
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -22,7 +22,7 @@ def rebuild_indicators(indicator_config_id):
         config.meta.build.initiated = datetime.datetime.utcnow()
         config.save()
 
-    adapter = IndicatorSqlAdapter(config, engine=create_engine())
+    adapter = IndicatorSqlAdapter(config)
     adapter.rebuild_table()
 
     couchdb = _get_db(config.referenced_doc_type)
@@ -35,7 +35,6 @@ def rebuild_indicators(indicator_config_id):
             adapter.save(doc)
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
-    adapter.engine.dispose()
 
     if not is_static:
         config.meta.build.finished = True

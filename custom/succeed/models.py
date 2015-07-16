@@ -21,17 +21,20 @@ def get_next_visit(case):
     actions = list(case['actions'])
     next_visit = VISIT_SCHEDULE[0]
     for visit_key, visit in enumerate(VISIT_SCHEDULE):
-        for key, action in enumerate(actions):
-            if visit['xmlns'] == action['xform_xmlns']:
-                try:
-                    next_visit = VISIT_SCHEDULE[visit_key + 1]
-                    del actions[key]
-                    break
-                except IndexError:
-                    next_visit = {
-                        'visit_name': 'last',
-                        'days': -1
-                    }
+        is_ignored = case.get_case_property(visit['ignored_field'])
+        completed = case.get_case_property(visit['completion_field'])
+        if completed or is_ignored is None or is_ignored.lower() != 'yes':
+            for key, action in enumerate(actions):
+                if visit['xmlns'] == action['xform_xmlns']:
+                    try:
+                        next_visit = VISIT_SCHEDULE[visit_key + 1]
+                        del actions[key]
+                        break
+                    except IndexError:
+                        next_visit = {
+                            'visit_name': 'last',
+                            'days': -1
+                        }
     return next_visit
 
 

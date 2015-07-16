@@ -13,3 +13,13 @@ def get_all_commcare_users_by_domain(domain):
         include_docs=False)]
 
     return [CommCareUser.wrap(user) for user in iter_docs(CommCareUser.get_db(), ids)]
+
+
+def get_user_docs_by_username(usernames):
+    from corehq.apps.users.models import CouchUser
+    return [res['doc'] for res in CouchUser.get_db().view(
+        'users/by_username',
+        keys=usernames,
+        reduce=False,
+        include_docs=True,
+    ).all()]

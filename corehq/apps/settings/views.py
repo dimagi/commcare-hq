@@ -92,6 +92,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
     api_key = None
+    template_name = 'settings/edit_my_account.b2.html'
 
     def get_or_create_api_key(self):
         if not self.api_key:
