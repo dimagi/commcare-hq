@@ -13,9 +13,10 @@ metadata = sqlalchemy.MetaData()
 
 class IndicatorSqlAdapter(object):
 
-    def __init__(self, config, engine=None):
+    def __init__(self, config):
         self.config = config
-        self.engine = engine or connection_manager.get_engine(get_engine_id(config))
+        self.sesssion_factory = connection_manager.get_session_factory(get_engine_id(config))
+        self.engine = self.sesssion_factory.engine
 
     @memoized
     def get_table(self):
@@ -30,6 +31,12 @@ class IndicatorSqlAdapter(object):
     def drop_table(self):
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
+
+    def get_query_object(self):
+        """
+        Get a sqlalchemy query object ready to query this table
+        """
+        return self.sesssion_factory.Session.query(self.get_table())
 
     def save(self, doc):
         indicator_rows = self.config.get_all_values(doc)
@@ -74,4 +81,3 @@ def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
         table.create(connection)
-    engine.dispose()

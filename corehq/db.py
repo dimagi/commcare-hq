@@ -59,6 +59,11 @@ class ConnectionManager(object):
         """
         return self._get_or_create_factory(engine_id).engine
 
+
+    def close_scoped_sessions(self):
+        for factory in self._session_factories.values():
+            factory.Session.remove()
+
     def dispose_engine(self, engine_id=DEFAULT_ENGINE_ID):
         """
         If found, closes the active sessions associated with an an engine and disposes it.
@@ -92,7 +97,8 @@ Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
 # Register an event that closes the database connection
 # when a Django request is finished.
 # This will rollback any open transactions.
-def _close_connection(**kwargs):
-    Session.remove()
+def _close_connections(**kwargs):
+    Session.remove()  # todo: unclear whether this is necessary
+    connection_manager.close_scoped_sessions()
 
-signals.request_finished.connect(_close_connection)
+signals.request_finished.connect(_close_connections)
