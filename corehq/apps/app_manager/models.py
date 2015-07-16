@@ -649,25 +649,27 @@ class FormBase(DocumentSchema):
         return hex(random.getrandbits(160))[2:-1]
 
     @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
+    def get_form(cls, form_unique_id, and_app=True):
+        @quickcache(['form_id'], timeout=30 * 60)
+        def get_app_id(form_id):
+            try:
+                d = get_db().view(
+                    'app_manager/xforms_index',
+                    key=form_id
+                ).one()
+            except MultipleResultsFound as e:
+                raise XFormIdNotUnique(
+                    "xform id '%s' not unique: %s" % (form_unique_id, e)
+                )
+            if d:
+                d = d['value']
+            else:
+                raise ResourceNotFound()
+            return d['app_id']
 
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
+        app_id = get_app_id(form_unique_id)
+        app = get_app(None, app_id)
+        form = app.get_form(form_unique_id)
         if and_app:
             return form, app
         else:
@@ -4563,13 +4565,13 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     return filter(remote_app_filter, wrapped_apps)
 
 
+@quickcache(['domain', 'app_id', 'wrap_cls', 'latest', 'target'])
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
 
     """
-
     if latest:
         try:
             original_app = get_db().get(app_id)
