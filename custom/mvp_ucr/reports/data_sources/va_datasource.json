@@ -2,9 +2,6 @@
     "domains": ["mvp-sauri", "mvp-mbola", "mvp-mwandama", "mvp-ruhiira", "mvp-koraro", "mvp-mayange",
                 "mvp-sada", "mvp-bonsaaso", "mvp-potou", "mvp-pampaida", "mvp-tiby"],
     "config": {
-        "base_item_expression": {
-            "type": "mvp_expression"
-        },
         "configured_filter": {
             "filters": [
                 {
@@ -239,9 +236,7 @@
                 "datatype": "string",
                 "display_name": "Death Place",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "mvp_death_place",
-                    "type": "property_name"
+                    "type": "mvp_death_place"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -254,7 +249,7 @@
                 "display_name": "Medical Reason",
                 "expression": {
                     "datatype": null,
-                    "property_name": "mvp_death_cause",
+                    "property_name": "mvp_medical_cause",
                     "type": "property_name"
                 },
                 "is_nullable": true,
@@ -267,9 +262,7 @@
                 "datatype": "string",
                 "display_name": "No Treatment reason",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "mvp_death_cause",
-                    "type": "property_name"
+                    "type": "mvp_no_treatment_reason"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -279,11 +272,9 @@
             {
                 "column_id": "treatment_provider",
                 "datatype": "string",
-                "display_name": "No Treatment reason",
+                "display_name": "Treatment Providers",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "mvp_treatment_providers",
-                    "type": "property_name"
+                    "type": "mvp_treatment_provider_name"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -295,9 +286,7 @@
                 "datatype": "string",
                 "display_name": "Treatment Facility Name",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "mvp_treatment_place_name",
-                    "type": "property_name"
+                    "type": "mvp_treatment_place_name"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

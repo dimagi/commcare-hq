@@ -1,15 +1,18 @@
-from jsonobject import JsonObject
 from corehq.apps.userreports.specs import TypeProperty
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
+from corehq.apps.userreports.indicators.specs import DataTypeProperty
 
 NEONATE_FORM = "http://openrosa.org/formdesigner/5cd541d5a1034f02c922dc888416148a89b85ffa"
 CHILD_FORM = "http://openrosa.org/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d"
 ADULT_FORM = "http://openrosa.org/formdesigner/60666f0dc7688fdef369947196722ff2f235101e"
 
 
-class MVPExpressionSpec(JsonObject):
-    type = TypeProperty('mvp_expression')
+class TreatmentPlaceExpressionSpec(JsonObject):
+    type = TypeProperty('mvp_treatment_place_name')
 
-    def _treatment_place_name(self, form, doc):
+    def __call__(self, item, context=None):
+        doc = item['form']
+        form = item['xmlns']
         treatment_place_name = ""
         if form == NEONATE_FORM:
             try:
@@ -29,7 +32,13 @@ class MVPExpressionSpec(JsonObject):
 
         return treatment_place_name
 
-    def _death_place(self, form, doc):
+
+class DeathPlaceExpressionSpec(JsonObject):
+    type = TypeProperty('mvp_death_place')
+
+    def __call__(self, item, context=None):
+        doc = item['form']
+        form = item['xmlns']
         death_place = ""
         death_field_value = ""
         if form == NEONATE_FORM:
@@ -62,7 +71,13 @@ class MVPExpressionSpec(JsonObject):
 
         return death_place
 
-    def _death_cause(self, form, doc):
+
+class MedicalCauseExpressionSpec(JsonObject):
+    type = TypeProperty('mvp_medical_cause')
+
+    def __call__(self, item, context=None):
+        doc = item['form']
+        form = item['xmlns']
         death_cause = ""
         if form == NEONATE_FORM:
             if 'birth_asphyxia' in doc and int(doc['birth_asphyxia']) == 1:
@@ -127,7 +142,13 @@ class MVPExpressionSpec(JsonObject):
 
         return death_cause
 
-    def _treatment_providers(self, form, doc):
+
+class TreatmentProviderExpressionSpec(JsonObject):
+    type = TypeProperty('mvp_treatment_provider_name')
+
+    def __call__(self, item, context=None):
+        doc = item['form']
+        form = item['xmlns']
         treatment_providers = ""
         parent_node = ""
         if form == NEONATE_FORM:
@@ -161,13 +182,13 @@ class MVPExpressionSpec(JsonObject):
                     treatment_providers += parent_node['q1006_7_96']
 
         if form == ADULT_FORM:
-            adult_answer = ""
+            treatment_providers_choices = ""
             try:
                 treatment_providers_choices = doc['interview']['q1006_q1060']['q1006']
             except KeyError:
                 pass
 
-            if len(adult_answer) > 0:
+            if len(treatment_providers_choices) > 0:
                 choices = treatment_providers_choices.split(" ")
                 for x in choices:
                     if int(x) == 1:
@@ -187,19 +208,83 @@ class MVPExpressionSpec(JsonObject):
                             treatment_providers += doc['interview']['q1006_q1060']['q1006_7']
                         except KeyError:
                             pass
+
         return treatment_providers
 
+
+class NoTreatmentReasonExpressionSpec(JsonObject):
+    type = TypeProperty('mvp_no_treatment_reason')
+
     def __call__(self, item, context=None):
+        doc = item['form']
+        form = item['xmlns']
+        no_treatment_reason = ""
+        if form == NEONATE_FORM:
+            try:
+                no_treatment_node = doc['interview']['q801_q1005']
+            except KeyError:
+                no_treatment_node = False
+        if form == CHILD_FORM:
+            try:
+                no_treatment_node = doc['q201-1114']['q1001-1011']
+            except KeyError:
+                no_treatment_node = False
+        if form == ADULT_FORM:
+            try:
+                no_treatment_node = doc['interview']
+            except KeyError:
+                no_treatment_node = False
 
-        docs = []
+        if no_treatment_node and 'q1005' in no_treatment_node and len(no_treatment_node['q1005']) > 0:
+            choices = no_treatment_node['q1005'].split(" ")
+            for x in choices:
+                if int(x) == 1:
+                    no_treatment_reason += "Personal/ religious objection <br>"
+                if int(x) == 2:
+                    no_treatment_reason += "No means of transport <br>"
+                if int(x) == 3:
+                    no_treatment_reason += "No money for transport <br>"
+                if int(x) == 4:
+                    no_treatment_reason += "No phone to call transport <br>"
+                if int(x) == 5:
+                    no_treatment_reason += "No money for phone to call transport <br>"
+                if int(x) == 6:
+                    no_treatment_reason += "Transport was too late <br>"
+                if int(x) == 7:
+                    no_treatment_reason += "No money to pay for consult <br>"
+                if int(x) == 8:
+                    no_treatment_reason += "No money to pay for drugs <br>"
+                if int(x) == 90:
+                    no_treatment_reason += "Don't know <br>"
+                if int(x) == 96:
+                    try:
+                        no_treatment_reason += no_treatment_node['q1005_96']
+                    except KeyError:
+                        pass
 
-        docs.append({'mvp_death_place': self._death_place(item['xmlns'], item['form']),
-                    'mvp_death_cause': self._death_cause(item['xmlns'], item['form']),
-                    'mvp_treatment_place_name': self._treatment_place_name(item['xmlns'], item['form']),
-                    'mvp_treatment_providers': self._treatment_providers(item['xmlns'], item['form'])})
-        return docs
+        return no_treatment_reason
 
 
-def mvp_expression(spec, context):
-    wrapped = MVPExpressionSpec.wrap(spec)
+def treatment_provider_name_expression(spec, context):
+    wrapped = TreatmentProviderExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def death_place_expression(spec, context):
+    wrapped = DeathPlaceExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def treatment_place_name_expression(spec, context):
+    wrapped = TreatmentPlaceExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def no_treatment_reason_expression(spec, context):
+    wrapped = NoTreatmentReasonExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def medical_cause_expression(spec, context):
+    wrapped = MedicalCauseExpressionSpec.wrap(spec)
     return wrapped
