@@ -664,7 +664,6 @@ def delete_invitation(request, domain):
 @require_POST
 @require_can_edit_web_users
 def delete_request(request, domain):
-    #import ipdb; ipdb.set_trace()
     DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
 
@@ -727,8 +726,10 @@ class InviteWebUserView(BaseManageWebUserView):
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
-            data = self.invite_web_user_form.cleaned_data
+            # If user exists and has already requested access, just add them to the project
+            # Otherwise, send an invitation
             create_invitation = True
+            data = self.invite_web_user_form.cleaned_data
             domain_request = DomainRequest.by_email(self.domain, data["email"])
             if domain_request is not None:
                 domain_request.is_approved = True
@@ -744,7 +745,6 @@ class InviteWebUserView(BaseManageWebUserView):
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
-                # create invitation record
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
@@ -787,16 +787,14 @@ class DomainRequestView(BasePageView):
         if self.request_form.is_valid():
             data = self.request_form.cleaned_data
             if DomainRequest.by_email(data['domain'], data['email']) is not None:
-                messages.error(request, _("A request is pending for this email. You will receive an email when the request is approved."))
+                messages.error(request, _("A request is pending for this email. "
+                    "You will receive an email when the request is approved."))
             else:
-                domain_request = DomainRequest(
-                    email=data['email'],
-                    full_name=data['full_name'],
-                    domain=data['domain'],
-                )
+                domain_request = DomainRequest(**data)
                 domain_request.send_request_email()
                 domain_request.save()
-                messages.success(request, _("Request created. You will receive an email when the request is approved."))
+                messages.success(request, _("Request created. "
+                    "You will receive an email when the request is approved."))
         return self.get(request, *args, **kwargs)
 
 
