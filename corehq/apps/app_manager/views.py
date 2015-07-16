@@ -2048,7 +2048,7 @@ def rename_language(request, domain, form_unique_id):
     old_code = request.POST.get('oldCode')
     new_code = request.POST.get('newCode')
     try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
+        form, app = Form.get_form(form_unique_id, and_app=True, skip_cache=True)
     except ResourceConflict:
         raise Http404()
     if app.domain != domain:

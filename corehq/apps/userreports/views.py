@@ -414,7 +414,7 @@ def create_data_source_from_app(request, domain):
                 messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
-                xform = Form.get_form(app_source.source)
+                xform = Form.get_form(app_source.source, skip_cache=True)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
                 messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))

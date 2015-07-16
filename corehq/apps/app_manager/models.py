@@ -34,7 +34,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
-from corehq.util.quickcache import quickcache
+from corehq.util.quickcache import quickcache, skippable_quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
@@ -649,9 +649,9 @@ class FormBase(DocumentSchema):
         return hex(random.getrandbits(160))[2:-1]
 
     @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        @quickcache(['form_id'], timeout=30 * 60)
-        def get_app_from_form_id(form_id):
+    def get_form(cls, form_unique_id, and_app=False, skip_cache=False):
+        @skippable_quickcache(['form_id'], skip_arg='skip_cache', timeout=30 * 60)
+        def get_app_from_form_id(form_id, skip_cache):
             try:
                 d = get_db().view(
                     'app_manager/xforms_index',
@@ -668,7 +668,7 @@ class FormBase(DocumentSchema):
             else:
                 raise ResourceNotFound()
 
-        app = get_app_from_form_id(form_unique_id)
+        app = get_app_from_form_id(form_unique_id, skip_cache)
         form = app.get_form(form_unique_id)
         if and_app:
             return form, app

@@ -107,7 +107,7 @@ class DataSourceBuilder(object):
         # source_id is a case type of form id
         self.source_id = source_id
         if self.source_type == 'form':
-            self.source_form = Form.get_form(self.source_id)
+            self.source_form = Form.get_form(self.source_id, skip_cache=True)
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
