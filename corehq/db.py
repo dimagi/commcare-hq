@@ -38,12 +38,19 @@ class ConnectionManager(object):
             self._session_factories[engine_id] = SessionFactory(self._get_connection_string(engine_id))
         return self._session_factories[engine_id]
 
-    def get_session_constructor(self, engine_id=DEFAULT_ENGINE_ID):
+    def get_session_factory(self, engine_id=DEFAULT_ENGINE_ID):
+        """
+        Returns the SessionFactory object associated with this engine id
+        """
+        # making this separate from _get_or_create in case we ever want to fail differently here
+        return self._get_or_create_factory(engine_id)
+
+    def get_scoped_session(self, engine_id=DEFAULT_ENGINE_ID):
         """
         This returns a class that can be instantiated and will have a session scoped
         to the local thread.
         """
-        return self._get_or_create_factory(engine_id).Session
+        return self.get_session_factory(engine_id).Session
 
     def get_engine(self, engine_id=DEFAULT_ENGINE_ID):
         """
@@ -54,10 +61,13 @@ class ConnectionManager(object):
 
     def dispose_engine(self, engine_id=DEFAULT_ENGINE_ID):
         """
-        If found, disposes an engine and removes it from this, otherwise does nothing.
+        If found, closes the active sessions associated with an an engine and disposes it.
+        Also removes it from the session manager.
+        If not found, does nothing.
         """
         if engine_id in self._session_factories:
             factory = self._session_factories.pop(engine_id)
+            factory.Session.remove()
             factory.engine.dispose()
 
     def dispose_all(self):
@@ -76,7 +86,7 @@ class ConnectionManager(object):
 
 
 connection_manager = ConnectionManager()
-Session = connection_manager.get_session_constructor(DEFAULT_ENGINE_ID)
+Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
 
 
 # Register an event that closes the database connection
