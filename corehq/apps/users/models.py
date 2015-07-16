@@ -2426,8 +2426,8 @@ class DomainRequest(models.Model):
             'domain_name': domain_name,
             'url': absolute_reverse("domain_homepage", args=[self.domain]),
         }
-        text_content = render_to_string("users/email/approve_domain_request.txt", params)
-        html_content = render_to_string("users/email/approve_domain_request.html", params)
+        text_content = render_to_string("users/email/new_domain_request.txt", params)
+        html_content = render_to_string("users/email/new_domain_request.html", params)
         subject = _('Request to join %s approved') % domain_name
         send_HTML_email(subject, self.email, html_content, text_content=text_content,
                         email_from=settings.DEFAULT_FROM_EMAIL)

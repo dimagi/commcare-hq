@@ -761,7 +761,7 @@ class InviteWebUserView(BaseManageWebUserView):
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = ugettext_noop("Request Access")
-    template_name = "users/web_user_request.html"
+    template_name = "users/domain_request.html"
     request_form = None
 
     @property
