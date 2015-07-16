@@ -649,7 +649,7 @@ class FormBase(DocumentSchema):
         return hex(random.getrandbits(160))[2:-1]
 
     @classmethod
-    def get_form(cls, form_unique_id, and_app=True):
+    def get_form(cls, form_unique_id, and_app=False):
         @quickcache(['form_id'], timeout=30 * 60)
         def get_app_id(form_id):
             try:
