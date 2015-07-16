@@ -277,7 +277,7 @@ def create_or_update_groups(domain, group_specs, log):
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
-        group_name = row.get('name')
+        group_name = unicode(row.get('name') or '')
         case_sharing = row.get('case-sharing')
         reporting = row.get('reporting')
         data = row.get('data')
@@ -337,7 +337,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             data = row.get('data')
             email = row.get('email')
-            group_names = row.get('group')
+            group_names = map(unicode, row.get('group') or [])
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -349,7 +349,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             if password:
                 password = unicode(password)
-            group_names = group_names or []
             try:
                 username = normalize_username(str(username), domain)
             except TypeError:
