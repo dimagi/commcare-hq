@@ -51,7 +51,7 @@ branches:
   - languageMedia # Sravan 6/10
   - wire-prepay # Farid June 26
   - locations-for-robber-barons  # Ethan 5/7
-  #- index-phonelog-reportentry # Ben 6/8
+  - index-phonelog-reportentry # Ben 6/8
   - web-user-requests # Jenny, July 16
 submodules:
   corehq/apps/prelogin:
