@@ -712,8 +712,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
+        upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
