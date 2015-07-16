@@ -1305,7 +1305,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         initial = {
             "secure_submissions": self.domain_object.secure_submissions,
             "restrict_superusers": self.domain_object.restrict_superusers,
-            "allow_web_user_requests": self.domain_object.allow_web_user_requests,
+            "allow_domain_requests": self.domain_object.allow_domain_requests,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial)

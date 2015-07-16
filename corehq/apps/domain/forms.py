@@ -602,7 +602,7 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
             "Read more about secure submissions here</a>"))
     )
-    allow_web_user_requests = BooleanField(
+    allow_domain_requests = BooleanField(
         label=_("Web user requests"),
         required=False,
         help_text=_("Allow unknown users to request web access to the domain."),
@@ -610,7 +610,7 @@ class PrivacySecurityForm(forms.Form):
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-        domain.allow_web_user_requests = self.cleaned_data.get('allow_web_user_requests', False)
+        domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []

@@ -34,11 +34,11 @@ class TestDomainViews(TestCase):
         self.user.delete()
         self.domain.delete()
         
-    def test_allow_web_user_requests(self):
+    def test_allow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)
 
         public_domain = Domain(name="public", is_active=True)
-        public_domain.allow_web_user_requests = True
+        public_domain.allow_domain_requests = True
         public_domain.save()
 
         response = self.client.get(reverse("domain_homepage", args=[public_domain.name]), follow=True)
@@ -46,7 +46,7 @@ class TestDomainViews(TestCase):
 
         public_domain.delete()
 
-    def test_disallow_web_user_requests(self):
+    def test_disallow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)
 
         private_domain = Domain(name="private", is_active=True)
