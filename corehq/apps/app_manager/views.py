@@ -1022,6 +1022,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         template, form_context = get_form_view_context_and_template(request, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
+            'usercase_properties': get_usercase_properties(app),
         })
 
         if toggles.FORM_LINK_WORKFLOW.enabled(domain):
@@ -1041,8 +1042,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                     linkable_forms
                 )
             })
-
-        context['usercase_properties'] = get_usercase_properties(app)
 
         context.update(form_context)
     elif module:
