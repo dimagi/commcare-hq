@@ -83,11 +83,11 @@ class Worker(object):
                 if row.raw_num_children and not row.is_secondary
             }
             growth_monitoring_contributions = {
-                row.case_id: 1 for row in self.case_data if row.growth_calculated_aww
+                (row.case_id, row.child_index): 1 for row in self.case_data if row.growth_calculated_aww
             }
             return 'Registration:<br>{}<br>Growth Monitoring:<br>{}'.format(
                 '<br>'.join('{}: {}'.format(k, v) for k, v in child_registered_contributions.items()),
-                '<br>'.join('{}: {}'.format(k, v) for k, v in growth_monitoring_contributions.items())
+                '<br>'.join('{}, {}: {}'.format(k[0], k[1], v) for k, v in growth_monitoring_contributions.items())
             )
         else:
             return ''
