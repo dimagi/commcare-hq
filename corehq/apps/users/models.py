@@ -2396,6 +2396,7 @@ class InvalidUser(FakeUser):
     def is_member_of(self, domain_qs):
         return False
 
+
 #
 # Django  models go here
 #

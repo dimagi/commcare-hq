@@ -39,8 +39,8 @@ from dimagi.utils.web import json_response
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm, UpdateMyAccountInfoForm,
-                                     UpdateUserPermissionForm, UpdateUserRoleForm)
+from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
+                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
@@ -771,11 +771,8 @@ class DomainRequestView(BasePageView):
     @property
     def page_context(self):
         domain = Domain.get_by_name(self.request.domain)
-        email = None
         if self.request_form is None:
             self.request_form = DomainRequestForm(initial={'domain': domain.name})
-        else:
-            email = self.request_form.cleaned_data['email']
         return {
             'domain': domain.name,
             'domain_name': domain.display_name(),
