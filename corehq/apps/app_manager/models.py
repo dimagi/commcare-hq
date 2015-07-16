@@ -651,24 +651,24 @@ class FormBase(DocumentSchema):
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         @quickcache(['form_id'], timeout=30 * 60)
-        def get_app_id(form_id):
+        def get_app_from_form_id(form_id):
             try:
                 d = get_db().view(
                     'app_manager/xforms_index',
-                    key=form_id
+                    key=form_id,
+                    include_docs=True
                 ).one()
             except MultipleResultsFound as e:
                 raise XFormIdNotUnique(
                     "xform id '%s' not unique: %s" % (form_unique_id, e)
                 )
             if d:
-                d = d['value']
+                doc = d['doc']
+                return get_correct_app_class(doc).wrap(doc)
             else:
                 raise ResourceNotFound()
-            return d['app_id']
 
-        app_id = get_app_id(form_unique_id)
-        app = get_app(None, app_id)
+        app = get_app_from_form_id(form_unique_id)
         form = app.get_form(form_unique_id)
         if and_app:
             return form, app
