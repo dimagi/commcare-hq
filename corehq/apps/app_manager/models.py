@@ -594,19 +594,13 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
-    anchor:                     Case property containing a date after which this schedule becomes active
-    expiry:                     Days after the anchor date that this schedule expires (optional)
-    visit_list:                 List of visits in this schedule
+    expires:                    Days after the anchor date that this schedule expires (optional)
+    visits:		        List of visits in this schedule
     post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
-    transition_condition:       Condition under which the schedule transitions to the next phase
-    termination_condition:      Condition under which the schedule terminates
     """
-    anchor = StringProperty()
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
     post_schedule_increment = IntegerProperty()
-    transition_condition = SchemaProperty(FormActionCondition)
-    termination_condition = SchemaProperty(FormActionCondition)
 
 
 class FormBase(DocumentSchema):
@@ -2006,6 +2000,21 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
+    def get_module(self):
+        if isinstance(self._parent, ModuleBase):
+            return self._parent
+        else: # Forms can be nested within SchedulePhases
+            return self._parent._parent
+
+    def get_phase(self):
+        module = self.get_module()
+
+        if not module.has_schedule:
+            raise TypeError("The module this form is in has no schedule")
+
+        return next((phase for phase in module.get_schedule_phases()
+                     for form in phase.forms if form == self), None)
+
     def check_actions(self):
         errors = []
 
@@ -2178,6 +2187,35 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class SchedulePhase(IndexedSchema):
+    """
+    SchedulePhases are attached to a module.
+    A Schedule Phase is a grouping of forms that occur within a period and share an anchor
+    A module should not have more than one SchedulePhase with the same anchor
+
+    anchor:                     Case property containing a date after which this phase becomes active
+    forms: 			The forms that are to be filled out within this phase
+    transition_condition:       Condition under which we transition to the next phase
+    termination_condition:      Condition under which we terminate the whole schedule
+    """
+    anchor = StringProperty()
+    forms = SchemaListProperty(AdvancedForm)
+    get_forms = IndexedSchema.Getter('forms')
+
+    # TODO: this
+    transition_condition = SchemaProperty(FormActionCondition)
+    termination_condition = SchemaProperty(FormActionCondition)
+
+    @property
+    def id(self):
+        """ A Schedule Phase is 1-indexed """
+        _id = super(SchedulePhase, self).id
+        return _id + 1
+
+    @property
+    def phase_id(self):
+        return "{}_{}".format(self.anchor, self.id)
+
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
@@ -2187,6 +2225,8 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
+    schedule_phases = SchemaListProperty(SchedulePhase)
+    get_schedule_phases = IndexedSchema.Getter('schedule_phases')
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2229,6 +2269,7 @@ class AdvancedModule(ModuleBase):
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
         if self.has_schedule:
+            # TODO: verify that this is what we want to have happen here
             form.schedule = FormSchedule()
 
         self.forms.append(form)
