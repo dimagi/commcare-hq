@@ -25,7 +25,6 @@ class IndicatorPillowTest(TestCase):
 
     def tearDown(self):
         self.adapter.drop_table()
-        connection_manager.dispose_all()
         # todo: remove this when pillow uses connection_manager
         self.pillow.get_sql_engine().dispose()
 

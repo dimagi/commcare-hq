@@ -74,9 +74,6 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
 
 class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
-    def tearDown(self):
-        connection_manager.dispose_all()
-
     def test_table_population(self):
 
         engine = connection_manager.get_engine()
