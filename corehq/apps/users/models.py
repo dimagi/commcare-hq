@@ -10,6 +10,7 @@ from restkit.errors import NoMoreData
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
@@ -2391,32 +2392,23 @@ class InvalidUser(FakeUser):
 #
 # Django  models go here
 #
-class DomainRequest(Document):
+class DomainRequest(models.Model):
     '''
     This could share code with OrgRequest, but as that's legacy code, I'm not going to
     take on the testing burden that would come with touching it.
     '''
-    doc_type = "DomainRequest"
-    email = StringProperty()
-    full_name = StringProperty()
-    is_approved = BooleanProperty(default=False)
-    domain = StringProperty()
+    email = models.CharField(max_length=100, db_index=True)
+    full_name = models.CharField(max_length=100, db_index=True)
+    is_approved = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255, db_index=True)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view("users/open_requests_by_domain",
-            reduce=False,
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True,
-        ).all()
+        return DomainRequest.objects.filter(domain=domain, is_approved=False)
 
     @classmethod
     def by_email(cls, domain, email):
-        requests = filter(lambda r: r.email == email, cls.by_domain(domain))
-        if len(requests) > 0:
-            return requests[0]
-        return None
+        return DomainRequest.by_domain(domain).filter(email=email).first()
 
     def send_approval_email(self):
         domain = Domain.get_by_name(self.domain)

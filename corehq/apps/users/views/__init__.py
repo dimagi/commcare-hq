@@ -659,7 +659,8 @@ def delete_invitation(request, domain):
 @require_POST
 @require_can_edit_web_users
 def delete_request(request, domain):
-    DomainRequest.get(request.POST['id']).delete()
+    #import ipdb; ipdb.set_trace()
+    DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
 
 
@@ -687,7 +688,7 @@ class InviteWebUserView(BaseManageWebUserView):
     def invite_web_user_form(self):
         role_choices = UserRole.role_choices(self.domain)
         loc = None
-        domain_request = DomainRequest.get(self.request_id) if self.request_id else None
+        domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
