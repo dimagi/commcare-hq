@@ -2,8 +2,9 @@ import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.sql.columns import column_to_sql
-from corehq.apps.userreports.sql.connection import connection_manager, get_engine_id
+from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
+from corehq.db import connection_manager
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -12,9 +13,10 @@ metadata = sqlalchemy.MetaData()
 
 class IndicatorSqlAdapter(object):
 
-    def __init__(self, config, engine=None):
+    def __init__(self, config):
         self.config = config
-        self.engine = engine or connection_manager.get_engine(get_engine_id(config))
+        self.session_helper = connection_manager.get_session_helper(get_engine_id(config))
+        self.engine = self.session_helper.engine
 
     @memoized
     def get_table(self):
@@ -29,6 +31,12 @@ class IndicatorSqlAdapter(object):
     def drop_table(self):
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
+
+    def get_query_object(self):
+        """
+        Get a sqlalchemy query object ready to query this table
+        """
+        return self.session_helper.Session.query(self.get_table())
 
     def save(self, doc):
         indicator_rows = self.config.get_all_values(doc)
@@ -73,4 +81,3 @@ def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
         table.create(connection)
-    engine.dispose()
