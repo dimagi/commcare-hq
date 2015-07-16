@@ -13,7 +13,7 @@ class MALTRow(models.Model):
     user_id = models.TextField()
     username = models.TextField()
     email = models.EmailField()
-    is_web_user = models.BooleanField()
+    is_web_user = models.BooleanField(default=False)
     domain_name = models.TextField(db_index=True)
     num_of_forms = models.TextField()
 
@@ -28,7 +28,7 @@ class MALTRow(models.Model):
     app_id = models.TextField()
     wam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
     pam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
-    is_app_deleted = models.BooleanField()
+    is_app_deleted = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('month', 'domain_name', 'user_id', 'app_id')
