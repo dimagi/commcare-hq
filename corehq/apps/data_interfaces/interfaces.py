@@ -95,24 +95,58 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         return context
 
 
+class FormManagementMode(object):
+    ARCHIVE_MODE = "archive"
+    RESTORE_MODE = "restore"
+
+    filter_options = [(ARCHIVE_MODE, _('Normal Forms')), (RESTORE_MODE, _('Archived Forms'))]
+
+    def __init__(self, mode, validate=False):
+        if mode == self.RESTORE_MODE:
+            self.mode_name = self.RESTORE_MODE
+            self.xform_filter = ADD_TO_ES_FILTER['archived_forms']
+            self.button_text = "Restore"
+            self.status_page_title = "Restore Forms Status"
+            self.progress_text = "Restoring your forms, this may take some time..."
+            self.error_text = "Problem restoring your forms! Please try again or report an issue"
+        else:
+            self.mode_name = self.ARCHIVE_MODE
+            self.xform_filter = ADD_TO_ES_FILTER['forms']
+            self.button_text = "Archive"
+            self.status_page_title = "Archive Forms Status"
+            self.progress_text = "Archiving your forms, this may take some time..."
+            self.error_text = "Problem archiving your forms! Please try again or report an issue"
+        if validate:
+            self.validate_mode(mode)
+
+    @classmethod
+    def validate_mode(cls, mode):
+        if mode not in [cls.ARCHIVE_MODE, cls.RESTORE_MODE]:
+            raise Exception("mode should be archive or restore")
+        return mode
+
+    def is_archive_mode(self):
+        return self.mode_name == self.ARCHIVE_MODE
+
+
 class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     # ToDo. Move to a better place
-    slug = 'archive'
+    slug = 'archive_or_restore'
     default_text = ugettext_noop("Select...")
     placeholder = ''
-    label = _('Archived Form')
+    label = _('Archived/Restored')
 
     @property
     def options(self):
-        return [('normal', _('Normal Forms')), ('archived', _('Archived Forms'))]
+        return FormManagementMode.filter_options
 
     @property
     def selected(self):
-        return 'normal'
+        return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
 class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
-    name = ugettext_noop("Archive Forms")
+    name = ugettext_noop("Filtered Forms")
     slug = "bulk_archive_forms"
 
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
@@ -120,23 +154,21 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
     def __init__(self, request, **kwargs):
         super(BulkArchiveFormInterface, self).__init__(request, **kwargs)
         self.fields = self.fields + ['corehq.apps.data_interfaces.interfaces.ArchiveOrNormalFormFilter']
+        self.mode = FormManagementMode(request.GET.get('archive_or_restore'))
 
     @property
     def template_context(self):
         context = super(BulkArchiveFormInterface, self).template_context
         import json
         context.update(filters_as_es_query=json.dumps(self.filters_as_es_query()))
+        context.update({
+            "button_text": self.mode.button_text,
+            "archive_or_restore": self.mode.mode_name
+        })
         return context
 
-    @property
-    def restore_mode(self):
-        return True if self.request.GET.get('archive') == 'archived' else False
-
     def _es_xform_filter(self):
-        if self.restore_mode:
-            return ADD_TO_ES_FILTER['archived_forms']
-        else:
-            return ADD_TO_ES_FILTER['forms']
+        return self.mode.xform_filter
 
     @property
     def headers(self):

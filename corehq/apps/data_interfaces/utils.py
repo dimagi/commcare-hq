@@ -67,13 +67,13 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
             username=user.username)
 
         try:
-            if archive_or_restore == 'archive':
-                print "archiving"
+            if archive_or_restore.is_archive_mode():
                 xform.archive(user=user.username)
+                message = _(u"Successfully archived {form}").format(form=xform_string)
             else:
                 xform.unarchive(user=user.username)
-                print "unarchiving"
-            response['success'].append(_(u"Successfully archived {form}").format(form=xform_string))
+                message = _(u"Successfully unarchived {form}").format(form=xform_string)
+            response['success'].append(message)
         except Exception as e:
             response['errors'].append(_(u"Could not archive {form}: {error}").format(
                 form=xform_string, error=e))

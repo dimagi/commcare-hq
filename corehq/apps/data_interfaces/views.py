@@ -27,8 +27,9 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
+from .interfaces import FormManagementMode
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseServerError
+from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -457,75 +458,59 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
-class BaseXFormManagementView(DataInterfaceSection):
-    def _archive_mode(request):
-        return True  # Todo
-
-    def archive_or_restore_progress_title(self):
-        archive_txt = _("Bulk Form Archive Status")
-        restore_txt = _("Bulk Form Restore Status")
-        return archive_txt if self._archive_mode else restore_txt
-
-    def archive_or_restore_progress_text(self):
-        archive_txt = _("Restoring Forms. This may take some time...")
-        restore_txt = _("Restoring Forms. This may take some time...")
-        return archive_txt if self._archive_mode else restore_txt
-
-    def archive_or_restore_task_title(self):
-        archive_txt = _("Bulk Archive Forms")
-        restore_txt = _("Bulk Restore Forms")
-        return archive_txt if self._archive_mode else restore_txt
-
-
-class XFormManagementView(BaseXFormManagementView):
+class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def _get_xform_ids(self, request):
+    def _get_es_dict_or_form_ids(self, request):
         # Todo - scan ids from POST and validate them
         if 'select_all' in self.request.POST:
             import json
             #  Todo - validate user-submitted es-query. Danger zone
+            # Altough evaluating form_ids and sending to task is cleaner,
+            # heavier calls should be in in an async task
             es_query = json.loads(self.request.POST.get('select_all'))
-            return
+            return es_query
         else:
             return self.request.POST.getlist('xform_ids')
 
     def post(self, request, *args, **kwargs):
-        xform_ids = self._get_xform_ids(request)
+        es_dict_or_form_ids = self._get_es_dict_or_form_ids(request)
+        mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(None, expiry=1*60*60)
+
         task = bulk_form_management_async.delay(
-            self._archive_mode(),
+            mode,
             self.domain,
             self.request.user,
-            xform_ids
+            es_dict_or_form_ids
         )
         task_ref.set_task(task)
 
         return HttpResponseRedirect(
             reverse(
                 XFormManagementStatusView.urlname,
-                args=[self.domain, task_ref.download_id]
+                args=[self.domain, mode, task_ref.download_id]
             )
         )
 
 
-class XFormManagementStatusView(BaseXFormManagementView):
+class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
     page_title = ugettext_noop('Form Status')
 
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
+        mode = FormManagementMode(kwargs['mode'])
 
-        # Todo - cleanup
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("XForm Archive Or Restore?"),
-            'progress_text': _("Archiving/Restoring Forms This may take some time......"),
-            'error_text': _("Problem restoring/archive data! Please try again or report an issue."),
+            'title': mode.status_page_title,
+            'progress_text': mode.progress_text,
+            'error_text': mode.error_text,
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
 

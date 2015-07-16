@@ -51,7 +51,8 @@
                 <div>{% trans 'Selected Forms' %}</div>
                 <label for="select_all">{% trans 'Select all Forms' %}</label>
                 <input type="checkbox" name="select_all" value="{{ filters_as_es_query|escape }}">
-                <button>{% trans 'Archive or Restore' %}</button>
+                <input type="hidden" name="mode" value="{{ archive_or_restore }}">
+                <button>{{ button_text }}</button>
             </div>
             {{ block.super }}
         </form>
