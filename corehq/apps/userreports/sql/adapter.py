@@ -2,8 +2,9 @@ import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.sql.columns import column_to_sql
-from corehq.apps.userreports.sql.connection import connection_manager, get_engine_id
+from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
+from corehq.db import connection_manager
 from dimagi.utils.decorators.memoized import memoized
 
 

@@ -7,9 +7,9 @@ from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.sql.connection import connection_manager, DEFAULT_ENGINE_ID
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests import get_sample_doc_and_indicators, get_sample_data_source
+from corehq.db import connection_manager, DEFAULT_ENGINE_ID
 
 
 class IndicatorPillowTest(TestCase):

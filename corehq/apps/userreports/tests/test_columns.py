@@ -3,8 +3,7 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.userreports.sql.connection import connection_manager
-from corehq.db import Session
+from corehq.db import Session, connection_manager
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
