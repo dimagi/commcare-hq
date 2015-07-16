@@ -2395,13 +2395,15 @@ class InvalidUser(FakeUser):
 #
 class DomainRequest(models.Model):
     '''
-    This could share code with OrgRequest, but as that's legacy code, I'm not going to
-    take on the testing burden that would come with touching it.
+    Request to join domain. Requester might or might not already have an account.
     '''
     email = models.CharField(max_length=100, db_index=True)
     full_name = models.CharField(max_length=100, db_index=True)
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
+
+    class Meta:
+        unique_together = [('domain', 'email')]
 
     @classmethod
     def by_domain(cls, domain):
@@ -2433,7 +2435,8 @@ class DomainRequest(models.Model):
             'domain_name': domain_name,
             'url': absolute_reverse("web_users", args=[self.domain]),
         }
-        recipients = {u.get_email() for u in WebUser.get_users_by_permission(self.domain, Permissions.edit_web_users)}
+        recipients = {u.get_email() for u in
+            WebUser.get_users_by_permission(self.domain, Permissions.edit_web_users)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)
