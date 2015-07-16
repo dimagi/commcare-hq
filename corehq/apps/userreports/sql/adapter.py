@@ -74,4 +74,3 @@ def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
         table.create(connection)
-    engine.dispose()
