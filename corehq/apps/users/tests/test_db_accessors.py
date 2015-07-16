@@ -52,6 +52,21 @@ class AllCommCareUsersTest(TestCase):
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
+    def test_exclude_retired_users(self):
+        deleted_user = CommCareUser.create(
+            domain=self.ccdomain.name,
+            username='deleted_user',
+            password='secret',
+            email='deleted_email@example.com',
+        )
+        deleted_user.retire()
+        self.assertNotIn(
+            deleted_user.username,
+            [user.username for user in
+             get_all_commcare_users_by_domain(self.ccdomain.name)]
+        )
+        deleted_user.delete()
+
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
         usernames = [u.username for u in users] + ['nonexistant@username.com']
