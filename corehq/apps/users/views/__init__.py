@@ -624,7 +624,7 @@ class UserInvitationView(InvitationView):
         return reverse("domain_homepage", args=[self.domain,])
 
     def invite(self, invitation, user):
-        user.add_as_web_user(self.domain, role=invitation.role,
+        user.add_as_web_user(invitation.domain, role=invitation.role,
                              location_id=invitation.supply_point, program_id=invitation.program)
 
 

@@ -545,9 +545,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
         if project.commtrack_enabled:
-            self.get_domain_membership(self.domain).program_id = program_id
+            self.get_domain_membership(domain).program_id = program_id
         if project.locations_enabled:
-            self.get_domain_membership(self.domain).location_id = loaction_id
+            self.get_domain_membership(domain).location_id = location_id
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
