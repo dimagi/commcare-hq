@@ -120,6 +120,10 @@ def start_call_session(recipient, call_log_entry, logged_subevent, app, module, 
             session_type=XFORMS_SESSION_IVR,
             case_for_case_submission=call_log_entry.case_for_case_submission)
 
+        if logged_subevent:
+            logged_subevent.xforms_session = session
+            logged_subevent.save()
+
         if len(responses) == 0:
             log_error(MessagingEvent.ERROR_FORM_HAS_NO_QUESTIONS,
                 call_log_entry, logged_subevent)
