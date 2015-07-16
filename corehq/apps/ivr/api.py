@@ -453,6 +453,9 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
         call_log_entry, logged_subevent)
     if error:
         return True
+    if ivr_data:
+        logged_subevent.xforms_session = ivr_data.session
+        logged_subevent.save()
 
     try:
         kwargs = backend.get_cleaned_outbound_params()

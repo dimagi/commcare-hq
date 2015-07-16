@@ -669,7 +669,8 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt(sms.backend_api),
                             self._fmt(status),
                         ])
-            elif messaging_subevent.content_type == MessagingEvent.CONTENT_SMS_SURVEY:
+            elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
+                    MessagingEvent.CONTENT_IVR_SURVEY):
                 status = self.get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
