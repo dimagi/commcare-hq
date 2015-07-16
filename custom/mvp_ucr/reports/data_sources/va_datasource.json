@@ -248,9 +248,7 @@
                 "datatype": "string",
                 "display_name": "Medical Reason",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "mvp_medical_cause",
-                    "type": "property_name"
+                    "type": "mvp_medical_cause"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
