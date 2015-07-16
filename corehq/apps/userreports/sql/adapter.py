@@ -13,9 +13,9 @@ metadata = sqlalchemy.MetaData()
 
 class IndicatorSqlAdapter(object):
 
-    def __init__(self, config, engine=None):
+    def __init__(self, config):
         self.config = config
-        self.engine = engine or connection_manager.get_engine(get_engine_id(config))
+        self.engine = connection_manager.get_engine(get_engine_id(config))
 
     @memoized
     def get_table(self):
