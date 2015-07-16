@@ -426,7 +426,7 @@ class ILSGatewayAPI(APISynchronization):
         return location
 
     def location_groups_sync(self, location_groups):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for date, groups in location_groups.groups.iteritems():
                 try:
                     sql_location = SQLLocation.objects.get(
