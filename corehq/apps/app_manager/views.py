@@ -1042,11 +1042,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                 )
             })
 
-        uc_on = toggles.USER_AS_A_CASE.enabled(domain)
-        context.update({
-            'usercase_toggle_on': uc_on,
-            'usercase_properties': get_usercase_properties(app) if uc_on else None,
-        })
+        context['usercase_properties'] = get_usercase_properties(app)
 
         context.update(form_context)
     elif module:

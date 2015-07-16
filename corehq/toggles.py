@@ -397,13 +397,6 @@ BULK_PAYMENTS = StaticToggle(
 )
 
 
-USER_AS_A_CASE = StaticToggle(
-    'user_as_a_case',
-    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
