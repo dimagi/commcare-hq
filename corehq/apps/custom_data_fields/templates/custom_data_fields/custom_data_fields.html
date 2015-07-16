@@ -159,7 +159,7 @@
                                             </a>
                                         </li>
                                     </ul>
-                                    {% if multiple_choice_field_enabled %}
+                                    {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
                                         <span data-bind="visible: choices().length !== 0">
                                             <label style="display: inline" for="multiChoice">Multiple choice: </label>
                                             <input data-bind="checked: multiChoice" id="multiChoice" type="checkbox"/>
