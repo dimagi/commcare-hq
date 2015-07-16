@@ -21,10 +21,9 @@ setup(
         "greenlet",
         "rawes",
         "elasticsearch==0.4.4",
-        'django>=1.3.1,<1.7',
+        'django>=1.3.1',
         'dimagi-utils>=1.3usec',
         'psycopg2==2.5.2',
-        'south==0.7.3',
     ],
     tests_require=[
         'unittest2',
