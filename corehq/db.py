@@ -45,18 +45,11 @@ class ConnectionManager(object):
         # making this separate from _get_or_create in case we ever want to fail differently here
         return self._get_or_create_helper(engine_id)
 
-    def get_session_factory(self, engine_id=DEFAULT_ENGINE_ID):
-        """
-        This returns a class that can be instantiated and will have a session scoped
-        to the local thread.
-        """
-        return self.get_session_helper(engine_id).Session
-
     def get_scoped_session(self, engine_id=DEFAULT_ENGINE_ID):
         """
-        This returns an instance of a thread-locally scoped session object.
+        This returns a handle to a thread-locally scoped session object.
         """
-        return self.get_session_factory(engine_id)()
+        return self.get_session_helper(engine_id).Session
 
     def get_engine(self, engine_id=DEFAULT_ENGINE_ID):
         """
@@ -96,7 +89,7 @@ class ConnectionManager(object):
 
 
 connection_manager = ConnectionManager()
-Session = connection_manager.get_session_factory(DEFAULT_ENGINE_ID)
+Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
 
 
 # Register an event that closes the database connection
