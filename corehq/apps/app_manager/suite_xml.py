@@ -1950,38 +1950,39 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def add_parent_datums(self, datums, module):
 
-        def update_refs(action_, datum_, changed_ids_):
-            if action_ and action_.parent_tag in changed_ids_:
-                # Update any reference to previously changed datums
-                change = changed_ids_[action_.parent_tag]
-                nodeset = datum_.nodeset
-                old = session_var(change['old_id'])
-                new = session_var(change['new_id'])
-                datum_.nodeset = nodeset.replace(old, new)
+        def update_refs(action_, datum_, changed_ids):
+            if action_:
+                # Only advanced module actions have a parent_tag attribute. Basic modules don't need one
+                # because they only deal with one case type. Set parent_tag to None for them.
+                parent_tag = getattr(action_, 'parent_tag', None)
+                if parent_tag in changed_ids:
+                    # update any reference to previously changed datums
+                    change = changed_ids[parent_tag]
+                    nodeset = datum_.nodeset
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    datum_.nodeset = nodeset.replace(old, new)
 
-        def update_refs_basic(datum_, changed_ids_):
-            if changed_ids_:
-                nodeset = datum_.nodeset
-                old = session_var(changed_ids_['old_id'])
-                new = session_var(changed_ids_['new_id'])
-                datum_.nodeset = nodeset.replace(old, new)
+        def avoid_duplicate_ids(action_, this_datum_, parent_datum_, datum_ids_, changed_ids):
+            if action_:
+                case_tag = getattr(action_, 'case_tag', None)  # Set case_tag to None for basic modules
+                if parent_datum_.id in datum_ids_:
+                    # We can't set a new ID to an ID we already have. We need to rename current ID
+                    datum = datum_ids_[parent_datum_.id]
+                    new_id = '_'.join((parent_datum_.id, datum['case_type']))
+                    # It is possible for an advanced form to manage multiple cases with the same case type, so
+                    # just using case_type is not enough to ensure uniqueness. Add a suffix if necessary.
+                    i = 0
+                    while new_id in datum_ids_:
+                        new_id = '_'.join((parent_datum_.id, datum['case_type'], str(i)))
+                        i += 1
+                    datum['datum'].id = new_id
 
-        def avoid_duplicate_ids(action_, this_datum_, parent_datum_, changed_ids_):
-            changed_ids_[action_.case_tag] = {
-                "old_id": this_datum_.id,
-                "new_id": parent_datum_.id
-            }
-
-        def avoid_duplicate_ids_basic(this_datum_, parent_datum_, datum_ids_, changed_ids_):
-            if parent_datum_.id in datum_ids_:
-                # We can't set a new ID to an ID we already have. We need to rename current ID
-                datum = datum_ids_[parent_datum_.id]
-                new_id = '_'.join((datum['datum'].id, datum['case_type']))
-                datum['datum'].id = new_id
-            changed_ids_.update({
-                "old_id": this_datum_.id,
-                "new_id": parent_datum_.id
-            })
+                changed_ids[case_tag] = {
+                    "old_id": this_datum_.id,
+                    "new_id": parent_datum_.id
+                }
+            this_datum_.id = parent_datum_.id
 
         root_module = module.root_module
         root_datums = []
@@ -2008,16 +2009,13 @@ class SuiteGenerator(SuiteGeneratorBase):
             datum_pairs = list(izip_longest(datums, root_datums))
             datum_ids = {d['datum'].id: d for d in datums}
             index = 0
-            changed_ids = {}
+            changed_ids_by_case_tag = {}
             for this_datum_meta, parent_datum_meta in datum_pairs:
                 if not this_datum_meta:
                     continue
                 this_datum = this_datum_meta['datum']
                 action = this_datum_meta['action']
-                if module.module_type == 'advanced':
-                    update_refs(action, this_datum, changed_ids)
-                else:
-                    update_refs_basic(this_datum, changed_ids)
+                update_refs(action, this_datum, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
 
@@ -2026,12 +2024,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     if not parent_datum_meta['requires_selection']:
                         datums.insert(index, parent_datum_meta)
                     elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
-                        if action:
-                            if module.module_type == 'advanced':
-                                avoid_duplicate_ids(action, this_datum, parent_datum, changed_ids)
-                            else:
-                                avoid_duplicate_ids_basic(this_datum, parent_datum, datum_ids, changed_ids)
-                        this_datum.id = parent_datum.id
+                        avoid_duplicate_ids(action, this_datum, parent_datum, datum_ids, changed_ids_by_case_tag)
 
                 index += 1
 
