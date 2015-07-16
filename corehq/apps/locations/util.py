@@ -18,7 +18,7 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
-        user=None):
+        user=None, show_admin=True):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -27,6 +27,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     * all top level locs
     * if a 'selected' loc is provided, that loc and its complete
       ancestry
+
+    show_admin - if True get all locations else get only administrative locations
     """
     def loc_to_json(loc, project):
         ret = {
@@ -42,11 +44,15 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
     project = Domain.get_by_name(domain)
 
+    locations = SQLLocation.root_locations(
+        domain, include_archive_ancestors=include_archived
+    )
+
+    if not show_admin:
+        locations = locations.filter(location_type__administrative=True)
+
     loc_json = [
-        loc_to_json(loc, project) for loc in
-        SQLLocation.root_locations(
-            domain, include_archive_ancestors=include_archived
-        )
+        loc_to_json(loc, project) for loc in locations
         if user is None or user_can_view_location(user, loc, project)
     ]
 
@@ -62,11 +68,13 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
         parent = {'children': loc_json}
         for loc in lineage:
+            children = loc.child_locations(include_archive_ancestors=include_archived)
+            if not show_admin:
+                children = children.filter(location_type__administrative=True)
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
-                loc_to_json(loc, project) for loc in
-                loc.child_locations(include_archive_ancestors=include_archived)
+                loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)
             ]
             parent = this_loc

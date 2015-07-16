@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.util import location_hierarchy_config
+from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
@@ -100,62 +100,6 @@ class MultiProductFilter(BaseMultipleOptionFilter):
             .order_by('name')
 
 
-def load_locs_json(domain, selected_loc_id=None, include_archived=False, show_admin=True,
-        user=None):
-    """initialize a json location tree for drill-down controls on
-    the client. tree is only partially initialized and branches
-    will be filled in on the client via ajax.
-
-    what is initialized:
-    * all top level locs
-    * if a 'selected' loc is provided, that loc and its complete
-      ancestry
-    """
-    def loc_to_json(loc):
-        ret = {
-            'name': loc.name,
-            'location_type': loc.location_type.name,  # todo: remove when types aren't optional
-            'uuid': loc.location_id,
-            'is_archived': loc.is_archived,
-            'can_edit': True
-        }
-        return ret
-
-    locations = SQLLocation.root_locations(
-        domain, include_archive_ancestors=include_archived
-    )
-
-    if not show_admin:
-        locations = locations.filter(location_type__administrative=True)
-
-    loc_json = [loc_to_json(loc) for loc in locations]
-
-    # if a location is selected, we need to pre-populate its location hierarchy
-    # so that the data is available client-side to pre-populate the drop-downs
-    if selected_loc_id:
-        selected = SQLLocation.objects.get(
-            domain=domain,
-            location_id=selected_loc_id
-        )
-
-        lineage = selected.get_ancestors()
-
-        parent = {'children': loc_json}
-        for loc in lineage:
-            children = loc.child_locations(include_archive_ancestors=include_archived)
-            if not show_admin:
-                children = children.filter(location_type__administrative=True)
-            # find existing entry in the json tree that corresponds to this loc
-            this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
-            this_loc['children'] = [
-                loc_to_json(loc) for loc in
-                children
-            ]
-            parent = this_loc
-
-    return loc_json
-
-
 class EWSRestrictionLocationFilter(AsyncLocationFilter):
     template = "ewsghana/partials/location_async.html"
     show_administrative = True
@@ -179,7 +123,7 @@ class EWSRestrictionLocationFilter(AsyncLocationFilter):
             'control_name': self.label,
             'control_slug': self.slug,
             'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
+            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative),
             'hierarchy': location_hierarchy_config(self.domain)
         }
 
@@ -221,7 +165,7 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
             'control_name': self.label,
             'control_slug': self.slug,
             'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative, user=user),
+            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative),
             'hierarchy': hierarchy
         }
 
