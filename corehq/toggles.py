@@ -506,3 +506,10 @@ SUPPORT = StaticToggle(
     'General toggle for support features',
     TAG_EXPERIMENTAL,
 )
+
+BASIC_CHILD_MODULE = StaticToggle(
+    'child_module',
+    'Basic modules can be child modules',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

@@ -951,6 +951,7 @@ def get_module_view_context_and_template(app, module):
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None)],
+            'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         }
 
 

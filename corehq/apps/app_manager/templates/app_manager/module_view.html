@@ -228,6 +228,7 @@
                 </div>
                 {% include "app_manager/partials/module_filter.html" %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                {% if child_module_enabled %}
                 <div class="control-group">
                     <label class="control-label">
                         {% trans "Parent Module" %}
@@ -241,6 +242,7 @@
                         </select>
                     </div>
                 </div>
+                {% endif %}
                 {% endblock %}
             </fieldset>
         </form>
