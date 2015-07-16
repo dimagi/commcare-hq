@@ -20,6 +20,9 @@ class DeviceReportEntry(models.Model):
 
     class Meta:
         unique_together = [('xform_id', 'i')]
+        index_together = [
+            ("domain", "date"),
+        ]
 
 
 class UserEntry(models.Model):
