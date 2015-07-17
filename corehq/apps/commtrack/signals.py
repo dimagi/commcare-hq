@@ -1,5 +1,3 @@
-from collections import defaultdict
-import itertools
 from django.dispatch import Signal
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import get_case_updates

@@ -9,14 +9,12 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_response
 
 from corehq.apps.domain.decorators import (
     domain_admin_required,
-    login_and_domain_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig

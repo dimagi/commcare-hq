@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.style.decorators import (
-    check_preview_bootstrap3,
+    use_bootstrap3,
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
@@ -386,7 +386,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users_b3'
 
-    @method_decorator(check_preview_bootstrap3())
+    @method_decorator(use_bootstrap3())
     @method_decorator(use_knockout_js())
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -712,9 +712,12 @@ class UserInvitationView(InvitationView):
         project = Domain.get_by_name(self.domain)
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
-        if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+
+        if project.commtrack_enabled:
             user.get_domain_membership(self.domain).program_id = invitation.program
+
+        if project.locations_enabled:
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
         user.save()
 
 

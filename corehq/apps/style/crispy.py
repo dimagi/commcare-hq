@@ -1,11 +1,9 @@
 import re
-from bootstrap3_crispy.bootstrap import FormActions as OriginalFormActions
-from bootstrap3_crispy.layout import Field as OldField, LayoutObject
-from bootstrap3_crispy.utils import render_field
+from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.layout import Field as OldField, LayoutObject
+from crispy_forms.utils import render_field, get_template_pack
 from django.template import Context
 from django.template.loader import render_to_string
-
-TEMPLATE_PACK = 'bootstrap3'
 
 
 def _get_offsets(context):
@@ -19,7 +17,8 @@ class FormActions(OriginalFormActions):
     """
     template = 'style/crispy/form_actions.html'
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         html = u''
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
@@ -45,7 +44,8 @@ class Field(OldField):
             self.is_static = kwargs.pop('is_static')
         super(Field, self).__init__(*args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         offsets = _get_offsets(context)
         context.update({
             'offsets': offsets,
@@ -60,7 +60,8 @@ class StaticField(LayoutObject):
         self.field_label = field_label
         self.field_value = field_value
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         context.update({
             'field_label': self.field_label,
             'field_value': self.field_value,

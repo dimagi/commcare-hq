@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'style/bootstrap2/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -29,6 +29,26 @@
             html: 'true'
         });
     </script>
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Exports"|safe }}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% if report.breadcrumbs %}
+            {% for crumb in report.breadcrumbs %}
+                <li>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                </li>
+            {% endfor %}
+        {% endif %}
+        <li class="active">
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+        </li>
+    </ul>
 {% endblock %}
 
 {% block main_column %}

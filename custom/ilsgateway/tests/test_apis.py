@@ -1,8 +1,7 @@
-from decimal import Decimal
 import json
 import os
 from django.test.testcases import TestCase
-from custom.ilsgateway.api import Product, ILSUser, SMSUser, Location, ProductStock, StockTransaction
+from custom.ilsgateway.api import Product, ILSUser, SMSUser, Location
 
 
 class ApisTest(TestCase):
@@ -56,24 +55,3 @@ class ApisTest(TestCase):
         self.assertEqual(location.latitude, "-10.6676087700")
         self.assertEqual(location.longitude, "39.1621900200")
         self.assertEqual(location.code, "MOHSW-MOHSW")
-
-    def test_parse_productstock_json(self):
-        with open(os.path.join(self.datapath, 'sample_productstocks.json')) as f:
-            product_stock = ProductStock(json.loads(f.read())[0])
-        self.assertEqual(None, product_stock.auto_monthly_consumption)
-        self.assertEqual("2011-09-01T22:41:35.039236", product_stock.last_modified)
-        self.assertEqual("ip", product_stock.product)
-        self.assertEqual(0.0, product_stock.quantity)
-        self.assertEqual(68, product_stock.supply_point)
-
-    def test_parse_stocktransaction_json(self):
-        with open(os.path.join(self.datapath, 'sample_stocktransactions.json')) as f:
-            stock_transaction = StockTransaction(json.loads(f.read())[0])
-        self.assertEqual(Decimal(0), stock_transaction.beginning_balance)
-        self.assertEqual("2010-12-03T07:45:59.139272", stock_transaction.date)
-        self.assertEqual(Decimal(63), stock_transaction.ending_balance)
-        self.assertEqual("pp", stock_transaction.product)
-        self.assertEqual(Decimal(63), stock_transaction.quantity)
-        self.assertEqual(39, stock_transaction.supply_point)
-        self.assertEqual("stock on hand", stock_transaction.report_type)
-

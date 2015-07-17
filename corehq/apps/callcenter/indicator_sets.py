@@ -310,8 +310,7 @@ class CallCenterIndicators(object):
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain,
-                doc_type='CommCareCase') \
+                domain=self.domain) \
             .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
             .filter(**{
                 '{}_by__in'.format(opened_or_closed): self.users_needing_data
@@ -326,7 +325,6 @@ class CallCenterIndicators(object):
             .exclude(type=self.cc_case_type) \
             .filter(
                 domain=self.domain,
-                doc_type='CommCareCase',
                 closed=False,
                 user_id__in=self.users_needing_data) \
             .annotate(count=Count('case_id'))
@@ -346,7 +344,6 @@ class CallCenterIndicators(object):
             .filter(
                 case_owner__in=self.owners_needing_data,
                 domain=self.domain,
-                doc_type='CommCareCase',
                 opened_on__lt=upper) \
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
@@ -404,7 +401,6 @@ class CallCenterIndicators(object):
             .filter(
                 xmlns=xmlns,
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data) \
             .filter(**self._date_filters('time_end', lower, upper)) \
             .annotate(count=aggregation)
@@ -423,7 +419,6 @@ class CallCenterIndicators(object):
             .filter(**self._date_filters('time_end', lower, upper)) \
             .filter(
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data
             )\
             .annotate(count=Count('instance_id'))

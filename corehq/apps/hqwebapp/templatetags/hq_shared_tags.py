@@ -156,9 +156,9 @@ def domains_for_user(context, request, selected_domain=None):
         'DOMAIN_TYPE': context['DOMAIN_TYPE']
     }
     template = {
-        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/domain_list_dropdown.html',
-        style_utils.BOOTSTRAP_3: 'style/includes/domain_list_dropdown.html',
-    }[style_utils.bootstrap_version(request)]
+        style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/domain_list_dropdown.html',
+        style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/domain_list_dropdown.html',
+    }[style_utils.get_bootstrap_version()]
     return mark_safe(render_to_string(template, ctxt))
 
 
@@ -332,3 +332,32 @@ class CaseNode(template.Node):
         if nodelist is None:
             return ""
         return nodelist.render(context)
+
+
+# https://djangosnippets.org/snippets/545/
+@register.tag(name='captureas')
+def do_captureas(parser, token):
+    """
+    Assign to a context variable from within a template
+        {% capturas my_context_var %}<!-- anything -->{% endcaptureas %}
+        <h1>Nice job capturing {{ my_context_var }}</h1>
+    """
+    try:
+        tag_name, args = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError("'captureas' node requires a "
+                                           "variable name.")
+    nodelist = parser.parse(('endcaptureas',))
+    parser.delete_first_token()
+    return CaptureasNode(nodelist, args)
+
+
+class CaptureasNode(template.Node):
+    def __init__(self, nodelist, varname):
+        self.nodelist = nodelist
+        self.varname = varname
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        context[self.varname] = output
+        return ''

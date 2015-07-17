@@ -1485,11 +1485,26 @@ class WireInvoice(InvoiceBase):
     def is_wire(self):
         return True
 
+    @property
+    def is_prepayment(self):
+        return False
+
     def get_domain(self):
         return self.domain
 
     def get_total(self):
         return self.balance
+
+
+class WirePrepaymentInvoice(WireInvoice):
+    class Meta:
+        proxy = True
+
+    items = []
+
+    @property
+    def is_prepayment(self):
+        return True
 
 
 class Invoice(InvoiceBase):
@@ -1781,6 +1796,14 @@ class WireBillingRecord(BillingRecordBase):
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
 
+class WirePrepaymentBillingRecord(WireBillingRecord):
+    class Meta:
+        proxy = True
+
+    def email_subject(self):
+        return _("Your prepayment invoice")
+
+
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
@@ -1840,7 +1863,7 @@ class BillingRecord(BillingRecordBase):
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
-                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_account': self.invoice.subscription.account.name,
                 'billing_contacts': self.invoice.contact_emails,
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
@@ -1882,7 +1905,8 @@ class InvoicePdf(SafeSaveDocument):
             applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
-            is_wire=invoice.is_wire
+            is_wire=invoice.is_wire,
+            is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
         if not invoice.is_wire:
@@ -1899,6 +1923,17 @@ class InvoicePdf(SafeSaveDocument):
                         line_item.applied_credit,
                         line_item.total
                     )
+
+        if invoice.is_wire and invoice.is_prepayment:
+            unit_cost = 1
+            applied_credit = 0
+            for item in invoice.items:
+                template.add_item(item['type'],
+                                  item['amount'],
+                                  unit_cost,
+                                  item['amount'],
+                                  applied_credit,
+                                  item['amount'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)

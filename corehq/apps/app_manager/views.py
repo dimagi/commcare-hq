@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from django.utils.decorators import method_decorator
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
 import os
@@ -173,6 +174,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege, has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
+from corehq.apps.style.decorators import use_bootstrap3
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
 
 logger = logging.getLogger(__name__)
@@ -948,6 +950,11 @@ def get_module_view_context_and_template(app, module):
             'case_list_form_allowed': bool(
                 module.all_forms_require_a_case and not module.parent_select.active and form_options
             ),
+            'valid_parent_modules': [parent_module
+                                     for parent_module in app.modules
+                                     if not getattr(parent_module, 'root_module_id', None) and
+                                     not parent_module == module],
+            'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         }
 
 
@@ -1743,15 +1750,16 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
-        if should_edit("root_module_id"):
-            if not request.POST.get("root_module_id"):
-                module["root_module_id"] = None
-            else:
-                try:
-                    app.get_module(module_id)
-                    module["root_module_id"] = request.POST.get("root_module_id")
-                except ModuleNotFoundException:
-                    messages.error(_("Unknown Module"))
+
+    if should_edit("root_module_id"):
+        if not request.POST.get("root_module_id"):
+            module["root_module_id"] = None
+        else:
+            try:
+                app.get_module(module_id)
+                module["root_module_id"] = request.POST.get("root_module_id")
+            except ModuleNotFoundException:
+                messages.error(_("Unknown Module"))
 
     _handle_media_edits(request, module, should_edit, resp)
 
@@ -3013,8 +3021,8 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
+    @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
-        request.preview_bootstrap3 = True
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property

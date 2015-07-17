@@ -19,7 +19,7 @@ class Worker(object):
         ('ifs_code', "IFS Code", True, None),
         ('account_number', "AWW Bank Account Number", True, None),
         ('block', "Block Name", True, None),
-        ('women_registered', "No. of women registered under BCSP", True, DTSortType.NUMERIC),
+        ('beneficiaries_registered', "No. of beneficiaries registered under BCSP", True, DTSortType.NUMERIC),
         ('children_registered', "No. of children registered under BCSP", True, DTSortType.NUMERIC),
         ('service_forms_count', "Service Availability Form Submitted", True, None),
         ('growth_monitoring_count', "No. of Growth monitoring Sections Filled for eligible children", True,
@@ -28,12 +28,13 @@ class Worker(object):
         ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True, DTSortType.NUMERIC),
         ('month_total', "Total Payment Made for the month (in Rs.)", True, DTSortType.NUMERIC),
         ('last_month_total', "Amount of AWW incentive paid last month", True, DTSortType.NUMERIC),
-        ('owner_id', 'Owner ID', False, None)
+        ('owner_id', 'Owner ID', False, None),
     ]
 
     # remove form_data parameter when all data will correct on HQ
     def __init__(self, worker, report, case_data=None, form_data=None):
-
+        self.debug = report.debug
+        self.case_data = case_data or []
         self.name = worker.get('name')
         self.awc_name = worker.get('awc')
         self.awc_code = numeric_fn(worker.get('awc_code'))
@@ -42,9 +43,8 @@ class Worker(object):
         self.account_number = worker.get('account_number')
         self.block = worker.get('block')
         self.owner_id = worker.get('doc_id')
-
         if case_data:
-            self.women_registered = numeric_fn(len(case_data))
+            self.beneficiaries_registered = numeric_fn(len(case_data))
             self.children_registered = numeric_fn(sum([c.raw_num_children for c
                                                        in case_data if not c.is_secondary]))
 
@@ -56,7 +56,7 @@ class Worker(object):
                 self.service_forms_count = 'yes' if dates else 'no'
             monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
         else:
-            self.women_registered = None
+            self.beneficiaries_registered = None
             self.children_registered = None
             self.service_forms_count = 'no'
             monitoring_count = 0
@@ -75,3 +75,19 @@ class Worker(object):
         else:
             self.last_month_total = numeric_fn(0)
 
+    @property
+    def debug_info(self):
+        if self.debug:
+            child_registered_contributions = {
+                row.case_id: row.raw_num_children for row in self.case_data
+                if row.raw_num_children and not row.is_secondary
+            }
+            growth_monitoring_contributions = {
+                (row.case_id, row.child_index): 1 for row in self.case_data if row.growth_calculated_aww
+            }
+            return 'Registration:<br>{}<br>Growth Monitoring:<br>{}'.format(
+                '<br>'.join('{}: {}'.format(k, v) for k, v in child_registered_contributions.items()),
+                '<br>'.join('{}, {}: {}'.format(k[0], k[1], v) for k, v in growth_monitoring_contributions.items())
+            )
+        else:
+            return ''
