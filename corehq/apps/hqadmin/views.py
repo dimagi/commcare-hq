@@ -410,7 +410,7 @@ def system_ajax(request):
                     traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
-            return HttpResponse(json.dumps(ret), content_type = 'application/json')
+            return HttpResponse(json.dumps(ret), content_type='application/json')
     return HttpResponse('{}', content_type='application/json')
 
 
