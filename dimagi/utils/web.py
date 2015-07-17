@@ -200,7 +200,7 @@ def json_response(obj, status_code=200, **kwargs):
     if 'default' not in kwargs:
         kwargs['default'] = json_handler
     return HttpResponse(json.dumps(obj, **kwargs), status=status_code,
-                        mimetype="application/json")
+                        content_type="application/json")
 
 
 def json_request(params, lenient=True):
