@@ -24,6 +24,7 @@ class IndicatorSqlAdapter(object):
         return get_indicator_table(self.config)
 
     def rebuild_table(self):
+        self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
         except ProgrammingError, e:
