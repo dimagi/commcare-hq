@@ -21,14 +21,6 @@ class ConfigurableIndicatorPillow(PythonPillow):
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db)
         self.bootstrapped = False
 
-    @classmethod
-    def get_sql_engine(cls):
-        # todo: switch to connection_manager
-        engine = getattr(cls, '_engine', None)
-        if not engine:
-            cls._engine = connection_manager.get_engine()
-        return cls._engine
-
     def get_all_configs(self):
         return DataSourceConfiguration.all()
 
