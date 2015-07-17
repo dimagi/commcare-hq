@@ -2,14 +2,12 @@ import decimal
 import uuid
 from django.test import TestCase
 from mock import patch
-import sqlalchemy
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
-from corehq.db import connection_manager, DEFAULT_ENGINE_ID
 
 
 class IndicatorPillowTest(TestCase):
@@ -17,7 +15,6 @@ class IndicatorPillowTest(TestCase):
     def setUp(self):
         self.config = get_sample_data_source()
         self.pillow = ConfigurableIndicatorPillow()
-        self.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
         self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.config)
         self.adapter.rebuild_table()
@@ -74,12 +71,11 @@ class IndicatorPillowTest(TestCase):
     def _check_sample_doc_state(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         _, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        with self.engine.begin() as connection:
-            rows = connection.execute(sqlalchemy.select([self.adapter.get_table()]))
-            self.assertEqual(1, rows.rowcount)
-            row = rows.fetchone()
-            for k, v in row.items():
-                if isinstance(expected_indicators[k], decimal.Decimal):
-                    self.assertAlmostEqual(expected_indicators[k], v)
-                else:
-                    self.assertEqual(expected_indicators[k], v)
+        self.assertEqual(1, self.adapter.get_query_object().count())
+        row = self.adapter.get_query_object()[0]
+        for k in row.keys():
+            v = getattr(row, k)
+            if isinstance(expected_indicators[k], decimal.Decimal):
+                self.assertAlmostEqual(expected_indicators[k], v)
+            else:
+                self.assertEqual(expected_indicators[k], v)
