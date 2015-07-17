@@ -17,7 +17,6 @@ class IndicatorPillowTest(TestCase):
         self.pillow = ConfigurableIndicatorPillow()
         self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.config)
-        self.adapter.rebuild_table()
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
 
     def tearDown(self):
