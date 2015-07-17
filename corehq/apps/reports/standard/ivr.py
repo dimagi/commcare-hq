@@ -1,3 +1,4 @@
+import cgi
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
@@ -120,7 +121,7 @@ class CallLogReport(BaseCommConnectLogReport):
                 self._fmt(answered),
                 self._fmt(call.duration),
                 self._fmt(_("Yes") if call.error else _("No")),
-                self._fmt(call.error_message),
+                self._fmt(cgi.escape(call.error_message) if call.error_message else None),
             ]
             
             if self.request.couch_user.is_previewer():

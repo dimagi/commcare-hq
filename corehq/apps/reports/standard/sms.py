@@ -1,3 +1,4 @@
+import cgi
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -385,8 +386,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         if event.additional_error_text:
             error_message += ' %s' % event.additional_error_text
 
+        # Sometimes the additional information from touchforms has < or >
+        # characters, so we need to escape them for display
         if error_message:
-            return '%s - %s' % (_(status), error_message)
+            return '%s - %s' % (_(status), cgi.escape(error_message))
         else:
             return _(status)
 
