@@ -88,8 +88,8 @@ class SyncBaseTest(TestCase):
             caseblocks = [caseblocks]
         return post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
-    def _checkLists(self, l1, l2):
-        self.assertEqual(set(l1), set(l2))
+    def _checkLists(self, l1, l2, msg=None):
+        self.assertEqual(set(l1), set(l2), msg)
 
     def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
         dependent_case_id_map = dependent_case_id_map or {}
@@ -104,7 +104,8 @@ class SyncBaseTest(TestCase):
             for case_id, indices in case_id_map.items():
                 if indices:
                     index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values())
+                    self._checkLists(index_ids, sync_log.index_tree.indices[case_id].values(),
+                                     'case {} has unexpected indices'.format(case_id))
             for case_id, indices in dependent_case_id_map.items():
                 if indices:
                     index_ids = [i.referenced_id for i in case_id_map[case_id]]
