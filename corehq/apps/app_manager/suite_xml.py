@@ -31,7 +31,8 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath, \
+    ScheduleFormXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -1266,98 +1267,33 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
         return r
 
-    @staticmethod
-    def detail_variables(module, detail, detail_column_infos):
+    def _schedule_detail_variables(self, module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
-        if (getattr(module, 'has_schedule', False) and
-                module.all_forms_require_a_case and
-                has_schedule_columns):
-
+        has_schedule = getattr(module, 'has_schedule', False)
+        if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
             forms_due = []
-
             for phase in module.get_schedule_phases():
                 if not phase.anchor:
-                    raise ScheduleError(
-                        _("Schedule Phase in module '{module_name}' is missing an anchor")
-                        .format(module_name=module.default_name())
-                    )
-                anchor = phase.anchor
+                    raise ScheduleError(_("Schedule Phase in module '{module_name}' is missing an anchor")
+                                        .format(module_name=module.default_name()))
+
                 for form in phase.get_forms():
-                    # TODO: does this allow us to have non-schedule forms in the module?
+                    form_xpath = ScheduleFormXPath(form, phase, module)
                     name = "next_{}".format(form.schedule_form_id)
                     forms_due.append(name)
-
-                    fixture_id = self.id_strings.schedule_fixture(module, phase, form)
-                    fixture = ScheduleFixtureInstance(fixture_id)
-
-                    # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
-                    within_window = XPath.or_(
-                        XPath('@late_window').eq(XPath.string('')),
-                        XPath('today() <= ({} + {} + {})'.format(
-                            XPath.date(anchor),
-                            XPath.int('@due'),
-                            XPath.int('@late_window'))
-                        )
-                    )
-
-                    # instance(...)/schedule/visit[within_window][1]/@due
-                    due_first = fixture.visit().select_raw(within_window).select_raw("1").slash("@due")
-
-                    # current_schedule_phase = phase.id and (
-                    #   instance(...)/schedule/@expires = ''
-                    #   or
-                    #   today() < (date(anchor) + instance(...)/schedule/@expires)
-                    # )
-                    expires = fixture.expires()
-                    valid_not_expired = XPath.and_(
-                        XPath(SCHEDULE_PHASE).eq(phase.id),
-                        XPath(anchor).neq(XPath.string('')),
-                        XPath.or_(
-                            XPath(expires).eq(XPath.string('')),
-                            "today() < ({} + {})".format(XPath.date(anchor), expires)
-                        ))
-
-                    # @id > last_visit_num_{form_unique_id}
-                    next_visits = XPath('@id > {}'.format(
-                        SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-                    ))
-
-                    # instance(...)/schedule/visit/[next_visits][within_window][1]/@due
-                    due_later = (fixture.
-                                 visit().
-                                 select_raw(next_visits).
-                                 select_raw(within_window).
-                                 select_raw("1").
-                                 slash("@due"))
-
-                    first_due_date = "{} + {}".format(XPath.date(anchor), XPath.int(due_first))
-                    due_date = "{} + {}".format(XPath.date(anchor), XPath.int(due_later))
-
-                    xpath_phase_set = XPath.if_(valid_not_expired, due_date, 0)
-
-                    # If this is the first phase, `current_schedule_phase` and last_visit_num might not be set yet
                     if phase.id == 1:
-                        zeroth_phase = XPath(SCHEDULE_PHASE).eq(XPath.string(''))  # No visits yet
-                        yield DetailVariable(
-                            name=name,
-                            function=XPath.if_(
-                                zeroth_phase,
-                                first_due_date,
-                                xpath_phase_set,
-                            )
-                        )
+                        # If this is the first phase, `current_schedule_phase` and
+                        # last_visit_num might not be set yet
+                        yield DetailVariable(name=name, function=form_xpath.first_visit_phase_set)
                     else:
-                        yield DetailVariable(name=name, function=xpath_phase_set)
+                        yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-            yield DetailVariable(
-                name='next_due',
-                function='min({})'.format(','.join(forms_due)),
-            )
+            yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
+            yield DetailVariable(name='is_late', function='next_due < today()')
 
-            yield DetailVariable(
-                name='is_late',
-                function='next_due < today()',
-            )
+    @staticmethod
+    def detail_variables(self, module, detail, detail_column_infos):
+        return chain(self._schedule_detail_variables(module, detail, detail_column_infos),)
 
     def build_case_tile_detail(self, module, detail, detail_type):
         """
