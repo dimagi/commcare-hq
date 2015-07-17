@@ -511,7 +511,6 @@ class XFormManagementStatusView(DataInterfaceSection):
                 url=reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
                 mode=mode.mode_name),
             'title': mode.status_page_title,
-            'progress_text': mode.progress_text,
             'error_text': mode.error_text,
         })
         return render(request, 'hqwebapp/soil_status_full.html', context)
@@ -533,7 +532,7 @@ def xform_management_job_poll(request, domain, download_id,
     context.update({
         'on_complete_short': mode.complete_short,
         'on_complete_long': mode.complete_long,
-        'mode': mode
+        'mode': mode,
     })
     print context
     return render(request, template, context)

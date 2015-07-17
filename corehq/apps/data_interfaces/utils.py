@@ -5,6 +5,8 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
+from soil import DownloadBase
+
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     response = {
@@ -43,7 +45,7 @@ def archive_forms_old(domain, user, uploaded_data):
     return archive_or_restore_forms(domain, user, form_ids, 'archive')
 
 
-def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
+def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None):
     # todo convert this to Async friendly view
     response = {
         'errors': [],
@@ -52,6 +54,9 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
 
     missing_forms = set(form_ids)
     success_count = 0
+
+    if task:
+        DownloadBase.set_progress(task, 0, len(form_ids))
 
     for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
         xform = XFormInstance.wrap(xform_doc)
@@ -79,6 +84,11 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
         except Exception as e:
             response['errors'].append(_(u"Could not archive {form}: {error}").format(
                 form=xform_string, error=e))
+
+        if task:
+            DownloadBase.set_progress(task, success_count, len(form_ids))
+        import time
+        time.sleep(3)
 
     for missing_form_id in missing_forms:
         response['errors'].append(

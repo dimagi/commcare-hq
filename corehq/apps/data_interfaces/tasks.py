@@ -1,10 +1,7 @@
-import uuid
-
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from soil import CachedDownload, DownloadBase
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
@@ -38,22 +35,14 @@ def bulk_archive_forms(domain, user, uploaded_data):
 
 @task
 def bulk_form_management_async(archive_or_restore, domain, user, es_dict_or_formids):
-    # ToDo refactor archive_or_restore
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)
 
-    print "setting 0"
-    DownloadBase.set_progress(task, 0, 100)
-    print "set to 0"
-
-    print "yeah we returned this"
     if type(es_dict_or_formids) == list:
         xform_ids = es_dict_or_formids
     elif type(es_dict_or_formids) == dict:
         xform_ids = get_form_ids(es_dict_or_formids, domain)
-    response = archive_or_restore_forms(domain, user, xform_ids, mode)
-    print response
-    DownloadBase.set_progress(task, 100, 100)
+    response = archive_or_restore_forms(domain, user, xform_ids, mode, task)
     return response
 
 
