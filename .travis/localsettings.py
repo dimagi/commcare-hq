@@ -74,17 +74,19 @@ SECRET_KEY='secrettravis'
 # No logging
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': True,
     'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
-        },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'phone.models': {
             'handlers': ['console'],
             'level': 'DEBUG',
