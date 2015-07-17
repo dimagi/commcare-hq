@@ -1,6 +1,8 @@
 from django.db.models import Q
+from django.http import HttpResponse
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
@@ -446,7 +448,8 @@ class ReportingRatesReport(MultiReport):
             products=None,
             program=program if program != ALL_OPTION else None,
             user=self.request.couch_user,
-            datespan_type=self.request.GET.get('datespan_type')
+            datespan_type=self.request.GET.get('datespan_type'),
+            is_rendered_as_email=self.is_rendered_as_email
         )
 
     @property
@@ -455,7 +458,7 @@ class ReportingRatesReport(MultiReport):
         if self.is_reporting_type():
             self.split = True
             if self.is_rendered_as_email:
-                return [FacilityReportData(config)]
+                return [FacilityReportData(config), InventoryManagementData(config)]
             else:
                 return [
                     FacilityReportData(config),
@@ -511,3 +514,15 @@ class ReportingRatesReport(MultiReport):
         table.extend(rows)
 
         return [export_sheet_name, self._report_info + table]
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        if self.is_reporting_type():
+            self.override_template = 'ewsghana/facility_page_print_report.html'
+        return HttpResponse(self._async_context()['report'])

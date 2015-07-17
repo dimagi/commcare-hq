@@ -3,8 +3,8 @@ import os
 import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, create_engine
-from corehq.apps.userreports.sql.connection import connection_manager
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.db import connection_manager
 
 
 DOC_ID = 'repeat-id'
@@ -74,12 +74,9 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
 
 class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
-    def tearDown(self):
-        connection_manager.dispose_all()
-
     def test_table_population(self):
 
-        engine = create_engine()
+        engine = connection_manager.get_engine()
         adapter = IndicatorSqlAdapter(self.config)
         # Delete and create table
         adapter.rebuild_table()

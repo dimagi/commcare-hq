@@ -47,6 +47,8 @@ These are created in /tmp/ by default, however you can change it by adding a val
 
     PROFILE_LOG_BASE = "/home/czue/profiling/"
 
+Note that the files created are huge; this code should only be run locally.
+
 
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

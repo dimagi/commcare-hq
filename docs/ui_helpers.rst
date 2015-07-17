@@ -23,7 +23,7 @@ In its very basic form (a simple paginated view) it should look like:
 .. code-block:: python
 
     class PuppiesCRUDView(BaseSectionView, CRUDPaginatedMixin):
-        # your template should extend hqwebapp/base_paginated_crud.html
+        # your template should extend style/bootstrap2/base_paginated_crud.html
         template_name = 'puppyapp/paginated_puppies.html
 
         # all the user-visible text
@@ -89,7 +89,7 @@ everything inside of `itemData`. Here's an example:
 
 .. code-block:: html
 
-    {% extends 'hqwebapp/base_paginated_crud.html' %}
+    {% extends 'style/bootstrap2/base_paginated_crud.html' %}
 
     {% block pagination_templates %}
     <script type="text/html" id="base-puppy-template">

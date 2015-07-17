@@ -11,27 +11,25 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.requestskit import get_auth
 
 
-def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
-    """
-    Gets a document and enforces its domain and doc type.
-    Raises Http404 if the doc isn't found or domain/doc_type don't match.
-    """
+class DocumentNotFound(Exception):
+    pass
+
+
+def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
     allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
     try:
         unwrapped = cls.get_db().get(doc_id)
-    except ResourceNotFound as e:
-        tb = traceback.format_exc()
-        raise Http404("Document {} of class {} not found!\n\n{}".format(
+    except ResourceNotFound:
+        raise DocumentNotFound("Document {} of class {} not found!".format(
             doc_id,
-            cls.__name__,
-            tb
+            cls.__name__
         ))
 
     if ((unwrapped.get('domain', None) != domain and
          domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
 
-        raise Http404("Document {} of class {} not in domain {}!".format(
+        raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
             doc_id,
             cls.__name__,
             domain,
@@ -40,12 +38,23 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     try:
         return cls.wrap(unwrapped)
     except WrappingAttributeError:
-        tb = traceback.format_exc()
-        raise Http404("Issue wrapping document {} of class {}!\n\n{}".format(
+        raise DocumentNotFound("Issue wrapping document {} of class {}!".format(
             doc_id,
-            cls.__name__,
-            tb
+            cls.__name__
         ))
+
+
+def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
+    """
+    Gets a document and enforces its domain and doc type.
+    Raises Http404 if the doc isn't found or domain/doc_type don't match.
+    """
+    try:
+        return get_document_or_not_found(
+            cls, domain, doc_id, additional_doc_types=additional_doc_types)
+    except DocumentNotFound as e:
+        tb = traceback.format_exc()
+        raise Http404("{}\n\n{}".format(e, tb))
 
 
 def categorize_bulk_save_errors(error):

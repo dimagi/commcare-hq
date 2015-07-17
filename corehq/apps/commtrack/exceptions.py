@@ -25,3 +25,10 @@ class MultipleSupplyPointException(Exception):
 class MissingProductId(Exception):
     pass
 
+
+class LedgerParseError(ValueError):
+    pass
+
+
+class InvalidDate(LedgerParseError):
+    pass

@@ -185,12 +185,6 @@ OFFLINE_CLOUDCARE = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-CASE_REBUILD = StaticToggle(
-    'case_rebuild',
-    'Show UI-based case and form rebuild options (primarily for support team)',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
@@ -500,9 +494,36 @@ REVAMPED_EXPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
 )
 
+MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
+    'multiple_choice_custom_field',
+    'Allow project to use multiple choice field in custom fields',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
     'restrict_form_edit_by_location',
     "Restrict ability to edit/archive forms by the web user's location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+SUPPORT = StaticToggle(
+    'support',
+    'General toggle for support features',
+    TAG_EXPERIMENTAL,
+)
+
+BASIC_CHILD_MODULE = StaticToggle(
+    'child_module',
+    'Basic modules can be child modules',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
+    'messaging_status',
+    'View the Messaging Status and Error Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
 )
