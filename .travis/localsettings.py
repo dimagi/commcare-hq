@@ -79,6 +79,11 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'django.utils.log.NullHandler',
         },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
     },
     'loggers': {
         '': {
@@ -95,7 +100,12 @@ LOGGING = {
             'level': 'CRITICAL',
             'handler': 'null',
             'propagate': False,
-        }
+        },
+        'phone.models': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
