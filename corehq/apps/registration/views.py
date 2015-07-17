@@ -304,6 +304,7 @@ def confirm_domain(request, guid=None):
             'Your account has been successfully activated.  Thank you for taking '
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
+    track_workflow.delay(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 
