@@ -354,7 +354,13 @@ def fast_import_app(request, domain, app_id):
     name = app.name
     assert(app.get_doc_type() in ('Application', 'RemoteApp'))
     app = import_app_util(app_id, domain, name=name)
-    return back_to_main(request, domain, app_id=app._id)
+    module_id = 0
+    form_id = 0
+    try:
+        app.get_module(module_id).get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException):
+        return back_to_main(request, domain, app_id=app._id)
+    return form_designer(request, domain, app._id, module_id, form_id)
 
 
 @require_can_edit_apps
