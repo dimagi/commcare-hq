@@ -1093,8 +1093,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                     actions = action
                 else:
                     actions = [action]
-                for action in actions:
-                    for path in FormAction.get_action_paths(action):
+                for act in actions:
+                    for path in FormAction.get_action_paths(act):
                         yield path
 
         errors.extend(self.check_paths(generate_paths()))
