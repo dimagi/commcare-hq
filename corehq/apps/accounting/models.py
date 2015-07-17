@@ -905,6 +905,52 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
+    def raise_conflicting_dates(self, date_start, date_end):
+        """Raises a subscription Adjustment error if the specified date range
+        conflicts with other subscriptions related to this subscriber.
+        """
+        for sub in Subscription.objects.filter(
+            subscriber=self.subscriber).exclude(id=self.id
+        ).all():
+            related_has_no_end = sub.date_end is None
+            current_has_no_end = date_end is None
+            start_before_related_end = (
+                date_start is not None and sub.date_end is not None
+                and date_start < sub.date_end
+            )
+            start_before_related_start = (
+                date_start is not None and date_start < sub.date_start
+            )
+            start_after_related_start = (
+                date_start is not None and date_start > sub.date_start
+            )
+            end_before_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end < sub.date_end
+            )
+            end_after_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end > sub.date_end
+            )
+            end_after_related_start = (
+                date_end is not None and date_end > sub.date_start
+            )
+
+            if ((start_before_related_end and start_after_related_start)
+                or (start_after_related_start and related_has_no_end)
+                or (end_after_related_start and end_before_related_end)
+                or (end_after_related_start and related_has_no_end)
+                or (start_before_related_start and end_after_related_end)
+                or (start_before_related_end and current_has_no_end)
+            ):
+                raise SubscriptionAdjustmentError(
+                    "The start date of %(start_date)s conflicts with the "
+                    "subscription dates to %(related_sub)s." % {
+                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
+                        'related_sub': sub,
+                   }
+                )
+
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
                             salesforce_contract_id=None,
