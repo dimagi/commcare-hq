@@ -26,11 +26,11 @@ class DownloadBase(object):
     A basic download object.
     """
     
-    def __init__(self, mimetype="text/plain", 
+    def __init__(self, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, 
-                 cache_backend=SOIL_DEFAULT_CACHE):
-        self.mimetype = mimetype
+                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None):
+        self.content_type = content_type if content_type else mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
         self.extras = extras or {}
@@ -72,7 +72,8 @@ class DownloadBase(object):
         self.get_cache().set(self.download_id, self, expiry)
 
     def toHttpResponse(self):
-        response = HttpResponse(self.get_content(), mimetype=self.mimetype)
+        response = HttpResponse(self.get_content(),
+                content_type=self.content_type)
         if self.transfer_encoding is not None:
             response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
@@ -87,7 +88,7 @@ class DownloadBase(object):
         }))
 
     def __str__(self):
-        return "content-type: %s, disposition: %s" % (self.mimetype, self.content_disposition)
+        return "content-type: %s, disposition: %s" % (self.content_type, self.content_disposition)
 
     def set_task(self, task, timeout=60 * 60 * 24):
         self.get_cache().set(self._task_key(), task.task_id, timeout)
@@ -161,12 +162,13 @@ class CachedDownload(DownloadBase):
     Download that lives in the cache
     """
     
-    def __init__(self, cacheindex, mimetype="text/plain", 
+    def __init__(self, cacheindex, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, 
-                 cache_backend=SOIL_DEFAULT_CACHE):
-        super(CachedDownload, self).__init__(mimetype, content_disposition, 
-                                             transfer_encoding, extras, download_id, cache_backend)
+                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None):
+        super(CachedDownload, self).__init__(
+                content_type if content_type else mimetype, content_disposition,
+                transfer_encoding, extras, download_id, cache_backend)
         self.cacheindex = cacheindex
 
     def get_content(self):
@@ -193,9 +195,10 @@ class FileDownload(DownloadBase):
     def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
-                 use_transfer=False):
-        super(FileDownload, self).__init__(mimetype, content_disposition,
-                                             transfer_encoding, extras, download_id, cache_backend)
+                 use_transfer=False, content_type=None):
+        super(FileDownload, self).__init__(
+                content_type if content_type else mimetype, content_disposition,
+                transfer_encoding, extras, download_id, cache_backend)
         self.filename = filename
         self.use_transfer = use_transfer
 
@@ -208,10 +211,11 @@ class FileDownload(DownloadBase):
 
     def toHttpResponse(self):
         if self.use_transfer:
-            response = TransferHttpResponse(self.filename, mimetype=self.mimetype)
+            response = TransferHttpResponse(self.filename,
+                    content_type=self.content_type)
         else:
             response = StreamingHttpResponse(FileWrapper(open(self.filename), CHUNK_SIZE),
-                                             mimetype=self.mimetype)
+                                             content_type=self.content_type)
 
         response['Content-Length'] = os.path.getsize(self.filename)
         response['Content-Disposition'] = self.content_disposition
