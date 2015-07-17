@@ -1,0 +1,104 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+<script>
+    var VELLUM_OPTIONS = {
+        plugins: {{ plugins|JSON }},
+        features: {{ features|JSON }},
+        core: {
+            dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
+            dataSources: [
+                {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
+                {
+                    key: 'fixture',
+                    name: 'Fixtures',
+                    endpoint: '{% url 'fixture_metadata' domain=domain %}'
+                }
+            ],
+            form: {{ form.source|to_javascript_string }},
+            formId: '{{ form.get_unique_id }}',
+            formName: "{{ form.name|trans:app.langs|escapejs }}",
+            saveType: 'patch',
+            saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
+            patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
+            allowedDataNodeReferences: [
+                "meta/deviceID",
+                "meta/instanceID",
+                "meta/username",
+                "meta/userID",
+                "meta/timeStart",
+                "meta/timeEnd"
+            ],
+            onFormSave: function (data) {
+                COMMCAREHQ.app_manager.updateDOM(data.update);
+            },
+            {% if vellum_debug == "dev" %}
+            onReady: function () {
+                var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
+                    less_error = $(less_error_id);
+                if (less_error) {
+                    console.log("hiding less error:", less_error_id);
+                    console.log(less_error.text());
+                    less_error.hide();
+                }
+            },
+            {% endif %}
+            sessionid: {{ sessionid|JSON }}
+        },
+        itemset: {
+            dataSourcesFilter: function (sources) {
+                return _.filter(sources, function (source) {
+                    return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
+                });
+            }
+        },
+        javaRosa: {
+            langs: {{ app.langs|JSON }},
+            displayLanguage: {{ lang|JSON }},
+        },
+        uploader: {
+            uploadUrls: {
+                image: '{% url "hqmedia_uploader_image" domain app.id %}',
+                audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
+                video: '{% url "hqmedia_uploader_video" domain app.id %}'
+            },
+            objectMap: {{ multimedia_object_map|JSON }},
+            sessionid: {{ sessionid|JSON }}
+        },
+        windowManager: {
+            bottomOffset: $('footer').outerHeight(),
+            leftOffset: function () {
+                return $('.sidebar').outerWidth() + 2;
+            },
+            topOffset: function () {
+                return $('header').outerHeight() + 
+                    $('.hq-page-header-container').outerHeight();
+            }
+        }
+    };
+
+    define("jquery", [], function () { return window.jQuery; });
+    define("jquery-ui", ["jquery"], function () {});
+    define("jquery.bootstrap", ["jquery"], function () {});
+
+    require.config({
+        {% comment %} 
+        to use non-built files in HQ:
+            * clone Vellum into submodules/formdesigner
+            * Run make in that directory (requires node.js)
+            * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+        {% endcomment %}
+        {% if not vellum_debug %}
+        baseUrl: "{% static 'app_manager/js/vellum/src' %}",
+        {% elif vellum_debug == "dev-min" %}
+        baseUrl: "{% static 'formdesigner/_build/src' %}",
+        {% else %}
+        baseUrl: "{% static 'formdesigner/src' %}",
+        {% endif %}
+        // handle very bad connections
+        waitSeconds: 60,
+        urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
+        paths: {
+            'jquery.vellum': 'main'
+        }
+    });
+</script>

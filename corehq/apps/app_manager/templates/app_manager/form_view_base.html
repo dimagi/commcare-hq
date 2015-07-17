@@ -78,6 +78,7 @@
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/backbone.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
@@ -90,6 +91,7 @@
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    {% include 'app_manager/partials/form_designer_js.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -154,6 +156,7 @@
                 /* form_requires needs to be a knockout observable so that
                 its value can be read by another UI (form filtering) */
                 var form_requires = ko.observable({{ form.requires|JSON }});
+                var case_config_version = ko.observable(0);
             {% endblock %}
 
             {% if app.application_version == '2.0' %}
@@ -219,6 +222,48 @@
                 });
             {% endif %}
         {% endif %}
+
+            var loadedVellum = false;
+            var FormRouter = Backbone.Router.extend({
+                routes: {
+                    "source": "showFormSource",
+                    "view": "hideFormSource",
+                },
+                hideFormSource: function() {
+                    $(".source-only").hide();
+                    $(".view-only").show();
+                    $(".hq-content.span10").removeClass("hq-flush-content");
+                    $('.edit-form-li.active .edit-form-pencil').hide();
+                    // TODO: update caseConfig.questions with whatever changed in Vellum
+                    // currently generated server-side as xform_questions.
+                    // Also, make sure caseConfig exists (i.e., we're not in user reg)
+                    caseConfig.version(caseConfig.version() + 1);
+                },
+                showFormSource: function() {
+                    $(".source-only").show();
+                    $(".view-only").hide();
+                    $('.edit-form-li.active .edit-form-pencil').show();
+                    $(".hq-content.span10").addClass("hq-flush-content");
+                    if (!loadedVellum) {
+                        require(["jquery", "jquery.vellum"], function ($) {
+                            $(function () {
+                                $('#formdesigner').vellum(VELLUM_OPTIONS);
+                                loadedVellum = true;
+                            });
+                        });
+                    }
+                    analytics.track('Entered the Form Builder');
+                },
+            });
+
+            var router = new FormRouter();
+            var matched = Backbone.history.start({
+                root: "{% url "view_form" domain app.id module.id form.id %}",
+            });
+            if (!matched) {
+                router.navigate("view", { trigger: true, replace: true });
+            }
+            $('footer').addClass('fixed-footer');
         });
     </script>
     <script>
@@ -227,12 +272,19 @@
                 '{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
+
+    {% include 'app_manager/partials/form_designer_js_inline_js.html' %}
+
+{% endblock %}
+
+{% block keyboard_shortcuts %}
+    {% include 'app_manager/partials/form_designer_keyboard_shortcuts_js.html' %}
 {% endblock %}
 
 {% block form-view %}
-    <div id="build_errors"></div>
+    <div id="build_errors" class="view-only"></div>
     {% if not is_user_registration %}
-        <div class="delete-me">
+        <div class="delete-me view-only">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
@@ -242,12 +294,12 @@
         </div>
     {% endif %}
 
-    <div class="btn-group">
+    <div class="btn-group view-only">
         {% if not form.no_vellum %}
         <a id="edit_label" href="{% if is_user_registration %}
                                     {% url "user_registration_source" domain app.id %}
                                  {% else %}
-                                    {% url "form_source" domain app.id module.id form.id %}
+                                    #source
                                  {% endif %}
                                  "
                                  class="btn btn-primary">
@@ -271,14 +323,16 @@
         {% endif %}
     </div>
 
-    <br/><br/><br/>
+    <br class="view-only">
+    <br class="view-only">
+    <br class="view-only">
 
     {% if is_user_registration %}
-    <h4>{% trans "User Registration Properties" %}</h4>
-    <div id="user_reg_home" class="config"></div>
+    <h4 class="view-only">{% trans "User Registration Properties" %}</h4>
+    <div id="user_reg_home" class="config view-only"></div>
     {% else %}
 
-    <div class="tabbable">
+    <div class="tabbable view-only">
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
@@ -380,7 +434,16 @@
         </div>
     </div>
     {% endif %}
-    <div id="questions"></div>
+    <div id="questions view-only"></div>
+
+    {% if form.no_vellum %}
+        <div class="alert alert-full alert-info source-only">
+            <i class="icon-info-sign"></i>
+            Your administrator has locked this form against editing.
+        </div>
+    {% else %}
+        {% include 'app_manager/partials/form_designer_form_view.html' %}
+    {% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
@@ -391,13 +454,14 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <span class="divider">&gt;</span>
+        <span class="divider">&gt;</span> 
         {% if is_user_registration %}
             <span class="app-manager-title">{% trans "User Registration" %}</span>
         {% else %}
-        <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
-            <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-        </a>
+            <a class="view-form" href="#view">
+                <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+            </a>
         {% endif %}
     </li>
+    <li class="source-only"><span class="divider">&gt;</span> <i class="icon-pencil"></i> Edit</li>
 {% endblock %}

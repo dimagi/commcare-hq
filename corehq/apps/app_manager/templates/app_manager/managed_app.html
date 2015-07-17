@@ -8,11 +8,7 @@
 
 
 {% block head %}{{ block.super }}
-{% if formdesigner %}
 <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.11.2.css' %}"/>
-{% else %}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-{% endif %}
 {% include "imports/hq-oldstyle-js.html" %}
 <style>
     .edit-form-pencil {
@@ -25,6 +21,9 @@
         position: relative;
         width: 110%;
     }
+    .edit-form-li.active .icon-pencil {
+        color: white;
+    }
     /* Push tooltips away from icons that trigger them */
     .tooltip {
         margin-right: 12px;
@@ -35,7 +34,9 @@
 {% block js %}
     {{ block.super }}
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
+    {% if not form %}
+        <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
+    {% endif %}
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
 {% endblock %}
 
@@ -90,13 +91,14 @@
             $('.edit-form-li').each(function () {
                 if ($(this).is('.active') && {{ formdesigner|JSON }}) {
                     $(this).find('.edit-form-pencil').show();
-                } else {
-                    $(this).mouseenter(function () {
-                        $(this).find('.edit-form-pencil').show();
-                    }).mouseleave(function () {
-                        $(this).find('.edit-form-pencil').hide();
-                    });
                 }
+                $(this).mouseenter(function () {
+                    $(this).find('.edit-form-pencil').show();
+                }).mouseleave(function () {
+                    if (!$(this).is('.active') || !$('#formdesigner:visible').length) {
+                        $(this).find('.edit-form-pencil').hide();
+                    }
+                });
             });
         });
     </script>
@@ -240,7 +242,14 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
+                                        <a 
+                                            {% ifequal form selected_form %}
+                                            href="#view"
+                                            {% else %}
+                                            href="{% url "view_form" domain app.id module.id form.id %}#view"
+                                            {% endifequal %}
+                                            class="view-form"
+                                        >
                                             <i class="drag_handle"></i>
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
@@ -248,8 +257,15 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil pull-right">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
-                                                    <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
+                                                <a 
+                                                    id="edit_pen_{{ module.id }}_{{ form.id }}"
+                                                    {% ifequal form selected_form %}
+                                                    href="#source"
+                                                    {% else %}
+                                                    href="{% url "view_form" domain app.id module.id form.id %}#source"
+                                                    {% endifequal %}
+                                                >
+                                                    <i class="icon-pencil"></i>
                                                 </a>
                                             </div>
                                         {% endif %}

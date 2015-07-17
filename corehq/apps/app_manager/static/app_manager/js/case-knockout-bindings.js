@@ -76,12 +76,12 @@ ko.bindingHandlers.casePropertyTypeahead = {
      */
     init: function (element, valueAccessor) {
         ko.bindingHandlers.typeahead.init(element, valueAccessor);
-        $(element).data("autocomplete")._renderItem = function (ul, item) {
+        $(element).autocomplete('option', '_renderItem', function (ul, item) {
             return $("<li></li>")
                 .data("item.autocomplete", item)
                 .append($("<a></a>").html(item.label))
                 .appendTo(ul);
-        };
+        });
     },
     update: function (element, valueAccessor) {
         function wrappedValueAccessor() {
