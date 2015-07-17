@@ -574,7 +574,7 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
-class ScheduleVisit(DocumentSchema):
+class ScheduleVisit(IndexedSchema):
     """
     due:         Days after the anchor date that this visit is due
     late_window: Days after the due day that this visit is valid until
@@ -582,6 +582,11 @@ class ScheduleVisit(DocumentSchema):
     due = IntegerProperty()
     late_window = IntegerProperty()
 
+    @property
+    def id(self):
+        """Visits are 1-based indexed"""
+        _id = super(ScheduleVisit, self).id
+        return _id + 1
 
 class FormLink(DocumentSchema):
     """
@@ -601,7 +606,7 @@ class FormSchedule(DocumentSchema):
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
     post_schedule_increment = IntegerProperty()
-
+    get_visits = IndexedSchema.Getter('visits')
 
 class FormBase(DocumentSchema):
     """

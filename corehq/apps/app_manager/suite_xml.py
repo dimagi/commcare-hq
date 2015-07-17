@@ -1,7 +1,7 @@
 from collections import namedtuple, defaultdict
 import copy
 from functools import total_ordering
-from itertools import izip_longest
+from itertools import izip_longest, chain
 import os
 from os.path import commonprefix
 import re
@@ -11,6 +11,7 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from lxml import etree
 from xml.sax.saxutils import escape, unescape
 
+from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
 
 from .exceptions import (
@@ -1268,8 +1269,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     @staticmethod
     def detail_variables(module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
-        if (hasattr(module, 'has_schedule') and
-                module.has_schedule and
+        if (getattr(module, 'has_schedule', False) and
                 module.all_forms_require_a_case and
                 has_schedule_columns):
 
@@ -1278,7 +1278,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             for phase in module.get_schedule_phases():
                 if not phase.anchor:
                     raise ScheduleError(
-                        "Schedule Phase in module '{}' is missing an anchor".format(module.default_name())
+                        _("Schedule Phase in module '{module_name}' is missing an anchor")
+                        .format(module_name=module.default_name())
                     )
                 anchor = phase.anchor
                 for form in phase.get_forms():
@@ -2304,6 +2305,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @property
     def fixtures(self):
+        return chain(self._case_sharing_fixtures, self._schedule_fixtures)
+
+    @property
+    def _case_sharing_fixtures(self):
         if self.app.case_sharing:
             f = Fixture(id='user-groups')
             f.user_id = 'demo_user'
@@ -2317,25 +2322,32 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
-        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
-                            module.all_forms_require_a_case)
-        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+    @property
+    def _schedule_fixtures(self):
+        schedule_modules = (module for module in self.modules
+                            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
+        schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())
+        schedule_forms = (form for phase in schedule_phases for form in phase.get_forms())
+
         for form in schedule_forms:
             schedule = form.schedule
-            fx = ScheduleFixture(
+
+            if schedule is None:
+                raise (ScheduleError(_("There is no schedule for form {form_id}")
+                                     .format(form_id=form.unique_id)))
+
+            visits = [ScheduleVisit(id=visit.id, due=visit.due, late_window=visit.late_window)
+                      for visit in schedule.get_visits()]
+
+            schedule_fixture = ScheduleFixture(
                 id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
                 schedule=Schedule(
                     expires=schedule.expires,
-                    post_schedule_increment=schedule.post_schedule_increment
-                ))
-            for i, visit in enumerate(schedule.visits):
-                fx.schedule.visits.append(ScheduleVisit(
-                    id=i + 1,
-                    due=visit.due,
-                    late_window=visit.late_window
-                ))
-
-            yield fx
+                    post_schedule_increment=schedule.post_schedule_increment,
+                    visits=visits,
+                )
+            )
+            yield schedule_fixture
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):
