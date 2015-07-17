@@ -977,7 +977,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @property
     def subevents(self):
-        return MessagingSubEvent.objects.filter(parent=self)
+        return self.messagingsubevent_set.all()
 
     @classmethod
     def get_source_from_reminder(cls, reminder_definition):
