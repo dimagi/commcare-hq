@@ -295,7 +295,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # make IDs both human readable and globally unique to this test
         uid = uuid.uuid4().hex
         child_id = 'child_id-{}'.format(uid)
-        parent_id_1 = 'parent_id={}'.format(uid)
+        parent_id_1 = 'parent_id-{}'.format(uid)
         index_id_1 = 'parent_index_id-{}'.format(uid)
         parent_id_2 = 'parent_id_2-{}'.format(uid)
         index_id_2 = 'parent_index_id_2-{}'.format(uid)
