@@ -339,7 +339,7 @@ class CaseNode(template.Node):
 def do_captureas(parser, token):
     """
     Assign to a context variable from within a template
-        {% capturas my_context_var %}<!-- anything -->{% endcaptureas %}
+        {% captureas my_context_var %}<!-- anything -->{% endcaptureas %}
         <h1>Nice job capturing {{ my_context_var }}</h1>
     """
     try:
