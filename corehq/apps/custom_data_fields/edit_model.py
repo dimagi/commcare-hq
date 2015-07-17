@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.utils.translation import ugettext as _
 from django import forms
+from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -73,6 +74,7 @@ class CustomDataFieldForm(forms.Form):
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
+    is_multiple_choice = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -126,11 +128,13 @@ class CustomDataModelMixin(object):
         definition.save()
 
     def get_field(self, field):
+        multiple_choice_enabled = MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
         return CustomDataField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=field.get('choices'),
+            is_multiple_choice=field.get('is_multiple_choice') if multiple_choice_enabled else False
         )
 
     @property

@@ -7,19 +7,4 @@
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
     {% include "app_manager/partials/enable_schedule.html" %}
     {% endif %}
-
-    <div class="control-group">
-        <label class="control-label">
-            {% trans "Parent Module" %}
-        </label>
-        <div class="controls">
-            <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
-            <option value="">{% trans "No Parent" %}</option>
-            {% for module in valid_parent_modules %}
-                <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
-            {% endfor %}
-            </select>
-            <!-- need a js util to get module name by unique id -->
-        </div>
-    </div>
 {% endblock %}

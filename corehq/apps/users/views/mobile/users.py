@@ -20,10 +20,10 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     EntryPoint,
 )
@@ -251,9 +251,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
             (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
 
     @property
-    def is_billing_admin(self):
-        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
-                or self.couch_user.is_superuser)
+    def can_edit_billing_info(self):
+        return self.couch_user.is_domain_admin(self.domain) or self.couch_user.is_superuser
 
     def _escape_val_error(self, expression, default):
         try:
@@ -336,7 +335,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
-            'is_billing_admin': self.is_billing_admin,
+            'can_edit_billing_info': self.can_edit_billing_info,
         }
 
 
@@ -494,7 +493,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
@@ -713,8 +712,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
+        upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
@@ -793,7 +792,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

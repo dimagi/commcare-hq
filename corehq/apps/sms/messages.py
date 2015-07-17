@@ -23,6 +23,8 @@ MSG_MISSING_EXTERNAL_ID = "sms.caselookup.missingexternalid"
 MSG_CASE_NOT_FOUND = "sms.caselookup.casenotfound"
 MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
+MSG_FORM_NOT_FOUND = "sms.survey.formnotfound"
+MSG_FORM_ERROR = "sms.survey.formerror"
 MSG_OPTED_IN = "sms.opt.in"
 MSG_OPTED_OUT = "sms.opt.out"
 MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
@@ -50,6 +52,9 @@ _MESSAGES = {
     MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
     MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
     MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
+    MSG_FORM_NOT_FOUND: ugettext_noop("Could not find the survey being requested."),
+    MSG_FORM_ERROR: ugettext_noop("There is a configuration error with this survey. "
+        "Please contact your administrator."),
     MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
         " CommCareHQ. To opt-out, reply to this number with {0}"),
     MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"

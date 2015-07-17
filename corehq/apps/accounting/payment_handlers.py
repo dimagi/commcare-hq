@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     Invoice,
     PaymentRecord,
     SoftwareProductType,
+    FeatureType,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -28,13 +29,8 @@ def get_or_create_stripe_customer(payment_method):
             pass
     if customer is None:
         customer = stripe.Customer.create(
-            description="Account Admin %(web_user)s for %(domain)s, "
-                        "Account %(account_name)s" % {
-                'web_user': payment_method.billing_admin.web_user,
-                'domain': payment_method.billing_admin.domain,
-                'account_name': payment_method.account.name,
-            },
-            email=payment_method.billing_admin.web_user,
+            description="{}'s cards".format(payment_method.web_user),
+            email=payment_method.web_user,
         )
     payment_method.customer_id = customer.id
     payment_method.save()
@@ -47,8 +43,9 @@ class BaseStripePaymentHandler(object):
     receipt_email_template = None
     receipt_email_template_plaintext = None
 
-    def __init__(self, payment_method):
+    def __init__(self, payment_method, domain):
         self.payment_method = payment_method
+        self.domain = domain
 
     @property
     def cost_item_name(self):
@@ -59,7 +56,7 @@ class BaseStripePaymentHandler(object):
     @property
     @memoized
     def core_product(self):
-        domain = Domain.get_by_name(self.payment_method.billing_admin.domain)
+        domain = Domain.get_by_name(self.domain)
         return SoftwareProductType.get_type_by_domain(domain)
 
     def create_charge(self, amount, card=None, customer=None):
@@ -158,6 +155,7 @@ class BaseStripePaymentHandler(object):
             'success': True,
             'card': card,
             'wasSaved': save_card,
+            'changedBalance': amount,
         }
 
     def get_email_context(self):
@@ -178,8 +176,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/invoice_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, invoice):
-        super(InvoiceStripePaymentHandler, self).__init__(payment_method)
+    def __init__(self, payment_method, domain, invoice):
+        super(InvoiceStripePaymentHandler, self).__init__(payment_method, domain)
         self.invoice = invoice
 
     @property
@@ -232,8 +230,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, domain):
-        super(BulkStripePaymentHandler, self).__init__(payment_method)
-        self.domain = domain
+        super(BulkStripePaymentHandler, self).__init__(payment_method, domain)
 
     @property
     def cost_item_name(self):
@@ -303,24 +300,41 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/credit_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, account, subscription=None,
-                 product_type=None, feature_type=None):
-        super(CreditStripePaymentHandler, self).__init__(payment_method)
-        self.product_type = product_type
-        self.feature_type = feature_type
+    def __init__(self, payment_method, domain, account, subscription=None, post_data=None):
+        super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
+        self.features = [{'type': feature_type[0],
+                          'amount': Decimal(post_data.get(feature_type[0], 0))}
+                         for feature_type in FeatureType.CHOICES
+                         if Decimal(post_data.get(feature_type[0], 0)) > 0]
+        self.products = [{'type': product_type[0],
+                          'amount': Decimal(post_data.get(product_type[0], 0))}
+                         for product_type in SoftwareProductType.CHOICES
+                         if Decimal(post_data.get(product_type[0], 0)) > 0]
+        self.post_data = post_data
         self.account = account
         self.subscription = subscription
+        self.credit_lines = []
 
     @property
     def cost_item_name(self):
-        return "%(credit_type)s Credit %(sub_or_account)s" % {
-            'credit_type': ("%s Product" % self.product_type
-                            if self.product_type is not None
-                            else "%s Feature" % self.feature_type),
-            'sub_or_account': ("Subscription %s" % self.subscription
-                               if self.subscription is None
-                               else "Account %s" % self.account.id),
-        }
+        credit_types = [unicode(product['type']) for product in self._humanized_products()]
+        credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
+        return _("Credits: {credit_types} for {sub_or_account}").format(
+            credit_types=", ".join(credit_types),
+            sub_or_account=("Subscription %s" % self.subscription
+                            if self.subscription is None
+                            else "Account %s" % self.account.id)
+        )
+
+    def _humanized_features(self):
+        return [{'type': get_feature_name(feature['type'], self.core_product),
+                 'amount': fmt_dollar_amount(feature['amount'])}
+                for feature in self.features]
+
+    def _humanized_products(self):
+        return [{'type': product['type'],
+                 'amount': fmt_dollar_amount(product['amount'])}
+                for product in self.products]
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
@@ -335,28 +349,48 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_credits(self, payment_record):
-        self.credit_line = CreditLine.add_credit(
-            payment_record.amount, account=self.account, subscription=self.subscription,
-            product_type=self.product_type, feature_type=self.feature_type,
-            payment_record=payment_record,
-        )
+        for feature in self.features:
+            feature_amount = feature['amount']
+            if feature_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    feature_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    feature_type=feature['type'],
+                    payment_record=payment_record,
+                ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {feature} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      feature=feature['type']))
+        for product in self.products:
+            plan_amount = product['amount']
+            if plan_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    plan_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    product_type=product['type'],
+                    payment_record=payment_record,
+                ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {product} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      product=product['type']))
 
     def process_request(self, request):
         response = super(CreditStripePaymentHandler, self).process_request(request)
-        if hasattr(self, 'credit_line'):
+        if self.credit_lines:
             response.update({
-                'balance': fmt_dollar_amount(self.credit_line.balance),
+                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
+                              'balance': fmt_dollar_amount(cline.balance)}
+                             for cline in self.credit_lines]
             })
         return response
 
     def get_email_context(self):
         context = super(CreditStripePaymentHandler, self).get_email_context()
-        if self.product_type:
-            credit_name = _("%s Software Plan" % self.product_type)
-        else:
-            credit_name = get_feature_name(self.feature_type, self.core_product)
         context.update({
-            'credit_name': credit_name,
+            'items': self._humanized_products() + self._humanized_features()
         })
         return context
-

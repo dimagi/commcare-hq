@@ -1,6 +1,6 @@
 from crispy_forms.bootstrap import AccordionGroup, InlineField
-from crispy_forms.layout import MultiField, TEMPLATE_PACK, Field
-from crispy_forms.utils import render_field
+from crispy_forms.layout import MultiField, Field
+from crispy_forms.utils import render_field, get_template_pack
 from django.template.loader import render_to_string
 
 
@@ -14,7 +14,8 @@ class BootstrapMultiField(MultiField):
         if 'help_bubble_text' in kwargs:
             self.help_bubble_text = kwargs.pop('help_bubble_text')
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         fields_output = u''
         for field in self.fields:
             fields_output += render_field(
@@ -66,7 +67,8 @@ class FieldWithHelpBubble(Field):
         super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
         self.help_bubble_text = kwargs.pop('help_bubble_text')
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         context.update({
             'help_bubble_text': self.help_bubble_text,
         })
@@ -84,7 +86,8 @@ class TextField(Field):
         self.text = text
         super(TextField, self).__init__(field_name, *args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         context.update({
             'field_text': self.text,
         })
@@ -98,7 +101,8 @@ class InlineColumnField(InlineField):
         self.block_css_class = kwargs.pop('block_css_class')
         super(InlineColumnField, self).__init__(*args, **kwargs)
 
-    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
         context.update({
             'block_css_class': self.block_css_class,
         })

@@ -116,11 +116,7 @@ class GhanaEndpoint(LogisticsEndpoint):
         meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
         return meta, [SupplyPoint(supply_point) for supply_point in supply_points]
 
-    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
-        kwargs.get('filters', {}).update({
-            'date__gte': start_date,
-            'date__lte': end_date
-        })
+    def get_stocktransactions(self, **kwargs):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]

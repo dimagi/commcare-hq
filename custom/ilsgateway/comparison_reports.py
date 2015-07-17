@@ -1,12 +1,14 @@
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import WebUser
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.models import ILSGatewayConfig, ProductAvailabilityData
 
 
 class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -158,3 +160,47 @@ class SMSUsersCompareReport(BaseComparisonReport):
                              sms_user.date_updated, sms_user.is_active, False])
 
         return rows
+
+
+class ProductAvailabilityReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    name = 'Product Availability'
+    slug = 'product_availability'
+    fields = [AsyncLocationFilter]
+    emailable = False
+    exportable = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
+
+    @property
+    def location_id(self):
+        return self.request.GET.get('location_id', '')
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Date'),
+            DataTablesColumn('Product'),
+            DataTablesColumn('Total'),
+            DataTablesColumn('Without data'),
+            DataTablesColumn('With stock'),
+            DataTablesColumn('Without stock'),
+            DataTablesColumn('')
+        )
+
+    @property
+    def rows(self):
+        data = ProductAvailabilityData.objects.filter(location_id=self.location_id).order_by('date')
+        for element in data:
+            yield [
+                element.date,
+                SQLProduct.objects.get(product_id=element.product).name,
+                element.total,
+                element.without_data,
+                element.with_stock,
+                element.without_stock,
+                '<a href="%s">Delete</a>' % (
+                    reverse_lazy('product_availability_delete', kwargs={'domain': self.domain, 'pk': element.pk})
+                )
+            ]

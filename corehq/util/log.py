@@ -40,7 +40,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             tb_list.extend(traceback.format_list(reversed(traceback.extract_tb(tb))))
             stack_trace = '\n'.join(tb_list)
             subject = '%s: %s' % (record.levelname,
-                                  formatted_exception[0] if formatted_exception else record.getMessage())
+                                  formatted_exception[0].strip() if formatted_exception else record.getMessage())
         else:
             stack_trace = 'No stack trace available'
             subject = '%s: %s' % (

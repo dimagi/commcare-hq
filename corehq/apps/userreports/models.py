@@ -24,7 +24,6 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from corehq.pillows.utils import get_deleted_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -169,12 +168,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         if self.base_item_expression:
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
         return None
-
-    @property
-    def table_exists(self):
-        adapter = IndicatorSqlAdapter(get_engine(), self)
-        table = adapter.get_table()
-        return table.exists()
 
     def get_columns(self):
         return self.indicators.get_columns()

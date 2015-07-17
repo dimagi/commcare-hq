@@ -1013,7 +1013,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         module_case_type = self.get_module().case_type
         if action_type == 'open_case':
             return 'case_id_new_{}_0'.format(module_case_type)
-        if action_type == 'subcase':
+        if action_type == 'subcases':
             opens_case = 'open_case' in self.active_actions()
             subcase_type = self.actions.subcases[subcase_index].case_type
             if opens_case:
@@ -1507,6 +1507,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    root_module_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1554,6 +1555,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             module for module in self.get_app().get_modules()
             if module.unique_id != self.unique_id and getattr(module, 'root_module_id', None) == self.unique_id
         ]
+
+    @property
+    def root_module(self):
+        if self.root_module_id:
+            return self._parent.get_module_by_unique_id(self.root_module_id)
 
     def requires_case_details(self):
         return False
@@ -2142,7 +2148,6 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
-    root_module_id = StringProperty()
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2276,11 +2281,6 @@ class AdvancedModule(ModuleBase):
     def rename_lang(self, old_lang, new_lang):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
-
-    @property
-    def root_module(self):
-        if self.root_module_id:
-            return self._parent.get_module_by_unique_id(self.root_module_id)
 
     def requires_case_details(self):
         if self.case_list.show:

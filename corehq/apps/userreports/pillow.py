@@ -2,8 +2,9 @@ from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
-from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.db import connection_manager
 from dimagi.utils.logging import notify_error
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.couchdb import CachedCouchDB
@@ -21,10 +22,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
     @classmethod
     def get_sql_engine(cls):
-        # todo: copy pasted from fluff - cleanup
+        # todo: switch to connection_manager
         engine = getattr(cls, '_engine', None)
         if not engine:
-            cls._engine = get_engine()
+            cls._engine = connection_manager.get_engine()
         return cls._engine
 
     def get_all_configs(self):
@@ -39,7 +40,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
+        self.tables = [IndicatorSqlAdapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
 

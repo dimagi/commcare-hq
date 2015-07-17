@@ -35,7 +35,7 @@ class Command(BaseCommand):
     hqstyle_src = "corehq/apps/style/"
     hq_bootstrap_src = "%s/static/style/lib/bootstrap" % hqstyle_src
     font_awesome_src = "%s/static/style/lib/fontawesome" % hqstyle_src
-    destination = "%s/static/hqstyle" % hqstyle_src
+    destination = "%s/static/style/lib/bootstrap2" % hqstyle_src
 
     lessc = "lessc"
     uglifyjs = "uglifyjs"

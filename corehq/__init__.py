@@ -21,7 +21,7 @@ from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInte
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
-
+import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 
 def REPORTS(project):
@@ -82,6 +82,14 @@ def REPORTS(project):
         messaging_reports.extend([
             sms.MessagesReport,
         ])
+
+    if toggles.MESSAGING_STATUS_AND_ERROR_REPORTS.enabled(project.name):
+        messaging_reports.extend([
+            sms.MessagingEventsReport,
+            sms.MessageEventDetailReport,
+            sms.SurveyDetailReport,
+        ])
+
     # always have these historical reports visible
     messaging_reports.extend([
         sms.MessageLogReport,
@@ -193,16 +201,21 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.export import DataExportInterface
+from corehq.apps.reports.standard.export import (
+    FormExportInterface,
+    CaseExportInterface,
+)
 EXPORT_DATA_INTERFACES = (
     (_('Export Data'), (
-        DataExportInterface,
+        FormExportInterface,
+        CaseExportInterface,
     )),
 )
 
 DATA_DOWNLOAD_INTERFACES = (
     ('', (
         export.FormExportReport,
+        export.NewCaseExportReport,
     )),
 )
 

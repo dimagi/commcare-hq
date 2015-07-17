@@ -154,7 +154,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
-    return render(request, "reminders/partial/list_reminders.html", {
+    return render(request, "reminders/list_broadcasts.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
@@ -1466,8 +1466,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1475,7 +1473,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),
@@ -1509,35 +1507,29 @@ def int_or_none(i):
 
 @reminders_framework_permission
 def rule_progress(request, domain):
-    handler_id = request.GET.get("handler_id", None)
-    response = {
-        "success": False,
-    }
+    client = get_redis_client()
+    handlers = CaseReminderHandler.get_handlers(domain,
+        reminder_type_filter=REMINDER_TYPE_DEFAULT)
 
-    try:
-        assert isinstance(handler_id, basestring)
-        handler = CaseReminderHandler.get(handler_id)
-        assert handler.doc_type == "CaseReminderHandler"
-        assert handler.domain == domain
+    response = {}
+    for handler in handlers:
+        info = {}
         if handler.locked:
-            response["complete"] = False
+            info['complete'] = False
             current = None
             total = None
-            # It shouldn't be necessary to lock this out, but a deadlock can
-            # happen in rare cases without it
-            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-                client = get_redis_client()
-                current = client.get("reminder-rule-processing-current-%s" % handler_id)
-                total = client.get("reminder-rule-processing-total-%s" % handler_id)
-            response["current"] = int_or_none(current)
-            response["total"] = int_or_none(total)
-            response["success"] = True
+
+            try:
+                current = client.get('reminder-rule-processing-current-%s' % handler._id)
+                total = client.get('reminder-rule-processing-total-%s' % handler._id)
+            except:
+                continue
+
+            info['current'] = int_or_none(current)
+            info['total'] = int_or_none(total)
         else:
-            response["complete"] = True
-            response["success"] = True
-    except:
-        pass
+            info['complete'] = True
+
+        response[handler._id] = info
 
     return HttpResponse(json.dumps(response))
-
-

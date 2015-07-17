@@ -14,7 +14,7 @@ class SchemaTest(SimpleTestCase):
             "id": "casedb",
             "uri": "jr://instance/casedb",
             "name": "case",
-            "path": "/cases/case",
+            "path": "/casedb/case",
             "structure": {},
             "subsets": [],
         })
