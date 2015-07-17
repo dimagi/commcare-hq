@@ -91,8 +91,11 @@ def is_valid_case_type(case_type):
     False
     >>> is_valid_case_type(None)
     False
+    >>> is_valid_case_type('commcare-user')
+    False
+
     """
-    return bool(_case_type_regex.match(case_type or ''))
+    return bool(_case_type_regex.match(case_type or '')) and case_type != USERCASE_TYPE
 
 
 class ParentCasePropertyBuilder(object):
