@@ -286,14 +286,14 @@
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}
 
+        <!--[if IE]>
         <script>
             $(function () {
-                if ($.browser.msie) {
-                    $('#unsupported-browser').show();
-                }
+                $('#unsupported-browser').show();
             });
         </script>
-
+        <![endif]-->
+        
         {# todo keyboard shortcuts #}
 
         {% compress js %}
