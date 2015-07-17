@@ -82,11 +82,6 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'phone.models': {
             'handlers': ['console'],
             'level': 'DEBUG',
