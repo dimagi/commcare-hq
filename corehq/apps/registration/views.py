@@ -259,29 +259,25 @@ def resend_confirmation(request):
 
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):
+    error = None
     # Did we get a guid?
     if guid is None:
-        context = {
-            'message_title': _('Missing Activation Key'),
-            'message_subtitle': _('Account Activation Failed'),
-            'message_body': _(
-                'An account activation key was not provided.  If you think this '
-                'is an error, please contact the system administrator.'
-            ),
-        }
-        return render(request, 'registration/confirmation_error.html', context)
+        error = _('An account activation key was not provided.  If you think this '
+                  'is an error, please contact the system administrator.')
 
     # Does guid exist in the system?
-    req = RegistrationRequest.get_by_guid(guid)
-    if not req:
+    else:
+        req = RegistrationRequest.get_by_guid(guid)
+        if not req:
+            error = _('The account activation key "%s" provided is invalid. If you '
+                      'think this is an error, please contact the system '
+                      'administrator.') % guid
+
+    if error is not None:
         context = {
-            'message_title': _('Invalid Activation Key'),
-            'message_subtitle': _('Account Activation Failed'),
-            'message_body': _(
-                'The account activation key "%s" provided is invalid. If you '
-                'think this is an error, please contact the system '
-                'administrator.'
-            ) % guid,
+            'message_title': _('Account not activated'),
+            'message_subtitle': _('Email not yet confirmed'),
+            'message_body': error,
         }
         return render(request, 'registration/confirmation_error.html', context)
 
