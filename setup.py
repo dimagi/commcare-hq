@@ -10,11 +10,11 @@ setup(
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
     install_requires = [
-        "django<1.7",
+        "django<1.8",
         "jsonobject-couchdbkit",
-        "dimagi-utils>=1.3usec",
-        'django-soil==0.10.0',
-        'django-transfer==dev',
+        "dimagi-utils>=1.2.2",
+        'django-soil',
+        'django-transfer',
         "openpyxl",
         "unidecode",
         "xlwt",
@@ -22,8 +22,7 @@ setup(
     packages=find_packages(exclude=['*.pyc']),
     include_package_data=True,
     dependency_links=[
-        'git+git://github.com/dimagi/dimagi-utils.git@24e1eaad37ac735ab9309253011f09835c9ee67e#egg=dimagi-utils-1.3usec',
-        'git+git://github.com/dimagi/django-soil.git@ad98c51dd95baec568c5f83af0807ef7965bf201#egg=django-soil-0.10.0',
-        'git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4#egg=django-transfer-dev',
+        'git+git://github.com/dimagi/dimagi-utils.git@72f58d63e47a6c873a1d5a0a60462be772542216#egg=dimagi-utils-1.2.2',
+        'git+git://github.com/dimagi/django-soil.git@8c6e1fe9f58fd1cabc199c835e444cf88b21b692#egg=django-soil',
     ]
 )
