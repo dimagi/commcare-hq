@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-soil',
-    version='0.9.0',
+    version='0.9.1',
     description="A simple django library to help you schedule long running tasks for retrieval later when they're done using celery",
     author='Dimagi',
     author_email='information@dimagi.com',
