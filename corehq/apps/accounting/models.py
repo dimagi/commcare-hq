@@ -1001,6 +1001,8 @@ class Subscription(models.Model):
                 "is today or in the past."
             )
 
+        self.raise_conflicting_dates(self.date_start, self.date_end)
+
         if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
             self.date_delay_invoicing = date_delay_invoicing
 
