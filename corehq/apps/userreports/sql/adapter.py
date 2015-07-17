@@ -15,7 +15,8 @@ class IndicatorSqlAdapter(object):
 
     def __init__(self, config):
         self.config = config
-        self.session_helper = connection_manager.get_session_helper(get_engine_id(config))
+        self.engine_id = get_engine_id(config)
+        self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
 
     @memoized

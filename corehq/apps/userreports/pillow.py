@@ -1,3 +1,4 @@
+from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
@@ -45,19 +46,23 @@ class ConfigurableIndicatorPillow(PythonPillow):
         self.bootstrapped = True
 
     def rebuild_tables_if_necessary(self):
-        table_map = {t.get_table().name: t for t in self.tables}
-        engine = self.get_sql_engine()
-        with engine.begin() as connection:
-            migration_context = get_migration_context(connection, table_map.keys())
-            diffs = compare_metadata(migration_context, metadata)
+        tables_by_engine = defaultdict(lambda: {})
+        for adapter in self.tables:
+            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
-        tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
-        for table_name in tables_to_rebuild:
-            table = table_map[table_name]
-            try:
-                self.rebuild_table(table)
-            except TableRebuildError, e:
-                notify_error(unicode(e))
+        for engine_id, table_map in tables_by_engine.items():
+            engine = connection_manager.get_engine(engine_id)
+            with engine.begin() as connection:
+                migration_context = get_migration_context(connection, table_map.keys())
+                diffs = compare_metadata(migration_context, metadata)
+
+            tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+            for table_name in tables_to_rebuild:
+                table = table_map[table_name]
+                try:
+                    self.rebuild_table(table)
+                except TableRebuildError, e:
+                    notify_error(unicode(e))
 
     def rebuild_table(self, table):
         table.rebuild_table()
