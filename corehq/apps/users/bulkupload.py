@@ -14,6 +14,8 @@ from dimagi.utils.excel import (flatten_json, json_to_headers,
     alphanumeric_sort_key)
 from soil import DownloadBase
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
@@ -329,7 +331,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-    location_cache = SiteCodeToLocationCache(domain)
+    can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    if can_access_locations:
+        location_cache = SiteCodeToLocationCache(domain)
     try:
         for row in user_specs:
             _set_progress(current)
@@ -443,7 +447,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         user.is_active = is_active
 
                     user.save()
-                    if location_code:
+                    if can_access_locations and location_code:
                         loc = location_cache.get(location_code)
                         if user.location_id != loc._id:
                             # this triggers a second user save so
@@ -532,7 +536,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, users, user_data_model, location_cache):
+def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     def _get_group_names(user):
         return sorted(map(
@@ -562,7 +566,7 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
     user_data_keys = set()
     user_groups_length = 0
     user_dicts = []
-    for user in users:
+    for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
         user_dicts.append(_make_user_dict(user, group_names, location_cache))
         user_data_keys.update(user.user_data.keys() if user.user_data else [])
@@ -570,8 +574,10 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'is_active', 'location-sms-code'
+        'language', 'user_id', 'is_active',
     ]
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.append('location-sms-code')
     user_data_fields = [f.slug for f in user_data_model.fields]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
@@ -647,7 +653,7 @@ def dump_users_and_groups(response, domain):
 
     user_headers, user_rows = parse_users(
         group_memoizer,
-        get_all_commcare_users_by_domain(domain),
+        domain,
         user_data_model,
         location_cache
     )
@@ -663,6 +669,7 @@ def dump_users_and_groups(response, domain):
     ]
 
     domain_obj = Domain.get_by_name(domain)
+    # This is only for domains using the multiple locations feature flag
     if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
         headers.append(
             ('locations', [['username', 'location-sms-code', 'location name (optional)']])
