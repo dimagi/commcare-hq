@@ -471,7 +471,8 @@ def get_commcare_versions(request_user):
 
 def actions_use_usercase(actions):
     return (('usercase_update' in actions and actions['usercase_update'].update) or
-            ('usercase_preload' in actions and actions['usercase_preload'].preload))
+            ('usercase_preload' in actions and actions['usercase_preload'].preload) or
+            ('usercase_subcase' in actions and actions['usercase_subcase']))
 
 
 def advanced_actions_use_usercase(actions):
