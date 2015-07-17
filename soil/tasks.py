@@ -19,7 +19,8 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     cache.set(download_id, CachedDownload(temp_id), expiry)
 
 @task
-def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
+def prepare_download(download_id, payload_func, content_disposition,
+        content_type, expiry=10*60*60):
     """
     payload_func should be an instance of SerializableFunction, and can return
     either a string or a FileWrapper object
@@ -28,7 +29,7 @@ def prepare_download(download_id, payload_func, content_disposition, mimetype, e
         payload = payload_func(process=prepare_download)
     except TypeError:
         payload = payload_func()
-    expose_cached_download(payload, expiry, mimetype=mimetype,
+    expose_cached_download(payload, expiry, content_type=content_type,
                     content_disposition=content_disposition,
                     download_id=download_id)
     
