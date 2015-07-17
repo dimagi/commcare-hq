@@ -1033,6 +1033,48 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             module.parent_select.module_id = parent_module.unique_id
 
 
+class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
+    """
+    Even though a module might be usercase-only, if it acts as a parent module
+    then the user should still be prompted for a case of the parent module's
+    case type.
+
+    The rationale is that child cases of the usercase never need to be
+    filtered by a parent module, because they can't be filtered any more than
+    they already are; there is only one usercase.
+    """
+
+    def setUp(self):
+        super(UserCaseOnlyModuleAsChildTest, self).setUp()
+        self.is_usercase_in_use_mock.return_value = True
+
+    def test_child_module_session_datums_added(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        # m0 is a user-case-only module. m0f0 does not update a normal case, only the user case.
+        m0f0.requires = 'case'
+        m0f0.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
+        m0f0.actions.usercase_preload.condition.type = 'always'
+
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='guppy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.module_1.case_type = 'guppy'
+        m1f0 = self.module_1.get_form(0)
+        self._load_case(m1f0, 'gold-fish')
+        self._load_case(m1f0, 'guppy', parent_module=self.module_0)
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-added-usercase'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
+
 class RegexTest(SimpleTestCase):
 
     def test_regex(self):
