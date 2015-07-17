@@ -4,11 +4,10 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
-from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.commtrack.parsing import unpack_commtrack
 from dimagi.utils.decorators.log_exception import log_exception
-from corehq.apps.commtrack.models import xml_to_stock_report_helper
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
 from casexml.apps.stock import const as stockconst
@@ -155,18 +154,3 @@ def process_stock(xform, case_db=None):
         relevant_cases=relevant_cases,
         stock_report_helpers=stock_report_helpers,
     )
-
-
-def unpack_commtrack(xform):
-    xml = xform.get_xml_element()
-
-    def commtrack_nodes(node):
-        for child in node:
-            if child.tag.startswith('{%s}' % COMMTRACK_REPORT_XMLNS):
-                yield child
-            else:
-                for e in commtrack_nodes(child):
-                    yield e
-
-    for elem in commtrack_nodes(xml):
-        yield xml_to_stock_report_helper(xform, elem)
