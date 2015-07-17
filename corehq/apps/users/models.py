@@ -2415,8 +2415,7 @@ class DomainRequest(models.Model):
         return DomainRequest.by_domain(domain).filter(email=email).first()
 
     def send_approval_email(self):
-        domain = Domain.get_by_name(self.domain)
-        domain_name = domain.hr_name if domain else self.domain
+        domain_name = Domain.get_by_name(self.domain).display_name()
         params = {
             'domain_name': domain_name,
             'url': absolute_reverse("domain_homepage", args=[self.domain]),
@@ -2428,8 +2427,7 @@ class DomainRequest(models.Model):
                         email_from=settings.DEFAULT_FROM_EMAIL)
 
     def send_request_email(self):
-        domain = Domain.get_by_name(self.domain)
-        domain_name = domain.hr_name if domain else self.domain
+        domain_name = Domain.get_by_name(self.domain).display_name()
         params = {
             'full_name': self.full_name,
             'email': self.email,
