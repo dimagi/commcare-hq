@@ -105,7 +105,8 @@ class FormManagementMode(object):
         if mode == self.RESTORE_MODE:
             self.mode_name = self.RESTORE_MODE
             self.xform_filter = ADD_TO_ES_FILTER['archived_forms']
-            self.button_text = "Restore"
+            self.button_text = "Restore selected Forms"
+            self.button_class = "btn-primary"
             self.status_page_title = "Restore Forms Status"
             self.progress_text = "Restoring your forms, this may take some time..."
             self.complete_short = "Restore complete!"
@@ -116,7 +117,8 @@ class FormManagementMode(object):
         else:
             self.mode_name = self.ARCHIVE_MODE
             self.xform_filter = ADD_TO_ES_FILTER['forms']
-            self.button_text = "Archive"
+            self.button_text = "Archive selected forms"
+            self.button_class = "btn-danger"
             self.status_page_title = "Archive Forms Status"
             self.progress_text = "Archiving your forms, this may take some time..."
             self.complete_short = "Archive complete!"
@@ -154,7 +156,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 
 
 class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
-    name = ugettext_noop("Filtered Forms")
+    name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
 
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
@@ -170,8 +172,8 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
         import json
         context.update(filters_as_es_query=json.dumps(self.filters_as_es_query()))
         context.update({
-            "button_text": self.mode.button_text,
-            "archive_or_restore": self.mode.mode_name
+            "mode": self.mode,
+            "total_xForms": int(self.es_results['hits']['total']),
         })
         return context
 

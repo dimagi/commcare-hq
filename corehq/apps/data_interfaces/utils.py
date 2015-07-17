@@ -87,8 +87,6 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=No
 
         if task:
             DownloadBase.set_progress(task, success_count, len(form_ids))
-        import time
-        time.sleep(3)
 
     for missing_form_id in missing_forms:
         response['errors'].append(
