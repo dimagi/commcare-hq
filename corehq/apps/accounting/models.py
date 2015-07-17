@@ -988,7 +988,7 @@ class Subscription(models.Model):
             self.is_active = False
 
         if (self.date_start > today and date_start is not None
-            and date_start > today and not date_start > self.date_end
+            and date_start > today and (self.date_end is None or not date_start > self.date_end)
         ):
             self.date_start = date_start
         elif self.date_end is not None and date_start > self.date_end:
