@@ -507,7 +507,9 @@ class XFormManagementStatusView(DataInterfaceSection):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': "{url}?mode={mode}".format(
+                url=reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
+                mode=mode.mode_name),
             'title': mode.status_page_title,
             'progress_text': mode.progress_text,
             'error_text': mode.error_text,
@@ -519,17 +521,19 @@ class XFormManagementStatusView(DataInterfaceSection):
 
 
 # ToDo permission decorator
-def xform_management_job_poll(request, domain, download_id, template="data_interfaces/partials/xform_management_status.html"):
+def xform_management_job_poll(request, domain, download_id,
+                              template="data_interfaces/partials/xform_management_status.html"):
     print "yooo"
+    mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
         return HttpResponseServerError()
 
     context.update({
-        'on_complete_short': _('Change this text'),
-        'on_complete_long': _('Change this text'),
-
+        'on_complete_short': mode.complete_short,
+        'on_complete_long': mode.complete_long,
+        'mode': mode
     })
     print context
     return render(request, template, context)

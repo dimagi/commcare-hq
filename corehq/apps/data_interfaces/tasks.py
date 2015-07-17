@@ -54,7 +54,7 @@ def bulk_form_management_async(archive_or_restore, domain, user, es_dict_or_form
     response = archive_or_restore_forms(domain, user, xform_ids, mode)
     print response
     DownloadBase.set_progress(task, 100, 100)
-    return {'messages': {'errors': ['done done']}}
+    return response
 
 
 def get_form_ids(es_query_dict, domain):

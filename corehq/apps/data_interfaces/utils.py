@@ -51,6 +51,7 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
     }
 
     missing_forms = set(form_ids)
+    success_count = 0
 
     for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
         xform = XFormInstance.wrap(xform_doc)
@@ -74,6 +75,7 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
                 xform.unarchive(user=user.username)
                 message = _(u"Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
+            success_count = success_count + 1
         except Exception as e:
             response['errors'].append(_(u"Could not archive {form}: {error}").format(
                 form=xform_string, error=e))
@@ -82,4 +84,7 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore):
         response['errors'].append(
             _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
-    return response
+    response["success_count_msg"] = _("{success_msg} {count} form(s)".format(
+        success_msg=archive_or_restore.success_text,
+        count=success_count))
+    return {"messages": response}
