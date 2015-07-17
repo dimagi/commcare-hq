@@ -23,7 +23,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             "Sorry, the export failed for %s, please try again later" % custom_export._id,
             expiry,
             content_disposition="",
-            content_type="text/html",
+            mimetype="text/html",
             download_id=download_id
         ).save(expiry)
     else:
@@ -121,7 +121,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
 
         payload = tmp.payload
         expose_cached_download(payload, expiry,
-                        content_type=format.mimetype,
+                        mimetype=format.mimetype,
                         content_disposition='attachment; filename="%s"' % escaped_filename,
                         extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
                         download_id=download_id)
@@ -130,5 +130,5 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         # this just gives you a link saying there wasn't anything there
         expose_cached_download("Sorry, there wasn't any data.", expiry,
                         content_disposition="",
-                        content_type="text/html",
+                        mimetype="text/html",
                         download_id=download_id).save(expiry)
