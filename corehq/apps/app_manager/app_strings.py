@@ -11,7 +11,7 @@ def non_empty_only(dct):
     return dict([(key, value) for key, value in dct.items() if value])
 
 
-def _create_custom_app_strings(app, lang):
+def _create_custom_app_strings(app, lang, for_default=False):
 
     def trans(d):
         return clean_trans(d, langs)
@@ -64,9 +64,9 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        if module.icon_by_language(lang, strict=True):
+        if not for_default and module.icon_by_language(lang, strict=True):
             yield id_strings.module_icon_locale(module), module.icon_by_language(lang)
-        if module.audio_by_language(lang, strict=True):
+        if not for_default and module.audio_by_language(lang, strict=True):
             yield id_strings.module_audio_locale(module), module.audio_by_language(lang)
         if hasattr(module, 'report_configs'):
             for config in module.report_configs:
@@ -124,7 +124,7 @@ class AppStringsBase(object):
         return self._load_translations(lang)
 
     def create_custom_app_strings(self, app, lang, for_default=False):
-        custom = dict(_create_custom_app_strings(app, lang))
+        custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))
         if not for_default:
             custom = non_empty_only(custom)
         return custom
