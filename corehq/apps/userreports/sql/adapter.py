@@ -30,6 +30,8 @@ class IndicatorSqlAdapter(object):
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
 
     def drop_table(self):
+        # this will hang if there are any open sessions, so go ahead and close them
+        self.session_helper.Session.remove()
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
 

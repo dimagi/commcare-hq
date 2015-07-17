@@ -68,9 +68,7 @@ class IndicatorPillowTest(TestCase):
                 'priority': bad_value
             })
         # make sure we saved rows to the table for everything
-        with self.engine.begin() as connection:
-            rows = connection.execute(sqlalchemy.select([self.adapter.get_table()]))
-            self.assertEqual(len(bad_ints), rows.rowcount)
+        self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
     @patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, datetime_mock):
