@@ -1026,8 +1026,8 @@ class Subscription(models.Model):
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, **kwargs):
         """
-        Changing a plan TERMINATES the current subscription and
-        creates a NEW SUBSCRIPTION where the old plan left off.
+        Changing a plan TERMINATES ALL ACTIVE SUBSCRIPTIONS for this
+        subscriber and creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -1062,8 +1062,13 @@ class Subscription(models.Model):
         if (self.date_delay_invoicing is not None
            and self.date_delay_invoicing > today):
             self.date_delay_invoicing = today
-        self.is_active = False
-        self.save()
+
+        self.terminate_all_active_subscriptions(
+            excluded_id=new_subscription.id,
+            web_user=web_user,
+            method=adjustment_method,
+            note=note,
+        )
 
         self.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgrades,
@@ -1095,6 +1100,12 @@ class Subscription(models.Model):
         created in between).
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
+        self.terminate_all_active_subscriptions(
+            excluded_id=self.id,
+            web_user=web_user,
+            method=adjustment_method,
+            note=note,
+        )
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
