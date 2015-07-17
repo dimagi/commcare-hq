@@ -9,7 +9,23 @@ from corehq import Domain
 
 
 @receiver(pre_save, sender=StockTransaction)
-def create_reconciliation_transaction(sender, instance, *args, **kwargs):
+def stock_transaction_pre_save_signal_receiver(sender, instance, *args, **kwargs):
+    create_reconciliation_transaction(instance)
+    populate_sql_product(instance)
+
+
+@receiver(post_save, sender=StockTransaction)
+def stock_transaction_post_save_signal_receiver(sender, instance, *args, **kwargs):
+    update_stock_state_for_transaction(instance)
+
+
+@receiver(post_delete, sender=StockTransaction)
+def stock_transaction_post_delete_signal_receiver(sender, instance, *args,
+                                                  **kwargs):
+    stock_state_deleted(instance)
+
+
+def create_reconciliation_transaction(instance):
     from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
 
     creating = instance.pk is None
@@ -31,8 +47,7 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
                 )
 
 
-@receiver(pre_save, sender=StockTransaction)
-def populate_sql_product(sender, instance, *args, **kwargs):
+def populate_sql_product(instance):
     from corehq.apps.products.models import SQLProduct
 
     # some day StockTransaction.sql_product should be the canonical source of
@@ -40,11 +55,6 @@ def populate_sql_product(sender, instance, *args, **kwargs):
     # look up the SQLProduct every time..
     if not instance.sql_product_id and instance.product_id:
         instance.sql_product = SQLProduct.objects.get(product_id=instance.product_id)
-
-
-@receiver(post_save, sender=StockTransaction)
-def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
-    update_stock_state_for_transaction(instance)
 
 
 def update_stock_state_for_transaction(instance):
@@ -123,8 +133,7 @@ def update_stock_state_for_transaction(instance):
     state.save()
 
 
-@receiver(post_delete, sender=StockTransaction)
-def stock_state_deleted(sender, instance, *args, **kwargs):
+def stock_state_deleted(instance):
     from corehq.apps.commtrack.models import StockState
 
     qs = StockTransaction.objects.filter(
