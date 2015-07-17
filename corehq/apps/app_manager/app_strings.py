@@ -64,9 +64,9 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-        if module.icon_by_language(lang):
+        if module.icon_by_language(lang, strict=True):
             yield id_strings.module_icon_locale(module), module.icon_by_language(lang)
-        if module.audio_by_language(lang):
+        if module.audio_by_language(lang, strict=True):
             yield id_strings.module_audio_locale(module), module.audio_by_language(lang)
         if hasattr(module, 'report_configs'):
             for config in module.report_configs:

@@ -1007,7 +1007,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
-    def _get_media_by_language(self, media_attr, lang):
+    def _get_media_by_language(self, media_attr, lang, strict=False):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr)
@@ -1015,7 +1015,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return None
         if lang in media_dict:
             return media_dict[lang]
-        else:
+        elif not strict:
             # if the queried lang key doesn't exist,
             # return the first in the sorted list
             for lang, item in sorted(media_dict.items()):
@@ -1031,11 +1031,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # For older apps that were migrated
         return self.audio_by_language('default')
 
-    def icon_by_language(self, lang):
-        return self._get_media_by_language('media_image', lang)
+    def icon_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_image', lang, strict=strict)
 
-    def audio_by_language(self, lang):
-        return self._get_media_by_language('media_audio', lang)
+    def audio_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_audio', lang, strict=strict)
 
     def _set_media(self, media_attr, lang, media_path):
         """
