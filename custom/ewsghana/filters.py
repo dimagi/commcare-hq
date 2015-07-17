@@ -102,7 +102,7 @@ class MultiProductFilter(BaseMultipleOptionFilter):
 
 class EWSRestrictionLocationFilter(AsyncLocationFilter):
     template = "ewsghana/partials/location_async.html"
-    show_administrative = True
+    only_administrative = False
 
     @property
     def filter_context(self):
@@ -123,13 +123,13 @@ class EWSRestrictionLocationFilter(AsyncLocationFilter):
             'control_name': self.label,
             'control_slug': self.slug,
             'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative),
+            'locations': load_locs_json(self.domain, loc_id, only_administrative=self.only_administrative),
             'hierarchy': location_hierarchy_config(self.domain)
         }
 
 
 class EWSLocationFilter(EWSRestrictionLocationFilter):
-    show_administrative = False
+    only_administrative = True
 
     def reporting_types(self):
         return [
@@ -165,7 +165,7 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
             'control_name': self.label,
             'control_slug': self.slug,
             'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, show_admin=self.show_administrative),
+            'locations': load_locs_json(self.domain, loc_id, only_administrative=self.only_administrative),
             'hierarchy': hierarchy
         }
 
