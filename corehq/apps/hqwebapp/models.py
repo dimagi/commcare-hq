@@ -1065,7 +1065,7 @@ class ProjectUsersTab(UITab):
                     'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                     'subpages': [
                         {
-                            'title': _("Invite Web User"),
+                            'title': _("Add Web User"),
                             'urlname': 'invite_web_user'
                         },
                         {
