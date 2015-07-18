@@ -20,6 +20,7 @@ from couchdbkit import ResourceConflict, MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
+from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
@@ -4755,6 +4756,19 @@ class CareplanConfig(Document):
             result = None
 
         return result
+
+
+class TemplateApp(models.Model):
+    slug = models.CharField(max_length=32)
+    app_id = models.CharField(max_length=32)
+    is_active = models.BooleanField(default=False)
+
+    @classmethod
+    def app_id_by_slug(cls, slug):
+        template = cls.objects.filter(slug=slug, is_active=True).first()
+        if template is not None and Application.get(template.app_id) is not None:
+            return template.app_id
+        return None
 
 
 # backwards compatibility with suite-1.0.xml

@@ -7,7 +7,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import Application, domain_has_apps
+from corehq.apps.app_manager.models import Application, domain_has_apps, TemplateApp
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -74,8 +74,8 @@ class NewUserDashboardView(BaseDashboardView):
             'lead_line2': _('with a blank application'),
         }]
 
-        case_management_app_id = 'ccfa9c6c4599c46dd957e5e5999006db'
-        if True:
+        case_management_app_id = TemplateApp.app_id_by_slug('case_management')
+        if case_management_app_id is not None:
             templates = [{
                 'heading': _('Case Management'),
                 'url': reverse('fast_import_app', args=[domain, case_management_app_id]),
@@ -84,8 +84,8 @@ class NewUserDashboardView(BaseDashboardView):
                 'lead_line2': _('over time'),
             }] + templates
 
-        survey_app_id = 'ccfa9c6c4599c46dd957e5e5999006db'
-        if True:
+        survey_app_id = TemplateApp.app_id_by_slug('survey')
+        if survey_app_id is not None:
             templates = [{
                 'heading': _('Survey'),
                 'url': reverse('fast_import_app', args=[domain, survey_app_id]),
