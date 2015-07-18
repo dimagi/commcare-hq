@@ -1041,7 +1041,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return (content_type, form_unique_id, form_name)
 
     @classmethod
-    def create_from_reminder(cls, reminder_definition, reminder, recipient):
+    def create_from_reminder(cls, reminder_definition, reminder, recipient=None):
         if reminder_definition.messaging_event_id:
             return cls.objects.get(pk=reminder_definition.messaging_event_id)
 
@@ -1051,6 +1051,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         if isinstance(recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+        elif recipient is None:
+            recipient_type = cls.RECIPIENT_UNKNOWN
             recipient_id = None
         else:
             recipient_type = cls.get_recipient_type(recipient)
