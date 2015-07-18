@@ -842,16 +842,6 @@ class CaseReminderHandler(Document):
             return False
 
         recipient = reminder.recipient
-
-        if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
-            # If we are on one of the timeout intervals, then do not create
-            # a new MessagingEvent. Instead, just resuse the one that was
-            # created last time.
-            logged_event = MessagingEvent.objects.get(pk=reminder.last_messaging_event_id)
-        else:
-            logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
-        reminder.last_messaging_event_id = logged_event.pk
-
         if isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
         elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
@@ -863,6 +853,15 @@ class CaseReminderHandler(Document):
         else:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
             return True
+
+        if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
+            # If we are on one of the timeout intervals, then do not create
+            # a new MessagingEvent. Instead, just resuse the one that was
+            # created last time.
+            logged_event = MessagingEvent.objects.get(pk=reminder.last_messaging_event_id)
+        else:
+            logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
+        reminder.last_messaging_event_id = logged_event.pk
 
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
