@@ -1,0 +1,127 @@
+{% extends "reports/standard/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# Copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/templates/reports/standard/base_template.html#L22 #}
+{# and some methods from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/javascripts/reports.config.js #}
+
+{# Added possibility to export without genereting the whole report. I must copied some methods because we don't have access to override them #}
+{# Main chcange is in getReportParams, I get actual parameters from filter without generating the report. #}
+{% block reports-js-inline %}
+    <script>
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            urlRoot: '{{ report.url_root }}',
+            slug: {{ report.slug|JSON }},
+            subReportSlug: {{ report.sub_slug|JSON }},
+            type: {{ report.type|JSON }},
+            filterSet: {{ report.filter_set|JSON }},
+            needsFilters: {{ report.needs_filters|JSON }},
+            isExportable: {{ report.is_exportable|JSON }},
+            isExportAll: {{ report.is_export_all|JSON }},
+            isEmailable: {{ report.is_emailable|JSON }},
+            emailDefaultSubject: {{ report.title|JSON }},
+            emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
+            emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
+
+            {% if request.datespan %}
+                datespan: {
+                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+                },
+            {% endif %}
+        });
+
+        function getReportParams(additionalParams, asObject) {
+            var params = $('#paramSelectorForm').serialize();
+            params += (additionalParams ? "&" + additionalParams : "");
+            if (asObject) {
+                // http://stackoverflow.com/a/8649003/835696
+                return JSON.parse('{"' +
+                    decodeURI(params)
+                        .replace(/"/g, '\\"')
+                        .replace(/&/g, '","')
+                        .replace(/=/g,'":"') +
+                    '"}');
+
+            }
+            return params;
+
+        }
+
+        function getReportBaseUrl(renderType) {
+            return window.location.pathname.replace(standardHQReport.urlRoot, standardHQReport.urlRoot+renderType+"/");
+        }
+
+        function getReportRenderUrl(renderType, additionalParams) {
+            var baseUrl = getReportBaseUrl(renderType);
+            var paramString = getReportParams(additionalParams);
+            return baseUrl + "?" + paramString;
+        }
+
+
+        var checkFilterAccordionToggleState = function () {
+            var _setShowFilterCookie = function (show) {
+                var showStr = show ? 'in' : '';
+                $.cookie(standardHQReport.toggleFiltersCookie, showStr, {path: standardHQReport.urlRoot, expires: 1});
+            };
+
+            if (!$.cookie(standardHQReport.toggleFiltersCookie) && $.cookie(standardHQReport.toggleFiltersCookie) !== '') {
+                // default to showing filters
+                // (When filters should be hidden, $.cookie(self.toggleFiltersCookie) === '')
+                _setShowFilterCookie(true);
+            }
+            $(standardHQReport.filterAccordion).addClass($.cookie(standardHQReport.toggleFiltersCookie));
+
+            if ($.cookie(standardHQReport.toggleFiltersCookie) == 'in') {
+                $(standardHQReport.toggleFiltersButton).button('close');
+            } else {
+                $(standardHQReport.toggleFiltersButton).button('open');
+            }
+
+            $(standardHQReport.filterAccordion).on('hidden', function (data) {
+                if (!(data.target && $(data.target).hasClass('modal'))) {
+                    _setShowFilterCookie(false);
+                    $(standardHQReport.toggleFiltersButton).button('open');
+                }
+            });
+
+            $(standardHQReport.filterAccordion).on('show', function () {
+                _setShowFilterCookie(true);
+                $(standardHQReport.toggleFiltersButton).button('close');
+            });
+
+        };
+
+
+        standardHQReport.init = function() {
+            $(function () {
+                checkFilterAccordionToggleState();
+                standardHQReport.resetFilterState();
+
+                if (standardHQReport.needsFilters) {
+                    standardHQReport.filterSubmitButton.button('reset').addClass('btn-primary');
+                }
+                if (standardHQReport.slug) {
+                    if (standardHQReport.isExportable) {
+                        $(standardHQReport.exportReportButton).click(function (e) {
+                            window.location.href = getReportRenderUrl("export");
+                        });
+                    }
+                }
+            });
+        }
+
+        standardHQReport.init();
+
+        {% if report.slug and report.is_async %}
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: standardHQReport
+            });
+            asyncHQReport.init();
+        {% endif %}
+
+        $('#apply-btn').replaceWith($('#export-report-excel'));
+        $('#export-report-excel').show()
+    </script>
+{% endblock %}

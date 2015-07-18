@@ -55,12 +55,12 @@ class ReportingRates(ReportingRatesData):
 
             chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting'),
+                     label=_('Non-Reporting %s%%' % non_reported_formatted),
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
                 dict(value=reported_percent,
-                     label=_('Reporting'),
+                     label=_('Reporting %s%%' % reported_formatted),
                      description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
                                                                 self.datetext())),
                      color='green'),
@@ -105,12 +105,12 @@ class ReportingDetails(ReportingRatesData):
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                     label=_('Complete'),
+                     label=_('Complete %s%%' % complete_formatted),
                      description=_("%s%% (%d) Complete Reports in %s" %
                                    (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_formatted,
-                     label=_('Incomplete'),
+                     label=_('Incomplete %s%%' % incomplete_formatted),
                      description=_("%s%% (%d) Incomplete Reports in %s" %
                                    (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
