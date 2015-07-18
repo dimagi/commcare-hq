@@ -649,7 +649,8 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        execute(record_successful_deploy)
+        url = _tag_commit()
+        execute(record_successful_deploy, url)
 
 
 def _confirm_translated():
