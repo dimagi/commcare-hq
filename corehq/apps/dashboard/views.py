@@ -60,6 +60,42 @@ class NewUserDashboardView(BaseDashboardView):
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_new_user.html'
 
+    @property
+    def page_context(self):
+        return { 'templates': self.templates(self.domain) }
+
+    @classmethod
+    def templates(cls, domain):
+        templates = [{
+            'heading': _('Blank Application'),
+            'url': reverse('default_new_app', args=[domain]),
+            'icon': 'fcc-blankapp',
+            'lead_line1': _('Start from scratch'),
+            'lead_line2': _('with a blank application'),
+        }]
+
+        case_management_app_id = 'ccfa9c6c4599c46dd957e5e5999006db'
+        if True:
+            templates = [{
+                'heading': _('Case Management'),
+                'url': reverse('fast_import_app', args=[domain, case_management_app_id]),
+                'icon': 'fcc-casemgt',
+                'lead_line1': _('Track information'),
+                'lead_line2': _('over time'),
+            }] + templates
+
+        survey_app_id = 'ccfa9c6c4599c46dd957e5e5999006db'
+        if True:
+            templates = [{
+                'heading': _('Survey'),
+                'url': reverse('fast_import_app', args=[domain, survey_app_id]),
+                'icon': 'fcc-survey',
+                'lead_line1': _('One-time'),
+                'lead_line2': _('data collection'),
+            }] + templates
+
+        return templates
+
 
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'

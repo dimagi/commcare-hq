@@ -1067,7 +1067,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         template = "app_manager/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
-        template = "dashboard/dashboard_new_user.html"
+        from corehq.apps.dashboard.views import NewUserDashboardView
+        template = NewUserDashboardView.template_name
+        context.update({ 'templates': NewUserDashboardView.templates(domain) })
 
     # update multimedia context for forms and modules.
     menu_host = form or module
