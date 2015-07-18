@@ -1,16 +1,5 @@
 from datetime import datetime
-import uuid
-from xml.etree import ElementTree
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
-from corehq.apps.commtrack import const
-
-
-def long_date(timestamp=None):
-    if not timestamp:
-        timestamp = datetime.utcnow()
-    return json_format_datetime(timestamp)
 
 
 def balance_ota_block(sp, section_id, product_amounts, datestring):
@@ -27,6 +16,7 @@ def balance_ota_block(sp, section_id, product_amounts, datestring):
 
 
 def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timestamp=None):
+    timestamp = timestamp or datetime.utcnow()
     insides = insides() if callable(insides) else insides
     return ("""<?xml version="1.0" ?>
         <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
@@ -53,7 +43,7 @@ def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timesta
         user_id=user._id,
         instance_id=instance_id,
         username=user.username,
-        long_date=long_date(timestamp),
+        long_date=json_format_datetime(timestamp),
     )
 
 

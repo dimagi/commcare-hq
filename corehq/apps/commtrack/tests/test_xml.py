@@ -34,7 +34,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     receipts_enumerated,
     balance_enumerated,
-    products_xml, long_date)
+    products_xml)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -397,7 +397,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         form = form.format(
             form_id=uuid.uuid4().hex,
             user_id=self.user._id,
-            date=long_date(),
+            date=json_format_datetime(datetime.utcnow()),
             sp_id=self.sp._id,
             product_block=product_block
         )
