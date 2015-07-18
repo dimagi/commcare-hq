@@ -687,6 +687,18 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt('-'),
                     self._fmt(status),
                 ])
+            elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
+                timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
+                status = self.get_status_display(messaging_subevent)
+                result.append([
+                    self._fmt_timestamp(timestamp),
+                    self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                    self._fmt('-'),
+                    self._fmt('-'),
+                    self._fmt_direction('-'),
+                    self._fmt('-'),
+                    self._fmt(status),
+                ])
         return result
 
 

@@ -875,6 +875,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
+        # Do not change the name of this method because this ends up implementing
+        # get_email() from the CommCareMobileContactMixin for the CommCareUser
         return self.email
 
     def is_commcare_user(self):
@@ -2177,6 +2179,8 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return True
 
     def get_email(self):
+        # Do not change the name of this method because this is implementing
+        # get_email() from the CommCareMobileContactMixin
         return self.email or self.username
 
     def get_time_zone(self):
