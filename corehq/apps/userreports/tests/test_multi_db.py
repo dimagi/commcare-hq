@@ -4,9 +4,12 @@ from django.test import TestCase
 from mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
-from corehq.apps.userreports.tests import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
+    get_sample_report_config
 from corehq.apps.userreports.sql import connection, IndicatorSqlAdapter
 from corehq import db
 
@@ -25,6 +28,7 @@ class UCRMultiDBTest(TestCase):
             # unfortunately we need to patch this directly in modules that import it as well
             patch('corehq.apps.userreports.sql.connection.get_engine_id'),
             patch('corehq.apps.userreports.sql.adapter.get_engine_id'),
+            patch('corehq.apps.userreports.reports.data_source.get_engine_id'),
         )
         cls.connection_string_patch = patch('corehq.db.connection_manager.get_connection_string')
         for engine_id_patch in cls.engine_id_patches:
@@ -45,8 +49,10 @@ class UCRMultiDBTest(TestCase):
         data_source_template = get_sample_data_source()
         cls.ds_1 = DataSourceConfiguration.wrap(data_source_template.to_json())
         cls.ds_1.engine_id = 'engine-1'
+        cls.ds_1.save()
         cls.ds_2 = DataSourceConfiguration.wrap(data_source_template.to_json())
         cls.ds_2.engine_id = 'engine-2'
+        cls.ds_2.save()
 
         # use db1 engine to create db2 http://stackoverflow.com/a/8977109/8207
         cls.root_engine = create_engine(settings.SQL_REPORTING_DATABASE_URL)
@@ -76,6 +82,10 @@ class UCRMultiDBTest(TestCase):
         for engine_id_patch in cls.engine_id_patches:
             engine_id_patch.stop()
         cls.connection_string_patch.stop()
+
+        # delete data sources
+        cls.ds_1.delete()
+        cls.ds_2.delete()
 
         # dispose secondary engine
         cls.ds2_adapter.session_helper.engine.dispose()
@@ -108,7 +118,7 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(settings.SQL_REPORTING_DATABASE_URL, str(self.ds1_adapter.engine.url))
         self.assertEqual(self.db2_url, str(self.ds2_adapter.engine.url))
 
-    def test_save_to_multiple_databases(self):
+    def test_pillow_save_to_multiple_databases(self):
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         pillow = ConfigurableIndicatorPillow()
         pillow.bootstrap(configs=[self.ds_1, self.ds_2])
@@ -119,7 +129,7 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
 
-    def test_save_to_one_database_at_a_time(self):
+    def test_pillow_save_to_one_database_at_a_time(self):
         pillow = ConfigurableIndicatorPillow()
         pillow.bootstrap(configs=[self.ds_1])
 
@@ -137,3 +147,37 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
         self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id='some-doc-id').count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().filter_by(doc_id=sample_doc['_id']).count())
+
+    def test_report_data_source(self):
+        # bootstrap report data sources against indicator data sources
+        report_config_template = get_sample_report_config()
+        report_config_1 = ReportConfiguration.wrap(report_config_template.to_json())
+        report_config_1.config_id = self.ds_1._id
+        report_config_2 = ReportConfiguration.wrap(report_config_template.to_json())
+        report_config_2.config_id = self.ds_2._id
+
+        # save a few docs to ds 1
+        sample_doc, _ = get_sample_doc_and_indicators()
+        num_docs = 3
+        for i in range(num_docs):
+            sample_doc['_id'] = uuid.uuid4().hex
+            self.ds1_adapter.save(sample_doc)
+
+        # ds 1 should have data, ds2 should not
+        ds1_rows = ReportFactory.from_spec(report_config_1).get_data()
+        self.assertEqual(1, len(ds1_rows))
+        self.assertEqual(num_docs, ds1_rows[0]['count'])
+        ds2_rows = ReportFactory.from_spec(report_config_2).get_data()
+        self.assertEqual(0, len(ds2_rows))
+
+        # save one doc to ds 2
+        sample_doc['_id'] = uuid.uuid4().hex
+        self.ds2_adapter.save(sample_doc)
+
+        # ds 1 should still have same data, ds2 should now have one row
+        ds1_rows = ReportFactory.from_spec(report_config_1).get_data()
+        self.assertEqual(1, len(ds1_rows))
+        self.assertEqual(num_docs, ds1_rows[0]['count'])
+        ds2_rows = ReportFactory.from_spec(report_config_2).get_data()
+        self.assertEqual(1, len(ds2_rows))
+        self.assertEqual(1, ds2_rows[0]['count'])
