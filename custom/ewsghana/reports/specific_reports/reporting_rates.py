@@ -491,9 +491,12 @@ class ReportingRatesReport(MultiReport):
     def export_table(self):
         if self.is_reporting_type():
             return super(ReportingRatesReport, self).export_table
-
-        reports = [self.report_context['reports'][-2]['report_table'],
+        non_reporting = self.report_context['reports'][-2]['report_table']
+        non_reporting['title'] = 'Non reporting'
+        reports = [non_reporting,
                    self.report_context['reports'][-1]['report_table']]
+        if self.report_location.location_type.name.lower() in ['country', 'region']:
+            reports = [self.report_context['reports'][-3]['report_table']] + reports
         return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
