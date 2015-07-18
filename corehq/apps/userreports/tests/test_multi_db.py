@@ -63,12 +63,11 @@ class UCRMultiDBTest(TestCase):
             pass
         conn.close()
 
-        # initialize the UCR tables
         cls.ds1_adapter = IndicatorSqlAdapter(cls.ds_1)
         cls.ds2_adapter = IndicatorSqlAdapter(cls.ds_2)
 
     def setUp(self):
-        pass
+        # initialize the tables
         self.ds1_adapter.rebuild_table()
         self.ds2_adapter.rebuild_table()
         self.assertEqual(0, self.ds1_adapter.get_query_object().count())
