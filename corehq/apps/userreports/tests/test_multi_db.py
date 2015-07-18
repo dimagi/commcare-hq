@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config
@@ -34,7 +33,6 @@ class UCRMultiDBTest(TestCase):
         for engine_id_patch in cls.engine_id_patches:
             mock_engine_id_method = engine_id_patch.start()
             mock_engine_id_method.side_effect = lambda x: x.engine_id
-
 
         def connection_string_for_engine(engine_id):
             if engine_id == 'engine-1':
@@ -66,7 +64,7 @@ class UCRMultiDBTest(TestCase):
         conn.close()
 
         # initialize the UCR tables
-        cls.ds1_adapter= IndicatorSqlAdapter(cls.ds_1)
+        cls.ds1_adapter = IndicatorSqlAdapter(cls.ds_1)
         cls.ds2_adapter = IndicatorSqlAdapter(cls.ds_2)
 
     def setUp(self):
