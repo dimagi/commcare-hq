@@ -89,7 +89,7 @@ class UCRMultiDBTest(TestCase):
 
         # drop the secondary database
         conn = cls.root_engine.connect()
-        conn.execute('commit')
+        conn.execute('rollback')
         try:
             conn.execute('DROP DATABASE {}'.format(cls.db2_name))
         finally:
