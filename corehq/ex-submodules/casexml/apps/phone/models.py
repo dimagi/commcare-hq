@@ -633,7 +633,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     id=self._id,
                 ))
                 raise
+
         logger.debug('final rev: {}'.format(self._rev))
+        logger.debug('index tree after save: {}'.format(self.index_tree))
+        from_db = self.__class__.get(self._id)
+        logger.debug('db rev: {}'.format(from_db._rev))
+        logger.debug('index tree from db: {}'.format(from_db.index_tree))
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
