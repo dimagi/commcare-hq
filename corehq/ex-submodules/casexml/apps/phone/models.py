@@ -3,6 +3,7 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -173,6 +174,16 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def invalidate_cached_payloads(self):
         for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
+
+    @classmethod
+    def from_other_format(cls, other_sync_log):
+        """
+        Convert to an instance of a subclass from another subclass. Subclasses can
+        override this to provide conversion functions.
+        """
+        raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+            type(other_sync_log), cls,
+        ))
 
     # anything prefixed with 'tests_only' is only used in tests
     def tests_only_get_cases_on_phone(self):
@@ -625,30 +636,33 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 raise
 
     @classmethod
-    def from_sync_log(cls, legacy_sync_log):
+    def from_other_format(cls, other_sync_log):
         """
-        Migrate from the old SyncLog format to the new one.
+        Migrate from the old SyncLog format to this one.
         """
-        def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
-            new_sync_log.case_ids_on_phone.add(case_state.case_id)
-            for index in case_state.indices:
-                new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
-            if is_dependent:
-                new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+        if isinstance(other_sync_log, SyncLog):
+            def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
+                new_sync_log.case_ids_on_phone.add(case_state.case_id)
+                for index in case_state.indices:
+                    new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                if is_dependent:
+                    new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
 
-        ret = cls.wrap(legacy_sync_log.to_json())
-        for case_state in legacy_sync_log.cases_on_phone:
-            _add_state_contributions(ret, case_state)
+            ret = cls.wrap(other_sync_log.to_json())
+            for case_state in other_sync_log.cases_on_phone:
+                _add_state_contributions(ret, case_state)
 
-        for case_state in legacy_sync_log.dependent_cases_on_phone:
-            _add_state_contributions(ret, case_state, is_dependent=True)
+            for case_state in other_sync_log.dependent_cases_on_phone:
+                _add_state_contributions(ret, case_state, is_dependent=True)
 
-        # set and cleanup other properties
-        ret.log_format = LOG_FORMAT_SIMPLIFIED
-        del ret['last_seq']
-        del ret['cases_on_phone']
-        del ret['dependent_cases_on_phone']
-        return ret
+            # set and cleanup other properties
+            ret.log_format = LOG_FORMAT_SIMPLIFIED
+            del ret['last_seq']
+            del ret['cases_on_phone']
+            del ret['dependent_cases_on_phone']
+            return ret
+        else:
+            return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
