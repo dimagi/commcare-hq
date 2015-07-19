@@ -38,7 +38,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         self.bootstrapped = True
 
     def rebuild_tables_if_necessary(self):
-        tables_by_engine = defaultdict(lambda: {})
+        tables_by_engine = defaultdict(dict)
         for adapter in self.tables:
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
