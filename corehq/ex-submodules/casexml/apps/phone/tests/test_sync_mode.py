@@ -96,6 +96,8 @@ class SyncBaseTest(TestCase):
         sync_log = get_properly_wrapped_sync_log(sync_id)
         
         if isinstance(sync_log, SimplifiedSyncLog):
+            logger.debug('in test, rev: {}'.format(sync_log._rev))
+            logger.debug('in test, index tree: {}'.format(sync_log.index_tree))
             all_ids = {}
             all_ids.update(case_id_map)
             all_ids.update(dependent_case_id_map)

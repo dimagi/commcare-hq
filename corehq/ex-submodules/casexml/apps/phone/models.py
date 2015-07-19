@@ -568,6 +568,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def update_phone_lists(self, xform, case_list):
         made_changes = False
         logger.debug('updating sync log for {}'.format(self.user_id))
+        logger.debug('initial rev: {}'.format(self._rev))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree before update: {}'.format(self.index_tree))
@@ -632,6 +633,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     id=self._id,
                 ))
                 raise
+        logger.debug('final rev: {}'.format(self._rev))
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
