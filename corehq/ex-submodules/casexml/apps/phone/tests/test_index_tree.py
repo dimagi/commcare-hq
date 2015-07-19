@@ -1,4 +1,3 @@
-import json
 from django.test import SimpleTestCase
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
