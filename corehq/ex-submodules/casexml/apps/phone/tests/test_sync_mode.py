@@ -15,7 +15,7 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
 from casexml.apps.case.xform import process_cases
-from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog
+from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, logger
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
@@ -293,6 +293,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_delete_one_of_multiple_indices(self):
         # make IDs both human readable and globally unique to this test
+        logger.debug('start test')
         uid = uuid.uuid4().hex
         child_id = 'child_id-{}'.format(uid)
         parent_id_1 = 'parent_id-{}'.format(uid)
@@ -300,6 +301,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         parent_id_2 = 'parent_id_2-{}'.format(uid)
         index_id_2 = 'parent_index_id_2-{}'.format(uid)
 
+        logger.debug('create cases')
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             attrs={'create': True},
@@ -320,6 +322,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
             identifier=index_id_1, referenced_type=PARENT_TYPE, referenced_id=parent_id_1)
         parent_ref_2 = CommCareCaseIndex(
             identifier=index_id_2, referenced_type=PARENT_TYPE, referenced_id=parent_id_2)
+
+        logger.debug('first check')
         self._testUpdate(self.sync_log.get_id, {parent_id_1: [], parent_id_2: [],
                                                 child_id: [parent_ref_1, parent_ref_2]})
 
@@ -327,7 +331,10 @@ class SyncTokenUpdateTest(SyncBaseTest):
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
                           index={index_id_1: (PARENT_TYPE, "")},
         ).as_xml()
+        logger.debug('submit deletion')
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
+
+        logger.debug('final check')
         self._testUpdate(self.sync_log.get_id, {parent_id_1: [], parent_id_2: [],
                                                 child_id: [parent_ref_2]})
 
