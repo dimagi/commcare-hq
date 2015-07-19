@@ -598,11 +598,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # however, we should update our index tree accordingly
                     for index in action.indices:
                         if index.referenced_id:
+                            logger.debug('setting index {} from {} to {}'.format(
+                                index.identifier, case._id, index.referenced_id
+                            ))
                             self.index_tree.set_index(case._id, index.identifier, index.referenced_id)
                             if index.referenced_id not in self.case_ids_on_phone:
                                 self.case_ids_on_phone.add(index.referenced_id)
                                 self.dependent_case_ids_on_phone.add(index.referenced_id)
                         else:
+                            logger.debug('deleting index {} from {}'.format(
+                                index.identifier, case._id
+                            ))
                             self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
