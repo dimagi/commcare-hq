@@ -624,6 +624,32 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 ))
                 raise
 
+    @classmethod
+    def from_sync_log(cls, legacy_sync_log):
+        """
+        Migrate from the old SyncLog format to the new one.
+        """
+        def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
+            new_sync_log.case_ids_on_phone.add(case_state.case_id)
+            for index in case_state.indices:
+                new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+            if is_dependent:
+                new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+
+        ret = cls.wrap(legacy_sync_log.to_json())
+        for case_state in legacy_sync_log.cases_on_phone:
+            _add_state_contributions(ret, case_state)
+
+        for case_state in legacy_sync_log.dependent_cases_on_phone:
+            _add_state_contributions(ret, case_state, is_dependent=True)
+
+        # set and cleanup other properties
+        ret.log_format = LOG_FORMAT_SIMPLIFIED
+        del ret['last_seq']
+        del ret['cases_on_phone']
+        del ret['dependent_cases_on_phone']
+        return ret
+
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
         return [CaseState(case_id=id) for id in self.case_ids_on_phone]
