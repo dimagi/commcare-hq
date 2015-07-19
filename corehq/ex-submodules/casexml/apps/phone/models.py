@@ -452,9 +452,14 @@ class IndexTree(DocumentSchema):
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
+        logger.debug('popped prior ids {}'.format(json.dumps(prior_ids)))
+        logger.debug('temp indices: {}'.format(json.dumps(self.indices, indent=2)))
+        logger.debug('temp _obj: {}'.format(json.dumps(self._obj, indent=2)))
         prior_ids.pop(index_name, None)
         if prior_ids:
             self.indices[from_case_id] = prior_ids
+            logger.debug('final indices: {}'.format(json.dumps(self.indices, indent=2)))
+            logger.debug('final _obj: {}'.format(json.dumps(self._obj, indent=2)))
 
     def set_index(self, from_case_id, index_name, to_case_id):
         prior_ids = self.indices.get(from_case_id, {})
