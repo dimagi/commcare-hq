@@ -431,7 +431,8 @@ class IndexTree(DocumentSchema):
     """
     Document type representing a case dependency tree (which is flattened to a single dict)
     """
-    # a flat mapping of cases to lists of cases that they depend on
+    # a flat mapping of cases to dicts of their indices. The keys in each dict are the index identifiers
+    # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
     def __repr__(self):
