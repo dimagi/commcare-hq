@@ -14,7 +14,7 @@ from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, 
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
@@ -34,7 +34,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     receipts_enumerated,
     balance_enumerated,
-    products_xml, long_date)
+    products_xml)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -179,7 +179,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    def submit_xml_form(self, xml_method, timestamp=None, **submit_extras):
+    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,
@@ -189,6 +189,7 @@ class CommTrackSubmissionTest(CommTrackTest):
             self.sp2._id,
             xml_method,
             timestamp=timestamp,
+            date_formatter=date_formatter,
         )
         submit_form_locally(
             instance=instance,
@@ -218,6 +219,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     def test_balance_submit(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
+
+    def test_balance_submit_date(self):
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
@@ -300,6 +307,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
+
+    def test_transfer_with_date(self):
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(transfer_dest_only(amounts), date_formatter=json_format_date)
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, amt)
 
     def test_transfer_enumerated(self):
         initial = float(100)
@@ -397,7 +410,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         form = form.format(
             form_id=uuid.uuid4().hex,
             user_id=self.user._id,
-            date=long_date(),
+            date=json_format_datetime(datetime.utcnow()),
             sp_id=self.sp._id,
             product_block=product_block
         )
