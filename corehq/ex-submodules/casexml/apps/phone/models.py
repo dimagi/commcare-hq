@@ -621,6 +621,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree after update: {}'.format(self.index_tree))
+        logger.debug('index indices: {}'.format(json.dumps(self.index_tree.indices, indent=2)))
+        logger.debug('index _obj: {}'.format(json.dumps(self.index_tree._obj, indent=2)))
+        logger.debug('self _obj: {}'.format(json.dumps(self._obj, indent=2)))
         if made_changes or case_list:
             try:
                 if made_changes:
