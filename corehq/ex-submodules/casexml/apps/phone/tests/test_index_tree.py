@@ -1,3 +1,4 @@
+import json
 from django.test import SimpleTestCase
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
@@ -219,6 +220,48 @@ class PruningTest(SimpleTestCase):
         sync_log.prune_case(id)
         self.assertFalse(id in sync_log.case_ids_on_phone)
         self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
+
+
+class JsonObjectBugTest(SimpleTestCase):
+
+    def test_weird_bug(self):
+        for i in range(100):
+            raw_doc = '''{
+                "index_tree": {
+                "indices": {
+                  "child_id-7de0c270fc4741af9535c4a8c8f9c43e": {
+                    "parent_index_id-7de0c270fc4741af9535c4a8c8f9c43e": "parent_id-7de0c270fc4741af9535c4a8c8f9c43e",
+                    "parent_index_id_2-7de0c270fc4741af9535c4a8c8f9c43e": "parent_id_2-7de0c270fc4741af9535c4a8c8f9c43e"
+                  }
+                },
+                "doc_type": "IndexTree"
+                },
+                "user_id": "main_user",
+                "doc_type": "SyncLog",
+                "dependent_cases_on_phone": [],
+                "_rev": "2-872f8020669cd2fecb0f39933de01bdf",
+                "log_format": "simplified",
+                "date": "2015-07-19T13:59:39.163488Z",
+                "dependent_case_ids_on_phone": [],
+                "previous_log_id": null,
+                "last_seq": "77",
+                "case_ids_on_phone": [
+                "parent_id_2-7de0c270fc4741af9535c4a8c8f9c43e",
+                "parent_id-7de0c270fc4741af9535c4a8c8f9c43e",
+                "child_id-7de0c270fc4741af9535c4a8c8f9c43e"
+                ],
+                "duration": 0,
+                "cases_on_phone": [],
+                "_id": "153eefeaab5d5f6d5a4460980c1f2d74",
+                "strict": true,
+                "owner_ids_on_phone": [
+                "main_user"
+                ]
+            }'''
+            log = SimplifiedSyncLog.wrap(json.loads(raw_doc))
+            self.assertTrue('parent_index_id-7de0c270fc4741af9535c4a8c8f9c43e' in log._obj['index_tree']['indices']['child_id-7de0c270fc4741af9535c4a8c8f9c43e'])
+            log.index_tree.delete_index('child_id-7de0c270fc4741af9535c4a8c8f9c43e', 'parent_index_id-7de0c270fc4741af9535c4a8c8f9c43e')
+            self.assertFalse('parent_index_id-7de0c270fc4741af9535c4a8c8f9c43e' in log._obj['index_tree']['indices']['child_id-7de0c270fc4741af9535c4a8c8f9c43e'])
 
 
 def convert_list_to_dict(a_list):
