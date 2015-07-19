@@ -33,13 +33,13 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.tables = [IndicatorSqlAdapter(config) for config in configs]
+        self.table_adapters = [IndicatorSqlAdapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
 
     def rebuild_tables_if_necessary(self):
         tables_by_engine = defaultdict(dict)
-        for adapter in self.tables:
+        for adapter in self.table_adapters:
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
         for engine_id, table_map in tables_by_engine.items():
@@ -74,7 +74,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
-        for table in self.tables:
+        for table in self.table_adapters:
             if table.config.filter(doc):
                 table.save(doc)
             elif table.config.deleted_filter(doc):
