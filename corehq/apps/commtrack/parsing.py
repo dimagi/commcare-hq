@@ -123,6 +123,9 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     # helper functions
     def get_date():
         timestamp = ledger_json.get('@date') or form.received_on
+        if isinstance(timestamp, datetime.date):
+            timestamp = datetime.datetime.combine(timestamp, datetime.time())
+
         if not isinstance(timestamp, (datetime.datetime, datetime.date)):
             raise InvalidDate("{} has invalid @date".format(ledger_json))
         return timestamp
