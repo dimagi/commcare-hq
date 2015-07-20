@@ -20,6 +20,7 @@ from couchdbkit import ResourceConflict, MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
+from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
@@ -3754,6 +3755,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    created_from = StringProperty()
+    created_from_id = StringProperty()
 
     @property
     @memoized
@@ -4611,6 +4614,16 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
+def domain_has_apps(domain):
+    results = Application.get_db().view('app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+        limit=1,
+    ).all()
+    return len(results) > 0
+
+
 def get_apps_in_domain(domain, full=False, include_remote=True):
     """
     Returns all apps(not builds) in a domain
@@ -4709,7 +4722,7 @@ str_to_cls = {
 }
 
 
-def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
         source = get_app(None, app_id)
@@ -4726,8 +4739,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
         attachments = {}
     finally:
         source['_attachments'] = {}
-    if name:
-        source['name'] = name
+    if source_properties is not None:
+        for key, value in source_properties.iteritems():
+            source[key] = value
     cls = str_to_cls[source['doc_type']]
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
@@ -4819,6 +4833,19 @@ class CareplanConfig(Document):
             result = None
 
         return result
+
+
+class TemplateApp(models.Model):
+    slug = models.CharField(max_length=32)
+    app_id = models.CharField(max_length=32)
+    is_active = models.BooleanField(default=False)
+
+    @classmethod
+    def app_id_by_slug(cls, slug):
+        template = cls.objects.filter(slug=slug, is_active=True).first()
+        if template is not None and Application.get(template.app_id) is not None:
+            return template.app_id
+        return None
 
 
 # backwards compatibility with suite-1.0.xml
