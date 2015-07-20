@@ -667,7 +667,7 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(None, is_divider=True))
             newapp_options = [
                 dropdown_dict(
-                    _('Blank Application'),
+                    _('Blank Application...'),
                     url=reverse('default_app', args=[self.domain]),
                 ),
                 dropdown_dict(

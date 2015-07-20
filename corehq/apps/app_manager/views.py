@@ -348,7 +348,7 @@ def migrate_app_filters(request, domain, app_id):
 
 
 @require_can_edit_apps
-def fast_import_app(request, domain, app_id):
+def app_from_template(request, domain, app_id):
     _clear_app_cache(request, domain)
     app = get_app(None, app_id)
     name = app.name

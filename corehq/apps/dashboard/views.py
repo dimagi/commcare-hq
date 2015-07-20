@@ -78,7 +78,7 @@ class NewUserDashboardView(BaseDashboardView):
         if case_management_app_id is not None:
             templates = [{
                 'heading': _('Case Management'),
-                'url': reverse('fast_import_app', args=[domain, case_management_app_id]),
+                'url': reverse('app_from_template', args=[domain, case_management_app_id]),
                 'icon': 'fcc-casemgt',
                 'lead_line1': _('Track information'),
                 'lead_line2': _('over time'),
@@ -88,7 +88,7 @@ class NewUserDashboardView(BaseDashboardView):
         if survey_app_id is not None:
             templates = [{
                 'heading': _('Survey'),
-                'url': reverse('fast_import_app', args=[domain, survey_app_id]),
+                'url': reverse('app_from_template', args=[domain, survey_app_id]),
                 'icon': 'fcc-survey',
                 'lead_line1': _('One-time'),
                 'lead_line2': _('data collection'),
