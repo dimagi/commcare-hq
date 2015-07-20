@@ -105,15 +105,15 @@ class ReportingDetails(ReportingRatesData):
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                     label=_('Complete %s%%') % complete_formatted,
-                     description=_("%s%% (%d) Complete Reports in %s") %
-                                   (complete_formatted, data['complete'], self.datetext()),
-                     color='green'),
+                    label=_('Complete %s%%') % complete_formatted,
+                    description=_("%s%% (%d) Complete Reports in %s") %
+                                  (complete_formatted, data['complete'], self.datetext()),
+                    color='green'),
                 dict(value=incomplete_formatted,
-                     label=_('Incomplete %s%%') % incomplete_formatted,
-                     description=_("%s%% (%d) Incomplete Reports in %s") %
-                                   (incomplete_formatted, data['incomplete'], self.datetext()),
-                     color='purple'),
+                    label=_('Incomplete %s%%') % incomplete_formatted,
+                    description=_("%s%% (%d) Incomplete Reports in %s") %
+                                  (incomplete_formatted, data['incomplete'], self.datetext()),
+                    color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
         pie_chart.tooltips = False

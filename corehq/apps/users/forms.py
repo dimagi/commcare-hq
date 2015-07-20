@@ -367,7 +367,8 @@ class CommCareAccountForm(forms.Form):
 import django
 if django.VERSION < (1, 6):
     from django.core.validators import email_re
-    validate_username = EmailValidator(email_re, ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
+    validate_username = EmailValidator(email_re,
+            ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
 else:
     validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
