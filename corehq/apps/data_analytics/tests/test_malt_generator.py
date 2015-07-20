@@ -85,22 +85,24 @@ class MaltGeneratorTest(TestCase):
                     _form_data(instance_id, app_id, received_on=received_on)
                 )
 
-        invalid_forms = [
+        out_of_range_forms = [
             ("out_of_range_1", cls.app_id),
             ("out_of_range_2", cls.wam_app_id),
-            ("unknown_appId", cls.UNKNOWN_ID),
         ]
-        valid_forms = [
+        in_range_forms = [
+            # should be included in MALT
             ('app_form1', cls.app_id),
             ('app_form2', cls.app_id),
             ('app_form3', cls.app_id),
             ('wam_app_form1', cls.wam_app_id),
             ('wam_app_form2', cls.wam_app_id),
             ('missing_app_form', MISSING_APP_ID),
+            # should not be included
+            ("unknown_appId", cls.UNKNOWN_ID),
         ]
 
-        _append_forms(invalid_forms, cls.out_of_range_date)
-        _append_forms(valid_forms, cls.correct_date)
+        _append_forms(out_of_range_forms, cls.out_of_range_date)
+        _append_forms(in_range_forms, cls.correct_date)
 
         sms_form = _form_data('sms_form', cls.app_id, device_id=COMMCONNECT_DEVICE_ID)
         form_data_rows.append(sms_form)
