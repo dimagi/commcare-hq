@@ -32,8 +32,6 @@ from corehq.apps.reminders.forms import (
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
-    KEYWORD_CONTENT_CHOICES,
-    KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
     KeywordForm,
     NO_RESPONSE,

@@ -47,8 +47,6 @@ from .models import (
     METHOD_IVR_SURVEY,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
-    FORM_TYPE_ONE_BY_ONE,
-    FORM_TYPE_ALL_AT_ONCE,
     SurveyKeyword,
     RECIPIENT_PARENT_CASE,
     RECIPIENT_SUBCASE,
@@ -74,7 +72,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -82,88 +80,43 @@ from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
+NO_RESPONSE = "none"
+
 YES_OR_NO = (
-    ("Y","Yes"),
-    ("N","No"),
+    ("Y", ugettext_lazy("Yes")),
+    ("N", ugettext_lazy("No")),
 )
 
 NOW_OR_LATER = (
-    (SEND_NOW, _("Now")),
-    (SEND_LATER ,_("Later")),
+    (SEND_NOW, ugettext_lazy("Now")),
+    (SEND_LATER, ugettext_lazy("Later")),
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
+    (NO_RESPONSE, ugettext_lazy("No Response")),
 )
 
-NO_RESPONSE = "none"
-
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-    (RECIPIENT_OWNER, _("The case's owner")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
-    ("", _("---choose---")),
-    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-)
-
-METHOD_CHOICES = (
-    ('sms', 'SMS'),
-    #('email', 'Email'),
-    #('test', 'Test'),
-    ('survey', 'SMS survey'),
-    ('callback', 'SMS expecting callback'),
-    ('ivr_survey', 'IVR survey'),
-)
-
-RECIPIENT_CHOICES = (
-    (RECIPIENT_OWNER, "The case's owner(s)"),
-    (RECIPIENT_USER, "The case's last submitting user"),
-    (RECIPIENT_CASE, "The case"),
-    (RECIPIENT_PARENT_CASE, "The case's parent case"),
-    (RECIPIENT_SUBCASE, "The case's child case(s)"),
-    (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
-    (RECIPIENT_USER_GROUP, _("User Group")),
-)
-
-MATCH_TYPE_DISPLAY_CHOICES = (
-    (MATCH_EXACT, "equals"),
-    (MATCH_ANY_VALUE, "exists"),
-    (MATCH_REGEX, "matches the regular expression")
-)
-
-START_IMMEDIATELY = "IMMEDIATELY"
-START_ON_DATE = "DATE"
-
-START_CHOICES = (
-    (START_ON_DATE, "defined by case property"),
-    (START_IMMEDIATELY, "immediately")
-)
-
-ITERATE_INDEFINITELY = "INDEFINITE"
-ITERATE_FIXED_NUMBER = "FIXED"
-
-ITERATION_CHOICES = (
-    (ITERATE_INDEFINITELY, "using the following case property"),
-    (ITERATE_FIXED_NUMBER, "after repeating the schedule the following number of times")
+    ("", ugettext_lazy("---choose---")),
+    (RECIPIENT_SURVEY_SAMPLE, ugettext_lazy("Case Group")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
 )
 
 EVENT_CHOICES = (
-    (EVENT_AS_OFFSET, "Offset-based"),
-    (EVENT_AS_SCHEDULE, "Schedule-based")
-)
-
-FORM_TYPE_CHOICES = (
-    (FORM_TYPE_ONE_BY_ONE, "One sms per question"),
-    (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
+    (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
+    (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
 
 
@@ -417,10 +370,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     event_interpretation = forms.ChoiceField(
         label=ugettext_noop("Schedule Type"),
         initial=EVENT_AS_OFFSET,
-        choices=(
-            (EVENT_AS_OFFSET, ugettext_noop("Offset-based")),
-            (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
-        ),
+        choices=EVENT_CHOICES,
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
     )
 
@@ -1740,7 +1690,7 @@ class OneTimeReminderForm(Form):
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
     content_type = ChoiceField(choices=(
-        (METHOD_SMS, _("SMS Message")),
+        (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
@@ -2300,11 +2250,7 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
-        choices.append(
-            (NO_RESPONSE, _("No Response"))
-        )
-        return choices
+        return KEYWORD_CONTENT_CHOICES
 
     @property
     @memoized
