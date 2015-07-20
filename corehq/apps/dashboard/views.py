@@ -155,9 +155,6 @@ def _get_default_tile_configurations():
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
-    is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
-    data_url_generator = lambda urlname, request: reverse(urlname,
-        args=[request.domain, ExcelExportReport.slug])
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
 
