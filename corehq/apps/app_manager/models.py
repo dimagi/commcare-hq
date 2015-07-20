@@ -20,7 +20,6 @@ from couchdbkit import ResourceConflict, MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
-from django.db import models
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
