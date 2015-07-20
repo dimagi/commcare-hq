@@ -99,17 +99,17 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
 
 
 accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
-    400: _('Your request was not formatted properly.'),
-    403: _('Forbidden.'),
-    404: _('Page not found.'),
-    500: _("There was an error processing your request."
+    400: ugettext_lazy('Your request was not formatted properly.'),
+    403: ugettext_lazy('Forbidden.'),
+    404: ugettext_lazy('Page not found.'),
+    500: ugettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
