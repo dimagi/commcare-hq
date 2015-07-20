@@ -148,7 +148,7 @@ class CaseData(BaseDataIndex):
     domain = models.CharField(max_length=128, db_index=True)
     version = models.CharField(max_length=10, null=True)
     type = models.CharField(max_length=128, db_index=True, null=True)
-    closed = models.BooleanField(db_index=True)
+    closed = models.BooleanField(db_index=True, default=False)
     user_id = models.CharField(max_length=128, db_index=True, null=True)
     owner_id = models.CharField(max_length=128, db_index=True, null=True)
     opened_on = models.DateTimeField(db_index=True, null=True)

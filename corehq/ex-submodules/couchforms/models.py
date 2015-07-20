@@ -462,5 +462,5 @@ from django.db import models
 class UnfinishedSubmissionStub(models.Model):
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField()
-    saved = models.BooleanField()
+    saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)

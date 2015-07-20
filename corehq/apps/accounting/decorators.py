@@ -5,7 +5,8 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from corehq import privileges
-from corehq.apps.accounting.models import DefaultProductPlan
+from corehq.apps.accounting.models import DefaultProductPlan, \
+    SoftwarePlanVisibility
 from django.http import Http404, HttpResponse
 from corehq.const import USER_DATE_FORMAT
 from django_prbac.decorators import requires_privilege
@@ -24,7 +25,7 @@ def requires_privilege_with_fallback(slug, **assignment):
             try:
                 if (hasattr(request, 'subscription')
                     and request.subscription is not None
-                    and request.subscription.is_trial
+                    and (request.subscription.is_trial or request.subscription.plan_version.plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL)
                     and request.subscription.date_end is not None
                 ):
                     edition_req = DefaultProductPlan.get_lowest_edition_by_domain(

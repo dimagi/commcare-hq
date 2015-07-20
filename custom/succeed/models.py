@@ -99,7 +99,7 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
     user_id = flat_field(lambda case: case.user_id)
 
     bp_category = flat_field(lambda case: get_property(case, 'BP_category'))
-    care_site = flat_field(lambda case: get_property(case, 'care_site').lower())
+    care_site = flat_field(lambda case: get_property(case, 'care_site_display').lower())
     is_active = flat_field(lambda case: is_active(case))
     visit_name = flat_field(lambda case: visit_name(case))
     visit_days = flat_field(lambda case: visit_days(case))

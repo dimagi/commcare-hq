@@ -545,7 +545,7 @@ def logo(request, domain):
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], mimetype=logo[1])
+    return HttpResponse(logo[0], content_type=logo[1])
 
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
@@ -1223,7 +1223,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 subscription_type = "contracted_partner"
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = "dimagi_only_enterprise"
-            elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+            elif (plan.edition == SoftwarePlanEdition.ADVANCED
+                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
                 subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})

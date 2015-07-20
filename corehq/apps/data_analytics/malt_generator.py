@@ -8,6 +8,7 @@ from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
+from django.http import Http404
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,8 @@ class MALTTableGenerator(object):
         for app_id in apps_submitted_for:
             try:
                 wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
+            except Http404:
+                wam, pam, is_app_deleted = 'not_set', 'not_set', False
             except Exception as ex:
                 logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
                             (id=user._id, app_id=app_id, ex=str(ex)))

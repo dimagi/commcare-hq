@@ -1279,6 +1279,15 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
+            elif module.root_module_id and module.parent_select.active:
+                # This is a submodule. case_id will have changed to avoid a clash with the parent case.
+                # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
+                case_id = '_'.join((CASE_ID, form.get_case_type()))
+                session_case_id = CaseIDXPath(session_var(case_id))
+                self.add_bind(
+                    nodeset="case/@case_id",
+                    calculate=session_case_id,
+                )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
@@ -1318,7 +1327,7 @@ class XForm(WrappedNode):
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
-                    case_id = session_var(form.session_var_for_action('subcase', i))
+                    case_id = session_var(form.session_var_for_action('subcases', i))
 
                 if nest:
                     name = 'subcase_%s' % i

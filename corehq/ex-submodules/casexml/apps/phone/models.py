@@ -567,9 +567,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
-        logger.debug('syncing {}'.format(self.user_id))
+        logger.debug('updating sync log for {}'.format(self.user_id))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree before update: {}'.format(self.index_tree))
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -612,9 +613,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree after update: {}'.format(self.index_tree))
         if made_changes or case_list:
             try:
                 if made_changes:
+                    logger.debug('made changes, saving.')
                     self.save()
                 if case_list:
                     self.invalidate_cached_payloads()

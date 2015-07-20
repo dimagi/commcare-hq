@@ -4,10 +4,7 @@ from celery.task import task
 from time import sleep
 from redis_cache.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS, ERROR_MESSAGE_IS_STALE,
-    ERROR_INVALID_DIRECTION)
-
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
 from django.conf import settings
@@ -23,7 +20,7 @@ def handle_unsuccessful_processing_attempt(msg):
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
-        msg.set_system_error(ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
 
 def handle_successful_processing_attempt(msg):
     utcnow = datetime.utcnow()
@@ -194,7 +191,7 @@ def process_sms(message_id):
         msg = SMSLog.get(message_id)
 
         if message_is_stale(msg, utcnow):
-            msg.set_system_error(ERROR_MESSAGE_IS_STALE)
+            msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
             message_lock.release()
             return
 
@@ -224,7 +221,7 @@ def process_sms(message_id):
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
-                msg.set_system_error(ERROR_INVALID_DIRECTION)
+                msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
 
             if recipient_block:
                 recipient_lock.release()

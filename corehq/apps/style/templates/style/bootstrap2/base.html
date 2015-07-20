@@ -3,7 +3,10 @@
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
         <meta charset="utf-8"/>
-        <title>{% block title %}{% endblock title %}{{ SITE_NAME }}</title>
+        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+        <title>
+            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+        </title>
         <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
@@ -332,8 +335,8 @@
                         {% blocktrans %}
                             We want you to have a chance to use and evaluate our
                             pay-only features before deciding which plan to subscribe to.
-                            You will have access to <strong>{{ feat_name }}</strong> for a
-                            30 day trial period. <strong>This period is ending on {{ date_end }}.</strong>
+                            You will have access to <strong>{{ feat_name }}</strong> during
+                            this trial period, ending on {{ date_end }}.
                             After {{ date_end }}, you will no longer have access to {{ feat_name }}.
                         {% endblocktrans %}
                         </p>

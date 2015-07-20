@@ -1229,6 +1229,13 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
     include_out_of_range_cases = True
 
     @property
+    def headers(self):
+        headers = super(IncentivePaymentReport, self).headers
+        if self.debug:
+            headers.add_column(DataTablesColumn(name='Debug Info'))
+        return headers
+
+    @property
     def fields(self):
         return [HierarchyFilter] + super(BaseReport, self).fields
 
@@ -1277,6 +1284,8 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
+            if self.debug:
+                data.append(row.debug_info)
             rows.append(data)
         return rows
 
