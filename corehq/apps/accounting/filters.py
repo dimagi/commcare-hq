@@ -15,7 +15,7 @@ from corehq.apps.reports.filters.base import (
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 
 class BaseAccountingSingleOptionFilter(BaseSingleOptionFilter):
@@ -173,6 +173,8 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
         (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.TRIAL_INTERNAL, "Custom Trial"),
+        (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
     )
 
 

@@ -11,7 +11,7 @@ from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 import uuid
 from corehq.apps.users.models import WebUser
@@ -49,9 +49,9 @@ class ReportField(object):
 
 class ReportSelectField(ReportField):
     slug = "generic_select"
-    name = ugettext_noop("Generic Select")
+    name = ugettext_lazy("Generic Select")
     template = "reports/dont_use_fields/select_generic.html"
-    default_option = ugettext_noop("Select Something...")
+    default_option = ugettext_lazy("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
     cssClasses = "span4"
@@ -107,7 +107,7 @@ class FilterUsersField(ReportField):
 
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
-    name = ugettext_noop("Select Mobile Worker")
+    name = ugettext_lazy("Select Mobile Worker")
 
     @classmethod
     def get_default_text(cls, user_filter, default_option=None):
@@ -120,7 +120,7 @@ class SelectMobileWorkerMixin(object):
 
 class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
     template = "reports/dont_use_fields/select_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers")
+    default_option = ugettext_lazy("All Mobile Workers")
     filter_users_field_class = FilterUsersField
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None, filter_users_field_class=None):
@@ -153,9 +153,9 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         is selected.
     """
     slug = "select_filtered_mw"
-    name = ugettext_noop("Select Mobile Worker")
+    name = ugettext_lazy("Select Mobile Worker")
     template = "reports/dont_use_fields/select_filtered_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers...")
+    default_option = ugettext_lazy("All Mobile Workers...")
 
     # Whether to display both the default option and "Only <group> Mobile
     # Workers" or just the default option (useful when using a single
@@ -216,7 +216,7 @@ class UserOrGroupField(ReportSelectField):
         To Use: Subclass and specify what the field options should be
     """
     slug = "view_by"
-    name = ugettext_noop("View by Users or Groups")
+    name = ugettext_lazy("View by Users or Groups")
     cssId = "view_by_select"
     cssClasses = "span2"
     default_option = "Users"
@@ -228,7 +228,7 @@ class UserOrGroupField(ReportSelectField):
 
 class SelectProgramField(ReportSelectField):
     slug = "program"
-    name = ugettext_noop("Program")
+    name = ugettext_lazy("Program")
     cssId = "program_select"
     default_option = 'All'
 
@@ -246,7 +246,7 @@ class SelectProgramField(ReportSelectField):
 
 class GroupFieldMixin():
     slug = "group"
-    name = ugettext_noop("Group")
+    name = ugettext_lazy("Group")
     cssId = "group_select"
 
 

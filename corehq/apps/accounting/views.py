@@ -14,7 +14,7 @@ from django.http import (
     Http404,
 )
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -537,6 +537,31 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class ViewSoftwarePlanVersionView(AccountingSectionView):
+    urlname = 'view_softwareplan_version'
+    page_title = 'Plan Version'
+    template_name = 'accounting/plan_version.html'
+
+    @property
+    @memoized
+    def plan_version(self):
+        try:
+            return SoftwarePlanVersion.objects.get(plan=self.args[0], id=self.args[1])
+        except SoftwarePlan.DoesNotExist:
+            raise Http404()
+
+    @property
+    def page_context(self):
+        return {
+            'plan_versions': [self.plan_version],
+            'plan_id': self.args[0],
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -808,14 +833,14 @@ class InvoiceSummaryView(InvoiceSummaryViewBase):
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     template_name = 'accounting/accounting_admins.html'
     urlname = 'accounting_manage_admins'
-    page_title = ugettext_noop("Accounting Admins")
+    page_title = ugettext_lazy("Accounting Admins")
 
-    limit_text = ugettext_noop("Admins per page")
-    empty_notification = ugettext_noop("You haven't specified any accounting admins. "
+    limit_text = ugettext_lazy("Admins per page")
+    empty_notification = ugettext_lazy("You haven't specified any accounting admins. "
                                        "How are you viewing this page??! x_x")
-    loading_message = ugettext_noop("Loading admin list...")
-    deleted_items_header = ugettext_noop("Removed Users:")
-    new_items_header = ugettext_noop("Added Users:")
+    loading_message = ugettext_lazy("Loading admin list...")
+    deleted_items_header = ugettext_lazy("Removed Users:")
+    new_items_header = ugettext_lazy("Added Users:")
 
     @property
     def page_url(self):

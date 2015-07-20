@@ -1013,7 +1013,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         module_case_type = self.get_module().case_type
         if action_type == 'open_case':
             return 'case_id_new_{}_0'.format(module_case_type)
-        if action_type == 'subcase':
+        if action_type == 'subcases':
             opens_case = 'open_case' in self.active_actions()
             subcase_type = self.actions.subcases[subcase_index].case_type
             if opens_case:

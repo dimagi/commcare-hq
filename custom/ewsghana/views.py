@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState, StockTransactionHelper
@@ -51,7 +51,7 @@ class EWSConfigView(BaseConfigView):
     sync_urlname = 'sync_ewsghana'
     sync_stock_url = 'ews_sync_stock_data'
     clear_stock_url = 'ews_clear_stock_data'
-    page_title = ugettext_noop("EWS Ghana")
+    page_title = ugettext_lazy("EWS Ghana")
     template_name = 'ewsghana/ewsconfig.html'
     source = 'ewsghana'
 
@@ -279,7 +279,7 @@ def inventory_management(request, domain):
     )
     return HttpResponse(
         json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 
@@ -296,7 +296,7 @@ def stockouts_product(request, domain):
     )
     return HttpResponse(
         json.dumps(stockout_graph.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 

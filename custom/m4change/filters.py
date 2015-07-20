@@ -1,10 +1,10 @@
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 
 class FacilityHmisFilter(BaseSingleOptionFilter):
     slug = "facility_hmis_filter"
-    label = ugettext_noop("Facility HMIS Report")
+    label = ugettext_lazy("Facility HMIS Report")
     default_text = None
 
     @property
@@ -20,7 +20,7 @@ class FacilityHmisFilter(BaseSingleOptionFilter):
 
 class ServiceTypeFilter(BaseSingleOptionFilter):
     slug = "service_type_filter"
-    label = ugettext_noop("Service type")
+    label = ugettext_lazy("Service type")
     default_text = None
 
     @property

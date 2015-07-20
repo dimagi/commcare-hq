@@ -30713,9 +30713,6 @@ msgstr ""
 #~ msgid "registration profiles"
 #~ msgstr "profils d'enregistrement"
 
-#~ msgid "ugettext_noop"
-#~ msgstr "ugettext_noop"
-
 #~ msgid "open"
 #~ msgstr "ouvrir"
 

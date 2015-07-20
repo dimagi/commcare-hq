@@ -513,3 +513,10 @@ BASIC_CHILD_MODULE = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
+    'messaging_status',
+    'View the Messaging Status and Error Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 class BaseReportFilter(object):
@@ -93,7 +93,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
         Displays a select field.
     """
     template = "reports/filters/single_option.html"
-    default_text = ugettext_noop("Filter by...")
+    default_text = ugettext_lazy("Filter by...")
     placeholder = ''
     is_paginated = False
     pagination_source = None  # url for paginated data
@@ -189,7 +189,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     """
     template = "reports/filters/drilldown_options.html"
     use_only_last = False
-    drilldown_empty_text = ugettext_noop("No Data Available")
+    drilldown_empty_text = ugettext_lazy("No Data Available")
     is_cacheable = True
 
     @property

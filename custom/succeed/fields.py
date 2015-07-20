@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.elastic import es_query
@@ -11,7 +11,7 @@ from custom.succeed.utils import (
 
 class CareSite(ReportSelectField):
     slug = "care_site_display"
-    name = ugettext_noop("Care Site")
+    name = ugettext_lazy("Care Site")
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "All Sites"
@@ -30,31 +30,31 @@ class CareSite(ReportSelectField):
 
 class ResponsibleParty(ReportSelectField):
     slug = "responsible_party"
-    name = ugettext_noop("Responsible Party")
+    name = ugettext_lazy("Responsible Party")
     cssId = "opened_closed"
     cssClasses = "span3"
-    default_option = ugettext_noop("All Roles")
+    default_option = ugettext_lazy("All Roles")
 
     @property
     def options(self):
         return [
-            dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager")),
-            dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker")),
+            dict(val=CONFIG['cm_role'], text=ugettext_lazy("Care Manager")),
+            dict(val=CONFIG['chw_role'], text=ugettext_lazy("Community Health Worker")),
         ]
 
 
 class PatientStatus(ReportSelectField):
     slug = "patient_status"
-    name = ugettext_noop("Patient Status")
+    name = ugettext_lazy("Patient Status")
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "All Patients"
-    options = [dict(val="active", text=ugettext_noop("Active")),
-               dict(val="not_active", text=ugettext_noop("Not Active"))]
+    options = [dict(val="active", text=ugettext_lazy("Active")),
+               dict(val="not_active", text=ugettext_lazy("Not Active"))]
 
 
 class PatientFormNameFilter(BaseSingleOptionFilter):
-    label = ugettext_noop("Form Group")
+    label = ugettext_lazy("Form Group")
     slug = "form_name"
     css_class = "span5"
     default_text = 'All Forms'
@@ -71,8 +71,8 @@ class PatientFormNameFilter(BaseSingleOptionFilter):
 
 class PatientNameFilterMixin(object):
     slug = "patient_id"
-    label = ugettext_noop("Patient Name")
-    default_text = ugettext_noop("All Patients")
+    label = ugettext_lazy("Patient Name")
+    default_text = ugettext_lazy("All Patients")
 
     @property
     def options(self):
@@ -111,18 +111,18 @@ class PatientNameFilterMixin(object):
         return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in es_results['hits'].get('hits', [])]
 
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
-    placeholder = ugettext_noop('Click to select a patient')
+    placeholder = ugettext_lazy('Click to select a patient')
 
 class TaskStatus(ReportSelectField):
     slug = "task_status"
-    name = ugettext_noop("Task Status")
+    name = ugettext_lazy("Task Status")
     cssId = "opened_closed"
     cssClasses = "span3"
-    default_option = ugettext_noop("All Tasks")
+    default_option = ugettext_lazy("All Tasks")
 
     @property
     def options(self):
         return [
-            dict(val='open', text=ugettext_noop("Only Open Tasks")),
-            dict(val='closed', text=ugettext_noop("Only Closed Tasks")),
+            dict(val='open', text=ugettext_lazy("Only Open Tasks")),
+            dict(val='closed', text=ugettext_lazy("Only Closed Tasks")),
         ]

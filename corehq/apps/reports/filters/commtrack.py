@@ -1,11 +1,11 @@
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 class SelectReportingType(BaseSingleOptionFilter):
     slug = "report_type"
-    label = ugettext_noop("Reporting data type")
-    default_text = ugettext_noop("Show aggregate data")
+    label = ugettext_lazy("Reporting data type")
+    default_text = ugettext_lazy("Show aggregate data")
 
     @property
     def options(self):

@@ -14,7 +14,7 @@ from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext
+from django.utils.translation import ugettext_lazy, ugettext as _, ugettext
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
@@ -369,7 +369,7 @@ class SubscriptionForm(forms.Form):
         if self.is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                EditSoftwarePlanView, ManageBillingAccountView
+                ViewSoftwarePlanVersionView, ManageBillingAccountView
             )
             from corehq.apps.domain.views import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
@@ -387,8 +387,8 @@ class SubscriptionForm(forms.Form):
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
                 'plan_version_url': reverse(
-                    EditSoftwarePlanView.urlname,
-                    args=[subscription.plan_version.plan.id]),
+                    ViewSoftwarePlanVersionView.urlname,
+                    args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
                 'plan_name': subscription.plan_version,
             })
             try:
@@ -545,7 +545,11 @@ class SubscriptionForm(forms.Form):
                     'account': account.name,
                 }))
 
-        start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
+        start_date = self.cleaned_data.get('start_date')
+        if start_date is None and self.subscription is not None:
+            start_date = self.subscription.date_start
+        elif start_date is None:
+            raise ValidationError(_("You must specify a start date"))
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError(_("End date must be after start date."))
@@ -1421,15 +1425,15 @@ class ProductRateForm(forms.ModelForm):
 
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=ugettext_lazy("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=ugettext_lazy("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=ugettext_lazy("Message"),
         widget=forms.Textarea
     )
 

@@ -7,7 +7,7 @@
 <span class="kn">from</span> <span class="nn">django.core.urlresolvers</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
 <span class="kn">from</span> <span class="nn">django.utils.decorators</span> <span class="kn">import</span> <span class="n">method_decorator</span>
-<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_noop</span><span class="p">,</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span><span class="p">,</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span> <span class="nn">corehq.apps.domain.decorators</span> <span class="kn">import</span> <span class="n">login_required</span>
 <span class="kn">from</span> <span class="nn">corehq.apps.style.views</span> <span class="kn">import</span> <span class="n">BaseB3SectionPageView</span>
 <span class="kn">from</span> <span class="nn">corehq.apps.styleguide.examples.simple_crispy_form.forms</span> <span class="kn">import</span> <span class="n">ExampleUserLoginForm</span>
@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col-lg-4"></div>
         <div class="col-lg-8"><div class="highlight"><pre><span class="k">class</span> <span class="nc">BaseSimpleCrispyFormSectionView</span><span class="p">(</span><span class="n">BaseB3SectionPageView</span><span class="p">):</span>
-    <span class="n">section_name</span> <span class="o">=</span> <span class="n">ugettext_noop</span><span class="p">(</span><span class="s">&quot;Simple Crispy Form Example&quot;</span><span class="p">)</span></pre></div></div>
+    <span class="n">section_name</span> <span class="o">=</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">&quot;Simple Crispy Form Example&quot;</span><span class="p">)</span></pre></div></div>
     </div>
     <div class="row">
         <div class="col-lg-4"></div>
@@ -49,7 +49,7 @@
     </div>
     <div class="row">
         <div class="col-lg-4"></div>
-        <div class="col-lg-8"><div class="highlight"><pre>    <span class="n">page_title</span> <span class="o">=</span> <span class="n">ugettext_noop</span><span class="p">(</span><span class="s">&quot;Register a New User&quot;</span><span class="p">)</span>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="n">page_title</span> <span class="o">=</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">&quot;Register a New User&quot;</span><span class="p">)</span>
     <span class="n">urlname</span> <span class="o">=</span> <span class="s">&#39;ex_simple_crispy_forms&#39;</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s">&#39;styleguide/examples/simple_crispy_form/base.html&#39;</span></pre></div></div>
     </div>

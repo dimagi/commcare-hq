@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from casexml.apps.case.xml import V2
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required
@@ -117,8 +117,8 @@ def historical_forms(request, domain):
 
 
 class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
-    page_title = ugettext_noop("Prime Restore Cache")
-    section_name = ugettext_noop("Project Settings")
+    page_title = ugettext_lazy("Prime Restore Cache")
+    section_name = ugettext_lazy("Project Settings")
     urlname = 'prime_restore_cache'
     template_name = "ota/prime_restore_cache.html"
 

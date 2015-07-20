@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from custom.reports.mc.models import WEEKLY_SUMMARY_XMLNS
 
 HF_MONTHLY_REPORT = [

@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
@@ -66,13 +66,13 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
 class NewUserDashboardView(BaseDashboardView):
     urlname = 'dashboard_new_user'
-    page_title = ugettext_noop("HQ Dashboard")
+    page_title = ugettext_lazy("HQ Dashboard")
     template_name = 'dashboard/dashboard_new_user.html'
 
 
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
-    page_title = ugettext_noop("HQ Dashboard")
+    page_title = ugettext_lazy("HQ Dashboard")
     template_name = 'dashboard/dashboard_domain.html'
 
     @property

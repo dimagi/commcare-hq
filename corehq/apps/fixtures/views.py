@@ -8,7 +8,7 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, H
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
@@ -257,7 +257,7 @@ def fixtures_home(domain):
 
 
 class FixtureViewMixIn(object):
-    section_name = ugettext_noop("Lookup Tables")
+    section_name = ugettext_lazy("Lookup Tables")
 
     @property
     def section_url(self):
@@ -311,7 +311,7 @@ class UploadItemLists(TemplateView):
 
 class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
     urlname = 'fixture_upload_status'
-    page_title = ugettext_noop('Lookup Table Upload Status')
+    page_title = ugettext_lazy('Lookup Table Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
@@ -367,7 +367,7 @@ def upload_fixture_api(request, domain, **kwargs):
         resp_json = {}
         resp_json["code"] = code
         resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+        return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
     try:
         upload_file = request.FILES["file-to-upload"]
@@ -422,7 +422,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_users:
         resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
-    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+    return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
 
 @login_and_domain_required

@@ -4,12 +4,12 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 
 
 class AddCaseGroupForm(forms.Form):
-    name = forms.CharField(required=True, label=ugettext_noop("Group Name"))
+    name = forms.CharField(required=True, label=ugettext_lazy("Group Name"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseGroupForm, self).__init__(*args, **kwargs)
@@ -76,7 +76,7 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
 
 
 class AddCaseToGroupForm(forms.Form):
-    case_identifier = forms.CharField(label=ugettext_noop("Case ID, External ID, or Phone Number"))
+    case_identifier = forms.CharField(label=ugettext_lazy("Case ID, External ID, or Phone Number"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseToGroupForm, self).__init__(*args, **kwargs)

@@ -7,7 +7,7 @@ from corehq.apps.domain.decorators import require_previewer, login_and_domain_re
 from django.http import HttpResponseRedirect, Http404
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 @require_previewer
 @login_and_domain_required

@@ -25,7 +25,7 @@ from corehq.apps.users.models import Permissions
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
@@ -218,13 +218,13 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
 
 class EditCustomFormExportView(BaseEditCustomExportView):
     urlname = 'edit_custom_export_form'
-    page_title = ugettext_noop("Edit Form Custom Export")
+    page_title = ugettext_lazy("Edit Form Custom Export")
     export_type = 'form'
 
 
 class EditCustomCaseExportView(BaseEditCustomExportView):
     urlname = 'edit_custom_export_case'
-    page_title = ugettext_noop("Edit Case Custom Export")
+    page_title = ugettext_lazy("Edit Case Custom Export")
     export_type = 'case'
 
 
@@ -302,7 +302,7 @@ def create_basic_form_checkpoint(index):
 
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_form_export'
-    page_title = ugettext_noop("Create Form Export: Select Form")
+    page_title = ugettext_lazy("Create Form Export: Select Form")
     template_name = 'export/create_form_export.html'
 
     @property
@@ -380,7 +380,7 @@ class CreateFormExportView(BaseProjectDataView):
 
 class CreateCaseExportView(BaseProjectDataView):
     urlname = 'create_case_export'
-    page_title = ugettext_noop('Create Case Export')
+    page_title = ugettext_lazy('Create Case Export')
     template_name = 'export/create_case_export.html'
 
     @property

@@ -14,7 +14,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application, Form
@@ -341,7 +341,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
 
 class CreateScheduledReminderView(BaseMessagingSectionView):
     urlname = 'create_reminder_schedule'
-    page_title = ugettext_noop("Schedule Reminder")
+    page_title = ugettext_lazy("Schedule Reminder")
     template_name = 'reminders/manage_scheduled_reminder.html'
     ui_type = UI_SIMPLE_FIXED
 
@@ -576,13 +576,13 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
 class CreateComplexScheduledReminderView(CreateScheduledReminderView):
     urlname = 'create_complex_reminder_schedule'
-    page_title = ugettext_noop("Schedule Multi Event Reminder")
+    page_title = ugettext_lazy("Schedule Multi Event Reminder")
     ui_type = UI_COMPLEX
 
 
 class EditScheduledReminderView(CreateScheduledReminderView):
     urlname = 'edit_reminder_schedule'
-    page_title = ugettext_noop("Edit Scheduled Reminder")
+    page_title = ugettext_lazy("Edit Scheduled Reminder")
 
     @property
     def handler_id(self):
@@ -693,7 +693,7 @@ class EditScheduledReminderView(CreateScheduledReminderView):
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
     urlname = 'add_structured_keyword'
-    page_title = ugettext_noop("New Structured Keyword")
+    page_title = ugettext_lazy("New Structured Keyword")
     template_name = 'reminders/keyword.html'
     process_structured_message = True
 
@@ -789,13 +789,13 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
 class AddNormalKeywordView(AddStructuredKeywordView):
     urlname = 'add_normal_keyword'
-    page_title = ugettext_noop("New Keyword")
+    page_title = ugettext_lazy("New Keyword")
     process_structured_message = False
 
 
 class EditStructuredKeywordView(AddStructuredKeywordView):
     urlname = 'edit_structured_keyword'
-    page_title = ugettext_noop("Edit Structured Keyword")
+    page_title = ugettext_lazy("Edit Structured Keyword")
 
     @property
     def page_url(self):
@@ -879,7 +879,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
 
 class EditNormalKeywordView(EditStructuredKeywordView):
     urlname = 'edit_normal_keyword'
-    page_title = ugettext_noop("Edit Normal Keyword")
+    page_title = ugettext_lazy("Edit Normal Keyword")
     process_structured_message = False
 
     @property
@@ -1331,7 +1331,7 @@ def reminders_in_error(request, domain):
 class RemindersListView(BaseMessagingSectionView):
     template_name = 'reminders/reminders_list.html'
     urlname = "list_reminders_new"
-    page_title = ugettext_noop("Reminder Definitions")
+    page_title = ugettext_lazy("Reminder Definitions")
 
     @property
     def page_url(self):
@@ -1416,11 +1416,11 @@ class RemindersListView(BaseMessagingSectionView):
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = 'reminders/keyword_list.html'
     urlname = 'keyword_list'
-    page_title = ugettext_noop("Keywords")
+    page_title = ugettext_lazy("Keywords")
 
-    limit_text = ugettext_noop("keywords per page")
-    empty_notification = ugettext_noop("You have no keywords. Please add one!")
-    loading_message = ugettext_noop("Loading keywords...")
+    limit_text = ugettext_lazy("keywords per page")
+    empty_notification = ugettext_lazy("You have no keywords. Please add one!")
+    loading_message = ugettext_lazy("Loading keywords...")
 
     @property
     def page_url(self):
@@ -1466,8 +1466,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1475,7 +1473,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),

@@ -9,7 +9,7 @@ from django.http.response import Http404
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.hqpillow_retry.filters import PillowErrorFilter
@@ -213,7 +213,7 @@ class EditPillowError(BasePageView):
         elif action == ACTION_SEND and not len(error_ids) == 1:
             messages.error(self.request, _("Only one error may be sent to FogBugs at a time."))
         else:
-            with transaction.commit_on_success():
+            with transaction.atomic():
                 if action == ACTION_DELETE:
                     PillowError.objects.filter(id__in=error_ids).delete()
                 elif action == ACTION_RESET:

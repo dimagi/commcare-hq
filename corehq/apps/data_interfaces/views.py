@@ -29,7 +29,7 @@ from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, Edi
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 @login_and_domain_required
@@ -55,7 +55,7 @@ class BulkUploadCasesException(Exception):
 
 
 class DataInterfaceSection(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = ugettext_lazy("Data")
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -152,7 +152,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def get_deleted_item_data(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
-        case_group.delete()
+        case_group.soft_delete()
         return {
             'itemData': item_data,
             'template': 'deleted-group-template',
@@ -162,7 +162,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 class ArchiveFormView(DataInterfaceSection):
     template_name = 'data_interfaces/interfaces/import_forms.html'
     urlname = 'archive_forms'
-    page_title = ugettext_noop("Bulk Archive Forms")
+    page_title = ugettext_lazy("Bulk Archive Forms")
 
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB
@@ -241,13 +241,13 @@ class ArchiveFormView(DataInterfaceSection):
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
-    page_title = ugettext_noop("Manage Case Group")
+    page_title = ugettext_lazy("Manage Case Group")
 
-    limit_text = ugettext_noop("cases per page")
-    empty_notification = ugettext_noop("You have no cases in your group.")
-    loading_message = ugettext_noop("Loading cases...")
-    deleted_items_header = ugettext_noop("Removed Cases:")
-    new_items_header = ugettext_noop("Added Cases:")
+    limit_text = ugettext_lazy("cases per page")
+    empty_notification = ugettext_lazy("You have no cases in your group.")
+    loading_message = ugettext_lazy("Loading cases...")
+    deleted_items_header = ugettext_lazy("Removed Cases:")
+    new_items_header = ugettext_lazy("Added Cases:")
 
     @property
     def group_id(self):

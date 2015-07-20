@@ -1,4 +1,5 @@
-from django.utils.translation import ugettext_noop
+import cgi
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
@@ -31,7 +32,7 @@ class CallLogReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
     """
-    name = ugettext_noop('Call Log')
+    name = ugettext_lazy('Call Log')
     slug = 'call_log'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
@@ -83,7 +84,8 @@ class CallLogReport(BaseCommConnectLogReport):
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
         
         for call in data:
-            doc_info = self.get_recipient_info(call, contact_cache)
+            doc_info = self.get_recipient_info(call.couch_recipient_doc_type,
+                call.couch_recipient, contact_cache)
 
             form_unique_id = call.form_unique_id
             if form_unique_id in [None, ""]:
@@ -111,7 +113,7 @@ class CallLogReport(BaseCommConnectLogReport):
             row = [
                 call.xforms_session_id,
                 self._fmt_timestamp(timestamp),
-                self._fmt_contact_link(call, doc_info),
+                self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction,"-")),
                 self._fmt(form_name),
@@ -119,7 +121,7 @@ class CallLogReport(BaseCommConnectLogReport):
                 self._fmt(answered),
                 self._fmt(call.duration),
                 self._fmt(_("Yes") if call.error else _("No")),
-                self._fmt(call.error_message),
+                self._fmt(cgi.escape(call.error_message) if call.error_message else None),
             ]
             
             if self.request.couch_user.is_previewer():
@@ -160,7 +162,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     """
     Displays all expected callbacks for the given time period.
     """
-    name = ugettext_noop('Expected Callbacks')
+    name = ugettext_lazy('Expected Callbacks')
     slug = 'expected_callbacks'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True

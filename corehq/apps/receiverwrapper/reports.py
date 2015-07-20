@@ -9,7 +9,7 @@ from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
     SubmissionTypeFilter
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from corehq.apps.reports.display import xmlns_to_name
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 
 
@@ -39,7 +39,7 @@ class SubmitFilter(CouchFilter):
 
 
 class SubmissionErrorReport(DeploymentsReport):
-    name = ugettext_noop("Raw Forms, Errors & Duplicates")
+    name = ugettext_lazy("Raw Forms, Errors & Duplicates")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False

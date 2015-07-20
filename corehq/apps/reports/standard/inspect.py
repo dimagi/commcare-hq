@@ -1,7 +1,7 @@
 import functools
 from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.util.dates import iso_string_to_datetime
 
 from corehq.apps.reports import util
@@ -42,7 +42,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
                     ProjectReportParametersMixin,
                     CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
                     DatespanMixin):
-    name = ugettext_noop('Submit History')
+    name = ugettext_lazy('Submit History')
     slug = 'submit_history'
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',

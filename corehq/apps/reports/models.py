@@ -33,7 +33,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjec
 import json
 import calendar
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 
@@ -45,10 +45,10 @@ class HQUserType(object):
     UNKNOWN = 3
     COMMTRACK = 4
     human_readable = [settings.COMMCARE_USER_TERM,
-                      ugettext_noop("demo_user"),
-                      ugettext_noop("admin"),
-                      ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply")]
+                      ugettext_lazy("demo_user"),
+                      ugettext_lazy("admin"),
+                      ugettext_lazy("Unknown Users"),
+                      ugettext_lazy("CommCare Supply")]
     toggle_defaults = (True, False, False, False, False)
     count = len(human_readable)
     included_defaults = (True, True, True, True, False)

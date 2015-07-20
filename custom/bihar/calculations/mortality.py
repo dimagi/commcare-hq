@@ -1,6 +1,6 @@
 import datetime
 import logging
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from custom.bihar.calculations.pregnancy import BirthPlace
 from custom.bihar.calculations.types import TotalCalculator, AddCalculator
 from custom.bihar.calculations.utils.calculations import get_actions, get_forms

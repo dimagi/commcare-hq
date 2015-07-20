@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -82,7 +82,7 @@ class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
     template_name = 'products/manage/products.html'
-    page_title = ugettext_noop("Products")
+    page_title = ugettext_lazy("Products")
 
     DEFAULT_LIMIT = 10
 
@@ -203,7 +203,7 @@ class FetchProductListView(ProductListView):
 
 class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
-    page_title = ugettext_noop("New Product")
+    page_title = ugettext_lazy("New Product")
     template_name = 'products/manage/product.html'
 
     @property
@@ -255,7 +255,7 @@ class NewProductView(BaseCommTrackManageView):
 
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
-    page_title = ugettext_noop("Import Products")
+    page_title = ugettext_lazy("Import Products")
     template_name = 'products/manage/upload_products.html'
 
     @property
@@ -306,7 +306,7 @@ class UploadProductView(BaseCommTrackManageView):
 
 class ProductImportStatusView(BaseCommTrackManageView):
     urlname = 'product_import_status'
-    page_title = ugettext_noop('Product Import Status')
+    page_title = ugettext_lazy('Product Import Status')
 
     def get(self, request, *args, **kwargs):
         context = super(ProductImportStatusView, self).main_context
@@ -417,7 +417,7 @@ def download_products(request, domain):
 
     writer.close()
 
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
     response.write(file.getvalue())
     return response
@@ -425,7 +425,7 @@ def download_products(request, domain):
 
 class EditProductView(NewProductView):
     urlname = 'commtrack_product_edit'
-    page_title = ugettext_noop("Edit Product")
+    page_title = ugettext_lazy("Edit Product")
 
     @property
     def product_id(self):

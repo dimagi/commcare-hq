@@ -61,7 +61,7 @@ from dimagi.utils.django.email import send_HTML_email
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
 
@@ -94,7 +94,7 @@ class ProjectSettingsForm(forms.Form):
         label="",
         widget=BootstrapCheckboxInput(
             attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
+            inline_label=ugettext_lazy("Override project's timezone setting just for me.")))
     user_timezone = TimeZoneChoiceField(
         label="My Timezone",
         initial=global_timezone.initial,
@@ -120,16 +120,16 @@ class ProjectSettingsForm(forms.Form):
 
 
 class SnapshotApplicationForm(forms.Form):
-    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
-    name = CharField(label=ugettext_noop("Name"), required=True)
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the application"))
-    deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
-    phone_model = CharField(label=ugettext_noop("Phone model"), required=False)
-    user_type = CharField(label=ugettext_noop("User type"), required=False,
-        help_text=ugettext_noop("e.g. CHW, ASHA, RA, etc"))
-    attribution_notes = CharField(label=ugettext_noop("Attribution notes"), required=False,
-        help_text=ugettext_noop(
+    publish = BooleanField(label=ugettext_lazy("Publish?"), required=False)
+    name = CharField(label=ugettext_lazy("Name"), required=True)
+    description = CharField(label=ugettext_lazy("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_lazy("A detailed technical description of the application"))
+    deployment_date = CharField(label=ugettext_lazy("Deployment date"), required=False)
+    phone_model = CharField(label=ugettext_lazy("Phone model"), required=False)
+    user_type = CharField(label=ugettext_lazy("User type"), required=False,
+        help_text=ugettext_lazy("e.g. CHW, ASHA, RA, etc"))
+    attribution_notes = CharField(label=ugettext_lazy("Attribution notes"), required=False,
+        help_text=ugettext_lazy(
             "Enter any special instructions to users here. "
             "This will be shown just before users copy your project."),
         widget=forms.Textarea)
@@ -150,9 +150,9 @@ class SnapshotApplicationForm(forms.Form):
 
 
 class SnapshotFixtureForm(forms.Form):
-    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the table"))
+    publish = BooleanField(label=ugettext_lazy("Publish?"), required=False)
+    description = CharField(label=ugettext_lazy("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_lazy("A detailed technical description of the table"))
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
@@ -165,36 +165,36 @@ class SnapshotFixtureForm(forms.Form):
 
 
 class SnapshotSettingsForm(forms.Form):
-    title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
+    title = CharField(label=ugettext_lazy("Title"), required=True, max_length=100)
     project_type = CharField(
-        label=ugettext_noop("Project Category"),
+        label=ugettext_lazy("Project Category"),
         required=True,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc.")
+        help_text=ugettext_lazy("e.g. MCH, HIV, etc.")
     )
-    license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
+    license = ChoiceField(label=ugettext_lazy("License"), required=True, choices=LICENSES.items(),
                           widget=Select(attrs={'class': 'input-xxlarge'}))
     description = CharField(
-        label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A high-level overview of your project as a whole"))
+        label=ugettext_lazy("Long Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_lazy("A high-level overview of your project as a whole"))
     short_description = CharField(
-        label=ugettext_noop("Short Description"), required=False,
+        label=ugettext_lazy("Short Description"), required=False,
         widget=forms.Textarea(attrs={'maxlength': 200}),
-        help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
-    share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
-        help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
-    share_reminders = BooleanField(label=ugettext_noop("Share Reminders?"), required=False,
-        help_text=ugettext_noop("This will publish reminders along with this project"))
-    image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
-        help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
+        help_text=ugettext_lazy("A brief description of your project (max. 200 characters)"))
+    share_multimedia = BooleanField(label=ugettext_lazy("Share all multimedia?"), required=False,
+        help_text=ugettext_lazy("This will allow any user to see and use all multimedia in this project"))
+    share_reminders = BooleanField(label=ugettext_lazy("Share Reminders?"), required=False,
+        help_text=ugettext_lazy("This will publish reminders along with this project"))
+    image = forms.ImageField(label=ugettext_lazy("Exchange image"), required=False,
+        help_text=ugettext_lazy("An optional image to show other users your logo or what your app looks like"))
     old_image = forms.BooleanField(required=False)
 
-    video = CharField(label=ugettext_noop("Youtube Video"), required=False,
-        help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
-    documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
-        help_text=ugettext_noop("An optional file to tell users more about your app."))
+    video = CharField(label=ugettext_lazy("Youtube Video"), required=False,
+        help_text=ugettext_lazy("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
+    documentation_file = forms.FileField(label=ugettext_lazy("Documentation File"), required=False,
+        help_text=ugettext_lazy("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
-    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
-    is_starter_app = BooleanField(required=False, label=ugettext_noop("This is a starter application"))
+    cda_confirmed = BooleanField(required=False, label=ugettext_lazy("Content Distribution Agreement"))
+    is_starter_app = BooleanField(required=False, label=ugettext_lazy("This is a starter application"))
 
     def __init__(self, *args, **kw):
         self.dom = kw.pop("domain", None)
@@ -410,7 +410,7 @@ class SubAreaMixin():
 
 class DomainGlobalSettingsForm(forms.Form):
     hr_name = forms.CharField(label=_("Project Name"))
-    default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
+    default_timezone = TimeZoneChoiceField(label=ugettext_lazy("Default Timezone"), initial="UTC")
 
     logo = ImageField(
         label=_("Custom Logo"),
@@ -632,23 +632,23 @@ class PrivacySecurityForm(forms.Form):
 
 
 class DomainInternalForm(forms.Form, SubAreaMixin):
-    sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
-    sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    services = ChoiceField(label=ugettext_noop("Services"), required=False,
+    sf_contract_id = CharField(label=ugettext_lazy("Salesforce Contract ID"), required=False)
+    sf_account_id = CharField(label=ugettext_lazy("Salesforce Account ID"), required=False)
+    services = ChoiceField(label=ugettext_lazy("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
-    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
+    initiative = forms.MultipleChoiceField(label=ugettext_lazy("Initiative"),
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
                                            required=False)
     workshop_region = CharField(
-        label=ugettext_noop("Workshop Region"),
+        label=ugettext_lazy("Workshop Region"),
         required=False,
-        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
+        help_text=ugettext_lazy("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     self_started = ChoiceField(
-        label=ugettext_noop("Self Started?"),
+        label=ugettext_lazy("Self Started?"),
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=ugettext_noop(
+        help_text=ugettext_lazy(
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
     is_test = ChoiceField(
@@ -658,41 +658,41 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                  ('false', _('Real')),)
     )
     area = ChoiceField(
-        label=ugettext_noop("Sector*"),
+        label=ugettext_lazy("Sector*"),
         required=False,
         choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(
-        label=ugettext_noop("Sub-Sector*"),
+        label=ugettext_lazy("Sub-Sector*"),
         required=False,
         choices=tuple_of_copies(SUB_AREA_CHOICES))
     organization_name = CharField(
-        label=ugettext_noop("Organization Name*"),
+        label=ugettext_lazy("Organization Name*"),
         required=False,
         help_text=_("Quick 1-2 sentence summary of the project."),
     )
-    notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
+    notes = CharField(label=ugettext_lazy("Notes*"), required=False, widget=forms.Textarea)
     phone_model = CharField(
-        label=ugettext_noop("Device Model"),
+        label=ugettext_lazy("Device Model"),
         help_text=_("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
     )
     deployment_date = CharField(
-        label=ugettext_noop("Deployment date"),
+        label=ugettext_lazy("Deployment date"),
         required=False,
         help_text=_("Date that the project went live (usually right after training).")
     )
     business_unit = forms.ChoiceField(
-        label=ugettext_noop('Business Unit'),
+        label=ugettext_lazy('Business Unit'),
         choices=tuple_of_copies(BUSINESS_UNITS),
         required=False,
     )
     countries = forms.MultipleChoiceField(
-        label=ugettext_noop("Countries"),
-        choices=sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8')),
+        label=ugettext_lazy("Countries"),
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(
-        label=ugettext_noop("CommCare Supply Project"),
+        label=ugettext_lazy("CommCare Supply Project"),
         choices=tf_choices('Yes', 'No'),
         required=False,
         help_text=_("This app aims to improve the supply of goods and materials")
@@ -705,13 +705,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         if self.can_edit_eula:
             additional_fields = ['custom_eula', 'can_use_data']
             self.fields['custom_eula'] = ChoiceField(
-                label=ugettext_noop("Custom Eula?"),
+                label=ugettext_lazy("Custom Eula?"),
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
             )
             self.fields['can_use_data'] = ChoiceField(
-                label=ugettext_noop("Can use project data?"),
+                label=ugettext_lazy("Can use project data?"),
                 choices=tf_choices('Yes', 'No'),
                 required=False,
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
@@ -1022,7 +1022,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         )
         self.renewed_version = renewed_version
         self.fields['plan_edition'].initial = renewed_version.plan.edition
-        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
+        self.fields['confirm_legal'].label = mark_safe(ugettext_lazy(
             'I have read and agree to the <a href="%(pa_url)s" '
             'target="_blank">Software Product Agreement</a>.'
         ) % {
@@ -1255,7 +1255,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             crispy.ButtonHolder(
                 crispy.Submit(
                     self.slug,
-                    ugettext_noop('Update')
+                    ugettext_lazy('Update')
                 )
             )
         )
@@ -1263,7 +1263,7 @@ class InternalSubscriptionManagementForm(forms.Form):
 
 class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     slug = 'dimagi_only_enterprise'
-    subscription_type = ugettext_noop('Test or Demo Project')
+    subscription_type = ugettext_lazy('Test or Demo Project')
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
@@ -1271,7 +1271,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.layout = crispy.Layout(
-            crispy.HTML(ugettext_noop(
+            crispy.HTML(ugettext_lazy(
                 '<i class="icon-info-sign"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
@@ -1314,15 +1314,15 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('3 Month Trial')
+    subscription_type = ugettext_lazy('3 Month Trial')
 
     organization_name = forms.CharField(
-        label=ugettext_noop('Organization Name'),
+        label=ugettext_lazy('Organization Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        label=ugettext_noop('Partner Contact Emails'),
+        label=ugettext_lazy('Partner Contact Emails'),
         max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
@@ -1405,7 +1405,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
 class ContractedPartnerForm(InternalSubscriptionManagementForm):
     slug = 'contracted_partner'
-    subscription_type = ugettext_noop('Contracted Partner')
+    subscription_type = ugettext_lazy('Contracted Partner')
 
     software_plan_edition = forms.ChoiceField(
         choices=(
@@ -1413,43 +1413,43 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             (SoftwarePlanEdition.PRO, SoftwarePlanEdition.PRO),
             (SoftwarePlanEdition.ADVANCED, SoftwarePlanEdition.ADVANCED),
         ),
-        label=ugettext_noop('Software Plan'),
+        label=ugettext_lazy('Software Plan'),
     )
 
     fogbugz_client_name = forms.CharField(
-        label=ugettext_noop('Fogbugz Client Name'),
+        label=ugettext_lazy('Fogbugz Client Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        help_text=ugettext_noop(
+        help_text=ugettext_lazy(
             'This is who will receive invoices if the Client exceeds the user '
             'or SMS limits in their plan.'
         ),
-        label=ugettext_noop('Partner Contact Emails'),
+        label=ugettext_lazy('Partner Contact Emails'),
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
 
     start_date = forms.DateField(
-        help_text=ugettext_noop('Date the project needs access to features.'),
-        label=ugettext_noop('Start Date'),
+        help_text=ugettext_lazy('Date the project needs access to features.'),
+        label=ugettext_lazy('Start Date'),
     )
 
     end_date = forms.DateField(
-        help_text=ugettext_noop(
+        help_text=ugettext_lazy(
             '1 year after the deployment date (date the project goes live).'
         ),
-        label=ugettext_noop('End Date'),
+        label=ugettext_lazy('End Date'),
     )
 
     sms_credits = forms.DecimalField(
         initial=0,
-        label=ugettext_noop('SMS Credits'),
+        label=ugettext_lazy('SMS Credits'),
     )
 
     user_credits = forms.IntegerField(
         initial=0,
-        label=ugettext_noop('User Credits'),
+        label=ugettext_lazy('User Credits'),
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
@@ -1609,12 +1609,12 @@ INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS = [
 class SelectSubscriptionTypeForm(forms.Form):
     subscription_type = forms.ChoiceField(
         choices=[
-            ('', ugettext_noop('Select a subscription type...'))
+            ('', ugettext_lazy('Select a subscription type...'))
         ] + [
             (form.slug, form.subscription_type)
             for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
         ],
-        label=ugettext_noop('Subscription Type'),
+        label=ugettext_lazy('Subscription Type'),
         required=False,
     )
 

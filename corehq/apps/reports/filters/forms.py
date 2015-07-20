@@ -9,7 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 # For translations
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
@@ -698,7 +698,7 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     """
         Same as its superclass, except you _must_ select one form by the end of it.
     """
-    label = ugettext_noop("Choose a Form")
+    label = ugettext_lazy("Choose a Form")
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
 
@@ -720,11 +720,11 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"
-    label = ugettext_noop("Filter Dates By")
+    label = ugettext_lazy("Filter Dates By")
     css_class = "span2"
-    help_text = mark_safe("%s<br />%s" % (ugettext_noop("<strong>Completion</strong> time is when the form is completed on the phone."),
-                                          ugettext_noop("<strong>Submission</strong> time is when CommCare HQ receives the form.")))
-    default_text = ugettext_noop("Completion Time")
+    help_text = mark_safe("%s<br />%s" % (ugettext_lazy("<strong>Completion</strong> time is when the form is completed on the phone."),
+                                          ugettext_lazy("<strong>Submission</strong> time is when CommCare HQ receives the form.")))
+    default_text = ugettext_lazy("Completion Time")
 
     @property
     def options(self):
@@ -738,7 +738,7 @@ class FormDataFilter(BaseTagsFilter):
     label = "Form Data"
     advanced = True
     help_text = "Filter by the value of a question in the form. Exact matches only."
-    placeholder = ugettext_noop("question id:value")
+    placeholder = ugettext_lazy("question id:value")
 
 
 class CustomFieldFilter(BaseTagsFilter):
@@ -746,4 +746,4 @@ class CustomFieldFilter(BaseTagsFilter):
     label = "Columns"
     advanced = True
     help_text = "Question ids entered here will appear as additonal columns in the report."
-    placeholder = ugettext_noop("question id")
+    placeholder = ugettext_lazy("question id")

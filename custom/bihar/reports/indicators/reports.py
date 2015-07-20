@@ -9,7 +9,7 @@ from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 from custom.bihar.utils import groups_for_user, get_all_owner_ids_from_group
 
@@ -17,9 +17,9 @@ DEFAULT_EMPTY = "?"
 
 
 class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
-    name = ugettext_noop("Indicator Options")
+    name = ugettext_lazy("Indicator Options")
     slug = "indicatornav"
-    description = ugettext_noop("Indicator navigation")
+    description = ugettext_lazy("Indicator navigation")
     preserve_url_params = True
     report_template_path = "bihar/team_listing_tabular.html"
     
@@ -36,7 +36,7 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                              IndicatorSetMixIn):
     
-    name = ugettext_noop("Indicators")
+    name = ugettext_lazy("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
     base_template_mobile = "bihar/indicator_summary.html"
@@ -81,7 +81,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
 
 
 class MyPerformanceReport(BiharSummaryReport):
-    name = ugettext_noop('My Performance')
+    name = ugettext_lazy('My Performance')
     slug = 'myperformance'
     description = "My performance indicators report"
     set_slug = 'homevisit'  # hard coded to homevisit indicators
@@ -123,13 +123,13 @@ class MyPerformanceReport(BiharSummaryReport):
 
 
 class IndicatorCharts(MockEmptyReport):
-    name = ugettext_noop("Charts")
+    name = ugettext_lazy("Charts")
     slug = "indicatorcharts"
 
 
 class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
                                IndicatorSetMixIn):
-    name = ugettext_noop("Select Client List")
+    name = ugettext_lazy("Select Client List")
     slug = "clients"
     is_cacheable = True
     
@@ -185,7 +185,7 @@ class ClientListBase(GroupReferenceMixIn, ConvenientBaseMixIn,
 class IndicatorClientList(ClientListBase, IndicatorMixIn):
     is_cacheable = True
     slug = "indicatorclientlist"
-    name = ugettext_noop("Client List") 
+    name = ugettext_lazy("Client List") 
 
     extra_context_providers = [shared_bihar_context, name_context]
 

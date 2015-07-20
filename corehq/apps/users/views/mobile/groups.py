@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
@@ -132,13 +132,13 @@ class BaseGroupsView(BaseUserSettingsView):
 
 class EditGroupsView(BaseGroupsView):
     template_name = "groups/all_groups.html"
-    page_title = ugettext_noop("Groups")
+    page_title = ugettext_lazy("Groups")
     urlname = 'all_groups'
 
 
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
-    page_title = ugettext_noop("Edit Group")
+    page_title = ugettext_lazy("Edit Group")
     template_name = 'groups/group_members.html'
 
     @property

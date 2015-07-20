@@ -1,6 +1,6 @@
 from datetime import timedelta
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils import html
 from casexml.apps.case.models import CommCareCase
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -198,7 +198,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
 class HBNCMotherReport(BaseHNBCReport):
 
-    name = ugettext_noop('Mother HBNC Form')
+    name = ugettext_lazy('Mother HBNC Form')
     slug = 'hbnc_mother_report'
     report_template_name = 'mothers_form_reports_template'
     default_case_type = 'pregnant_mother'

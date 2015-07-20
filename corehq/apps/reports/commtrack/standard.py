@@ -9,7 +9,7 @@ from corehq.apps.reports.filters.commtrack import SelectReportingType
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
@@ -72,7 +72,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
 
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Stock Status by Product')
+    name = ugettext_lazy('Stock Status by Product')
     slug = 'current_stock_status'
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
@@ -212,9 +212,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Inventory by Location')
+    name = ugettext_lazy('Inventory by Location')
     slug = SimplifiedInventoryDataSource.slug
-    special_notice = ugettext_noop('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
+    special_notice = ugettext_lazy('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
     exportable = True
     emailable = True
     fields = [
@@ -267,7 +267,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Aggregate Inventory')
+    name = ugettext_lazy('Aggregate Inventory')
     slug = StockStatusDataSource.slug
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
@@ -358,7 +358,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Reporting Rate')
+    name = ugettext_lazy('Reporting Rate')
     slug = 'reporting_rate'
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',

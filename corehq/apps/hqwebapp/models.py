@@ -6,10 +6,10 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, get_language
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain
+from corehq import toggles, privileges, Domain, feature_previews
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
@@ -256,7 +256,7 @@ class UITab(object):
 
 
 class ProjectReportsTab(UITab):
-    title = ugettext_noop("Project Reports")
+    title = ugettext_lazy("Project Reports")
     view = "corehq.apps.reports.views.default"
 
     @property
@@ -306,7 +306,7 @@ class ProjectReportsTab(UITab):
 
 
 class IndicatorAdminTab(UITab):
-    title = ugettext_noop("Administer Indicators")
+    title = ugettext_lazy("Administer Indicators")
     view = "corehq.apps.indicators.views.default_admin"
     dispatcher = IndicatorAdminInterfaceDispatcher
 
@@ -342,7 +342,7 @@ class IndicatorAdminTab(UITab):
 
 
 class DashboardTab(UITab):
-    title = ugettext_noop("Dashboard")
+    title = ugettext_lazy("Dashboard")
     view = 'corehq.apps.dashboard.views.dashboard_default'
 
     @property
@@ -355,7 +355,7 @@ class DashboardTab(UITab):
 
 
 class ReportsTab(UITab):
-    title = ugettext_noop("Reports")
+    title = ugettext_lazy("Reports")
     subtab_classes = (ProjectReportsTab, IndicatorAdminTab)
 
     @property
@@ -406,7 +406,7 @@ class ReportsTab(UITab):
 
 
 class ProjectInfoTab(UITab):
-    title = ugettext_noop("Project Info")
+    title = ugettext_lazy("Project Info")
     view = "corehq.apps.appstore.views.project_info"
 
     @property
@@ -415,7 +415,7 @@ class ProjectInfoTab(UITab):
 
 
 class SetupTab(UITab):
-    title = ugettext_noop("Setup")
+    title = ugettext_lazy("Setup")
     view = "corehq.apps.commtrack.views.default"
 
     @property
@@ -543,7 +543,7 @@ class SetupTab(UITab):
 
 
 class ProjectDataTab(UITab):
-    title = ugettext_noop("Data")
+    title = ugettext_lazy("Data")
     view = "corehq.apps.data_interfaces.views.default"
 
     @property
@@ -703,7 +703,7 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    title = ugettext_noop("CloudCare")
+    title = ugettext_lazy("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
@@ -718,7 +718,7 @@ class CloudcareTab(UITab):
 
 
 class MessagingTab(UITab):
-    title = ugettext_noop("Messaging")
+    title = ugettext_lazy("Messaging")
     view = "corehq.apps.sms.views.default"
 
     @property
@@ -948,7 +948,7 @@ class MessagingTab(UITab):
 
 
 class ProjectUsersTab(UITab):
-    title = ugettext_noop("Users")
+    title = ugettext_lazy("Users")
     view = "users_default"
 
     @property
@@ -1081,7 +1081,8 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if self.project.locations_enabled:
+        if (feature_previews.LOCATIONS.enabled(self.domain) and
+                has_privilege(self._request, privileges.LOCATIONS)):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,
@@ -1135,7 +1136,7 @@ class ProjectUsersTab(UITab):
 
 
 class ProjectSettingsTab(UITab):
-    title = ugettext_noop("Project Settings")
+    title = ugettext_lazy("Project Settings")
     view = 'domain_settings_default'
 
     @property
@@ -1329,7 +1330,7 @@ class ProjectSettingsTab(UITab):
 
 
 class MySettingsTab(UITab):
-    title = ugettext_noop("My Settings")
+    title = ugettext_lazy("My Settings")
     view = 'default_my_settings'
 
     @property
@@ -1360,7 +1361,7 @@ class MySettingsTab(UITab):
 
 
 class AdminReportsTab(UITab):
-    title = ugettext_noop("Admin Reports")
+    title = ugettext_lazy("Admin Reports")
     view = "corehq.apps.hqadmin.views.default"
 
     @property
@@ -1428,7 +1429,7 @@ class AdminReportsTab(UITab):
 
 
 class AccountingTab(UITab):
-    title = ugettext_noop("Accounting")
+    title = ugettext_lazy("Accounting")
     view = "accounting_default"
     dispatcher = AccountingAdminInterfaceDispatcher
 
@@ -1471,7 +1472,7 @@ class AccountingTab(UITab):
 
 
 class SMSAdminTab(UITab):
-    title = ugettext_noop("SMS Connectivity & Billing")
+    title = ugettext_lazy("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
     dispatcher = SMSAdminInterfaceDispatcher
 
@@ -1499,7 +1500,7 @@ class SMSAdminTab(UITab):
 
 
 class FeatureFlagsTab(UITab):
-    title = ugettext_noop("Feature Flags")
+    title = ugettext_lazy("Feature Flags")
     view = "toggle_list"
 
     @property
@@ -1508,7 +1509,7 @@ class FeatureFlagsTab(UITab):
 
 
 class AdminTab(UITab):
-    title = ugettext_noop("Admin")
+    title = ugettext_lazy("Admin")
     view = "corehq.apps.hqadmin.views.default"
     subtab_classes = (
         AdminReportsTab,
@@ -1565,7 +1566,7 @@ class AdminTab(UITab):
 
 
 class ExchangeTab(UITab):
-    title = ugettext_noop("Exchange")
+    title = ugettext_lazy("Exchange")
     view = "corehq.apps.appstore.views.appstore"
 
     @property
@@ -1597,7 +1598,7 @@ class OrgTab(UITab):
 
 
 class OrgReportTab(OrgTab):
-    title = ugettext_noop("Reports")
+    title = ugettext_lazy("Reports")
     view = "corehq.apps.orgs.views.base_report"
 
     @property
@@ -1619,7 +1620,7 @@ class OrgReportTab(OrgTab):
 
 
 class OrgSettingsTab(OrgTab):
-    title = ugettext_noop("Settings")
+    title = ugettext_lazy("Settings")
     view = "corehq.apps.orgs.views.orgs_landing"
 
     @property

@@ -1,6 +1,6 @@
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.translation import localize
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
 MSG_TOUCHFORMS_DOWN = "sms.survey.temporarilydown"
@@ -23,39 +23,44 @@ MSG_MISSING_EXTERNAL_ID = "sms.caselookup.missingexternalid"
 MSG_CASE_NOT_FOUND = "sms.caselookup.casenotfound"
 MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
+MSG_FORM_NOT_FOUND = "sms.survey.formnotfound"
+MSG_FORM_ERROR = "sms.survey.formerror"
 MSG_OPTED_IN = "sms.opt.in"
 MSG_OPTED_OUT = "sms.opt.out"
 MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
 MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
 
 _MESSAGES = {
-    MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
-    MSG_TOUCHFORMS_DOWN: ugettext_noop("An error has occurred. Please try again later. If the problem persists, try restarting the survey."),
-    MSG_TOUCHFORMS_ERROR: ugettext_noop("Internal server error."),
-    MSG_CHOICE_OUT_OF_RANGE: ugettext_noop("Answer is out of range."),
-    MSG_INVALID_CHOICE: ugettext_noop("Invalid choice."),
-    MSG_INVALID_INT: ugettext_noop("Invalid integer entered."),
-    MSG_INVALID_FLOAT: ugettext_noop("Invalid decimal number entered."),
-    MSG_INVALID_LONG: ugettext_noop("Invalid long integer entered."),
-    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected YYYYMMDD."),
-    MSG_INVALID_TIME: ugettext_noop("Invalid time format: expected HHMM (24-hour)."),
-    MSG_KEYWORD_NOT_FOUND: ugettext_noop("Keyword not found: '{0}'"),
-    MSG_START_KEYWORD_USAGE: ugettext_noop("Usage: {0} <keyword>"),
-    MSG_UNKNOWN_GLOBAL_KEYWORD: ugettext_noop("Unknown command: '{0}'"),
-    MSG_FIELD_REQUIRED: ugettext_noop("This field is required."),
-    MSG_EXPECTED_NAMED_ARGS_SEPARATOR: ugettext_noop("Expected name and value to be joined by '{0}'."),
-    MSG_MULTIPLE_ANSWERS_FOUND: ugettext_noop("More than one answer found for '{0}'"),
-    MSG_MULTIPLE_QUESTIONS_MATCH: ugettext_noop("More than one question matches '{0}'"),
-    MSG_MISSING_EXTERNAL_ID: ugettext_noop("Please provide an external id for the case."),
-    MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
-    MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
-    MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
-    MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
+    MSG_MULTIPLE_SESSIONS: ugettext_lazy("An error has occurred. Please try restarting the survey."),
+    MSG_TOUCHFORMS_DOWN: ugettext_lazy("An error has occurred. Please try again later. If the problem persists, try restarting the survey."),
+    MSG_TOUCHFORMS_ERROR: ugettext_lazy("Internal server error."),
+    MSG_CHOICE_OUT_OF_RANGE: ugettext_lazy("Answer is out of range."),
+    MSG_INVALID_CHOICE: ugettext_lazy("Invalid choice."),
+    MSG_INVALID_INT: ugettext_lazy("Invalid integer entered."),
+    MSG_INVALID_FLOAT: ugettext_lazy("Invalid decimal number entered."),
+    MSG_INVALID_LONG: ugettext_lazy("Invalid long integer entered."),
+    MSG_INVALID_DATE: ugettext_lazy("Invalid date format: expected YYYYMMDD."),
+    MSG_INVALID_TIME: ugettext_lazy("Invalid time format: expected HHMM (24-hour)."),
+    MSG_KEYWORD_NOT_FOUND: ugettext_lazy("Keyword not found: '{0}'"),
+    MSG_START_KEYWORD_USAGE: ugettext_lazy("Usage: {0} <keyword>"),
+    MSG_UNKNOWN_GLOBAL_KEYWORD: ugettext_lazy("Unknown command: '{0}'"),
+    MSG_FIELD_REQUIRED: ugettext_lazy("This field is required."),
+    MSG_EXPECTED_NAMED_ARGS_SEPARATOR: ugettext_lazy("Expected name and value to be joined by '{0}'."),
+    MSG_MULTIPLE_ANSWERS_FOUND: ugettext_lazy("More than one answer found for '{0}'"),
+    MSG_MULTIPLE_QUESTIONS_MATCH: ugettext_lazy("More than one question matches '{0}'"),
+    MSG_MISSING_EXTERNAL_ID: ugettext_lazy("Please provide an external id for the case."),
+    MSG_CASE_NOT_FOUND: ugettext_lazy("Case with the given external id was not found."),
+    MSG_MULTIPLE_CASES_FOUND: ugettext_lazy("More than one case was found with the given external id."),
+    MSG_FIELD_DESCRIPTOR: ugettext_lazy("Field '{0}': "),
+    MSG_FORM_NOT_FOUND: ugettext_lazy("Could not find the survey being requested."),
+    MSG_FORM_ERROR: ugettext_lazy("There is a configuration error with this survey. "
+        "Please contact your administrator."),
+    MSG_OPTED_IN: ugettext_lazy("You have opted-in to receive messages from"
         " CommCareHQ. To opt-out, reply to this number with {0}"),
-    MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
+    MSG_OPTED_OUT: ugettext_lazy("You have opted-out from receiving"
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
-    MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
-    MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
+    MSG_DUPLICATE_USERNAME: ugettext_lazy("CommCare user {0} already exists"),
+    MSG_USERNAME_TOO_LONG: ugettext_lazy("Username {0} is too long.  Must be under {1} characters."),
 }
 
 def get_message(msg_id, verified_number=None, context=None):

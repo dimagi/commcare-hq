@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.styleguide.examples.simple_crispy_form.forms import ExampleUserLoginForm
@@ -10,7 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class BaseSimpleCrispyFormSectionView(BaseB3SectionPageView):
-    section_name = ugettext_noop("Simple Crispy Form Example")
+    section_name = ugettext_lazy("Simple Crispy Form Example")
 
     def section_url(self):
         return reverse(DefaultSimpleCrispyFormSectionView.urlname)
@@ -35,7 +35,7 @@ class DefaultSimpleCrispyFormSectionView(BaseSimpleCrispyFormSectionView):
 class SimpleCrispyFormView(BaseSimpleCrispyFormSectionView):
     """This shows example usage for crispy forms in an HQ template view.
     """
-    page_title = ugettext_noop("Register a New User")
+    page_title = ugettext_lazy("Register a New User")
     urlname = 'ex_simple_crispy_forms'
     template_name = 'styleguide/examples/simple_crispy_form/base.html'
 

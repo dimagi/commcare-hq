@@ -103,4 +103,4 @@ class ToggleEditView(ToggleBaseView):
         data = {
             'item_list': item_list
         }
-        return HttpResponse(json.dumps(data), mimetype="application/json")
+        return HttpResponse(json.dumps(data), content_type="application/json")

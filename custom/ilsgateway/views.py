@@ -19,17 +19,23 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
+from custom.ilsgateway import DashboardReport
 from custom.ilsgateway.comparison_reports import ProductAvailabilityReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
 from custom.ilsgateway.stock_data import ILSStockDataSynchronization
+from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
 from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
+from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
+from custom.ilsgateway.tanzania.reports.randr import RRreport
+from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
+from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from custom.ilsgateway.tasks import clear_report_data
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
@@ -112,7 +118,7 @@ class ILSConfigView(BaseConfigView):
     sync_urlname = 'sync_ilsgateway'
     sync_stock_url = 'ils_sync_stock_data'
     clear_stock_url = 'ils_clear_stock_data'
-    page_title = ugettext_noop("ILSGateway")
+    page_title = ugettext_lazy("ILSGateway")
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
 
@@ -144,13 +150,34 @@ class SupervisionDocumentListView(BaseDomainView):
             reverse(self.urlname, args=[self.domain])
         )
 
+    def _ils_make_url(self, cls):
+        params = '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s'
+        return make_url(cls, self.domain, params, (
+            self.request.GET.get('location_id', ''),
+            self.request.GET.get('filter_by_program', ''),
+            self.request.GET.get('datespan_type', ''),
+            self.request.GET.get('datespan_first', ''),
+            self.request.GET.get('datespan_second', ''),
+        ))
+
+    @property
+    def report_links(self):
+        return [
+            ('Dashboard Report', self._ils_make_url(DashboardReport)),
+            ('Stock On Hand', self._ils_make_url(StockOnHandReport)),
+            ('R&R', self._ils_make_url(RRreport)),
+            ('Delivery', self._ils_make_url(DeliveryReport)),
+            ('Supervision', self._ils_make_url(SupervisionReport))
+        ]
+
     @property
     def main_context(self):
         main_context = super(SupervisionDocumentListView, self).main_context
         main_context.update({
             'form': SupervisionDocumentForm(),
             'documents': SupervisionDocument.objects.filter(domain=self.domain),
-            'is_user_domain_admin': self.request.couch_user.is_domain_admin(self.domain)
+            'is_user_domain_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'report_links': self.report_links
         })
         return main_context
 

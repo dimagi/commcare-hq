@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import privileges
@@ -71,7 +71,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     template_name = "users/edit_commcare_user.html"
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
-    page_title = ugettext_noop("Edit Mobile Worker")
+    page_title = ugettext_lazy("Edit Mobile Worker")
 
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -159,10 +159,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
-        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
+        if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
-                'commtrack_enabled': self.request.project.commtrack_enabled,
-                'locations_enabled': self.request.project.locations_enabled,
+                'commtrack_enabled': self.domain_object.commtrack_enabled,
+                'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
@@ -223,7 +223,7 @@ class EditCommCareUserView(BaseFullEditUserView):
 class ListCommCareUsersView(BaseUserSettingsView):
     template_name = "users/mobile/users_list.html"
     urlname = 'commcare_users'
-    page_title = ugettext_noop("Mobile Workers")
+    page_title = ugettext_lazy("Mobile Workers")
 
     DEFAULT_LIMIT = 10
 
@@ -462,7 +462,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
     template_name = 'users/extra_users_confirm_billing.html'
-    page_title = ugettext_noop("Confirm Billing Information")
+    page_title = ugettext_lazy("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -619,7 +619,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 class CreateCommCareUserView(BaseManageCommCareUserView):
     template_name = "users/add_commcare_account.html"
     urlname = 'add_commcare_account'
-    page_title = ugettext_noop("New Mobile Worker")
+    page_title = ugettext_lazy("New Mobile Worker")
 
     @property
     def password_format(self):
@@ -685,7 +685,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
 class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'users/upload_commcare_users.html'
     urlname = 'upload_commcare_users'
-    page_title = ugettext_noop("Bulk Upload Mobile Workers")
+    page_title = ugettext_lazy("Bulk Upload Mobile Workers")
 
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
@@ -712,8 +712,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
+        upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
@@ -780,7 +780,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
-    page_title = ugettext_noop('Mobile Worker Upload Status')
+    page_title = ugettext_lazy('Mobile Worker Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
@@ -839,7 +839,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:

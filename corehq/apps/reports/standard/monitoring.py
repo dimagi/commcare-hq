@@ -27,7 +27,7 @@ from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -113,14 +113,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
-    name = ugettext_noop('Case Activity')
+    name = ugettext_lazy('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
     all_users = None
     display_data = ['percent']
     emailable = True
-    description = ugettext_noop("Followup rates on active cases.")
+    description = ugettext_lazy("Followup rates on active cases.")
     is_cacheable = True
 
     @classmethod
@@ -329,7 +329,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin):
-    name = ugettext_noop("Submissions By Form")
+    name = ugettext_lazy("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -339,7 +339,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     fix_left_col = True
     emailable = True
     is_cacheable = True
-    description = ugettext_noop("Number of submissions by form.")
+    description = ugettext_lazy("Number of submissions by form.")
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -438,8 +438,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
 class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = ugettext_noop("Daily Form Activity")
-    bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
+    name = ugettext_lazy("Daily Form Activity")
+    bad_request_error_text = ugettext_lazy("Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -447,7 +447,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
-    description = ugettext_noop("Number of submissions per day.")
+    description = ugettext_lazy("Number of submissions per day.")
 
     fix_left_col = False
     emailable = True
@@ -630,14 +630,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
-    name = ugettext_noop("Form Completion Time")
+    name = ugettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    description = ugettext_noop("Statistics on time spent on a particular form.")
+    description = ugettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
 
     @property
@@ -752,11 +752,11 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
                                              MultiFormDrilldownMixin, DatespanMixin):
-    name = ugettext_noop("Form Completion vs. Submission Trends")
+    name = ugettext_lazy("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
 
-    description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
+    description = ugettext_lazy("Time lag between when forms were completed and when forms were successfully "
                                 "sent to CommCare HQ.")
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -880,11 +880,11 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,
     MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
-    name = ugettext_noop("Worker Activity Times")
+    name = ugettext_lazy("Worker Activity Times")
     slug = "worker_activity_times"
     is_cacheable = True
 
-    description = ugettext_noop("Graphical representation of when forms are "
+    description = ugettext_lazy("Graphical representation of when forms are "
                                 "completed or submitted.")
 
     fields = [
@@ -983,9 +983,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_noop("Worker Activity")
-    description = ugettext_noop("Summary of form and case activity by user or group.")
-    section_name = ugettext_noop("Project Reports")
+    name = ugettext_lazy("Worker Activity")
+    description = ugettext_lazy("Summary of form and case activity by user or group.")
+    section_name = ugettext_lazy("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
     is_cacheable = True
 

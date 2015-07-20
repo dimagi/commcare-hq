@@ -3,11 +3,26 @@ Internationalization
 
 This page contains the most common techniques needed for managing CommCare HQ
 localization strings. For more comprehensive information, consult the
-`Django Docs translations page <https://docs.djangoproject.com/en/dev/topics/i18n/translation/>`_.
+`Django Docs translations page <https://docs.djangoproject.com/en/dev/topics/i18n/translation/>`_
+or `this helpful blog post <http://blog.bessas.me/post/65775299341/using-gettext-in-django>`_.
 
 
 Tagging strings in views
 ------------------------
+
+There are three gettext functions you should be aware of:
+
+* ``ugettext``: The function returns the translation for the currently selected
+  language.
+* ``ugettext_lazy``: The function marks the string as translation string, but only
+  fetches the translated string when it is used in a string context, such as
+  when rendering a template.
+* ``ugettext_noop``: This function only marks a string as translation string, it
+  does not have any other effect; that is, it always returns the string itself.
+  This should be considered an advanced tool and generally avoided.  It could
+  be useful if you need access to both the translated and untranslated strings.
+
+**TL;DR**: ``ugettext`` should be used in code that will be run per-request.  ``ugettext_lazy`` should be used in top-level code.
 
 The most common case is just wrapping text with ugettext.
 
@@ -19,10 +34,10 @@ The most common case is just wrapping text with ugettext.
         messages.success(request, _("Welcome!"))
 
 
-Sometimes it isn't always so simple, for example with report or settings
-section names. Two methods (`ugettext_noop` and `ugettext_lazy`) are available to mark
-a string for translation but not store the translated string value. These solve
-slightly different cases but are often interchangeable.
+When a string will be read by python as soon as the code is parsed, there is
+not yet a user whose locale can be used for translations, so it must be
+delayed.  This is where `ugettext_lazy` comes in.  It will mark a string for
+translation, but delay the actual translation as long as possible.
 
 .. code-block:: python
 
