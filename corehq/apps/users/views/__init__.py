@@ -34,6 +34,7 @@ from django.contrib import messages
 from django_digest.decorators import httpdigest
 from no_exceptions.exceptions import Http403
 
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
@@ -783,15 +784,16 @@ class DomainRequestView(BasePageView):
         self.request_form = DomainRequestForm(request.POST)
         if self.request_form.is_valid():
             data = self.request_form.cleaned_data
-            if DomainRequest.by_email(data['domain'], data['email']) is not None:
-                messages.error(request, _("A request is pending for this email. "
-                    "You will receive an email when the request is approved."))
-            else:
-                domain_request = DomainRequest(**data)
-                domain_request.send_request_email()
-                domain_request.save()
-                messages.success(request, _("Request created. "
-                    "You will receive an email when the request is approved."))
+            with CriticalSection(["domain_request_%s" % data['domain']]):
+                if DomainRequest.by_email(data['domain'], data['email']) is not None:
+                    messages.error(request, _("A request is pending for this email. "
+                        "You will receive an email when the request is approved."))
+                else:
+                    domain_request = DomainRequest(**data)
+                    domain_request.send_request_email()
+                    domain_request.save()
+                    messages.success(request, _("Request created. "
+                        "You will receive an email when the request is approved."))
         return self.get(request, *args, **kwargs)
 
 
