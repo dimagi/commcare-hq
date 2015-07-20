@@ -839,7 +839,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:

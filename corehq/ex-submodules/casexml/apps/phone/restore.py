@@ -43,7 +43,7 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 def stream_response(payload, headers=None):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml")
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -469,7 +469,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, mimetype="text/xml",
+            return HttpResponse(response, content_type="text/xml",
                                 status=412)  # precondition failed
 
     def _initial_cache_key(self):

@@ -148,7 +148,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     results = es_snapshot_query(params, facets)
-    return HttpResponse(json.dumps(results), mimetype="application/json")
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
@@ -355,7 +355,7 @@ def deployments_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_deployments_query(params, facets)
-    return HttpResponse(json.dumps(results), mimetype="application/json")
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
 
 def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):
