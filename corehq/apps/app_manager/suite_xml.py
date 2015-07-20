@@ -2155,6 +2155,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
+    def _schedule_filter_conditions(self, form, module):
+        try:
+            form_xpath = ScheduleFormXPath(form, form.get_phase(), module, include_casedb=True)
+            relevant = form_xpath.filter_condition
+        except ScheduleError:
+            relevant = None
+        return relevant
+
     @property
     @memoized
     def menus(self):
@@ -2228,6 +2236,15 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                             if case:
                                 command.relevant = interpolate_xpath(form.form_filter, case)
+
+                        if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
+                            # If there is a schedule and another filter condition, disregard it...
+                            # Other forms of filtering are disabled in the UI
+                            # TODO: disable filtering in the UI
+                            schedule_filter_condition = self._schedule_filter_conditions(form, module)
+                            if schedule_filter_condition is not None:
+                                command.relevant = schedule_filter_condition
+
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:

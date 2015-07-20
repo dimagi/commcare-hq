@@ -1,6 +1,6 @@
 import re
 from corehq.apps.app_manager.const import USERCASE_TYPE, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT
-from corehq.apps.app_manager.exceptions import LocationXpathValidationError
+from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError
 from django.utils.translation import ugettext as _
 
 
@@ -322,10 +322,18 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
-    def __init__(self, form, phase, module):
+    def __init__(self, form, phase, module, include_casedb=False):
         self.form = form
         self.phase = phase
         self.module = module
+
+        try:
+            self.anchor = self.phase.anchor
+        except AttributeError:
+            raise ScheduleError("Phase needs an Anchor")
+
+        if include_casedb:
+            self.case_id_xpath = CaseIDXPath(session_var('case_id')).case()
 
     @property
     def fixture(self):
@@ -347,6 +355,14 @@ class ScheduleFormXPath(object):
         zeroth_phase = XPath(SCHEDULE_PHASE).eq(XPath.string(''))  # No visits yet
         return XPath.if_(zeroth_phase, self.first_due_date(), self.xpath_phase_set)
 
+    @property
+    def filter_condition(self):
+        """returns the `relevant` condition on whether to show this form in the list"""
+        next_valid_schedules = self.next_valid_schedules()
+        num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
+        num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
+        return XPath.and_(next_valid_schedules, num_upcoming_visits_gt_0)
+
     def next_valid_schedules(self):
         """
          current_schedule_phase = phase.id and (
@@ -355,12 +371,15 @@ class ScheduleFormXPath(object):
            today() < (date(anchor) + instance(...)/schedule/@expires)
          )
         """
-        phase = self.form.get_phase()
-        anchor = phase.anchor
+        try:
+            anchor = self.case_id_xpath.slash(self.anchor)
+        except AttributeError:
+            anchor = self.anchor
+
         expires = self.fixture.expires()
 
         valid_not_expired = XPath.and_(
-            XPath(SCHEDULE_PHASE).eq(phase.id),
+            XPath(SCHEDULE_PHASE).eq(self.phase.id),
             XPath(anchor).neq(XPath.string('')),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
@@ -370,10 +389,15 @@ class ScheduleFormXPath(object):
 
     def within_window(self):
         """@late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))"""
+        try:
+            anchor = self.case_id_xpath.slash(self.anchor)
+        except AttributeError:
+            anchor = self.anchor
+
         return XPath.or_(
             XPath('@late_window').eq(XPath.string('')),
             XPath('today() <= ({} + {} + {})'.format(
-                XPath.date(self.phase.anchor),
+                XPath.date(anchor),
                 XPath.int('@due'),
                 XPath.int('@late_window'))
             )
@@ -385,16 +409,23 @@ class ScheduleFormXPath(object):
 
     def next_visits(self):
         """@id > last_visit_num_{form_unique_id}"""
-        return XPath('@id > {}'.format(
-            SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
-        ))
+        try:
+            last_visit = self.case_id_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
+        except AttributeError:
+            last_visit = SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
 
-    def due_later(self):
-        """instance(...)/schedule/visit/[next_visits][within_window][1]/@due"""
+        return XPath('@id > {}'.format(last_visit))
+
+    def upcoming_scheduled_visits(self):
+        """instance(...)/schedule/visit/[next_visits][within_window]"""
         return (self.fixture.
                 visit().
                 select_raw(self.next_visits()).
-                select_raw(self.within_window()).
+                select_raw(self.within_window()))
+
+    def due_later(self):
+        """instance(...)/schedule/visit/[next_visits][within_window][1]/@due"""
+        return (self.upcoming_scheduled_visits().
                 select_raw("1").
                 slash("@due"))
 
