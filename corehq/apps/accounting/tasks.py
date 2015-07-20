@@ -48,16 +48,6 @@ def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
     for subscription in starting_subscriptions:
         if not has_subscription_already_ended(subscription) and not subscription.is_active:
-            # terminate previously active subscriptions
-            try:
-                subscription.terminate_all_active_subscriptions(
-                    excluded_id=subscription.id,
-                    note="Task",
-                    method=SubscriptionAdjustmentMethod.TASK,
-                )
-            except Exception as e:
-                logger.error("Could not terminate all active subs for %s due "
-                             "to %s", (subscription, e))
             subscription.is_active = True
             subscription.save()
             _, _, upgraded_privs = get_change_status(None, subscription.plan_version)
