@@ -30,6 +30,8 @@ ALLOW_EXCESS_USERS = 'allow_excess_users'
 
 COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 
+LOCATIONS = 'locations'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -49,6 +51,7 @@ MAX_PRIVILEGES = [
     HIPAA_COMPLIANCE_ASSURANCE,
     ALLOW_EXCESS_USERS,
     COMMCARE_LOGO_UPLOADER,
+    LOCATIONS,
     REPORT_BUILDER,
 ]
 
@@ -82,5 +85,6 @@ class Titles(object):
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
+            LOCATIONS: _("Locations"),
             REPORT_BUILDER: _('User Configurable Report Builder')
         }.get(privilege, privilege)
