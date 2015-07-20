@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, get_language
-from django.utils.translation import ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from django.core.cache import cache
 
 from corehq import toggles, privileges, Domain, feature_previews

@@ -14,7 +14,7 @@ from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.sms.util import get_available_backends, validate_phone_number
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser

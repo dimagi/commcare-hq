@@ -8,7 +8,7 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import MySettingsTab
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)

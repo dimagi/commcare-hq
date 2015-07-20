@@ -29,7 +29,7 @@ from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, Edi
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 @login_and_domain_required

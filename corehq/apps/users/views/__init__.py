@@ -54,7 +54,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.util.couch import get_document_or_404
 
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 def _users_context(request, domain):

@@ -1,5 +1,5 @@
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
-from django.utils.translation import ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 
 
 class SelectReportingType(BaseSingleOptionFilter):

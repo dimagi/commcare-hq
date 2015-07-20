@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.util.soft_assert import soft_assert
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,

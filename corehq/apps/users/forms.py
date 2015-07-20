@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES

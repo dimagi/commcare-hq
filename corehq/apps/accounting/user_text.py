@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy, ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
 DESC_BY_EDITION = {
@@ -319,14 +319,14 @@ class PricingTable(object):
             PricingTableCategories.SUPPORT,
         ),
     }
-    VISIT_WIKI_TEXT = ugettext_lazy("Visit the help site to learn more.")
+    VISIT_WIKI_TEXT = _("Visit the help site to learn more.")
 
     @classmethod
     def get_footer_by_product(cls, product, domain=None):
         ensure_product(product)
         from corehq.apps.domain.views import ProBonoStaticView
         return (
-            ugettext_lazy(
+            _(
                 mark_safe(
                     _('*Local taxes and other country-specific fees not included. Dimagi provides pro-bono '
                       'software plans on a needs basis. To learn more about this opportunity or see if your '

@@ -9,7 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 # For translations
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"

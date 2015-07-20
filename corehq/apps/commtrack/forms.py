@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_lazy, ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
 
