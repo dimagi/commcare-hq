@@ -55,12 +55,12 @@ class ReportingRates(ReportingRatesData):
 
             chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting'),
+                     label=_('Non-Reporting %s%%' % non_reported_formatted),
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
                 dict(value=reported_percent,
-                     label=_('Reporting'),
+                     label=_('Reporting %s%%' % reported_formatted),
                      description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
                                                                 self.datetext())),
                      color='green'),
@@ -105,12 +105,12 @@ class ReportingDetails(ReportingRatesData):
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                     label=_('Complete'),
+                     label=_('Complete %s%%' % complete_formatted),
                      description=_("%s%% (%d) Complete Reports in %s" %
                                    (complete_formatted, data['complete'], self.datetext())),
                      color='green'),
                 dict(value=incomplete_formatted,
-                     label=_('Incomplete'),
+                     label=_('Incomplete %s%%' % incomplete_formatted),
                      description=_("%s%% (%d) Incomplete Reports in %s" %
                                    (incomplete_formatted, data['incomplete'], self.datetext())),
                      color='purple'),
@@ -162,10 +162,10 @@ class SummaryReportingRates(ReportingRatesData):
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (values['location_id'], self.config['startdate'], self.config['enddate'])
                 )
-
+                is_rendered_as_email = self.config['is_rendered_as_email']
                 rows.append(
                     [
-                        link_format(location_name, url),
+                        link_format(location_name, url) if not is_rendered_as_email else location_name,
                         values['all'],
                         values['complete'] + values['incomplete'],
                         '%d%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
@@ -222,7 +222,7 @@ class NonReporting(ReportingRatesData):
                     date = ews_date_format(st[0].report.date)
                 else:
                     date = '---'
-                rows.append([link_format(name, url), date])
+                rows.append([link_format(name, url) if not self.config['is_rendered_as_email'] else name, date])
         return rows
 
 
@@ -255,7 +255,12 @@ class InCompleteReports(ReportingRatesData):
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location_id, self.config['startdate'], self.config['enddate'])
                 )
-                rows.append([link_format(name, url), ews_date_format(date)])
+                rows.append(
+                    [
+                        link_format(name, url) if not self.config['is_rendered_as_email'] else name,
+                        ews_date_format(date)
+                    ]
+                )
         return rows
 
 
@@ -475,13 +480,20 @@ class ReportingRatesReport(MultiReport):
             ReportingRates(config=config),
             ReportingDetails(config=config)
         ]
+        location = SQLLocation.objects.get(location_id=config['location_id'])
         if config['location_id']:
-            location = SQLLocation.objects.get(location_id=config['location_id'])
             if location.location_type.name.lower() in ['country', 'region']:
                 data_providers.append(SummaryReportingRates(config=config))
 
         if self.is_rendered_as_email:
-            data_providers = [NonReporting(config=config), InCompleteReports(config=config)]
+            config.update({'is_reported_as_email': self.is_rendered_as_email})
+            data_providers = [
+                NonReporting(config=config),
+                InCompleteReports(config=config)
+            ]
+
+            if location.location_type.name.lower() in ['country', 'region']:
+                data_providers = [SummaryReportingRates(config=config)] + data_providers
         else:
             data_providers.extend([NonReporting(config=config), InCompleteReports(config=config)])
 
@@ -491,9 +503,12 @@ class ReportingRatesReport(MultiReport):
     def export_table(self):
         if self.is_reporting_type():
             return super(ReportingRatesReport, self).export_table
-
-        reports = [self.report_context['reports'][-2]['report_table'],
+        non_reporting = self.report_context['reports'][-2]['report_table']
+        non_reporting['title'] = 'Non reporting'
+        reports = [non_reporting,
                    self.report_context['reports'][-1]['report_table']]
+        if self.report_location.location_type.name.lower() in ['country', 'region']:
+            reports = [self.report_context['reports'][-3]['report_table']] + reports
         return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
@@ -525,4 +540,6 @@ class ReportingRatesReport(MultiReport):
         self.use_datatables = False
         if self.is_reporting_type():
             self.override_template = 'ewsghana/facility_page_print_report.html'
+        else:
+            self.override_template = 'ewsghana/reporting_rates_print_report.html'
         return HttpResponse(self._async_context()['report'])

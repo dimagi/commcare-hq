@@ -61,9 +61,10 @@ class DownloadZip(View):
             self.log_errors(errors)
 
         if transfer_enabled:
-            return TransferHttpResponse(fpath, mimetype=self.zip_mimetype)
+            return TransferHttpResponse(fpath, content_type=self.zip_mimetype)
         else:
-            response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE), mimetype=self.zip_mimetype)
+            response = StreamingHttpResponse(FileWrapper(open(fpath), CHUNK_SIZE),
+                    content_type=self.zip_mimetype)
             response['Content-Length'] = os.path.getsize(fpath)
             set_file_download(response, self.zip_name)
             return response

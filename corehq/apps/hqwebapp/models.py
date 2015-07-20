@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain
+from corehq import toggles, privileges, Domain, feature_previews
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
@@ -1084,7 +1084,8 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if self.project.locations_enabled:
+        if (feature_previews.LOCATIONS.enabled(self.domain) and
+                has_privilege(self._request, privileges.LOCATIONS)):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,

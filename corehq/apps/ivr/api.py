@@ -307,7 +307,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     """
     call_log_entry = CallLog.get_call_by_gateway_session_id(gateway_session_id)
     logged_subevent = None
-    if call_log_entry.messaging_subevent_id:
+    if call_log_entry and call_log_entry.messaging_subevent_id:
         logged_subevent = MessagingSubEvent.objects.get(
             pk=call_log_entry.messaging_subevent_id)
 

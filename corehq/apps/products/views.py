@@ -417,7 +417,7 @@ def download_products(request, domain):
 
     writer.close()
 
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
     response.write(file.getvalue())
     return response

@@ -369,7 +369,7 @@ class SubscriptionForm(forms.Form):
         if self.is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                EditSoftwarePlanView, ManageBillingAccountView
+                ViewSoftwarePlanVersionView, ManageBillingAccountView
             )
             from corehq.apps.domain.views import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
@@ -387,8 +387,8 @@ class SubscriptionForm(forms.Form):
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
                 'plan_version_url': reverse(
-                    EditSoftwarePlanView.urlname,
-                    args=[subscription.plan_version.plan.id]),
+                    ViewSoftwarePlanVersionView.urlname,
+                    args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
                 'plan_name': subscription.plan_version,
             })
             try:

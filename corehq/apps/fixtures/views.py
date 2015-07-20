@@ -367,7 +367,7 @@ def upload_fixture_api(request, domain, **kwargs):
         resp_json = {}
         resp_json["code"] = code
         resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+        return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
     try:
         upload_file = request.FILES["file-to-upload"]
@@ -422,7 +422,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_users:
         resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
-    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+    return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
 
 @login_and_domain_required

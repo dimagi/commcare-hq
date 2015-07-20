@@ -279,7 +279,7 @@ def inventory_management(request, domain):
     )
     return HttpResponse(
         json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 
@@ -296,7 +296,7 @@ def stockouts_product(request, domain):
     )
     return HttpResponse(
         json.dumps(stockout_graph.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 

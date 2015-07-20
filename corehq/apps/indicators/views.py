@@ -121,7 +121,7 @@ class BulkExportIndicatorsView(View):
                 ).all()
                 data[view_type].extend([_clean_indicator(d['doc']) for d in result])
 
-        response = HttpResponse(json.dumps(data), mimetype='application/json')
+        response = HttpResponse(json.dumps(data), content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename=%(domain)s-indicators.json' % {
             'domain': domain,
         }

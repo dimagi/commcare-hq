@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 import json
 import os
@@ -22,7 +23,9 @@ def get_sample_data_source():
         return DataSourceConfiguration.wrap(structure)
 
 
-def get_sample_doc_and_indicators(fake_time_now):
+def get_sample_doc_and_indicators(fake_time_now=None):
+    if fake_time_now is None:
+        fake_time_now = datetime.utcnow()
     date_opened = "2014-06-21"
     sample_doc = dict(
         _id='some-doc-id',
