@@ -315,9 +315,9 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": _("Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option."),
+            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
             "application": _("Which application should the data come from?"),
-            "source": _("For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on."),
+            "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
         self.fields.update(report_source_fields)
 
@@ -329,7 +329,7 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is."))
+            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("<strong>Bar</strong> shows one vertical bar for each value in your case or form. <strong>Pie</strong> shows what percentage of the total each value is."))
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
