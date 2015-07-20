@@ -34,6 +34,8 @@ class MaltGeneratorTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        FormData.objects.all().delete()
+        MALTRow.objects.all().delete()
 
     @classmethod
     def _setup_domain_user(cls):
