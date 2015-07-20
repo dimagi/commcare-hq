@@ -681,7 +681,7 @@ class ApplicationsTab(UITab):
                 ),
             ]
             submenu_context.append(dropdown_dict(
-                _('New Application...'),
+                _('New Application'),
                 '#',
                 second_level_dropdowns=newapp_options
             ))

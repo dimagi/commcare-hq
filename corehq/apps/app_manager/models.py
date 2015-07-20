@@ -3682,7 +3682,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from = StringProperty()
-    created_from_id = SchemaProperty(Application)
+    created_from_id = StringProperty()
 
     @property
     @memoized
@@ -4665,8 +4665,8 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         attachments = {}
     finally:
         source['_attachments'] = {}
-    if source_properties:
-        for key, value in source_properties:
+    if source_properties is not None:
+        for key, value in source_properties.iteritems():
             source[key] = value
     cls = str_to_cls[source['doc_type']]
     # Allow the wrapper to update to the current default build_spec

@@ -70,8 +70,7 @@ class NewUserDashboardView(BaseDashboardView):
             'heading': _('Blank Application'),
             'url': reverse('default_new_app', args=[domain]),
             'icon': 'fcc-blankapp',
-            'lead_line1': _('Start from scratch'),
-            'lead_line2': _('with a blank application'),
+            'lead': _('Start from scratch'),
         }]
 
         case_management_app_id = TemplateApp.app_id_by_slug('case_management')
@@ -80,8 +79,7 @@ class NewUserDashboardView(BaseDashboardView):
                 'heading': _('Case Management'),
                 'url': reverse('app_from_template', args=[domain, case_management_app_id]),
                 'icon': 'fcc-casemgt',
-                'lead_line1': _('Track information'),
-                'lead_line2': _('over time'),
+                'lead': _('Track information over time'),
             }] + templates
 
         survey_app_id = TemplateApp.app_id_by_slug('survey')
@@ -90,8 +88,7 @@ class NewUserDashboardView(BaseDashboardView):
                 'heading': _('Survey'),
                 'url': reverse('app_from_template', args=[domain, survey_app_id]),
                 'icon': 'fcc-survey',
-                'lead_line1': _('One-time'),
-                'lead_line2': _('data collection'),
+                'lead': _('One-time data collection'),
             }] + templates
 
         return templates
