@@ -360,7 +360,7 @@ def fast_import_app(request, domain, app_id):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
