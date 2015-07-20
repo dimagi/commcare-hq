@@ -16,7 +16,7 @@ before_install:
   - "lsb_release -a"
 install:
   - "sudo apt-get install moreutils libblas-dev liblapack-dev"
-  - "git clone https://github.com/dimagi/commcarehq-venv.git"
+  - "git clone -b update-env https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
   - "time (bash -e scripts/uninstall-requirements.sh | ts)"
