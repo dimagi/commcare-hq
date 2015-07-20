@@ -1,6 +1,6 @@
 import json
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq import Domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
@@ -102,7 +102,7 @@ class AsyncDrillableFilter(BaseReportFilter):
 
 class AsyncLocationFilter(BaseReportFilter):
     # todo: cleanup template
-    label = ugettext_noop("Location")
+    label = ugettext_lazy("Location")
     slug = "location_async"
     template = "reports/filters/location_async.html"
 

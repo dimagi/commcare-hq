@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
@@ -44,7 +44,7 @@ class CareBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
 
 class GeographyFilter(CareBaseDrilldownOptionFilter):
-    label = ugettext_noop("Geography")
+    label = ugettext_lazy("Geography")
     slug = "geography"
     template = "care_pathways/filters/drilldown_options.html"
 
@@ -124,7 +124,7 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
 
 class CBTNameFilter(BaseSingleOptionFilter):
     slug = 'cbt_name'
-    label = ugettext_noop('CBT Name')
+    label = ugettext_lazy('CBT Name')
     default_text = "All"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"

@@ -1,12 +1,12 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from custom.tdh.reports import TDHReport
 from custom.tdh.sqldata import NewbornConsultationHistory, NewbornConsultationHistoryComplete
 
 
 class NewbornConsultationHistoryReport(TDHReport):
-    name = ugettext_noop('Newborn Consultation History')
+    name = ugettext_lazy('Newborn Consultation History')
     slug = 'newborn_consultation_history'
-    title = ugettext_noop('Newborn Consultation History')
+    title = ugettext_lazy('Newborn Consultation History')
     base_template = "tdh/tdh_template.html"
 
     @property

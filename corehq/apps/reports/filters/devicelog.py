@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.util.queries import fast_distinct
 from phonelog.models import DeviceReportEntry
@@ -7,7 +7,7 @@ from phonelog.models import DeviceReportEntry
 class DeviceLogTagFilter(BaseReportFilter):
     # todo: clean this up
     slug = "logtag"
-    label = ugettext_noop("Filter Logs by Tag")
+    label = ugettext_lazy("Filter Logs by Tag")
     errors_only_slug = "errors_only"
     template = "reports/filters/devicelog_tags.html"
 
@@ -36,7 +36,7 @@ class BaseDeviceLogFilter(BaseReportFilter):
     slug = "logfilter"
     template = "reports/filters/devicelog_filter.html"
     field = None
-    label = ugettext_noop("Filter Logs By")
+    label = ugettext_lazy("Filter Logs By")
     url_param_map = {'Unknown': None}
 
     def get_filters(self, selected):
@@ -76,11 +76,11 @@ class BaseDeviceLogFilter(BaseReportFilter):
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):
     slug = "loguser"
-    label = ugettext_noop("Filter Logs by Username")
+    label = ugettext_lazy("Filter Logs by Username")
     field = 'username'
 
 
 class DeviceLogDevicesFilter(BaseDeviceLogFilter):
     slug = "logdevice"
-    label = ugettext_noop("Filter Logs by Device")
+    label = ugettext_lazy("Filter Logs by Device")
     field = 'device_id'

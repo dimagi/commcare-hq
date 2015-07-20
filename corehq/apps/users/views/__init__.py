@@ -54,7 +54,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.util.couch import get_document_or_404
 
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 def _users_context(request, domain):
@@ -78,7 +78,7 @@ def _users_context(request, domain):
 
 
 class BaseUserSettingsView(BaseDomainView):
-    section_name = ugettext_noop("Users")
+    section_name = ugettext_lazy("Users")
 
     @property
     @memoized
@@ -233,7 +233,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
-    page_title = ugettext_noop("Edit User Role")
+    page_title = ugettext_lazy("Edit User Role")
     user_update_form_class = UpdateUserRoleForm
 
     @property
@@ -344,8 +344,8 @@ class BaseFullEditUserView(BaseEditUserView):
 class EditMyAccountDomainView(BaseFullEditUserView):
     template_name = "users/edit_full_user.html"
     urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
+    page_title = ugettext_lazy("Edit My Information")
+    edit_user_form_title = ugettext_lazy("My Information")
     user_update_form_class = UpdateMyAccountInfoForm
 
     @property
@@ -767,7 +767,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_noop("Invite Web User to Project")
+    page_title = ugettext_lazy("Invite Web User to Project")
 
     @property
     @memoized

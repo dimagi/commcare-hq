@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -11,29 +11,29 @@ class ExampleUserLoginForm(forms.Form):
     This is an EXAMPLE form that demonstrates the use of Crispy Forms in HQ.
     """
     full_name = forms.CharField(
-        label=ugettext_noop("Full Name"),
+        label=ugettext_lazy("Full Name"),
     )
     email = forms.EmailField(
-        label=ugettext_noop("Email"),
+        label=ugettext_lazy("Email"),
     )
     password = forms.CharField(
-        label=ugettext_noop("Password"),
+        label=ugettext_lazy("Password"),
         widget=forms.PasswordInput(),
     )
     password_repeat = forms.CharField(
-        label=ugettext_noop("Password (Repeat)"),
+        label=ugettext_lazy("Password (Repeat)"),
         widget=forms.PasswordInput(),
     )
     phone_number = forms.CharField(
-        label=ugettext_noop("Phone Number"),
+        label=ugettext_lazy("Phone Number"),
         required=False,
     )
     is_staff = forms.BooleanField(
-        label=ugettext_noop("Has Staff Privileges"),
+        label=ugettext_lazy("Has Staff Privileges"),
         required=False,
     )
     language = forms.ChoiceField(
-        label=ugettext_noop("Language"),
+        label=ugettext_lazy("Language"),
         required=False,
     )
 

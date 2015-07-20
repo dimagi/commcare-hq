@@ -2,21 +2,21 @@ from django.forms.fields import *
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from crispy_forms import layout as crispy
 
 class TelerivetBackendForm(BackendForm):
     api_key = TrimmedCharField(
-        label=ugettext_noop("API Key"),
+        label=ugettext_lazy("API Key"),
     )
     project_id = TrimmedCharField(
-        label=ugettext_noop("Project ID"),
+        label=ugettext_lazy("Project ID"),
     )
     phone_id = TrimmedCharField(
-        label=ugettext_noop("Phone ID"),
+        label=ugettext_lazy("Phone ID"),
     )
     webhook_secret = TrimmedCharField(
-        label=ugettext_noop("Webhook Secret"),
+        label=ugettext_lazy("Webhook Secret"),
     )
 
     @property

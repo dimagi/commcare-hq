@@ -2,7 +2,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -19,7 +19,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop("Data")
+    section_name = ugettext_lazy("Data")
     base_template = "reports/standard/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
@@ -31,7 +31,7 @@ class DataInterface(GenericReportView):
 
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
-    name = ugettext_noop("Reassign Cases")
+    name = ugettext_lazy("Reassign Cases")
     slug = "reassign_cases"
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'

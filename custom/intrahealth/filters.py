@@ -1,7 +1,7 @@
 import calendar
 import json
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 
 
 class LocationFilter(AsyncLocationFilter):
-    label = ugettext_noop("Region")
+    label = ugettext_lazy("Region")
     slug = "ih_location_async"
     template = 'intrahealth/location_filter.html'
     required = 0
@@ -59,11 +59,11 @@ class RecapPassageLocationFilter(LocationFilter):
         return context
 
 class FRYearFilter(YearFilter):
-    label = ugettext_noop(u"Ann\xe9e")
+    label = ugettext_lazy(u"Ann\xe9e")
 
 
 class FRMonthFilter(MonthFilter):
-    label = ugettext_noop("Mois")
+    label = ugettext_lazy("Mois")
 
     @property
     def options(self):

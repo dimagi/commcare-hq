@@ -2,12 +2,12 @@ import datetime
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 import json
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.reports.dont_use.fields import ReportField
 
 
 class DateRangeField(ReportField):
-    name = ugettext_noop("Date Range")
+    name = ugettext_lazy("Date Range")
     slug = "datespan"
     template = "m4change/fields/daterange.html"
     inclusive = True
@@ -44,7 +44,7 @@ class DateRangeField(ReportField):
 
 
 class CaseSearchField(ReportField):
-    name = ugettext_noop("Case Search")
+    name = ugettext_lazy("Case Search")
     slug = "case_search"
     template = "reports/filters/search.html"
 

@@ -1,5 +1,5 @@
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
@@ -104,8 +104,8 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
 
 
 class EWSMapReport(CustomProjectReport, StockStatusMapReport):
-    name = ugettext_noop("Maps")
-    title = ugettext_noop("Maps")
+    name = ugettext_lazy("Maps")
+    title = ugettext_lazy("Maps")
     slug = "ews_mapreport"
     template_report = 'ewsghana/map_template.html'
 

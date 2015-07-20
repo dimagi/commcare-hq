@@ -2,7 +2,7 @@ import cgi
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.domain.models import Domain
@@ -56,12 +56,12 @@ from couchforms.models import XFormInstance
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    name = ugettext_noop('SMS Usage')
+    name = ugettext_lazy('SMS Usage')
     slug = 'messages'
     fields = ['corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    special_notice = ugettext_noop(
+    special_notice = ugettext_lazy(
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
@@ -221,7 +221,7 @@ So, to have this report abbreviate the phone number to only the first four digit
 the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number_domains"]
 """
 class MessageLogReport(BaseCommConnectLogReport):
-    name = ugettext_noop('Message Log')
+    name = ugettext_lazy('Message Log')
     slug = 'message_log'
 
     exportable = True
@@ -499,7 +499,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
-    name = ugettext_noop('Past Events')
+    name = ugettext_lazy('Past Events')
     slug = 'messaging_events'
     fields = [
         DatespanFilter,
@@ -587,9 +587,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
 
 class MessageEventDetailReport(BaseMessagingEventReport):
-    name = ugettext_noop('Message Event Detail')
+    name = ugettext_lazy('Message Event Detail')
     slug = 'message_event_detail'
-    description = ugettext_noop('Displays the detail for a given messaging event.')
+    description = ugettext_lazy('Displays the detail for a given messaging event.')
     emailable = False
     exportable = False
     hide_filters = True
@@ -691,9 +691,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
 
 class SurveyDetailReport(BaseMessagingEventReport):
-    name = ugettext_noop('Survey Detail')
+    name = ugettext_lazy('Survey Detail')
     slug = 'survey_detail'
-    description = ugettext_noop('Displays the detail for a given messaging survey.')
+    description = ugettext_lazy('Displays the detail for a given messaging survey.')
     emailable = False
     exportable = False
     hide_filters = True

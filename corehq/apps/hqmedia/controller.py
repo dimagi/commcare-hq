@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 class BaseMultimediaUploadController(object):
@@ -43,7 +43,7 @@ class BaseMultimediaUploadController(object):
 class MultimediaBulkUploadController(BaseMultimediaUploadController):
     is_multi_file = True
     uploader_type = "bulk"
-    media_type = ugettext_noop("zip")
+    media_type = ugettext_lazy("zip")
 
     queue_template = "hqmedia/uploader/queue_multi.html"
     status_template = "hqmedia/uploader/status_multi.html"
@@ -65,7 +65,7 @@ class BaseMultimediaFileUploadController(BaseMultimediaUploadController):
 
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("image")
+    media_type = ugettext_lazy("image")
     existing_file_template = "hqmedia/uploader/preview_image_single.html"
 
     @property
@@ -79,11 +79,11 @@ class MultimediaImageUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaLogoUploadController(MultimediaImageUploadController):
-    media_type = ugettext_noop("logo")
+    media_type = ugettext_lazy("logo")
 
 
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("audio")
+    media_type = ugettext_lazy("audio")
 
     existing_file_template = "hqmedia/uploader/preview_audio_single.html"
 
@@ -98,7 +98,7 @@ class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("video")
+    media_type = ugettext_lazy("video")
 
     existing_file_template = "hqmedia/uploader/preview_video_single.html"
 

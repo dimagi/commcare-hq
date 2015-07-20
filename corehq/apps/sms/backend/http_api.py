@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.util import clean_phone_number, strip_plus
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from crispy_forms import layout as crispy
 from django.conf import settings
 
@@ -26,20 +26,20 @@ BANNED_URL_REGEX = (
 
 class HttpBackendForm(BackendForm):
     url = TrimmedCharField(
-        label=ugettext_noop("URL"),
+        label=ugettext_lazy("URL"),
     )
     message_param = TrimmedCharField(
-        label=ugettext_noop("Message Parameter"),
+        label=ugettext_lazy("Message Parameter"),
     )
     number_param = TrimmedCharField(
-        label=ugettext_noop("Phone Number Parameter"),
+        label=ugettext_lazy("Phone Number Parameter"),
     )
     include_plus = BooleanField(
         required=False,
-        label=ugettext_noop("Include '+' in Phone Number"),
+        label=ugettext_lazy("Include '+' in Phone Number"),
     )
     method = ChoiceField(
-        label=ugettext_noop("HTTP Request Method"),
+        label=ugettext_lazy("HTTP Request Method"),
         choices=(
             ("GET","GET"),
             ("POST","POST")
@@ -47,7 +47,7 @@ class HttpBackendForm(BackendForm):
     )
     additional_params = RecordListField(
         input_name="additional_params",
-        label=ugettext_noop("Additional Parameters"),
+        label=ugettext_lazy("Additional Parameters"),
     )
 
     def __init__(self, *args, **kwargs):

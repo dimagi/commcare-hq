@@ -24,17 +24,17 @@ from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.tasks import initiate_outbound_call
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
 
-ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
-ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
-ERROR_NO_OTHER_NUMBERS = ugettext_noop("Recipient has no phone number.")
-ERROR_FORM = ugettext_noop("Can't load form. Please check configuration.")
-ERROR_NO_RECIPIENTS = ugettext_noop("No recipient(s).")
-ERROR_FINDING_CUSTOM_CONTENT_HANDLER = ugettext_noop("Error looking up custom content handler.")
-ERROR_INVALID_CUSTOM_CONTENT_HANDLER = ugettext_noop("Invalid custom content handler.")
+ERROR_RENDERING_MESSAGE = ugettext_lazy("Error rendering templated message for language '%s'. Please check message syntax.")
+ERROR_NO_VERIFIED_NUMBER = ugettext_lazy("Recipient has no phone number.")
+ERROR_NO_OTHER_NUMBERS = ugettext_lazy("Recipient has no phone number.")
+ERROR_FORM = ugettext_lazy("Can't load form. Please check configuration.")
+ERROR_NO_RECIPIENTS = ugettext_lazy("No recipient(s).")
+ERROR_FINDING_CUSTOM_CONTENT_HANDLER = ugettext_lazy("Error looking up custom content handler.")
+ERROR_INVALID_CUSTOM_CONTENT_HANDLER = ugettext_lazy("Invalid custom content handler.")
 
 
 """

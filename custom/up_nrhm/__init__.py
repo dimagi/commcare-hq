@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
 from custom.up_nrhm.reports.asha_reports import ASHAReports
 

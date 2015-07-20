@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
@@ -46,8 +46,8 @@ class UserTypeFilter(BaseReportFilter):
 
 class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
     slug = 'individual'
-    label = ugettext_noop("Select Mobile Worker")
-    default_text = ugettext_noop("All Mobile Workers")
+    label = ugettext_lazy("Select Mobile Worker")
+    default_text = ugettext_lazy("All Mobile Workers")
 
     @property
     def filter_context(self):
@@ -75,12 +75,12 @@ class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
 
 
 class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
-    default_text = ugettext_noop('Enter a worker')
+    default_text = ugettext_lazy('Enter a worker')
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
-    label = ugettext_noop("Select Case Owner")
-    default_text = ugettext_noop("All Case Owners")
+    label = ugettext_lazy("Select Case Owner")
+    default_text = ugettext_lazy("All Case Owners")
 
     @property
     def options(self):

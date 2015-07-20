@@ -22,7 +22,7 @@ import hashlib
 from dimagi.utils.modules import to_function
 import logging
 import toggles
-from django.utils.translation import ugettext_noop as _, ugettext_lazy
+from django.utils.translation import ugettext_lazy as _
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -34,7 +34,7 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     reports.extend([
-        (ugettext_lazy("Monitor Workers"), (
+        (_("Monitor Workers"), (
             monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
             monitoring.SubmissionsByFormReport,
@@ -43,22 +43,22 @@ def REPORTS(project):
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
         )),
-        (ugettext_lazy("Inspect Data"), (
+        (_("Inspect Data"), (
             inspect.SubmitHistory, CaseListReport,
         )),
-        (ugettext_lazy("Manage Deployments"), (
+        (_("Manage Deployments"), (
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
         )),
-        (ugettext_lazy("Demos for Previewers"), (
+        (_("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])
 
     if project.commtrack_enabled:
-        reports.insert(0, (ugettext_lazy("CommCare Supply"), (
+        reports.insert(0, (_("CommCare Supply"), (
             commtrack_reports.SimplifiedInventoryReport,
             commtrack_reports.InventoryReport,
             commtrack_reports.CurrentStockStatusReport,
@@ -72,7 +72,7 @@ def REPORTS(project):
         config = CareplanConfig.for_domain(project.name)
         if config:
             cp_reports = tuple(make_careplan_reports(config))
-            reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
+            reports.insert(0, (_("Care Plans"), cp_reports))
 
     from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
@@ -105,7 +105,7 @@ def REPORTS(project):
         ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
-    messaging = (ugettext_lazy("Messaging"), messaging_reports)
+    messaging = (_("Messaging"), messaging_reports)
     reports.append(messaging)
 
     reports.extend(_get_dynamic_reports(project))
@@ -180,7 +180,7 @@ from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
-    (ugettext_lazy("Export Data"), (
+    (_("Export Data"), (
         export.ExcelExportReport,
         export.CaseExportReport,
         export.DeidExportReport,
@@ -188,7 +188,7 @@ DATA_INTERFACES = (
 )
 
 EDIT_DATA_INTERFACES = (
-    (ugettext_lazy('Edit Data'), (
+    (_('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases,
     )),

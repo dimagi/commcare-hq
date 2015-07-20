@@ -62,7 +62,7 @@ from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
@@ -80,9 +80,9 @@ from couchexport.shortcuts import export_response
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
-    (ugettext_noop("Yesterday"), 1),
-    (ugettext_noop("1 Week"), 7),
-    (ugettext_noop("30 Days"), 30),
+    (ugettext_lazy("Yesterday"), 1),
+    (ugettext_lazy("1 Week"), 7),
+    (ugettext_lazy("30 Days"), 30),
 )
 
 @login_and_domain_required
@@ -91,7 +91,7 @@ def default(request, domain):
 
 
 class BaseMessagingSectionView(BaseDomainView):
-    section_name = ugettext_noop("Messaging")
+    section_name = ugettext_lazy("Messaging")
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, *args, **kwargs):
@@ -987,7 +987,7 @@ def api_last_read_message(request, domain):
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends'
-    page_title = ugettext_noop("SMS Connectivity")
+    page_title = ugettext_lazy("SMS Connectivity")
     strict_domain_fetching = True
 
     @property
@@ -1148,7 +1148,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 class AddDomainGatewayView(BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'sms/add_gateway.html'
-    page_title = ugettext_noop("Add SMS Connection")
+    page_title = ugettext_lazy("Add SMS Connection")
 
     @property
     def is_superuser(self):
@@ -1243,7 +1243,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
 
 class EditDomainGatewayView(AddDomainGatewayView):
     urlname = 'edit_domain_gateway'
-    page_title = ugettext_noop("Edit SMS Connection")
+    page_title = ugettext_lazy("Edit SMS Connection")
 
     @property
     def backend_id(self):
@@ -1301,7 +1301,7 @@ class EditDomainGatewayView(AddDomainGatewayView):
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"
     urlname = 'subscribe_sms'
-    page_title = ugettext_noop("Subscribe SMS")
+    page_title = ugettext_lazy("Subscribe SMS")
 
     @property
     def commtrack_settings(self):
@@ -1466,7 +1466,7 @@ def upload_sms_translations(request, domain):
 class SMSSettingsView(BaseMessagingSectionView):
     urlname = "sms_settings"
     template_name = "sms/settings.html"
-    page_title = ugettext_noop("SMS Settings")
+    page_title = ugettext_lazy("SMS Settings")
 
     @property
     def page_name(self):

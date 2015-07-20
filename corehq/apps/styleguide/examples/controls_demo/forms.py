@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -17,23 +17,23 @@ class SelectControlDemoForm(forms.Form):
     """This form demonstrates the use of different types of selects.
     """
     office = forms.ChoiceField(
-        label=ugettext_noop("Dimagi Office (Single Select)"),
+        label=ugettext_lazy("Dimagi Office (Single Select)"),
         required=False,
         # only do this if the choices are static:
         choices=[(o, o) for o in OFFICES]
     )
     colors = forms.MultipleChoiceField(
-        label=ugettext_noop("Favorite Colors (Multi Select)"),
+        label=ugettext_lazy("Favorite Colors (Multi Select)"),
         required=False,
         # only do this if the choices are static:
         choices=[(c, c) for c in COLORS]
     )
     language = forms.ChoiceField(
-        label=ugettext_noop("Language (Select2 Single)"),
+        label=ugettext_lazy("Language (Select2 Single)"),
         required=False,
     )
     genres = forms.MultipleChoiceField(
-        label=ugettext_noop("Music Genre (Select2 Multi)"),
+        label=ugettext_lazy("Music Genre (Select2 Multi)"),
         required=False,
     )
 

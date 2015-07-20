@@ -3,7 +3,7 @@ from corehq.apps.accounting.filters import (
     clean_options,
     DateRangeFilter,
 )
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsBillable

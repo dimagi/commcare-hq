@@ -8,7 +8,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 
 
 class FixtureInterface(FixtureViewMixIn, GenericReportView):
@@ -43,7 +43,7 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
 
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
-    name = ugettext_noop("View Tables")
+    name = ugettext_lazy("View Tables")
     slug = "view_lookup_tables"
 
     report_template_path = 'fixtures/view_table.html'
@@ -102,7 +102,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
 
 class FixtureEditInterface(FixtureInterface):
-    name = ugettext_noop("Manage Tables")
+    name = ugettext_lazy("Manage Tables")
     slug = "edit_lookup_tables"
 
     report_template_path = 'fixtures/manage_tables.html'

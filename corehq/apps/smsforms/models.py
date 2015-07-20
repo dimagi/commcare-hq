@@ -3,7 +3,7 @@ from couchdbkit import MultipleResultsFound
 from couchforms.models import XFormInstance
 from django.db import models
 from django.db.models import Q
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 XFORMS_SESSION_SMS = "SMS"
@@ -61,14 +61,14 @@ class SQLXFormsSession(models.Model):
 
         if xform_instance:
             if xform_instance.partial_submission:
-                return ugettext_noop('Completed (Partially Completed Submission)')
+                return ugettext_lazy('Completed (Partially Completed Submission)')
             else:
-                return ugettext_noop('Completed')
+                return ugettext_lazy('Completed')
         else:
             if self.is_open and self.session_type == XFORMS_SESSION_SMS:
-                return ugettext_noop('In Progress')
+                return ugettext_lazy('In Progress')
             else:
-                return ugettext_noop('Not Finished')
+                return ugettext_lazy('Not Finished')
 
     @property
     def is_open(self):

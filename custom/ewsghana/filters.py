@@ -2,7 +2,7 @@ import calendar
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
@@ -21,7 +21,7 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
     template = "common/drilldown_options.html"
-    label = ugettext_noop("Filter By")
+    label = ugettext_lazy("Filter By")
 
     @property
     def drilldown_map(self):
@@ -66,7 +66,7 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
 
 
 class ViewReportFilter(BaseSingleOptionFilter):
-    default_text = ugettext_noop("Product Availability")
+    default_text = ugettext_lazy("Product Availability")
     slug = 'report_type'
     label = 'View'
 

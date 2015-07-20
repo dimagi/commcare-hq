@@ -1,6 +1,6 @@
 from collections import defaultdict
 import re
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 import os
 import yaml
 
@@ -24,7 +24,7 @@ def load_custom_commcare_settings():
         if not setting.get('widget'):
             setting['widget'] = 'select'
         # i18n; not statically analyzable
-        setting['name'] = ugettext_noop(setting['name'])
+        setting['name'] = ugettext_lazy(setting['name'])
     return settings
 
 
@@ -39,7 +39,7 @@ def load_commcare_settings_layout(doc_type):
 
     for section in layout:
         # i18n; not statically analyzable
-        section['title'] = ugettext_noop(section['title'])
+        section['title'] = ugettext_lazy(section['title'])
         for i, key in enumerate(section['settings']):
             setting = settings.pop(key)
             if doc_type == 'Application' or setting['type'] == 'hq':

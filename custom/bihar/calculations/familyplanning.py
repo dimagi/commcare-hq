@@ -1,5 +1,5 @@
 import datetime
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from custom.bihar.calculations.newborn import is_recently_delivered
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator, AddCalculator
 from custom.bihar.calculations.utils.filters import get_add, A_MONTH, is_pregnant_mother, get_edd

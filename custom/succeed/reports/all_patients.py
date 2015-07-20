@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from couchdbkit import ResourceNotFound
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
@@ -111,7 +111,7 @@ def tasks(case_id):
 
 class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
 
-    name = ugettext_noop('Patient List')
+    name = ugettext_lazy('Patient List')
     slug = 'patient_list'
     use_datatables = True
     table_name = 'fluff_UCLAPatientFluff'

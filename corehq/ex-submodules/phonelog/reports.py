@@ -22,13 +22,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 
 logger = logging.getLogger(__name__)
 
-DATA_NOTICE = ugettext_noop(
+DATA_NOTICE = ugettext_lazy(
     "This report will only show data for the past 60 days. Furthermore the report may not "
     "always show the latest log data but will be updated over time",
 )
@@ -40,7 +40,7 @@ TAGS = {
 
 
 class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, PaginatedReportMixin):
-    name = ugettext_noop("Device Log Details")
+    name = ugettext_lazy("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',

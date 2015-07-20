@@ -2,7 +2,7 @@ import logging
 import json
 
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
@@ -208,7 +208,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
-    name = ugettext_noop('Case List')
+    name = ugettext_lazy('Case List')
     slug = 'case_list'
 
     @classmethod

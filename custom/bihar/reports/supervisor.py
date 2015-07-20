@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.util.soft_assert import soft_assert
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
@@ -203,13 +202,13 @@ class MockEmptyReport(BiharSummaryReport):
 
 class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                                CustomProjectReport, ReportReferenceMixIn):
-    name = ugettext_noop("Select Subcenter")
+    name = ugettext_lazy("Select Subcenter")
     slug = "subcenter"
-    description = ugettext_noop("Subcenter selection report")
+    description = ugettext_lazy("Subcenter selection report")
 
     _headers = {
-        'supervisor': [ugettext_noop("Team Name"), ugettext_noop("AWCC")],
-        'manager': [ugettext_noop("Subcentre")],
+        'supervisor': [ugettext_lazy("Team Name"), ugettext_lazy("AWCC")],
+        'manager': [ugettext_lazy("Subcentre")],
     }
 
     @memoized
@@ -240,9 +239,9 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
 
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
-    name = ugettext_noop("Main Menu")
+    name = ugettext_lazy("Main Menu")
     slug = "mainnav"
-    description = ugettext_noop("Main navigation")
+    description = ugettext_lazy("Main navigation")
 
     @classmethod
     def additional_reports(cls):
@@ -280,7 +279,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 
 
 class ToolsNavReport(BiharSummaryReport):
-    name = ugettext_noop("Tools Menu")
+    name = ugettext_lazy("Tools Menu")
     slug = "tools"
 
     _headers = [" ", " ", " "]
@@ -303,7 +302,7 @@ class ToolsNavReport(BiharSummaryReport):
 
 
 class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
-    name = ugettext_noop("Referrals")
+    name = ugettext_lazy("Referrals")
     slug = "referrals"
 
     _headers = []
@@ -354,13 +353,13 @@ class InputReport(MockEmptyReport):
 
 
 class EDDCalcReport(InputReport):
-    name = ugettext_noop("EDD Calculator")
+    name = ugettext_lazy("EDD Calculator")
     slug = "eddcalc"
     _inputs = [
         {
             "name": "lmp",
             "type": "text",
-            "label": ugettext_noop("Enter LMP (DD-MM-YYYY)")
+            "label": ugettext_lazy("Enter LMP (DD-MM-YYYY)")
         }
     ]
 
@@ -377,18 +376,18 @@ class EDDCalcReport(InputReport):
 
 
 class BMICalcReport(InputReport):
-    name = ugettext_noop("BMI Calculator")
+    name = ugettext_lazy("BMI Calculator")
     slug = "bmicalc"
     _inputs = [
         {
             "name": "weight",
             "type": "text",
-            "label": ugettext_noop("Enter weight in kilograms:")
+            "label": ugettext_lazy("Enter weight in kilograms:")
         },
         {
             "name": "height",
             "type": "text",
-            "label": ugettext_noop("Enter height in meters:")
+            "label": ugettext_lazy("Enter height in meters:")
         }
     ]
 

@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -552,7 +552,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_queried = False
     es_facet_list = []
     es_facet_mapping = []
-    section_name = ugettext_noop("ADMINREPORT")
+    section_name = ugettext_lazy("ADMINREPORT")
     es_url = ''
 
     @property
@@ -639,9 +639,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     slug = "domains"
     es_facet_list = DOMAIN_FACETS
     es_facet_mapping = FACET_MAPPING
-    name = ugettext_noop('Project Space List')
-    facet_title = ugettext_noop("Project Facets")
-    search_for = ugettext_noop("projects...")
+    name = ugettext_lazy('Project Space List')
+    facet_title = ugettext_lazy("Project Facets")
+    search_for = ugettext_lazy("projects...")
     base_template = "hqadmin/domain_faceted_report.html"
 
     @property
@@ -805,9 +805,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
-    name = ugettext_noop('User List')
-    facet_title = ugettext_noop("User Facets")
-    search_for = ugettext_noop("users...")
+    name = ugettext_lazy('User List')
+    facet_title = ugettext_lazy("User Facets")
+    search_for = ugettext_lazy("users...")
     default_sort = {'username.exact': 'asc'}
     es_url = USER_INDEX + '/user/_search'
 
@@ -873,9 +873,9 @@ def create_mapping_from_list(l, name="", expand_outer=False, expand_inner=False,
 
 class AdminAppReport(AdminFacetedReport):
     slug = "app_list"
-    name = ugettext_noop('Application List')
-    facet_title = ugettext_noop("App Facets")
-    search_for = ugettext_noop("apps...")
+    name = ugettext_lazy('Application List')
+    facet_title = ugettext_lazy("App Facets")
+    search_for = ugettext_lazy("apps...")
     default_sort = {'name.exact': 'asc'}
     es_url = APP_INDEX + '/app/_search'
 
@@ -925,7 +925,7 @@ class AdminAppReport(AdminFacetedReport):
 
 class GlobalAdminReports(AdminDomainStatsReport):
     base_template = "hqadmin/indicator_report.html"
-    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
+    section_name = ugettext_lazy("ADMINREPORT")  # not sure why ...
 
     @property
     def template_context(self):
@@ -957,7 +957,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
 
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
-    name = ugettext_noop('All Project Spaces')
+    name = ugettext_lazy('All Project Spaces')
     default_params = {'es_is_test': 'false'}
     indicators = [
         'domain_count',
@@ -981,7 +981,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
 
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
-    name = ugettext_noop('Project Spaces Using Messaging')
+    name = ugettext_lazy('Project Spaces Using Messaging')
     default_params = {
         'es_is_test': 'false',
         'es_cp_sms_ever': 'T',
@@ -1006,7 +1006,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
 
 class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
-    name = ugettext_noop('CommCare Supply Project Spaces')
+    name = ugettext_lazy('CommCare Supply Project Spaces')
     default_params = {
         'es_is_test': 'false',
         'es_internal.commtrack_domain': 'T',

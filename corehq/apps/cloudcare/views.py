@@ -39,7 +39,7 @@ from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 import requests
@@ -499,7 +499,7 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+    page_title = ugettext_lazy("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

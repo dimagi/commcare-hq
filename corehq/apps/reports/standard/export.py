@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 from django.conf import settings
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
@@ -102,7 +102,7 @@ def sizeof_fmt(num):
 
 
 class ExcelExportReport(FormExportReportBase):
-    name = ugettext_noop("Export Forms")
+    name = ugettext_lazy("Export Forms")
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
@@ -451,10 +451,10 @@ class DataExportInterface(GenericReportView):
 
 
 class FormExportInterface(DataExportInterface):
-    name = ugettext_noop('Export Forms')
+    name = ugettext_lazy('Export Forms')
     slug = 'forms'
 
-    bulk_download_notice_text = ugettext_noop('Form Export')
+    bulk_download_notice_text = ugettext_lazy('Form Export')
     create_export_view_name = 'create_form_export'
     edit_export_view_name = 'edit_custom_export_form'
     export_schema = FormExportSchema
@@ -466,10 +466,10 @@ class FormExportInterface(DataExportInterface):
 
 
 class CaseExportInterface(DataExportInterface):
-    name = ugettext_noop('Export Cases')
+    name = ugettext_lazy('Export Cases')
     slug = 'cases'
 
-    bulk_download_notice_text = ugettext_noop('Case Export')
+    bulk_download_notice_text = ugettext_lazy('Case Export')
     create_export_view_name = 'create_case_export'
     edit_export_view_name = 'edit_custom_export_case'
     export_schema = CaseExportSchema
@@ -483,8 +483,8 @@ class CaseExportInterface(DataExportInterface):
 class FormExportReport(FormExportReportBase):
     base_template = 'reports/standard/export_download.html'
     report_template_path = 'reports/partials/download_form_export.html'
-    name = ugettext_noop('Download Forms')
-    section_name = ugettext_noop("Export Data")
+    name = ugettext_lazy('Download Forms')
+    section_name = ugettext_lazy("Export Data")
     slug = 'form_export'
 
     dispatcher = DataDownloadInterfaceDispatcher
@@ -497,7 +497,7 @@ class FormExportReport(FormExportReportBase):
             'export': self.exports[0],
             'exports': self.exports,
             "use_bulk": len(self.export_ids) > 1,
-            "filter_title": ugettext_noop("Export Filters"),
+            "filter_title": ugettext_lazy("Export Filters"),
             "back_url": FormExportInterface.get_url(domain=self.domain),
             'additional_params': mark_safe(
                 '&'.join('export_id=%(export_id)s' % {
@@ -505,7 +505,7 @@ class FormExportReport(FormExportReportBase):
                 } for export_id in self.export_ids)
             ),
             'selected_exports_data': self.selected_exports_data,
-            'bulk_download_notice_text': ugettext_noop('Form Exports'),
+            'bulk_download_notice_text': ugettext_lazy('Form Exports'),
         })
         return context
 
@@ -541,8 +541,8 @@ class FormExportReport(FormExportReportBase):
 class NewCaseExportReport(CaseExportReport):
     base_template = 'reports/standard/export_download.html'
     report_template_path = 'reports/partials/download_case_export.html'
-    name = ugettext_noop('Download Cases')
-    section_name = ugettext_noop('Export Data')
+    name = ugettext_lazy('Download Cases')
+    section_name = ugettext_lazy('Export Data')
     slug = 'case_export'
 
     dispatcher = DataDownloadInterfaceDispatcher
@@ -561,7 +561,7 @@ class NewCaseExportReport(CaseExportReport):
                 } for export_id in self.export_ids)
             ),
             # 'selected_exports_data': self.selected_exports_data,
-            # 'bulk_download_notice_text': ugettext_noop('Case Exports'),
+            # 'bulk_download_notice_text': ugettext_lazy('Case Exports'),
         })
         return context
 

@@ -8,7 +8,7 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import MySettingsTab
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
@@ -210,7 +210,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
 
 class BaseProjectDataView(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = ugettext_lazy("Data")
 
     @property
     def section_url(self):

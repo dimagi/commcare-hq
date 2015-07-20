@@ -2,7 +2,7 @@ from collections import defaultdict
 from corehq.apps.reports.util import make_ctable_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
@@ -418,7 +418,7 @@ class HeathFacilityMonthly(MCBase):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("mc_report_hf_monthly")
+    name = ugettext_lazy("mc_report_hf_monthly")
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
 
@@ -428,7 +428,7 @@ class DistrictMonthly(MCBase):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly'
-    name = ugettext_noop("mc_report_dist_monthly")
+    name = ugettext_lazy("mc_report_dist_monthly")
     SECTIONS = DISTRICT_MONTHLY_REPORT
     format_class = FacilityDataFormat
 
@@ -438,7 +438,7 @@ class DistrictWeekly(MCBase):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly'
-    name = ugettext_noop("mc_report_dist_weekly")
+    name = ugettext_lazy("mc_report_dist_weekly")
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
 
@@ -505,6 +505,6 @@ class HealthFacilityWeekly(MCBase):
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly'
-    name = ugettext_noop("mc_report_hf_weekly")
+    name = ugettext_lazy("mc_report_hf_weekly")
     SECTIONS = HF_WEEKLY_REPORT
     format_class = UserDataFormat

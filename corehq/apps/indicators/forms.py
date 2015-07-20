@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 
 # todo proper B3 Handle
 from crispy_forms import bootstrap as twbs
@@ -11,11 +11,11 @@ from corehq.apps.style.crispy import FormActions
 
 class ImportIndicatorsFromJsonFileForm(forms.Form):
     json_file = forms.FileField(
-        label=ugettext_noop("Exported File"),
+        label=ugettext_lazy("Exported File"),
         required=False,
     )
     override_existing = forms.BooleanField(
-        label=ugettext_noop("Override Existing Indicators"),
+        label=ugettext_lazy("Override Existing Indicators"),
         required=False,
     )
 

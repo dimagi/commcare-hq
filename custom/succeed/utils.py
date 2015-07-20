@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 import dateutil
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
@@ -14,10 +14,10 @@ SUCCEED_CHW_APPNAME = 'SUCCEED CHW app'
 
 CONFIG = {
     'groups': [
-        dict(val="harbor", text=ugettext_noop("Harbor UCLA")),
-        dict(val="lac-usc", text=ugettext_noop("LAC-USC")),
-        dict(val="oliveview", text=ugettext_noop("Olive View Medical Center")),
-        dict(val="rancho", text=ugettext_noop("Rancho Los Amigos")),
+        dict(val="harbor", text=ugettext_lazy("Harbor UCLA")),
+        dict(val="lac-usc", text=ugettext_lazy("LAC-USC")),
+        dict(val="oliveview", text=ugettext_lazy("Olive View Medical Center")),
+        dict(val="rancho", text=ugettext_lazy("Rancho Los Amigos")),
     ],
     'succeed_admin': 'SUCCEED Admin',
     'pm_role': 'Project Manager',

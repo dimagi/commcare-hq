@@ -3,7 +3,7 @@ from django.forms.fields import *
 from django.core.exceptions import ValidationError
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 class MessageBankForm(Form):
     message_bank_file = FileField(required=False)

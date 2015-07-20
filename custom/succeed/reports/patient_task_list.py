@@ -3,7 +3,7 @@ import logging
 
 from django.core.urlresolvers import reverse
 from django.utils import html
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 import json
 
 from corehq.apps.api.es import ReportCaseES
@@ -157,7 +157,7 @@ class PatientTaskListReportDisplay(CaseDisplay):
 
 class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     ajax_pagination = True
-    name = ugettext_noop('Patient Tasks')
+    name = ugettext_lazy('Patient Tasks')
     slug = 'patient_task_list'
     default_sort = {'task_due.#value': 'asc'}
     base_template_filters = 'succeed/report.html'

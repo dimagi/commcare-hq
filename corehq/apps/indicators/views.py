@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.generic import TemplateView, View
 from tastypie.http import HttpBadRequest
 from corehq.apps.crud.views import BaseCRUDFormView
@@ -130,8 +130,8 @@ class BulkExportIndicatorsView(View):
 
 class BulkImportIndicatorsView(BaseSectionPageView, DomainViewMixin):
     urlname = 'indicators_upload_bulk'
-    section_name = ugettext_noop("Administer Indicators")
-    page_title = ugettext_noop("Bulk Import Indicators")
+    section_name = ugettext_lazy("Administer Indicators")
+    page_title = ugettext_lazy("Bulk Import Indicators")
     template_name = 'indicators/bulk_import.html'
 
     @method_decorator(login_and_domain_required)
