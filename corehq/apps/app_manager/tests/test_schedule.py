@@ -149,3 +149,29 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(expected_fixture, suite, './fixture[@id="schedule:m2:p1:f0"]')
         self.assertXmlHasXpath(suite, './fixture[@id="schedule:m1:p1:f0"]')
+
+    def test_form_filtering(self):
+        self._apply_schedule_phases()
+        suite = self.app.create_suite()
+        form_ids = (self.form_1.schedule_form_id, self.form_2.schedule_form_id)
+        anchor = "instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/edd"
+        for form_num, form_id in enumerate(form_ids):
+            filter_condition = (
+                "(current_schedule_phase = 1 "  # form phase == current phase
+                "and {anchor} != '' "                # anchor not empty
+                "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
+                "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
+                "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
+                "[@id &gt; instance('casedb')/casedb/case"   # where id > last_visit_number
+                    "[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_{form_id}]"
+                "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "  # not late
+                "&gt; 0"
+            ).format(form_num=form_num, form_id=form_id, anchor=anchor)
+
+            partial = """
+            <partial>
+                <command id='m1-f{form_num}' relevant="{filter_condition}" />
+            </partial>
+            """.format(form_num=form_num, filter_condition=filter_condition)
+
+            self.assertXmlPartialEqual(partial, suite, './menu/command[@id="m1-f{}"]'.format(form_num))
