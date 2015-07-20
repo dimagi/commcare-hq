@@ -4,7 +4,6 @@ import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.db import connection_manager
 
 
 DOC_ID = 'repeat-id'
@@ -76,7 +75,6 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
     def test_table_population(self):
 
-        engine = connection_manager.get_engine()
         adapter = IndicatorSqlAdapter(self.config)
         # Delete and create table
         adapter.rebuild_table()
@@ -95,17 +93,15 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
         adapter.save(doc)
 
         # Get rows from the table
-        with engine.connect() as connection:
-            rows = connection.execute(adapter.get_table().select())
+        rows = adapter.get_query_object()
         retrieved_logs = [
             {
-                'start_time': r[3],
-                'end_time': r[4],
-                'person': r[5],
+                'start_time': r.start_time,
+                'end_time': r.end_time,
+                'person': r.person,
 
             } for r in rows
         ]
-
         # Check those rows against the expected result
         self.assertItemsEqual(
             retrieved_logs,

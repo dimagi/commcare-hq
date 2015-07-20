@@ -219,7 +219,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
 </cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, mimetype="application/xml")
+    return HttpResponse(x_domain, content_type="application/xml")
 
 
 @login_required()

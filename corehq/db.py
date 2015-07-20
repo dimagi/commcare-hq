@@ -35,7 +35,7 @@ class ConnectionManager(object):
 
     def _get_or_create_helper(self, engine_id):
         if engine_id not in self._session_helpers:
-            self._session_helpers[engine_id] = SessionHelper(self._get_connection_string(engine_id))
+            self._session_helpers[engine_id] = SessionHelper(self.get_connection_string(engine_id))
         return self._session_helpers[engine_id]
 
     def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID):
@@ -80,7 +80,7 @@ class ConnectionManager(object):
         for engine_id in self._session_helpers.keys():
             self.dispose_engine(engine_id)
 
-    def _get_connection_string(self, engine_id):
+    def get_connection_string(self, engine_id):
         # for now this just always returns the same connection string for any
         # engine_id, but in the future we could make this function more complicated
         return {

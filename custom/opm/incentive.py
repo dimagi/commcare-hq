@@ -3,6 +3,7 @@ Field definitions for the Incentive Payment Report.
 Takes a CommCareUser and points to the appropriate fluff indicators
 for each field.
 """
+from collections import defaultdict
 from corehq.apps.reports.datatables import DTSortType
 
 from custom.opm.constants import get_fixture_data
@@ -43,6 +44,7 @@ class Worker(object):
         self.account_number = worker.get('account_number')
         self.block = worker.get('block')
         self.owner_id = worker.get('doc_id')
+        self.growth_monitoring_contributions = defaultdict(lambda: 0)
         if case_data:
             self.beneficiaries_registered = numeric_fn(len(case_data))
             self.children_registered = numeric_fn(sum([c.raw_num_children for c
@@ -54,7 +56,12 @@ class Worker(object):
                                                                   opm_case.reporting_window_end)
 
                 self.service_forms_count = 'yes' if dates else 'no'
-            monitoring_count = len(filter(lambda row: row.growth_calculated_aww, case_data))
+
+            for row in self.case_data:
+                if row.growth_calculated_aww:
+                    self.growth_monitoring_contributions[(row.case_id, row.child_index)] += 1
+
+            monitoring_count = len(self.growth_monitoring_contributions.keys())
         else:
             self.beneficiaries_registered = None
             self.children_registered = None
@@ -82,12 +89,10 @@ class Worker(object):
                 row.case_id: row.raw_num_children for row in self.case_data
                 if row.raw_num_children and not row.is_secondary
             }
-            growth_monitoring_contributions = {
-                row.case_id: 1 for row in self.case_data if row.growth_calculated_aww
-            }
             return 'Registration:<br>{}<br>Growth Monitoring:<br>{}'.format(
                 '<br>'.join('{}: {}'.format(k, v) for k, v in child_registered_contributions.items()),
-                '<br>'.join('{}: {}'.format(k, v) for k, v in growth_monitoring_contributions.items())
+                '<br>'.join('{}, {}: {}'.format(k[0], k[1], v)
+                            for k, v in self.growth_monitoring_contributions.items())
             )
         else:
             return ''

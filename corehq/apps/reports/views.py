@@ -1186,19 +1186,19 @@ def download_cases(request, domain):
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
     content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
-    mimetype = "%s" % format.mimetype
+    content_type = "%s" % format.mimetype
 
     def generate_payload(payload_func):
         if async:
             download = DownloadBase()
             a_task = prepare_download.delay(download.download_id, payload_func,
-                                            content_disposition, mimetype)
+                                            content_disposition, content_type)
             download.set_task(a_task)
             return download.get_start_response()
         else:
             payload = payload_func()
             response = HttpResponse(payload)
-            response['Content-Type'] = mimetype
+            response['Content-Type'] = content_type
             response['Content-Disposition'] = content_disposition
             return response
 

@@ -240,7 +240,6 @@ class Domain(Document, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
-    locations_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
@@ -1164,13 +1163,19 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
 
+    @memoized
+    def has_privilege(self, privilege):
+        from corehq.apps.accounting.utils import domain_has_privilege
+        return domain_has_privilege(self, privilege)
+
     @property
     @memoized
     def uses_locations(self):
-        if self.commtrack_enabled:
-            return True
+        from corehq import privileges
         from corehq.apps.locations.models import LocationType
-        return LocationType.objects.filter(domain=self.name).exists()
+        return (self.has_privilege(privileges.LOCATIONS)
+                and (self.commtrack_enabled
+                     or LocationType.objects.filter(domain=self.name).exists()))
 
     @property
     def supports_multiple_locations_per_user(self):

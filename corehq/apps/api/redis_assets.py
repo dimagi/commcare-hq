@@ -67,5 +67,5 @@ class RedisAssetsAPI(View):
             mime_type = cmeta['content_type']
         else:
             mime_type = "plain/text"
-        response = HttpResponse(wrapper, mimetype=mime_type)
+        response = HttpResponse(wrapper, content_type=mime_type)
         return response

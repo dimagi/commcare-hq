@@ -622,4 +622,4 @@ class ViewMultimediaFile(View):
             metadata, buffer = obj.get()
             data = buffer.getvalue()
             content_type = metadata['content_type']
-        return HttpResponse(data, mimetype=content_type)
+        return HttpResponse(data, content_type=content_type)

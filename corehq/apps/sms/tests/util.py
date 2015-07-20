@@ -234,9 +234,9 @@ class TouchformsTestCase(LiveServerTestCase):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        [form] = get_forms_by_type(self.domain, 'XFormInstance',
+        result = get_forms_by_type(self.domain, 'XFormInstance',
                                    recent_first=True, limit=1)
-        return form
+        return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()

@@ -482,7 +482,10 @@ class StockStatus(MultiReport):
         if self.is_reporting_type():
             self.split = True
             if self.is_rendered_as_email:
-                return [FacilityReportData(config)]
+                return [
+                    FacilityReportData(config),
+                    InventoryManagementData(config)
+                ]
             else:
                 return [
                     FacilityReportData(config),
@@ -565,5 +568,8 @@ class StockStatus(MultiReport):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "ewsghana/stock_status_print_report.html"
+        if self.is_reporting_type():
+            self.override_template = 'ewsghana/facility_page_print_report.html'
+        else:
+            self.override_template = "ewsghana/stock_status_print_report.html"
         return HttpResponse(self._async_context()['report'])

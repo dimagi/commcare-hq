@@ -59,3 +59,9 @@ class MockEndpoint(ILSGatewayEndpoint):
                 return objects[2]
             elif id == 13:
                 return objects[3]
+            elif id == 25:
+                return objects[4]
+            elif id == 50:
+                return objects[5]
+            elif id == 51:
+                return objects[6]

@@ -331,7 +331,6 @@ HQ_APPS = (
     'custom.world_vision',
     'custom.tdh',
     'custom.up_nrhm',
-    'crispy_forms',
 
     'custom.care_pathways',
     'custom.common',

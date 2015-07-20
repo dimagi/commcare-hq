@@ -49,25 +49,27 @@ branches:
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
-  - wire-prepay # Farid June 26
-  - locations-for-robber-barons  # Ethan 5/7
-  - index-phonelog-reportentry # Ben 6/8
-  - b3-migration-prep # BB 7/10
+  - web-user-requests # Jenny, July 16
+  - template-apps # Jenny, July 20
+  - extra-permissions-checks  # Ethan 7/20
 submodules:
   corehq/apps/prelogin:
-    branches:
-      - b3-migration-prep # BB 7/10
+    branches: []
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
       - 221-jars # wsp 5/20
+      - django17
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/bootstrap3_crispy:
-    trunk: b3-migration-prep # BB 7/10
   submodules/ctable-src:
+    branches: []
+  submodules/django-digest-src:
     branches:
-      - b3-migration-prep # BB 7/10
+      - django17
+  submodules/pillowtop-src:
+    branches:
+      - django17
