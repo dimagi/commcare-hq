@@ -58,6 +58,31 @@ class FilterField(JsonField):
                 raise forms.ValidationError("Invalid filter format!")
 
 
+class Select2(Widget):
+    """
+    A widget for rendering an input with our knockout "select2" binding.
+    Requires knockout to be included on the page.
+    """
+
+    def __init__(self, attrs=None, choices=()):
+        super(Select2, self).__init__(attrs)
+        self.choices = list(choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+        value = '' if value is None else value
+        final_attrs = self.build_attrs(attrs, name=name)
+
+        return format_html(
+            '<input{0} type="text" data-bind="select2: {1}, {2}">',
+            flatatt(final_attrs),
+            json.dumps(self._choices_for_binding(choices)),
+            'value: {}'.format(json.dumps(value)) if value else ""
+        )
+
+    def _choices_for_binding(self, choices):
+        return [{'id': id, 'text': text} for id, text in chain(self.choices, choices)]
+
+
 class QuestionSelect(Widget):
     """
     A widget for rendering an input with our knockout "questionsSelect" binding.
@@ -726,6 +751,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         )
         if self.source_type == "form":
             self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
