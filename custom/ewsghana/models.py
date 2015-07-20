@@ -1,3 +1,4 @@
+from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
@@ -68,8 +69,6 @@ class EWSGhanaConfig(Document):
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
 
-class AlertsSent(models.Model):
-    create_date = models.DateTimeField(editable=False)
-    alert_type = models.TextField()
-    alert_text = models.TextField()
-    supply_point_id = models.CharField(max_length=10)
+class FacilityInCharge(models.Model):
+    user_id = models.CharField(max_length=128, db_index=True)
+    location = models.ForeignKey(SQLLocation)

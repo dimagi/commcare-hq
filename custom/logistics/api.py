@@ -184,6 +184,7 @@ class APISynchronization(object):
             need_save = False
             for custom_field in custom_fields:
                 name = custom_field.get('name')
+                label = custom_field.get('label')
                 choices = custom_field.get('choices') or []
                 existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
                 if not existing_fields:
@@ -191,9 +192,10 @@ class APISynchronization(object):
                     fields_definitions.fields.append(
                         CustomDataField(
                             slug=name,
-                            label=name,
+                            label=label or name,
                             is_required=False,
-                            choices=choices
+                            choices=choices,
+                            is_multiple_choice=custom_field.get('is_multiple_choice', False)
                         )
                     )
                 else:
