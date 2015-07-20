@@ -10,19 +10,25 @@ or `this helpful blog post <http://blog.bessas.me/post/65775299341/using-gettext
 Tagging strings in views
 ------------------------
 
-There are three ugettext functions you should be aware of:
+**TL;DR**: ``ugettext`` should be used in code that will be run per-request.
+``ugettext_lazy`` should be used in top-level code.
 
-* ``ugettext``: The function returns the translation for the currently selected
-  language.
-* ``ugettext_lazy``: The function marks the string as translation string, but only
-  fetches the translated string when it is used in a string context, such as
-  when rendering a template.
-* ``ugettext_noop``: This function only marks a string as translation string, it
-  does not have any other effect; that is, it always returns the string itself.
-  This should be considered an advanced tool and generally avoided.  It could
-  be useful if you need access to both the translated and untranslated strings.
+The management command ``makemessages`` pulls out strings marked for
+translation so they can be translated via transifex.  All three ugettext
+functions mark strings for translation.  The actual translation is performed
+separately.  This is where the ugettext functions differ.
 
-**TL;DR**: ``ugettext`` should be used in code that will be run per-request.  ``ugettext_lazy`` should be used in top-level code.
+* ``ugettext``: The function immediately returns the translation for the
+  currently selected language.
+* ``ugettext_lazy``: The function converts the string to a translation
+  "promise" object.  This is later coerced to a string when rendering a
+  template or otherwise forcing the promise.
+* ``ugettext_noop``: This function only marks a string as translation string,
+  it does not have any other effect; that is, it always returns the string
+  itself. This should be considered an advanced tool and generally avoided.
+  It could be useful if you need access to both the translated and untranslated
+  strings.
+
 
 The most common case is just wrapping text with ugettext.
 
@@ -61,10 +67,10 @@ This ends up in the translations file as::
 
     msgid "User '{user}' has successfully been {action}."
 
-Using `ugettext_lazy`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using ``ugettext_lazy``
+^^^^^^^^^^^^^^^^^^^^^^^
 
-The `ugettext_lazy` method will work in the majority of translation situations. 
+The `ugettext_lazy` method will work in the majority of translation situations.
 It flags the string for translation but does not translate it until it is
 rendered for display. If the string needs to be immediately used or
 manipulated by other methods, this might not work.
@@ -76,17 +82,6 @@ When using the value immediately, there is no reason to do lazy translation.
     return HttpResponse(ugettext("An error was encountered."))
 
 
-When using methods to manipulate a string, lazy translated strings will not
-work properly.
-
-.. code-block:: python
-
-    group_name = ugettext("mobile workers")
-    return group_name.upper()
-
-
-
-
 It is easy to forget to translate form field names, as Django normally builds
 nice looking text for you. When writing forms, make sure to specify labels with
 a translation flagged value. These will need to be done with `ugettext_lazy`.
@@ -96,6 +91,33 @@ a translation flagged value. These will need to be done with `ugettext_lazy`.
     class BaseUserInfoForm(forms.Form):
         first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
         last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+
+
+``ugettext_lazy``, a cautionary tale
+************************************
+
+``ugettext_lazy`` does not return a string.  This can cause complications.
+
+When using methods to manipulate a string, lazy translated strings will not
+work properly.
+
+.. code-block:: python
+
+    group_name = ugettext("mobile workers")
+    return group_name.upper()
+
+Converting ``ugettext_lazy`` objects to json will crash.  You should use
+``dimagi.utils.web.json_handler`` to properly coerce it to a string.
+
+.. code-block:: python
+
+    >>> import json
+    >>> from django.utils.translation import ugettext_lazy
+    >>> json.dumps({"message": ugettext_lazy("Hello!")})
+    TypeError: <django.utils.functional.__proxy__ object at 0x7fb50766f3d0> is not JSON serializable
+    >>> from dimagi.utils.web import json_handler
+    >>> json.dumps({"message": ugettext_lazy("Hello!")}, default=json_handler)
+    '{"message": "Hello!"}'
 
 
 Tagging strings in template files
