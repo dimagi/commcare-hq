@@ -162,6 +162,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SavedAppBuild,
     get_app,
+    load_app_template,
     load_case_reserved_words,
     str_to_cls,
     ReportAppConfig)
@@ -335,15 +336,11 @@ def copy_app(request, domain):
 
 
 @require_can_edit_apps
-def app_from_template(request, domain, template_id):
+def app_from_template(request, domain, slug):
     _clear_app_cache(request, domain)
-    app = get_app(None, template_id)
-    name = app.name
-    assert(app.get_doc_type() in ('Application', 'RemoteApp'))
-    app = import_app_util(template_id, domain, {
-        'name': name,
-        'created_from': 'template',
-        'created_from_id': template_id,
+    template = load_app_template(slug)
+    app = import_app_util(template, domain, {
+        'created_from': 'template_%s' % slug,
     })
     module_id = 0
     form_id = 0
@@ -1057,7 +1054,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
         template = NewUserDashboardView.template_name
-        context.update({ 'templates': NewUserDashboardView.templates(domain) })
+        context.update({'templates': NewUserDashboardView.templates(domain)})
 
     # update multimedia context for forms and modules.
     menu_host = form or module

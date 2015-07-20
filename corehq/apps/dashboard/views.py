@@ -7,7 +7,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import Application, domain_has_apps, TemplateApp
+from corehq.apps.app_manager.models import domain_has_apps
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -62,7 +62,7 @@ class NewUserDashboardView(BaseDashboardView):
 
     @property
     def page_context(self):
-        return { 'templates': self.templates(self.domain) }
+        return {'templates': self.templates(self.domain)}
 
     @classmethod
     def templates(cls, domain):
@@ -73,23 +73,19 @@ class NewUserDashboardView(BaseDashboardView):
             'lead': _('Start from scratch'),
         }]
 
-        case_management_app_id = TemplateApp.app_id_by_slug('case_management')
-        if case_management_app_id is not None:
-            templates = [{
-                'heading': _('Case Management'),
-                'url': reverse('app_from_template', args=[domain, case_management_app_id]),
-                'icon': 'fcc-casemgt',
-                'lead': _('Track information over time'),
-            }] + templates
+        templates = [{
+            'heading': _('Case Management'),
+            'url': reverse('app_from_template', args=[domain, 'case_management']),
+            'icon': 'fcc-casemgt',
+            'lead': _('Track information over time'),
+        }] + templates
 
-        survey_app_id = TemplateApp.app_id_by_slug('survey')
-        if survey_app_id is not None:
-            templates = [{
-                'heading': _('Survey'),
-                'url': reverse('app_from_template', args=[domain, survey_app_id]),
-                'icon': 'fcc-survey',
-                'lead': _('One-time data collection'),
-            }] + templates
+        templates = [{
+            'heading': _('Survey'),
+            'url': reverse('app_from_template', args=[domain, 'survey']),
+            'icon': 'fcc-survey',
+            'lead': _('One-time data collection'),
+        }] + templates
 
         return templates
 

@@ -144,6 +144,13 @@ def _rename_key(dct, old, new):
 
 
 @memoized
+def load_app_template(slug):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
+    with open(os.path.join(path, slug + '.json')) as f:
+        return json.load(f)
+
+
+@memoized
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
@@ -3682,7 +3689,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from = StringProperty()
-    created_from_id = StringProperty()
 
     @property
     @memoized
@@ -4759,19 +4765,6 @@ class CareplanConfig(Document):
             result = None
 
         return result
-
-
-class TemplateApp(models.Model):
-    slug = models.CharField(max_length=32)
-    app_id = models.CharField(max_length=32)
-    is_active = models.BooleanField(default=False)
-
-    @classmethod
-    def app_id_by_slug(cls, slug):
-        template = cls.objects.filter(slug=slug, is_active=True).first()
-        if template is not None and Application.get(template.app_id) is not None:
-            return template.app_id
-        return None
 
 
 # backwards compatibility with suite-1.0.xml
