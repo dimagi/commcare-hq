@@ -168,8 +168,8 @@ class SubscriptionResource(ModelResource):
 
 class InvoiceResource(ModelResource):
     subscription = fields.IntegerField('subscription_id')
-    subtotal = fields.IntegerField('subtotal')
-    applied_credit = fields.IntegerField('applied_credit')
+    subtotal = fields.DecimalField('subtotal')
+    applied_credit = fields.DecimalField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = Invoice.objects.all()
