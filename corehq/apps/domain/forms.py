@@ -336,8 +336,8 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = _(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
