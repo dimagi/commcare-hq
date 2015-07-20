@@ -74,7 +74,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -82,37 +82,38 @@ from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
+NO_RESPONSE = "none"
+
 YES_OR_NO = (
     ("Y","Yes"),
     ("N","No"),
 )
 
 NOW_OR_LATER = (
-    (SEND_NOW, _("Now")),
-    (SEND_LATER ,_("Later")),
+    (SEND_NOW, ugettext_lazy("Now")),
+    (SEND_LATER, ugettext_lazy("Later")),
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
+    (NO_RESPONSE, ugettext_lazy("No Response")),
 )
 
-NO_RESPONSE = "none"
-
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-    (RECIPIENT_OWNER, _("The case's owner")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
-    ("", _("---choose---")),
-    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
+    ("", ugettext_lazy("---choose---")),
+    (RECIPIENT_SURVEY_SAMPLE, ugettext_lazy("Case Group")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
 )
 
 METHOD_CHOICES = (
@@ -131,7 +132,7 @@ RECIPIENT_CHOICES = (
     (RECIPIENT_PARENT_CASE, "The case's parent case"),
     (RECIPIENT_SUBCASE, "The case's child case(s)"),
     (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("User Group")),
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
@@ -1740,7 +1741,7 @@ class OneTimeReminderForm(Form):
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
     content_type = ChoiceField(choices=(
-        (METHOD_SMS, _("SMS Message")),
+        (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
@@ -2300,11 +2301,7 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
-        choices.append(
-            (NO_RESPONSE, _("No Response"))
-        )
-        return choices
+        return KEYWORD_CONTENT_CHOICES
 
     @property
     @memoized

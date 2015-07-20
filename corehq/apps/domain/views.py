@@ -99,7 +99,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext_lazy as _, ugettext_noop, ugettext
 from toggle.models import Toggle
 
 
@@ -1155,7 +1155,7 @@ class BillingStatementPdfView(View):
             response['Content-Disposition'] = 'inline;filename="%s' % filename
         except Exception as e:
             logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
-            return HttpResponse(_("Could not obtain billing statement. "
+            return HttpResponse(ugettext("Could not obtain billing statement. "
                                   "An issue has been submitted."))
         return response
 

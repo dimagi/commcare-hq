@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy as _, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -129,7 +129,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class UpdateUserPermissionForm(forms.Form):
-    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
+    super_user = forms.BooleanField(label=_('System Super User'), required=False)
 
     def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
         is_update_successful = False
@@ -142,15 +142,15 @@ class UpdateUserPermissionForm(forms.Form):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
-    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
-    email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
+    first_name = forms.CharField(label=_('First Name'), max_length=50, required=False)
+    last_name = forms.CharField(label=_('Last Name'), max_length=50, required=False)
+    email = forms.EmailField(label=_("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
         initial=None,
         required=False,
         help_text=mark_safe_lazy(
-            ugettext_lazy(
+            _(
                 "<i class=\"icon-info-sign\"></i> "
                 "Becomes default language seen in CloudCare and reports (if applicable), "
                 "but does not affect mobile applications. "

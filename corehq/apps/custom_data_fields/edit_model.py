@@ -3,7 +3,7 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django import forms
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
 

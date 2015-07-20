@@ -17,7 +17,7 @@ from dimagi.utils.dates import months_between, first_of_next_month, add_months_t
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from corehq.util.translation import localize
 
