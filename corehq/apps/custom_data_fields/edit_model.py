@@ -104,7 +104,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(cls.entity_string)
+        return _("Edit {} Fields").format(unicode(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -157,7 +157,9 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
-            msg = _(u"{} fields saved successfully").format(self.entity_string)
+            msg = _(u"{} fields saved successfully").format(
+                unicode(self.entity_string)
+            )
             messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)
         else:
