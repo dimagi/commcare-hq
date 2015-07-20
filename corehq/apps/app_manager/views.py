@@ -320,7 +320,7 @@ def app_source(request, domain, app_id):
 
 @require_can_edit_apps
 def copy_app_check_domain(request, domain, name, app_id):
-    app_copy = import_app_util(app_id, domain, name=name)
+    app_copy = import_app_util(app_id, domain, {'name': name})
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -335,12 +335,16 @@ def copy_app(request, domain):
 
 
 @require_can_edit_apps
-def app_from_template(request, domain, app_id):
+def app_from_template(request, domain, template_id):
     _clear_app_cache(request, domain)
-    app = get_app(None, app_id)
+    app = get_app(None, template_id)
     name = app.name
     assert(app.get_doc_type() in ('Application', 'RemoteApp'))
-    app = import_app_util(app_id, domain, name=name)
+    app = import_app_util(template_id, domain, {
+        'name': name,
+        'created_from': 'template',
+        'created_from_id': template_id,
+    })
     module_id = 0
     form_id = 0
     try:
@@ -371,7 +375,7 @@ def import_app(request, domain, template="app_manager/import_app.html"):
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, name=name)
+        app = import_app_util(source, domain, {'name': name})
 
         return back_to_main(request, domain, app_id=app._id)
     else:
