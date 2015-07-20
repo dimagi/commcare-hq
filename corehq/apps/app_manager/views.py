@@ -817,9 +817,8 @@ def get_module_view_context_and_template(app, module):
             for mod in app.get_modules() if module.unique_id != mod.unique_id
             for form in mod.get_forms() if form.is_registration_form(case_type_)
         ]
-        if forms or module.case_list_form.form_id:
-            options['disabled'] = _("Don't Show")
-            options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+        options['disabled'] = _("Don't Show")
+        options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
 
         return options
 
@@ -898,7 +897,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
+            'case_list_form_allowed': module.all_forms_require_a_case(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -934,9 +933,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(
-                module.all_forms_require_a_case and not module.parent_select.active and form_options
-            ),
+            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and
