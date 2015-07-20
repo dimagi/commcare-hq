@@ -452,9 +452,14 @@ class IndexTree(DocumentSchema):
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
+        logger.debug('popped prior ids {}'.format(json.dumps(prior_ids)))
+        logger.debug('temp indices: {}'.format(json.dumps(self.indices, indent=2)))
+        logger.debug('temp _obj: {}'.format(json.dumps(self._obj, indent=2)))
         prior_ids.pop(index_name, None)
         if prior_ids:
             self.indices[from_case_id] = prior_ids
+            logger.debug('final indices: {}'.format(json.dumps(self.indices, indent=2)))
+            logger.debug('final _obj: {}'.format(json.dumps(self._obj, indent=2)))
 
     def set_index(self, from_case_id, index_name, to_case_id):
         prior_ids = self.indices.get(from_case_id, {})
@@ -567,9 +572,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
-        logger.debug('syncing {}'.format(self.user_id))
+        logger.debug('updating sync log for {}'.format(self.user_id))
+        logger.debug('initial rev: {}'.format(self._rev))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree before update: {}'.format(self.index_tree))
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -597,11 +604,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     # however, we should update our index tree accordingly
                     for index in action.indices:
                         if index.referenced_id:
+                            logger.debug('setting index {} from {} to {}'.format(
+                                index.identifier, case._id, index.referenced_id
+                            ))
                             self.index_tree.set_index(case._id, index.identifier, index.referenced_id)
                             if index.referenced_id not in self.case_ids_on_phone:
                                 self.case_ids_on_phone.add(index.referenced_id)
                                 self.dependent_case_ids_on_phone.add(index.referenced_id)
                         else:
+                            logger.debug('deleting index {} from {}'.format(
+                                index.identifier, case._id
+                            ))
                             self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
@@ -612,17 +625,26 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree after update: {}'.format(self.index_tree))
+        logger.debug('index indices: {}'.format(json.dumps(self.index_tree.indices, indent=2)))
+        logger.debug('index _obj: {}'.format(json.dumps(self.index_tree._obj, indent=2)))
+        logger.debug('self _obj: {}'.format(json.dumps(self._obj, indent=2)))
         if made_changes or case_list:
             try:
                 if made_changes:
+                    logger.debug('made changes, saving.')
                     self.save()
+                    logger.debug('index tree after save: {}'.format(self.index_tree))
                 if case_list:
                     self.invalidate_cached_payloads()
+                    logger.debug('index tree after invalidate: {}'.format(self.index_tree))
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
                 ))
                 raise
+
+        logger.debug('final rev: {}'.format(self._rev))
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests

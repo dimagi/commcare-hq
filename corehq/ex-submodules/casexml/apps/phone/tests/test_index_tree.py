@@ -221,5 +221,24 @@ class PruningTest(SimpleTestCase):
         self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
 
 
+class JsonObjectBugTest(SimpleTestCase):
+
+    def test_weird_bug(self):
+        for i in range(100):
+            tree = IndexTree.wrap({
+                "indices": {
+                    "child_id": {
+                        "parent_index_id": "parent_id",
+                        "parent_index_id_2": "parent_id_2"
+                    }
+                },
+                "doc_type": "IndexTree",
+            })
+            self.assertTrue('parent_index_id' in tree._obj['indices']['child_id'])
+            tree.delete_index('child_id', 'parent_index_id')
+            self.assertFalse('parent_index_id' in tree._obj['indices']['child_id'],
+                             'failed in iteration {}'.format(i))
+
+
 def convert_list_to_dict(a_list):
     return {str(i): item for i, item in enumerate(a_list)}
