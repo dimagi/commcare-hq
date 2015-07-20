@@ -120,10 +120,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
         (TRIAL, "This is a Trial Plan"),
+        (TRIAL_INTERNAL, "This is special Trial plan that Dimagi manages."),
     )
 
 
@@ -171,11 +173,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
-        (TRIAL, "30 Day Trial")
+        (TRIAL, "30 Day Trial"),
+        (TRIAL_INTERNAL, "Custom Trial Period"),
     )
 
 
