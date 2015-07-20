@@ -9,7 +9,7 @@ from django.forms import Widget
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions

@@ -1,13 +1,13 @@
 from operator import attrgetter
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.groups.models import Group
 from redis_cache.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
 
-ASHA_ROLE = ugettext_noop('ASHA')
-AWW_ROLE = ugettext_noop('AWW')
-ANM_ROLE = ugettext_noop('ANM')
-LS_ROLE = ugettext_noop('LS')
+ASHA_ROLE = ugettext_lazy('ASHA')
+AWW_ROLE = ugettext_lazy('AWW')
+ANM_ROLE = ugettext_lazy('ANM')
+LS_ROLE = ugettext_lazy('LS')
 
 FLW_ROLES = (ASHA_ROLE, AWW_ROLE)
 SUPERVISOR_ROLES = (ANM_ROLE, LS_ROLE)

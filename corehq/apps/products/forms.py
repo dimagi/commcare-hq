@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product
@@ -22,10 +22,10 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10, required=False)
+    code = forms.CharField(label=ugettext_lazy("Product ID"), max_length=10, required=False)
     description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
-    unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
-    program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
+    unit = forms.CharField(label=ugettext_lazy("Units"), max_length=100, required=False)
+    program_id = forms.ChoiceField(label=ugettext_lazy("Program"), choices=(), required=True)
     cost = CurrencyField(max_digits=8, decimal_places=2, required=False)
 
     def __init__(self, product, *args, **kwargs):

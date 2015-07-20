@@ -1,5 +1,5 @@
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
@@ -10,8 +10,8 @@ from corehq.apps.sms import util
 from corehq.apps.sms.models import MessagingEvent
 from corehq.util.translation import localize
 
-OUTGOING = ugettext_noop("Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ.")
-CONFIRM = ugettext_noop("Thank you. This phone has been verified for using SMS with CommCareHQ")
+OUTGOING = ugettext_lazy("Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ.")
+CONFIRM = ugettext_lazy("Thank you. This phone has been verified for using SMS with CommCareHQ")
 
 VERIFICATION__ALREADY_IN_USE = 1
 VERIFICATION__ALREADY_VERIFIED = 2

@@ -1,7 +1,7 @@
 import pytz
 import cgi
 from datetime import datetime, time, timedelta
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
@@ -53,9 +53,9 @@ class FRIReport(CustomProjectReport, GenericTabularReport):
         return self._interactive_participants
 
 class MessageBankReport(FRIReport):
-    name = ugettext_noop("Message Bank")
+    name = ugettext_lazy("Message Bank")
     slug = "fri_message_bank"
-    description = ugettext_noop("Displays the message bank.")
+    description = ugettext_lazy("Displays the message bank.")
     emailable = False
     fields = (
         "custom.fri.reports.filters.RiskProfileFilter",
@@ -143,7 +143,7 @@ class MessageBankReport(FRIReport):
         return self.table_cell(val1, '<span style="display: none;">%s</span><span>%s</span>' % (val1, val2))
 
 class MessageReport(FRIReport, DatespanMixin):
-    name = ugettext_noop('Message Report')
+    name = ugettext_lazy('Message Report')
     slug = 'fri_message_report'
     fields = [
         DatespanMixin.datespan_field,
@@ -274,9 +274,9 @@ class MessageReport(FRIReport, DatespanMixin):
         )
 
 class PHEDashboardReport(FRIReport):
-    name = ugettext_noop("PHE Dashboard")
+    name = ugettext_lazy("PHE Dashboard")
     slug = "fri_phe_dashboard"
-    description = ugettext_noop("Displays a list of active, arm A, participants.")
+    description = ugettext_lazy("Displays a list of active, arm A, participants.")
     emailable = False
     exportable = False
     report_template_path = "fri/phe_dashboard.html"
@@ -330,9 +330,9 @@ class PHEDashboardReport(FRIReport):
         return "window.open('%s', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');" % url
 
 class SurveyResponsesReport(FRIReport):
-    name = ugettext_noop("Survey Responses")
+    name = ugettext_lazy("Survey Responses")
     slug = "fri_survey_responses"
-    description = ugettext_noop("Shows information pertaining to survey responses.")
+    description = ugettext_lazy("Shows information pertaining to survey responses.")
     emailable = False
     fields = [
         "custom.fri.reports.filters.SurveyDateSelector",

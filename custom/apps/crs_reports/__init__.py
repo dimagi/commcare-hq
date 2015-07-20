@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 from custom.apps.crs_reports.reports import HBNCMotherReport
 

@@ -18,7 +18,7 @@ from dateutil import parser
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
@@ -882,7 +882,7 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
 
 
 class MetReport(CaseReportMixin, BaseReport):
-    name = ugettext_noop("Conditions Met Report")
+    name = ugettext_lazy("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
     model = ConditionsMet

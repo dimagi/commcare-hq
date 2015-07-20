@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
@@ -34,7 +34,7 @@ class HierarchySqlData(SqlData):
 
 
 class DrillDownOptionFilter(BaseDrilldownOptionFilter):
-    label = ugettext_noop("Hierarchy")
+    label = ugettext_lazy("Hierarchy")
     slug = "hierarchy"
 
     @property

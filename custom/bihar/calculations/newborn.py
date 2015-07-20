@@ -4,7 +4,7 @@ from custom.bihar.calculations.utils.calculations import get_related_prop
 from custom.bihar.calculations.utils.filters import is_pregnant_mother, get_add, A_MONTH
 from custom.bihar.calculations.utils.xmlns import REGISTRATION
 from custom.bihar.calculations.utils.calculations import get_form
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 import fluff
 
 

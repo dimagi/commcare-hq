@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reports.commconnect import div, CommConnectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -20,9 +20,9 @@ class BaseSystemOverviewReport(CommConnectReport):
 
 class SystemOverviewReport(BaseSystemOverviewReport):
     slug = 'system_overview'
-    name = ugettext_noop("Overview")
-    description = ugettext_noop("Summary of the different types of messages sent and received by the system.")
-    section_name = ugettext_noop("Overview")
+    name = ugettext_lazy("Overview")
+    description = ugettext_lazy("Summary of the different types of messages sent and received by the system.")
+    section_name = ugettext_lazy("Overview")
 
     def workflow_query(self, workflow=None, additional_facets=None):
         additional_facets = additional_facets or []
@@ -124,9 +124,9 @@ class SystemOverviewReport(BaseSystemOverviewReport):
 
 class SystemUsersReport(BaseSystemOverviewReport):
     slug = 'user_summary'
-    name = ugettext_noop("User Summary")
-    description = ugettext_noop("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
-    section_name = ugettext_noop("User Summary")
+    name = ugettext_lazy("User Summary")
+    description = ugettext_lazy("Summary of recipient information including number of active recipients and  message usage by type of recipient (case vs. mobile worker)")
+    section_name = ugettext_lazy("User Summary")
 
     def active_query(self, recipient_type):
         q = self.base_query

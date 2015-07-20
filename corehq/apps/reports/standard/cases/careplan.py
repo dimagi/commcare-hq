@@ -1,5 +1,5 @@
 import uuid
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
@@ -21,7 +21,7 @@ class CareplanCaseDisplay(CaseDisplay):
 
 
 class CareplanCaseListReport(CaseListReport):
-    name = ugettext_noop('Care Plan Case List')
+    name = ugettext_lazy('Care Plan Case List')
     slug = "careplan_caselist"
 
     def case_detail_url(self, case_id):

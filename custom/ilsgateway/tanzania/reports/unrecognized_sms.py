@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.locations.models import SQLLocation
@@ -28,7 +28,7 @@ def _fmt(val):
 
 class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
                             GenericTabularReport, DatespanMixin):
-    name = ugettext_noop('Unrecognized SMS')
+    name = ugettext_lazy('Unrecognized SMS')
     slug = 'unrecognized_sms'
     fields = [AsyncLocationFilter, DatespanFilter]
     exportable = True

@@ -1,5 +1,5 @@
 import cgi
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
@@ -32,7 +32,7 @@ class CallLogReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
     """
-    name = ugettext_noop('Call Log')
+    name = ugettext_lazy('Call Log')
     slug = 'call_log'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
@@ -162,7 +162,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     """
     Displays all expected callbacks for the given time period.
     """
-    name = ugettext_noop('Expected Callbacks')
+    name = ugettext_lazy('Expected Callbacks')
     slug = 'expected_callbacks'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True

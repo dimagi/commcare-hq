@@ -5,7 +5,7 @@ from django.contrib import messages
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from django.views.decorators.http import require_POST
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.commtrack.views import BaseCommTrackManageView
@@ -30,7 +30,7 @@ def delete_program(request, domain, prog_id):
 class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
     template_name = 'programs/manage/programs.html'
-    page_title = ugettext_noop("Programs")
+    page_title = ugettext_lazy("Programs")
 
 
 class FetchProgramListView(ProgramListView):
@@ -57,7 +57,7 @@ class FetchProgramListView(ProgramListView):
 
 class NewProgramView(BaseCommTrackManageView):
     urlname = 'commtrack_program_new'
-    page_title = ugettext_noop("New Program")
+    page_title = ugettext_lazy("New Program")
     template_name = 'programs/manage/program.html'
 
     @property
@@ -96,7 +96,7 @@ class NewProgramView(BaseCommTrackManageView):
 
 class EditProgramView(NewProgramView):
     urlname = 'commtrack_program_edit'
-    page_title = ugettext_noop("Edit Program")
+    page_title = ugettext_lazy("Edit Program")
 
     DEFAULT_LIMIT = 10
 

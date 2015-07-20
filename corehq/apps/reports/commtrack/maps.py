@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
@@ -6,7 +6,7 @@ from corehq.apps.reports.standard.maps import GenericMapReport
 
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
-    name = ugettext_noop("Stock Status (map)")
+    name = ugettext_lazy("Stock Status (map)")
     slug = "stockstatus_map"
 
     fields = [
@@ -138,7 +138,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
 
 
 class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
-    name = ugettext_noop("Reporting Status (map)")
+    name = ugettext_lazy("Reporting Status (map)")
     slug = "reportingstatus_map"
 
     fields = [

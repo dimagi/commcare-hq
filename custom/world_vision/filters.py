@@ -1,11 +1,11 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.sqldata import LocationSqlData, LOCATION_HIERARCHY
 
 
 class LocationFilter(BaseDrilldownOptionFilter):
-    label = ugettext_noop("Location")
+    label = ugettext_lazy("Location")
     slug = "location"
     template = "world_vision/location_filter.html"
 

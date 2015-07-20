@@ -18,7 +18,7 @@ from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import get_document_or_404
 from couchforms.models import XFormInstance
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 
@@ -64,7 +64,7 @@ def _build_html(version, version_source):
 
 
 class ApplicationStatusReport(DeploymentsReport):
-    name = ugettext_noop("Application Status")
+    name = ugettext_lazy("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
@@ -141,10 +141,10 @@ class ApplicationStatusReport(DeploymentsReport):
 
 
 class SyncHistoryReport(DeploymentsReport):
-    name = ugettext_noop("User Sync History")
+    name = ugettext_lazy("User Sync History")
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
-    report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
+    report_subtitles = [ugettext_lazy('Shows the last (up to) 10 times a user has synced.')]
     disable_pagination = True
 
     @property

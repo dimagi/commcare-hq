@@ -19,7 +19,7 @@ from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
@@ -118,7 +118,7 @@ class ILSConfigView(BaseConfigView):
     sync_urlname = 'sync_ilsgateway'
     sync_stock_url = 'ils_sync_stock_data'
     clear_stock_url = 'ils_clear_stock_data'
-    page_title = ugettext_noop("ILSGateway")
+    page_title = ugettext_lazy("ILSGateway")
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
 

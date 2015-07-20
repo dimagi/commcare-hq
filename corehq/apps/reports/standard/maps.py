@@ -2,7 +2,7 @@ import json
 import os.path
 import re
 from django.conf import settings
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -290,7 +290,7 @@ class DemoMapReport(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("Maps: Highest Mountains")
+    name = ugettext_lazy("Maps: Highest Mountains")
     slug = "maps_demo"
     data_source = {
         "adapter": "csv",
@@ -486,7 +486,7 @@ class DemoMapReport2(GenericMapReport):
     it uses a static dataset
     """
 
-    name = ugettext_noop("Maps: States of India")
+    name = ugettext_lazy("Maps: States of India")
     slug = "maps_demo2"
     data_source = {
         "adapter": "geojson",
@@ -627,7 +627,7 @@ class GenericCaseListMap(GenericMapReport):
         return static_config
 
 class DemoMapCaseList(GenericCaseListMap):
-    name = ugettext_noop("Maps: Case List")
+    name = ugettext_lazy("Maps: Case List")
     slug = "maps_demo_caselist"
 
     case_config = {

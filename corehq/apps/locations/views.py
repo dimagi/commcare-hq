@@ -7,7 +7,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
@@ -72,7 +72,7 @@ class BaseLocationView(BaseDomainView):
 
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
-    page_title = ugettext_noop("Locations")
+    page_title = ugettext_lazy("Locations")
     template_name = 'locations/manage/locations.html'
 
     @property
@@ -109,7 +109,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
 class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
-    page_title = ugettext_noop("Location Types")
+    page_title = ugettext_lazy("Location Types")
     template_name = 'locations/settings.html'
 
     @method_decorator(can_edit_location_types)
@@ -259,7 +259,7 @@ class LocationTypesView(BaseLocationView):
 
 class NewLocationView(BaseLocationView):
     urlname = 'create_location'
-    page_title = ugettext_noop("New Location")
+    page_title = ugettext_lazy("New Location")
     template_name = 'locations/manage/location.html'
     creates_new_location = True
     form_tab = 'basic'
@@ -384,7 +384,7 @@ def unarchive_location(request, domain, loc_id):
 
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
-    page_title = ugettext_noop("Edit Location")
+    page_title = ugettext_lazy("Edit Location")
     creates_new_location = False
 
     @method_decorator(can_edit_location)
@@ -573,14 +573,14 @@ class BaseSyncView(BaseLocationView):
 class FacilitySyncView(BaseSyncView):
     urlname = 'sync_facilities'
     sync_urlname = 'sync_openlmis'
-    page_title = ugettext_noop("OpenLMIS")
+    page_title = ugettext_lazy("OpenLMIS")
     template_name = 'locations/facility_sync.html'
     source = 'openlmis'
 
 
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
-    page_title = ugettext_noop('Location Import Status')
+    page_title = ugettext_lazy('Location Import Status')
     template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
@@ -601,7 +601,7 @@ class LocationImportStatusView(BaseLocationView):
 
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
-    page_title = ugettext_noop('Upload Locations from Excel')
+    page_title = ugettext_lazy('Upload Locations from Excel')
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)

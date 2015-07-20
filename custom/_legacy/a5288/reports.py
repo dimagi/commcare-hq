@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 import pytz
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
@@ -13,9 +13,9 @@ from dimagi.utils.parsing import json_format_date
 
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
-    name = ugettext_noop("Missed Callbacks")
+    name = ugettext_lazy("Missed Callbacks")
     slug = "missed_callbacks"
-    description = ugettext_noop("Summarizes two weeks of SMS / Callback interactions for all participants.")
+    description = ugettext_lazy("Summarizes two weeks of SMS / Callback interactions for all participants.")
     flush_layout = True
     
     def get_past_two_weeks(self):

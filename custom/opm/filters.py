@@ -1,6 +1,6 @@
 from custom.common import ALL_OPTION
 
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from sqlagg.columns import SimpleColumn
 
 from dimagi.utils.decorators.memoized import memoized
@@ -110,7 +110,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
 class HierarchyFilter(OpmBaseDrilldownOptionFilter):
     single_option_select = 0
-    label = ugettext_noop("Hierarchy")
+    label = ugettext_lazy("Hierarchy")
     slug = "hierarchy"
 
     @property
@@ -123,7 +123,7 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
     single_option_select = 0
-    label = ugettext_noop("Hierarchy")
+    label = ugettext_lazy("Hierarchy")
     slug = "hierarchy"
 
     @property

@@ -9,7 +9,7 @@ from django.http.response import Http404
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.hqpillow_retry.filters import PillowErrorFilter

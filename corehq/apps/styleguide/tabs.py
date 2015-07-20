@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -34,7 +34,7 @@ class BaseSGTab(UITab):
 
 
 class SimpleCrispyFormSGExample(BaseSGTab):
-    title = ugettext_noop("Simple Crispy Form")
+    title = ugettext_lazy("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
 
     @property
@@ -67,7 +67,7 @@ class SimpleCrispyFormSGExample(BaseSGTab):
 
 
 class ControlsDemoSGExample(BaseSGTab):
-    title = ugettext_noop("Form Controls")
+    title = ugettext_lazy("Form Controls")
     view = DefaultControlsDemoFormsView.urlname
 
     @property
@@ -101,7 +101,7 @@ class ControlsDemoSGExample(BaseSGTab):
 
 
 class SGExampleTab(BaseSGTab):
-    title = ugettext_noop("Style Guide")
+    title = ugettext_lazy("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
     subtab_classes = (
         SimpleCrispyFormSGExample,

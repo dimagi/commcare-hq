@@ -4,7 +4,7 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from custom.bihar.reports.indicators.reports import ClientListBase
 from custom.bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn,
                                       shared_bihar_context, team_member_context, BiharSummaryReport,
@@ -22,7 +22,7 @@ MAX_ES_RESULTS = 1000000
 DUE_LIST_CONFIG = [
     {
         'slug': 'anc',
-        'title': ugettext_noop('ANC'),
+        'title': ugettext_lazy('ANC'),
         'tasks': [
             "anc_1",
             "anc_2",
@@ -32,7 +32,7 @@ DUE_LIST_CONFIG = [
     },
     {
         'slug': 'tt',
-        'title': ugettext_noop('TT'),
+        'title': ugettext_lazy('TT'),
         'tasks': [
             "tt_1",
             "tt_2",
@@ -41,12 +41,12 @@ DUE_LIST_CONFIG = [
     },
     {
         'slug': 'bcg',
-        'title': ugettext_noop('BCG'),
+        'title': ugettext_lazy('BCG'),
         'tasks': ["bcg",]
     },
     {
         'slug': 'opv',
-        'title': ugettext_noop('OPV'),
+        'title': ugettext_lazy('OPV'),
         'tasks': [
             "opv_0",
             "opv_1",
@@ -57,7 +57,7 @@ DUE_LIST_CONFIG = [
     },
     {
         'slug': 'dpt',
-        'title': ugettext_noop('DPT'),
+        'title': ugettext_lazy('DPT'),
         'tasks': ["dpt_1",
                   "dpt_2",
                   "dpt_3",
@@ -66,7 +66,7 @@ DUE_LIST_CONFIG = [
     },
     {
         'slug': 'hepb',
-        'title': ugettext_noop('Hepatitis B'),
+        'title': ugettext_lazy('Hepatitis B'),
         'tasks': ["hep_0",
                   "hep_1",
                   "hep_2",
@@ -75,12 +75,12 @@ DUE_LIST_CONFIG = [
     },
     {
         'slug': 'measles',
-        'title': ugettext_noop('Measles'),
+        'title': ugettext_lazy('Measles'),
         'tasks': ["measles",]
     },
     {
         'slug': 'vita',
-        'title': ugettext_noop('Vitamin A'),
+        'title': ugettext_lazy('Vitamin A'),
         'tasks': ["vita_1",]
     },
     # test - to ignore: ["hep_b_0", "je", "vit_a_1"]
@@ -93,8 +93,8 @@ def get_config_item_by_slug(slug):
 
 class DueListNav(GroupReferenceMixIn, BiharNavReport):
     slug = "duelistnav"
-    name = ugettext_noop("Due List")
-    description = ugettext_noop("Indicator navigation")
+    name = ugettext_lazy("Due List")
+    description = ugettext_lazy("Indicator navigation")
     preserve_url_params = True
     report_template_path = "bihar/team_listing_tabular.html"
 
@@ -109,7 +109,7 @@ class DueListNav(GroupReferenceMixIn, BiharNavReport):
         return self.group_display
 
 class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
-    name = ugettext_noop("Care Due")
+    name = ugettext_lazy("Care Due")
     slug = "vaccinationsummary"
     description = "Vaccination summary report"
     base_template_mobile = "bihar/bihar_summary.html"
@@ -149,7 +149,7 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
         return list(format_results(by_task_name))
 
 class VaccinationClientList(ClientListBase):
-    name = ugettext_noop("Vaccination Client List")
+    name = ugettext_lazy("Vaccination Client List")
     slug = "vacdetails"
     description = "Vaccination client list report"
 
@@ -284,31 +284,31 @@ def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=No
 
 # TODO: this is pretty silly but doing this without classes would be a bit of extra work
 class VaccinationSummaryToday(VaccinationSummary):
-    name = ugettext_noop("Care Due Today")
+    name = ugettext_lazy("Care Due Today")
     slug = "vacstoday"
     def get_date(self):
         return datetime.today()
 
 class VaccinationSummaryTomorrow(VaccinationSummary):
-    name = ugettext_noop("Care Due Tomorrow")
+    name = ugettext_lazy("Care Due Tomorrow")
     slug = "vacstomorrow"
     def get_date(self):
         return datetime.today() + timedelta(days=1)
 
 class VaccinationSummaryTomorrow(VaccinationSummary):
-    name = ugettext_noop("Care Due Tomorrow")
+    name = ugettext_lazy("Care Due Tomorrow")
     slug = "vacstomorrow"
     def get_date(self):
         return datetime.today() + timedelta(days=1)
 
 class VaccinationSummary2Days(VaccinationSummary):
-    name = ugettext_noop("Care Due In 2 Days")
+    name = ugettext_lazy("Care Due In 2 Days")
     slug = "vacs2days"
     def get_date(self):
         return datetime.today() + timedelta(days=2)
 
 class VaccinationSummary3Days(VaccinationSummary):
-    name = ugettext_noop("Care Due In 3 Days")
+    name = ugettext_lazy("Care Due In 3 Days")
     slug = "vacs3days"
     def get_date(self):
         return datetime.today() + timedelta(days=3)
@@ -316,7 +316,7 @@ class VaccinationSummary3Days(VaccinationSummary):
 
 class DueListSelectionReport(SubCenterSelectionReport):
     slug = "duelistselect"
-    name = ugettext_noop("Due List")
+    name = ugettext_lazy("Due List")
 
     next_report_slug = DueListNav.slug
     next_report_class = DueListNav

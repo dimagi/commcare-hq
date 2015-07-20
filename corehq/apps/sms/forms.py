@@ -14,7 +14,7 @@ from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_lazy
 from corehq.apps.sms.util import get_available_backends, validate_phone_number
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
@@ -23,29 +23,29 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django.conf import settings
 
 FORWARDING_CHOICES = (
-    (FORWARD_ALL, ugettext_noop("All messages")),
-    (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
+    (FORWARD_ALL, ugettext_lazy("All messages")),
+    (FORWARD_BY_KEYWORD, ugettext_lazy("All messages starting with a keyword")),
 )
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 
 ENABLED_DISABLED_CHOICES = (
-    (DISABLED, ugettext_noop("Disabled")),
-    (ENABLED, ugettext_noop("Enabled")),
+    (DISABLED, ugettext_lazy("Disabled")),
+    (ENABLED, ugettext_lazy("Enabled")),
 )
 
 DEFAULT = "DEFAULT"
 CUSTOM = "CUSTOM"
 
 DEFAULT_CUSTOM_CHOICES = (
-    (DEFAULT, ugettext_noop("Default")),
-    (CUSTOM, ugettext_noop("Specify:")),
+    (DEFAULT, ugettext_lazy("Default")),
+    (CUSTOM, ugettext_lazy("Specify:")),
 )
 
 MESSAGE_COUNTER_CHOICES = (
-    (DEFAULT, ugettext_noop("Don't use counter")),
-    (CUSTOM, ugettext_noop("Use counter with threshold:")),
+    (DEFAULT, ugettext_lazy("Don't use counter")),
+    (CUSTOM, ugettext_lazy("Use counter with threshold:")),
 )
 
 SMS_CONVERSATION_LENGTH_CHOICES = (
@@ -116,7 +116,7 @@ class SettingsForm(Form):
     # General Settings
     use_default_sms_response = ChoiceField(
         required=False,
-        label=ugettext_noop("Default SMS Response"),
+        label=ugettext_lazy("Default SMS Response"),
         choices=ENABLED_DISABLED_CHOICES,
     )
     default_sms_response = TrimmedCharField(
@@ -125,10 +125,10 @@ class SettingsForm(Form):
     )
     use_restricted_sms_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Send SMS on..."),
+        label=ugettext_lazy("Send SMS on..."),
         choices=(
-            (DISABLED, ugettext_noop("any day, at any time")),
-            (ENABLED, ugettext_noop("only specific days and times")),
+            (DISABLED, ugettext_lazy("any day, at any time")),
+            (ENABLED, ugettext_lazy("only specific days and times")),
         ),
     )
     restricted_sms_times_json = CharField(
@@ -137,7 +137,7 @@ class SettingsForm(Form):
     )
     send_to_duplicated_case_numbers = ChoiceField(
         required=False,
-        label=ugettext_noop("Send Messages to Non-Unique Phone Numbers"),
+        label=ugettext_lazy("Send Messages to Non-Unique Phone Numbers"),
         choices=ENABLED_DISABLED_CHOICES,
     )
 
@@ -148,7 +148,7 @@ class SettingsForm(Form):
     )
     custom_case_username = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
     )
     use_custom_message_count_threshold = ChoiceField(
         required=False,
@@ -156,11 +156,11 @@ class SettingsForm(Form):
     )
     custom_message_count_threshold = IntegerField(
         required=False,
-        label=ugettext_noop("Enter a Number"),
+        label=ugettext_lazy("Enter a Number"),
     )
     use_sms_conversation_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Delay Automated SMS"),
+        label=ugettext_lazy("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
     )
     sms_conversation_times_json = CharField(
@@ -169,25 +169,25 @@ class SettingsForm(Form):
     )
     sms_conversation_length = ChoiceField(
         required=False,
-        label=ugettext_noop("Conversation Duration"),
+        label=ugettext_lazy("Conversation Duration"),
         choices=SMS_CONVERSATION_LENGTH_CHOICES,
     )
     survey_traffic_option = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey Traffic"),
+        label=ugettext_lazy("Survey Traffic"),
         choices=(
-            (SHOW_ALL, ugettext_noop("Show all survey traffic")),
-            (SHOW_INVALID, ugettext_noop("Hide all survey traffic except "
+            (SHOW_ALL, ugettext_lazy("Show all survey traffic")),
+            (SHOW_INVALID, ugettext_lazy("Hide all survey traffic except "
                                          "invalid responses")),
-            (HIDE_ALL, ugettext_noop("Hide all survey traffic")),
+            (HIDE_ALL, ugettext_lazy("Hide all survey traffic")),
         ),
     )
     count_messages_as_read_by_anyone = ChoiceField(
         required=False,
-        label=ugettext_noop("A Message is Read..."),
+        label=ugettext_lazy("A Message is Read..."),
         choices=(
-            (ENABLED, ugettext_noop("when it is read by anyone")),
-            (DISABLED, ugettext_noop("only for the user that reads it")),
+            (ENABLED, ugettext_lazy("when it is read by anyone")),
+            (DISABLED, ugettext_lazy("only for the user that reads it")),
         ),
     )
     use_custom_chat_template = ChoiceField(
@@ -196,30 +196,30 @@ class SettingsForm(Form):
     )
     custom_chat_template = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter Chat Template Identifier"),
+        label=ugettext_lazy("Enter Chat Template Identifier"),
     )
     sms_case_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("Case Self-Registration"),
+        label=ugettext_lazy("Case Self-Registration"),
     )
     sms_case_registration_type = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Default Case Type"),
+        label=ugettext_lazy("Default Case Type"),
     )
     sms_case_registration_owner_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Default Case Owner"),
+        label=ugettext_lazy("Default Case Owner"),
     )
     sms_case_registration_user_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Registration Submitter"),
+        label=ugettext_lazy("Registration Submitter"),
     )
 
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("SMS Mobile Worker Registration"),
+        label=ugettext_lazy("SMS Mobile Worker Registration"),
     )
 
 
@@ -656,24 +656,24 @@ class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None
     name = CharField(
-        label=ugettext_noop("Name")
+        label=ugettext_lazy("Name")
     )
     description = CharField(
-        label=ugettext_noop("Description"),
+        label=ugettext_lazy("Description"),
         widget=forms.Textarea,
         required=False,
     )
     give_other_domains_access = BooleanField(
         required=False,
-        label=ugettext_noop("Give other domains access.")
+        label=ugettext_lazy("Give other domains access.")
     )
     authorized_domains = CharField(
         required=False,
-        label=ugettext_noop("List of authorized domains")
+        label=ugettext_lazy("List of authorized domains")
     )
     reply_to_phone_number = CharField(
         required=False,
-        label=ugettext_noop("Reply-To Phone Number"),
+        label=ugettext_lazy("Reply-To Phone Number"),
     )
 
     def __init__(self, *args, **kwargs):

@@ -22,7 +22,7 @@ import hashlib
 from dimagi.utils.modules import to_function
 import logging
 import toggles
-from django.utils.translation import ugettext_noop as _, ugettext_lazy
+from django.utils.translation import ugettext_lazy as _, ugettext_lazy
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport

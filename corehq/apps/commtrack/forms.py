@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
 
@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 
 class CommTrackSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=ugettext_noop("Use default emergency levels"), required=False)
+        label=ugettext_lazy("Use default emergency levels"), required=False)
 
     stock_emergency_level = forms.DecimalField(
         label=ugettext_lazy("Emergency Level (months)"), required=False)
@@ -141,15 +141,15 @@ class LocationTypeStockLevels(forms.Form):
     Sub form for configuring stock levels for a specific location type
     """
     emergency_level = forms.DecimalField(
-        label=ugettext_noop("Emergency Level (months)"),
+        label=ugettext_lazy("Emergency Level (months)"),
         required=True,
     )
     understock_threshold = forms.DecimalField(
-        label=ugettext_noop("Low Stock Level (months)"),
+        label=ugettext_lazy("Low Stock Level (months)"),
         required=True,
     )
     overstock_threshold = forms.DecimalField(
-        label=ugettext_noop("Overstock Level (months)"),
+        label=ugettext_lazy("Overstock Level (months)"),
         required=True,
     )
 

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 
 from dimagi.utils.decorators.memoized import memoized
@@ -32,7 +32,7 @@ def default(request, domain):
 
 
 class BaseCommTrackManageView(BaseDomainView):
-    section_name = ugettext_noop("Setup")
+    section_name = ugettext_lazy("Setup")
 
     @property
     def section_url(self):
@@ -45,7 +45,7 @@ class BaseCommTrackManageView(BaseDomainView):
 
 class CommTrackSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_settings'
-    page_title = ugettext_noop("Advanced Settings")
+    page_title = ugettext_lazy("Advanced Settings")
     template_name = 'domain/admin/commtrack_settings.html'
 
     @property
@@ -139,7 +139,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Consumption")
+    page_title = ugettext_lazy("Consumption")
 
     @property
     @memoized
@@ -166,7 +166,7 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
-    page_title = ugettext_noop("SMS")
+    page_title = ugettext_lazy("SMS")
     template_name = 'domain/admin/sms_settings.html'
 
     @property
@@ -227,7 +227,7 @@ class SMSSettingsView(BaseCommTrackManageView):
 
 class StockLevelsView(BaseCommTrackManageView):
     urlname = 'stock_levels'
-    page_title = ugettext_noop("Stock Levels")
+    page_title = ugettext_lazy("Stock Levels")
     template_name = 'commtrack/manage/stock_levels.html'
 
     def get_existing_stock_levels(self):

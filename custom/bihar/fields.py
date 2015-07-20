@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.select import GroupFilter
 

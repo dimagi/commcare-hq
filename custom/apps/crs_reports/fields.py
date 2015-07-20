@@ -1,6 +1,6 @@
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.users import SelectCaseOwnerFilter
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 
 class SelectBlockField(ReportSelectField):
     slug = "block"
-    name = ugettext_noop("Name of the Block")
+    name = ugettext_lazy("Name of the Block")
     cssId = "opened_closed"
     cssClasses = "span3"
 
@@ -34,7 +34,7 @@ class SelectBlockField(ReportSelectField):
 
 class SelectSubCenterField(ReportSelectField):
     slug = "sub_center"
-    name = ugettext_noop("Sub Center")
+    name = ugettext_lazy("Sub Center")
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "Select Sub Center"
@@ -42,5 +42,5 @@ class SelectSubCenterField(ReportSelectField):
 
 
 class SelectASHAField(SelectCaseOwnerFilter):
-    name = ugettext_noop("ASHA")
-    default_option = ugettext_noop("Type ASHA name")
+    name = ugettext_lazy("ASHA")
+    default_option = ugettext_lazy("Type ASHA name")

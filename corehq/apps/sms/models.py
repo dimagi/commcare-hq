@@ -17,7 +17,7 @@ from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseEx
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -256,13 +256,13 @@ class SMS(SyncSQLToCouchMixin, models.Model):
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
-            ugettext_noop('Gateway error.'),
+            ugettext_lazy('Gateway error.'),
         ERROR_MESSAGE_IS_STALE:
-            ugettext_noop('Message is stale and will not be processed.'),
+            ugettext_lazy('Message is stale and will not be processed.'),
         ERROR_INVALID_DIRECTION:
-            ugettext_noop('Unknown message direction.'),
+            ugettext_lazy('Unknown message direction.'),
         ERROR_PHONE_NUMBER_OPTED_OUT:
-            ugettext_noop('Phone number has opted out of receiving SMS.'),
+            ugettext_lazy('Phone number has opted out of receiving SMS.'),
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -724,10 +724,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_ERROR = 'ERR'
 
     STATUS_CHOICES = (
-        (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
-        (STATUS_COMPLETED, ugettext_noop('Completed')),
-        (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
-        (STATUS_ERROR, ugettext_noop('Error')),
+        (STATUS_IN_PROGRESS, ugettext_lazy('In Progress')),
+        (STATUS_COMPLETED, ugettext_lazy('Completed')),
+        (STATUS_NOT_COMPLETED, ugettext_lazy('Not Completed')),
+        (STATUS_ERROR, ugettext_lazy('Error')),
     )
 
     SOURCE_BROADCAST = 'BRD'
@@ -738,12 +738,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_OTHER = 'OTH'
 
     SOURCE_CHOICES = (
-        (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
-        (SOURCE_KEYWORD, ugettext_noop('Keyword')),
-        (SOURCE_REMINDER, ugettext_noop('Reminder')),
-        (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
-        (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
-        (SOURCE_OTHER, ugettext_noop('Other')),
+        (SOURCE_BROADCAST, ugettext_lazy('Broadcast')),
+        (SOURCE_KEYWORD, ugettext_lazy('Keyword')),
+        (SOURCE_REMINDER, ugettext_lazy('Reminder')),
+        (SOURCE_UNRECOGNIZED, ugettext_lazy('Unrecognized')),
+        (SOURCE_FORWARDED, ugettext_lazy('Forwarded Message')),
+        (SOURCE_OTHER, ugettext_lazy('Other')),
     )
 
     CONTENT_NONE = 'NOP'
@@ -757,15 +757,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_CHAT_SMS = 'CHT'
 
     CONTENT_CHOICES = (
-        (CONTENT_NONE, ugettext_noop('None')),
-        (CONTENT_SMS, ugettext_noop('SMS Message')),
-        (CONTENT_SMS_CALLBACK, ugettext_noop('SMS Expecting Callback')),
-        (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
-        (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
-        (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
-        (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
-        (CONTENT_API_SMS, ugettext_noop('Message Sent Via API')),
-        (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
+        (CONTENT_NONE, ugettext_lazy('None')),
+        (CONTENT_SMS, ugettext_lazy('SMS Message')),
+        (CONTENT_SMS_CALLBACK, ugettext_lazy('SMS Expecting Callback')),
+        (CONTENT_SMS_SURVEY, ugettext_lazy('SMS Survey')),
+        (CONTENT_IVR_SURVEY, ugettext_lazy('IVR Survey')),
+        (CONTENT_PHONE_VERIFICATION, ugettext_lazy('Phone Verification')),
+        (CONTENT_ADHOC_SMS, ugettext_lazy('Manually Sent Message')),
+        (CONTENT_API_SMS, ugettext_lazy('Message Sent Via API')),
+        (CONTENT_CHAT_SMS, ugettext_lazy('Message Sent Via Chat')),
     )
 
     RECIPIENT_CASE = 'CAS'
@@ -777,13 +777,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     RECIPIENT_UNKNOWN = 'UNK'
 
     RECIPIENT_CHOICES = (
-        (RECIPIENT_CASE, ugettext_noop('Case')),
-        (RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
-        (RECIPIENT_WEB_USER, ugettext_noop('Web User')),
-        (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
-        (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
-        (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
-        (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
+        (RECIPIENT_CASE, ugettext_lazy('Case')),
+        (RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Worker')),
+        (RECIPIENT_WEB_USER, ugettext_lazy('Web User')),
+        (RECIPIENT_USER_GROUP, ugettext_lazy('User Group')),
+        (RECIPIENT_CASE_GROUP, ugettext_lazy('Case Group')),
+        (RECIPIENT_VARIOUS, ugettext_lazy('Multiple Recipients')),
+        (RECIPIENT_UNKNOWN, ugettext_lazy('Unknown Contact')),
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
@@ -808,45 +808,45 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
-            ugettext_noop('No recipient'),
+            ugettext_lazy('No recipient'),
         ERROR_CANNOT_RENDER_MESSAGE:
-            ugettext_noop('Error rendering message; please check syntax.'),
+            ugettext_lazy('Error rendering message; please check syntax.'),
         ERROR_UNSUPPORTED_COUNTRY:
-            ugettext_noop('Gateway does not support the destination country.'),
+            ugettext_lazy('Gateway does not support the destination country.'),
         ERROR_NO_PHONE_NUMBER:
-            ugettext_noop('Contact has no phone number.'),
+            ugettext_lazy('Contact has no phone number.'),
         ERROR_NO_TWO_WAY_PHONE_NUMBER:
-            ugettext_noop('Contact has no two-way phone number.'),
+            ugettext_lazy('Contact has no two-way phone number.'),
         ERROR_INVALID_CUSTOM_CONTENT_HANDLER:
-            ugettext_noop('Invalid custom content handler.'),
+            ugettext_lazy('Invalid custom content handler.'),
         ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER:
-            ugettext_noop('Cannot load custom content handler.'),
+            ugettext_lazy('Cannot load custom content handler.'),
         ERROR_CANNOT_FIND_FORM:
-            ugettext_noop('Cannot find form.'),
+            ugettext_lazy('Cannot find form.'),
         ERROR_FORM_HAS_NO_QUESTIONS:
-            ugettext_noop('No questions were available in the form. Please '
+            ugettext_lazy('No questions were available in the form. Please '
                 'check that the form has questions and that display conditions '
                 'are not preventing questions from being asked.'),
         ERROR_CASE_EXTERNAL_ID_NOT_FOUND:
-            ugettext_noop('The case with the given external ID was not found.'),
+            ugettext_lazy('The case with the given external ID was not found.'),
         ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
-            ugettext_noop('Multiple cases were found with the given external ID.'),
+            ugettext_lazy('Multiple cases were found with the given external ID.'),
         ERROR_NO_CASE_GIVEN:
-            ugettext_noop('The form requires a case but no case was provided.'),
+            ugettext_lazy('The form requires a case but no case was provided.'),
         ERROR_NO_EXTERNAL_ID_GIVEN:
-            ugettext_noop('No external ID given; please include case external ID after keyword.'),
+            ugettext_lazy('No external ID given; please include case external ID after keyword.'),
         ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS:
-            ugettext_noop('Error processing structured SMS.'),
+            ugettext_lazy('Error processing structured SMS.'),
         ERROR_SUBEVENT_ERROR:
-            ugettext_noop('View details for more information.'),
+            ugettext_lazy('View details for more information.'),
         ERROR_TOUCHFORMS_ERROR:
-            ugettext_noop('An error occurred in the formplayer service.'),
+            ugettext_lazy('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
-            ugettext_noop('Internal Server Error'),
+            ugettext_lazy('Internal Server Error'),
         ERROR_GATEWAY_ERROR:
-            ugettext_noop('Gateway error.'),
+            ugettext_lazy('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
-            ugettext_noop('No suitable gateway could be found.'),
+            ugettext_lazy('No suitable gateway could be found.'),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1129,9 +1129,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     Used to track the status of a MessagingEvent for each of its recipients.
     """
     RECIPIENT_CHOICES = (
-        (MessagingEvent.RECIPIENT_CASE, ugettext_noop('Case')),
-        (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
-        (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
+        (MessagingEvent.RECIPIENT_CASE, ugettext_lazy('Case')),
+        (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Worker')),
+        (MessagingEvent.RECIPIENT_WEB_USER, ugettext_lazy('Web User')),
     )
 
     parent = models.ForeignKey('MessagingEvent')

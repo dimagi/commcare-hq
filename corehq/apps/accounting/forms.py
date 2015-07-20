@@ -14,7 +14,7 @@ from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext
+from django.utils.translation import ugettext_lazy, ugettext as _, ugettext
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
@@ -1425,15 +1425,15 @@ class ProductRateForm(forms.ModelForm):
 
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=ugettext_lazy("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=ugettext_lazy("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=ugettext_lazy("Message"),
         widget=forms.Textarea
     )
 

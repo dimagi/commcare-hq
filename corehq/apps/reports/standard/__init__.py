@@ -14,13 +14,13 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop("Project Reports")
+    section_name = ugettext_lazy("Project Reports")
     base_template = 'reports/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True

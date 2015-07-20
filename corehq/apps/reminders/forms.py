@@ -74,7 +74,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -247,9 +247,9 @@ def validate_phone_number(value):
 
 
 MATCH_TYPE_CHOICES = (
-    (MATCH_ANY_VALUE, ugettext_noop("exists.")),
-    (MATCH_EXACT, ugettext_noop("equals")),
-    (MATCH_REGEX, ugettext_noop("matches regular expression")),
+    (MATCH_ANY_VALUE, ugettext_lazy("exists.")),
+    (MATCH_EXACT, ugettext_lazy("equals")),
+    (MATCH_REGEX, ugettext_lazy("matches regular expression")),
 )
 
 START_REMINDER_ALL_CASES = 'start_all_cases'
@@ -279,9 +279,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
     This form creates a new CaseReminder. It is the most basic version, no advanced options (like language).
     """
     nickname = forms.CharField(
-        label=ugettext_noop("Name"),
+        label=ugettext_lazy("Name"),
         error_messages={
-            'required': ugettext_noop("Please enter a name for this reminder."),
+            'required': ugettext_lazy("Please enter a name for this reminder."),
         }
     )
 
@@ -289,20 +289,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # simple has start_condition_type = CASE_CRITERIA by default
     case_type = forms.CharField(
         required=False,
-        label=ugettext_noop("Send For Case Type"),
+        label=ugettext_lazy("Send For Case Type"),
     )
     start_reminder_on = forms.ChoiceField(
-        label=ugettext_noop("Send Reminder For"),
+        label=ugettext_lazy("Send Reminder For"),
         required=False,
         choices=(
-            (START_REMINDER_ALL_CASES, ugettext_noop("All Cases")),
-            (START_REMINDER_ON_CASE_PROPERTY, ugettext_noop("Only Cases in Following State")),
+            (START_REMINDER_ALL_CASES, ugettext_lazy("All Cases")),
+            (START_REMINDER_ON_CASE_PROPERTY, ugettext_lazy("Only Cases in Following State")),
         ),
     )
     ## send options > start_reminder_on = case_date
     start_property = forms.CharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
     )
     start_match_type = forms.ChoiceField(
         required=False,
@@ -311,16 +311,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # only shows up if start_match_type != MATCH_ANY_VALUE
     start_value = forms.CharField(
         required=False,
-        label=ugettext_noop("Value")
+        label=ugettext_lazy("Value")
     )
     # this is a UI control that determines how start_offset is calculated (0 or an integer)
     start_property_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            (START_PROPERTY_OFFSET_IMMEDIATE, ugettext_noop("Immediately")),
-            (START_PROPERTY_OFFSET_DELAY, ugettext_noop("Delay By")),
-            (START_REMINDER_ON_CASE_DATE, ugettext_noop("Date in Case")),
-            (START_REMINDER_ON_DAY_OF_WEEK, ugettext_noop("Specific Day of Week")),
+            (START_PROPERTY_OFFSET_IMMEDIATE, ugettext_lazy("Immediately")),
+            (START_PROPERTY_OFFSET_DELAY, ugettext_lazy("Delay By")),
+            (START_REMINDER_ON_CASE_DATE, ugettext_lazy("Date in Case")),
+            (START_REMINDER_ON_DAY_OF_WEEK, ugettext_lazy("Specific Day of Week")),
         )
     )
     # becomes start_offset
@@ -331,25 +331,25 @@ class BaseScheduleCaseReminderForm(forms.Form):
     ## send options > start_reminder_on = case_property
     start_date = forms.CharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
     )
     start_date_offset_type = forms.ChoiceField(
         required=False,
         choices=(
-            (START_DATE_OFFSET_BEFORE, ugettext_noop("Before Date By")),
-            (START_DATE_OFFSET_AFTER, ugettext_noop("After Date By")),
+            (START_DATE_OFFSET_BEFORE, ugettext_lazy("Before Date By")),
+            (START_DATE_OFFSET_AFTER, ugettext_lazy("After Date By")),
         )
     )
     start_day_of_week = forms.ChoiceField(
         required=False,
         choices=(
-            (DAY_SUN, ugettext_noop("Sunday")),
-            (DAY_MON, ugettext_noop("Monday")),
-            (DAY_TUE, ugettext_noop("Tuesday")),
-            (DAY_WED, ugettext_noop("Wednesday")),
-            (DAY_THU, ugettext_noop("Thursday")),
-            (DAY_FRI, ugettext_noop("Friday")),
-            (DAY_SAT, ugettext_noop("Saturday")),
+            (DAY_SUN, ugettext_lazy("Sunday")),
+            (DAY_MON, ugettext_lazy("Monday")),
+            (DAY_TUE, ugettext_lazy("Tuesday")),
+            (DAY_WED, ugettext_lazy("Wednesday")),
+            (DAY_THU, ugettext_lazy("Thursday")),
+            (DAY_FRI, ugettext_lazy("Friday")),
+            (DAY_SAT, ugettext_lazy("Saturday")),
         )
     )
     # becomes start_offset
@@ -361,18 +361,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # Fieldset: Recipient
     recipient = forms.ChoiceField(
         choices=(
-            (RECIPIENT_CASE, ugettext_noop("Case")),
-            (RECIPIENT_OWNER, ugettext_noop("Case Owner")),
-            (RECIPIENT_USER, ugettext_noop("Last User Who Modified Case")),
-            (RECIPIENT_USER_GROUP, ugettext_noop("Mobile Worker Group")),
-            (RECIPIENT_ALL_SUBCASES, ugettext_noop("All Child Cases")),
-            (RECIPIENT_SUBCASE, ugettext_noop("Specific Child Case")),
-            (RECIPIENT_PARENT_CASE, ugettext_noop("Parent Case")),
+            (RECIPIENT_CASE, ugettext_lazy("Case")),
+            (RECIPIENT_OWNER, ugettext_lazy("Case Owner")),
+            (RECIPIENT_USER, ugettext_lazy("Last User Who Modified Case")),
+            (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+            (RECIPIENT_ALL_SUBCASES, ugettext_lazy("All Child Cases")),
+            (RECIPIENT_SUBCASE, ugettext_lazy("Specific Child Case")),
+            (RECIPIENT_PARENT_CASE, ugettext_lazy("Parent Case")),
         ),
     )
     ## recipient = RECIPIENT_SUBCASE
     recipient_case_match_property = forms.CharField(
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
         required=False
     )
     recipient_case_match_type = forms.ChoiceField(
@@ -380,46 +380,46 @@ class BaseScheduleCaseReminderForm(forms.Form):
         choices=MATCH_TYPE_CHOICES,
     )
     recipient_case_match_value = forms.CharField(
-        label=ugettext_noop("Value"),
+        label=ugettext_lazy("Value"),
         required=False
     )
     ## recipient = RECIPIENT_USER_GROUP
     user_group_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Mobile Worker Group"),
+        label=ugettext_lazy("Mobile Worker Group"),
     )
 
     # Fieldset: Message Content
     method = forms.ChoiceField(
-        label=ugettext_noop("Send"),
+        label=ugettext_lazy("Send"),
         choices=(
-            (METHOD_SMS, ugettext_noop("SMS")),
+            (METHOD_SMS, ugettext_lazy("SMS")),
         ),
     )
 
     global_timeouts = forms.CharField(
-        label=ugettext_noop("Timeouts"),
+        label=ugettext_lazy("Timeouts"),
         required=False,
     )
 
     default_lang = forms.ChoiceField(
         required=False,
-        label=ugettext_noop("Default Language"),
+        label=ugettext_lazy("Default Language"),
         choices=(
-            ('en', ugettext_noop("English (en)")),
+            ('en', ugettext_lazy("English (en)")),
         )
     )
 
     event_timing = forms.ChoiceField(
-        label=ugettext_noop("Time of Day"),
+        label=ugettext_lazy("Time of Day"),
     )
 
     event_interpretation = forms.ChoiceField(
-        label=ugettext_noop("Schedule Type"),
+        label=ugettext_lazy("Schedule Type"),
         initial=EVENT_AS_OFFSET,
         choices=(
-            (EVENT_AS_OFFSET, ugettext_noop("Offset-based")),
-            (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
+            (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
+            (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based")),
         ),
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
     )
@@ -433,46 +433,46 @@ class BaseScheduleCaseReminderForm(forms.Form):
     # Fieldset: Repeat
     repeat_type = forms.ChoiceField(
         required=False,
-        label=ugettext_noop("Repeat Reminder"),
+        label=ugettext_lazy("Repeat Reminder"),
         initial=REPEAT_TYPE_NO,
         choices=(
-            (REPEAT_TYPE_NO, ugettext_noop("No")),  # reminder_type = ONE_TIME
-            (REPEAT_TYPE_INDEFINITE, ugettext_noop("Indefinitely")),  # reminder_type = DEFAULT, max_iteration_count = -1
-            (REPEAT_TYPE_SPECIFIC, ugettext_noop("Specific Number of Times")),
+            (REPEAT_TYPE_NO, ugettext_lazy("No")),  # reminder_type = ONE_TIME
+            (REPEAT_TYPE_INDEFINITE, ugettext_lazy("Indefinitely")),  # reminder_type = DEFAULT, max_iteration_count = -1
+            (REPEAT_TYPE_SPECIFIC, ugettext_lazy("Specific Number of Times")),
         )
     )
     # shown if repeat_type != 'no_repeat'
     schedule_length = forms.IntegerField(
         required=False,
-        label=ugettext_noop("Repeat Every"),
+        label=ugettext_lazy("Repeat Every"),
     )
     # shown if repeat_type == 'specific' (0 if no_repeat, -1 if indefinite)
     max_iteration_count = forms.IntegerField(
         required=False,
-        label=ugettext_noop("Number of Times"),
+        label=ugettext_lazy("Number of Times"),
     )
     # shown if repeat_type != 'no_repeat'
     stop_condition = forms.ChoiceField(
         required=False,
         label="",
         choices=(
-            ('', ugettext_noop('(none)')),
-            (STOP_CONDITION_CASE_PROPERTY, ugettext_noop('Based on Case Property')),
+            ('', ugettext_lazy('(none)')),
+            (STOP_CONDITION_CASE_PROPERTY, ugettext_lazy('Based on Case Property')),
         )
     )
     until = forms.CharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
     )
 
     # Advanced Toggle
     submit_partial_forms = forms.BooleanField(
         required=False,
-        label=ugettext_noop("Submit Partial Forms"),
+        label=ugettext_lazy("Submit Partial Forms"),
     )
     include_case_side_effects = forms.BooleanField(
         required=False,
-        label=ugettext_noop("Include Case Changes for Partial Forms"),
+        label=ugettext_lazy("Include Case Changes for Partial Forms"),
     )
     # only show if SMS_SURVEY or IVR_SURVEY is chosen
     max_question_retries = forms.ChoiceField(
@@ -482,17 +482,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     force_surveys_to_use_triggered_case = forms.BooleanField(
         required=False,
-        label=ugettext_noop("For Surveys, force answers to affect "
+        label=ugettext_lazy("For Surveys, force answers to affect "
                               "case sending the survey."),
     )
 
     use_custom_content_handler = BooleanField(
         required=False,
-        label=ugettext_noop("Use Custom Content Handler")
+        label=ugettext_lazy("Use Custom Content Handler")
     )
     custom_content_handler = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Custom Content Handler")
+        label=ugettext_lazy("Please Specify Custom Content Handler")
     )
 
     def __init__(self, data=None, is_previewer=False,
@@ -1584,9 +1584,9 @@ class CaseReminderEventForm(forms.Form):
     """
     fire_time_type = forms.ChoiceField(
         choices=(
-            (FIRE_TIME_DEFAULT, ugettext_noop("Default")),
-            (FIRE_TIME_CASE_PROPERTY, ugettext_noop("Case Property")),  # not valid when method != EVENT_AS_SCHEDULE
-            (FIRE_TIME_RANDOM, ugettext_noop("Random")),  # not valid when method != EVENT_AS_SCHEDULE
+            (FIRE_TIME_DEFAULT, ugettext_lazy("Default")),
+            (FIRE_TIME_CASE_PROPERTY, ugettext_lazy("Case Property")),  # not valid when method != EVENT_AS_SCHEDULE
+            (FIRE_TIME_RANDOM, ugettext_lazy("Random")),  # not valid when method != EVENT_AS_SCHEDULE
         ),
         widget=forms.HiddenInput,  # don't actually display this widget to the user for now, but validate as choice
     )
@@ -1602,17 +1602,17 @@ class CaseReminderEventForm(forms.Form):
     # EVENT_AS_SCHEDULE: time of day
     fire_time = forms.TimeField(
         required=False,
-        label=ugettext_noop("HH:MM:SS"),
+        label=ugettext_lazy("HH:MM:SS"),
     )
 
     # method must be EVENT_AS_SCHEDULE
     fire_time_aux = forms.CharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=ugettext_lazy("Enter a Case Property"),
     )
 
     time_window_length = forms.IntegerField(
-        label=ugettext_noop("Window Length (minutes)"),
+        label=ugettext_lazy("Window Length (minutes)"),
         required=False
     )
 
@@ -1626,7 +1626,7 @@ class CaseReminderEventForm(forms.Form):
     # form_unique_id is visible when the method of the reminder is SMS_SURVEY or IVR_SURVEY
     form_unique_id = forms.CharField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=ugettext_lazy("Survey"),
     )
 
     callback_timeout_intervals = forms.CharField(
@@ -2022,84 +2022,84 @@ class RemindersInErrorForm(Form):
 class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
-    keyword = CharField(label=ugettext_noop("Keyword"))
-    description = TrimmedCharField(label=ugettext_noop("Description"))
+    keyword = CharField(label=ugettext_lazy("Keyword"))
+    description = TrimmedCharField(label=ugettext_lazy("Description"))
     override_open_sessions = BooleanField(
         required=False,
         initial=False,
-        label=ugettext_noop("Override open SMS Surveys"),
+        label=ugettext_lazy("Override open SMS Surveys"),
     )
     allow_keyword_use_by = ChoiceField(
         required=False,
-        label=ugettext_noop("Allow Keyword Use By"),
+        label=ugettext_lazy("Allow Keyword Use By"),
         initial='any',
         choices=(
-            ('any', ugettext_noop("Both Mobile Workers and Cases")),
-            ('users', ugettext_noop("Mobile Workers Only")),
-            ('cases', ugettext_noop("Cases Only")),
+            ('any', ugettext_lazy("Both Mobile Workers and Cases")),
+            ('users', ugettext_lazy("Mobile Workers Only")),
+            ('cases', ugettext_lazy("Cases Only")),
         )
     )
     sender_content_type = ChoiceField(
-        label=ugettext_noop("Send to Sender"),
+        label=ugettext_lazy("Send to Sender"),
     )
     sender_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=ugettext_lazy("Message"),
     )
     sender_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=ugettext_lazy("Survey"),
     )
     other_recipient_content_type = ChoiceField(
         required=False,
-        label=ugettext_noop("Notify Another Person"),
+        label=ugettext_lazy("Notify Another Person"),
         initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
-        label=ugettext_noop("Recipient"),
+        label=ugettext_lazy("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
     )
     other_recipient_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Group Name"),
+        label=ugettext_lazy("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=ugettext_lazy("Message"),
     )
     other_recipient_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=ugettext_lazy("Survey"),
     )
     process_structured_sms = BooleanField(
         required=False,
-        label=ugettext_noop("Process incoming keywords as a Structured Message"),
+        label=ugettext_lazy("Process incoming keywords as a Structured Message"),
     )
     structured_sms_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=ugettext_lazy("Survey"),
     )
     use_custom_delimiter = BooleanField(
         required=False,
-        label=ugettext_noop("Use Custom Delimiter"),
+        label=ugettext_lazy("Use Custom Delimiter"),
     )
     delimiter = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Delimiter"),
+        label=ugettext_lazy("Please Specify Delimiter"),
     )
     use_named_args_separator = BooleanField(
         required=False,
-        label=ugettext_noop("Use Joining Character"),
+        label=ugettext_lazy("Use Joining Character"),
     )
     use_named_args = BooleanField(
         required=False,
-        label=ugettext_noop("Use Named Answers"),
+        label=ugettext_lazy("Use Named Answers"),
     )
     named_args_separator = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Joining Characcter"),
+        label=ugettext_lazy("Please Specify Joining Characcter"),
     )
     named_args = RecordListField(
         input_name="named_args",

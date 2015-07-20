@@ -1,5 +1,5 @@
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseDrilldownOptionFilter
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.groups.models import Group
 
 ALL_DISTRICTS = 'All Districts'

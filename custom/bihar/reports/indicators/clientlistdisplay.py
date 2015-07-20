@@ -1,6 +1,6 @@
 from custom.bihar.calculations.utils.filters import get_add, get_edd
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 from . import display
 from custom.bihar.reports.indicators.display import next_visit_date, days_overdue
@@ -34,9 +34,9 @@ class SummaryValueMixIn(ClientListDisplay):
 
     Also provides sensible defaults.
     """
-    numerator_text = ugettext_noop("Yes")
-    denominator_text = ugettext_noop("No")
-    neither_text = ugettext_noop("N/A")
+    numerator_text = ugettext_lazy("Yes")
+    denominator_text = ugettext_lazy("No")
+    neither_text = ugettext_lazy("N/A")
     summary_header = "Value?"
 
     @property
@@ -142,9 +142,9 @@ class PostDeliverySummaryCLD(PostDeliveryCLD, SummaryValueMixIn):
 
 
 class DoneDueMixIn(SummaryValueMixIn):
-    summary_header = ugettext_noop("Visit Status")
-    numerator_text = ugettext_noop("Done")
-    denominator_text = ugettext_noop("Due")
+    summary_header = ugettext_lazy("Visit Status")
+    numerator_text = ugettext_lazy("Done")
+    denominator_text = ugettext_lazy("Due")
 
     def sortkey(self, case, context):
         return display.in_numerator(case, context)

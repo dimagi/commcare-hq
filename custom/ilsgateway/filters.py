@@ -1,6 +1,6 @@
 import calendar
 from datetime import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
@@ -12,7 +12,7 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
     template = "common/drilldown_options.html"
-    label = ugettext_noop("Filter By")
+    label = ugettext_lazy("Filter By")
 
     @property
     def drilldown_map(self):

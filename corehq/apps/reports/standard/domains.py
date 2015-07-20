@@ -1,6 +1,6 @@
 from corehq.elastic import es_query
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -26,7 +26,7 @@ class DomainStatsReport(GenericTabularReport):
     custom_params = []
     es_queried = False
 
-    name = ugettext_noop('Domain Statistics')
+    name = ugettext_lazy('Domain Statistics')
     slug = 'dom_stats'
 
     def get_domains(self):
