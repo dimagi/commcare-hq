@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from django.db import transaction
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
@@ -1174,8 +1175,9 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         form = self.get_post_form
         if form.is_valid():
             try:
-                form.process_subscription_management()
-                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                with transaction.atomic():
+                    form.process_subscription_management()
+                    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except NewSubscriptionError as e:
                 messages.error(self.request, e.message)
         return self.get(request, *args, **kwargs)
