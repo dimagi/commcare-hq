@@ -608,6 +608,10 @@ class FormSchedule(DocumentSchema):
     post_schedule_increment = IntegerProperty()
     get_visits = IndexedSchema.Getter('visits')
 
+    # TODO: remove this
+    transition_condition = SchemaProperty(FormActionCondition)
+    termination_condition = SchemaProperty(FormActionCondition)
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -2018,7 +2022,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             raise TypeError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
-                     for form in phase.forms if form == self), None)
+                     for form in phase.get_forms()
+                     if form.get_module() == self.get_module()
+                     and form.unique_id == self.unique_id),
+                    None)
 
     def check_actions(self):
         errors = []
@@ -2100,7 +2107,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and not (self.schedule and self.schedule.anchor):
+        if module.has_schedule and not self.schedule and getattr(self.schedule, 'anchor', False):
             error = {
                 'type': 'validation error',
                 'validation_message': _("All forms in this module require a visit schedule.")
@@ -2221,6 +2228,8 @@ class SchedulePhase(IndexedSchema):
     def phase_id(self):
         return "{}_{}".format(self.anchor, self.id)
 
+    def get_form(self, desired_form):
+        return next((form for form in self.get_forms() if form.unique_id == desired_form.unique_id), None)
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'

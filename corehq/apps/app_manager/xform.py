@@ -1448,7 +1448,7 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
+        has_schedule = module.has_schedule and form.schedule and getattr(form.schedule, 'anchor', False)
 
         adjusted_datums = {}
         if module.root_module and module.root_module.module_type == 'basic':

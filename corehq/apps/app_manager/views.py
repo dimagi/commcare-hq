@@ -401,6 +401,17 @@ def default(request, domain):
     """
     return view_app(request, domain)
 
+def get_schedule_context(form):
+        from corehq.apps.app_manager.models import SchedulePhase
+        schedule_context = {}
+        module = form.get_module()
+        if module.has_schedule:
+            phase = form.get_phase()
+            if phase is not None:
+                schedule_context.update({'schedule_phase': phase})
+            else:
+                schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+        return schedule_context
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
@@ -529,6 +540,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
+        context.update(get_schedule_context(form))
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
@@ -2056,9 +2068,27 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 @require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+
     json_loads = json.loads(request.POST.get('schedule'))
+    phase, is_new_phase = module.get_or_create_schedule_phase(anchor=json_loads['anchor'])
+    # TODO: Raise if anchor == ''
+
+    old_phase = form.get_phase()
+
+    if old_phase is not None and old_phase.anchor != phase.anchor:
+        if len(old_phase.forms) == 1:
+            module.schedule_phases.remove(old_phase)
+        else:
+            # TODO: verify this works
+            phase_form = old_phase.get_form(form)
+            del phase_form
+
     form.schedule = FormSchedule.wrap(json_loads)
+    if form not in phase.get_forms():
+        phase.forms.append(form)
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
