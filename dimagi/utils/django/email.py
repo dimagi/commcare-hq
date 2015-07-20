@@ -2,7 +2,7 @@ from smtplib import SMTPSenderRefused
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext as _
 
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
