@@ -3,7 +3,7 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
 
@@ -62,13 +62,13 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': _('All fields are required')}
+        error_messages={'required': ugettext_lazy('All fields are required')}
     )
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': _('All fields are required'),
-            'invalid': _('Key fields must consist only of letters, numbers, '
+            'required': ugettext_lazy('All fields are required'),
+            'invalid': ugettext_lazy('Key fields must consist only of letters, numbers, '
                          'underscores or hyphens.'),
         }
     )
