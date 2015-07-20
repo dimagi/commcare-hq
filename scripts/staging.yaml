@@ -51,6 +51,7 @@ branches:
   - languageMedia # Sravan 6/10
   - locations-for-robber-barons  # Ethan 5/7
   - web-user-requests # Jenny, July 16
+  - template-apps # Jenny, July 20
 submodules:
   corehq/apps/prelogin:
     branches: []
