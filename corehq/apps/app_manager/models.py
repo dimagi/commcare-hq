@@ -2176,6 +2176,7 @@ class SchedulePhase(IndexedSchema):
     def phase_id(self):
         return "{}_{}".format(self.anchor, self.id)
 
+
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
@@ -2433,6 +2434,19 @@ class AdvancedModule(ModuleBase):
                     })
 
         return errors
+
+    def get_or_create_schedule_phase(self, anchor):
+        """Returns a tuple of (phase, new?)"""
+
+        phase = next((phase for phase in self.get_schedule_phases() if phase.anchor == anchor), None)
+        is_new_phase = False
+
+        if phase is None:
+            phase = SchedulePhase(anchor=anchor)
+            self.schedule_phases.append(phase)
+            is_new_phase = True
+
+        return (phase, is_new_phase)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):

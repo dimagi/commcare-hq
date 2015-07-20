@@ -92,6 +92,17 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         with self.assertRaises(ScheduleError):
             self.app.create_suite()
 
+    def test_get_or_create_schedule_phase(self):
+        pre_made_phase = SchedulePhase(anchor='sea-floor')
+        self.module.schedule_phases = [pre_made_phase]
+
+        phase, created = self.module.get_or_create_schedule_phase(anchor='hook')
+        self.assertTrue(created)
+
+        phase_2, created = self.module.get_or_create_schedule_phase(anchor='sea-floor')
+        self.assertFalse(created)
+        self.assertEqual(phase_2, pre_made_phase)
+
     def test_form_in_phase_requires_schedule(self):
         self._apply_schedule_phases()
         self.form_3.schedule = None
