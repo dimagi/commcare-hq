@@ -29,7 +29,6 @@ from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
-from .exceptions import BadOperationException
 
 
 def doc_types():
