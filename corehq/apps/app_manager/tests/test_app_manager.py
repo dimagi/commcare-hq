@@ -46,7 +46,7 @@ class AppManagerTest(TestCase):
     def test_increment_version(self):
         old_version = self.app.version
         self.app.save()
-        self.assertEqual(self.app.version, old_version + 1)
+        self.assertEqual(self.app.version, old_version + 5)
 
     def tearDown(self):
         self.app.delete()
