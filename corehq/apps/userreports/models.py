@@ -341,6 +341,14 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def all(cls):
         return get_all_report_configs()
 
+    def clear_related_caches(self):
+        from corehq import _get_configurable_reports
+        _get_configurable_reports.clear(self.domain)
+
+    def save(self, **params):
+        self.clear_related_caches()
+        super(ReportConfiguration, self).save(**params)
+
 
 class CustomDataSourceConfiguration(JsonObject):
     _datasource_id_prefix = 'custom-'

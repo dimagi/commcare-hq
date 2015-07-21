@@ -13,6 +13,7 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
 from corehq.apps.receiverwrapper import reports as receiverwrapper
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.util.quickcache import quickcache
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
@@ -148,10 +149,12 @@ def _make_dynamic_report(report_config, keyprefix):
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
 
 
+@quickcache(['project.name'], memoize_timeout=10, timeout=5*60)
 def _get_configurable_reports(project):
     """
     User configurable reports
     """
+    reports = []
     configs = ReportConfiguration.by_domain(project.name)
     if configs:
         def _make_report_class(config):
@@ -174,7 +177,10 @@ def _get_configurable_reports(project):
                 'show_in_navigation': show_in_navigation,
             })
 
-        yield (_('Reports'), [_make_report_class(config) for config in configs])
+        reports.append(
+            (_('Reports'), [_make_report_class(config) for config in configs])
+        )
+    return reports
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
