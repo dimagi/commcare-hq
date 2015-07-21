@@ -29,3 +29,7 @@ def get_user_docs_by_username(usernames):
         reduce=False,
         include_docs=True,
     ).all()]
+
+
+def refresh_couch_user_views(couch_user):
+    pass

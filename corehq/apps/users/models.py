@@ -15,6 +15,9 @@ from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    refresh_couch_user_views,
+)
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -804,6 +807,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     _user_checked = False
 
     @classmethod
+    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        super(CouchUser, cls).save_docs(docs, use_uuids, all_or_nothing)
+        for doc in docs:
+            refresh_couch_user_views(super(CouchUser, cls).wrap(doc))
+
+    bulk_save = save_docs
+
+    def delete(self):
+        super(CouchUser, self).delete()
+        refresh_couch_user_views(self)
+
+    @classmethod
     def wrap(cls, data, should_save=False):
         if data.has_key("organizations"):
             del data["organizations"]
@@ -1277,6 +1292,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             (self.username, str(result[1]))
                 )
 
+        refresh_couch_user_views(self)
 
 
     @classmethod
