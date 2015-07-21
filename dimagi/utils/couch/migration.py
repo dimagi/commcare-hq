@@ -61,16 +61,23 @@ class SyncCouchToSQLMixin(object):
         """
         return False
 
-    def _migration_get_or_create_sql_object(self):
+    def _migration_get_sql_object(self):
         cls = self._migration_get_sql_model_class()
         try:
             obj = cls.objects.get(couch_id=self._id)
         except cls.DoesNotExist:
-            obj = cls(couch_id=self._id)
+            return None
         except cls.MultipleObjectsReturned:
             if not self._migration_automatically_handle_dups():
                 raise
             cls.objects.filter(couch_id=self._id).delete()
+            return None
+        return obj
+
+    def _migration_get_or_create_sql_object(self):
+        cls = self._migration_get_sql_model_class()
+        obj = self._migration_get_sql_object()
+        if obj is None:
             obj = cls(couch_id=self._id)
         return obj
 
@@ -97,6 +104,14 @@ class SyncCouchToSQLMixin(object):
                     message='Could not sync %s SQL object from %s %s' % (sql_class_name,
                         couch_class_name, self._id))
 
+    def delete(self, *args, **kwargs):
+        sync_to_sql = kwargs.pop('sync_to_sql', True)
+        if sync_to_sql:
+            sql_object = self._migration_get_sql_object()
+            if sql_object is not None:
+                sql_object.delete(sync_to_couch=False)
+        super(SyncCouchToSQLMixin, self).delete(*args, **kwargs)
+
 
 class SyncSQLToCouchMixin(object):
     """
@@ -120,16 +135,23 @@ class SyncSQLToCouchMixin(object):
         """
         raise NotImplementedError()
 
-    def _migration_get_or_create_couch_object(self):
+    def _migration_get_couch_object(self):
         cls = self._migration_get_couch_model_class()
         if not self.couch_id:
+            return None
+        else:
+            obj = cls.get(self.couch_id)
+
+        return obj
+
+    def _migration_get_or_create_couch_object(self):
+        cls = self._migration_get_couch_model_class()
+        obj = self._migration_get_couch_object()
+        if obj is None:
             obj = cls()
             obj.save(sync_to_sql=False)
             self.couch_id = obj._id
             self.save(sync_to_couch=False)
-        else:
-            obj = cls.get(self.couch_id)
-
         return obj
 
     def _migration_sync_to_couch(self, couch_obj):
@@ -154,3 +176,11 @@ class SyncSQLToCouchMixin(object):
                 notify_exception(None,
                     message='Could not sync %s Couch object from %s %s' % (couch_class_name,
                         sql_class_name, self.pk))
+
+    def delete(self, *args, **kwargs):
+        sync_to_couch = kwargs.pop('sync_to_couch', True)
+        if sync_to_couch:
+            couch_object = self._migration_get_couch_object()
+            if couch_object is not None:
+                couch_object.delete(sync_to_sql=False)
+        super(SyncSQLToCouchMixin, self).delete(*args, **kwargs)
