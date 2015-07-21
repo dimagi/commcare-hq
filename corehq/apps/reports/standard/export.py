@@ -315,11 +315,7 @@ class CaseExportReport(ExportReport):
         return self.request.GET.copy()
 
     def get_saved_exports(self):
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True).all()
+        exports = stale_get_exports(self.domain).all()
         exports = filter(lambda x: x.type == "case", exports)
         return sorted(exports, key=lambda x: x.name)
 
