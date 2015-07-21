@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.cachehq.invalidate import invalidate_document
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -24,6 +25,7 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -2375,7 +2377,7 @@ class InvalidUser(FakeUser):
 #
 # Django  models go here
 #
-class SQLInvitation(models.Model):
+class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     email = models.CharField(max_length=100, db_index=True)
     invited_by = models.CharField(max_length=32)
     invited_on = models.DateTimeField()
@@ -2394,11 +2396,20 @@ class SQLInvitation(models.Model):
         raise NotImplementedError
 
 
-class Invitation(Document):
+class Invitation(SyncCouchToSQLMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'email',
+            'invited_by',
+            'invited_on',
+            'is_accepted',
+        ]
 
     _inviter = None
     def get_inviter(self):
@@ -2418,7 +2429,16 @@ class SQLDomainInvitation(SQLInvitation):
     When we invite someone to a domain it gets stored here.
     """
     domain = models.CharField(max_length=255, db_index=True)
-    role = SchemaProperty(UserRole)
+    role = models.CharField(max_length=100, null=True)
+    couch_id = models.CharField(max_length=32, db_index=True, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return DomainInvitation._migration_get_fields()
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return DomainInvitation
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
@@ -2441,13 +2461,28 @@ class SQLDomainInvitation(SQLInvitation):
         return SQLDomainInvitation.objects.filter(email=email, is_accepted=False)
 
 
-class DomainInvitation(CachedCouchDocumentMixin, Invitation):
+class DomainInvitation(Invitation, CachedCouchDocumentMixin):
     """
     When we invite someone to a domain it gets stored here.
     """
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
+
+    def save(self, *args, **kwargs):
+        super(DomainInvitation, self).save(*args, **kwargs)
+        invalidate_document(self)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return Invitation._migration_get_fields() + [
+            'domain',
+            'role',
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLDomainInvitation
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",

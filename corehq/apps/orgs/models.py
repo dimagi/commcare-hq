@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation, SQLInvitation
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from dimagi.utils.django.email import send_HTML_email
 
@@ -106,6 +107,15 @@ class DeleteTeamRecord(DeleteDocRecord):
 
 class SQLOrgInvitation(SQLInvitation):
     organization = models.CharField(max_length=255)
+    couch_id = models.CharField(max_length=32, db_index=True, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return OrgInvitation._migration_get_fields()
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return OrgInvitation
 
     def send_activation_email(self):
         url = absolute_reverse("orgs_accept_invitation",
@@ -122,6 +132,14 @@ class SQLOrgInvitation(SQLInvitation):
 class OrgInvitation(Invitation):
     doc_type = "OrgInvitation"
     organization = StringProperty()
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return Invitation._migration_get_fields() + ['organization']
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLOrgInvitation
 
     def send_activation_email(self):
         url = absolute_reverse("orgs_accept_invitation",
