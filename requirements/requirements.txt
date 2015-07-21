@@ -1,6 +1,6 @@
 # needed to build gevent from source
 Cython==0.17.4
-restkit==4.2.0
+restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.0
 jsonobject-couchdbkit==0.6.5.7
@@ -54,10 +54,9 @@ gevent==1.0
 greenlet==0.4.2
 rawes==0.4.0
 numpy==1.7.1
-six==1.4.1
-socketpool==0.5.2
+six==1.9.0
+socketpool==0.5.3
 markdown==2.2.1
-django-markup-deprecated
 amqp==1.4.6
 amqplib==1.0.2
 sqlagg==0.2.3
