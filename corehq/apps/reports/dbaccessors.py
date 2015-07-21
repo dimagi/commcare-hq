@@ -1,4 +1,5 @@
 import json
+import settings
 from corehq.apps.reports.models import HQExportSchema
 
 
@@ -12,4 +13,5 @@ def get_exports(domain):
         startkey=startkey,
         endkey=endkey,
         include_docs=True,
+        stale=settings.COUCH_STALE_QUERY,
     )
