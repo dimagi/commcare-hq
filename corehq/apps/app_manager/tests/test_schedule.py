@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
     FormSchedule,
     ScheduleVisit,
     SchedulePhase,
+    SchedulePhaseForm,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -64,18 +65,20 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.module.schedule_phases = [
             SchedulePhase(  # phase 1
                 anchor='edd',
-                forms=[self.form_1, self.form_2],
+                forms=[SchedulePhaseForm(form_id=self.form_1.unique_id),
+                       SchedulePhaseForm(form_id=self.form_2.unique_id)],
             ),
             SchedulePhase(  # phase 2
                 anchor='dob',
-                forms=[self.form_3]
+                forms=[SchedulePhaseForm(form_id=self.form_3.unique_id)]
             ),
         ]
 
     def test_get_phase(self):
         phase = SchedulePhase(
             anchor='some_case_property',
-            forms=[self.form_1, self.form_2],
+            forms=[SchedulePhaseForm(form_id=self.form_1.unique_id),
+                   SchedulePhaseForm(form_id=self.form_2.unique_id)],
         )
 
         self.module.schedule_phases = [phase]
@@ -86,7 +89,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
     def test_phase_requires_anchor(self):
         self.module.schedule_phases = [
             SchedulePhase(
-                forms=[self.form_3]
+                forms=[SchedulePhaseForm(form_id=self.form_3.unique_id)]
             ),
         ]
         with self.assertRaises(ScheduleError):
@@ -141,7 +144,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         other_module.schedule_phases = [
             SchedulePhase(
                 anchor='case_property',
-                forms=[scheduled_form]
+                forms=[SchedulePhaseForm(form_id=scheduled_form.unique_id)]
             )
         ]
 

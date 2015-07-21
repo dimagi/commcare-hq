@@ -2023,8 +2023,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
-                     if form.get_module() == self.get_module()
-                     and form.unique_id == self.unique_id),
+                     if form.unique_id == self.unique_id),
                     None)
 
     def check_actions(self):
@@ -2199,6 +2198,13 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class SchedulePhaseForm(IndexedSchema):
+    """
+    A reference to a form in a schedule phase.
+    """
+    form_id = FormIdProperty("modules[*].schedule_phases[*].form_id")
+
+
 class SchedulePhase(IndexedSchema):
     """
     SchedulePhases are attached to a module.
@@ -2211,8 +2217,7 @@ class SchedulePhase(IndexedSchema):
     termination_condition:      Condition under which we terminate the whole schedule
     """
     anchor = StringProperty()
-    forms = SchemaListProperty(AdvancedForm)
-    get_forms = IndexedSchema.Getter('forms')
+    forms = SchemaListProperty(SchedulePhaseForm)
 
     # TODO: this
     transition_condition = SchemaProperty(FormActionCondition)
@@ -2228,8 +2233,29 @@ class SchedulePhase(IndexedSchema):
     def phase_id(self):
         return "{}_{}".format(self.anchor, self.id)
 
+    def get_module(self):
+        return self._parent
+
+    _get_forms = IndexedSchema.Getter('forms')
+    def get_forms(self):
+        """Returns the actual form objects related to this phase"""
+        module = self.get_module()
+        return (module.get_form_by_unique_id(form.form_id) for form in self._get_forms())
+
     def get_form(self, desired_form):
         return next((form for form in self.get_forms() if form.unique_id == desired_form.unique_id), None)
+
+    def get_phase_form_index(self, form):
+        """
+        Returns the index of the form with respect to the phase
+
+        schedule_phase.forms = [a,b,c]
+        schedule_phase.get_phase_form_index(b)
+        => 1
+        schedule_phase.get_phase_form_index(c)
+        => 2
+        """
+        return next(phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id)
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'

@@ -241,4 +241,5 @@ def indicator_instance(indicator_set_name):
 
 
 def schedule_fixture(module, phase, form):
-    return u'schedule:m{module.id}:p{phase.id}:f{form.id}'.format(module=module, phase=phase, form=form)
+    form_id = phase.get_phase_form_index(form)
+    return u'schedule:m{module.id}:p{phase.id}:f{form_id}'.format(module=module, phase=phase, form_id=form_id)
