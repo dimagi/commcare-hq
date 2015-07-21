@@ -52,6 +52,7 @@
             this.existsInCurrentVersion = ko.observable(true);
             this.property = ko.observable("");
             this.displayText = ko.observable("");
+            this.userModifiedDisplayText = false;
             this.format = ko.observable("");
             this.dataSourceField = ko.observable("");
 
@@ -74,6 +75,12 @@
             this.isValid= ko.computed(function(){
                 return that.isNotBlank() && that.existsInCurrentVersion();
             });
+
+            this.property.subscribe(function(newValue) {
+                if (! that.userModifiedDisplayText){
+                    that.displayText(newValue);
+                }
+            });
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
@@ -81,6 +88,7 @@
             i.property(o.property !== undefined ? o.property : null);
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
+            i.userModifiedDisplayText = true;
             i.format(o.format);
             return i;
         };

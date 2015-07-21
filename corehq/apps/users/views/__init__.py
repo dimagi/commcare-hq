@@ -268,7 +268,7 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
@@ -370,7 +370,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             context.update({
                 'update_form': self.commtrack_form,
             })
@@ -530,6 +530,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'requests': DomainRequest.by_domain(self.domain),
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
         }
 
 

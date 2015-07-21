@@ -11,7 +11,6 @@ class TestUsersByLocation(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = create_domain('test-domain')
-        cls.domain.locations_enabled = True
         bootstrap_location_types(cls.domain.name)
 
         def make_user(name, location):

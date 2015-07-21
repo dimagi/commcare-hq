@@ -9,7 +9,7 @@ from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_fac
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
-    IncompatibleSyncLogType)
+)
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -278,10 +278,6 @@ class RestoreState(object):
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if not isinstance(self.last_sync_log, self.sync_log_class):
-                raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
-                    type(self.last_sync_log), self.sync_log_class,
-                ))
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -308,6 +304,10 @@ class RestoreState(object):
                     self.params.sync_log_id, self.user.user_id, sync_log.user_id
                 ))
 
+            # convert to the right type if necessary
+            if not isinstance(sync_log, self.sync_log_class):
+                # this call can fail with an IncompatibleSyncLogType error
+                sync_log = self.sync_log_class.from_other_format(sync_log)
             return sync_log
         else:
             return None
