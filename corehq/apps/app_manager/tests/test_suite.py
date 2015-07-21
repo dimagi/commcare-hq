@@ -1053,7 +1053,6 @@ class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
         self.module_0.case_type = 'gold-fish'
         m0f0 = self.module_0.get_form(0)
         # m0 is a user-case-only module. m0f0 does not update a normal case, only the user case.
-        m0f0.requires = 'case'
         m0f0.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
         m0f0.actions.usercase_preload.condition.type = 'always'
 
