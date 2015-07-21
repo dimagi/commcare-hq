@@ -106,7 +106,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
                 group=self.group_id,
                 user_ids=(self.individual,),
                 user_filter=tuple(self.user_filter),
-                simplified=False
             )
         ]
 

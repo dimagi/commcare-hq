@@ -716,7 +716,6 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
             group=group,
             user_ids=user_ids,
             user_filter=user_filter,
-            simplified=False,  # override simplified to False
             CommCareUser=self.CommCareUser
         ))
 

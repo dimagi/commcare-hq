@@ -193,7 +193,6 @@ class ProjectReportParametersMixin(object):
     def get_admins_and_demo_users(self, ufilters=None):
         ufilters = ufilters if ufilters is not None else ['1', '2', '3']
         users = self.get_all_users_by_domain(
-            group=None,
             user_filter=tuple(HQUserType.use_filter(ufilters)),
             simplified=True
         ) if ufilters else []
