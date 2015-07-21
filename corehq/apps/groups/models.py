@@ -172,10 +172,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def ids_by_domain(cls, domain):
-        return [r['id'] for r in cls.get_db().view('groups/by_domain',
-            key=domain,
-            include_docs=False,
-        )]
+        return [r['id'] for r in stale_group_by_domain(domain, include_docs=False)]
 
     @classmethod
     def by_name(cls, domain, name, one=True):
