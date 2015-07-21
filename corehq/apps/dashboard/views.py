@@ -71,6 +71,8 @@ class NewUserDashboardView(BaseDashboardView):
             'url': reverse('default_new_app', args=[domain]),
             'icon': 'fcc-blankapp',
             'lead': _('Start from scratch'),
+            'action': 'Blank',
+            'description': 'Clicked Blank App Template Tile',
         }]
 
         templates = [{
@@ -78,6 +80,8 @@ class NewUserDashboardView(BaseDashboardView):
             'url': reverse('app_from_template', args=[domain, 'case_management']),
             'icon': 'fcc-casemgt',
             'lead': _('Track information over time'),
+            'action': 'Case Management',
+            'description': 'Clicked Case Management App Template Tile',
         }] + templates
 
         templates = [{
@@ -85,6 +89,8 @@ class NewUserDashboardView(BaseDashboardView):
             'url': reverse('app_from_template', args=[domain, 'survey']),
             'icon': 'fcc-survey',
             'lead': _('One-time data collection'),
+            'action': 'Survey',
+            'description': 'Clicked Survey App Template Tile',
         }] + templates
 
         return templates

@@ -2,6 +2,17 @@
 {% load i18n %}{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
+<script>
+    $(function() {
+        analytics.workflow('Visited new user dashboard');
+        var $links = [];
+        {% for template in templates %}
+            $links.push($('.dashboard-link[data-index="{{ forloop.counter0 }}"]'));
+            gaTrackLink($links[{{ forloop.counter0 }}], 'Dashboard', 'Welcome Tile', '{{ template.action }}')
+            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], '{{ template.description }}')
+        {% endfor %}
+    });
+</script>
 {% endblock js-inline %}
 
 {% block dashboard-content %}
@@ -24,6 +35,7 @@
                 <div class="panel-body">
                     <p class="text-center">
                         <a class="dashboard-link"
+                            data-index="{{ forloop.counter0 }}"
                             href="{{ template.url }}">
                         <i class="fcc {{ template.icon }} dashboard-icon dashboard-icon-large"></i>
                         <span class="lead">
