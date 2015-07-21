@@ -2042,6 +2042,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     if form.requires_case():
                         datums_.extend(self.get_datum_meta_module(module_))
                     datums_.extend(self.get_new_case_id_datums_meta(form))
+                    datums_.extend(self.get_extra_case_id_datums(form))
             return datums_
 
         def append_update(dict_, new_dict):
