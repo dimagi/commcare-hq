@@ -63,6 +63,9 @@ class Group(UndoableDocument):
 
     bulk_save = save_docs
 
+    def delete(self):
+        super(Group, self).delete()
+        refresh_group_views(self)
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
