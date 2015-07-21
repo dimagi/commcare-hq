@@ -31,7 +31,8 @@ class UsersMiddleware(object):
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
         if request.user and hasattr(request.user, 'get_profile'):
-            request.couch_user = CouchUser.get_by_username(request.user.username)
+            request.couch_user = CouchUser.get_by_username(
+                request.user.username, strict=False)
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
