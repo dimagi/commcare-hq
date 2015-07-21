@@ -692,10 +692,11 @@ cloudCare.AppView = Backbone.View.extend({
             if (self.options.instanceViewerEnabled && $('#auto-sync-control').is(':checked')) {
                 $.ajax({
                     url: self.options.renderFormRoot,
-                    data: {'session_id': sessionId}
-                }).done(function (data) {
-                    showRenderedForm(data.instance_xml, $("#xml-viewer-pretty"));
-                    showRenderedForm(data.form_data, $("#question-viewer-pretty"));
+                    data: {'session_id': sessionId},
+                    success: function (data) {
+                        showRenderedForm(data.instance_xml, $("#xml-viewer-pretty"));
+                        showRenderedForm(data.form_data, $("#question-viewer-pretty"));
+                    }
                 });
             }
         };
