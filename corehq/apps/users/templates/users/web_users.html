@@ -82,7 +82,7 @@
                     var post_url = '{% url "delete_invitation" domain %}';
                     $.post(post_url, {invite: id},
                         function(data) {
-                            $("a[data-id]=" + id).parents("tr").remove();
+                            $("a[data-id=" + id + "]").parents("tr").remove();
                             $('#modal-dialog').data('id', id).modal('hide');
                              $(this).removeClass('disabled');
                         }
