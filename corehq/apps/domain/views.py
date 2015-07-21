@@ -10,7 +10,6 @@ from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from django.db.models import Sum
@@ -21,6 +20,7 @@ from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -86,7 +86,6 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
@@ -101,6 +100,7 @@ import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2225,8 +2225,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                     can_use_data_old=old_attrs.can_use_data,
                     can_use_data_new=self.domain_object.internal.can_use_data,
                 )
-                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
-                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+                send_mail_async.delay(
+                    'Custom EULA or data use flags changed for {}'.format(self.domain),
+                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                )
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
@@ -2300,9 +2302,9 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)
@@ -2681,9 +2683,9 @@ def _send_request_notification_email(request, org, dom):
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)

@@ -692,7 +692,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._get_and_send_report(language, emails)
 
     def _get_and_send_report(self, language, emails):
-        from dimagi.utils.django.email import send_HTML_email
+        from corehq.apps.hqwebapp.tasks import send_html_email_async
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
@@ -702,9 +702,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self.owner, self.domain, self._id, attach_excel=attach_excel
             )
             for email in emails:
-                send_HTML_email(title, email, body.content,
-                                email_from=settings.DEFAULT_FROM_EMAIL,
-                                file_attachments=excel_files)
+                send_html_email_async.delay(title, email, body.content,
+                                            email_from=settings.DEFAULT_FROM_EMAIL,
+                                            file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
