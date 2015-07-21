@@ -475,12 +475,10 @@ def render_form(request, domain):
         {'questions': readable_form}
     )
 
-    data = {
+    return json_response({
         'form_data': rendered_readable_form,
         'instance_xml': render_pretty_xml(form_data_xml)
-    }
-
-    return json_response(data)
+    })
 
 
 class HttpResponseConflict(HttpResponse):
