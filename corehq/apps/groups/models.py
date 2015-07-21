@@ -7,6 +7,9 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
+from corehq.apps.groups.dbaccessors import (
+    refresh_group_views,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 
@@ -43,7 +46,9 @@ class Group(UndoableDocument):
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
-        return super(Group, self).save(*args, **kwargs)
+        saved_group = super(Group, self).save(*args, **kwargs)
+        refresh_group_views(saved_group.domain, saved_group.name)
+        return saved_group
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
@@ -51,6 +56,8 @@ class Group(UndoableDocument):
         for doc in docs:
             doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        for doc in docs:
+            refresh_group_views(Group.wrap(doc))
 
     bulk_save = save_docs
 
