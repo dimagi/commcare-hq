@@ -1182,6 +1182,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def clear_quickcache_for_user(self):
         self.get_by_username.clear(self.__class__, self.username)
+        Domain.active_for_couch_user.clear(self)
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
