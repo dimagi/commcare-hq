@@ -52,6 +52,7 @@ branches:
   - web-user-requests # Jenny, July 16
   - template-apps # Jenny, July 20
   - extra-permissions-checks  # Ethan 7/20
+  - speedup-export-pages # Nick P 7/21
 submodules:
   corehq/apps/prelogin:
     branches: []
