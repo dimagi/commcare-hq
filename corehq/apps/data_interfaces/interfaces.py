@@ -87,6 +87,9 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
 
 class FormManagementMode(object):
+    """
+        Simple container for bulk form archive/restore mode and messages
+    """
     ARCHIVE_MODE = "archive"
     RESTORE_MODE = "restore"
 
@@ -96,27 +99,27 @@ class FormManagementMode(object):
         if mode == self.RESTORE_MODE:
             self.mode_name = self.RESTORE_MODE
             self.xform_filter = ADD_TO_ES_FILTER['archived_forms']
-            self.button_text = "Restore selected Forms"
-            self.button_class = "btn-primary"
-            self.status_page_title = "Restore Forms Status"
-            self.progress_text = "Restoring your forms, this may take some time..."
-            self.complete_short = "Restore complete!"
-            self.complete_long = "Your forms are succesfully restored"
-            self.success_text = "Succesfully restored "
-            self.fail_text = "Restore Failed. Details:"
-            self.error_text = "Problem restoring your forms! Please try again or report an issue"
+            self.button_text = _("Restore selected Forms")
+            self.button_class = _("btn-primary")
+            self.status_page_title = _("Restore Forms Status")
+            self.progress_text = _("Restoring your forms, this may take some time...")
+            self.complete_short = _("Restore complete!")
+            self.complete_long = _("Your forms are succesfully restored")
+            self.success_text = _("Succesfully restored ")
+            self.fail_text = _("Restore Failed. Details:")
+            self.error_text = _("Problem restoring your forms! Please try again or report an issue")
         else:
             self.mode_name = self.ARCHIVE_MODE
             self.xform_filter = ADD_TO_ES_FILTER['forms']
-            self.button_text = "Archive selected forms"
-            self.button_class = "btn-danger"
-            self.status_page_title = "Archive Forms Status"
-            self.progress_text = "Archiving your forms, this may take some time..."
-            self.complete_short = "Archive complete!"
-            self.complete_long = "Your forms are succesfully archived"
-            self.success_text = "Succesfully archived "
-            self.fail_text = "Archive Failed. Details:"
-            self.error_text = "Problem archiving your forms! Please try again or report an issue"
+            self.button_text = _("Archive selected forms")
+            self.button_class = _("btn-danger")
+            self.status_page_title = _("Archive Forms Status")
+            self.progress_text = _("Archiving your forms, this may take some time...")
+            self.complete_short = _("Archive complete!")
+            self.complete_long = _("Your forms are succesfully archived")
+            self.success_text = _("Succesfully archived ")
+            self.fail_text = _("Archive Failed. Details:")
+            self.error_text = _("Problem archiving your forms! Please try again or report an issue")
         if validate:
             self.validate_mode(mode)
 
@@ -131,7 +134,6 @@ class FormManagementMode(object):
 
 
 class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
-    # ToDo. Move to a better place
     slug = 'archive_or_restore'
     default_text = ugettext_noop("Select...")
     placeholder = ''
