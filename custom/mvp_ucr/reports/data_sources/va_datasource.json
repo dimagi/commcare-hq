@@ -1,0 +1,301 @@
+{
+    "domains": ["mvp-sauri", "mvp-mbola", "mvp-mwandama", "mvp-ruhiira", "mvp-koraro", "mvp-mayange",
+                "mvp-sada", "mvp-bonsaaso", "mvp-potou", "mvp-pampaida", "mvp-tiby"],
+    "config": {
+        "configured_filter": {
+            "filters": [
+                {
+                    "expression": {
+                        "datatype": null,
+                        "property_name": "xmlns",
+                        "type": "property_name"
+                    },
+                    "operator": "eq",
+                    "property_value": "http://openrosa.org/formdesigner/60666f0dc7688fdef369947196722ff2f235101e",
+                    "type": "boolean_expression"
+                },
+                {
+                    "expression": {
+                        "datatype": null,
+                        "property_name": "xmlns",
+                        "type": "property_name"
+                    },
+                    "operator": "eq",
+                    "property_value": "http://openrosa.org/formdesigner/a591e5a20bf459c898bff3faacd552a3ebcc0f5d",
+                    "type": "boolean_expression"
+                },
+                {
+                    "expression": {
+                        "datatype": null,
+                        "property_name": "xmlns",
+                        "type": "property_name"
+                    },
+                    "operator": "eq",
+                    "property_value": "http://openrosa.org/formdesigner/5cd541d5a1034f02c922dc888416148a89b85ffa",
+                    "type": "boolean_expression"
+                }
+            ],
+            "type": "or"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "timeEnd",
+                "datatype": "datetime",
+                "display_name": "timeEnd",
+                "expression": {
+                    "expression": {
+                        "datatype": null,
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                        ],
+                        "type": "property_path"
+                    },
+                    "type": "root_doc"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "case_id",
+                "type": "expression",
+                "expression": {
+                    "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                                "form",
+                                "case",
+                                "@case_id"
+                        ]
+                    },
+                    "type": "root_doc"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "last_chw_visit",
+                "type": "expression",
+                "expression": {
+                    "expression": {
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "property_path",
+                            "property_path": ["form", "case", "@case_id"]
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "last_chw_visit"
+                        }
+                    },
+                    "type": "root_doc"
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "death_year",
+                "type": "expression",
+                "expression": {
+                    "expression": {
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "property_path",
+                            "property_path": ["form", "case", "@case_id"]
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "date_of_termination"
+                        }
+                    },
+                    "type": "root_doc"
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "death_month",
+                "type": "expression",
+                "expression": {
+                    "expression": {
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "property_path",
+                            "property_path": ["form", "case", "@case_id"]
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "date_of_termination"
+                        }
+                    },
+                    "type": "root_doc"
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "age_category",
+                "type": "expression",
+                "expression": {
+                    "expression": {
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "property_path",
+                            "property_path": ["form", "case", "@case_id"]
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "age_category"
+                        }
+                    },
+                    "type": "root_doc"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "received_treatment",
+                "datatype": "string",
+                "display_name": "Received Treatment",
+                "expression": {
+                    "expression_if_false": {
+                        "expression_if_false": {
+                            "expression_if_false": {
+                              "constant": "No",
+                              "type": "constant"
+                            },
+                            "expression_if_true": {
+                              "constant": "Yes",
+                              "type": "constant"
+                            },
+                            "test": {
+                                "expression": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "interview",
+                                        "q801_q1005",
+                                        "q1004"
+                                    ]
+                                },
+                                "operator": "eq",
+                                "property_value": 1,
+                                "type": "boolean_expression"
+                            },
+                            "type": "conditional"
+                        },
+                        "expression_if_true": {
+                          "constant": "Yes",
+                          "type": "constant"
+                        },
+                        "test": {
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "q201-1114",
+                                    "q1001-1011",
+                                    "q1004"
+                                ]
+                            },
+                            "operator": "eq",
+                            "property_value": 1,
+                            "type": "boolean_expression"
+                        },
+                        "type": "conditional"
+                    },
+                    "expression_if_true": {
+                      "constant": "Yes",
+                      "type": "constant"
+                    },
+                    "test": {
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "interview",
+                                "q1004"
+                            ]
+                        },
+                        "operator": "eq",
+                        "property_value": 1,
+                        "type": "boolean_expression"
+                    },
+                    "type": "conditional"
+                  },
+                  "is_nullable": true,
+                  "is_primary_key": false,
+                  "transform": {
+                  },
+                  "type": "expression"
+            },
+            {
+                "column_id": "death_place",
+                "datatype": "string",
+                "display_name": "Death Place",
+                "expression": {
+                    "type": "mvp_death_place"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "medical_reason",
+                "datatype": "string",
+                "display_name": "Medical Reason",
+                "expression": {
+                    "type": "mvp_medical_cause"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "no_treatment_reason",
+                "datatype": "string",
+                "display_name": "No Treatment reason",
+                "expression": {
+                    "type": "mvp_no_treatment_reason"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "treatment_provider",
+                "datatype": "string",
+                "display_name": "Treatment Providers",
+                "expression": {
+                    "type": "mvp_treatment_provider_name"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "treatment_facility_name",
+                "datatype": "string",
+                "display_name": "Treatment Facility Name",
+                "expression": {
+                    "type": "mvp_treatment_place_name"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            }
+        ],
+        "description": "",
+        "display_name": "VA REPORTS",
+        "named_filters": {},
+        "referenced_doc_type": "XFormInstance",
+        "table_id": "va_indicators"
+    }
+}

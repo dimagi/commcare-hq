@@ -582,7 +582,7 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')
-    template_name = 'hqwebapp/soil_status_full.html'
+    template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -680,7 +680,7 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
     dump_locations(response, domain, include_consumption)
     return response

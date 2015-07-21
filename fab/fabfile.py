@@ -649,7 +649,8 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        execute(record_successful_deploy)
+        url = _tag_commit()
+        execute(record_successful_deploy, url)
 
 
 def _confirm_translated():
@@ -1129,6 +1130,7 @@ def set_celery_supervisorconf():
         'pillow_retry_queue':           ['supervisor_celery_pillow_retry_queue.conf'],
         'background_queue':             ['supervisor_celery_background_queue.conf'],
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
+        'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
         }
 

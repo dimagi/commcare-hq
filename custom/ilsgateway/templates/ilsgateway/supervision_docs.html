@@ -1,8 +1,22 @@
-{% extends 'hqwebapp/two_column.html' %}
+{% extends 'style/bootstrap2/two_column.html' %}
 {% load i18n %}
+
+{% block stylesheets %}
+    <style>
+        ul#report-links li {
+            display: inline;
+            padding-right: 10px;
+        }
+    </style>
+{% endblock %}
 
 {% block main_column %}
     <h2>Supervision Documents</h2>
+    <ul id="report-links">
+        {% for title, href in report_links %}
+            <li><a href='{{ href }}'>{{ title }}</a></li>
+        {% endfor %}
+    </ul>
     <table class="table table-striped">
         {% for document in documents %}
             <tr>

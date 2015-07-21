@@ -16,7 +16,10 @@ class MockEndpoint(GhanaEndpoint):
         elif 'product' in url:
             return self._from_json('sample_products.json', **kwargs)
         elif 'stocktransactions' in url:
-            return self._from_json('sample_stocktransactions.json', **kwargs)
+            meta, objects = self._from_json('sample_stocktransactions.json', **kwargs)
+            if filters.get('supply_point'):
+                objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
+            return meta, objects
 
     def _from_json(self, filename, **kwargs):
         with open(os.path.join(self.datapath, filename)) as f:

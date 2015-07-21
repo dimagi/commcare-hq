@@ -1,5 +1,5 @@
-{% extends 'style/base_section.html' %}
-{% load crispy_forms_tags_b3 %}
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block page_content %}
@@ -10,5 +10,5 @@
         <strong>Note:</strong> This doesn't register a user for reals&mdash;just
         a coding example.
     </div>
-    {% crispy_b3 simple_crispy_form %}
+    {% crispy simple_crispy_form %}
 {% endblock page_content %}
