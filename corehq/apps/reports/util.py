@@ -113,6 +113,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        temp_user_ids = []
         if include_inactive:
             registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
         for user_id in submitted_user_ids:
@@ -123,10 +124,14 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id)
-                temp_user = TempCommCareUser(domain, username, user_id)
-                if user_filter[temp_user.filter_flag].show:
-                    users.append(temp_user)
+                temp_user_ids.append(user_id)
+
+        for user_id in temp_user_ids:
+            username = get_username_from_forms(domain, user_id)
+            temp_user = TempCommCareUser(domain, username, user_id)
+            if user_filter[temp_user.filter_flag].show:
+                users.append(temp_user)
+
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
 
