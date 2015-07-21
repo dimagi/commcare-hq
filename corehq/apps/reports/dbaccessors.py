@@ -24,3 +24,7 @@ def stale_get_exports(domain, include_docs=True, **kwargs):
         stale=settings.COUCH_STALE_QUERY,
         **kwargs
     )
+
+
+def touch_exports(domain):
+    get_exports(domain, include_docs=False, limit=1)
