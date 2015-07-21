@@ -9,6 +9,8 @@ from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_S
 from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
     refresh_group_views,
+    stale_group_by_domain,
+    stale_group_by_name,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
@@ -155,11 +157,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('groups/by_domain',
-            key=domain,
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
+        return stale_group_by_domain(domain).all()
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -178,11 +176,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_name(cls, domain, name, one=True):
-        result = cls.view('groups/by_name',
-            key=[domain, name],
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        )
+        result = stale_group_by_name(domain, name)
         if one:
             return result.one()
         else:
