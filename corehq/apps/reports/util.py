@@ -126,8 +126,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                   user_filter[HQUserType.UNKNOWN].show):
                 temp_user_ids.append(user_id)
 
-        for user_id in temp_user_ids:
-            username = get_username_from_forms(domain, user_id)
+        for user_id, username in get_usernames_from_forms(domain, temp_user_ids).iteritems():
             temp_user = TempCommCareUser(domain, username, user_id)
             if user_filter[temp_user.filter_flag].show:
                 users.append(temp_user)
@@ -156,7 +155,7 @@ def get_all_userids_submitted(domain):
     return [user['key'][1] for user in submitted]
 
 
-def get_username_from_forms(domain, user_id):
+def get_usernames_from_forms(domain, user_ids):
     def _get_username_from_user_id(user_info, user_id):
         username = HQUserType.human_readable[HQUserType.ADMIN]
         try:
@@ -170,15 +169,19 @@ def get_username_from_forms(domain, user_id):
                 username = possible_username
         return username
 
-    key = make_form_couch_key(domain, user_id=user_id)
+    key = make_form_couch_key(domain)
     user_info = get_db().view(
         'reports_forms/all_forms',
         startkey=key,
-        limit=1,
         reduce=False
-    ).one()
+    ).all()
 
-    return _get_username_from_user_id(user_info, user_id)
+    usernames = dict()
+    for u in user_info:
+        if not usernames.get(u['value']['user_id'], None):
+            usernames[u['value']['user_id']] = _get_username_from_user_id(u, u['value']['user_id'])
+
+    return usernames
 
 
 def namedtupledict(name, fields):
