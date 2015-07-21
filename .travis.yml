@@ -25,6 +25,9 @@ addons:
     - libblas-dev
     - liblapack-dev
 install:
+  - "which time"
+  - "which bash"
+  - "which ts"
   - "git clone https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
