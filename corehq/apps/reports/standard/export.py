@@ -355,14 +355,7 @@ class DeidExportReport(FormExportReportBase):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        startkey = json.dumps([domain, ""])[:-3]
-        return SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey,
-            limit=1,
-            include_docs=False,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).count() > 0
-
+        return stale_get_exports(domain, include_docs=False, limit=1).count() > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
