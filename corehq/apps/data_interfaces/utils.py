@@ -41,12 +41,12 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
 
 
 def archive_forms_old(domain, user, uploaded_data):
+    # used by excel archive forms
     form_ids = [row.get('form_id') for row in uploaded_data]
-    return archive_or_restore_forms(domain, user, form_ids, 'archive')
+    return archive_or_restore_forms(domain, user, form_ids, 'archive', from_excel=True)
 
 
-def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None):
-    # todo convert this to Async friendly view
+def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
@@ -91,6 +91,9 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=No
     for missing_form_id in missing_forms:
         response['errors'].append(
             _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
+
+    if from_excel:
+        return response
 
     response["success_count_msg"] = _("{success_msg} {count} form(s)".format(
         success_msg=archive_or_restore.success_text,
