@@ -15,7 +15,8 @@ from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_l
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
 from casexml.apps.case.xform import process_cases
-from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog
+from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
+    AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
@@ -91,10 +92,13 @@ class SyncBaseTest(TestCase):
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
 
-    def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map=None):
+    def _testUpdate(self, sync_log_or_id, case_id_map, dependent_case_id_map=None):
         dependent_case_id_map = dependent_case_id_map or {}
-        sync_log = get_properly_wrapped_sync_log(sync_id)
-        
+        if isinstance(sync_log_or_id, AbstractSyncLog):
+            sync_log = sync_log_or_id
+        else:
+            sync_log = get_properly_wrapped_sync_log(sync_log_or_id)
+
         if isinstance(sync_log, SimplifiedSyncLog):
             all_ids = {}
             all_ids.update(case_id_map)
@@ -125,6 +129,12 @@ class SyncBaseTest(TestCase):
                 self.assertTrue(sync_log.phone_has_dependent_case(case_id))
                 state = sync_log.get_dependent_case_state(case_id)
                 self._checkLists(indices, state.indices)
+
+            # test migration of old to new by migrating and testing again.
+            # this is a lazy way of running tests on a variety of edge cases
+            # without having to write explicit tests for the migration
+            migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
+            self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
     
 class SyncTokenUpdateTest(SyncBaseTest):
