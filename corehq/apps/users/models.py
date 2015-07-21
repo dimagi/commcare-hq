@@ -1180,6 +1180,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
+    def clear_quickcache_for_user(self):
+        self.get_by_username.clear(self.__class__, self.username)
+
     @classmethod
     def get_by_default_phone(cls, phone_number):
         result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
@@ -1252,6 +1255,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.save()
 
     def save(self, **params):
+        self.clear_quickcache_for_user()
         # test no username conflict
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
