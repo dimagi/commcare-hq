@@ -161,7 +161,7 @@
                                     </ul>
                                     {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
                                         <span data-bind="visible: choices().length !== 0">
-                                            <label style="display: inline" for="multipleChoice">Multiple choice: </label>
+                                            <label style="display: inline" for="multipleChoice">{% trans 'Multiple choice' %}: </label>
                                             <input data-bind="checked: multipleChoice" id="multipleChoice" type="checkbox"/>
                                         </span>
                                     {% endif %}
