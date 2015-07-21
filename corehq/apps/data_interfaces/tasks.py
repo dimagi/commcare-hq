@@ -22,6 +22,7 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 
 @task(ignore_result=True)
 def bulk_archive_forms(domain, user, uploaded_data):
+    # archive using Excel-data
     response = archive_forms_old(domain, user, uploaded_data)
 
     for msg in response['success']:
@@ -35,6 +36,17 @@ def bulk_archive_forms(domain, user, uploaded_data):
 
 @task
 def bulk_form_management_async(archive_or_restore, domain, user, es_dict_or_formids):
+    # bulk archive/restore
+    # es_dict_or_formids - can either be list of formids or a partial es-query dict that returns
+    def get_form_ids(es_query_dict, domain):
+        query = es_query(
+            params={'domain.exact': domain},
+            q=es_query_dict,
+            es_url=XFORM_INDEX + '/xform/_search',
+        )
+        form_ids = [res['_id'] for res in query.get('hits', {}).get('hits', [])]
+        return form_ids
+
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)
 
@@ -44,13 +56,3 @@ def bulk_form_management_async(archive_or_restore, domain, user, es_dict_or_form
         xform_ids = get_form_ids(es_dict_or_formids, domain)
     response = archive_or_restore_forms(domain, user, xform_ids, mode, task)
     return response
-
-
-def get_form_ids(es_query_dict, domain):
-    query = es_query(
-        params={'domain.exact': domain},
-        q=es_query_dict,
-        es_url=XFORM_INDEX + '/xform/_search',
-    )
-    form_ids = [res['_id'] for res in query.get('hits', {}).get('hits', [])]
-    return form_ids

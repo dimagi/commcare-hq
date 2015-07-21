@@ -174,7 +174,15 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
     @property
     def headers(self):
         h = [
-            DataTablesColumn(mark_safe('Select  <a class="select-all btn btn-mini btn-inverse">all</a> <a class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
+            DataTablesColumn(
+                mark_safe(
+                    """
+                    Select  <a class="select-all btn btn-mini btn-inverse">all</a>
+                    <a class="select-none btn btn-mini btn-warning">none</a>'
+                    """
+                ),
+                sortable=False, span=2
+            ),
             DataTablesColumn(_("View Form")),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(

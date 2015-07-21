@@ -467,6 +467,7 @@ class XFormManagementView(DataInterfaceSection):
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in in an async task instead
             es_query = json.loads(self.request.POST.get('select_all'))
+            # todo - validate query
             return es_query
         else:
             return self.request.POST.getlist('xform_ids')
