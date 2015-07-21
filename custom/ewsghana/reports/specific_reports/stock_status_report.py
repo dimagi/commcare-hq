@@ -326,6 +326,12 @@ class StockStatus(MultiReport):
     is_exportable = True
     is_rendered_as_email = False
 
+    @property
+    def fields(self):
+        if self.is_reporting_type():
+            return [EWSRestrictionLocationFilter, ProductByProgramFilter, ViewReportFilter]
+        return [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter, ViewReportFilter]
+
     def unique_products(self, locations):
         return SQLProduct.objects.filter(
             pk__in=locations.values_list('_products', flat=True)
