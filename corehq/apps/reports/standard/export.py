@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from corehq.apps.reports.dbaccessors import get_exports
+from corehq.apps.reports.dbaccessors import stale_get_exports
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -62,7 +62,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_exports(self.domain)
+        exports = stale_get_exports(self.domain)
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
@@ -413,7 +413,7 @@ class DataExportInterface(GenericReportView):
     def saved_exports(self):
         exports = [
             self.export_schema.wrap(doc.to_json())
-            for doc in filter(lambda x: x.type == self.export_type, get_exports(self.domain))
+            for doc in filter(lambda x: x.type == self.export_type, stale_get_exports(self.domain))
         ]
         for export in exports:
             export.download_url = (
