@@ -1,4 +1,5 @@
 language: python
+sudo: false
 python:
   - "2.7"
 env:
@@ -17,8 +18,13 @@ before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
   - "lsb_release -a"
+addons:
+  apt:
+    packages:
+    - moreutils
+    - libblas-dev
+    - liblapack-dev
 install:
-  - "sudo apt-get install moreutils libblas-dev liblapack-dev"
   - "git clone https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
