@@ -1,8 +1,8 @@
 import settings
-from corehq.apps.groups.models import Group
 
 
 def group_by_domain(domain, include_docs=True, **kwargs):
+    from corehq.apps.groups.models import Group
     return Group.view(
         'groups/by_domain',
         key=domain,
@@ -21,6 +21,7 @@ def stale_group_by_domain(domain, include_docs=True, **kwargs):
 
 
 def group_by_name(domain, name, include_docs=True, **kwargs):
+    from corehq.apps.groups.models import Group
     return Group.view(
         'groups/by_name',
         key=[domain, name],
