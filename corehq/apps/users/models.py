@@ -808,6 +808,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        # TODO - is it a bug that we're not doing everything else in save here?
         super(CouchUser, cls).save_docs(docs, use_uuids, all_or_nothing)
         for doc in docs:
             refresh_couch_user_views(super(CouchUser, cls).wrap(doc))
