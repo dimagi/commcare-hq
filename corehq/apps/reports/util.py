@@ -152,6 +152,19 @@ def get_all_userids_submitted(domain):
 
 
 def get_username_from_forms(domain, user_id):
+    def _get_username_from_user_id(user_info, user_id):
+        username = HQUserType.human_readable[HQUserType.ADMIN]
+        try:
+            possible_username = user_info['value']['username']
+            if not possible_username == 'none':
+                username = possible_username
+            return username
+        except KeyError:
+            possible_username = user_id_to_username(user_id)
+            if possible_username:
+                username = possible_username
+        return username
+
     key = make_form_couch_key(domain, user_id=user_id)
     user_info = get_db().view(
         'reports_forms/all_forms',
@@ -159,17 +172,8 @@ def get_username_from_forms(domain, user_id):
         limit=1,
         reduce=False
     ).one()
-    username = HQUserType.human_readable[HQUserType.ADMIN]
-    try:
-        possible_username = user_info['value']['username']
-        if not possible_username == 'none':
-            username = possible_username
-        return username
-    except KeyError:
-        possible_username = user_id_to_username(user_id)
-        if possible_username:
-            username = possible_username
-    return username
+
+    return _get_username_from_user_id(user_info, user_id)
 
 
 def namedtupledict(name, fields):
