@@ -1155,13 +1155,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             }[source['doc_type']].wrap(source)
 
     @classmethod
-    def get_by_username(cls, username):
+    @skippable_quickcache(['username'], skip_arg='strict')
+    def get_by_username(cls, username, strict=False):
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
                 reduce=False,
-                #stale=stale,
+                stale=stale if not strict else None,
             )
             return result.one(except_all=raise_if_none)
         try:
