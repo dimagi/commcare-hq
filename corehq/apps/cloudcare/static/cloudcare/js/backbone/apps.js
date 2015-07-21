@@ -689,7 +689,7 @@ cloudCare.AppView = Backbone.View.extend({
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
         data.answerCallback = function(sessionId) {
-            if (self.options.instanceViewerEnabled) {
+            if (self.options.instanceViewerEnabled && $('#auto-sync-control').is(':checked')) {
                 $.ajax({
                     url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
