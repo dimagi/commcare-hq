@@ -59,14 +59,14 @@ function UsersViewModel(sms_users, district_in_charges, location_id, submit_url)
     self.locationId = location_id;
     self.submitUrl = submit_url;
 
-    self.users = ko.observableArray(sms_users.map(function(user) { return new User(user)}));
+    self.users = ko.observableArray(sms_users.map(function(user) { return new User(user);}));
 
-    self.districtInCharges = ko.observableArray(district_in_charges.map(function(user) { return new User(user)}));
+    self.districtInCharges = ko.observableArray(district_in_charges.map(function(user) { return new User(user);}));
 
     self.inCharges = ko.computed(function() {
         return ko.utils.arrayFilter(self.districtInCharges(), function (user) {
             return user.in_charge();
-        })
+        });
     }, this);
 
     var mapInChargesToIds = function() {

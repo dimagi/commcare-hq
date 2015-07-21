@@ -57,7 +57,7 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.name, "Test1")
         self.assertEqual(smsuser.role, "Other")
         self.assertEqual(smsuser.supply_point.id, 456)
-        self.assertEqual(smsuser.supply_point.location_id, 591)
+        self.assertEqual(smsuser.supply_point.location_id, 620)
         self.assertEqual(smsuser.supply_point.name, "aa55")
         self.assertEqual(smsuser.supply_point.active, True)
         self.assertEqual(smsuser.email, None)

@@ -202,6 +202,5 @@ class LocationSyncTest(TestCase):
         ewsghana_location = self.api_object.location_sync(location)
         in_charges = FacilityInCharge.objects.filter(location=ewsghana_location.sql_location)
         self.assertEqual(in_charges.count(), 1)
-        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 1)
         user = CommCareUser.get_by_user_id(in_charges[0].user_id)
         self.assertIsNotNone(user)
