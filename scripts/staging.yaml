@@ -59,8 +59,7 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 221-jars # wsp 5/20
-      - threadlocks
+      - threadlocks  # cz 7/21
       - django17
   submodules/formtranslate-src:
     # let's leave this here even when empty
