@@ -49,7 +49,7 @@ class Group(UndoableDocument):
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
         saved_group = super(Group, self).save(*args, **kwargs)
-        refresh_group_views(saved_group.domain, saved_group.name)
+        refresh_group_views(self)
         return saved_group
 
     @classmethod
