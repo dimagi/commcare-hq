@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
+from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
@@ -149,9 +150,15 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
         loc_id = self.request.GET.get('location_id')
         if not loc_id:
             domain_membership = user.get_domain_membership(self.domain)
-            if domain_membership:
+            if not domain_membership or not domain_membership.location_id:
+                loc_id = SQLLocation.objects.filter(
+                    domain=self.domain,
+                    location_type__name='country'
+                ).first().location_id
+            else:
                 loc_id = domain_membership.location_id
-        location = SQLLocation.objects.get(location_id=loc_id)
+
+        location = get_object_or_404(SQLLocation, location_id=loc_id)
         if not location.location_type.administrative:
             loc_id = location.parent.location_id
         hier = location_hierarchy_config(self.domain)
