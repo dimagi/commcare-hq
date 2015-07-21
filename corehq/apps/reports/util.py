@@ -86,15 +86,14 @@ def get_group(group='', **kwargs):
 
 
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
-                            user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
+                            user_filter=None, simplified=False,
+                            CommCareUser=CommCareUser, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
     user_ids = user_ids if user_ids and user_ids[0] else None
-    if not CommCareUser:
-        from corehq.apps.users.models import CommCareUser
 
     if group:
         # get all the users only in this group and don't bother filtering.

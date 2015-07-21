@@ -345,11 +345,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 domain=domain,
                 user_ids=user_ids,
                 simplified=simplified_users,
-                CommCareUser=CommCareUser,
             )
         user_filter = tuple([HQUserToggle(id, id in user_types) for id in range(4)])
-        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
-                                                   CommCareUser=CommCareUser, include_inactive=include_inactive)
+        other_users = util.get_all_users_by_domain(domain=domain,
+                user_filter=user_filter, simplified=simplified_users,
+                include_inactive=include_inactive)
         groups = [Group.get(g) for g in group_ids]
         all_users = users + other_users
         if combined:
