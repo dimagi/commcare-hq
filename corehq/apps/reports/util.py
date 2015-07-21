@@ -116,12 +116,14 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         registered_user_ids = dict([(user.user_id, user) for user in
             get_all_commcare_users_by_domain(domain, include_inactive)])
         temp_user_ids = []
+
+        if user_filter[HQUserType.REGISTERED].show:
+            users += registered_user_ids.values()
+
         for user_id in submitted_user_ids:
-            if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
-                user = registered_user_ids[user_id]
-                users.append(user)
-            elif not user_id in registered_user_ids and \
-                 (user_filter[HQUserType.ADMIN].show or
+            if user_id in registered_user_ids:
+                continue
+            if (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show):
                 temp_user_ids.append(user_id)
@@ -133,13 +135,6 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
 
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
-
-        if user_filter[HQUserType.REGISTERED].show:
-            # now add all the registered users who never submitted anything
-            for user_id in registered_user_ids:
-                if not user_id in submitted_user_ids:
-                    user = registered_user_ids[user_id]
-                    users.append(user)
 
     if simplified:
         return [_report_user_dict(user) for user in users]
