@@ -15,6 +15,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
+from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
@@ -112,10 +113,9 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             user_filter = HQUserType.all()
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
-        registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        registered_user_ids = dict([(user.user_id, user) for user in
+            get_all_commcare_users_by_domain(domain, include_inactive)])
         temp_user_ids = []
-        if include_inactive:
-            registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]

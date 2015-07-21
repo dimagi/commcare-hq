@@ -2,12 +2,16 @@ from itertools import imap
 from dimagi.utils.couch.database import iter_docs
 
 
-def get_all_commcare_users_by_domain(domain):
+def get_all_commcare_users_by_domain(domain, include_inactive=True):
     """Returns all CommCareUsers by domain regardless of their active status"""
     from corehq.apps.users.models import CommCareUser
 
+    flags = ['active']
+    if include_inactive:
+        flags.append('inactive')
+
     def get_ids():
-        for flag in ['active', 'inactive']:
+        for flag in flags:
             key = [flag, domain, CommCareUser.__name__]
             for user in CommCareUser.get_db().view(
                 'users/by_domain',
