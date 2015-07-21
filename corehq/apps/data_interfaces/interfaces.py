@@ -18,7 +18,7 @@ from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter
 )
-
+from corehq.elastic import ADD_TO_ES_FILTER
 
 from .dispatcher import EditDataInterfaceDispatcher
 

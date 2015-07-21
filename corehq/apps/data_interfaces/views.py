@@ -174,9 +174,8 @@ class ArchiveFormView(DataInterfaceSection):
 
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
-        # ToDo, remove this after test
-        # if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
-        #     raise Http404()
+        if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
+            raise Http404()
         return super(ArchiveFormView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -463,12 +462,10 @@ class XFormManagementView(DataInterfaceSection):
     page_title = ugettext_noop('Form Management')
 
     def _get_es_dict_or_form_ids(self, request):
-        # Todo - scan ids from POST and validate them
         if 'select_all' in self.request.POST:
             import json
-            #  Todo - validate user-submitted es-query. Danger zone
-            # Altough evaluating form_ids and sending to task is cleaner,
-            # heavier calls should be in in an async task
+            # Altough evaluating form_ids and sending to task would be cleaner,
+            # heavier calls should be in in an async task instead
             es_query = json.loads(self.request.POST.get('select_all'))
             return es_query
         else:
@@ -513,7 +510,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -522,7 +519,6 @@ class XFormManagementStatusView(DataInterfaceSection):
 # ToDo permission decorator
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
-    print "yooo"
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
         context = get_download_context(download_id, check_state=True)
@@ -534,5 +530,4 @@ def xform_management_job_poll(request, domain, download_id,
         'on_complete_long': mode.complete_long,
         'mode': mode,
     })
-    print context
     return render(request, template, context)
