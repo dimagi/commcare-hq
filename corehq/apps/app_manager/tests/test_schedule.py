@@ -106,6 +106,12 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.assertFalse(created)
         self.assertEqual(phase_2, pre_made_phase)
 
+        with self.assertRaises(ScheduleError):
+            self.module.get_or_create_schedule_phase(anchor='  \n\n\n\t\t')
+
+        with self.assertRaises(ScheduleError):
+            self.module.get_or_create_schedule_phase(anchor=None)
+
     def test_form_in_phase_requires_schedule(self):
         self._apply_schedule_phases()
         self.form_3.schedule = None
@@ -114,6 +120,49 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
         self.module.schedule_phases.pop()
         self.app.create_suite()
+
+    def test_remove_form_from_phase(self):
+        form_1 = self.form_1
+        form_2 = self.form_2
+        self.module.schedule_phases = [
+            SchedulePhase(
+                anchor='dob',
+                forms=[SchedulePhaseForm(form_id=form_1.unique_id),
+                       SchedulePhaseForm(form_id=form_2.unique_id)]
+            )
+        ]
+        phase = next(self.module.get_schedule_phases())  # get the phase through the module so we have a _parent
+        phase.remove_form(form_1)
+
+        self.assertEqual(len(phase.forms), 1)
+        self.assertEqual([form_2], list(phase.get_forms()))
+
+        with self.assertRaises(ScheduleError):
+            phase.remove_form(form_1)
+
+        # Removing all the forms deletes the phase
+        phase.remove_form(form_2)
+        self.assertEqual(len(self.module.schedule_phases), 0)
+
+    def test_add_form_to_phase(self):
+        self.module.schedule_phases = [
+            SchedulePhase(
+                anchor='dob',
+                forms=[SchedulePhaseForm(form_id=self.form_1.unique_id),
+                       SchedulePhaseForm(form_id=self.form_2.unique_id)]
+            ),
+            SchedulePhase(anchor='second_phase', forms=[]),
+        ]
+        phases = list(self.module.get_schedule_phases())
+        phase1 = phases[0]
+        phase1.add_form(self.form_3)
+        self.assertEqual(phase1.get_phase_form_index(self.form_3), 2)
+
+        # adding a form to a different phase removes it from the first phase
+        phase2 = phases[1]
+        phase2.add_form(self.form_3)
+        self.assertEqual(phase2.get_phase_form_index(self.form_3), 0)
+        self.assertIsNone(phase1.get_form(self.form_3))
 
     def test_schedule_detail(self):
         self._apply_schedule_phases()

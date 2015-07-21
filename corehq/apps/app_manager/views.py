@@ -32,6 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
+    ScheduleError,
 )
 
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -165,7 +166,9 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    SchedulePhaseForm,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -2072,22 +2075,15 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     form = module.get_form(form_id)
 
     json_loads = json.loads(request.POST.get('schedule'))
-    phase, is_new_phase = module.get_or_create_schedule_phase(anchor=json_loads['anchor'])
-    # TODO: Raise if anchor == ''
+    anchor = json_loads.pop('anchor')
 
-    old_phase = form.get_phase()
-
-    if old_phase is not None and old_phase.anchor != phase.anchor:
-        if len(old_phase.forms) == 1:
-            module.schedule_phases.remove(old_phase)
-        else:
-            # TODO: verify this works
-            phase_form = old_phase.get_form(form)
-            del phase_form
+    try:
+        phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
 
     form.schedule = FormSchedule.wrap(json_loads)
-    if form not in phase.get_forms():
-        phase.forms.append(form)
+    phase.add_form(form)
 
     response_json = {}
     app.save(response_json)

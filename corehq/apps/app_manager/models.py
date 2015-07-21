@@ -91,6 +91,7 @@ from .exceptions import (
     XFormException,
     XFormIdNotUnique,
     XFormValidationError,
+    ScheduleError,
 )
 from corehq.apps.app_manager import id_strings
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -2255,7 +2256,36 @@ class SchedulePhase(IndexedSchema):
         schedule_phase.get_phase_form_index(c)
         => 2
         """
-        return next(phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id)
+        return next((phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id),
+                    None)
+
+    def remove_form(self, form):
+        """
+        Remove a form from the phase
+
+        If this results in an empty phase, delete the phase
+        """
+        idx = self.get_phase_form_index(form)
+        if idx is None:
+            raise ScheduleError("That form doesn't exist in the phase")
+
+        self.forms.remove(self.forms[idx])
+
+        if len(self.forms) == 0:
+            # I'm useless now
+            self.get_module().schedule_phases.remove(self)
+
+    def add_form(self, form):
+        """
+        Adds a form to this phase, removing it from other phases
+        """
+        old_phase = form.get_phase()
+        if old_phase is not None and old_phase.anchor != self.anchor:
+            old_phase.remove_form(form)
+
+        if self.get_form(form) is None:
+            self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
+
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
@@ -2534,13 +2564,16 @@ class AdvancedModule(ModuleBase):
 
     def get_or_create_schedule_phase(self, anchor):
         """Returns a tuple of (phase, new?)"""
+        if anchor is None or anchor.strip() == '':
+            raise ScheduleError(_("You can't create a phase without an anchor property"))
 
         phase = next((phase for phase in self.get_schedule_phases() if phase.anchor == anchor), None)
         is_new_phase = False
 
         if phase is None:
-            phase = SchedulePhase(anchor=anchor)
-            self.schedule_phases.append(phase)
+            self.schedule_phases.append(SchedulePhase(anchor=anchor))
+            # TODO: is there a better way of doing this?
+            phase = list(self.get_schedule_phases())[-1] # get the phase from the module so we know the _parent
             is_new_phase = True
 
         return (phase, is_new_phase)
