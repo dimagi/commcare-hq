@@ -1,5 +1,6 @@
 from mock import patch
 import copy
+import base64
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
     DetailColumn,
@@ -73,6 +74,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 forms=[SchedulePhaseForm(form_id=self.form_3.unique_id)]
             ),
         ]
+
 
     def test_get_phase(self):
         phase = SchedulePhase(
@@ -238,3 +240,52 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             """.format(form_num=form_num, filter_condition=filter_condition)
 
             self.assertXmlPartialEqual(partial, suite, './menu/command[@id="m1-f{}"]'.format(form_num))
+
+    def _fetch_sources(self):
+        # TODO: a better way of fetching the source
+        for form in self.module.forms:
+            form.source = base64.b64decode(
+                self.app._attachments['{}.xml'.format(form.unique_id)]['data']
+            )
+
+    def test_current_schedule_phase(self):
+        # Hackety hack hack
+
+        # xmlns is added because I needed to use WrappedNode.find()
+        xmlns_junk = ("xmlns='http://www.w3.org/2002/xforms' "
+                      "xmlns:h='http://www.w3.org/1999/xhtml' "
+                      "xmlns:jr='http://openrosa.org/javarosa' "
+                      "xmlns:orx='http://openrosa.org/jr/xforms' "
+                      "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
+
+        current_schedule_phase_partial = """
+        <partial>
+            <setvalue event="xforms-ready" ref="/data/case/update/current_schedule_phase" value="{value}" {xmlns}/>
+        </partial>
+        """
+        self._fetch_sources()
+        self._apply_schedule_phases()
+
+        xform_1 = self.form_1.wrapped_xform()
+        self.form_1.add_stuff_to_xform(xform_1)
+        self.assertXmlPartialEqual(
+            current_schedule_phase_partial.format(value='1', xmlns=xmlns_junk),
+            xform_1.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
+            '.'
+        )
+
+        xform_2 = self.form_2.wrapped_xform()
+        self.form_2.add_stuff_to_xform(xform_2)
+        self.assertXmlPartialEqual(
+            current_schedule_phase_partial.format(value='1', xmlns=xmlns_junk),
+            xform_2.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
+            '.'
+        )
+
+        xform_3 = self.form_3.wrapped_xform()
+        self.form_3.add_stuff_to_xform(xform_3)
+        self.assertXmlPartialEqual(
+            current_schedule_phase_partial.format(value='2', xmlns=xmlns_junk),
+            xform_3.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
+            '.'
+        )
