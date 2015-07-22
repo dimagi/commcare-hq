@@ -1397,15 +1397,16 @@ class XForm(WrappedNode):
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             update_block.append(make_case_elem(last_visit_num))
 
-            self.add_setvalue(
-                ref='case/update/{}'.format(SCHEDULE_PHASE),
-                value=str(form.get_phase().id)
+            self.add_bind(
+                nodeset='case/update/{}'.format(SCHEDULE_PHASE),
+                type="xs:integer",
+                calculate=str(form.get_phase().id)
             )
 
             last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
-            self.add_setvalue(
-                ref='case/update/{}'.format(last_visit_num),
-                value="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+            self.add_bind(
+                nodeset='case/update/{}'.format(last_visit_num),
+                calculate="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
             )
 
             self.add_bind(
