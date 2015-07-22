@@ -121,9 +121,11 @@ form_id_references = []
 
 def FormIdProperty(expression, **kwargs):
     """
-    Create a StringProperty that references a form ID.
-    :param level:   From where is the form referenced? One of 'app', 'module', 'form'
-    :param path:    jsonpath to field that holds the form ID
+    Create a StringProperty that references a form ID. This is necessary because
+    form IDs change when apps are copied so we need to make sure we update
+    any references to the them.
+    :param expression:  jsonpath expression that can be used to find the field
+    :param kwargs:      arguments to be passed to the underlying StringProperty
     """
     path_expression = parse(expression)
     assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"

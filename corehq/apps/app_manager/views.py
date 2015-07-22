@@ -817,9 +817,8 @@ def get_module_view_context_and_template(app, module):
             for mod in app.get_modules() if module.unique_id != mod.unique_id
             for form in mod.get_forms() if form.is_registration_form(case_type_)
         ]
-        if forms or module.case_list_form.form_id:
-            options['disabled'] = _("Don't Show")
-            options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+        options['disabled'] = _("Don't Show")
+        options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
 
         return options
 
@@ -898,7 +897,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
+            'case_list_form_allowed': module.all_forms_require_a_case(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -934,9 +933,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(
-                module.all_forms_require_a_case and not module.parent_select.active and form_options
-            ),
+            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and
@@ -1647,7 +1644,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if is_valid_case_type(case_type):
-            # todo: something better than nothing when invalid
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -1666,6 +1662,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
                     # only apply change if the module's case_type does not reference the old value
                     rename_action_case_type(ad_mod)
+        elif case_type == USERCASE_TYPE:
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):

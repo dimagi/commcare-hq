@@ -268,7 +268,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def fields(self):
         fields = [DatespanFilter, MessageTypeFilter]
-        if self.locations_enabled:
+        if self.uses_locations:
             fields.insert(0, AsyncLocationFilter)
         return fields
 
@@ -287,8 +287,8 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     @memoized
-    def locations_enabled(self):
-        return Domain.get_by_name(self.domain).locations_enabled
+    def uses_locations(self):
+        return Domain.get_by_name(self.domain).uses_locations
 
     @property
     def rows(self):
@@ -297,7 +297,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
 
-        reporting_locations_id = self.get_location_filter() if self.locations_enabled else []
+        reporting_locations_id = self.get_location_filter() if self.uses_locations else []
         # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
