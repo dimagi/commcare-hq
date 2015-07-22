@@ -19,17 +19,20 @@ class EmailReportData(EWSData):
     def get_locations(self, loc_id, domain):
         return []
 
+
+class StockSummaryReportData(EmailReportData):
+    slug = 'stock_summary'
+
     @property
     def headers(self):
         return DataTablesHeader(*[
             DataTablesColumn(_('Product')),
-            DataTablesColumn(_('% Facilities with Stockouts')),
             DataTablesColumn(_('Total # Facilities Registered with this Product')),
-            DataTablesColumn(_('Total Stock')),
-            DataTablesColumn(_('% Facilities with Consumption Data')),
-            DataTablesColumn(_('Monthly Consumption')),
-            DataTablesColumn(_('Months of Stock')),
-            DataTablesColumn(_('Stock Status'))
+            DataTablesColumn(_('Total # facilities reported')),
+            DataTablesColumn(_('% Facilities with Stockouts')),
+            DataTablesColumn(_('% Facilities with Adequate Stock')),
+            DataTablesColumn(_('% Facilities with Low Stock')),
+            DataTablesColumn(_('% Facilities Overstocked')),
         ])
 
     @property
@@ -37,15 +40,17 @@ class EmailReportData(EWSData):
         def percent(x, y):
             return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
-        def stock_status(status, loc):
-            if status == 0.0:
-                return '<div style="background-color: rgba(255, 47, 54, 0.5);"><b>Stockout</b></div>'
-            elif status < loc.location_type.understock_threshold:
-                return '<div style="background-color: rgba(255, 234, 112, 0.5)"><b>Low</b></div>'
-            elif status < loc.location_type.overstock_threshold + 7:
-                return '<div style="background-color: rgba(17, 148, 16, 0.5)"><b>Adequate</b></div>'
+        def _stock_status(status, loc):
+            daily = status.daily_consumption or 0
+            state = status.stock_on_hand / ((daily * 30) or 1)
+            if state == 0.0:
+                return "stockout"
+            elif state < loc.location_type.understock_threshold:
+                return "adequate"
+            elif state < loc.location_type.overstock_threshold + 7:
+                return "low"
             else:
-                return '<div style="background-color: rgba(179, 80, 255, 0.5)"><b>Overstock</b></div>'
+                return "overstock"
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
@@ -61,27 +66,24 @@ class EmailReportData(EWSData):
 
             for state in stock_states:
                 p_name = state.sql_product.name
-                row_data[p_name]['total_fac'] += 1
-                if state.stock_on_hand:
-                    row_data[p_name]['total_stock'] += int(state.stock_on_hand)
-                else:
-                    row_data[p_name]['fac_with_stockout'] += 1
-                if state.get_monthly_consumption():
-                    row_data[p_name]['fac_with_consumption'] += 1
-                    row_data[p_name]['monthly_consumption'] += state.get_monthly_consumption()
+                if location.products.filter(code=state.sql_product.code):
+                    row_data[p_name]['total_fac'] += 1
+                row_data[p_name]['reported_fac'] += 1
+                s = _stock_status(state, location)
+                row_data[p_name][s] += 1
 
         rows = []
         for k, v in row_data.iteritems():
-            months_of_stock = float(v['total_stock']) / float(v['monthly_consumption'] or 1)
-            rows.append([k, percent(v['fac_with_stockout'], v['total_fac']),
-                        v['total_fac'], v['total_stock'], percent(v['fac_with_consumption'], v['total_fac']),
-                        round(v['monthly_consumption']), "<b>%.1f</b>" % months_of_stock,
-                        stock_status(months_of_stock, location)])
+            rows.append([
+                k,
+                v['total_fac'],
+                v['reported_fac'],
+                percent(v['stockout'], v['reported_fac']),
+                percent(v['adequate'], v['reported_fac']),
+                percent(v['low'], v['reported_fac']),
+                percent(v['overstock'], v['reported_fac']),
+            ])
         return rows
-
-
-class StockSummaryReportData(EmailReportData):
-    slug = 'stock_summary'
 
     def get_locations(self, loc_id, domain):
         return get_descendants(loc_id)
@@ -90,6 +92,61 @@ class StockSummaryReportData(EmailReportData):
 class CMSRMSReportData(EmailReportData):
     title = 'Weekly Stock Summary Report - CMS and RMS'
     slug = 'stock_summary'
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(*[
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('Total # facilities registered with this product')),
+            DataTablesColumn(_('Total # facilities reported')),
+            DataTablesColumn(_('% Facilities with stockouts'))
+        ])
+
+        for location in self.get_locations(self.config['location_id'], self.config['domain']).order_by('name'):
+            headers.add_column(DataTablesColumn(location.name))
+        headers.add_column(DataTablesColumn(_('Total Stock')))
+        return headers
+
+    @property
+    def rows(self):
+        def percent(x, y):
+            return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
+
+        locations = self.get_locations(self.config['location_id'], self.config['domain'])
+
+        products = self.unique_products(locations)
+        row_data = {product.name: defaultdict(lambda: 0) for product in products}
+
+        for location in locations:
+            stock_states = StockState.objects.filter(
+                case_id=location.supply_point_id,
+                section_id=STOCK_SECTION_TYPE,
+                sql_product__in=products
+            )
+
+            for state in stock_states:
+                p_name = state.sql_product.name
+                if location.products.filter(code=state.sql_product.code):
+                    row_data[p_name]['total_fac'] += 1
+                row_data[p_name]['reported_fac'] += 1
+                if not state.stock_on_hand:
+                    row_data[p_name]['fac_with_stockout'] += 1
+                row_data[p_name][location.pk] = int(state.stock_on_hand)
+                row_data[p_name]['total'] += int(state.stock_on_hand)
+
+        rows = []
+        for k, v in row_data.iteritems():
+            row = [
+                k,
+                v['total_fac'],
+                v['reported_fac'],
+                percent(v['fac_with_stockout'], v['total_fac'])
+            ]
+            for location in locations.order_by('name'):
+                row.append(v[location.pk])
+            row.append(v['total'])
+            rows.append(row)
+        return rows
 
     def get_locations(self, loc_id, domain):
         return SQLLocation.objects.filter(
@@ -136,7 +193,7 @@ class EmailReportingData(EWSData):
 
 class StockSummaryReportingData(EmailReportingData):
     def get_locations(self, loc_id, domain):
-        return [loc.supply_point_id for loc in get_descendants(loc_id, domain)]
+        return [loc.supply_point_id for loc in get_descendants(loc_id)]
 
 
 class CMSRMSSummaryReportingData(EmailReportingData):
