@@ -15,7 +15,7 @@ from custom.ewsghana.reports.stock_levels_report import FacilityReportData, Stoc
 from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
@@ -29,9 +29,9 @@ class ReportingRates(ReportingRatesData):
     def title(self):
 
         if self.config.get('datespan_type') == '1':
-            return _('Reporting Rates({}, {})'.format(
+            return _('Reporting Rates({}, {})').format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
-            ))
+            )
         else:
             return _('Reporting Rates (Weekly Reporting Period)')
 
@@ -78,9 +78,9 @@ class ReportingDetails(ReportingRatesData):
     @property
     def title(self):
         if self.config.get('datespan_type') == '1':
-            return _('Reporting Details({}, {})'.format(
+            return _('Reporting Details({}, {})').format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
-            ))
+            )
         else:
             return _('Reporting Details (Weekly Reporting Period)')
 
@@ -105,15 +105,15 @@ class ReportingDetails(ReportingRatesData):
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                     label=_('Complete %s%%' % complete_formatted),
-                     description=_("%s%% (%d) Complete Reports in %s" %
-                                   (complete_formatted, data['complete'], self.datetext())),
-                     color='green'),
+                    label=_('Complete %s%%') % complete_formatted,
+                    description=_("%s%% (%d) Complete Reports in %s") %
+                        (complete_formatted, data['complete'], self.datetext()),
+                    color='green'),
                 dict(value=incomplete_formatted,
-                     label=_('Incomplete %s%%' % incomplete_formatted),
-                     description=_("%s%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_formatted, data['incomplete'], self.datetext())),
-                     color='purple'),
+                    label=_('Incomplete %s%%') % incomplete_formatted,
+                    description=_("%s%% (%d) Incomplete Reports in %s") %
+                        (incomplete_formatted, data['incomplete'], self.datetext()),
+                    color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
         pie_chart.tooltips = False
@@ -125,7 +125,7 @@ class SummaryReportingRates(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'summary_reporting'
-    title = _('Summary Reporting Rates')
+    title = ugettext_lazy('Summary Reporting Rates')
     use_datatables = True
 
     @property
@@ -231,7 +231,7 @@ class InCompleteReports(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'incomplete_reporting'
-    title = _('Incomplete Reports')
+    title = ugettext_lazy('Incomplete Reports')
     use_datatables = True
 
     @property
@@ -268,7 +268,7 @@ class AlertsData(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'alerts'
-    title = _('Alerts')
+    title = ugettext_lazy('Alerts')
 
     @property
     def headers(self):

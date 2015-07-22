@@ -27,4 +27,4 @@ def stale_get_exports(domain, include_docs=True, **kwargs):
 
 
 def touch_exports(domain):
-    get_exports(domain, include_docs=False, limit=1).all()
+    get_exports(domain, include_docs=False, limit=1).fetch()

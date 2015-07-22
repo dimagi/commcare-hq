@@ -17,7 +17,7 @@ from dimagi.utils.dates import months_between, first_of_next_month, add_months_t
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.util.translation import localize
 
@@ -801,28 +801,28 @@ class OPMCaseRow(object):
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
-        ('serial_number', _("Serial number"), True, DTSortType.NUMERIC),
-        ('name', _("List of Beneficiaries"), True, None),
-        ('awc_name', _("AWC Name"), True, None),
-        ('awc_code', _("AWC Code"), True, DTSortType.NUMERIC),
-        ('block_name', _("Block Name"), True, None),
-        ('husband_name', _("Husband Name"), True, None),
-        ('readable_status', _("Current status"), True, None),
-        ('preg_month_display', _('Pregnancy Month'), True, DTSortType.NUMERIC),
-        ('child_name', _("Child Name"), True, None),
-        ('child_age_display', _("Child Age"), True, DTSortType.NUMERIC),
-        ('window', _("Window"), True, None),
-        ('one', _("Condition 1"), True, None),
-        ('two', _("Condition 2"), True, None),
-        ('three', _("Condition 3"), True, None),
-        ('four', _("Condition 4"), True, None),
-        ('five', _("Condition 5"), True, None),
-        ('cash', _("Payment amount this month (Rs.)"), True, None),
-        ('payment_last_month', _("Payment amount last month (Rs.)"), True, None),
-        ('cash_received_last_month', _("Cash received last month"), True, None),
-        ('case_id', _('Case ID'), True, None),
-        ('closed_date', _("Closed On"), True, None),
-        ('issue', _('Issues'), True, None)
+        ('serial_number', ugettext_lazy("Serial number"), True, DTSortType.NUMERIC),
+        ('name', ugettext_lazy("List of Beneficiaries"), True, None),
+        ('awc_name', ugettext_lazy("AWC Name"), True, None),
+        ('awc_code', ugettext_lazy("AWC Code"), True, DTSortType.NUMERIC),
+        ('block_name', ugettext_lazy("Block Name"), True, None),
+        ('husband_name', ugettext_lazy("Husband Name"), True, None),
+        ('readable_status', ugettext_lazy("Current status"), True, None),
+        ('preg_month_display', ugettext_lazy('Pregnancy Month'), True, DTSortType.NUMERIC),
+        ('child_name', ugettext_lazy("Child Name"), True, None),
+        ('child_age_display', ugettext_lazy("Child Age"), True, DTSortType.NUMERIC),
+        ('window', ugettext_lazy("Window"), True, None),
+        ('one', ugettext_lazy("Condition 1"), True, None),
+        ('two', ugettext_lazy("Condition 2"), True, None),
+        ('three', ugettext_lazy("Condition 3"), True, None),
+        ('four', ugettext_lazy("Condition 4"), True, None),
+        ('five', ugettext_lazy("Condition 5"), True, None),
+        ('cash', ugettext_lazy("Payment amount this month (Rs.)"), True, None),
+        ('payment_last_month', ugettext_lazy("Payment amount last month (Rs.)"), True, None),
+        ('cash_received_last_month', ugettext_lazy("Cash received last month"), True, None),
+        ('case_id', ugettext_lazy('Case ID'), True, None),
+        ('closed_date', ugettext_lazy("Closed On"), True, None),
+        ('issue', ugettext_lazy('Issues'), True, None)
     ]
 
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
@@ -881,27 +881,27 @@ class Beneficiary(OPMCaseRow):
     """
     method_map = [
         # If you need to change any of these names, keep the key intact
-        ('name', _("List of Beneficiaries"), True, None),
-        ('husband_name', _("Husband Name"), True, None),
-        ('awc_name', _("AWC Name"), True, None),
-        ('bank_name', _("Bank Name"), True, None),
-        ('bank_branch_name', _("Bank Branch Name"), True, None),
-        ('ifs_code', _("IFS Code"), True, None),
-        ('account_number', _("Bank Account Number"), True, None),
-        ('block_name', _("Block Name"), True, None),
-        ('village', _("Village Name"), True, None),
-        ('child_count', _("Number of Children"), True, DTSortType.NUMERIC),
-        ('bp1_cash', _("Birth Preparedness Form 1"), True, None),
-        ('bp2_cash', _("Birth Preparedness Form 2"), True, None),
-        ('child_cash', _("Child Followup Form"), True, None),
-        ('year_end_bonus_cash', _("Bonus Payment"), True, None),
-        ('total_cash', _("Amount to be paid to beneficiary"), True, None),
-        ('case_id', _('Case ID'), True, None),
-        ('owner_id', _("Owner ID"), False, None),
-        ('closed_date', _("Closed On"), True, None),
-        ('vhnd_available_display', _('VHND organised this month'), True, None),
-        ('payment_last_month', _('Payment last month'), True, DTSortType.NUMERIC),
-        ('issues', _("Issues"), True, None),
+        ('name', ugettext_lazy("List of Beneficiaries"), True, None),
+        ('husband_name', ugettext_lazy("Husband Name"), True, None),
+        ('awc_name', ugettext_lazy("AWC Name"), True, None),
+        ('bank_name', ugettext_lazy("Bank Name"), True, None),
+        ('bank_branch_name', ugettext_lazy("Bank Branch Name"), True, None),
+        ('ifs_code', ugettext_lazy("IFS Code"), True, None),
+        ('account_number', ugettext_lazy("Bank Account Number"), True, None),
+        ('block_name', ugettext_lazy("Block Name"), True, None),
+        ('village', ugettext_lazy("Village Name"), True, None),
+        ('child_count', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
+        ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
+        ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
+        ('year_end_bonus_cash', ugettext_lazy("Bonus Payment"), True, None),
+        ('total_cash', ugettext_lazy("Amount to be paid to beneficiary"), True, None),
+        ('case_id', ugettext_lazy('Case ID'), True, None),
+        ('owner_id', ugettext_lazy("Owner ID"), False, None),
+        ('closed_date', ugettext_lazy("Closed On"), True, None),
+        ('vhnd_available_display', ugettext_lazy('VHND organised this month'), True, None),
+        ('payment_last_month', ugettext_lazy('Payment last month'), True, DTSortType.NUMERIC),
+        ('issues', ugettext_lazy("Issues"), True, None),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):

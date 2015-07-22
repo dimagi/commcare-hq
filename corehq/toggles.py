@@ -340,13 +340,6 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_HELP_MARKDOWN = StaticToggle(
-    'help_markdown',
-    "Use markdown for the help text in the form builder",
-    TAG_UNKNOWN,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
@@ -372,6 +365,13 @@ VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_RICH_TEXT = StaticToggle(
+    'rich_text',
+    "Enables rich text for the form builder",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
