@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.dbaccessors import refresh_group_views
 from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
@@ -154,7 +155,7 @@ class IterDBTest(TestCase):
         self.assertEqual({old._id}, iter_db.error_ids)
 
     def test_delete(self):
-        with IterDB(self.db, chunksize=5) as iter_db:
+        with IterDB(self.db, chunksize=5, refresh_view_funcs=[refresh_group_views]) as iter_db:
             deleted_groups = set()
             for group in self.groups[:4]:
                 deleted_groups.add(group._id)
