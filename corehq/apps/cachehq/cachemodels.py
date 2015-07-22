@@ -12,7 +12,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/with_deployment",
         "domain/domains",
         "domain/fields_by_prefix",
-        "domain/by_status",
         "domain/by_organization",
     ]
 

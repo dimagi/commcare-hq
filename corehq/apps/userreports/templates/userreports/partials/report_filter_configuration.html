@@ -85,7 +85,8 @@ You must delete this property to update this report.</label>
         <td class="control-group">
             <input type="text" data-bind="
                 value: displayText,
-                attr: {disabled: !existsInCurrentVersion()}
+                attr: {disabled: !existsInCurrentVersion()},
+                event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
             ">
         </td>
         <!--ko if: $parent.hasFormatCol -->

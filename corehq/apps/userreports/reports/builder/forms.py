@@ -58,6 +58,31 @@ class FilterField(JsonField):
                 raise forms.ValidationError("Invalid filter format!")
 
 
+class Select2(Widget):
+    """
+    A widget for rendering an input with our knockout "select2" binding.
+    Requires knockout to be included on the page.
+    """
+
+    def __init__(self, attrs=None, choices=()):
+        super(Select2, self).__init__(attrs)
+        self.choices = list(choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+        value = '' if value is None else value
+        final_attrs = self.build_attrs(attrs, name=name)
+
+        return format_html(
+            '<input{0} type="text" data-bind="select2: {1}, {2}">',
+            flatatt(final_attrs),
+            json.dumps(self._choices_for_binding(choices)),
+            'value: {}'.format(json.dumps(value)) if value else ""
+        )
+
+    def _choices_for_binding(self, choices):
+        return [{'id': id, 'text': text} for id, text in chain(self.choices, choices)]
+
+
 class QuestionSelect(Widget):
     """
     A widget for rendering an input with our knockout "questionsSelect" binding.
@@ -290,9 +315,9 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": _("Form: display data from form submissions.<br/>Case: display data from your cases. You must be using case management for this option."),
+            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
             "application": _("Which application should the data come from?"),
-            "source": _("For cases: choose the case type to use for this report.<br/>For forms: choose the form from your application you'd like to see data on."),
+            "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
         self.fields.update(report_source_fields)
 
@@ -304,7 +329,7 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("Bar: shows one vertical bar for each value in your case or form.<br/>Pie: shows what percentage of the total each value is."))
+            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("<strong>Bar</strong> shows one vertical bar for each value in your case or form. <strong>Pie</strong> shows what percentage of the total each value is."))
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
@@ -726,6 +751,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         )
         if self.source_type == "form":
             self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
@@ -868,7 +895,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
 
     @property
     def container_fieldset(self):
@@ -878,7 +905,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
-                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no"'),
+                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
                 ),
                 'group_by',
             ),

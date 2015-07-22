@@ -24,6 +24,7 @@ from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
@@ -44,7 +45,6 @@ from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 import requests
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.reports.formdetails.readable import get_readable_form_data
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
 from django.shortcuts import get_object_or_404
 
@@ -452,44 +452,33 @@ def render_form(request, domain):
 
     session = get_object_or_404(EntrySession, session_id=session_id)
 
-    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
-                                                                               session_id=session_id))
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(
+        base_url=get_url_base(),
+        session_id=session_id)
+    )
 
     if response.status_code is not 200:
         err = "Session XML could not be found"
         return HttpResponse(err, status=500, content_type="text/plain")
 
-    json_response = json.loads(response.text)
-    xmlns = json_response["xmlns"]
-    form_data_xml = json_response["output"]
+    response_json = json.loads(response.text)
+    xmlns = response_json["xmlns"]
+    form_data_xml = response_json["output"]
 
     _, form_data_json = xml2json(form_data_xml)
     pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
 
-    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
-    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
-                                    {'questions': readable_form})
+    rendered_readable_form = render_to_string(
+        'reports/form/partials/readable_form.html',
+        {'questions': readable_form}
+    )
 
-    return rendered_readable_form
-
-
-def render_xml(request, domain):
-
-    session_id = request.GET.get('session_id')
-
-    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
-                                                                               session_id=session_id))
-
-    if response.status_code is not 200:
-        err = "Session XML could not be found"
-        return HttpResponse(err, status=500, content_type="text/plain")
-
-    json_response = json.loads(response.text)
-    form_data_xml = json_response["output"]
-
-    return HttpResponse(render_pretty_xml(form_data_xml))
-
+    return json_response({
+        'form_data': rendered_readable_form,
+        'instance_xml': render_pretty_xml(form_data_xml)
+    })
 
 
 class HttpResponseConflict(HttpResponse):

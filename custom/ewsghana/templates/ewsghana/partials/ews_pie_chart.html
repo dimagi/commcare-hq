@@ -2,7 +2,7 @@
 <script type="text/javascript">
 
     var moveLegend = function (chart_id) {
-        var x = $(chart_id).width() / 2;
+        var x = ($(chart_id).width() / 2) - 20;
         d3.select(chart_id + ' svg').select('.nv-legendWrap').attr("transform", "translate(" + (-x) + ", -30)");
     };
 

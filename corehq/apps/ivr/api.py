@@ -1,5 +1,6 @@
 from datetime import datetime
-from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
+from corehq.apps.sms.models import (CallLog, INCOMING, OUTGOING,
+    MessagingSubEvent, MessagingEvent)
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
@@ -9,12 +10,26 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
 from django.conf import settings
 from dimagi.utils.web import get_url_base
-from touchforms.formplayer.api import current_question
+from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.apps.smsforms.util import form_requires_input
+
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
 IVR_EVENT_INPUT = "INPUT"
 IVR_EVENT_DISCONNECT = "DISCONNECT"
+
+
+class GatewayConnectionError(Exception):
+    pass
+
+
+class IVRResponseData(object):
+    def __init__(self, ivr_responses, input_length, session):
+        self.ivr_responses = ivr_responses
+        self.input_length = input_length
+        self.session = session
+
 
 def convert_media_path_to_hq_url(path, app):
     media = app.multimedia_map.get(path, None)
@@ -80,148 +95,237 @@ def add_metadata(call_log_entry, duration=None):
         pass
 
 
-def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None,
-    duration=None):
-    # Look up the call if one already exists
-    call_log_entry = CallLog.view("sms/call_by_session",
-                                  startkey=[gateway_session_id, {}],
-                                  endkey=[gateway_session_id],
-                                  descending=True,
-                                  include_docs=True,
-                                  limit=1).one()
-    
-    answer_is_valid = False # This will be set to True if IVR validation passes
-    error_occurred = False # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
-
-    if call_log_entry:
-        add_metadata(call_log_entry, duration)
-
-    if call_log_entry and call_log_entry.form_unique_id is None:
-        # If this request is for a call with no touchforms session,
-        # then just short circuit everything and hang up
-        return hang_up_response(gateway_session_id, backend_module=backend_module)
-
-    if call_log_entry is not None and backend_module:
-        if ivr_event == IVR_EVENT_NEW_CALL and call_log_entry.use_precached_first_response:
-            return HttpResponse(call_log_entry.first_response)
-        
+def get_app_module_form(call_log_entry, logged_subevent):
+    """
+    Returns (app, module, form, error)
+    """
+    try:
         form = Form.get_form(call_log_entry.form_unique_id)
         app = form.get_app()
         module = form.get_module()
-        recipient = call_log_entry.recipient
-        
-        if ivr_event == IVR_EVENT_NEW_CALL:
-            case_id = call_log_entry.case_id
-            case_for_case_submission = call_log_entry.case_for_case_submission
-            session, responses = start_session(recipient.domain, recipient, app,
-                module, form, case_id, yield_responses=True,
-                session_type=XFORMS_SESSION_IVR,
-                case_for_case_submission=case_for_case_submission)
-            call_log_entry.xforms_session_id = session.session_id
-        elif ivr_event == IVR_EVENT_INPUT:
-            if call_log_entry.xforms_session_id is not None:
-                current_q = current_question(call_log_entry.xforms_session_id)
-                if validate_answer(input_data, current_q):
-                    answer_is_valid = True
-                    responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True, session_id=call_log_entry.xforms_session_id)
-                else:
-                    call_log_entry.current_question_retry_count += 1
-                    responses = [current_q]
-            else:
-                responses = []
-        else:
-            responses = []
-        
-        ivr_responses = []
-        hang_up = False
-        for response in responses:
-            if response.is_error:
-                error_occurred = True
-                call_log_entry.current_question_retry_count += 1
-                if response.text_prompt is None:
-                    ivr_responses = []
-                    break
-                else:
-                    ivr_responses.append(format_ivr_response(response.text_prompt, app))
-            elif response.event.type == "question":
-                ivr_responses.append(format_ivr_response(response.event.caption, app))
-            elif response.event.type == "form-complete":
-                hang_up = True
-        
-        if answer_is_valid and not error_occurred:
-            call_log_entry.current_question_retry_count = 0
-        
-        if call_log_entry.max_question_retries is not None and call_log_entry.current_question_retry_count > call_log_entry.max_question_retries:
-            # Force hang-up
+        return (app, module, form, False)
+    except:
+        log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM,
+            call_log_entry, logged_subevent)
+        return (None, None, None, True)
+
+
+def start_call_session(recipient, call_log_entry, logged_subevent, app, module, form):
+    """
+    Returns (session, responses, error)
+    """
+    try:
+        session, responses = start_session(recipient.domain, recipient, app,
+            module, form, call_log_entry.case_id, yield_responses=True,
+            session_type=XFORMS_SESSION_IVR,
+            case_for_case_submission=call_log_entry.case_for_case_submission)
+
+        if logged_subevent:
+            logged_subevent.xforms_session = session
+            logged_subevent.save()
+
+        if len(responses) == 0:
+            log_error(MessagingEvent.ERROR_FORM_HAS_NO_QUESTIONS,
+                call_log_entry, logged_subevent)
+            return (session, responses, True)
+
+        return (session, responses, False)
+    except TouchformsError as e:
+        additional_error_text = e.response_data.get('human_readable_message', None)
+        log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+            call_log_entry, logged_subevent, additional_error_text=additional_error_text)
+        return (None, None, True)
+
+
+def get_ivr_responses_from_touchforms_responses(call_log_entry, responses, app):
+    """
+    responses is a list of XFormsResponse objects
+    app is the app from which the form came
+    """
+    ivr_responses = []
+    question_constraint_failed = False
+    hang_up = False
+    for response in responses:
+        if response.status == 'validation-error':
+            question_constraint_failed = True
+            call_log_entry.current_question_retry_count += 1
+            ivr_responses.append(format_ivr_response(response.text_prompt, app))
+        elif response.status == 'http-error':
             ivr_responses = []
-        
-        if len(ivr_responses) == 0:
             hang_up = True
-        
-        input_length = None
-        
-        if hang_up:
-            if call_log_entry.xforms_session_id is not None:
-                # Process disconnect
-                session = get_session_by_session_id(call_log_entry.xforms_session_id)
-                if session.end_time is None:
-                    if call_log_entry.submit_partial_form:
-                        submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)
-                    else:
-                        session.end(completed=False)
-                        session.save()
-        else:
-            # Set input_length to let the ivr gateway know how many digits we need to collect.
-            # Have to get the current question again, since the last XFormsResponse in responses
-            # may not have an event if it was a response to a constraint error.
-            if error_occurred:
-                current_q = current_question(call_log_entry.xforms_session_id)
+            break
+        elif response.event.type == "question":
+            ivr_responses.append(format_ivr_response(response.event.caption, app))
+        elif response.event.type == "form-complete":
+            hang_up = True
+    return (ivr_responses, question_constraint_failed, hang_up)
+
+
+def process_disconnect(call_log_entry):
+    if call_log_entry.xforms_session_id is not None:
+        session = get_session_by_session_id(call_log_entry.xforms_session_id)
+        if session.is_open:
+            if call_log_entry.submit_partial_form:
+                submit_unfinished_form(session.session_id,
+                    call_log_entry.include_case_side_effects)
             else:
-                current_q = responses[-1]
-            
-            input_length = get_input_length(current_q)
-        
-        call_log_entry.save()
-        return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
-    
-    # If not processed, just log the call
+                session.end(completed=False)
+                session.save()
 
-    if call_log_entry:
-        # No need to log, already exists
-        return HttpResponse("")
 
-    cleaned_number = phone_number
-    if cleaned_number is not None and len(cleaned_number) > 0 and cleaned_number[0] == "+":
-        cleaned_number = cleaned_number[1:]
-    
-    # Try to look up the verified number entry
-    v = VerifiedNumber.view("sms/verified_number_by_number",
-        key=cleaned_number,
-        include_docs=True
-    ).one()
-    
-    # If none was found, try to match only the last digits of numbers in the database
-    if v is None:
-        v = VerifiedNumber.view("sms/verified_number_by_suffix",
-            key=cleaned_number,
-            include_docs=True
-        ).one()
-    
-    # Save the call entry
-    msg = CallLog(
+def answer_question(call_log_entry, recipient, input_data, logged_subevent=None):
+    """
+    Returns a list of (responses, answer_is_valid), where responses is the
+    list of XFormsResponse objects from touchforms and answer_is_valid is
+    True if input_data passes validation and False if not.
+
+    Returning an empty list for responses will end up forcing a hangup
+    later on in the workflow.
+    """
+    if call_log_entry.xforms_session_id is None:
+        return ([], None)
+
+    try:
+        current_q = current_question(call_log_entry.xforms_session_id)
+    except TouchformsError as e:
+        log_touchforms_error(e, call_log_entry, logged_subevent)
+        return ([], None)
+
+    if current_q.status == 'http-error':
+        log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, call_log_entry,
+            logged_subevent)
+        return ([], None)
+
+    if validate_answer(input_data, current_q):
+        answer_is_valid = True
+        try:
+            responses = _get_responses(recipient.domain, recipient._id,
+                input_data, yield_responses=True,
+                session_id=call_log_entry.xforms_session_id)
+        except TouchformsError as e:
+            log_touchforms_error(e, call_log_entry, logged_subevent)
+            return ([], None)
+    else:
+        answer_is_valid = False
+        call_log_entry.current_question_retry_count += 1
+        responses = [current_q]
+
+    return (responses, answer_is_valid)
+
+
+def handle_known_call_session(call_log_entry, backend_module, ivr_event,
+        input_data=None, logged_subevent=None):
+    if (ivr_event == IVR_EVENT_NEW_CALL and
+            call_log_entry.use_precached_first_response):
+        # This means we precached the first IVR response when we
+        # initiated the call, so all we need to do is return that
+        # response.
+        return HttpResponse(call_log_entry.first_response)
+
+    app, module, form, error = get_app_module_form(call_log_entry, logged_subevent)
+    if error:
+        return hang_up_response(call_log_entry.gateway_session_id,
+            backend_module=backend_module)
+
+    recipient = call_log_entry.recipient
+
+    answer_is_valid = True
+    if ivr_event == IVR_EVENT_NEW_CALL:
+        session, responses, error = start_call_session(recipient,
+            call_log_entry, logged_subevent, app, module, form)
+        if error:
+            return hang_up_response(call_log_entry.gateway_session_id,
+                backend_module=backend_module)
+        call_log_entry.xforms_session_id = session.session_id
+    elif ivr_event == IVR_EVENT_INPUT:
+        responses, answer_is_valid = answer_question(call_log_entry, recipient,
+            input_data, logged_subevent=logged_subevent)
+    else:
+        responses = []
+
+    ivr_responses, question_constraint_failed, hang_up = \
+        get_ivr_responses_from_touchforms_responses(call_log_entry, responses, app)
+
+    if answer_is_valid and not question_constraint_failed:
+        # If there were no validation errors (including question contraint errors),
+        # then reset the current question retry count to 0.
+        call_log_entry.current_question_retry_count = 0
+
+    if (call_log_entry.max_question_retries is not None and
+            call_log_entry.current_question_retry_count > call_log_entry.max_question_retries):
+        # We have retried to current question too many times without
+        # getting a valid answer, so force a hang-up.
+        ivr_responses = []
+
+    if len(ivr_responses) == 0:
+        hang_up = True
+
+    input_length = None
+    if hang_up:
+        process_disconnect(call_log_entry)
+    else:
+        # Set input_length to let the ivr gateway know how many digits we need to collect.
+        # If the latest XFormsResponse we have was a response to a contraint error, then
+        # it won't have an event, so in that case we have to get the current question again.
+        if question_constraint_failed:
+            current_q = current_question(call_log_entry.xforms_session_id)
+        else:
+            current_q = responses[-1]
+
+        input_length = get_input_length(current_q)
+
+    call_log_entry.save()
+
+    return HttpResponse(
+        backend_module.get_http_response_string(call_log_entry.gateway_session_id,
+            ivr_responses, collect_input=(not hang_up), hang_up=hang_up,
+            input_length=input_length))
+
+
+def log_call(phone_number, gateway_session_id, backend_module=None):
+    cleaned_number = strip_plus(phone_number)
+    v = VerifiedNumber.by_extensive_search(cleaned_number)
+
+    call = CallLog(
         phone_number=cleaned_number,
         direction=INCOMING,
         date=datetime.utcnow(),
         backend_api=backend_module.API_ID if backend_module else None,
         gateway_session_id=gateway_session_id,
     )
-    if v is not None:
-        msg.domain = v.domain
-        msg.couch_recipient_doc_type = v.owner_doc_type
-        msg.couch_recipient = v.owner_id
-    msg.save()
+    if v:
+        call.domain = v.domain
+        call.couch_recipient_doc_type = v.owner_doc_type
+        call.couch_recipient = v.owner_id
+    call.save()
 
-    return hang_up_response(gateway_session_id, backend_module=backend_module)
+
+def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None,
+        duration=None):
+    """
+    The main entry point for all incoming IVR requests.
+    """
+    call_log_entry = CallLog.get_call_by_gateway_session_id(gateway_session_id)
+    logged_subevent = None
+    if call_log_entry and call_log_entry.messaging_subevent_id:
+        logged_subevent = MessagingSubEvent.objects.get(
+            pk=call_log_entry.messaging_subevent_id)
+
+    if call_log_entry:
+        add_metadata(call_log_entry, duration)
+
+    if call_log_entry and call_log_entry.form_unique_id is None:
+        # If this request is for a call with no form,
+        # then just short circuit everything and hang up
+        return hang_up_response(gateway_session_id, backend_module=backend_module)
+
+    if call_log_entry and backend_module:
+        return handle_known_call_session(call_log_entry, backend_module, ivr_event,
+            input_data=input_data, logged_subevent=logged_subevent)
+    else:
+        if not call_log_entry:
+            log_call(phone_number, gateway_session_id, backend_module=backend_module)
+        return hang_up_response(gateway_session_id, backend_module=backend_module)
 
 
 def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
@@ -238,48 +342,142 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
                 return MobileBackend.get(settings.IVR_BACKEND_MAP[prefix])
     return None
 
-def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
-    include_case_side_effects, max_question_retries, verified_number=None,
-    unverified_number=None, case_id=None, case_for_case_submission=False,
-    timestamp=None):
+
+def log_error(error, call_log_entry=None, logged_subevent=None,
+        additional_error_text=None):
+    if call_log_entry:
+        call_log_entry.error = True
+        call_log_entry.error_message = dict(MessagingEvent.ERROR_MESSAGES).get(error)
+        if additional_error_text:
+            call_log_entry.error_message += ' %s' % additional_error_text
+        call_log_entry.save()
+    if logged_subevent:
+        logged_subevent.error(error, additional_error_text=additional_error_text)
+
+
+def log_touchforms_error(touchforms_error, call_log_entry=None, logged_subevent=None):
     """
-    Returns True if the call was queued successfully, or False if an error
-    occurred.
+    touchforms_error should be an instance of TouchformsError
+    """
+    additional_error_text = touchforms_error.response_data.get('human_readable_message', None)
+    log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+        call_log_entry, logged_subevent, additional_error_text)
+
+
+def get_first_ivr_response_data(recipient, call_log_entry, logged_subevent):
+    """
+    As long as the form has at least one question in it (i.e., it
+    doesn't consist of all labels), then we can start the touchforms
+    session now and cache the first IVR response, so that all we
+    need to do later is serve it up. This makes for less time ringing
+    when the user is on the phone, waiting for the line to pick up.
+
+    If the form consists of all labels, we don't do anything here,
+    because then we would end up submitting the form right away
+    regardless of whether the user actually got the call.
+
+    Returns (ivr_data, error) where ivr_data is an instance of IVRResponseData
+    """
+    app, module, form, error = get_app_module_form(call_log_entry,
+        logged_subevent)
+    if error:
+        return (None, True)
+
+    if form_requires_input(form):
+        session, responses, error = start_call_session(recipient, call_log_entry,
+            logged_subevent, app, module, form)
+        if error:
+            return (None, True)
+
+        ivr_responses = []
+        for response in responses:
+            ivr_responses.append(format_ivr_response(response.event.caption, app))
+
+        ivr_data = IVRResponseData(ivr_responses, get_input_length(responses[-1]),
+            session)
+        return (ivr_data, False)
+
+    return (None, False)
+
+
+def set_first_ivr_response(call_log_entry, gateway_session_id, ivr_data, get_response_function):
+    call_log_entry.xforms_session_id = ivr_data.session.session_id
+    call_log_entry.use_precached_first_response = True
+    call_log_entry.first_response = get_response_function(
+        gateway_session_id, ivr_data.ivr_responses, collect_input=True,
+        hang_up=False, input_length=ivr_data.input_length)
+
+
+def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
+        include_case_side_effects, max_question_retries, messaging_event_id,
+        verified_number=None, unverified_number=None, case_id=None,
+        case_for_case_submission=False, timestamp=None):
+    """
+    Returns False if an error occurred and the call should be retried.
+    Returns True if the call should not be retried (either because it was
+    queued successfully or because an unrecoverable error occurred).
     """
     call_log_entry = None
+    logged_event = MessagingEvent.objects.get(pk=messaging_event_id)
+    logged_subevent = logged_event.create_ivr_subevent(recipient,
+        form_unique_id, case_id=case_id)
+
+    if not verified_number and not unverified_number:
+        log_error(MessagingEvent.ERROR_NO_PHONE_NUMBER,
+            logged_subevent=logged_subevent)
+        return True
+
+    backend = get_ivr_backend(recipient, verified_number, unverified_number)
+    if not backend:
+        log_error(MessagingEvent.ERROR_NO_SUITABLE_GATEWAY,
+            logged_subevent=logged_subevent)
+        return True
+
+    phone_number = (verified_number.phone_number if verified_number
+        else unverified_number)
+
+    call_log_entry = CallLog(
+        couch_recipient_doc_type=recipient.doc_type,
+        couch_recipient=recipient.get_id,
+        phone_number='+%s' % str(phone_number),
+        direction=OUTGOING,
+        date=timestamp or datetime.utcnow(),
+        domain=recipient.domain,
+        form_unique_id=form_unique_id,
+        submit_partial_form=submit_partial_form,
+        include_case_side_effects=include_case_side_effects,
+        max_question_retries=max_question_retries,
+        current_question_retry_count=0,
+        case_id=case_id,
+        case_for_case_submission=case_for_case_submission,
+        messaging_subevent_id=logged_subevent.pk,
+    )
+
+    ivr_data, error = get_first_ivr_response_data(recipient,
+        call_log_entry, logged_subevent)
+    if error:
+        return True
+    if ivr_data:
+        logged_subevent.xforms_session = ivr_data.session
+        logged_subevent.save()
+
     try:
-        if not verified_number and not unverified_number:
-            return False
-        phone_number = (verified_number.phone_number if verified_number
-            else unverified_number)
-        call_log_entry = CallLog(
-            couch_recipient_doc_type=recipient.doc_type,
-            couch_recipient=recipient.get_id,
-            phone_number="+%s" % str(phone_number),
-            direction=OUTGOING,
-            date=timestamp or datetime.utcnow(),
-            domain=recipient.domain,
-            form_unique_id=form_unique_id,
-            submit_partial_form=submit_partial_form,
-            include_case_side_effects=include_case_side_effects,
-            max_question_retries=max_question_retries,
-            current_question_retry_count=0,
-            case_id=case_id,
-            case_for_case_submission=case_for_case_submission,
-        )
-        backend = get_ivr_backend(recipient, verified_number, unverified_number)
-        if not backend:
-            return False
         kwargs = backend.get_cleaned_outbound_params()
         module = __import__(backend.outbound_module,
-            fromlist=["initiate_outbound_call"])
+            fromlist=['initiate_outbound_call'])
+
         call_log_entry.backend_api = module.API_ID
         call_log_entry.save()
-        return module.initiate_outbound_call(call_log_entry, **kwargs)
-    except Exception:
-        if call_log_entry:
-            call_log_entry.error = True
-            call_log_entry.error_message = "Internal Server Error"
-            call_log_entry.save()
-        raise
 
+        result = module.initiate_outbound_call(call_log_entry,
+            logged_subevent, ivr_data=ivr_data, **kwargs)
+        logged_subevent.completed()
+        return result
+    except GatewayConnectionError:
+        log_error(MessagingEvent.ERROR_GATEWAY_ERROR,
+            call_log_entry, logged_subevent)
+        raise
+    except Exception:
+        log_error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR,
+            call_log_entry, logged_subevent)
+        raise

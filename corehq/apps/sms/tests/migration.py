@@ -1,4 +1,5 @@
-from corehq.apps.sms.models import SMSLog, SMS, INCOMING, OUTGOING
+from corehq.apps.sms.models import (SMSLog, SMS, INCOMING, OUTGOING,
+    MessagingEvent, MessagingSubEvent)
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -44,6 +45,27 @@ class SQLMigrationTestCase(TestCase):
     def randomRiskProfile(self):
         return random.choice(PROFILES)
 
+    def randomMessagingSubEventId(self):
+        # Just create a dummy event and subevent to generate
+        # a valid MessagingSubEvent foreign key
+        event = MessagingEvent(
+            domain=self.domain,
+            date=self.randomDateTime(),
+            source=MessagingEvent.SOURCE_KEYWORD,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED,
+        )
+        event.save()
+        subevent = MessagingSubEvent(
+            date=self.randomDateTime(),
+            parent=event,
+            recipient_type=MessagingEvent.RECIPIENT_CASE,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED,
+        )
+        subevent.save()
+        return subevent.pk
+
     def getSMSLogCount(self):
         result = SMSLog.view(
             'sms/by_domain',
@@ -88,6 +110,7 @@ class SQLMigrationTestCase(TestCase):
         smslog.raw_text = self.randomString()
         smslog.backend_message_id = self.randomString()
         smslog.invalid_survey_response = self.randomBoolean()
+        smslog.messaging_subevent_id = self.randomMessagingSubEventId()
 
     def setRandomFRISMSLogValues(self, frismslog):
         frismslog.fri_message_bank_lookup_completed = self.randomBoolean()
@@ -128,6 +151,7 @@ class SQLMigrationTestCase(TestCase):
         sms.fri_message_bank_message_id = self.randomString()
         sms.fri_id = self.randomString()
         sms.fri_risk_profile = self.randomRiskProfile()
+        sms.messaging_subevent_id = self.randomMessagingSubEventId()
 
     def checkFieldValues(self, object1, object2, fields):
         for field_name in fields:

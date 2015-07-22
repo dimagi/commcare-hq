@@ -67,7 +67,6 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
-        var renderXmlRoot = "{% url "cloudcare_render_xml" domain %}";
         var renderFormRoot = "{% url "cloudcare_render_form" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
@@ -92,7 +91,6 @@
             initialCase: initialCase,
             initialParent: initialParent,
             sessionsEnabled: sessionsEnabled,
-            renderXmlRoot: renderXmlRoot,
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled
         });
@@ -201,6 +199,20 @@
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <hr/>
             <div id="instance-xml-home" name="instance-xml-home">
+                <form class="form-horizontal debug-controls">
+                    <div class="control-group">
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
+                                <span class="help-block">
+                                {% blocktrans %}
+                                    When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                {% endblocktrans %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
                 <div id="question-viewer-pretty"></div>
                 <div id="xml-viewer-pretty"></div>
                 <input id="evaluate-result" style="display: block;"/>

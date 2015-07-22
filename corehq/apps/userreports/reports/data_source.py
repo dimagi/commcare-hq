@@ -11,6 +11,7 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
@@ -42,14 +43,18 @@ class ConfigurableReportDataSource(SqlData):
             self._column_configs[column.column_id] = column
 
     @property
-    def column_configs(self):
-        return self._column_configs.values()
-
-    @property
     def config(self):
         if self._config is None:
             self._config, _ = get_datasource_config_or_404(self._config_id, self.domain)
         return self._config
+
+    @property
+    def engine_id(self):
+        return get_engine_id(self.config)
+
+    @property
+    def column_configs(self):
+        return self._column_configs.values()
 
     @property
     def table_name(self):

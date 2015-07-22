@@ -132,19 +132,7 @@ def domains_for_user(context, request, selected_domain=None):
     """
     domain_list = []
     if selected_domain != 'public':
-        cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
-        if cached_domains:
-            domain_list = [Domain.wrap(x) for x in cached_domains]
-        else:
-            try:
-                domain_list = Domain.active_for_user(request.couch_user)
-                cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', [x.to_json() for x in domain_list])
-            except Exception:
-                if settings.DEBUG:
-                    raise
-                else:
-                    domain_list = Domain.active_for_user(request.user)
-                    notify_exception(request)
+        domain_list = Domain.active_for_user(request.couch_user)
     domain_list = [dict(
         url=reverse('domain_homepage', args=[d.name]),
         name=d.long_display_name()
@@ -339,7 +327,7 @@ class CaseNode(template.Node):
 def do_captureas(parser, token):
     """
     Assign to a context variable from within a template
-        {% capturas my_context_var %}<!-- anything -->{% endcaptureas %}
+        {% captureas my_context_var %}<!-- anything -->{% endcaptureas %}
         <h1>Nice job capturing {{ my_context_var }}</h1>
     """
     try:

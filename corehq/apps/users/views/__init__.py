@@ -45,7 +45,13 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
-from corehq.apps.sms import verify as smsverify
+from corehq.apps.sms.verify import (
+    initiate_sms_verification_workflow,
+    VERIFICATION__ALREADY_IN_USE,
+    VERIFICATION__ALREADY_VERIFIED,
+    VERIFICATION__RESENT_PENDING,
+    VERIFICATION__WORKFLOW_STARTED,
+)
 from corehq.util.couch import get_document_or_404
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -260,7 +266,7 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
@@ -362,7 +368,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             context.update({
                 'update_form': self.commtrack_form,
             })
@@ -520,6 +526,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
             'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
         }
 
 
@@ -595,7 +602,8 @@ class ListWebUsersView(BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'domain_object': self.domain_object
+            'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
         }
 
 
@@ -710,7 +718,7 @@ class UserInvitationView(InvitationView):
         if project.commtrack_enabled:
             user.get_domain_membership(self.domain).program_id = invitation.program
 
-        if project.locations_enabled:
+        if project.uses_locations:
             user.get_domain_membership(self.domain).location_id = invitation.supply_point
         user.save()
 
@@ -857,14 +865,15 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    try:
-        # send verification message
-        smsverify.send_verification(domain, user, phone_number)
-
-        # create pending verified entry if doesn't exist already
-        user.save_verified_number(domain, phone_number, False, None)
-    except BadSMSConfigException:
-        messages.error(request, "Could not verify phone number. It seems there is no usable SMS backend.")
+    result = initiate_sms_verification_workflow(user, phone_number)
+    if result == VERIFICATION__ALREADY_IN_USE:
+        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+    elif result == VERIFICATION__ALREADY_VERIFIED:
+        messages.error(request, _('Phone number is already verified.'))
+    elif result == VERIFICATION__RESENT_PENDING:
+        messages.success(request, _('Verification message resent.'))
+    elif result == VERIFICATION__WORKFLOW_STARTED:
+        messages.success(request, _('Verification workflow started.'))
 
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView

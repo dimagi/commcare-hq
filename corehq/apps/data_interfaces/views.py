@@ -152,7 +152,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def get_deleted_item_data(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
-        case_group.delete()
+        case_group.soft_delete()
         return {
             'itemData': item_data,
             'template': 'deleted-group-template',

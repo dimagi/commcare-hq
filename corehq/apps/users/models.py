@@ -1155,13 +1155,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             }[source['doc_type']].wrap(source)
 
     @classmethod
-    def get_by_username(cls, username):
+    @skippable_quickcache(['username'], skip_arg='strict')
+    def get_by_username(cls, username, strict=True):
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
                 reduce=False,
-                #stale=stale,
+                stale=stale if not strict else None,
             )
             return result.one(except_all=raise_if_none)
         try:
@@ -1178,6 +1179,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.wrap_correctly(result['doc'])
         else:
             return None
+
+    def clear_quickcache_for_user(self):
+        self.get_by_username.clear(self.__class__, self.username)
+        Domain.active_for_couch_user.clear(self)
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
@@ -1251,6 +1256,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.save()
 
     def save(self, **params):
+        self.clear_quickcache_for_user()
         # test no username conflict
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
@@ -1647,7 +1653,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids = [self.user_id]
         owner_ids.extend(Group.by_user(self, wrap=False))
 
-        if self.project.locations_enabled and self.location:
+        if self.project.uses_locations and self.location:
             owner_ids.extend(self.location_group_ids())
         return owner_ids
 

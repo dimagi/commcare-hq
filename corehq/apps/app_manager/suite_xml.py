@@ -1626,7 +1626,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
                         datums.append({
-                            'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                            'datum': SessionDatum(
+                                id=form.session_var_for_action('subcases', i), function='uuid()'
+                            ),
                             'case_type': subcase.case_type,
                             'requires_selection': False,
                             'action': subcase

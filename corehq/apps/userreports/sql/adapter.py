@@ -15,7 +15,8 @@ class IndicatorSqlAdapter(object):
 
     def __init__(self, config):
         self.config = config
-        self.session_helper = connection_manager.get_session_helper(get_engine_id(config))
+        self.engine_id = get_engine_id(config)
+        self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
 
     @memoized
@@ -23,12 +24,15 @@ class IndicatorSqlAdapter(object):
         return get_indicator_table(self.config)
 
     def rebuild_table(self):
+        self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
         except ProgrammingError, e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
 
     def drop_table(self):
+        # this will hang if there are any open sessions, so go ahead and close them
+        self.session_helper.Session.remove()
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
 

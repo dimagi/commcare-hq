@@ -194,6 +194,11 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
                       for stock_transaction in stock_transactions]
 
 
+EXCLUDED_REGIONS = [
+    24, 25, 26, 27, 148
+]
+
+
 class ILSGatewayAPI(APISynchronization):
 
     LOCATION_CUSTOM_FIELDS = [
@@ -370,6 +375,9 @@ class ILSGatewayAPI(APISynchronization):
             return
 
         if not location:
+            if ilsgateway_location.id in EXCLUDED_REGIONS:
+                return
+
             if ilsgateway_location.parent_id:
                 try:
                     sql_loc_parent = SQLLocation.objects.get(
@@ -380,6 +388,8 @@ class ILSGatewayAPI(APISynchronization):
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
+                    if not loc_parent:
+                        return
 
                 if ilsgateway_location.type == 'REGION':
                     location = Loc(parent=get_or_create_msd_zone(ilsgateway_location))
@@ -426,7 +436,7 @@ class ILSGatewayAPI(APISynchronization):
         return location
 
     def location_groups_sync(self, location_groups):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for date, groups in location_groups.groups.iteritems():
                 try:
                     sql_location = SQLLocation.objects.get(
