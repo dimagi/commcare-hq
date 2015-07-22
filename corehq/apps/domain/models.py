@@ -399,7 +399,20 @@ class Domain(Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
-    def active_for_user(user, is_active=True):
+    @skippable_quickcache(['couch_user._id', 'is_active'],
+                          skip_arg='strict', timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True, strict=False):
+        domain_names = couch_user.get_domains()
+        return Domain.view(
+            "domain/by_status",
+            keys=[[is_active, d] for d in domain_names],
+            reduce=False,
+            include_docs=True,
+            stale=settings.COUCH_STALE_QUERY if not strict else None,
+        ).all()
+
+    @staticmethod
+    def active_for_user(user, is_active=True, strict=False):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -408,13 +421,8 @@ class Domain(Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.get_domains()
-            return cache_core.cached_view(Domain.get_db(), "domain/by_status",
-                                          keys=[[is_active, d] for d in domain_names],
-                                          reduce=False,
-                                          include_docs=True,
-                                          wrapper=Domain.wrap
-            )
+            return Domain.active_for_couch_user(
+                couch_user, is_active=is_active, strict=strict)
         else:
             return []
 
