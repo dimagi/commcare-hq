@@ -36,6 +36,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -692,7 +693,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._get_and_send_report(language, emails)
 
     def _get_and_send_report(self, language, emails):
-        from corehq.apps.hqwebapp.tasks import send_html_email_async
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
