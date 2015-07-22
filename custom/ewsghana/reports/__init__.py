@@ -223,7 +223,6 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             loc_id = ''
             if dm.location_id:
                 location = SQLLocation.objects.get(location_id=dm.location_id)
-                from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
                 if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
                     location = location.parent
                 loc_id = location.location_id

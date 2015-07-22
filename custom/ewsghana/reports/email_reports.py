@@ -4,7 +4,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.ewsghana.filters import EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
