@@ -1399,7 +1399,7 @@ class XForm(WrappedNode):
 
             self.add_setvalue(
                 ref='case/update/{}'.format(SCHEDULE_PHASE),
-                value=str(form.id + 1)
+                value=str(form.get_phase().id)
             )
 
             last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
@@ -1448,8 +1448,7 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and getattr(form.schedule, 'anchor', False)
-
+        has_schedule = module.has_schedule and form.schedule and getattr(form.get_phase(), 'anchor', False)
         adjusted_datums = {}
         if module.root_module and module.root_module.module_type == 'basic':
             # for child modules the session variable for a case may have been
