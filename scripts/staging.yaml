@@ -55,8 +55,6 @@ branches:
   - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
 submodules:
-  corehq/apps/prelogin:
-    branches: []
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
