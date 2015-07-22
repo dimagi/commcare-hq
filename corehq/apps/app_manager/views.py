@@ -171,7 +171,7 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
     require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege, has_privilege
+from django_prbac.utils import has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 from corehq.apps.style.decorators import use_bootstrap3
@@ -2390,9 +2390,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        try:
-            ensure_request_has_privilege(request, privileges.CLOUDCARE)
-        except PermissionDenied:
+        if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
 
     if should_edit('show_user_registration'):

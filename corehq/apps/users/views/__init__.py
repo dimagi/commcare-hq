@@ -18,7 +18,7 @@ from corehq.apps.users.util import smart_query_string
 from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -494,11 +494,8 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+                and self.couch_user.is_domain_admin
 
     @property
     @memoized
@@ -570,11 +567,8 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+                and self.couch_user.is_domain_admin
 
     @property
     @memoized
