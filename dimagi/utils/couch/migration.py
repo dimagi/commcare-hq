@@ -64,7 +64,7 @@ class SyncCouchToSQLMixin(object):
     def _migration_get_sql_object(self):
         cls = self._migration_get_sql_model_class()
         try:
-            obj = cls.objects.get(couch_id=self._id)
+            return cls.objects.get(couch_id=self._id)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
@@ -72,7 +72,6 @@ class SyncCouchToSQLMixin(object):
                 raise
             cls.objects.filter(couch_id=self._id).delete()
             return None
-        return obj
 
     def _migration_get_or_create_sql_object(self):
         cls = self._migration_get_sql_model_class()
