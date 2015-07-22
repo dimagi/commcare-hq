@@ -4,6 +4,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -150,6 +151,7 @@ class CustomExportHelper(object):
         self.update_custom_params()
         self.custom_export.custom_validate()
         self.custom_export.save()
+        touch_exports(self.domain)
 
         if self.presave:
             HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
