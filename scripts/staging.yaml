@@ -53,6 +53,7 @@ branches:
   - template-apps # Jenny, July 20
   - extra-permissions-checks  # Ethan 7/20
   - speedup-export-pages # Nick P 7/21
+  - opbeat # Simon 7/22
 submodules:
   corehq/apps/prelogin:
     branches: []
