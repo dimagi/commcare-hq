@@ -376,10 +376,15 @@ class ScheduleFormXPath(object):
         except AttributeError:
             anchor = self.anchor
 
+        try:
+            current_schedule_phase = self.case_id_xpath.slash(SCHEDULE_PHASE)
+        except AttributeError:
+            current_schedule_phase = SCHEDULE_PHASE
+
         expires = self.fixture.expires()
 
         valid_not_expired = XPath.and_(
-            XPath(SCHEDULE_PHASE).eq(self.phase.id),
+            XPath(current_schedule_phase).eq(self.phase.id),
             XPath(anchor).neq(XPath.string('')),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
