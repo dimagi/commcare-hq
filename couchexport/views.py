@@ -51,7 +51,7 @@ def export_data(request, **kwargs):
 
 def download_saved_export(request, export_id):
     export = SavedBasicExport.get(export_id)
-    response = HttpResponse(mimetype=Format.from_format(export.configuration.format).mimetype)
+    response = HttpResponse(content_type=Format.from_format(export.configuration.format).mimetype)
     response.write(export.get_payload())
     if export.configuration.format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols

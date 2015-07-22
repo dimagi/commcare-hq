@@ -55,11 +55,11 @@ def export_response(file, format, filename, checkpoint=None):
         file = file.file
 
     if isinstance(file, StringIO):
-        response = HttpResponse(file.getvalue(), mimetype=format.mimetype)
+        response = HttpResponse(file.getvalue(), content_type=format.mimetype)
         # I don't know why we need to close the file. Keeping around.
         file.close()
     else:
-        response = StreamingHttpResponse(FileWrapper(file), mimetype=format.mimetype)
+        response = StreamingHttpResponse(FileWrapper(file), content_type=format.mimetype)
 
     if format.download:
         try:
