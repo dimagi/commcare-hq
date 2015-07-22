@@ -71,6 +71,21 @@ LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
 
 
 def compute_ledger_values(lazy_original_balance, report_type, quantity):
+    """
+    lazy_original_balance:
+        a zero-argument function returning original balance
+        the original_balance is only used in the case of a transfer
+        and it may be computationally expensive for the caller to provide
+        putting it behind a function lets compute_ledger_values decide
+        whether it's necessary to do that work
+    report_type:
+        a string in string in VALID_REPORT_TYPES
+        says whether it's a transfer or balance
+    quantity:
+        the associated quantity, interpreted as a delta for transfers
+        and a total balance for balances
+
+    """
     if report_type == stockconst.REPORT_TYPE_BALANCE:
         new_balance = quantity
         new_delta = 0
