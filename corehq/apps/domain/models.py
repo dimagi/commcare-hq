@@ -1364,10 +1364,11 @@ class TransferDomainRequest(models.Model):
             "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_html_email_async.delay(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
-                        self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content,
-                        text_content=text_content)
+        send_html_email_async.delay(
+            _(u'There has been a transfer of ownership of {domain}').format(
+                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
+            html_content, text_content=text_content
+        )
 
     def as_dict(self):
         return {
