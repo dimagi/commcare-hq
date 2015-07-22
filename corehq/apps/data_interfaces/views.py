@@ -27,7 +27,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from .interfaces import FormManagementMode
+from .interfaces import FormManagementMode, BulkArchiveFormInterface
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
@@ -461,27 +461,25 @@ class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def _get_es_dict_or_form_ids(self, request):
+    def _get_form_ids_or_url(self, request):
         if 'select_all' in self.request.POST:
-            import json
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in in an async task instead
-            es_query = json.loads(self.request.POST.get('select_all'))
-            # todo - validate query
-            return es_query
+            import urllib
+            filtered_form_url = urllib.unquote(self.request.POST.get('select_all'))
+            return filtered_form_url
         else:
             return self.request.POST.getlist('xform_ids')
 
     def post(self, request, *args, **kwargs):
-        es_dict_or_form_ids = self._get_es_dict_or_form_ids(request)
+        form_ids_or_url = self._get_form_ids_or_url(request)
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(None, expiry=1*60*60)
-
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
-            self.request.user,
-            es_dict_or_form_ids
+            self.request.couch_user,
+            form_ids_or_url
         )
         task_ref.set_task(task)
 

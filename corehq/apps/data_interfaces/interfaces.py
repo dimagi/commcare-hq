@@ -162,9 +162,8 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
     @property
     def template_context(self):
         context = super(BulkArchiveFormInterface, self).template_context
-        import json
-        context.update(filters_as_es_query=json.dumps(self.filters_as_es_query()))
         context.update({
+            "filtered_form_url": self.request.get_full_path(),
             "mode": self.mode,
             "total_xForms": int(self.es_results['hits']['total']),
         })
@@ -214,3 +213,16 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
                 display.submission_or_completion_time,
                 display.readable_form_name,
             ] + display.other_columns
+
+    @property
+    def form_ids_response(self):
+        from corehq.elastic import es_query
+        from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+
+        results = es_query(
+            params={'domain.exact': self.domain},
+            q=self.filters_as_es_query(),
+            es_url=XFORM_INDEX + '/xform/_search',
+        )
+        form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]
+        return form_ids
