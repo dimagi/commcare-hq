@@ -248,15 +248,16 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 self.app._attachments['{}.xml'.format(form.unique_id)]['data']
             )
 
-    def test_current_schedule_phase(self):
-        # Hackety hack hack
+    # xmlns is added because I needed to use WrappedNode.find() in the next few tests
+    xmlns = ("xmlns='http://www.w3.org/2002/xforms' "
+                  "xmlns:h='http://www.w3.org/1999/xhtml' "
+                  "xmlns:jr='http://openrosa.org/javarosa' "
+                  "xmlns:orx='http://openrosa.org/jr/xforms' "
+                  "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
 
-        # xmlns is added because I needed to use WrappedNode.find()
-        xmlns_junk = ("xmlns='http://www.w3.org/2002/xforms' "
-                      "xmlns:h='http://www.w3.org/1999/xhtml' "
-                      "xmlns:jr='http://openrosa.org/javarosa' "
-                      "xmlns:orx='http://openrosa.org/jr/xforms' "
-                      "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
+    def test_current_schedule_phase(self):
+        """ Set the current schedule phase to phase of the form that was just opened """
+        # Hackety hack hack
 
         current_schedule_phase_partial = """
         <partial>
@@ -269,7 +270,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         xform_1 = self.form_1.wrapped_xform()
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='1', xmlns=xmlns_junk),
+            current_schedule_phase_partial.format(value='1', xmlns=self.xmlns),
             xform_1.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
             '.'
         )
@@ -277,7 +278,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         xform_2 = self.form_2.wrapped_xform()
         self.form_2.add_stuff_to_xform(xform_2)
         self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='1', xmlns=xmlns_junk),
+            current_schedule_phase_partial.format(value='1', xmlns=self.xmlns),
             xform_2.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
             '.'
         )
@@ -285,7 +286,46 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         xform_3 = self.form_3.wrapped_xform()
         self.form_3.add_stuff_to_xform(xform_3)
         self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='2', xmlns=xmlns_junk),
+            current_schedule_phase_partial.format(value='2', xmlns=self.xmlns),
             xform_3.model_node.find('./setvalue[@ref="/data/case/update/current_schedule_phase"]').render(),
+            '.'
+        )
+
+    def test_last_visit_number(self):
+        """ Increment the visit number for that particular form. If it is empty, set it to 1 """
+        last_visit_number_partial = """
+        <partial>
+        <setvalue event="xforms-ready" ref="/data/case/update/last_visit_number_{form_id}" value="if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_a1e369 = '', 1, int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_a1e369) + 1)" {xmlns}/>
+        </partial>
+        """
+        self._fetch_sources()
+        self._apply_schedule_phases()
+        xform_1 = self.form_1.wrapped_xform()
+        form_id = self.form_1.schedule_form_id
+        self.form_1.add_stuff_to_xform(xform_1)
+        self.assertXmlPartialEqual(
+            last_visit_number_partial.format(form_id=form_id, xmlns=self.xmlns),
+            (xform_1.model_node.find('./setvalue[@ref="/data/case/update/last_visit_number_{}"]'.format(form_id))
+             .render()),
+            '.'
+        )
+
+    def test_last_visit_date(self):
+        """ Set the date of the last visit when a form gets submitted """
+        last_visit_date_partial = """
+        <partial>
+        <bind nodeset="/data/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
+         calculate="/data/meta/timeEnd" {xmlns}/>
+        </partial>
+        """
+        self._fetch_sources()
+        self._apply_schedule_phases()
+        xform_1 = self.form_1.wrapped_xform()
+        form_id = self.form_1.schedule_form_id
+        self.form_1.add_stuff_to_xform(xform_1)
+        self.assertXmlPartialEqual(
+            last_visit_date_partial.format(form_id=form_id, xmlns=self.xmlns),
+            (xform_1.model_node.find('./bind[@nodeset="/data/case/update/last_visit_date_{}"]'.format(form_id))
+             .render()),
             '.'
         )
