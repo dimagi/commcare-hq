@@ -234,12 +234,16 @@ class EWSDateFilter(BaseReportFilter):
 
         ]
 
-    @property
-    def default_week(self):
+    @staticmethod
+    def last_reporting_period():
         now = datetime.utcnow()
         date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
-        return '{0}|{1}'.format((date - relativedelta(days=7)).strftime("%Y-%m-%d"), date.strftime("%Y-%m-%d"))
+        return date - relativedelta(days=7), date
 
+    @property
+    def default_week(self):
+        start_date, end_date = self.last_reporting_period()
+        return '{0}|{1}'.format(start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
     @property
     def filter_context(self):
