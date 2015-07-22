@@ -1332,7 +1332,8 @@ class Subscription(models.Model):
     def _get_plan_by_subscriber(cls, subscriber):
         active_subscriptions = cls.objects\
             .filter(subscriber=subscriber, is_active=True)\
-            .order_by('-date_created')[:2]
+            .order_by('-date_created')[:2]\
+            .select_related('plan_version__role')
 
         if not active_subscriptions:
             return None, None

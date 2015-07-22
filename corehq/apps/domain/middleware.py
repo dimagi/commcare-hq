@@ -41,7 +41,7 @@ class CCHQPRBACMiddleware(object):
             except AccountingError:
                 pass
         try:
-            request.role = Role.objects.get(slug='community_plan_v0')
+            request.role = Role.get_privilege('community_plan_v0').role
         except Role.DoesNotExist:
             request.role = Role()  # A fresh Role() has no privileges
 
