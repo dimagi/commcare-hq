@@ -8,7 +8,6 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION

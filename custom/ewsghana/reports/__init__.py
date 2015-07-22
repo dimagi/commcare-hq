@@ -220,10 +220,17 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
+                    location = location.parent
+                loc_id = location.location_id
+
             start_date, end_date = EWSDateFilter.last_reporting_period()
             url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
-                dm.location_id if dm.location_id else '',
+                loc_id,
                 program_id if program_id else '',
                 start_date.strftime('%Y-%m-%d'),
                 end_date.strftime('%Y-%m-%d')
