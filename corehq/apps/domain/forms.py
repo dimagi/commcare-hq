@@ -59,7 +59,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
