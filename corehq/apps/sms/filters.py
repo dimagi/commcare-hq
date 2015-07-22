@@ -6,6 +6,7 @@ from corehq.apps.sms.models import (
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
     WORKFLOW_DEFAULT,
+    MessagingEvent,
 )
 
 
@@ -24,3 +25,24 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
         (WORKFLOW_DEFAULT, ugettext_noop('Default')),
         (OPTION_OTHER, ugettext_noop('Other')),
     )
+
+
+class EventTypeFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Communication Type')
+    default_text = ugettext_noop('Select Communication Type...')
+    slug = 'event_type'
+    options = [
+        (MessagingEvent.SOURCE_BROADCAST, ugettext_noop('Broadcast')),
+        (MessagingEvent.SOURCE_KEYWORD, ugettext_noop('Keyword')),
+        (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('Survey')),
+        (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('Callback')),
+        (MessagingEvent.SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
+        (MessagingEvent.SOURCE_OTHER, ugettext_noop('Other')),
+    ]
+    default_options = [
+        MessagingEvent.SOURCE_BROADCAST,
+        MessagingEvent.SOURCE_KEYWORD,
+        MessagingEvent.SOURCE_REMINDER,
+        MessagingEvent.CONTENT_SMS_SURVEY,
+    ]

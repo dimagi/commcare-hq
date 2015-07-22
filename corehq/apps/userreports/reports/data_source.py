@@ -1,3 +1,5 @@
+import datetime
+from datetime import date
 from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
@@ -11,6 +13,7 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
@@ -42,14 +45,18 @@ class ConfigurableReportDataSource(SqlData):
             self._column_configs[column.column_id] = column
 
     @property
-    def column_configs(self):
-        return self._column_configs.values()
-
-    @property
     def config(self):
         if self._config is None:
             self._config, _ = get_datasource_config_or_404(self._config_id, self.domain)
         return self._config
+
+    @property
+    def engine_id(self):
+        return get_engine_id(self.config)
+
+    @property
+    def column_configs(self):
+        return self._column_configs.values()
 
     @property
     def table_name(self):
@@ -115,9 +122,24 @@ class ConfigurableReportDataSource(SqlData):
             # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
+                    is_descending = col[1] == DESCENDING
+                    is_date = any(
+                        configured_indicator['datatype'] == 'date'
+                        for configured_indicator in self.config.configured_indicators
+                        if configured_indicator['column_id'] == col[0]
+                    )
+                    default_sort_by_date = (
+                        date(datetime.MINYEAR, 1, 1)
+                        if is_descending else date(datetime.MAXYEAR, 12, 31)
+                    )
+                    value = lambda x: x.get(col[0], None)
+                    sort_by_value = lambda x: (
+                        value(x)
+                        or (default_sort_by_date if is_date else value(x))
+                    )
                     ret.sort(
-                        key=lambda x: x.get(col[0], None),
-                        reverse=col[1] == DESCENDING
+                        key=sort_by_value,
+                        reverse=is_descending
                     )
                 return ret
             # Otherwise sort by the first column

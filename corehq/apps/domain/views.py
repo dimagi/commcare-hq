@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from django.db import transaction
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
@@ -98,17 +99,17 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
 
 
 accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
-    400: _('Your request was not formatted properly.'),
-    403: _('Forbidden.'),
-    404: _('Page not found.'),
-    500: _("There was an error processing your request."
+    400: ugettext_lazy('Your request was not formatted properly.'),
+    403: ugettext_lazy('Forbidden.'),
+    404: ugettext_lazy('Page not found.'),
+    500: ugettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
@@ -545,7 +546,7 @@ def logo(request, domain):
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], mimetype=logo[1])
+    return HttpResponse(logo[0], content_type=logo[1])
 
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
@@ -1174,8 +1175,9 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         form = self.get_post_form
         if form.is_valid():
             try:
-                form.process_subscription_management()
-                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                with transaction.atomic():
+                    form.process_subscription_management()
+                    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except NewSubscriptionError as e:
                 messages.error(self.request, e.message)
         return self.get(request, *args, **kwargs)
@@ -1223,7 +1225,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 subscription_type = "contracted_partner"
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = "dimagi_only_enterprise"
-            elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+            elif (plan.edition == SoftwarePlanEdition.ADVANCED
+                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
                 subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})

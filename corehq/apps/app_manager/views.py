@@ -178,7 +178,6 @@ from django_prbac.utils import ensure_request_has_privilege, has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 from corehq.apps.style.decorators import use_bootstrap3
-FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
 
 logger = logging.getLogger(__name__)
 
@@ -336,18 +335,6 @@ def copy_app(request, domain):
         return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
-
-
-@require_can_edit_apps
-def migrate_app_filters(request, domain, app_id):
-    message = "Migration succeeded!"
-    try:
-        app = get_app(domain, app_id)
-        FilterMigration.migrate_app(app)
-        app.save()
-    except:
-        message = "Migration failed :("
-    return HttpResponse(message, content_type='text/plain')
 
 
 @require_can_edit_apps
@@ -845,9 +832,8 @@ def get_module_view_context_and_template(app, module):
             for mod in app.get_modules() if module.unique_id != mod.unique_id
             for form in mod.get_forms() if form.is_registration_form(case_type_)
         ]
-        if forms or module.case_list_form.form_id:
-            options['disabled'] = _("Don't Show")
-            options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+        options['disabled'] = _("Don't Show")
+        options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
 
         return options
 
@@ -926,7 +912,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(module.all_forms_require_a_case and form_options),
+            'case_list_form_allowed': module.all_forms_require_a_case(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -962,9 +948,12 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': bool(
-                module.all_forms_require_a_case and not module.parent_select.active and form_options
-            ),
+            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
+            'valid_parent_modules': [parent_module
+                                     for parent_module in app.modules
+                                     if not getattr(parent_module, 'root_module_id', None) and
+                                     not parent_module == module],
+            'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         }
 
 
@@ -1670,7 +1659,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if is_valid_case_type(case_type):
-            # todo: something better than nothing when invalid
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -1689,6 +1677,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
                     # only apply change if the module's case_type does not reference the old value
                     rename_action_case_type(ad_mod)
+        elif case_type == USERCASE_TYPE:
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
         else:
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
@@ -1760,15 +1750,16 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
-        if should_edit("root_module_id"):
-            if not request.POST.get("root_module_id"):
-                module["root_module_id"] = None
-            else:
-                try:
-                    app.get_module(module_id)
-                    module["root_module_id"] = request.POST.get("root_module_id")
-                except ModuleNotFoundException:
-                    messages.error(_("Unknown Module"))
+
+    if should_edit("root_module_id"):
+        if not request.POST.get("root_module_id"):
+            module["root_module_id"] = None
+        else:
+            try:
+                app.get_module(module_id)
+                module["root_module_id"] = request.POST.get("root_module_id")
+            except ModuleNotFoundException:
+                messages.error(_("Unknown Module"))
 
     _handle_media_edits(request, module, should_edit, resp)
 
@@ -2697,7 +2688,7 @@ class DownloadCCZ(DownloadMultimediaZip):
 
 @safe_download
 def download_file(request, domain, app_id, path):
-    mimetype_map = {
+    content_type_map = {
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
         'jar': 'application/java-archive',
@@ -2705,10 +2696,10 @@ def download_file(request, domain, app_id, path):
         'txt': 'text/plain',
     }
     try:
-        mimetype = mimetype_map[path.split('.')[-1]]
+        content_type = content_type_map[path.split('.')[-1]]
     except KeyError:
-        mimetype = None
-    response = HttpResponse(mimetype=mimetype)
+        content_type = None
+    response = HttpResponse(content_type=content_type)
 
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
@@ -2731,7 +2722,7 @@ def download_file(request, domain, app_id, path):
             if type(payload) is unicode:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
-            metadata = {'content_type': mimetype}
+            metadata = {'content_type': content_type}
             obj.cache_put(buffer, metadata, timeout=0)
         else:
             _, buffer = obj.get()
@@ -2813,11 +2804,11 @@ def odk_install(request, domain, app_id, with_media=False):
 
 def odk_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
-    return HttpResponse(qr_code, mimetype="image/png")
+    return HttpResponse(qr_code, content_type="image/png")
 
 def odk_media_qr_code(request, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
-    return HttpResponse(qr_code, mimetype="image/png")
+    return HttpResponse(qr_code, content_type="image/png")
 
 
 def short_url(request, domain, app_id):
@@ -2838,14 +2829,14 @@ def download_odk_profile(request, domain, app_id):
     """
     return HttpResponse(
         request.app.create_profile(is_odk=True),
-        mimetype="commcare/profile"
+        content_type="commcare/profile"
     )
 
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
-        mimetype="commcare/profile"
+        content_type="commcare/profile"
     )
 
 @safe_download
@@ -2938,7 +2929,7 @@ def download_jar(request, domain, app_id):
     build (i.e. over the air to a phone).
 
     """
-    response = HttpResponse(mimetype="application/java-archive")
+    response = HttpResponse(content_type="application/java-archive")
     app = request.app
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
@@ -2954,7 +2945,7 @@ def download_test_jar(request):
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
         jar = f.read()
 
-    response = HttpResponse(mimetype="application/java-archive")
+    response = HttpResponse(content_type="application/java-archive")
     set_file_download(response, "CommCare.jar")
     response['Content-Length'] = len(jar)
     response.write(jar)
@@ -3009,7 +3000,7 @@ def formdefs(request, domain, app_id):
             [FormattedRow([cell for (_, cell) in sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))]) for row in sheet['rows']]
         ) for sheet in formdefs])
         writer.close()
-        response = HttpResponse(f.getvalue(), mimetype=Format.from_format('xlsx').mimetype)
+        response = HttpResponse(f.getvalue(), content_type=Format.from_format('xlsx').mimetype)
         set_file_download(response, 'formdefs.xlsx')
         return response
     else:

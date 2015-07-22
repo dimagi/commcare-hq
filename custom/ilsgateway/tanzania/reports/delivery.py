@@ -155,10 +155,11 @@ class DeliveryData(ILSData):
             percent_format = lambda x, y: x * 100 / (y or 1)
 
             return [
-                [_('Didn\'t Respond'), dg.not_responding, '%.1f%%' % percent_format(dg.not_responding, dg.total)],
-                [_('Not Received'), dg.not_received, '%.1f%%' % percent_format(dg.not_received, dg.total)],
-                [_('Received'), dg.received, '%.1f%%' % percent_format(dg.received, dg.total)],
-                [_('Total'), dg.total, '100%'],
+                [_('Didn\'t Respond'), '%d' % dg.not_responding,
+                 '%.1f%%' % percent_format(dg.not_responding, dg.total)],
+                [_('Not Received'), '%d' % dg.not_received, '%.1f%%' % percent_format(dg.not_received, dg.total)],
+                [_('Received'), '%d' % dg.received, '%.1f%%' % percent_format(dg.received, dg.total)],
+                [_('Total'), '%d' % dg.total, '100%'],
             ]
 
 

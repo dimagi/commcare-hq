@@ -18,6 +18,23 @@ class MockEndpoint(ILSGatewayEndpoint):
             return self._from_json('sample_webusers.json', **kwargs)
         elif 'product' in url:
             return self._from_json('sample_products.json', **kwargs)
+        elif 'stocktransactions' in url:
+            meta, objects = self._from_json('sample_stocktransactions.json', **kwargs)
+            if 'date__lte' in filters:
+                raise Exception()
+            if filters.get('supply_point'):
+                objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
+            return meta, objects
+        elif 'supplypointstatus' in url:
+            meta, objects = self._from_json('sample_supplypointstatuses.json', **kwargs)
+            if filters.get('supply_point'):
+                objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
+            return meta, objects
+        elif 'deliverygroupreports' in url:
+            meta, objects = self._from_json('sample_deliverygroupreports.json', **kwargs)
+            if filters.get('supply_point'):
+                objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
+            return meta, objects
 
     def _from_json(self, filename, **kwargs):
         with open(os.path.join(self.datapath, filename)) as f:
@@ -42,3 +59,9 @@ class MockEndpoint(ILSGatewayEndpoint):
                 return objects[2]
             elif id == 13:
                 return objects[3]
+            elif id == 25:
+                return objects[4]
+            elif id == 50:
+                return objects[5]
+            elif id == 51:
+                return objects[6]

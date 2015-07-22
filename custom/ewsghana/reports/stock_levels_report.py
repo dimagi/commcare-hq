@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+import datetime
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.timesince import timesince
@@ -83,13 +84,6 @@ class FacilityReportData(EWSData):
             sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk))
         ).order_by('-last_modified_date')
 
-        st = StockTransaction.objects.filter(
-            case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk)),
-            report__date__lte=self.config['enddate'],
-            type='stockonhand',
-        ).order_by('-report__date')
-
         for state in stock_states:
             if state.daily_consumption:
                 monthly_consumption = round(state.get_monthly_consumption())
@@ -98,32 +92,34 @@ class FacilityReportData(EWSData):
                 monthly_consumption = None
                 max_level = 0
 
-            if state.product_id not in state_grouping:
-                state_grouping[state.product_id] = {
-                    'commodity': state.sql_product.name,
-                    'months_until_stockout': "%.1f" % (float(state.stock_on_hand) / monthly_consumption)
-                    if state.stock_on_hand and monthly_consumption else 0,
-                    'stockout_duration': '',
-                    'stockout_duration_helper': True,
-                    'current_stock': None,
-                    'monthly_consumption': monthly_consumption,
-                    'reorder_level': round(max_level / 2.0),
-                    'maximum_level': max_level,
-                    'last_report': ''
-                }
+            state_grouping[state.product_id] = {
+                'commodity': state.sql_product.name,
+                'months_until_stockout': "%.1f" % (float(state.stock_on_hand) / monthly_consumption)
+                if state.stock_on_hand and monthly_consumption else 0,
+                'stockout_duration': '',
+                'stockout_duration_helper': True,
+                'current_stock': state.stock_on_hand,
+                'monthly_consumption': monthly_consumption,
+                'reorder_level': round(max_level / 2.0),
+                'maximum_level': max_level,
+                'last_report': ews_date_format(state.last_modified_date)
+            }
 
-        for state in st:
-            if state_grouping[state.product_id]['stockout_duration_helper']:
-                if not state.stock_on_hand:
-                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date,
-                                                                                      now=self.config['enddate'])
-                else:
-                    state_grouping[state.product_id]['stockout_duration_helper'] = False
+            if state.stock_on_hand == 0:
+                try:
+                    st = StockTransaction.objects.filter(
+                        case_id=loc.supply_point_id,
+                        product_id=state.product_id,
+                        stock_on_hand__gt=0
+                    ).latest('report__date')
+                    state_grouping[state.product_id]['stockout_duration'] = timesince(
+                        st.report.date, now=datetime.datetime.now()
+                    )
+                except StockTransaction.DoesNotExist:
+                    state_grouping[state.product_id]['stockout_duration'] = 'Always'
 
-                if not state_grouping[state.product_id]['last_report']:
-                    state_grouping[state.product_id]['last_report'] = ews_date_format(state.report.date)
-                if state_grouping[state.product_id]['current_stock'] is None:
-                    state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
+            else:
+                state_grouping[state.product_id]['stockout_duration_helper'] = False
 
         for values in state_grouping.values():
             if values['monthly_consumption'] is not None or values['current_stock'] == 0:
@@ -250,6 +246,7 @@ class InventoryManagementData(EWSData):
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)
             chart.forceY = [0, loc.location_type.understock_threshold + loc.location_type.overstock_threshold]
+            chart.is_rendered_as_email = self.config.get('is_rendered_as_email', False)
             return [chart]
         return []
 

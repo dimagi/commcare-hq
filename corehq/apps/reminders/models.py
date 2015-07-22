@@ -7,7 +7,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
@@ -504,6 +504,10 @@ class CaseReminderHandler(Document):
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
 
+    # If this reminder definition is being created as a subevent of a
+    # MessagingEvent, this is the id of the MessagingEvent
+    messaging_event_id = IntegerProperty()
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -826,22 +830,18 @@ class CaseReminderHandler(Document):
 
     def fire(self, reminder):
         """
-        Sends the message associated with the given CaseReminder's current event.
-        
-        reminder    The CaseReminder which to fire.
-        
-        return      True on success, False on failure
+        Sends the content associated with the given CaseReminder's current event.
+
+        reminder - The CaseReminder which to fire.
+        return - True to move to the next event, False to not move to the next event.
         """
-        # Prevent circular import
         from .event_handlers import EVENT_HANDLER_MAP
 
         if self.deleted():
             reminder.retire()
             return False
 
-        # Retrieve the list of individual recipients
         recipient = reminder.recipient
-        
         if isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
         elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
@@ -851,10 +851,23 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, CommCareCaseGroup):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
-            from corehq.apps.reminders.event_handlers import raise_error, ERROR_NO_RECIPIENTS
-            raise_error(reminder, ERROR_NO_RECIPIENTS)
-            return False
-        
+            # If the recipient is not recognized, set recipient = None so that
+            # we stop processing below
+            recipient = None
+
+        if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
+            # If we are on one of the timeout intervals, then do not create
+            # a new MessagingEvent. Instead, just resuse the one that was
+            # created last time.
+            logged_event = MessagingEvent.objects.get(pk=reminder.last_messaging_event_id)
+        else:
+            logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
+        reminder.last_messaging_event_id = logged_event.pk
+
+        if recipient is None:
+            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
+            return True
+
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
@@ -875,9 +888,10 @@ class CaseReminderHandler(Document):
         # Call the appropriate event handler
         event_handler = EVENT_HANDLER_MAP.get(self.method)
         last_fired = self.get_now() # Store the timestamp right before firing to ensure continuity in the callback lookups
-        result = event_handler(reminder, self, recipients, verified_numbers)
+        event_handler(reminder, self, recipients, verified_numbers, logged_event)
         reminder.last_fired = last_fired
-        return result
+        logged_event.completed()
+        return True
 
     @classmethod
     def condition_reached(cls, case, case_property, now):
@@ -1325,7 +1339,11 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     event_initiation_timestamp = DateTimeProperty() # The date and time that the event was started (which is the same throughout all timeouts)
     error = BooleanProperty(default=False)
     error_msg = StringProperty()
-    
+
+    # This is the id of the MessagingEvent that was created the
+    # last time an event for this reminder fired.
+    last_messaging_event_id = IntegerProperty()
+
     @property
     def handler(self):
         return CaseReminderHandler.get(self.handler_id)
@@ -1432,6 +1450,12 @@ class SurveyKeyword(Document):
     named_args = DictProperty()
     named_args_separator = StringProperty()
     oct13_migration_timestamp = DateTimeProperty()
+
+    def is_structured_sms(self):
+        return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
+
+    def deleted(self):
+        return self.doc_type != 'SurveyKeyword'
 
     def retire(self):
         self.doc_type += "-Deleted"

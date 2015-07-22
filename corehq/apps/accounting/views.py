@@ -537,6 +537,31 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class ViewSoftwarePlanVersionView(AccountingSectionView):
+    urlname = 'view_softwareplan_version'
+    page_title = 'Plan Version'
+    template_name = 'accounting/plan_version.html'
+
+    @property
+    @memoized
+    def plan_version(self):
+        try:
+            return SoftwarePlanVersion.objects.get(plan=self.args[0], id=self.args[1])
+        except SoftwarePlan.DoesNotExist:
+            raise Http404()
+
+    @property
+    def page_context(self):
+        return {
+            'plan_versions': [self.plan_version],
+            'plan_id': self.args[0],
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"

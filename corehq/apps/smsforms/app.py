@@ -9,6 +9,7 @@ from touchforms.formplayer.api import (
     DigestAuth,
     get_raw_instance,
     InvalidSessionIdException,
+    TouchformsError,
 )
 from touchforms.formplayer import sms as tfsms
 from django.conf import settings
@@ -84,6 +85,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     )
     session.save()
     responses = session_start_info.first_responses
+
+    if len(responses) > 0 and responses[0].status == 'http-error':
+        session.end(False)
+        session.save()
+        raise TouchformsError('Cannot connect to touchforms.')
 
     # Prevent future update conflicts by getting the session again from the db
     # since the session could have been updated separately in the first_responses call
