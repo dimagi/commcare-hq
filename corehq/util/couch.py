@@ -114,10 +114,11 @@ class IterDB(object):
     `new_edits` param will be passed directly to db.bulk_save
     """
     def __init__(self, database, chunksize=100, throttle_secs=None,
-                 new_edits=None):
+                 new_edits=None, refresh_view_funcs=None):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
+        self.refresh_view_funcs = refresh_view_funcs or []
         self.saved_ids = set()
         self.deleted_ids = set()
         self.error_ids = set()
@@ -171,6 +172,8 @@ class IterDB(object):
             self._commit_save()
         if self.to_delete:
             self._commit_delete()
+        for refresh_view_func in self.refresh_view_funcs:
+            refresh_view_func()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
