@@ -544,6 +544,8 @@ class NewCaseExportReport(CaseExportReport):
             'export': self.exports[0],
             # 'exports': self.exports,
             # "use_bulk": len(self.export_ids) > 1,
+            'filter_title': ugettext_lazy('Export Filters'),
+            'back_url': CaseExportInterface.get_url(domain=self.domain),
             'additional_params': mark_safe(
                 '&'.join('export_id=%(export_id)s' % {
                     'export_id': export_id,
@@ -567,3 +569,10 @@ class NewCaseExportReport(CaseExportReport):
     @property
     def selected_exports_data(self):
         return {}
+
+    @property
+    def breadcrumbs(self):
+        return [{
+            'link': CaseExportInterface.get_url(domain=self.domain),
+            'title': ugettext_lazy('Case Exports'),
+        }]

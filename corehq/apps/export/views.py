@@ -382,7 +382,7 @@ class CreateFormExportView(BaseProjectDataView):
 
 class CreateCaseExportView(BaseProjectDataView):
     urlname = 'create_case_export'
-    page_title = ugettext_noop('Create Case Export')
+    page_title = ugettext_noop('Create Case Export: Select Case')
     template_name = 'export/create_case_export.html'
 
     @property
@@ -426,3 +426,17 @@ class CreateCaseExportView(BaseProjectDataView):
             )]
             for app in get_apps_in_domain(self.domain)
         }
+
+    @property
+    def breadcrumbs(self):
+        return [{
+            'link': CaseExportInterface.get_url(domain=self.domain),
+            'title': ugettext_lazy("Case Exports"),
+        }]
+
+    @property
+    def parent_pages(self):
+        return [{
+            'link': CaseExportInterface.get_url(domain=self.domain),
+            'title': ugettext_lazy("Case Exports"),
+        }]
