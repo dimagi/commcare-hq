@@ -57,9 +57,6 @@ def get_redis_client():
         raise RedisClientError("Could not get redis connection.")
     return client
 
-def key_doc_prop(doc_id, prop_name):
-    return ':'.join([CACHED_DOC_PROP_PREFIX, doc_id, prop_name])
-
 
 def key_doc_id(doc_id):
     """
