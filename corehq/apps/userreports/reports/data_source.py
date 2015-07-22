@@ -135,7 +135,7 @@ class ConfigurableReportDataSource(SqlData):
                                     'Number of indicators matching column %(col)s is %(num_matching)d' % {
                                         'col': col[0],
                                         'num_matching': len(matching_indicators),
-                                     }
+                                    }
                                 )
                             if matching_indicators[0]['datatype'] == 'date':
                                 return (
