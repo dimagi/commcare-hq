@@ -66,6 +66,13 @@ class Group(UndoableDocument):
         super(Group, self).delete()
         refresh_group_views()
 
+    @classmethod
+    def delete_docs(cls, docs, **params):
+        super(Group, cls).delete_docs(docs, **params)
+        refresh_group_views()
+
+    bulk_delete = delete_docs
+
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
