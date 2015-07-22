@@ -49,7 +49,7 @@ class Group(UndoableDocument):
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
         super(Group, self).save(*args, **kwargs)
-        refresh_group_views(self)
+        refresh_group_views()
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
@@ -58,13 +58,13 @@ class Group(UndoableDocument):
             doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
         for doc in docs:
-            refresh_group_views(Group.wrap(doc))
+            refresh_group_views()
 
     bulk_save = save_docs
 
     def delete(self):
         super(Group, self).delete()
-        refresh_group_views(self)
+        refresh_group_views()
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
