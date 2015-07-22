@@ -1,5 +1,4 @@
 import datetime
-from datetime import date
 from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
@@ -123,22 +122,38 @@ class ConfigurableReportDataSource(SqlData):
             if self._order_by:
                 for col in reversed(self._order_by):
                     is_descending = col[1] == DESCENDING
-                    is_date = any(
-                        configured_indicator['datatype'] == 'date'
-                        for configured_indicator in self.config.configured_indicators
-                        if configured_indicator['column_id'] == col[0]
-                    )
-                    default_sort_by_date = (
-                        date(datetime.MINYEAR, 1, 1)
-                        if is_descending else date(datetime.MAXYEAR, 12, 31)
-                    )
-                    value = lambda x: x.get(col[0], None)
-                    sort_by_value = lambda x: (
-                        value(x)
-                        or (default_sort_by_date if is_date else value(x))
-                    )
+
+                    def sort_by(row):
+                        value = row.get(col[0], None)
+                        if not value:
+                            matching_indicators = filter(
+                                lambda configured_indicator: configured_indicator['column_id'] == col[0],
+                                self.config.configured_indicators
+                            )
+                            if not len(matching_indicators) == 1:
+                                raise UserReportsError(
+                                    'Number of indicators matching column %(col)s is %(num_matching)d' % {
+                                        'col': col[0],
+                                        'num_matching': len(matching_indicators),
+                                     }
+                                )
+                            if matching_indicators[0]['datatype'] == 'date':
+                                return (
+                                    datetime.date(datetime.MINYEAR, 1, 1)
+                                    if is_descending else datetime.date(datetime.MAXYEAR, 12, 31)
+                                )
+                            elif matching_indicators[0]['datatype'] == 'datetime':
+                                return (
+                                    datetime.datetime(datetime.MINYEAR, 1, 1)
+                                    if is_descending else datetime.datetime(
+                                        datetime.MAXYEAR, 12, 31,
+                                        23, 59, 59, 999999
+                                    )
+                                )
+                        return value
+
                     ret.sort(
-                        key=sort_by_value,
+                        key=sort_by,
                         reverse=is_descending
                     )
                 return ret
