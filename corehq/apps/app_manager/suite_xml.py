@@ -2000,6 +2000,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if root_module_form.requires_case():
                     root_datums.extend(self.get_datum_meta_module(root_module))
                 root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
+                root_datums.extend(self.get_extra_case_id_datums(root_module_form))
 
         if root_datums:
             # we need to try and match the datums to the root module so that
