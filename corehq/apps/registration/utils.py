@@ -403,7 +403,10 @@ You can view the %s here: %s""" % (
         get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail_async.delay(u"New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
+        send_mail_async.delay(
+            u"New %s: %s" % (entity_texts[0], entity_name),
+            message, settings.SERVER_EMAIL, recipients
+        )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
