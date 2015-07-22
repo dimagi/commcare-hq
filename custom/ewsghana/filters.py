@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
 from django.utils.translation import ugettext_noop
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -242,3 +242,18 @@ class EWSDateFilter(BaseReportFilter):
             selected_first=self.selected('first') if self.selected('first') else self.default_week,
             selected_second=self.selected('second') if self.selected('second') else ''
         )
+
+
+class LocationTypeFilter(BaseMultipleOptionFilter):
+    slug = 'loc_type'
+    label = "Location Type"
+    placeholder = 'Click to select location type'
+
+    @property
+    def options(self):
+        return [
+            (unicode(loc_type.pk), loc_type.name) for loc_type in
+            LocationType.objects.filter(
+                domain=self.domain, administrative=False
+            )
+        ]
