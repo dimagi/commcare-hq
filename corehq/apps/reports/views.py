@@ -587,7 +587,7 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    from dimagi.utils.django.email import send_HTML_email
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
     from forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -632,12 +632,13 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
-        send_HTML_email(subject, request.couch_user.get_email(), body,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, request.couch_user.get_email(), body,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body, email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, body,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 

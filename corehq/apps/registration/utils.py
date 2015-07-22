@@ -2,7 +2,6 @@ import logging
 import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
@@ -15,9 +14,10 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.feature_previews import enable_commtrack_previews
+from corehq.apps.hqwebapp.tasks import send_mail_async
 
 
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
@@ -332,8 +332,9 @@ Username:  "{username}"
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_html, text_content=message_plaintext,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, recipient, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -372,8 +373,9 @@ You may access your project by following this link: {registration_link}
     subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
-        send_HTML_email(subject, requesting_user.email, message_html,
-                        text_content=message_plaintext, email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, requesting_user.email, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -401,7 +403,10 @@ You can view the %s here: %s""" % (
         get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail(u"New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
+        send_mail_async.delay(
+            u"New %s: %s" % (entity_texts[0], entity_name),
+            message, settings.SERVER_EMAIL, recipients
+        )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
