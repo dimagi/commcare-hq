@@ -57,8 +57,7 @@ class Group(UndoableDocument):
         for doc in docs:
             doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
-        for doc in docs:
-            refresh_group_views()
+        refresh_group_views()
 
     bulk_save = save_docs
 
