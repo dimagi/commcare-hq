@@ -1,3 +1,5 @@
+from django.dispatch import receiver
+from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
@@ -72,3 +74,8 @@ class EWSGhanaConfig(Document):
 class FacilityInCharge(models.Model):
     user_id = models.CharField(max_length=128, db_index=True)
     location = models.ForeignKey(SQLLocation)
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    FacilityInCharge.objects.filter(location__in=SQLLocation.objects.filter(domain=domain)).delete()
