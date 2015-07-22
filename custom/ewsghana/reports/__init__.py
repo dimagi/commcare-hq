@@ -214,9 +214,17 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
+                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
+                    location = location.parent
+                loc_id = location.location_id
+
             url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,
-                dm.location_id if dm.location_id else '',
+                loc_id,
                 program_id if program_id else ''
             )
 
