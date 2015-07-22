@@ -368,6 +368,13 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_RICH_TEXT = StaticToggle(
+    'rich_text',
+    "Enables rich text for the form builder",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
