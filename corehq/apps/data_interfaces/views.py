@@ -27,7 +27,8 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from .interfaces import FormManagementMode, BulkArchiveFormInterface
+from .dispatcher import require_form_management_privilege
+from .interfaces import FormManagementMode
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
@@ -490,6 +491,10 @@ class XFormManagementView(DataInterfaceSection):
             )
         )
 
+    @method_decorator(require_form_management_privilege)
+    def dispatch(self, request, *args, **kwargs):
+        return super(XFormManagementView, self).dispatch(request, *args, **kwargs)
+
 
 class XFormManagementStatusView(DataInterfaceSection):
 
@@ -515,7 +520,8 @@ class XFormManagementStatusView(DataInterfaceSection):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-# ToDo permission decorator
+@require_can_edit_data
+@require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
