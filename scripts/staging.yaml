@@ -49,8 +49,10 @@ branches:
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
-  - locations-for-robber-barons  # Ethan 5/7
   - web-user-requests # Jenny, July 16
+  - template-apps # Jenny, July 20
+  - extra-permissions-checks  # Ethan 7/20
+  - speedup-export-pages # Nick P 7/21
 submodules:
   corehq/apps/prelogin:
     branches: []
@@ -58,7 +60,7 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 221-jars # wsp 5/20
+      - threadlocks  # cz 7/21
       - django17
   submodules/formtranslate-src:
     # let's leave this here even when empty

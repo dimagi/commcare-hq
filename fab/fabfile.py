@@ -347,6 +347,12 @@ def env_common():
     }
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
+    env.supervisor_roles = ROLES_ALL_SRC
+
+
+@task
+def webworkers():
+    env.supervisor_roles = ROLES_DJANGO
 
 
 @task
@@ -900,6 +906,18 @@ def netstat_plnt():
     """run netstat -plnt on a remote host"""
     _require_target()
     sudo('netstat -plnt', user='root')
+
+
+@task
+def supervisorctl(command):
+    require('supervisor_roles',
+            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+
+    @roles(env.supervisor_roles)
+    def _inner():
+        _supervisor_command(command)
+
+    execute(_inner)
 
 
 @roles(ROLES_ALL_SERVICES)

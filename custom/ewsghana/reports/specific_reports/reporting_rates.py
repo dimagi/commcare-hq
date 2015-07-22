@@ -321,9 +321,14 @@ class ReportingRatesReport(MultiReport):
     name = 'Reporting'
     title = 'Reporting'
     slug = 'reporting_page'
-    fields = [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
+
+    @property
+    def fields(self):
+        if self.is_reporting_type():
+            return [EWSRestrictionLocationFilter, ProductByProgramFilter]
+        return [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
 
     def get_supply_points(self, location_id):
         sql_location = SQLLocation.objects.get(location_id=location_id)

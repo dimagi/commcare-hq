@@ -201,8 +201,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
                             stale=True, skip=None, limit=None):
+        kwargs = {}
         if stale:
-            #kwargs['stale'] = settings.COUCH_STALE_QUERY
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
 
         if report_slug is not None:
@@ -211,7 +212,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        kwargs = {}
         if skip is not None:
             kwargs['skip'] = skip
         if limit is not None:
