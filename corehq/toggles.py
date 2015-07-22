@@ -52,9 +52,7 @@ class StaticToggle(object):
 
 
 def deterministic_random(input_string):
-    """
-    Returns a deterministically random number between 0 and 1 based on the
-    value of the string. The same input should always produce the same output.
+    """ Returns a deterministically random number between 0 and 1 based on the value of the string. The same input should always produce the same output.
     """
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
@@ -365,6 +363,13 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     'experimental_ui',
     "Enables some experimental UI enhancements for the form builder",
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_PRINTING = StaticToggle(
+    'printing',
+    "Enables the Print Android App Callout",
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
