@@ -1,7 +1,8 @@
 import json
 import os
 from django.test import TestCase
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.dbaccessors import \
+    get_supply_point_case_by_location_id
 from corehq.apps.commtrack.tests.util import (bootstrap_products,
                                               bootstrap_domain as initial_bootstrap)
 from corehq.apps.locations.models import SQLLocation
@@ -69,7 +70,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(int(sql_location.parent.external_id), location.parent_id)
         self.assertIsNotNone(sql_location.id)
         self.assertIsNotNone(sql_location.supply_point_id)
-        supply_point = SupplyPointCase.get_by_location_id(TEST_DOMAIN, sql_location.location_id)
+        supply_point = get_supply_point_case_by_location_id(
+            TEST_DOMAIN, sql_location.location_id)
         self.assertIsNotNone(supply_point)
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))

@@ -1,5 +1,6 @@
 from functools import partial
 from dateutil import rrule
+from corehq.apps.locations.dbaccessors import get_one_user_at_location
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
@@ -138,15 +139,9 @@ class RRReportingHistory(ILSData):
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
-            contact = CommCareUser.get_db().view(
-                'locations/users_by_location_id',
-                startkey=[child.location_id],
-                endkey=[child.location_id, {}],
-                include_docs=True
-            ).first()
+            contact = get_one_user_at_location(child.location_id)
 
-            if contact and contact['doc']:
-                contact = CommCareUser.wrap(contact['doc'])
+            if contact:
                 role = contact.user_data.get('role') or ""
                 args = (contact.first_name, contact.last_name, role, contact.default_phone_number)
                 contact_string = "%s %s (%s) %s" % args

@@ -1,3 +1,4 @@
+from mock import patch
 from corehq.apps.groups.tests import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_REPORTING_PREFIX
@@ -16,7 +17,6 @@ from corehq.apps.domain.shortcuts import create_domain
 class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         self.domain.save()
 
         LocationType.objects.get_or_create(
@@ -78,7 +78,6 @@ class LocationProducts(TestCase):
 class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
@@ -211,17 +210,10 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        def _all_locations(domain):
-            return Location.view(
-                'locations/hierarchy',
-                startkey=[domain],
-                endkey=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ).all()
-        compare(
-            [self.user.location, test_state1, test_state2, test_village1],
-            _all_locations(self.domain.name)
+        self.assertEqual(
+            {loc._id for loc in [self.user.location, test_state1, test_state2,
+                                 test_village1]},
+            set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
         # Location.by_site_code
@@ -370,6 +362,7 @@ class LocationGroupTest(LocationTestBase):
             self.loc.sql_location.reporting_group_object().metadata
         )
 
+    @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
     def test_location_fixture_generator(self):
         """
         This tests the location XML fixture generator. It specifically ensures that no duplicate XML

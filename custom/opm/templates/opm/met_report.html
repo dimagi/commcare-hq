@@ -42,7 +42,9 @@
             var totalCell = $(totalCells)[childNumber];
             $(bodyRows).each(function(id) {
                 var cell = $(this).children()[childNumber];
-                total += parseFloat($(cell).text().trim().split('.')[1]);
+                if ($(cell).text().trim() !== "--") {
+                    total += parseFloat($(cell).text().trim().split('.')[1]);
+                }
             });
             $(totalCell).text('Rs. ' + total);
         };

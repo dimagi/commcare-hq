@@ -119,7 +119,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 
 class ASHAMonthFilter(MonthFilter):
-    label = "Last month of the quarter"
+    label = "Last Reporting month of the quarter"
 
 
 class NRHMDatespanFilter(DatespanFilter):

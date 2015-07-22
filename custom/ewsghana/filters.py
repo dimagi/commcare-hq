@@ -2,12 +2,16 @@ import calendar
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
+from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
     BaseMultipleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq import Domain
 from custom.ewsghana.utils import ews_date_format
@@ -97,7 +101,37 @@ class MultiProductFilter(BaseMultipleOptionFilter):
             .order_by('name')
 
 
-class EWSLocationFilter(AsyncLocationFilter):
+class EWSRestrictionLocationFilter(AsyncLocationFilter):
+    template = "ewsghana/partials/location_async.html"
+    only_administrative = False
+
+    @property
+    def filter_context(self):
+        api_root = reverse('api_dispatch_list',
+                           params={'show_administrative': True},
+                           kwargs={'domain': self.domain,
+                                   'resource_name': 'ews_location',
+                                   'api_name': 'v0.3'})
+        user = self.request.couch_user
+        loc_id = self.request.GET.get('location_id')
+        if not loc_id:
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership:
+                loc_id = domain_membership.location_id
+
+        return {
+            'api_root': api_root,
+            'control_name': self.label,
+            'control_slug': self.slug,
+            'loc_id': loc_id,
+            'locations': load_locs_json(self.domain, loc_id, only_administrative=self.only_administrative),
+            'hierarchy': location_hierarchy_config(self.domain)
+        }
+
+
+class EWSLocationFilter(EWSRestrictionLocationFilter):
+    only_administrative = True
+
     def reporting_types(self):
         return [
             location_type.name
@@ -107,14 +141,40 @@ class EWSLocationFilter(AsyncLocationFilter):
 
     @property
     def filter_context(self):
-        context = super(EWSLocationFilter, self).filter_context
+        api_root = reverse('api_dispatch_list',
+                           params={'show_administrative': False},
+                           kwargs={'domain': self.domain,
+                                   'resource_name': 'ews_location',
+                                   'api_name': 'v0.3'})
+        user = self.request.couch_user
+        loc_id = self.request.GET.get('location_id')
+        if not loc_id:
+            domain_membership = user.get_domain_membership(self.domain)
+            if not domain_membership or not domain_membership.location_id:
+                loc_id = SQLLocation.objects.filter(
+                    domain=self.domain,
+                    location_type__name='country'
+                ).first().location_id
+            else:
+                loc_id = domain_membership.location_id
+
+        location = get_object_or_404(SQLLocation, location_id=loc_id)
+        if not location.location_type.administrative:
+            loc_id = location.parent.location_id
+        hier = location_hierarchy_config(self.domain)
         hierarchy = []
-        for h in context['hierarchy']:
+        for h in hier:
             if h[0] not in self.reporting_types():
                 hierarchy.append(h)
-        context['hierarchy'] = hierarchy
 
-        return context
+        return {
+            'api_root': api_root,
+            'control_name': self.label,
+            'control_slug': self.slug,
+            'loc_id': loc_id,
+            'locations': load_locs_json(self.domain, loc_id, only_administrative=self.only_administrative),
+            'hierarchy': hierarchy
+        }
 
 
 class EWSDateFilter(BaseReportFilter):
@@ -149,7 +209,10 @@ class EWSDateFilter(BaseReportFilter):
         for idx, val in enumerate(fridays):
             try:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), fridays[idx + 1].strftime("%Y-%m-%d"))
-                text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(fridays[idx + 1]))
+                text = '{0} - {1}'.format(
+                    ews_date_format(val),
+                    ews_date_format(fridays[idx + 1] - relativedelta(days=1))
+                )
             except IndexError:
                 value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
                 text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(now))
@@ -159,7 +222,7 @@ class EWSDateFilter(BaseReportFilter):
             {
                 'text': 'Week (Friday - Thursday)',
                 'val': 2,
-                'firstOptions': weeks,
+                'firstOptions': weeks[:-1],
                 'secondOptions': []
             },
             {
@@ -173,13 +236,10 @@ class EWSDateFilter(BaseReportFilter):
 
     @property
     def default_week(self):
-        now = datetime.now()
-        if now.weekday() == 4:
-            return '{0}|{1}'.format(now.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
-        else:
-            week_ago = (now - relativedelta(weeks=1))
-            days = relativedelta(days=(4 - week_ago.weekday()) % 7)
-            return '{0}|{1}'.format((week_ago + days).strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
+        now = datetime.utcnow()
+        date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
+        return '{0}|{1}'.format((date - relativedelta(days=7)).strftime("%Y-%m-%d"), date.strftime("%Y-%m-%d"))
+
 
     @property
     def filter_context(self):

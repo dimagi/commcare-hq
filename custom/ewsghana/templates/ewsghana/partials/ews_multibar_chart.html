@@ -61,6 +61,9 @@
         $("text").on("mouseleave", function(event) {
             nv.tooltip.cleanup();
         });
+        var $chart = $(multibar_chart_id + ' svg');
+        $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
+        $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
     });
 
 </script>

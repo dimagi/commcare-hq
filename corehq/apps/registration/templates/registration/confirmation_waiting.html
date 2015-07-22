@@ -7,24 +7,6 @@
     Confirm Account <small>Waiting for your confirmation. Please check your email.</small>
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ul class="breadcrumb breadcrumb-steps">
-        <li class="past">
-            {% blocktrans with request.couch_user.first_name as first_name %}
-                Account Created for <strong>{{ first_name }}</strong>
-            {% endblocktrans %}
-            <span class="divider">></span>
-        </li>
-        <li class="past">
-            Project Requested{% if requested_domain %} for <strong>{{ requested_domain }}</strong>{% endif %}
-            <span class="divider">></span>
-        </li>
-        <li class="active">
-            Confirm Account
-        </li>
-    </ul>
-{% endblock %}
-
 {% block registration-content %}
     <p>Thank you for requesting a new CommCare HQ project: <strong>{{ requested_domain }}</strong>. Before you can use this project, you must first confirm your account.</p>
     {% include "registration/partials/confirmation_waiting_actions.html" %}

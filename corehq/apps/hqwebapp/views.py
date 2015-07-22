@@ -32,7 +32,6 @@ from django.template.context import RequestContext
 from restkit import Resource
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -220,7 +219,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
 </cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, mimetype="application/xml")
+    return HttpResponse(x_domain, content_type="application/xml")
 
 
 @login_required()
@@ -310,33 +309,36 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
-def _login(req, domain, template_name):
+def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
-        if not domain:
+        if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST['username'] = format_username(req.POST['username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain:
+    if domain_name:
+        domain = Domain.get_by_name(domain_name)
         context.update({
-            'domain': domain,
+            'domain': domain_name,
+            'hr_name': domain.hr_name if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 
+    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        authentication_form=authentication_form,
                         extra_context=context)
 
 
@@ -530,21 +532,6 @@ def bug_report(req):
     return HttpResponse()
 
 
-@login_required()
-@require_POST
-def dismiss_notification(request):
-    note_id = request.POST.get('note_id', None)
-    note = Notification.get(note_id)
-    if note:
-        if note.user != request.couch_user.username:
-            return json_response({"status": "failure: Not the same user"})
-
-        note.dismissed = True
-        note.save()
-        return json_response({"status": "success"})
-    return json_response({"status": "failure: No note by that name"})
-
-
 def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
@@ -646,7 +633,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "style/bootstrap2/base_section.html"
 
     @property
     def section_url(self):
@@ -968,7 +955,7 @@ def osdd(request, template='osdd.xml'):
     return response
 
 @require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {

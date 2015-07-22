@@ -190,13 +190,13 @@ DEFAULT_APPS = (
     'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
-    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
@@ -205,6 +205,7 @@ HQ_APPS = (
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -212,6 +213,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -234,9 +236,7 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
-    'corehq.apps.adm',
     'corehq.apps.analytics',
-    'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
@@ -334,7 +334,6 @@ HQ_APPS = (
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
 )
@@ -355,7 +354,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -428,7 +426,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -456,6 +454,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+PROBONO_SUPPORT_EMAIL = 'zapier+billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -965,6 +964,7 @@ if DEBUG:
 
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -1020,6 +1020,7 @@ COUCHDB_APPS = [
     'orgs',
     'builds',
     'case',
+    'casegroups',
     'callcenter',
     'cleanup',
     'cloudcare',
@@ -1148,8 +1149,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error',
-    messages.ERROR: 'alert-error',
+    messages.WARNING: 'alert-error alert-danger',
+    messages.ERROR: 'alert-error alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1295,6 +1296,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', 'mvp_ucr', 'reports', 'data_sources', 'va_datasource.json'),
 ]
 
 
@@ -1349,6 +1351,11 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('mvp_medical_cause', 'custom.mvp_ucr.reports.expressions.medical_cause_expression'),
+    ('mvp_no_treatment_reason', 'custom.mvp_ucr.reports.expressions.no_treatment_reason_expression'),
+    ('mvp_treatment_provider_name', 'custom.mvp_ucr.reports.expressions.treatment_provider_name_expression'),
+    ('mvp_treatment_place_name', 'custom.mvp_ucr.reports.expressions.treatment_place_name_expression'),
+    ('mvp_death_place', 'custom.mvp_ucr.reports.expressions.death_place_expression'),
 ]
 
 CUSTOM_MODULES = [
@@ -1418,7 +1425,7 @@ TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',

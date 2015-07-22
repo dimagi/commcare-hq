@@ -11,6 +11,8 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import \
+    get_one_case_in_domain_by_external_id
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
@@ -226,20 +228,15 @@ class TouchformsTestCase(LiveServerTestCase):
         return site
 
     def get_case(self, external_id):
-        case = CommCareCase.view("hqcase/by_domain_external_id",
-            key=[self.domain, external_id],
-            include_docs=True,
-            reduce=False,
-        ).one()
-        return case
+        return get_one_case_in_domain_by_external_id(self.domain, external_id)
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        [form] = get_forms_by_type(self.domain, 'XFormInstance',
+        result = get_forms_by_type(self.domain, 'XFormInstance',
                                    recent_first=True, limit=1)
-        return form
+        return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()

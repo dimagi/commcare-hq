@@ -2,6 +2,12 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% block head %}{{ block.super }}
+    {% if form %}
+        {{ form.media }}
+    {% endif %}
+{% endblock %}
+
 {% block reports-js %}
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
@@ -11,7 +17,60 @@
 
 {% block reports-js-inline %}
 <script>
-    $("#id_config_ids").width(600).height(200).multiselect();
+$(function(){
+    var isConfigurableMap = {{ is_configurable_map|JSON }};
+    var languagesMap = {{ languages_map|JSON }};
+    var languagesForSelect = {{ languages_for_select|JSON }};
+
+    var updateUcrElements = function(selectedConfigs){
+        var showUcrElements = _.any(
+            selectedConfigs, function(i){return isConfigurableMap[i] === true;}
+        );
+        var currentLanguageOptions = [];
+
+        if (showUcrElements){
+            $("#ucr-privacy-warning").show();
+
+            // Figure out which options to show in the combobox
+            var languageLists = _.map(selectedConfigs, function(i){return languagesMap[i];});
+            var languageSet = _.reduce(languageLists, function(memo, list){
+                _.map(list, function(e){
+                    memo[e] = true;
+                });
+                return memo;
+            }, {});
+            var currentLanguageOptions = Object.keys(languageSet).sort();
+            var $id_language = $('#id_language');
+
+            if (currentLanguageOptions.length === 1 && currentLanguageOptions[0] === 'en') {
+                $id_language.val('en');
+                $('#div_id_language').hide();
+            } else {
+                // Update the options of the combobox
+                var current = $id_language.val();
+                $id_language.empty();
+
+                // Populate the select
+                _.map(currentLanguageOptions, function (l) {
+                    $id_language.append(
+                        $("<option></option>").attr("value", l).text(languagesForSelect[l][1])
+                    );
+                });
+                $id_language.val(current);
+                $id_language.data('combobox').refresh();
+                $("#div_id_language").show();
+            }
+        } else {
+            $("#div_id_language").hide();
+            $("#ucr-privacy-warning").hide();
+        }
+    };
+
+    $("#id_config_ids").width(600).height(200).multiselect().change(function(){
+        updateUcrElements($(this).val());
+    });
+    updateUcrElements($("#id_config_ids").val());
+});
 </script>
 <script type="text/javascript">
     var scheduled_report_form_helper = new ScheduledReportFormHelper({

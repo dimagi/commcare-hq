@@ -6,11 +6,13 @@ import json
 import tempfile
 import re
 import itertools
+import langcodes
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
@@ -19,16 +21,16 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponseRedirect,
-    HttpResponseBadRequest, Http404, HttpResponseForbidden)
+from django.http import (HttpResponseRedirect, HttpResponseBadRequest, Http404,
+                         HttpResponseForbidden)
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import (require_http_methods,
-    require_POST)
+from django.views.decorators.http import require_http_methods, require_POST
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
@@ -53,17 +55,17 @@ from couchexport.exceptions import (
 )
 from couchexport.models import FakeSavedExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
-    export_response)
+                                   export_response)
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
+from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
+                                  string_to_datetime, json_format_date)
 from dimagi.utils.web import json_request, json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
@@ -82,11 +84,12 @@ import couchforms.views as couchforms_views
 from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types
 from corehq.apps.reports.templatetags.xform_tags import render_form
-from filters.users import UserTypeFilter
+from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
+from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
@@ -162,7 +165,13 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
             or request.couch_user.get_viewable_reports()):
         raise Http404
 
-    configs = ReportConfig.by_domain_and_owner(domain, user._id)
+    all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
+    good_configs = []
+    for config in all_configs:
+        if config.is_configurable_report and not config.configurable_report:
+            continue
+
+        good_configs.append(config)
 
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
@@ -181,7 +190,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     context = dict(
         couch_user=request.couch_user,
         domain=domain,
-        configs=configs,
+        configs=good_configs,
         scheduled_reports=scheduled_reports,
         report=dict(
             title=_("My Saved Reports"),
@@ -192,10 +201,8 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         ),
     )
 
-    if request.couch_user:
-        util.set_report_announcements_for_user(request, user)
-
     return render(request, template, context)
+
 
 @login_or_digest
 @require_form_export_permission
@@ -618,6 +625,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
                                   domain,
                                   user_id, request.couch_user,
                                   True,
+                                  lang=request.couch_user.language,
                                   notes=form.cleaned_data['notes'],
                                   once=once)[0].content
 
@@ -713,7 +721,9 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     if not configs:
         return render(request, template, context)
 
-    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+    is_configurable_map = {c._id: c.is_configurable_report for c in configs}
+    languages_map = {c._id: list(c.languages | set(['en'])) for c in configs}
+    languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
     config_choices = [(c._id, c.full_name) for c in configs]
 
@@ -732,20 +742,23 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         if instance.owner_id != user_id or instance.domain != domain:
             raise HttpResponseBadRequest()
     else:
-        instance = ReportNotification(owner_id=user_id, domain=domain,
-                                      config_ids=[], hour=8, minute=0,
-                                      send_to_owner=True, recipient_emails=[])
+        instance = ReportNotification(
+            owner_id=user_id,
+            domain=domain,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+        )
 
     is_new = instance.new_document
     initial = instance.to_json()
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (
-        (display_privacy_disclaimer, request.POST)
-        if request.method == "POST"
-        else (display_privacy_disclaimer,)
-    )
+    args = ((request.POST, ) if request.method == "POST" else ())
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices
@@ -786,6 +799,9 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     else:
         context['form_action'] = _("Edit")
         context['report']['title'] = _("Edit Scheduled Report")
+    context['is_configurable_map'] = is_configurable_map
+    context['languages_map'] = languages_map
+    context['languages_for_select'] = languages_for_select
 
     return render(request, template, context)
 
@@ -845,22 +861,27 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     request.couch_user.current_domain = domain
 
     notification = ReportNotification.get(scheduled_report_id)
-    return _render_report_configs(request, notification.configs,
-                                  notification.domain,
-                                  notification.owner_id,
-                                  couch_user,
-                                  email, attach_excel=attach_excel)
+    return _render_report_configs(
+        request,
+        notification.configs,
+        notification.domain,
+        notification.owner_id,
+        couch_user,
+        email,
+        attach_excel=attach_excel,
+        lang=notification.language
+    )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False):
+                           notes=None, attach_excel=False, once=False, lang=None):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
     excel_attachments = []
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
     for config in configs:
-        content, excel_file = config.get_report_content(attach_excel=attach_excel)
+        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -930,7 +951,7 @@ def case_details(request, domain, case_id):
             "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
-        "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
+        "show_case_rebuild": toggles.SUPPORT.enabled(request.user.username),
         'is_usercase': case.type == USERCASE_TYPE,
     })
 
@@ -1165,28 +1186,27 @@ def download_cases(request, domain):
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
     content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
-    mimetype = "%s" % format.mimetype
+    content_type = "%s" % format.mimetype
 
     def generate_payload(payload_func):
         if async:
             download = DownloadBase()
             a_task = prepare_download.delay(download.download_id, payload_func,
-                                            content_disposition, mimetype)
+                                            content_disposition, content_type)
             download.set_task(a_task)
             return download.get_start_response()
         else:
             payload = payload_func()
             response = HttpResponse(payload)
-            response['Content-Type'] = mimetype
+            response['Content-Type'] = content_type
             response['Content-Disposition'] = content_disposition
             return response
 
     return generate_payload(payload_func)
 
 
-def _get_form_context(request, domain, instance_id):
+def _get_form_context(request, domain, instance):
     timezone = get_timezone_for_user(request.couch_user, domain)
-    instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
     except AssertionError:
@@ -1219,22 +1239,29 @@ def _get_form_or_404(id):
     return doc_type.wrap(xform_json)
 
 
+def _get_form_to_edit(domain, user, instance_id):
+    form = _get_form_or_404(instance_id)
+    if not can_edit_form_location(domain, user, form):
+        raise PermissionDenied()
+    return form
+
+
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
-    context = _get_form_context(request, domain, instance_id)
-    instance = context['instance']
+    instance = _get_form_or_404(instance_id)
+    context = _get_form_context(request, domain, instance)
     context['form_meta'] = FormType(domain, instance.xmlns, instance.app_id).metadata
     try:
-        form_name = context['instance'].form["@name"]
+        form_name = instance.form["@name"]
     except KeyError:
         form_name = "Untitled Form"
 
     context.update({
         "slug": inspect.SubmitHistory.slug,
         "form_name": form_name,
-        "form_received_on": context['instance'].received_on
+        "form_received_on": instance.received_on
     })
 
     return render(request, "reports/reportdata/form_data.html", context)
@@ -1244,10 +1271,11 @@ def form_data(request, domain, instance_id):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    context = _get_form_context(request, domain, xform_id)
+    instance = _get_form_or_404(xform_id)
+    context = _get_form_context(request, domain, instance)
     context['case_id'] = case_id
     context['side_pane'] = True
-    return HttpResponse(render_form(context['instance'], domain, options=context))
+    return HttpResponse(render_form(instance, domain, options=context))
 
 
 @require_form_view_permission
@@ -1266,15 +1294,22 @@ def edit_form_instance(request, domain, instance_id):
     if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
         raise Http404()
 
-    context = _get_form_context(request, domain, instance_id)
-    instance = context['instance']
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    context = _get_form_context(request, domain, instance)
+    if not instance.app_id or not instance.build_id:
+        messages.error(request, _('Could not detect the application/form for this submission.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
     form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
 
     def _form_meta_to_context_url(form_meta, instance_id=None):
+        # todo: this might break if the form has moved. right now fixing that is out of scope,
+        # but it wouldn't be too much work to do a more complicated lookup to infer the module/form ID
+        # based on the XMLNS using the actual build of the app
         try:
             url = reverse(
                 'cloudcare_form_context',
-                args=[domain, form_meta['app']['id'], form_meta['module']['id'], form_meta['form']['id']])
+                args=[domain, instance.build_id, form_meta['module']['id'], form_meta['form']['id']])
         except (KeyError, AttributeError):
             raise Http404(_('Missing app, module or form information!'))
 
@@ -1282,14 +1317,15 @@ def edit_form_instance(request, domain, instance_id):
             url = '{}?instance_id={}'.format(url, instance_id)
         return url
 
-    edit_session_data = {'user_id': instance.metadata.userID}
+    user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
+    edit_session_data = get_user_contributions_to_touchforms_session(user)
     case_blocks = extract_case_blocks(instance)
 
     if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
         edit_session_data["case_id"] = case_blocks[0].get(const.CASE_ATTR_ID)
 
     edit_session_data['function_context'] = {
-        'static': [
+        'static-date': [
             {'name': 'now', 'value': instance.metadata.timeEnd},
             {'name': 'today', 'value': instance.metadata.timeEnd.date()},
         ]
@@ -1301,7 +1337,7 @@ def edit_form_instance(request, domain, instance_id):
         'form_name': _('Edit Submission'),  # used in breadcrumbs
         'edit_context': {
             'formUrl': _form_meta_to_context_url(form_meta, instance_id),
-            'submitUrl': reverse('receiver_post_with_app_id', args=[domain, form_meta['app']['id']]),
+            'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
             'sessionData': edit_session_data,
             'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
         }
@@ -1325,7 +1361,7 @@ def download_attachment(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def archive_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance":
         instance.archive(user=request.couch_user._id)
@@ -1343,7 +1379,7 @@ def archive_form(request, domain, instance_id):
     }
     msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
         <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" \
-        else u'%(notif)s'
+        else u'{notif}'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
@@ -1370,7 +1406,7 @@ def archive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
         instance.unarchive(user=request.couch_user._id)
@@ -1388,7 +1424,7 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     XFormInstance.get_db().save_doc(instance.to_json())
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))

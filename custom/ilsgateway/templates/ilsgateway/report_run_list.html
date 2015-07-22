@@ -1,0 +1,30 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+
+{% block main_column %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+               <th>Start</th>
+               <th>End</th>
+               <th>Start run</th>
+               <th>End run</th>
+               <th>Has error</th>
+               <th>Complete</th>
+               <th>Domain</th>
+               <th></th>
+            </tr>
+        </thead>
+        {% for run in runs %}
+            <tr>
+                <td>{{ run.start }}</td>
+                <td>{{ run.end }}</td>
+                <td>{{ run.start_run }}</td>
+                <td>{{ run.end_run }}</td>
+                <td>{{ run.has_error }}</td>
+                <td>{{ run.complete }}</td>
+                <td>{{ run.domain }}</td>
+                <td><a href="{% url 'delete_report_run' run.domain run.pk %}">Delete</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

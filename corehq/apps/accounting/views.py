@@ -29,7 +29,9 @@ from corehq.apps.accounting.forms import (
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
     TestReminderEmailFrom,
-    CreateAdminForm)
+    CreateAdminForm,
+    SuppressInvoiceForm,
+)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
     CreateAccountingAdminError,
@@ -535,6 +537,31 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class ViewSoftwarePlanVersionView(AccountingSectionView):
+    urlname = 'view_softwareplan_version'
+    page_title = 'Plan Version'
+    template_name = 'accounting/plan_version.html'
+
+    @property
+    @memoized
+    def plan_version(self):
+        try:
+            return SoftwarePlanVersion.objects.get(plan=self.args[0], id=self.args[1])
+        except SoftwarePlan.DoesNotExist:
+            raise Http404()
+
+    @property
+    def page_context(self):
+        return {
+            'plan_versions': [self.plan_version],
+            'plan_id': self.args[0],
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=self.args)
+
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -680,6 +707,25 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
     @property
+    def page_context(self):
+        return {
+            'billing_records': self.billing_records,
+            'can_send_email': self.can_send_email,
+            'invoice_info_form': self.invoice_info_form,
+            'resend_email_form': self.resend_email_form,
+            'suppress_invoice_form': self.suppress_invoice_form,
+        }
+
+    @property
+    @memoized
+    def billing_records(self):
+        raise NotImplementedError
+
+    @property
+    def can_send_email(self):
+        raise NotImplementedError
+
+    @property
     @memoized
     def resend_email_form(self):
         if self.request.method == 'POST':
@@ -690,6 +736,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
     @memoized
     def invoice_info_form(self):
         return InvoiceInfoForm(self.invoice)
+
+    @property
+    @memoized
+    def suppress_invoice_form(self):
+        if self.request.method == 'POST':
+            return SuppressInvoiceForm(self.invoice, self.request.POST)
+        return SuppressInvoiceForm(self.invoice)
 
     def post(self, request, *args, **kwargs):
         if 'adjust_balance' in self.request.POST:
@@ -706,6 +759,10 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                 except Exception as e:
                     messages.error(request,
                                    "Could not send emails due to: %s" % e)
+        elif SuppressInvoiceForm.submit_kwarg in self.request.POST:
+            if self.suppress_invoice_form.is_valid():
+                self.suppress_invoice_form.suppress_invoice()
+                return HttpResponseRedirect(InvoiceInterface.get_url())
         return self.get(request, *args, **kwargs)
 
 
@@ -726,13 +783,8 @@ class WireInvoiceSummaryView(InvoiceSummaryViewBase):
         return self.invoice.wirebillingrecord_set.all()
 
     @property
-    def page_context(self):
-        return {
-            'billing_records': self.billing_records,
-            'invoice_info_form': self.invoice_info_form,
-            'resend_email_form': self.resend_email_form,
-            'can_send_email': True
-        }
+    def can_send_email(self):
+        return True
 
 
 class InvoiceSummaryView(InvoiceSummaryViewBase):
@@ -765,15 +817,17 @@ class InvoiceSummaryView(InvoiceSummaryViewBase):
         return adjustment_list.order_by('-date_created')
 
     @property
+    def can_send_email(self):
+        return not self.invoice.subscription.do_not_invoice
+
+    @property
     def page_context(self):
-        return {
+        context = super(InvoiceSummaryView, self).page_context
+        context.update({
             'adjust_balance_form': self.adjust_balance_form,
             'adjustment_list': self.adjustment_list,
-            'billing_records': self.billing_records,
-            'invoice_info_form': self.invoice_info_form,
-            'resend_email_form': self.resend_email_form,
-            'can_send_email': not self.invoice.subscription.do_not_invoice,
-        }
+        })
+        return context
 
 
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):

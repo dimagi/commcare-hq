@@ -9,14 +9,12 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_response
 
 from corehq.apps.domain.decorators import (
     domain_admin_required,
-    login_and_domain_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
@@ -164,31 +162,6 @@ class DefaultConsumptionView(BaseCommTrackManageView):
                 reverse(DefaultConsumptionView.urlname, args=[self.domain])
             )
         return self.get(request, *args, **kwargs)
-
-
-@login_and_domain_required
-def api_query_supply_point(request, domain):
-    id = request.GET.get('id')
-    query = request.GET.get('name', '').lower()
-
-    def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.display_name}
-
-    if id:
-        try:
-            loc = SQLLocation.objects.get(location_id=id)
-        except SQLLocation.DoesNotExist:
-            return json_response(
-                {'message': 'no location with id %s found' % id},
-                status_code=404,
-            )
-        else:
-            return json_response(loc_to_payload(loc))
-    else:
-        locs = SQLLocation.objects.filter(domain=domain)
-        if query:
-            locs = locs.filter(name__icontains=query)
-        return json_response(map(loc_to_payload, locs[:10]))
 
 
 class SMSSettingsView(BaseCommTrackManageView):

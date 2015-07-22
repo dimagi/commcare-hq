@@ -1,9 +1,15 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "style/bootstrap2/two_column.html" %}
+{% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
 {% block head %}
     {{ block.super }}
+{% endblock %}
+
+{% block js %}
+    {{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -134,17 +140,15 @@
                     </div>                
                     <legend>                    
                         {% trans "Corresponding Key/Value fields from Excel" %}
-                        <div style="display:inline; position:relative; top:-5px;">
-                            <a href="#" class="hq-help no-click" id="help_key_value_pairs">
-                                <i class="icon-question-sign" 
-                                    data-title='{% trans "Key/Value Pairs" %}'
-                                    data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
-                                    data-trigger="hover" data-original-title=""></i>
-                            </a>
-                        </div>
+                        <span class="hq-help-template"
+                            data-title='{% trans "Key/Value Pairs" %}'
+                            data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
+                        ></span>
                         <script>
                             $(function () {
-                                $('#help_key_value_pairs').hqHelp();
+                                $('.hq-help-template').each(function () {
+                                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                                });
                             });
                         </script>                         
                     </legend>

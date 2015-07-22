@@ -28,3 +28,10 @@ class AdjustDatetimesTest(SimpleTestCase):
                 adjust_datetimes({'datetime': '2013-03-09T06:30:09.007+03'}),
                 {'datetime': '2013-03-09T06:30:09.007000Z'}
             )
+
+    def test_match_no_parse(self):
+        fake_datetime = '2015-07-14 2015-06-07 '
+        self.assertEqual(
+            adjust_datetimes({'fake_datetime': fake_datetime}),
+            {'fake_datetime': fake_datetime}
+        )

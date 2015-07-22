@@ -1,0 +1,69 @@
+{% extends 'style/bootstrap2/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        var exportManager = new ExportManager({
+            bulk_download_notice_text: '{{ bulk_download_notice_text }}',
+            is_new_exporter: true,
+            bulkDownloadPageUrlRoot: '{{ download_page_url_root }}'
+        });
+        ko.applyBindings(exportManager, $('#export-ui').get(0));
+
+        var bulkExportTitle = "{% trans "What is Bulk Export?" %}";
+        var bulkExportContent = (
+            "{% trans "Bulk Export creates a single Excel file with each export as a separate sheet inside that file." %}"
+            + "<br /><br />{% trans "NOTE: Excel 2007+ is currently the only bulk export format supported." %}"
+        );
+        $('.bulk-export-info').popover({
+            title: bulkExportTitle,
+            content: bulkExportContent,
+            placement: 'left',
+            trigger: 'hover',
+            html: 'true'
+        });
+    </script>
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Exports"|safe }}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% if report.breadcrumbs %}
+            {% for crumb in report.breadcrumbs %}
+                <li>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                </li>
+            {% endfor %}
+        {% endif %}
+        <li class="active">
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <h2>{{ report.title }}</h2>
+    <a href="{% url create_export_view_name domain %}" class="btn btn-success">
+        <i class="icon-white icon-plus">
+            {% trans 'Create New Export' %}
+        </i>
+    </a>
+    <div id="export-ui">
+        {% if saved_exports %}
+            <p>
+                {% include 'reports/partials/bulk_export_notice.html' with is_revamped=True%}
+                {% include 'reports/partials/saved_exports.html' %}
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,10 +1,12 @@
 .row_chart {
+    border: 1px solid lightslategray;
     width: 45%;
     float: left;
     margin: 20px;
 }
 
 .row_chart_all {
+    border: 1px solid lightslategray;
     float: left;
     width: 90%;
     margin: 20px;
@@ -64,4 +66,8 @@ tr:nth-child(n+2) {
 
 #report_table_product_selection_pane td {
     padding: 0;
+}
+
+.nv-pieChart .nv-legendWrap {
+    display: none;
 }

@@ -1,11 +1,9 @@
 import re
+
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
-from casexml.apps.stock import const
-from decimal import Decimal
-from corehq.apps.products.models import SQLProduct
 from south.modelsinspector import add_introspection_rules
+
+from corehq.apps.products.models import SQLProduct
 
 
 class TruncatingCharField(models.CharField):
@@ -99,40 +97,4 @@ class DocDomainMapping(models.Model):
     doc_type = models.CharField(max_length=100, db_index=True)
     domain_name = models.CharField(max_length=100, db_index=True)
 
-
-# signal catchers
-@receiver(pre_save, sender=StockTransaction)
-def create_reconciliation_transaction(sender, instance, *args, **kwargs):
-    creating = instance.pk is None
-    if creating and instance.type == const.TRANSACTION_TYPE_STOCKONHAND:
-        previous_transaction = instance.get_previous_transaction()
-        # only soh reports that have changed the stock create inferred transactions
-        if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
-            amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
-            domain = instance.report.domain
-            exclude_invalid_periods = False
-            if domain:
-                from corehq.apps.commtrack.models import CommtrackConfig
-                config = CommtrackConfig.for_domain(domain)
-                if config:
-                    exclude_invalid_periods = config.consumption_config.exclude_invalid_periods
-            if not domain or not exclude_invalid_periods or amt < 0:
-                StockTransaction.objects.create(
-                    report=instance.report,
-                    case_id=instance.case_id,
-                    section_id=instance.section_id,
-                    product_id=instance.product_id,
-                    type=const.TRANSACTION_TYPE_CONSUMPTION if amt < 0 else const.TRANSACTION_TYPE_RECEIPTS,
-                    quantity=amt,
-                    stock_on_hand=instance.stock_on_hand,
-                    subtype=const.TRANSACTION_SUBTYPE_INFERRED,
-                )
-
-
-@receiver(pre_save, sender=StockTransaction)
-def populate_sql_product(sender, instance, *args, **kwargs):
-    # some day StockTransaction.sql_product should be the canonical source of
-    # the couch product_id, but until then lets not force people to
-    # look up the SQLProduct every time..
-    if not instance.sql_product_id and instance.product_id:
-        instance.sql_product = SQLProduct.objects.get(product_id=instance.product_id)
+from .signals import *

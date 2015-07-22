@@ -11,7 +11,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
+
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
@@ -23,9 +24,9 @@ from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
 
 # Bootstrap 3 Crispy Forms
-from bootstrap3_crispy import layout as cb3_layout
-from bootstrap3_crispy import helper as cb3_helper
-from bootstrap3_crispy import bootstrap as twbscrispy
+from crispy_forms import layout as cb3_layout
+from crispy_forms import helper as cb3_helper
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re
@@ -172,6 +173,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
+        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
         username_controls = []
@@ -179,6 +183,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 _('Username'), self.username)
             )
+
+        api_key_controls = [
+            hqcrispy.StaticField(_('API Key'), api_key),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _('Generate API Key'),
+                    type="button",
+                    id='generate-api-key',
+                ),
+                css_class="form-group"
+            ),
+        ]
 
         self.fields['language'].label = _("My Language")
 
@@ -202,6 +218,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             cb3_layout.Fieldset(
                 _("Other Options"),
                 hqcrispy.Field('language'),
+                cb3_layout.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -416,7 +433,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
+            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }))
 
 
@@ -466,10 +483,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         from corehq.apps.users.views.mobile import ListCommCareUsersView
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
-            crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
                 'first_name',
@@ -485,7 +498,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+                             data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             crispy.Field('confirm_product_agreement'),
             FormActions(

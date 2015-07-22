@@ -28,14 +28,17 @@ class BaseDomainTest(TestCase):
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
 
+        self.another_domain = Domain(name='anotherdomain', is_active=True)
+        self.another_domain.save()
         self.mugglename = 'muggle'
-        self.muggle = WebUser.create('anotherdomain', self.mugglename, self.password)
+        self.muggle = WebUser.create(self.another_domain.name, self.mugglename, self.password)
         self.muggle.save()
 
     def tearDown(self):
         self.user.delete()
         self.domain.delete()
         self.muggle.delete()
+        self.another_domain.delete()
 
 
 class TestTransferDomainForm(BaseDomainTest):

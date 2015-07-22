@@ -7,6 +7,8 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -73,7 +75,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain, DomainCounter
 from corehq.apps.groups.models import Group
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
+from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -152,7 +154,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
-    return render(request, "reminders/partial/list_reminders.html", {
+    return render(request, "reminders/list_broadcasts.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
@@ -1234,7 +1236,7 @@ def add_sample(request, domain, sample_id=None):
 def sample_list(request, domain):
     context = {
         "domain" : domain,
-        "samples": CommCareCaseGroup.get_by_domain(domain)
+        "samples": get_case_groups_in_domain(domain)
     }
     return render(request, "reminders/partial/sample_list.html", context)
 
@@ -1431,7 +1433,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        data = CommCareCaseGroup.get_db().view(
+        data = SurveyKeyword.get_db().view(
             'reminders/survey_keywords',
             reduce=True,
             startkey=[self.domain],
@@ -1464,8 +1466,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1473,7 +1473,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),
@@ -1507,35 +1507,29 @@ def int_or_none(i):
 
 @reminders_framework_permission
 def rule_progress(request, domain):
-    handler_id = request.GET.get("handler_id", None)
-    response = {
-        "success": False,
-    }
+    client = get_redis_client()
+    handlers = CaseReminderHandler.get_handlers(domain,
+        reminder_type_filter=REMINDER_TYPE_DEFAULT)
 
-    try:
-        assert isinstance(handler_id, basestring)
-        handler = CaseReminderHandler.get(handler_id)
-        assert handler.doc_type == "CaseReminderHandler"
-        assert handler.domain == domain
+    response = {}
+    for handler in handlers:
+        info = {}
         if handler.locked:
-            response["complete"] = False
+            info['complete'] = False
             current = None
             total = None
-            # It shouldn't be necessary to lock this out, but a deadlock can
-            # happen in rare cases without it
-            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-                client = get_redis_client()
-                current = client.get("reminder-rule-processing-current-%s" % handler_id)
-                total = client.get("reminder-rule-processing-total-%s" % handler_id)
-            response["current"] = int_or_none(current)
-            response["total"] = int_or_none(total)
-            response["success"] = True
+
+            try:
+                current = client.get('reminder-rule-processing-current-%s' % handler._id)
+                total = client.get('reminder-rule-processing-total-%s' % handler._id)
+            except:
+                continue
+
+            info['current'] = int_or_none(current)
+            info['total'] = int_or_none(total)
         else:
-            response["complete"] = True
-            response["success"] = True
-    except:
-        pass
+            info['complete'] = True
+
+        response[handler._id] = info
 
     return HttpResponse(json.dumps(response))
-
-

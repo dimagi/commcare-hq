@@ -31,11 +31,13 @@ from corehq.apps.accounting.exceptions import (
     SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
+from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
+    is_active_subscription,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -118,10 +120,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
         (TRIAL, "This is a Trial Plan"),
+        (TRIAL_INTERNAL, "This is special Trial plan that Dimagi manages."),
     )
 
 
@@ -169,11 +173,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
-        (TRIAL, "30 Day Trial")
+        (TRIAL, "30 Day Trial"),
+        (TRIAL_INTERNAL, "Custom Trial Period"),
     )
 
 
@@ -239,38 +245,6 @@ class Currency(models.Model):
         return default
 
 
-class BillingAccountAdmin(models.Model):
-    web_user = models.CharField(max_length=80, db_index=True)
-    domain = models.CharField(
-        max_length=256, null=True, blank=True, db_index=True
-    )
-    last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return "Billing Admin %(web_user)s for domain %(domain)s" % {
-            'web_user': self.web_user,
-            'domain': self.domain,
-        }
-
-    @classmethod
-    def get_admin_status_and_account(cls, web_user, domain):
-        if not isinstance(web_user, WebUser):
-            return False, None
-        account = BillingAccount.get_account_by_domain(domain)
-        is_domain_admin = web_user.is_domain_admin(domain)
-        if account is None:
-            return is_domain_admin, None
-        admins = account.billing_admins.filter(domain=domain)
-        if not admins.exists():
-            # BillingAccountAdmins for this domain have NOT been
-            # specified. This was likely an account created
-            # from the accounting admin side.
-            return is_domain_admin, account
-        # BillingAccountAdmins for this domain have been specified
-        admins = admins.filter(web_user=web_user.username)
-        return (admins.count() > 0 and is_domain_admin), account
-
-
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -286,7 +260,6 @@ class BillingAccount(models.Model):
     created_by = models.CharField(max_length=80)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    billing_admins = models.ManyToManyField(BillingAccountAdmin, null=True)
     dimagi_contact = models.CharField(max_length=80, null=True, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
@@ -333,12 +306,6 @@ class BillingAccount(models.Model):
                 entry_point=entry_point,
             )
             account.save()
-            if not created_by_invoicing:
-                billing_admin = BillingAccountAdmin.objects.get_or_create(
-                    domain=domain, web_user=created_by,
-                )[0]
-                account.billing_admins.add(billing_admin)
-                account.save()
         return account, is_new
 
     @classmethod
@@ -822,6 +789,8 @@ class Subscriber(models.Model):
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
 
+        subscription_upgrade_or_downgrade.send_robust(self.domain, domain=self.domain)
+
 
 class Subscription(models.Model):
     """
@@ -936,6 +905,74 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
+    def raise_conflicting_dates(self, date_start, date_end):
+        """Raises a subscription Adjustment error if the specified date range
+        conflicts with other subscriptions related to this subscriber.
+        """
+        for sub in Subscription.objects.filter(
+            subscriber=self.subscriber).exclude(id=self.id
+        ).all():
+            related_has_no_end = sub.date_end is None
+            current_has_no_end = date_end is None
+            start_before_related_end = (
+                date_start is not None and sub.date_end is not None
+                and date_start < sub.date_end
+            )
+            start_before_related_start = (
+                date_start is not None and date_start < sub.date_start
+            )
+            start_after_related_start = (
+                date_start is not None and date_start > sub.date_start
+            )
+            end_before_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end < sub.date_end
+            )
+            end_after_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end > sub.date_end
+            )
+            end_after_related_start = (
+                date_end is not None and date_end > sub.date_start
+            )
+
+            if ((start_before_related_end and start_after_related_start)
+                or (start_after_related_start and related_has_no_end)
+                or (end_after_related_start and end_before_related_end)
+                or (end_after_related_start and related_has_no_end)
+                or (start_before_related_start and end_after_related_end)
+                or (start_before_related_end and current_has_no_end)
+            ):
+                raise SubscriptionAdjustmentError(
+                    "The start date of %(start_date)s conflicts with the "
+                    "subscription dates to %(related_sub)s." % {
+                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
+                        'related_sub': sub,
+                   }
+                )
+
+    def terminate_all_active_subscriptions(self, excluded_id=None,
+                                           web_user=None, note=None,
+                                           method=None):
+        active_subs = Subscription.objects.filter(
+            subscriber=self.subscriber, is_active=True
+        )
+        if excluded_id is not None:
+            active_subs = active_subs.exclude(id=excluded_id)
+        today = datetime.date.today()
+
+        for sub in active_subs:
+            if sub.id == self.id:
+                sub = self
+            sub.is_active = False
+            if sub.date_end is None or sub.date_end > today:
+                sub.date_end = today
+            sub.save()
+            SubscriptionAdjustment.record_adjustment(
+                sub, reason=SubscriptionAdjustmentReason.MODIFY,
+                method=method, note=note, web_user=web_user,
+            )
+
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
                             salesforce_contract_id=None,
@@ -951,7 +988,7 @@ class Subscription(models.Model):
             self.is_active = False
 
         if (self.date_start > today and date_start is not None
-            and date_start > today and not date_start > self.date_end
+            and date_start > today and (self.date_end is None or not date_start > self.date_end)
         ):
             self.date_start = date_start
         elif self.date_end is not None and date_start > self.date_end:
@@ -963,6 +1000,8 @@ class Subscription(models.Model):
                 "Can't change the start date of a subscription to a date that "
                 "is today or in the past."
             )
+
+        self.raise_conflicting_dates(self.date_start, self.date_end)
 
         if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
             self.date_delay_invoicing = date_delay_invoicing
@@ -984,7 +1023,8 @@ class Subscription(models.Model):
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
-                    transfer_credits=True, internal_change=False):
+                    transfer_credits=True, internal_change=False, account=None,
+                    do_not_invoice=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -998,17 +1038,18 @@ class Subscription(models.Model):
         new_start_date = today if self.date_start < today else self.date_start
 
         new_subscription = Subscription(
-            account=self.account,
+            account=account if account else self.account,
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=new_start_date,
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
-            is_active=self.is_active,
-            do_not_invoice=self.do_not_invoice,
+            is_active=is_active_subscription(new_start_date, date_end),
+            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            **kwargs
         )
         new_subscription.save()
 
@@ -1195,11 +1236,11 @@ class Subscription(models.Model):
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s" % {
+                        "ends %(ending_on)s") % {
                 'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
-            })
+            }
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
@@ -1211,10 +1252,9 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_admins = self.account.billing_admins.filter(
-                domain=self.subscriber.domain
-            )
-            emails |= {admin.web_user for admin in billing_admins}
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
+            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
@@ -1248,6 +1288,38 @@ class Subscription(models.Model):
                     'domain': domain_name,
                     'email': email,
                 })
+
+    def send_dimagi_ending_reminder_email(self):
+        if self.date_end is None:
+            raise SubscriptionReminderError(
+                "This subscription has no end date."
+            )
+        if self.account.dimagi_contact is None:
+            raise SubscriptionReminderError(
+                "This subscription has no Dimagi contact."
+            )
+
+        domain = self.subscriber.domain
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
+                  domain=domain,
+                  end_date=end_date)
+        template = 'accounting/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        context = {
+            'domain': domain,
+            'end_date': end_date,
+            'contacts': self.account.billingcontactinfo.emails,
+            'dimagi_contact': email,
+        }
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        send_HTML_email(
+            subject, email, email_html,
+            text_content=email_plaintext,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+        )
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -1330,9 +1402,9 @@ class Subscription(models.Model):
             raise NewSubscriptionError(_(
                 "There is already a subscription '%s' with no end date "
                 "that conflicts with the start and end dates of this "
-                "subscription." %
+                "subscription.") %
                 future_subscription_no_end.latest('date_created')
-            ))
+            )
 
         future_subscriptions = available_subs.filter(
             date_end__gt=date_start
@@ -1343,12 +1415,12 @@ class Subscription(models.Model):
             raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s." % {
+                "subscription %(start)s - %(end)s.") % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
                 }
-            )))
+            ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1370,12 +1442,14 @@ class Subscription(models.Model):
             date_end=date_end,
             **kwargs
         )
-        subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version,
-            web_user=web_user,
-            new_subscription=subscription,
-            internal_change=internal_change,
-        )
+        subscription.is_active = is_active_subscription(date_start, date_end)
+        if subscription.is_active:
+            subscriber.apply_upgrades_and_downgrades(
+                new_plan_version=plan_version,
+                web_user=web_user,
+                new_subscription=subscription,
+                internal_change=internal_change,
+            )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
             web_user=web_user
@@ -1485,11 +1559,26 @@ class WireInvoice(InvoiceBase):
     def is_wire(self):
         return True
 
+    @property
+    def is_prepayment(self):
+        return False
+
     def get_domain(self):
         return self.domain
 
     def get_total(self):
         return self.balance
+
+
+class WirePrepaymentInvoice(WireInvoice):
+    class Meta:
+        proxy = True
+
+    items = []
+
+    @property
+    def is_prepayment(self):
+        return True
 
 
 class Invoice(InvoiceBase):
@@ -1645,6 +1734,10 @@ class BillingRecordBase(models.Model):
     def text_template(self):
         return self.INVOICE_TEXT_TEMPLATE
 
+    @property
+    def should_send_email(self):
+        raise NotImplementedError("should_send_email is required")
+
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
@@ -1652,7 +1745,6 @@ class BillingRecordBase(models.Model):
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf._id
         record._pdf = invoice_pdf
-        record.skipped_email = invoice.is_hidden
         record.save()
         return record
 
@@ -1703,8 +1795,11 @@ class BillingRecordBase(models.Model):
         raise NotImplementedError()
 
     def send_email(self, contact_emails=None):
-        if self.skipped_email:
+        if not self.should_send_email:
+            self.skipped_email = True
+            self.save()
             return
+
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),
@@ -1756,6 +1851,11 @@ class WireBillingRecord(BillingRecordBase):
     INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
 
+    @property
+    def should_send_email(self):
+        hidden = self.invoice.is_hidden
+        return not hidden
+
     def is_email_throttled(self):
         return False
 
@@ -1768,6 +1868,14 @@ class WireBillingRecord(BillingRecordBase):
 
     def email_from(self):
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
+
+
+class WirePrepaymentBillingRecord(WireBillingRecord):
+    class Meta:
+        proxy = True
+
+    def email_subject(self):
+        return _("Your prepayment invoice")
 
 
 class BillingRecord(BillingRecordBase):
@@ -1789,6 +1897,15 @@ class BillingRecord(BillingRecordBase):
         else:
             return self.INVOICE_TEXT_TEMPLATE
 
+    @property
+    def should_send_email(self):
+        subscription = self.invoice.subscription
+        autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
+        small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
+                            subscription.service_type == SubscriptionType.CONTRACTED)
+        hidden = self.invoice.is_hidden
+        return not (autogenerate or small_contracted or hidden)
+
     def is_email_throttled(self):
         month = self.invoice.date_start.month
         year = self.invoice.date_start.year
@@ -1804,22 +1921,23 @@ class BillingRecord(BillingRecordBase):
             is_hidden=False,
             subscription__subscriber__domain=self.invoice.get_domain(),
         ))
-        is_small_invoice = self.invoice.balance <= SMALL_INVOICE_THRESHOLD
+        is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
+        payment_status = (_("Paid")
+                          if self.invoice.is_paid or total_balance == 0
+                          else _("Payment Required"))
         context.update({
-            'plan_name': "%(product)s %(name)s" % {
-                'product': self.invoice.subscription.plan_version.core_product,
-                'name': self.invoice.subscription.plan_version.plan.edition,
-            },
+            'plan_name': self.invoice.subscription.plan_version.plan.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': total_balance,
-            'is_total_balance_due': total_balance > SMALL_INVOICE_THRESHOLD,
+            'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
+            'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
-                'billing_account_id': self.invoice.subscription.account.id,
+                'billing_account': self.invoice.subscription.account.name,
                 'billing_contacts': self.invoice.contact_emails,
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
@@ -1861,7 +1979,8 @@ class InvoicePdf(SafeSaveDocument):
             applied_tax=getattr(invoice, 'applied_tax', Decimal('0.000')),
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
-            is_wire=invoice.is_wire
+            is_wire=invoice.is_wire,
+            is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
         if not invoice.is_wire:
@@ -1878,6 +1997,17 @@ class InvoicePdf(SafeSaveDocument):
                         line_item.applied_credit,
                         line_item.total
                     )
+
+        if invoice.is_wire and invoice.is_prepayment:
+            unit_cost = 1
+            applied_credit = 0
+            for item in invoice.items:
+                template.add_item(item['type'],
+                                  item['amount'],
+                                  unit_cost,
+                                  item['amount'],
+                                  applied_credit,
+                                  item['amount'])
 
         template.get_pdf()
         filename = self.get_filename(invoice)
@@ -2148,10 +2278,7 @@ class PaymentMethod(models.Model):
     :customer_id: is used by the API of the payment method we're using that
     uniquely identifies the payer on their end.
     """
-    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT,
-                                db_index=True)
-    billing_admin = models.ForeignKey(BillingAccountAdmin,
-                                      on_delete=models.PROTECT, db_index=True)
+    web_user = models.CharField(max_length=80, null=True, db_index=True)
     method_type = models.CharField(max_length=50,
                                    default=PaymentMethodType.STRIPE,
                                    choices=PaymentMethodType.CHOICES,

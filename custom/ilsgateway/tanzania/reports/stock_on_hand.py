@@ -137,8 +137,9 @@ class SohPercentageTableData(ILSData):
                     month = enddate.month - 1 if enddate.month != 1 else 12
                     year = enddate.year - 1 if enddate.month == 1 else enddate.year
                     stockouts = StockTransaction.objects.filter(
-                        case_id__in=fac_ids,
+                        case_id__in=list(fac_ids),
                         stock_on_hand__lte=0,
+                        report__domain=self.config['domain'],
                         report__date__range=[
                             datetime(year, month, 1),
                             datetime(enddate.year, enddate.month, 1)
@@ -164,7 +165,7 @@ class SohPercentageTableData(ILSData):
                 ]
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        location_id=org_summary[0].location_id,
+                        location_id=loc.location_id,
                         product=product,
                         date__range=(self.config['startdate'], self.config['enddate'])
                     ).aggregate(without_stock=Avg('without_stock'), total=Max('total'))

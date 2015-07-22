@@ -96,13 +96,6 @@ WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
 WORKFLOW_FORM = 'form'
 
-AUTO_SELECT_USER = 'user'
-AUTO_SELECT_FIXTURE = 'fixture'
-AUTO_SELECT_CASE = 'case'
-AUTO_SELECT_LOCATION = 'location'
-AUTO_SELECT_RAW = 'raw'
-AUTO_SELECT_USERCASE = 'usercase'
-
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -128,9 +121,11 @@ form_id_references = []
 
 def FormIdProperty(expression, **kwargs):
     """
-    Create a StringProperty that references a form ID.
-    :param level:   From where is the form referenced? One of 'app', 'module', 'form'
-    :param path:    jsonpath to field that holds the form ID
+    Create a StringProperty that references a form ID. This is necessary because
+    form IDs change when apps are copied so we need to make sure we update
+    any references to the them.
+    :param expression:  jsonpath expression that can be used to find the field
+    :param kwargs:      arguments to be passed to the underlying StringProperty
     """
     path_expression = parse(expression)
     assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
@@ -1020,7 +1015,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         module_case_type = self.get_module().case_type
         if action_type == 'open_case':
             return 'case_id_new_{}_0'.format(module_case_type)
-        if action_type == 'subcase':
+        if action_type == 'subcases':
             opens_case = 'open_case' in self.active_actions()
             subcase_type = self.actions.subcases[subcase_index].case_type
             if opens_case:
@@ -1283,6 +1278,7 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
+    radius_function = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):
@@ -1513,6 +1509,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    root_module_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1560,6 +1557,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
             module for module in self.get_app().get_modules()
             if module.unique_id != self.unique_id and getattr(module, 'root_module_id', None) == self.unique_id
         ]
+
+    @property
+    def root_module(self):
+        if self.root_module_id:
+            return self._parent.get_module_by_unique_id(self.root_module_id)
 
     def requires_case_details(self):
         return False
@@ -2148,7 +2150,6 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
-    root_module_id = StringProperty()
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2282,11 +2283,6 @@ class AdvancedModule(ModuleBase):
     def rename_lang(self, old_lang, new_lang):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
-
-    @property
-    def root_module(self):
-        if self.root_module_id:
-            return self._parent.get_module_by_unique_id(self.root_module_id)
 
     def requires_case_details(self):
         if self.case_list.show:
@@ -2590,7 +2586,7 @@ class CareplanModule(ModuleBase):
     task_details = SchemaProperty(DetailPair)
 
     @classmethod
-    def new_module(cls, app, name, lang, target_module_id, target_case_type):
+    def new_module(cls, name, lang, target_module_id, target_case_type):
         lang = lang or 'en'
         module = CareplanModule(
             name={lang: name or ugettext("Care Plan")},

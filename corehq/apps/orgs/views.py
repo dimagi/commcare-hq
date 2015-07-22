@@ -10,10 +10,8 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 
-from corehq.apps.announcements.models import Notification
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqadmin.reporting.reports import get_general_stats_data
 from corehq.apps.hqwebapp.utils import InvitationView
@@ -39,36 +37,24 @@ def base_context(request, organization, update_form=None):
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
-        "update_form": update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email,
-                                                            'url': organization.url, 'location': organization.location})
+        "update_form": update_form or UpdateOrgInfo(initial={
+            'org_title': organization.title, 'email': organization.email,
+            'url': organization.url, 'location': organization.location})
     }
+
 
 @require_superuser
 def orgs_base(request, template="orgs/orgs_base.html"):
     organizations = Organization.get_all()
-    vals = dict(orgs = organizations)
+    vals = dict(orgs=organizations)
     return render(request, template, vals)
-
-class MainNotification(Notification):
-    doc_type = 'OrgMainNotification'
-
-    def template(self):
-        return 'orgs/partials/main_notification.html'
 
 
 @org_member_required
-def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
+def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None,
+                 add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
     organization = request.organization
-
-    class LandingNotification(Notification):
-        doc_type = 'OrgLandingNotification'
-
-        def template(self):
-            return 'orgs/partials/landing_notification.html'
-
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
-    LandingNotification.display_if_needed(messages, request)
 
     reg_form_empty = not form
     add_form_empty = not add_form
@@ -121,15 +107,6 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
-    class MembersNotification(Notification):
-        doc_type = 'OrgMembersNotification'
-
-        def template(self):
-            return 'orgs/partials/members_notification.html'
-
-    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
-    MembersNotification.display_if_needed(messages, request)
-
     ctxt = base_context(request, request.organization)
     ctxt["org_admins"] = [member.username for member in ctxt["members"] if member.is_org_admin(org)]
     ctxt["tab"] = "members"
@@ -139,15 +116,6 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
-    class TeamsNotification(Notification):
-        doc_type = 'OrgTeamsNotification'
-
-        def template(self):
-            return 'orgs/partials/teams_notification.html'
-
-    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
-    TeamsNotification.display_if_needed(messages, request)
-
     ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 
@@ -307,7 +275,8 @@ class OrgInvitationView(InvitationView):
         user.add_org_membership(self.organization)
         user.save()
 
-@transaction.commit_on_success
+
+@transaction.atomic
 def accept_invitation(request, org, invitation_id):
     # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)
@@ -341,15 +310,6 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
-    class TeamMembersNotification(Notification):
-        doc_type = 'OrgTeamMembersNotification'
-
-        def template(self):
-            return 'orgs/partials/team_members_notification.html'
-
-    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
-    TeamMembersNotification.display_if_needed(messages, request)
-
     ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 

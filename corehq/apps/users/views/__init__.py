@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.style.decorators import (
-    check_preview_bootstrap3,
+    use_bootstrap3,
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
@@ -45,7 +45,13 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
-from corehq.apps.sms import verify as smsverify
+from corehq.apps.sms.verify import (
+    initiate_sms_verification_workflow,
+    VERIFICATION__ALREADY_IN_USE,
+    VERIFICATION__ALREADY_VERIFIED,
+    VERIFICATION__RESENT_PENDING,
+    VERIFICATION__WORKFLOW_STARTED,
+)
 from corehq.util.couch import get_document_or_404
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -380,7 +386,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users_b3'
 
-    @method_decorator(check_preview_bootstrap3())
+    @method_decorator(use_bootstrap3())
     @method_decorator(use_knockout_js())
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -679,7 +685,10 @@ class UserInvitationView(InvitationView):
     need = ["domain"]
 
     def added_context(self):
-        return {'domain': self.domain}
+        return {
+            'domain': self.domain,
+            'invite_type': _('Project'),
+        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
@@ -703,9 +712,12 @@ class UserInvitationView(InvitationView):
         project = Domain.get_by_name(self.domain)
         user.add_domain_membership(domain=self.domain)
         user.set_role(self.domain, invitation.role)
-        if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+
+        if project.commtrack_enabled:
             user.get_domain_membership(self.domain).program_id = invitation.program
+
+        if project.locations_enabled:
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
         user.save()
 
 
@@ -851,14 +863,15 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    try:
-        # send verification message
-        smsverify.send_verification(domain, user, phone_number)
-
-        # create pending verified entry if doesn't exist already
-        user.save_verified_number(domain, phone_number, False, None)
-    except BadSMSConfigException:
-        messages.error(request, "Could not verify phone number. It seems there is no usable SMS backend.")
+    result = initiate_sms_verification_workflow(user, phone_number)
+    if result == VERIFICATION__ALREADY_IN_USE:
+        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+    elif result == VERIFICATION__ALREADY_VERIFIED:
+        messages.error(request, _('Phone number is already verified.'))
+    elif result == VERIFICATION__RESENT_PENDING:
+        messages.success(request, _('Verification message resent.'))
+    elif result == VERIFICATION__WORKFLOW_STARTED:
+        messages.success(request, _('Verification workflow started.'))
 
     if user.is_commcare_user():
         from corehq.apps.users.views.mobile import EditCommCareUserView

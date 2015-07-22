@@ -12,6 +12,8 @@ from dimagi.ext.couchdbkit import (
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
+    get_report_configs_for_domain, get_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -22,7 +24,6 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from corehq.pillows.utils import get_deleted_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -168,12 +169,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
         return None
 
-    @property
-    def table_exists(self):
-        adapter = IndicatorSqlAdapter(get_engine(), self)
-        table = adapter.get_table()
-        return table.exists()
-
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -202,11 +197,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """
         Return the number of ReportConfigurations that reference this data source.
         """
-        return DataSourceConfiguration.view(
-            'userreports/report_configs_by_data_source',
-            reduce=True,
-            key=[self.domain, self._id]
-        ).one()['value']
+        return get_number_of_report_configs_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
@@ -301,6 +292,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 return filter
         return None
 
+    def get_languages(self):
+        """
+        Return the languages used in this report's column and filter display properties.
+        Note that only explicitly identified languages are returned. So, if the
+        display properties are all strings, "en" would not be returned.
+        """
+        langs = set()
+        for item in self.columns + self.filters:
+            if isinstance(item['display'], dict):
+                langs |= set(item['display'].keys())
+        return langs
+
     def validate(self, required=True):
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
@@ -320,7 +323,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             'Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
-            [c.column_id for c in self.report_columns],
+            [column_id for c in self.report_columns for column_id in c.get_column_ids()],
             'Columns cannot contain duplicate column_ids: {}',
         )
 
@@ -332,17 +335,11 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return sorted(
-            cls.view('userreports/report_configs_by_domain', key=domain, reduce=False, include_docs=True),
-            key=lambda report: report.title,
-        )
+        return get_report_configs_for_domain(domain)
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/report_configs_by_domain',
-                                             reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
-            yield cls.wrap(result)
+        return get_all_report_configs()
 
 
 class CustomDataSourceConfiguration(JsonObject):

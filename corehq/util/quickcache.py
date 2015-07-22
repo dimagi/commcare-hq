@@ -119,6 +119,8 @@ class QuickCache(object):
         elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
+        elif value is None:
+            return 'N'
         else:
             raise ValueError('Bad type "{}": {}'.format(type(value), value))
 
@@ -272,7 +274,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
     memoize_timeout = memoize_timeout or 10
 
     if cache is None:
-        cache = TieredCache([get_cache('locmem://', timeout=memoize_timeout),
+        cache = TieredCache([get_cache('django.core.cache.backends.locmem.LocMemCache', timeout=memoize_timeout),
                              get_cache('default', timeout=timeout)])
 
     def decorator(fn):

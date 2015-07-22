@@ -213,7 +213,7 @@ class EditPillowError(BasePageView):
         elif action == ACTION_SEND and not len(error_ids) == 1:
             messages.error(self.request, _("Only one error may be sent to FogBugs at a time."))
         else:
-            with transaction.commit_on_success():
+            with transaction.atomic():
                 if action == ACTION_DELETE:
                     PillowError.objects.filter(id__in=error_ids).delete()
                 elif action == ACTION_RESET:

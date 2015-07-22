@@ -18,10 +18,32 @@ TODO:
     <thead data-bind="visible: columns().length > 0">
         <tr>
             <th></th>
-            <th>{% trans "Property" %}</th>
-            <th>{% trans "Display Text" %}</th>
+            <th>
+                {% trans "Property" %}
+                <!--ko if: $data.propertyHelpText -->
+                <span class="hq-help-template" data-bind="
+                    attr: {'data-content': propertyHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
+            <th>
+                {% trans "Display Text" %}
+                <!--ko if: $data.displayHelpText -->
+                <span class="hq-help-template" data-bind="
+                    attr: {'data-content': displayHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
             <!--ko if: $data.hasFormatCol -->
-            <th>{% trans "Format" %}</th>
+            <th>
+                {% trans "Format" %}
+                <!--ko if: $data.formatHelpText -->
+                <span class="hq-help-template" data-bind="
+                    if: formatHelpText,
+                    attr: {'data-content': formatHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
             <!--/ko-->
             <th></th>
         </tr>
@@ -63,7 +85,8 @@ You must delete this property to update this report.</label>
         <td class="control-group">
             <input type="text" data-bind="
                 value: displayText,
-                attr: {disabled: !existsInCurrentVersion()}
+                attr: {disabled: !existsInCurrentVersion()},
+                event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
             ">
         </td>
         <!--ko if: $parent.hasFormatCol -->

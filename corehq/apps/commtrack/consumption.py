@@ -1,7 +1,8 @@
 from casexml.apps.stock import const
 from casexml.apps.stock.models import DocDomainMapping, StockTransaction
-from corehq.apps.commtrack.models import update_stock_state_for_transaction
+from casexml.apps.stock.signals import update_stock_state_for_transaction
 from corehq.apps.products.models import Product
+from corehq.util.quickcache import quickcache
 
 
 def recalculate_domain_consumption(domain):
@@ -23,3 +24,16 @@ def recalculate_domain_consumption(domain):
             ).order_by('-report__date', '-pk')
             if filtered_transactions:
                 update_stock_state_for_transaction(filtered_transactions[0])
+
+
+@quickcache(['domain'], timeout=30 * 60)
+def should_exclude_invalid_periods(domain):
+    """
+    Whether the domain's consumption calculation should exclude invalid periods
+    """
+    from corehq.apps.commtrack.models import CommtrackConfig
+    if domain:
+        config = CommtrackConfig.for_domain(domain)
+        if config:
+            return config.consumption_config.exclude_invalid_periods
+    return False

@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'style/bootstrap2/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -39,6 +39,7 @@
         {% if adjustment_list %}
         <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
         {% endif %}
+        <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
     </ul>
 
     <div class="tab-content">
@@ -109,5 +110,8 @@
             </table>
         </div>
         {% endif %}
+        <div class="tab-pane" id="suppress">
+            {% crispy suppress_invoice_form %}
+        </div>
     </div>
 {% endblock %}

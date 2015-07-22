@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 return domain_cache[domain]
             else:
                 domain_obj = Domain.get_by_name(domain)
-                val = domain_obj.commtrack_enabled or domain_obj.locations_enabled
+                val = domain_obj.uses_locations
                 domain_cache[domain] = val
                 return val
 

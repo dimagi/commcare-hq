@@ -42,4 +42,3 @@ def process_incoming_message(*args, **kwargs):
         elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
             incoming_ivr(from_number, None,
                 "TELERIVET-%s" % kwargs["message_id"], None)
-

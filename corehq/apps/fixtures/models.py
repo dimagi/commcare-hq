@@ -1,6 +1,8 @@
 from decimal import Decimal
+from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from django.db import models
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
@@ -49,16 +51,15 @@ class FixtureDataType(Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=domain,
-        ).first()
-        return num_fixtures['value'] if num_fixtures is not None else 0
+        from corehq.apps.fixtures.dbaccessors import \
+            get_number_of_fixture_data_types_in_domain
+        return get_number_of_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True, descending=True)
+        from corehq.apps.fixtures.dbaccessors import \
+            get_fixture_data_types_in_domain
+        return get_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -523,3 +524,22 @@ class FixtureOwnership(Document):
         ).all()
 
         return ownerships
+
+
+class UserFixtureType(object):
+    LOCATION = 1
+    CHOICES = (
+        (LOCATION, "Location"),
+    )
+
+
+class UserFixtureStatus(models.Model):
+    """Keeps track of when a user needs to re-sync a fixture"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
+    last_modified = models.DateTimeField()
+
+    DEFAULT_LAST_MODIFIED = datetime.min
+
+    class Meta(object):
+        unique_together = ("user_id", "fixture_type")

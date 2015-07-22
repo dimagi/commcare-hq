@@ -11,25 +11,6 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
-            var help_text = {
-                "Deactivate User": "Deactivate a user if they are no longer active, and they will stop appearing in reports to reduce clutter. " +
-                        "Deactivating is completely reversible, so you can always reactivate them later.",
-                "Delete User": "Deleting a user removes any record of them, including all of the forms they ever submitted and their " +
-                        "associated cases. We recommend only deleting users that never corresponded to real people to begin with, " +
-                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>deactivate</strong> a user.",
-                "Case Sharing": "You have selected to use case sharing in your apps. To use basic case sharing, " +
-                        "a user must belong to exactly one case sharing group."
-            };
-
-            $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
-            });
             $('#commcare-users-list').asyncUsersList({
                 total: {{ data_list.total }},
                 start_page: {{ data_list.page }},
@@ -130,7 +111,7 @@
                     </p>
                     {% endif %}
                     <p>
-                    {% if is_billing_admin %}
+                    {% if can_edit_billing_info %}
                         <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary">{% trans 'Confirm Billing Information' %}</a>
                     {% else %}
                         {% blocktrans %}
@@ -231,17 +212,27 @@
                         <th>{% trans "Phone" %}</th>
                         <th data-bind="fadeVisible: more_columns()">{% trans "Forms" %}</th>
                         <th data-bind="fadeVisible: more_columns()">{% trans "Cases" %}</th>
+
                         {% if show_case_sharing %}
-                        <th class="help_popover"  data-bind="fadeVisible: more_columns" data-help-key="Case Sharing" data-placement="right">
-                            <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
+                        <th data-bind="fadeVisible: more_columns">
+                            {% trans "Case Sharing" %}
+                            <span class="hq-help-template"
+                                data-title="{% trans "Case Sharing" %}"
+                                data-content="You have selected to use case sharing in your apps. To use basic case sharing, a user must belong to exactly one case sharing group."
+                            ></span>
                         </th>
                         {% endif %}
                         <th data-bind="visible: !more_columns()">
                             <a href="#" data-bind="click: show_more_columns">{% trans "More..." %}</a>
                         </th>
                         {% if can_edit_user_archive %}
-                            <th class="help_popover" data-help-key="Deactivate User">
-                                <a href="#">{% trans "Deactivate" %} <i class="icon icon-question-sign"></i></a>
+                            <th>
+                                {% trans "Deactivate" %}
+                                <span class="hq-help-template"
+                                    data-title="{% trans "Deactivate User" %}"
+                                    data-content="Deactivate a user if they are no longer active, and they will stop appearing in reports to reduce clutter. Deactivating is completely reversible, so you can always reactivate them later."
+                                    data-placement="left"
+                                ></span>
                             </th>
                         {% endif %}
                     </tr>

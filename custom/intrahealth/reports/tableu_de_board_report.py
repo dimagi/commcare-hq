@@ -150,6 +150,20 @@ class TableuDeBoardReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
+        locations = []
+
+        if 'region_id' in config:
+            locations = tuple(SQLLocation.objects.get(
+                location_id=config['region_id']
+            ).archived_descendants().values_list('location_id', flat=True))
+        elif 'district_id' in config:
+            locations = tuple(SQLLocation.objects.get(
+                location_id=config['district_id']
+            ).archived_descendants().values_list('location_id', flat=True))
+
+        if locations:
+            config.update({'archived_locations': locations})
+
         if 'district_id' in config:
             return [
                 ConventureData(config=config),
@@ -158,7 +172,8 @@ class TableuDeBoardReport(MultiReport):
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
                 NombreData(config=config),
-                GestionDeLIPMTauxDeRuptures(config=config)
+                GestionDeLIPMTauxDeRuptures(config=config),
+                RecouvrementDesCouts(config=config)
             ]
         else:
             return [

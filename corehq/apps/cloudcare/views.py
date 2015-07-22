@@ -16,7 +16,7 @@ from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -251,7 +251,7 @@ def get_cases_skip_arg(request, domain):
 
 
 @cloudcare_api
-@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=50 * 60)
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -375,13 +375,14 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
-            if fixture.attrib.get("id") == fixture_id:
-                assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-                    fixture_id, len(fixture.getchildren())
-                )
-                return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-        raise Http404
+        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        if not fixture:
+            raise Http404
+        assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+            fixture_id, len(fixture.getchildren())
+        )
+        return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+
 
 @cloudcare_api
 def get_sessions(request, domain):

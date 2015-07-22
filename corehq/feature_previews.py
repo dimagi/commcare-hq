@@ -87,10 +87,7 @@ def commtrackify(domain_name, checked):
     domain = Domain.get_by_name(domain_name)
     domain.commtrack_enabled = checked
     if checked:
-        # turning on commtrack should turn on locations, but not the other way around
-        domain.locations_enabled = True
         enable_commtrack_previews(domain)
-
     domain.save()
 
 COMMTRACK = FeaturePreview(
@@ -103,7 +100,7 @@ COMMTRACK = FeaturePreview(
         "goods and materials, from medication to food to bednets. <br/>"
         "Note: You must also enable CommCare Supply on any CommCare Supply "
         "application's settings page."),
-    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
+    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
     save_fn=commtrackify,
 )
 
@@ -130,13 +127,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-def enable_locations(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.locations_enabled = checked
-    domain.save()
-
-
 LOCATIONS = FeaturePreview(
     slug='locations',
     label=_("Locations"),
@@ -145,7 +135,6 @@ LOCATIONS = FeaturePreview(
         'CommCare Supply to work properly'
     ),
     help_link='https://help.commcarehq.org/display/commtrack/Locations',
-    save_fn=enable_locations,
 )
 
 MODULE_FILTER = FeaturePreview(
