@@ -41,6 +41,8 @@ development:
         concurrency: 1
       ucr_queue:
         concurrency: 1
+      email_queue:
+        concurrency: 1
       flower: {}
 
 india:
@@ -68,6 +70,8 @@ india:
       sms_queue:
         concurrency: 8
       ucr_queue:
+        concurrency: 4
+      email_queue:
         concurrency: 4
       flower: {}
 
@@ -111,6 +115,8 @@ production:
         concurrency: 8
       ucr_queue:
         concurrency: 4
+      email_queue:
+        concurrency: 4
       flower: {}
 
 staging:
@@ -128,6 +134,8 @@ staging:
       saved_exports_queue:
         concurrency: 3
       ucr_queue:
+        concurrency: 1
+      email_queue:
         concurrency: 1
       flower: {}
 
@@ -156,5 +164,7 @@ zambia:
       sms_queue:
         concurrency: 4
       ucr_queue:
+        concurrency: 2
+      email_queue:
         concurrency: 2
       flower: {}
