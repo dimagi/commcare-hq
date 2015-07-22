@@ -19,10 +19,10 @@ class SyncCouchToSQLMixin(object):
 
     3. Implement the unimplemented methods from the mixins on both models.
 
-    4. Make sure neither of the models overrides the save() method. If
-    either does, you will have to manually insert the sync code from
-    the corresponding mixin. Also make sure the mixins are the left-most
-    classes being inherited from.
+    4. Make sure neither of the models overrides the save() or delete()
+    methods. If either does, you will have to manually insert the sync
+    code from the corresponding mixin. Also make sure the mixins are the
+    left-most classes being inherited from.
 
     After that, any saves to the Couch model will sync the SQL model, and
     any saves to the SQL model will sync the Couch model. After migrating
@@ -135,13 +135,10 @@ class SyncSQLToCouchMixin(object):
         raise NotImplementedError()
 
     def _migration_get_couch_object(self):
-        cls = self._migration_get_couch_model_class()
         if not self.couch_id:
             return None
-        else:
-            obj = cls.get(self.couch_id)
-
-        return obj
+        cls = self._migration_get_couch_model_class()
+        return cls.get(self.couch_id)
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()
