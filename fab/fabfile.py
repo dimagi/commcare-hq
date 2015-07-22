@@ -347,6 +347,12 @@ def env_common():
     }
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
+    env.supervisor_roles = ROLES_ALL_SRC
+
+
+@task
+def webworkers():
+    env.supervisor_roles = ROLES_DJANGO
 
 
 @task
@@ -649,7 +655,8 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        execute(record_successful_deploy)
+        url = _tag_commit()
+        execute(record_successful_deploy, url)
 
 
 def _confirm_translated():
@@ -901,6 +908,18 @@ def netstat_plnt():
     sudo('netstat -plnt', user='root')
 
 
+@task
+def supervisorctl(command):
+    require('supervisor_roles',
+            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+
+    @roles(env.supervisor_roles)
+    def _inner():
+        _supervisor_command(command)
+
+    execute(_inner)
+
+
 @roles(ROLES_ALL_SERVICES)
 def services_stop():
     """Stop the gunicorn servers"""
@@ -1129,6 +1148,7 @@ def set_celery_supervisorconf():
         'pillow_retry_queue':           ['supervisor_celery_pillow_retry_queue.conf'],
         'background_queue':             ['supervisor_celery_background_queue.conf'],
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
+        'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
         }
 

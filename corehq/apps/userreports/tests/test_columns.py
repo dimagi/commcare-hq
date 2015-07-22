@@ -3,7 +3,6 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.userreports.sql.connection import connection_manager
 from corehq.db import Session
 
 from corehq.apps.userreports import tasks
@@ -78,10 +77,6 @@ class TestFieldColumn(SimpleTestCase):
 
 class ChoiceListColumnDbTest(TestCase):
 
-    @classmethod
-    def tearDownClass(cls):
-        connection_manager.dispose_all()
-
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
@@ -119,11 +114,6 @@ class ChoiceListColumnDbTest(TestCase):
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
-
-    @classmethod
-    def tearDownClass(cls):
-        connection_manager.dispose_all()
-        super(TestExpandedColumn, cls).tearDownClass()
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex

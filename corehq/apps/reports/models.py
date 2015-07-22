@@ -1,12 +1,13 @@
-from datetime import datetime, timedelta
+from collections import defaultdict
+from datetime import datetime
 import logging
 from urllib import urlencode
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-import pytz
 from corehq import Domain
 from corehq.apps import reports
+from corehq.apps.accounting.utils import get_previous_month_date_range
 from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -16,14 +17,15 @@ from corehq.apps.reports.display import xmlns_to_name
 from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
@@ -199,8 +201,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
                             stale=True, skip=None, limit=None):
+        kwargs = {}
         if stale:
-            #kwargs['stale'] = settings.COUCH_STALE_QUERY
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
 
         if report_slug is not None:
@@ -209,7 +212,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        kwargs = {}
         if skip is not None:
             kwargs['skip'] = skip
         if limit is not None:
@@ -277,7 +279,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return {}
 
         import datetime
-        from dateutil.relativedelta import relativedelta
         today = datetime.date.today()
         if date_range == 'since':
             start_date = self.start_date
@@ -286,8 +287,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             start_date = self.start_date
             end_date = self.end_date
         elif date_range == 'lastmonth':
-            end_date = today
-            start_date = today - relativedelta(months=1) + timedelta(days=1)  # add one day to handle inclusiveness
+            start_date, end_date = get_previous_month_date_range()
         else:
             end_date = today
 
@@ -579,24 +579,30 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return result
 
     @property
+    @memoized
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
             return [self.owner.get_email()]
 
         emails = []
-        if self.send_to_owner:
-            if self.owner.is_web_user():
-                emails.append(self.owner.username)
-            else:
-                email = self.owner.get_email()
-                try:
-                    validate_email(email)
-                    emails.append(email)
-                except Exception:
-                    pass
+        if self.send_to_owner and self.owner_email:
+            emails.append(self.owner_email)
         emails.extend(self.recipient_emails)
         return emails
+
+    @property
+    @memoized
+    def owner_email(self):
+        if self.owner.is_web_user():
+            return self.owner.username
+
+        email = self.owner.get_email()
+        try:
+            validate_email(email)
+            return email
+        except Exception:
+            pass
 
     @property
     @memoized
@@ -658,25 +664,47 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         """Tuples for hour number and human-readable hour"""
         return tuple([(val, "%s:00" % val) for val in range(24)])
 
-    def send(self):
-        from dimagi.utils.django.email import send_HTML_email
-        from corehq.apps.reports.views import get_scheduled_report_response
+    @property
+    @memoized
+    def recipients_by_language(self):
+        user_languages = {
+            user['username']: user['language']
+            for user in get_user_docs_by_username(self.all_recipient_emails)
+            if 'username' in user and 'language' in user
+        }
+        fallback_language = user_languages.get(self.owner_email, 'en')
 
+        recipients = defaultdict(list)
+        for email in self.all_recipient_emails:
+            language = user_languages.get(email, fallback_language)
+            recipients[language].append(email)
+        return recipients
+
+    def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
         if not self.owner.is_member_of(self.domain):
             self.delete()
             return
 
-        if self.all_recipient_emails:
-            title = "Scheduled report from CommCare HQ"
-            if hasattr(self, "attach_excel"):
-                attach_excel = self.attach_excel
-            else:
-                attach_excel = False
-            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
-            for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
+        if self.recipients_by_language:
+            for language, emails in self.recipients_by_language.items():
+                self._get_and_send_report(language, emails)
+
+    def _get_and_send_report(self, language, emails):
+        from dimagi.utils.django.email import send_HTML_email
+        from corehq.apps.reports.views import get_scheduled_report_response
+
+        with localize(language):
+            title = _("Scheduled report from CommCare HQ")
+            attach_excel = getattr(self, 'attach_excel', False)
+            body, excel_files = get_scheduled_report_response(
+                self.owner, self.domain, self._id, attach_excel=attach_excel
+            )
+            for email in emails:
+                send_HTML_email(title, email, body.content,
+                                email_from=settings.DEFAULT_FROM_EMAIL,
+                                file_attachments=excel_files)
 
 
 class AppNotFound(Exception):

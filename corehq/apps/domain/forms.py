@@ -8,6 +8,9 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.models import get_current_site
+from django.utils.http import urlsafe_base64_encode
 from dimagi.utils.decorators.memoized import memoized
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -27,8 +30,7 @@ from django.core.urlresolvers import reverse
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField)
 from django.forms.widgets import  Select
-from django.utils.encoding import smart_str
-from django.contrib.auth.forms import PasswordResetForm
+from django.utils.encoding import smart_str, force_bytes
 from django.utils.safestring import mark_safe
 from django_countries.data import COUNTRIES
 from corehq.apps.accounting.models import (
@@ -61,7 +63,7 @@ from dimagi.utils.django.email import send_HTML_email
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
 
@@ -682,7 +684,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
-        choices=sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8')),
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(
@@ -792,39 +794,83 @@ def clean_password(txt):
     return txt
 
 
-class HQPasswordResetForm(PasswordResetForm):
+class HQPasswordResetForm(forms.Form):
     """
-    Modified from PasswordResetForm to filter only web users by default.
+    Only finds users and emails forms where the USERNAME is equal to the
+    email specified (preventing Mobile Workers from using this form to submit).
 
-    This prevents duplicate emails with linked commcare user accounts to the same email.
+    This small change is why we can't use the default PasswordReset form.
     """
+    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
     error_messages = {
-        'unknown': _("That email address doesn't have an associated "
+        'unknown': ugettext_lazy("That email address doesn't have an associated "
                      "user account. Are you sure you've registered?"),
-        'unusable': _("The user account associated with this email "
-                      "address cannot reset the password."),
+        'unusable': ugettext_lazy("The user account associated with this email "
+                       "address cannot reset the password."),
     }
 
     def clean_email(self):
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
         matching_users = UserModel._default_manager.filter(username__iexact=email)
-        if matching_users.count():
-            self.users_cache = matching_users
-        else:
-            # revert to previous behavior to theoretically allow commcare users to create an account
-            self.users_cache = UserModel._default_manager.filter(email__iexact=email)
 
         # below here is not modified from the superclass
-        if not len(self.users_cache):
+        if not len(matching_users):
             raise forms.ValidationError(self.error_messages['unknown'])
-        if not any(user.is_active for user in self.users_cache):
+        if not any(user.is_active for user in matching_users):
             # none of the filtered users are active
             raise forms.ValidationError(self.error_messages['unknown'])
         if any((user.password == UNUSABLE_PASSWORD_PREFIX)
-               for user in self.users_cache):
+               for user in matching_users):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        from django.core.mail import send_mail
+        UserModel = get_user_model()
+        email = self.cleaned_data["email"]
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        active_users = UserModel._default_manager.filter(
+            username__iexact=email, is_active=True)
+
+        # the code below is copied from default PasswordForm
+        for user in active_users:
+            # Make sure that no email is sent to a user that actually has
+            # a password marked as unusable
+            if not user.has_usable_password():
+                continue
+            if not domain_override:
+                current_site = get_current_site(request)
+                site_name = current_site.name
+                domain = current_site.domain
+            else:
+                site_name = domain = domain_override
+            c = {
+                'email': user.email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': token_generator.make_token(user),
+                'protocol': 'https' if use_https else 'http',
+            }
+            subject = render_to_string(subject_template_name, c)
+            # Email subject *must not* contain newlines
+            subject = ''.join(subject.splitlines())
+            email = render_to_string(email_template_name, c)
+            send_mail(subject, email, from_email, [user.email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):

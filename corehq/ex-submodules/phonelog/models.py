@@ -10,6 +10,7 @@ class DeviceReportEntry(models.Model):
     msg = models.TextField()
     type = models.CharField(max_length=32, db_index=True)
     date = models.DateTimeField(db_index=True)
+    server_date = models.DateTimeField(null=True, db_index=True)
     domain = models.CharField(max_length=100, db_index=True)
     device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True,
                                  null=True)
@@ -19,6 +20,9 @@ class DeviceReportEntry(models.Model):
 
     class Meta:
         unique_together = [('xform_id', 'i')]
+        index_together = [
+            ("domain", "date"),
+        ]
 
 
 class UserEntry(models.Model):

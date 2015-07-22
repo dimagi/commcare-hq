@@ -1,0 +1,20 @@
+{% extends 'style/bootstrap3/two_column.html' %}
+
+{% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}
+
+{% block page_title %}
+    {{ current_page.page_name }}
+    {% if current_page.page_subtitle %}
+    <small>{{ current_page.page_subtitle }}</small>
+    {% endif %}
+{% endblock %}
+
+{% block page_breadcrumbs %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
+    {% for parent in current_page.parents %}
+        <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
+    {% endfor %}
+    <li class="active">{{ current_page.page_name }}</li>
+</ol>
+{% endblock %}

@@ -323,7 +323,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -367,7 +367,7 @@ def upload_fixture_api(request, domain, **kwargs):
         resp_json = {}
         resp_json["code"] = code
         resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+        return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
     try:
         upload_file = request.FILES["file-to-upload"]
@@ -422,7 +422,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_users:
         resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
-    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+    return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
 
 @login_and_domain_required

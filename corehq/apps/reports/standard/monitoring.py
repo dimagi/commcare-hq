@@ -536,7 +536,6 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     def users_by_range(self, start, end, order):
         results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
             .filter(**self.date_filter(start, end)) \
             .values('user_id') \
             .annotate(Count('user_id'))
@@ -600,9 +599,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         If no user is passed, assemble a totals row.
         """
         values = ['date']
-        results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
-            .filter(**self.date_filter(self.startdate, self.enddate))
+        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
 
         if user:
             results = results.filter(user_id=user.user_id)
@@ -697,9 +694,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         def get_data(users, group_by_user=True):
-            query = FormData.objects \
-                .filter(doc_type='XFormInstance') \
-                .filter(xmlns=self.selected_xmlns['xmlns'])
+            query = FormData.objects.filter(xmlns=self.selected_xmlns['xmlns'])
 
             date_field = 'received_on' if self.by_submission_time else 'time_end'
             date_filter = {
@@ -799,7 +794,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
             where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
             results = FormData.objects \
-                .filter(doc_type='XFormInstance') \
                 .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
                 .filter(user_id__in=user_map.keys()) \
                 .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\

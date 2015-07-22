@@ -8,6 +8,7 @@ from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
+from django.db.models import Count
 
 logger = logging.getLogger(__name__)
 
@@ -37,17 +38,20 @@ class MALTTableGenerator(object):
     def _get_malt_row_dicts(self, user, domain_name, monthspan):
         malt_row_dicts = []
         forms_query = self._get_forms_queryset(user._id, domain_name, monthspan)
-        num_of_forms = forms_query.count()
-        apps_submitted_for = [app_id for (app_id,) in
-                              forms_query.values_list('app_id').distinct()]
+        apps_submitted_for = forms_query.values('app_id').annotate(num_of_forms=Count('instance_id'))
 
-        for app_id in apps_submitted_for:
+        for app_row_dict in apps_submitted_for:
+            app_id = app_row_dict['app_id']
+            num_of_forms = app_row_dict['num_of_forms']
             try:
                 wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
             except Exception as ex:
-                logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
-                            (id=user._id, app_id=app_id, ex=str(ex)))
-                continue
+                if app_id == MISSING_APP_ID:
+                    wam, pam, is_app_deleted = 'not_set', 'not_set', False
+                else:
+                    logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
+                                (id=user._id, app_id=app_id, ex=str(ex)))
+                    continue
 
             malt_dict = {
                 'month': monthspan.startdate,
@@ -94,7 +98,6 @@ class MALTTableGenerator(object):
 
         return FormData.objects.exclude(
             device_id=COMMCONNECT_DEVICE_ID,
-            app_id=MISSING_APP_ID
         ).filter(
             user_id=user_id,
             domain=domain_name,

@@ -1742,7 +1742,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
                         datums.append({
-                            'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                            'datum': SessionDatum(
+                                id=form.session_var_for_action('subcases', i), function='uuid()'
+                            ),
                             'case_type': subcase.case_type,
                             'requires_selection': False,
                             'action': subcase
@@ -1804,6 +1806,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         datums.extend(self.get_new_case_id_datums_meta(form))
         datums.extend(self.get_extra_case_id_datums(form))
+        self.add_parent_datums(datums, module)
         for datum in datums:
             e.datums.append(datum['datum'])
 
@@ -2059,6 +2062,46 @@ class SuiteGenerator(SuiteGeneratorBase):
             except IndexError:
                 pass
 
+        self.add_parent_datums(datums, module)
+
+        return datums, assertions
+
+    def add_parent_datums(self, datums, module):
+
+        def update_refs(action_, datum_, changed_ids):
+            if action_:
+                # Only advanced module actions have a parent_tag attribute. Basic modules don't need one
+                # because they only deal with one case type. Set parent_tag to None for them.
+                parent_tag = getattr(action_, 'parent_tag', None)
+                if parent_tag in changed_ids:
+                    # update any reference to previously changed datums
+                    change = changed_ids[parent_tag]
+                    nodeset = datum_.nodeset
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    datum_.nodeset = nodeset.replace(old, new)
+
+        def avoid_duplicate_ids(action_, this_datum_, parent_datum_, datum_ids_, changed_ids):
+            if action_:
+                case_tag = getattr(action_, 'case_tag', None)  # Set case_tag to None for basic modules
+                if parent_datum_.id in datum_ids_:
+                    # We can't set a new ID to an ID we already have. We need to rename current ID
+                    datum = datum_ids_[parent_datum_.id]
+                    new_id = '_'.join((parent_datum_.id, datum['case_type']))
+                    # It is possible for an advanced form to manage multiple cases with the same case type, so
+                    # just using case_type is not enough to ensure uniqueness. Add a suffix if necessary.
+                    i = 0
+                    while new_id in datum_ids_:
+                        new_id = '_'.join((parent_datum_.id, datum['case_type'], str(i)))
+                        i += 1
+                    datum['datum'].id = new_id
+
+                changed_ids[case_tag] = {
+                    "old_id": this_datum_.id,
+                    "new_id": parent_datum_.id
+                }
+            this_datum_.id = parent_datum_.id
+
         root_module = module.root_module
         root_datums = []
         if root_module and root_module.module_type == 'basic':
@@ -2073,6 +2116,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if root_module_form.requires_case():
                     root_datums.extend(self.get_datum_meta_module(root_module))
                 root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
+                root_datums.extend(self.get_extra_case_id_datums(root_module_form))
 
         if root_datums:
             # we need to try and match the datums to the root module so that
@@ -2082,41 +2126,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             #    will be loading the same case type
             # see advanced_app_features#child-modules in docs
             datum_pairs = list(izip_longest(datums, root_datums))
+            datum_ids = {d['datum'].id: d for d in datums}
             index = 0
             changed_ids_by_case_tag = {}
             for this_datum_meta, parent_datum_meta in datum_pairs:
                 if not this_datum_meta:
                     continue
-
                 this_datum = this_datum_meta['datum']
                 action = this_datum_meta['action']
-                if action and action.parent_tag in changed_ids_by_case_tag:
-                    # update any reference to previously changed datums
-                    change = changed_ids_by_case_tag[action.parent_tag]
-                    nodeset = this_datum.nodeset
-                    old = session_var(change['old_id'])
-                    new = session_var(change['new_id'])
-                    this_datum.nodeset = nodeset.replace(old, new)
-
+                update_refs(action, this_datum, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
 
-                that_datum = parent_datum_meta['datum']
-                if this_datum.id != that_datum.id:
+                parent_datum = parent_datum_meta['datum']
+                if this_datum.id != parent_datum.id:
                     if not parent_datum_meta['requires_selection']:
                         datums.insert(index, parent_datum_meta)
                     elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
-                        action = action
-                        if action:
-                            changed_ids_by_case_tag[action.case_tag] = {
-                                "old_id": this_datum.id,
-                                "new_id": that_datum.id
-                            }
-                        this_datum.id = that_datum.id
+                        avoid_duplicate_ids(action, this_datum, parent_datum, datum_ids, changed_ids_by_case_tag)
 
                 index += 1
-
-        return datums, assertions
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

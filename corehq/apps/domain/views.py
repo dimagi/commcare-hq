@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from django.db import transaction
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
@@ -57,7 +58,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -545,7 +546,7 @@ def logo(request, domain):
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], mimetype=logo[1])
+    return HttpResponse(logo[0], content_type=logo[1])
 
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
@@ -721,12 +722,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'process_payment_url': reverse(CreditsStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
+            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
-                                         args=[self.domain])
+                                         args=[self.domain]),
+            'user_email': self.request.couch_user.username,
         }
 
 
@@ -1009,9 +1011,42 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.domain,
             self.account,
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
-            product_type=self.request.POST.get('product'),
-            feature_type=self.request.POST.get('feature'),
+            post_data=self.request.POST.copy(),
         )
+
+
+class CreditsWireInvoiceView(DomainAccountingSettings):
+    http_method_names = ['post']
+    urlname = 'domain_wire_payment'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', []).split()
+        amount = Decimal(request.POST.get('amount', 0))
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        try:
+            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+        except Exception as e:
+            return json_response({'error': {'message': str(e)}})
+
+        return json_response({'success': True})
+
+    def _get_items(self, request):
+        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
+
+        features = [{'type': get_feature_name(feature_type[0], product_type),
+                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
+                    for feature_type in FeatureType.CHOICES
+                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
+        products = [{'type': pt[0],
+                     'amount': Decimal(request.POST.get(pt[0], 0))}
+                    for pt in SoftwareProductType.CHOICES
+                    if Decimal(request.POST.get(pt[0], 0)) > 0]
+
+        return products + features
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1140,8 +1175,9 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         form = self.get_post_form
         if form.is_valid():
             try:
-                form.process_subscription_management()
-                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                with transaction.atomic():
+                    form.process_subscription_management()
+                    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except NewSubscriptionError as e:
                 messages.error(self.request, e.message)
         return self.get(request, *args, **kwargs)
@@ -1189,7 +1225,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 subscription_type = "contracted_partner"
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = "dimagi_only_enterprise"
-            elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
+            elif (plan.edition == SoftwarePlanEdition.ADVANCED
+                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
                 subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})

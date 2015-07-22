@@ -108,6 +108,21 @@
             standardReport: standardHQReport
         });
         asyncHQReport.init();
+        var defaultConfig = {{ default_config|JSON }};
+        {% if report.has_datespan %}
+            defaultConfig.date_range = 'last7';
+        {% else %}
+            defaultConfig.date_range = null;
+        {% endif %}
+        defaultConfig.has_ucr_datespan = false;
+        defaultConfig.datespan_filters = [];
+        defaultConfig.datespan_slug = null;
+        $("#savedReports").reportConfigEditor({
+            filterForm: $("#reportFilters"),
+            items: {{ report_configs|JSON }},
+            defaultItem: defaultConfig,
+            saveUrl: '{% url "add_report_config" domain %}'
+        });
 
     </script>
 {% endblock %}

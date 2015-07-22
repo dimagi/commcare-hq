@@ -129,20 +129,55 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
         self.groups = self._urlcombine(self.base_uri, '/groups/')
 
-    def get_supplypointstatuses(self, domain, facility, **kwargs):
+    def get_supplypointstatuses(self, domain, facility=None, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        try:
-            location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-            return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
-                          supplypointstatuses]
-        except SQLLocation.DoesNotExist:
-            return None, None
+        location = None
 
-    def get_deliverygroupreports(self, domain, facility, **kwargs):
+        if facility:
+            try:
+                location = SQLLocation.objects.get(domain=domain, external_id=facility)
+            except SQLLocation.DoesNotExist:
+                return meta, []
+
+        statuses = []
+        for supplypointstatus in supplypointstatuses:
+            if not location:
+                try:
+                    location = SQLLocation.objects.get(
+                        domain=domain,
+                        external_id=supplypointstatus['supply_point']
+                    )
+                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, location))
+                except SQLLocation.DoesNotExist:
+                    continue
+            else:
+                statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, location))
+        return meta, statuses
+
+    def get_deliverygroupreports(self, domain, facility=None, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        location_id = SQLLocation.objects.filter(domain=domain, external_id=facility)
-        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
-                      for deliverygroupreport in deliverygroupreports]
+        location = None
+        if facility:
+            try:
+                location = SQLLocation.objects.get(domain=domain, external_id=facility)
+            except SQLLocation.DoesNotExist:
+                return meta, []
+
+        reports = []
+        for deliverygroupreport in deliverygroupreports:
+            if not location:
+                try:
+                    location = SQLLocation.objects.get(
+                        domain=domain,
+                        external_id=deliverygroupreport['supply_point']
+                    )
+                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, location))
+                except SQLLocation.DoesNotExist:
+                    continue
+            else:
+                reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, location))
+
+        return meta, reports
 
     def get_groups(self, **kwargs):
         meta, groups_list = self.get_objects(self.groups, **kwargs)
@@ -150,13 +185,18 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
             Groups(obj) for obj in groups_list
         ]
 
-    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
-        kwargs.get('filters', {}).update({
-            'date__gte': start_date,
-        })
-        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+    def get_stocktransactions(self, filters=None, **kwargs):
+        filters = filters or {}
+        if 'date__lte' in filters:
+            filters.pop('date__lte')
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, filters=filters, **kwargs)
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]
+
+
+EXCLUDED_REGIONS = [
+    24, 25, 26, 27, 148
+]
 
 
 class ILSGatewayAPI(APISynchronization):
@@ -193,7 +233,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_region',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'region',
                     'is_active': True
@@ -203,7 +243,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_district',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'district',
                     'is_active': True
@@ -213,7 +253,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_facility',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'facility',
                     'is_active': True
@@ -225,8 +265,8 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_groups_sync,
                 migrate_once=True
             ),
-            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined__gte'),
-            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated__gte')
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
 
     def create_or_edit_roles(self):
@@ -335,6 +375,9 @@ class ILSGatewayAPI(APISynchronization):
             return
 
         if not location:
+            if ilsgateway_location.id in EXCLUDED_REGIONS:
+                return
+
             if ilsgateway_location.parent_id:
                 try:
                     sql_loc_parent = SQLLocation.objects.get(
@@ -345,6 +388,8 @@ class ILSGatewayAPI(APISynchronization):
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
+                    if not loc_parent:
+                        return
 
                 if ilsgateway_location.type == 'REGION':
                     location = Loc(parent=get_or_create_msd_zone(ilsgateway_location))
@@ -391,7 +436,7 @@ class ILSGatewayAPI(APISynchronization):
         return location
 
     def location_groups_sync(self, location_groups):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for date, groups in location_groups.groups.iteritems():
                 try:
                     sql_location = SQLLocation.objects.get(

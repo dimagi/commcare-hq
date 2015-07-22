@@ -369,7 +369,7 @@ class SubscriptionForm(forms.Form):
         if self.is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                EditSoftwarePlanView, ManageBillingAccountView
+                ViewSoftwarePlanVersionView, ManageBillingAccountView
             )
             from corehq.apps.domain.views import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
@@ -387,8 +387,8 @@ class SubscriptionForm(forms.Form):
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
                 'plan_version_url': reverse(
-                    EditSoftwarePlanView.urlname,
-                    args=[subscription.plan_version.plan.id]),
+                    ViewSoftwarePlanVersionView.urlname,
+                    args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
                 'plan_name': subscription.plan_version,
             })
             try:
@@ -545,7 +545,11 @@ class SubscriptionForm(forms.Form):
                     'account': account.name,
                 }))
 
-        start_date = self.cleaned_data.get('start_date') or self.subscription.date_start
+        start_date = self.cleaned_data.get('start_date')
+        if start_date is None and self.subscription is not None:
+            start_date = self.subscription.date_start
+        elif start_date is None:
+            raise ValidationError(_("You must specify a start date"))
         if (self.cleaned_data['end_date'] is not None
             and start_date > self.cleaned_data['end_date']):
             raise ValidationError(_("End date must be after start date."))

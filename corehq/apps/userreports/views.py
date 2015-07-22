@@ -244,9 +244,9 @@ class ConfigureChartReport(ReportBuilderView):
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
             ],
-            'filter_property_help_text': _('Choose the property you would you like to add as a filter to this report'),
-            'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for viewers to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/>Date: select this if the property is a date<br/>Choice: select this if the property is text or multiple choice<br/>Numeric: select this if the property is a number'),
+            'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
+            'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.<br/><strong>Numeric</strong>: select this if the property is a number.'),
         }
         return context
 
@@ -493,9 +493,8 @@ def data_source_json(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    table = get_indicator_table(config)
-
-    q = Session.query(table)
+    adapter = IndicatorSqlAdapter(config)
+    q = adapter.get_query_object()
     context = _shared_context(domain)
     context.update({
         'data_source': config,
@@ -570,8 +569,9 @@ def process_url_params(params, columns):
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    table = get_indicator_table(config)
-    q = Session.query(table)
+    adapter = IndicatorSqlAdapter(config)
+    q = adapter.get_query_object()
+    table = adapter.get_table()
 
     try:
         params = process_url_params(request.GET, table.columns)

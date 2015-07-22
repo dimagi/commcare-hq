@@ -5,4 +5,4 @@ from .test_locations_sync import *
 from .test_apis import *
 from .test_migration_task import *
 from .test_delete_domain import *
-from custom.ilsgateway.tanzania.test import *
+from .test_stock_transaction_sync import *

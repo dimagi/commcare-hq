@@ -99,17 +99,21 @@ class ApiSyncObject(object):
     filters = {}
 
     def __init__(self, name, get_objects_function, sync_function, date_filter_name=None, filters=None,
-                 migrate_once=False):
+                 migrate_once=False, is_date_range=False):
         self.name = name
         self.get_objects_function = get_objects_function
         self.sync_function = sync_function
         self.date_filter_name = date_filter_name
         self.filters = filters or {}
         self.migrate_once = migrate_once
+        self._is_date_range = is_date_range
 
-    def add_date_filter(self, date):
+    def add_date_filter(self, start_date, end_date=None):
         if self.date_filter_name:
-            self.filters[self.date_filter_name] = date
+            self.filters[self.date_filter_name + '__gte'] = start_date
+
+        if self._is_date_range and end_date:
+            self.filters[self.date_filter_name + '__lte'] = end_date
 
 
 class APISynchronization(object):
@@ -130,7 +134,7 @@ class APISynchronization(object):
                 'location_region',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'region',
                     'is_active': True
@@ -140,7 +144,7 @@ class APISynchronization(object):
                 'location_district',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'district',
                     'is_active': True
@@ -150,14 +154,14 @@ class APISynchronization(object):
                 'location_facility',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'facility',
                     'is_active': True
                 }
             ),
-            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined__gte'),
-            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated__gte')
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
 
     def prepare_commtrack_config(self):

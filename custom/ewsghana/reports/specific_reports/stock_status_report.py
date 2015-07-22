@@ -8,7 +8,6 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.ilsgateway.tanzania.reports.utils import link_format
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
@@ -326,6 +325,12 @@ class StockStatus(MultiReport):
     is_exportable = True
     is_rendered_as_email = False
 
+    @property
+    def fields(self):
+        if self.is_reporting_type():
+            return [EWSRestrictionLocationFilter, ProductByProgramFilter, ViewReportFilter]
+        return [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter, ViewReportFilter]
+
     def unique_products(self, locations):
         return SQLProduct.objects.filter(
             pk__in=locations.values_list('_products', flat=True)
@@ -481,8 +486,15 @@ class StockStatus(MultiReport):
 
         if self.is_reporting_type():
             self.split = True
-            if self.is_rendered_as_email:
-                return [FacilityReportData(config)]
+            if self.is_rendered_as_email and self.is_rendered_as_print:
+                return [
+                    FacilityReportData(config),
+                    InventoryManagementData(config)
+                ]
+            elif self.is_rendered_as_email:
+                return [
+                    FacilityReportData(config)
+                ]
             else:
                 return [
                     FacilityReportData(config),
@@ -502,6 +514,13 @@ class StockStatus(MultiReport):
             ]
         elif report_type == 'asi':
             config.update(self.data())
+            if self.is_rendered_as_email and not self.is_rendered_as_print:
+                return [
+                    ProductSelectionPane(config=config),
+                    MonthOfStockProduct(config=config),
+                    StockoutTable(config=config)
+                ]
+
             return [
                 ProductSelectionPane(config=config),
                 ProductAvailabilityData(config=config),
@@ -509,13 +528,17 @@ class StockStatus(MultiReport):
                 StockoutsProduct(config=config),
                 StockoutTable(config=config)
             ]
+
         else:
             config.update(self.data())
-            return [
+            providers = [
                 ProductSelectionPane(config=config),
                 ProductAvailabilityData(config=config),
                 MonthOfStockProduct(config=config)
             ]
+            if self.is_rendered_as_email and not self.is_rendered_as_print:
+                providers.pop(1)
+            return providers
 
     @property
     def export_table(self):
@@ -564,6 +587,10 @@ class StockStatus(MultiReport):
         Returns the report for printing.
         """
         self.is_rendered_as_email = True
+        self.is_rendered_as_print = True
         self.use_datatables = False
-        self.override_template = "ewsghana/stock_status_print_report.html"
+        if self.is_reporting_type():
+            self.override_template = 'ewsghana/facility_page_print_report.html'
+        else:
+            self.override_template = "ewsghana/stock_status_print_report.html"
         return HttpResponse(self._async_context()['report'])

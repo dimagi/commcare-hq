@@ -379,6 +379,7 @@ class DateSource(BaseSqlData):
         filters = super(DateSource, self).filters
         if 'location_id' in self.config:
             filters.append(EQ('location_id', 'location_id'))
+        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
         return filters
 
     @property
@@ -413,6 +414,7 @@ class RecapPassageData(BaseSqlData):
         filters = super(RecapPassageData, self).filters
         if 'location_id' in self.config:
             filters.append(EQ("location_id", "location_id"))
+        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
         return filters
 
     @property

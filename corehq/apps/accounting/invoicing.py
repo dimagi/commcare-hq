@@ -23,7 +23,8 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
-    SMALL_INVOICE_THRESHOLD, SubscriptionType,
+    SMALL_INVOICE_THRESHOLD, WirePrepaymentBillingRecord,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -289,6 +290,17 @@ class DomainWireInvoiceFactory(object):
                 self.logged_throttle_error = True
 
         return wire_invoice
+
+    def create_wire_credits_invoice(self, items, amount):
+        from corehq.apps.accounting.tasks import create_wire_credits_invoice
+        create_wire_credits_invoice.delay(
+            domain_name=self.domain.name,
+            account_created_by=self.__class__.__name__,
+            account_entry_point=EntryPoint.SELF_STARTED,
+            amount=amount,
+            invoice_items=items,
+            contact_emails=self.contact_emails
+        )
 
 
 class LineItemFactory(object):
