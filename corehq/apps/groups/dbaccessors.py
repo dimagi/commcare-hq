@@ -41,5 +41,5 @@ def stale_group_by_name(domain, name, include_docs=True, **kwargs):
 
 
 def refresh_group_views(group):
-    group_by_domain(group.domain, include_docs=False, limit=1).all()
-    group_by_name(group.domain, group.name, include_docs=False, limit=1).all()
+    group_by_domain(group.domain, include_docs=False, limit=1).fetch()
+    group_by_name(group.domain, group.name, include_docs=False, limit=1).fetch()
