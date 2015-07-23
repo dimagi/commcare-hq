@@ -108,6 +108,8 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
 class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     """
         For CC >= 2.21
+        - suite.xml should contain correct localized media references
+        - app_strings should contain translations for above media references
     """
     file_path = ('data', 'suite')
 
@@ -158,6 +160,7 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
         XML = self.makeXML("forms.m0f0", "forms.m0f0.icon", "forms.m0f0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/display")
+        self._assert_app_strings_available(self.app, lang)
 
     def test_form_suite_english(self):
         self._test_form_suite('en')
@@ -171,6 +174,9 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
         XML = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m0']/display")
+        self._assert_app_strings_available(self.app, 'en')
+        with self.assertRaises(AssertionError):
+            self._assert_app_strings_available(self.app, 'hin')
 
     def test_case_list_form_media(self):
         app = Application.wrap(self.get_json('app'))
@@ -182,7 +188,9 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
         self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
-        self._assert_app_strings_available(app)
+        self._assert_app_strings_available(app, 'en')
+        with self.assertRaises(AssertionError):
+            self._assert_app_strings_available(app, 'hin')
 
     def test_case_list_menu_media(self):
         self.module.case_list.show = True
@@ -199,6 +207,9 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
             self.app.create_suite(),
             "./entry/command[@id='m0-case-list']/"
         )
+        self._assert_app_strings_available(self.app, 'en')
+        with self.assertRaises(AssertionError):
+            self._assert_app_strings_available(self.app, 'hin')
 
     def test_media_app_strings(self):
         self.form.set_icon('en', self.image_path)
@@ -209,14 +220,16 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         self.module.case_list.set_audio('en', self.audio_path)
         self.form = self.app.new_form(0, "Form 2", None)
 
-        self._assert_app_strings_available(self.app)
+        self._assert_app_strings_available(self.app, 'en')
+        with self.assertRaises(AssertionError):
+            self._assert_app_strings_available(self.app, 'hin')
 
-    def _assert_app_strings_available(self, app):
+    def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())
         locale_elems = et.findall(".//locale/[@id]")
         locale_strings = [elem.attrib['id'] for elem in locale_elems]
 
-        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        app_strings = commcare_translations.loads(app.create_app_strings(lang))
         for string in locale_strings:
             if string not in app_strings:
                 raise AssertionError("App strings did not contain %s" % string)
@@ -227,8 +240,6 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         self.form.set_icon('en', self.image_path)
 
         en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
-        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
 
         form_icon_locale = id_strings.form_icon_locale(self.form)
         self.assertEqual(en_app_strings[form_icon_locale], self.image_path)
-        self.assertEqual(hin_app_strings[form_icon_locale], self.image_path)

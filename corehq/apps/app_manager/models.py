@@ -1010,6 +1010,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
     def _get_media_by_language(self, media_attr, lang, strict=False):
+        # if strict is False, media for a random lang is returned if given lang
+        # doesn't have media set
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr)
@@ -1067,6 +1069,37 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def all_audio_paths(self):
         return self._all_media_paths('media_audio')
+
+    def icon_app_string(self, lang, for_default=False):
+        """
+            Return lang/app_strings.txt translation for given lang
+            - if a path exists for the lang, returns the path
+              otherwise None
+            - if for_default is True (default/app_strings.txt), returns
+              an invalid path deliberately, so that if media is set
+              for one lang but not other, the media for other lang will
+              not be shown. Mobile prefers an invalid path over empty path
+              [Hacky - see http://manage.dimagi.com/default.asp?176008]
+        """
+
+        if not for_default and self.icon_by_language(lang, strict=True):
+            return self.icon_by_language(lang)
+
+        DELIBERATELY_INVALID_PATH = "jr://file/commcare_wrong/invalid/have_a_nice_day.png"
+        if for_default and any(self.all_image_paths()):
+            return DELIBERATELY_INVALID_PATH
+
+    def audio_app_string(self, lang, for_default=False):
+        """
+            see note on self.icon_app_string
+        """
+
+        if not for_default and self.audio_by_language(lang, strict=True):
+            return self.audio_by_language(lang)
+
+        DELIBERATELY_INVALID_PATH = "jr://file/commcare_wrong/invalid/have_a_nice_day.mp3"
+        if for_default and any(self.all_audio_paths()):
+            return DELIBERATELY_INVALID_PATH
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
