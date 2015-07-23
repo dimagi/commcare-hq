@@ -62,6 +62,7 @@ submodules:
     # just so we always get latest master
     branches:
       - django17
+      - revert-148-revert-147-2.22_jars  # cz 7/23. also love this branch name.
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
