@@ -212,7 +212,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3, verbose=False):
+def iter_update(db, fn, ids, max_retries=3, verbose=False, refresh_view_funcs=None):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -247,7 +247,7 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
     results = IterResults(set(), set(), set(), set(), set())
 
     def _iter_update(doc_ids, try_num):
-        with IterDB(db, chunksize=100) as iter_db:
+        with IterDB(db, chunksize=100, refresh_view_funcs=refresh_view_funcs) as iter_db:
             for chunk in chunked(set(doc_ids), 100):
                 for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')

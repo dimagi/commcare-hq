@@ -190,7 +190,7 @@ class IterDBTest(TestCase):
                 return DocUpdate(group, delete=True)
 
         ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
-        res = iter_update(self.db, mark_cool, ids)
+        res = iter_update(self.db, mark_cool, ids, refresh_view_funcs=[refresh_group_views])
         self.assertEqual(res.not_found_ids, {'NOT_REAL_ID'})
         for result_ids, action in [
             (res.ignored_ids, 'IGNORE'),
