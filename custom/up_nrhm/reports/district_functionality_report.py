@@ -71,6 +71,8 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
                     rows[index].append(format_datatables_data(grade, grade))
                 else:
                     rows[index].append(row[-1])
-                    rows[index].append(format_datatables_data('', ''))
+                    val = row[-1]['sort_key']
+                    grade = get_grade(val)
+                    rows[index].append(format_datatables_data(grade, grade))
 
         return rows, 0
