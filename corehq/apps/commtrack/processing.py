@@ -203,7 +203,7 @@ def _adjust_ledger_values(original_balance, stock_transaction):
 
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         assert stock_transaction.stock_on_hand == ledger_values.balance
-        # this is currently always 0 for some reason
+        # this is currently always 0 because of inferred transactions
         stock_transaction.quantity = ledger_values.delta
     elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
         stock_transaction.stock_on_hand = ledger_values.balance
