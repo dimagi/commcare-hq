@@ -108,14 +108,20 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
 class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     """
         For CC >= 2.21
+        Tests following for form, module, case_list_menu, case_list_form
         - suite.xml should contain correct localized media references
-        - app_strings should contain translations for above media references
+        - app_strings should contain all of above media references
+        - translations should be correct for each of above app_strings
     """
     file_path = ('data', 'suite')
+    image_path = 'jr://file/commcare/case_list_image.jpg'
+    audio_path = 'jr://file/commcare/case_list_audo.mp3'
+    hindi_image = 'jr://file/commcare/case_list_image_hin.jpg'
+    hindi_audio = 'jr://file/commcare/case_list_audo_hin.mp3'
+    HACKY_image = 'jr://file/commcare_wrong/invalid/have_a_nice_day.png'
+    HACKY_audio = 'jr://file/commcare_wrong/invalid/have_a_nice_day.mp3'
 
     def setUp(self):
-        self.image_path = 'jr://file/commcare/case_list_image.jpg'
-        self.audio_path = 'jr://file/commcare/case_list_audo.mp3'
         self.app = Application.new_app('domain', "my app", application_version=APP_V2)
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
@@ -154,19 +160,19 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/")
 
-    def _test_form_suite(self, lang):
-        self.form.set_icon(lang, self.image_path)
-        self.form.set_audio(lang, self.audio_path)
+    def test_form_suite(self):
+        self.form.set_icon('en', self.image_path)
+        self.form.set_audio('en', self.audio_path)
 
         XML = self.makeXML("forms.m0f0", "forms.m0f0.icon", "forms.m0f0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/display")
-        self._assert_app_strings_available(self.app, lang)
 
-    def test_form_suite_english(self):
-        self._test_form_suite('en')
+        self._assert_app_strings_available(self.app, 'en')
 
-    def test_form_suite_hindi(self):
-        self._test_form_suite('hin')
+        icon_locale = id_strings.form_icon_locale(self.form)
+        audio_locale = id_strings.form_audio_locale(self.form)
+        self._test_correct_icon_translations(self.app, self.form, icon_locale)
+        self._test_correct_audio_translations(self.app, self.form, audio_locale)
 
     def test_module_suite(self):
         self.module.set_icon('en', self.image_path)
@@ -174,9 +180,13 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
 
         XML = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m0']/display")
+
         self._assert_app_strings_available(self.app, 'en')
-        with self.assertRaises(AssertionError):
-            self._assert_app_strings_available(self.app, 'hin')
+
+        icon_locale = id_strings.module_icon_locale(self.module)
+        audio_locale = id_strings.module_audio_locale(self.module)
+        self._test_correct_icon_translations(self.app, self.module, icon_locale)
+        self._test_correct_audio_translations(self.app, self.module, audio_locale)
 
     def test_case_list_form_media(self):
         app = Application.wrap(self.get_json('app'))
@@ -189,8 +199,11 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
         self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
         self._assert_app_strings_available(app, 'en')
-        with self.assertRaises(AssertionError):
-            self._assert_app_strings_available(app, 'hin')
+
+        icon_locale = id_strings.case_list_form_icon_locale(app.get_module(0))
+        audio_locale = id_strings.case_list_form_audio_locale(app.get_module(0))
+        self._test_correct_icon_translations(app, app.get_module(0).case_list_form, icon_locale)
+        self._test_correct_audio_translations(app, app.get_module(0).case_list_form, audio_locale)
 
     def test_case_list_menu_media(self):
         self.module.case_list.show = True
@@ -208,21 +221,11 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
             "./entry/command[@id='m0-case-list']/"
         )
         self._assert_app_strings_available(self.app, 'en')
-        with self.assertRaises(AssertionError):
-            self._assert_app_strings_available(self.app, 'hin')
 
-    def test_media_app_strings(self):
-        self.form.set_icon('en', self.image_path)
-        self.form.set_audio('en', self.audio_path)
-
-        self.module.case_list.show = True
-        self.module.case_list.set_icon('en', self.image_path)
-        self.module.case_list.set_audio('en', self.audio_path)
-        self.form = self.app.new_form(0, "Form 2", None)
-
-        self._assert_app_strings_available(self.app, 'en')
-        with self.assertRaises(AssertionError):
-            self._assert_app_strings_available(self.app, 'hin')
+        icon_locale = id_strings.case_list_icon_locale(self.module)
+        audio_locale = id_strings.case_list_audio_locale(self.module)
+        self._test_correct_icon_translations(self.app, self.module.case_list, icon_locale)
+        self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
 
     def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())
@@ -236,10 +239,33 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
             if not app_strings.get(string, '').strip():
                 raise AssertionError("App strings has blank entry for %s" % string)
 
-    def test_localized_app_strings(self):
-        self.form.set_icon('en', self.image_path)
+    def _test_correct_icon_translations(self, app, menu, menu_locale_id):
+        #  english should have right translation
+        self._assert_valid_media_translation(app, 'en', menu_locale_id, self.image_path)
+        #  default should have wrong-translation
+        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.HACKY_image)
+        #  hindi shouldn't have translation strings
+        with self.assertRaises(KeyError):
+            self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.image_path)
+        #  set media for hindi
+        menu.set_icon('hin', self.hindi_image)
+        #  hindi should have right translation
+        self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.hindi_image)
 
-        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+    def _test_correct_audio_translations(self, app, menu, menu_locale_id):
+        #  english should have right translation
+        self._assert_valid_media_translation(app, 'en', menu_locale_id, self.audio_path)
+        #  default should have wrong-translation
+        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.HACKY_audio)
+        #  hindi shouldn't have translation strings
+        with self.assertRaises(KeyError):
+            self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.audio_path)
+        #  set media for hindi
+        menu.set_audio('hin', self.hindi_audio)
+        #  hindi should have right translation
+        self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.hindi_audio)
 
-        form_icon_locale = id_strings.form_icon_locale(self.form)
-        self.assertEqual(en_app_strings[form_icon_locale], self.image_path)
+    def _assert_valid_media_translation(self, app, lang, media_locale_id, media_path):
+        # assert that <lang>/app_strings.txt contains media_locale_id=media_path
+        app_strings = commcare_translations.loads(app.create_app_strings(lang))
+        self.assertEqual(app_strings[media_locale_id], media_path)
