@@ -342,11 +342,14 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return get_all_report_configs()
 
 
+CUSTOM_PREFIX = 'custom-'
+
+
 class CustomDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository
     """
-    _datasource_id_prefix = 'custom-'
+    _datasource_id_prefix = CUSTOM_PREFIX
     domains = ListProperty()
     config = DictProperty()
 
@@ -397,7 +400,7 @@ class CustomReportConfiguration(JsonObject):
 
     @classmethod
     def get_doc_id(cls, domain, report_id):
-        return 'custom-{}-{}'.format(domain, report_id)
+        return '{}{}-{}'.format(CUSTOM_PREFIX, domain, report_id)
 
     @classmethod
     def all(cls):
@@ -426,5 +429,5 @@ class CustomReportConfiguration(JsonObject):
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
-        raise BadSpecError(_('The data source referenced by this report could '
+        raise BadSpecError(_('The report configuration referenced by this report could '
                              'not be found.'))
