@@ -136,7 +136,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                         yield k
             else:
                 yield root + [e.html]
-        headers = ['::'.join(unicode(k)) for k in _headers(report.headers)]
+        headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
             yield dict(zip(headers, row))
