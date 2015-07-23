@@ -229,10 +229,11 @@ def rebuild_stock_state(case_id, section_id, product_id):
         StockTransaction
         .get_ordered_transactions_for_stock(
             case_id=case_id, section_id=section_id, product_id=product_id)
+        .reverse()  # we want earliest transactions first
         .select_related('report__type')
     )
     balance = None
-    for stock_transaction in reversed(stock_transactions):
+    for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
             stock_transaction.delete()
         else:
