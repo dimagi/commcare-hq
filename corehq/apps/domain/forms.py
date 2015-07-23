@@ -59,7 +59,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
@@ -840,7 +840,6 @@ class HQPasswordResetForm(forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-        from django.core.mail import send_mail
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
 
@@ -876,7 +875,7 @@ class HQPasswordResetForm(forms.Form):
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             email = render_to_string(email_template_name, c)
-            send_mail(subject, email, from_email, [user.email])
+            send_mail_async.delay(subject, email, from_email, [user.email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -1192,7 +1191,7 @@ class ProBonoForm(forms.Form):
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
