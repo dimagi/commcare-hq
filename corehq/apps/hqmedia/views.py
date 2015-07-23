@@ -422,6 +422,15 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
         return ['video']
 
 
+class ProcessTextFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareMultimedia
+    name = "hqmedia_uploader_text"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['text']
+
+
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
 

@@ -361,6 +361,13 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_PRINTING = StaticToggle(
+    'printing',
+    "Enables the Print Android App Callout",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 VELLUM_RICH_TEXT = StaticToggle(
     'rich_text',
     "Enables rich text for the form builder",
