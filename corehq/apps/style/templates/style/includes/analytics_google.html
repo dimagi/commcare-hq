@@ -99,7 +99,7 @@
         // rather than the 3rd or 4th from the left, because it's variable
         // https://developers.google.com/analytics/devguides/collection/analyticsjs/events#overview
         var lastArg = arguments[arguments.length - 1];
-        var callBack = lastArg.hitCallback;
+        var callBack = lastArg && lastArg.hitCallback;
 
         if (window.ga && ga.create){
             // Check that Google Analytics is not blocked by apps such as Ghostery
