@@ -123,7 +123,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = DomainInvitation.by_email(email)
+    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
