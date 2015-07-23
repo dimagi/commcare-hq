@@ -599,24 +599,15 @@ class DomainSubscriptionView(DomainAccountingSettings):
             if subscription.date_end is not None:
                 if subscription.is_renewed:
 
-                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                    next_product = self.get_product_summary(subscription.next_subscription.plan_version,
                                                              self.account,
                                                              subscription)
-
-                    if len(next_products) > 1:
-                        accounting_logger.error(
-                            "[BILLING] "
-                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
-                            "subscriber %s. Odd, right? The latest one by "
-                            "date_created was used, but consider this an issue."
-                            % self.account
-                        )
 
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
-                        'price': next_products[0]['monthly_fee'],
+                        'price': next_product['monthly_fee'],
                     })
 
                 else:
@@ -631,10 +622,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         if general_credits:
             general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
-        products = self.get_product_summary(plan_version, self.account, subscription)
         info = {
-            'products': products,
-            'is_multiproduct': len(products) > 1,
+            'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
             'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
@@ -664,27 +653,35 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_summary = []
-        for product_rate in plan_version.product_rates.all():
-            product_info = {
-                'name': product_rate.product.product_type,
-                'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-                'credit': None,
-                'type': product_rate.product.product_type,
-            }
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, product_type=product_rate.product.product_type
-                )
-            if credit_lines:
-                product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-            product_summary.append(product_info)
-        return product_summary
+        product_rates = plan_version.product_rates.all()
+        if len(product_rates) > 1:
+            # Models and UI are both written to support multiple products,
+            # but for now, each subscription can only have one product.
+            accounting_logger.error(
+                "[BILLING] "
+                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
+                "Odd, right? The latest one by date_created was used, but consider this an issue."
+                % self.account
+            )
+        product_rate = product_rates[0]
+        product_info = {
+            'name': product_rate.product.product_type,
+            'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
+            'credit': None,
+            'type': product_rate.product.product_type,
+        }
+        credit_lines = None
+        if subscription is not None:
+            credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                subscription, product_type=product_rate.product.product_type
+            )
+        elif account is not None:
+            credit_lines = CreditLine.get_credits_for_account(
+                account, product_type=product_rate.product.product_type
+            )
+        if credit_lines:
+            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []
