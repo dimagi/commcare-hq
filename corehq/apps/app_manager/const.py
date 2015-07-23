@@ -40,3 +40,7 @@ AUTO_SELECT_RAW = 'raw'
 AUTO_SELECT_USERCASE = 'usercase'
 
 RETURN_TO = 'return_to'
+
+AMPLIFIES_YES = 'yes'
+AMPLIFIES_NO = 'no'
+AMPLIFIES_NOT_SET = 'not_set'
