@@ -343,6 +343,9 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
 
 class CustomDataSourceConfiguration(JsonObject):
+    """
+    For custom data sources maintained in the repository
+    """
     _datasource_id_prefix = 'custom-'
     domains = ListProperty()
     config = DictProperty()
@@ -375,6 +378,50 @@ class CustomDataSourceConfiguration(JsonObject):
         """
         Returns a DataSourceConfiguration object,
         NOT a CustomDataSourceConfiguration.
+        """
+        for ds in cls.all():
+            if ds.get_id == config_id:
+                return ds
+        raise BadSpecError(_('The data source referenced by this report could '
+                             'not be found.'))
+
+
+class CustomReportConfiguration(JsonObject):
+    """
+    For statically defined reports based off of custom data sources
+    """
+    domains = ListProperty()
+    report_id = StringProperty()
+    data_source_table = StringProperty()
+    config = DictProperty()
+
+    @classmethod
+    def get_doc_id(cls, domain, report_id):
+        return 'custom-{}-{}'.format(domain, report_id)
+
+    @classmethod
+    def all(cls):
+        for path in settings.CUSTOM_UCR_REPORTS:
+            with open(path) as f:
+                wrapped = cls.wrap(json.load(f))
+                for domain in wrapped.domains:
+                    doc = copy(wrapped.config)
+                    doc['domain'] = domain
+                    doc['_id'] = cls.get_doc_id(domain, wrapped.report_id)
+                    doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
+                    yield ReportConfiguration.wrap(doc)
+
+    @classmethod
+    def by_domain(cls, domain):
+        """
+        Returns a list of ReportConfiguration objects, NOT CustomReportConfigurations.
+        """
+        return [ds for ds in cls.all() if ds.domain == domain]
+
+    @classmethod
+    def by_id(cls, config_id):
+        """
+        Returns a ReportConfiguration object, NOT CustomReportConfigurations.
         """
         for ds in cls.all():
             if ds.get_id == config_id:
