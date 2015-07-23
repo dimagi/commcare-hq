@@ -25,7 +25,6 @@
             table {
                 border-collapse: collapse;
             }
-
             td {
                 border: 1px solid #000000;
             }
@@ -36,10 +35,6 @@
 
             body {
                 width: 297mm;
-            }
-            #map {
-                height: 15cm !important;
-                page-break-after: always;
             }
             tr {
                 border: 1px solid #000000;
@@ -62,7 +57,19 @@
             }
         </style>
     {% endif %}
-
+    <style>
+        #legend {
+            max-height: 17em !important;
+            overflow-y: auto;
+        }
+        #legend > div {
+            font: 10px/0.9 "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        #map {
+            height: 15cm !important;
+            page-break-after: always;
+        }
+    </style>
     {{ block.super }}
 {% endblock js-libs %}
 
