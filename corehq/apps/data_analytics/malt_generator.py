@@ -1,5 +1,6 @@
 import logging
 
+from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
@@ -47,7 +48,7 @@ class MALTTableGenerator(object):
                 wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
             except Exception as ex:
                 if app_id == MISSING_APP_ID:
-                    wam, pam, is_app_deleted = 'not_set', 'not_set', False
+                    wam, pam, is_app_deleted = AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False
                 else:
                     logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
                                 (id=user._id, app_id=app_id, ex=str(ex)))
@@ -62,8 +63,8 @@ class MALTTableGenerator(object):
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
                 'app_id': app_id,
-                'wam': wam,
-                'pam': pam,
+                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, AMPLIFIES_NOT_SET),
+                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, AMPLIFIES_NOT_SET),
                 'is_app_deleted': is_app_deleted,
             }
             malt_row_dicts.append(malt_dict)
@@ -108,6 +109,6 @@ class MALTTableGenerator(object):
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
         app = get_app(domain, app_id)
-        return (getattr(app, 'amplifies_workers', 'not_set'),
-                getattr(app, 'amplifies_project', 'not_set'),
+        return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
+                getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
                 app.is_deleted())
