@@ -11,7 +11,7 @@ Tagging strings in views
 ------------------------
 
 **TL;DR**: ``ugettext`` should be used in code that will be run per-request.
-``ugettext_lazy`` should be used in top-level code.
+``ugettext_lazy`` should be used in code that is run at module import.
 
 The management command ``makemessages`` pulls out strings marked for
 translation so they can be translated via transifex.  All three ugettext
@@ -40,9 +40,9 @@ The most common case is just wrapping text with ugettext.
         messages.success(request, _("Welcome!"))
 
 
-When a string will be read by python as soon as the code is parsed, there is
+Typically when code is run as a result of a module being imported, there is
 not yet a user whose locale can be used for translations, so it must be
-delayed.  This is where `ugettext_lazy` comes in.  It will mark a string for
+delayed. This is where `ugettext_lazy` comes in.  It will mark a string for
 translation, but delay the actual translation as long as possible.
 
 .. code-block:: python
