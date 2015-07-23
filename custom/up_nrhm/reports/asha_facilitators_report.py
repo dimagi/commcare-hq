@@ -6,7 +6,7 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "ASHA Facilitators Report"
+    name = "Format-2 Consolidation of the Functionality numbers"
     slug = "asha_facilitators_report"
     no_value = '--'
 

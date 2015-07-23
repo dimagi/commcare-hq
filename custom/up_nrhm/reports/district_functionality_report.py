@@ -10,7 +10,7 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "District Functionality Report"
+    name = "Format-5 Functionality of ASHAs in blocks"
     slug = "district_functionality_report"
     no_value = '--'
 

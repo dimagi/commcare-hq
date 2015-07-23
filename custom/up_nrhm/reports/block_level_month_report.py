@@ -10,7 +10,7 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "Block Level-Month wise Report"
+    name = "Format-3 Block Consolidation of the functionality status"
     slug = "block_level_month_wise"
     no_value = '--'
 

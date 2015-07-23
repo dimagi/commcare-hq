@@ -9,7 +9,7 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "Block Level-Month wise Report"
+    name = "Format-4 Block Consolidation of the functionality status"
     slug = "block_level_month_wise"
 
     def get_afs_for_block(self):

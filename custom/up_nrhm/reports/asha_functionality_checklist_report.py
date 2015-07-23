@@ -7,7 +7,7 @@ from dimagi.utils.dates import force_to_datetime
 
 
 class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
-    name = "ASHA Functionality Checklist Report"
+    name = "Format-1 for ASHA Sanginis"
     slug = "asha_functionality_checklist_report"
 
     @property
