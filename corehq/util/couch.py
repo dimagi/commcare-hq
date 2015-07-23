@@ -1,3 +1,4 @@
+import logging
 import traceback
 import requests
 import json
@@ -9,6 +10,8 @@ from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
 from dimagi.utils.chunked import chunked
 from dimagi.utils.requestskit import get_auth
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentNotFound(Exception):
@@ -247,8 +250,11 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
         raise IterUpdateError(results, msg)
 
     if verbose:
-        print "couldn't find {} docs".format(len(results.not_found_ids))
-        print "ignored {} docs".format(len(results.ignored_ids))
-        print "deleted {} docs".format(len(results.deleted_ids))
-        print "updated {} docs".format(len(results.updated_ids))
+        level = logger.level
+        logger.setLevel(logging.INFO)
+        logger.info("couldn't find %s docs", len(results.not_found_ids))
+        logger.info("ignored %s docs", len(results.ignored_ids))
+        logger.info("deleted %s docs", len(results.deleted_ids))
+        logger.info("updated %s docs", len(results.updated_ids))
+        logger.setLevel(level)
     return results
