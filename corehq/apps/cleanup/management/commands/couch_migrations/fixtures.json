@@ -9,6 +9,7 @@
     "couch_views": [
         "fixtures/data_items_by_domain_type",
         "fixtures/data_items_by_field_value",
+        "fixtures/data_types_by_domain",
         "fixtures/data_types_by_domain_tag",
         "fixtures/ownership"
     ]
