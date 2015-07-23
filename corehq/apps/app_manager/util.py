@@ -303,8 +303,6 @@ def get_session_schema(form):
 
 
 def get_usercase_properties(app):
-    # No need to check toggles.USER_AS_A_CASE. This function is only called
-    # from app_manager.views, and it checks the toggle.
     if is_usercase_in_use(app.domain):
         return get_case_properties(app, [USERCASE_TYPE])
     return {USERCASE_TYPE: []}
