@@ -603,13 +603,14 @@ class FormSchedule(DocumentSchema):
     expires:                    Days after the anchor date that this schedule expires (optional)
     visits:		        List of visits in this schedule
     post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    transition_condition:       Condition under which we transition to the next phase
+    termination_condition:      Condition under which we terminate the whole schedule
     """
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
     post_schedule_increment = IntegerProperty()
     get_visits = IndexedSchema.Getter('visits')
 
-    # TODO: remove this
     transition_condition = SchemaProperty(FormActionCondition)
     termination_condition = SchemaProperty(FormActionCondition)
 
@@ -2214,15 +2215,9 @@ class SchedulePhase(IndexedSchema):
 
     anchor:                     Case property containing a date after which this phase becomes active
     forms: 			The forms that are to be filled out within this phase
-    transition_condition:       Condition under which we transition to the next phase
-    termination_condition:      Condition under which we terminate the whole schedule
     """
     anchor = StringProperty()
     forms = SchemaListProperty(SchedulePhaseForm)
-
-    # TODO: this
-    transition_condition = SchemaProperty(FormActionCondition)
-    termination_condition = SchemaProperty(FormActionCondition)
 
     @property
     def id(self):

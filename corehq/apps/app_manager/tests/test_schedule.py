@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models import (
     ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
+    FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -74,7 +75,6 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 forms=[SchedulePhaseForm(form_id=self.form_3.unique_id)]
             ),
         ]
-
 
     def test_get_phase(self):
         phase = SchedulePhase(
@@ -220,8 +220,9 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         suite = self.app.create_suite()
         form_ids = (self.form_1.schedule_form_id, self.form_2.schedule_form_id)
         anchor = "instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/edd"
-        current_schedule_phase = ("instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
-                "current_schedule_phase")
+        current_schedule_phase = ("instance('casedb')/casedb/case"
+                                  "[@case_id=instance('commcaresession')/session/data/case_id]/"
+                                  "current_schedule_phase")
         for form_num, form_id in enumerate(form_ids):
             filter_condition = (
                 "({current_schedule_phase} = 1 "     # form phase == current phase
@@ -253,54 +254,81 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
     # xmlns is added because I needed to use WrappedNode.find() in the next few tests
     xmlns = ("xmlns='http://www.w3.org/2002/xforms' "
-                  "xmlns:h='http://www.w3.org/1999/xhtml' "
-                  "xmlns:jr='http://openrosa.org/javarosa' "
-                  "xmlns:orx='http://openrosa.org/jr/xforms' "
-                  "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
+             "xmlns:h='http://www.w3.org/1999/xhtml' "
+             "xmlns:jr='http://openrosa.org/javarosa' "
+             "xmlns:orx='http://openrosa.org/jr/xforms' "
+             "xmlns:xsd='http://www.w3.org/2001/XMLSchema'")
 
     def test_current_schedule_phase(self):
-        """ Set the current schedule phase to phase of the form that was just completed """
-        # Hackety hack hack
+        """ Current Schedule Phase is set depending on transition and termination conditions """
+        self._fetch_sources()
 
         current_schedule_phase_partial = """
         <partial>
-            <bind type="xs:integer" nodeset="/data/case/update/current_schedule_phase" calculate="{value}" {xmlns}/>
+        <bind type="xs:integer" nodeset="/data/case/update/current_schedule_phase" calculate="{value}" {xmlns}/>
         </partial>
         """
-        self._fetch_sources()
+
+        transition_question = '/data/successful_birth'
+        transition_answer = 'yes'
+        self.form_1.schedule.transition_condition = FormActionCondition(
+            type='if',
+            question=transition_question,
+            answer=transition_answer,
+        )
+
+        termination_question = '/data/passed_away'
+        termination_answer = 'yes'
+        self.form_1.schedule.termination_condition = FormActionCondition(
+            type='if',
+            question=termination_question,
+            answer=termination_answer,
+        )
+
         self._apply_schedule_phases()
 
         xform_1 = self.form_1.wrapped_xform()
         self.form_1.add_stuff_to_xform(xform_1)
+        value = "if({termination_condition}, -1, if({transition_condition}, 2, 1))".format(
+            termination_condition="{} = '{}'".format(termination_question, termination_answer),
+            transition_condition="{} = '{}'".format(transition_question, transition_answer),
+        )
         self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='1', xmlns=self.xmlns),
+            current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
             xform_1.model_node.find('./bind[@nodeset="/data/case/update/current_schedule_phase"]').render(),
             '.'
         )
 
+    def test_current_schedule_phase_no_transitions(self):
+        """The current_schedule_phase is set to the phase of the current form"""
+        self._fetch_sources()
+        self._apply_schedule_phases()
+
+        current_schedule_phase_partial = """
+        <partial>
+        <bind type="xs:integer" nodeset="/data/case/update/current_schedule_phase" calculate="{value}" {xmlns}/>
+        </partial>
+        """
+        value = "if(false(), -1, if(false(), 2, {}))".format(self.form_2.get_phase().id)
         xform_2 = self.form_2.wrapped_xform()
         self.form_2.add_stuff_to_xform(xform_2)
         self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='1', xmlns=self.xmlns),
+            current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
             xform_2.model_node.find('./bind[@nodeset="/data/case/update/current_schedule_phase"]').render(),
-            '.'
-        )
-
-        xform_3 = self.form_3.wrapped_xform()
-        self.form_3.add_stuff_to_xform(xform_3)
-        self.assertXmlPartialEqual(
-            current_schedule_phase_partial.format(value='2', xmlns=self.xmlns),
-            xform_3.model_node.find('./bind[@nodeset="/data/case/update/current_schedule_phase"]').render(),
             '.'
         )
 
     def test_last_visit_number(self):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
-        last_visit_number_partial = """
-        <partial>
-        <bind nodeset="/data/case/update/last_visit_number_{form_id}" calculate="if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_a1e369 = '', 1, int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_a1e369) + 1)" {xmlns}/>
-        </partial>
-        """
+        last_visit_number_partial = (
+            "<partial>"
+            '<bind nodeset="/data/case/update/last_visit_number_{form_id}" calculate="'
+            "if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
+            "last_visit_number_a1e369 = '', 1, "
+            "int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
+            'last_visit_number_a1e369) + 1)" {xmlns}/>'
+            '</partial>'
+        )
         self._fetch_sources()
         self._apply_schedule_phases()
         xform_1 = self.form_1.wrapped_xform()
@@ -315,6 +343,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
     def test_last_visit_date(self):
         """ Set the date of the last visit when a form gets submitted """
+        # TODO: this should probably be "today"
         last_visit_date_partial = """
         <partial>
         <bind nodeset="/data/case/update/last_visit_date_{form_id}" type="xsd:dateTime"

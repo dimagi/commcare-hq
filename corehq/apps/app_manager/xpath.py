@@ -1,5 +1,10 @@
 import re
-from corehq.apps.app_manager.const import USERCASE_TYPE, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT
+from corehq.apps.app_manager.const import (
+    USERCASE_TYPE,
+    SCHEDULE_PHASE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_TERMINATED,
+)
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError
 from django.utils.translation import ugettext as _
 
@@ -362,6 +367,26 @@ class ScheduleFormXPath(object):
         num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
         num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
         return XPath.and_(next_valid_schedules, num_upcoming_visits_gt_0)
+
+    def current_schedule_phase_calculation(self, termination_condition, transition_condition):
+        """
+        Returns the current schedule phase calculation, taking transition and termination conditions into account.
+
+        if({termination_condition}, '-1',
+            if({transition_condition}, current_form_phase + 1, current_form_phase))
+        """
+        this_phase = self.phase.id
+        next_phase = this_phase + 1
+
+        return XPath.if_(
+            termination_condition,
+            SCHEDULE_TERMINATED,
+            XPath.if_(
+                transition_condition,
+                str(next_phase),
+                str(this_phase),
+            ),
+        )
 
     def next_valid_schedules(self):
         """

@@ -8,7 +8,7 @@ from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
-from .xpath import CaseIDXPath, session_var, CaseTypeXpath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath, ScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
@@ -1392,6 +1392,7 @@ class XForm(WrappedNode):
         from corehq.apps.app_manager.util import split_path
 
         def configure_visit_schedule_updates(update_block):
+            schedule_form_xpath = ScheduleFormXPath(form, form.get_phase(), form.get_module())
             update_block.append(make_case_elem(SCHEDULE_PHASE))
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
@@ -1400,7 +1401,10 @@ class XForm(WrappedNode):
             self.add_bind(
                 nodeset='case/update/{}'.format(SCHEDULE_PHASE),
                 type="xs:integer",
-                calculate=str(form.get_phase().id)
+                calculate=schedule_form_xpath.current_schedule_phase_calculation(
+                    self.action_relevance(form.schedule.termination_condition),
+                    self.action_relevance(form.schedule.transition_condition),
+                )
             )
 
             last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
