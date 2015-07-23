@@ -1551,10 +1551,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        # I remember being worried about exceptions here,
-        # so let's ensure atomicity of the transaction
-        with transaction.atomic():
-            if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+
+        if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+            with transaction.atomic():
+                # atomically create new subscription
                 new_subscription = Subscription.new_domain_subscription(
                     self.next_account,
                     self.domain,
@@ -1562,13 +1562,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     date_start=self.cleaned_data['start_date'],
                     **self.subscription_default_fields
                 )
-            else:
-                new_subscription = self.current_subscription.change_plan(
-                    new_plan_version,
-                    transfer_credits=self.current_subscription.account == self.next_account,
-                    account=self.next_account,
-                    **self.subscription_default_fields
-                )
+        else:
+            # change plan method is already atomic
+            new_subscription = self.current_subscription.change_plan(
+                new_plan_version,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                account=self.next_account,
+                **self.subscription_default_fields
+            )
 
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],

@@ -1020,6 +1020,7 @@ class Subscription(models.Model):
             reason=SubscriptionAdjustmentReason.MODIFY
         )
 
+    @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,

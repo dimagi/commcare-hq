@@ -1172,9 +1172,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         form = self.get_post_form
         if form.is_valid():
             try:
-                with transaction.atomic():
-                    form.process_subscription_management()
-                    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                form.process_subscription_management()
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except NewSubscriptionError as e:
                 messages.error(self.request, e.message)
         return self.get(request, *args, **kwargs)
