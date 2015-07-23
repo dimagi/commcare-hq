@@ -1673,7 +1673,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         frame_case_not_created.add_command(return_to)
         entry.stack.add_frame(frame_case_not_created)
 
-    def get_case_datums(self, module, form):
+    def get_case_datums_basic_module(self, module, form):
         datums = []
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
@@ -1692,7 +1692,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        datums = self.get_case_datums(module, form)
+        datums = self.get_case_datums_basic_module(module, form)
         self.add_parent_datums(datums, module)
         for datum in datums:
             e.datums.append(datum['datum'])
@@ -2044,7 +2044,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 except FormNotFoundException:
                     pass
                 else:
-                    datums_.extend(self.get_case_datums(module_, form))
+                    datums_.extend(self.get_case_datums_basic_module(module_, form))
             return datums_
 
         def append_update(dict_, new_dict):
