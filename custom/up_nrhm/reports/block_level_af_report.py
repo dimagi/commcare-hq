@@ -68,7 +68,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
 
         for index, sum in enumerate(sums):
             if index == 10:
-                html = "{0}/{1} {2}%".format(sum_row_10, denom_row_10, sum_row_10 * 100 / denom_row_10)
+                html = "{0}/{1} ({2}%)".format(sum_row_10, denom_row_10, sum_row_10 * 100 / denom_row_10)
                 rows[index].append(format_datatables_data(html, sum_row_10 * 100 / denom_row_10))
             else:
                 rows[index].append(format_datatables_data(sum, sum))

@@ -89,7 +89,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             if percent >= 60:
                 total_of_functional += 1
             default_row_data[-3].append(total)
-            default_row_data[-2].append('{0}/{1} {2}%'.format(total, denominator, percent))
+            default_row_data[-2].append('{0}/{1} ({2}%)'.format(total, denominator, percent))
             default_row_data[-1].append('')
 
         for idx, row in enumerate(default_row_data):
