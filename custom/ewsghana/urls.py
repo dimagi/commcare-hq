@@ -24,5 +24,6 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^clear_products/$', 'clear_products', name='clear_products'),
     url(r'^delete_last_stock_data/$', 'delete_last_stock_data', name='delete_last_stock_data'),
     url(r'^(?P<site_code>\w+)/input_stock/$', InputStockView.as_view(), name='input_stock'),
-    url(r'^', include(hq_api.urls))
+    url(r'^', include(hq_api.urls)),
+    url(r'^convert_user_data_fields/$', 'convert_user_data_fields', name='convert_user_data_fields')
 )
