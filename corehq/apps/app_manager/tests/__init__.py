@@ -19,6 +19,7 @@ try:
     from corehq.apps.app_manager.tests.test_brief_view import *
     from corehq.apps.app_manager.tests.test_xpath import *
     from corehq.apps.app_manager.tests.test_bulk_app_translation import *
+    from corehq.apps.app_manager.tests.test_extension_case import *
     from .test_location_xpath import *
     from .test_get_questions import *
     from .test_repeater import *
