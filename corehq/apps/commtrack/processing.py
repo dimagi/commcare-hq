@@ -79,7 +79,7 @@ def compute_ledger_values(lazy_original_balance, report_type, quantity):
         putting it behind a function lets compute_ledger_values decide
         whether it's necessary to do that work
     report_type:
-        a string in string in VALID_REPORT_TYPES
+        a string in VALID_REPORT_TYPES
         says whether it's a transfer or balance
     quantity:
         the associated quantity, interpreted as a delta for transfers
