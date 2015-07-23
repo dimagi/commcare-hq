@@ -77,6 +77,11 @@ ADD_TO_ES_FILTER = {
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],
+    "archived_forms": [
+        {"term": {"doc_type": "xformarchived"}},
+        {"not": {"missing": {"field": "xmlns"}}},
+        {"not": {"missing": {"field": "form.meta.userID"}}},
+    ],
     "users": [
         {"term": {"doc_type": "CommCareUser"}},
         {"term": {"base_doc": "couchuser"}},
