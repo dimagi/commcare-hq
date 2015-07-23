@@ -10,7 +10,7 @@ from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocu
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq.const import USER_DATE_FORMAT
@@ -1038,6 +1038,16 @@ class Subscription(models.Model):
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
 
+        if self.date_start > today:
+            self.date_start = today
+        if self.date_end is None or self.date_end > today:
+            self.date_end = today
+        if (self.date_delay_invoicing is not None
+           and self.date_delay_invoicing > today):
+            self.date_delay_invoicing = today
+        self.is_active = False
+        self.save()
+
         new_subscription = Subscription(
             account=account if account else self.account,
             plan_version=new_plan_version,
@@ -1055,16 +1065,6 @@ class Subscription(models.Model):
         new_subscription.save()
 
         new_subscription.set_billing_account_entry_point()
-
-        if self.date_start > today:
-            self.date_start = today
-        if self.date_end is None or self.date_end > today:
-            self.date_end = today
-        if (self.date_delay_invoicing is not None
-           and self.date_delay_invoicing > today):
-            self.date_delay_invoicing = today
-        self.is_active = False
-        self.save()
 
         self.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgrades,
