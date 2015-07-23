@@ -9,7 +9,6 @@ from corehq import Domain, privileges, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
@@ -39,6 +38,7 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.hqwebapp.utils import InvitationView
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm, UpdateUserPermissionForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
@@ -293,21 +293,23 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    app_languages = Application.get_db().view(
+    app_languages = [res['key'][1] for res in Application.get_db().view(
         'languages/list',
         startkey=[domain],
         endkey=[domain, {}],
         group='true'
-    ).all()
+    ).all()]
+
+    translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
+    sms_languages = translation_doc.langs if translation_doc else []
 
     domain_languages = []
-    for result in app_languages:
-        lang_code = result['key'][1]
+    for lang_code in set(app_languages + sms_languages):
         name = langcodes.get_name(lang_code)
         label = u"{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
-    return domain_languages or langcodes.get_all_langs_for_select()
+    return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
 class BaseFullEditUserView(BaseEditUserView):
