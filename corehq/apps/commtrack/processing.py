@@ -234,7 +234,6 @@ def rebuild_stock_state(case_id, section_id, product_id):
     balance = None
     for stock_transaction in reversed(stock_transactions):
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
-            print 'deleting stock transaction'
             stock_transaction.delete()
         else:
             balance = _adjust_ledger_values(balance, stock_transaction)
