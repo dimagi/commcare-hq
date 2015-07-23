@@ -6,12 +6,13 @@ from casexml.apps.case.xform import extract_case_blocks
 
 class TestExtractCaseBlocks(SimpleTestCase):
 
-    def test_simple(self):
+    def test_basic(self):
         block = {CASE_ATTR_ID: uuid.uuid4().hex}
         blocks = extract_case_blocks({
             'data': {
-                'case': block
-            }
+                'some': 'stuff'
+            },
+            'case': block
         })
         self.assertEqual(1, len(blocks))
         self.assertEqual(block, blocks[0])
@@ -20,17 +21,18 @@ class TestExtractCaseBlocks(SimpleTestCase):
         block = {CASE_ATTR_ID: uuid.uuid4().hex}
         block_with_path = extract_case_blocks({
             'data': {
-                'case': block
-            }
+                'some': 'stuff'
+            },
+            'case': block
         }, include_path=True)[0]
         self.assertEqual(block, block_with_path.caseblock)
-        self.assertEqual(['data'], block_with_path.path)
+        self.assertEqual([], block_with_path.path)
 
     def test_nested_path(self):
         block = {CASE_ATTR_ID: uuid.uuid4().hex}
         blocks = extract_case_blocks({
             'data': {
-                'parent': {
+                'parents': {
                     'parent': {
                         'case': block
                     }
@@ -40,7 +42,7 @@ class TestExtractCaseBlocks(SimpleTestCase):
         }, include_path=True)
         self.assertEqual(1, len(blocks))
         self.assertEqual(block, blocks[0].caseblock)
-        self.assertEqual(['data', 'parent', 'parent'], blocks[0].path)
+        self.assertEqual(['data', 'parents', 'parent'], blocks[0].path)
 
     def test_blocks_in_list(self):
         blocks = [{CASE_ATTR_ID: uuid.uuid4().hex} for i in range(3)]
