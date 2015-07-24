@@ -84,6 +84,7 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
+    NoMatchingFilterException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -2785,6 +2786,18 @@ class ReportGraphConfig(DocumentSchema):
     config = DictProperty()
 
 
+class ReportAppFilter(DocumentSchema):
+    type = StringProperty(choices=['AUTO', 'STATIC'])
+    value = StringProperty()
+
+    def get_filter_value(self):
+        if self.type == 'AUTO':
+            pass
+        elif self.type == 'STATIC':
+            pass
+        raise NoMatchingFilterException
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
@@ -2792,6 +2805,7 @@ class ReportAppConfig(DocumentSchema):
     report_id = StringProperty(required=True)
     header = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
+    filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
 
