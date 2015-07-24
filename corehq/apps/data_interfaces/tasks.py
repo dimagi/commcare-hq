@@ -52,7 +52,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
             _request,
             render_as='form_ids',
             domain=domain,
-            report_slug=BulkArchiveFormInterface.slug
+            report_slug=BulkArchiveFormInterface.slug,
+            skip_permissions_check=True,
         )
 
     task = bulk_form_management_async
