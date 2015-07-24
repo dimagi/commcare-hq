@@ -8,7 +8,6 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, H
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
