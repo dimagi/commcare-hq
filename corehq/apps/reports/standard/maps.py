@@ -10,7 +10,16 @@ from corehq.apps.reports.generic import GenericReportView, GenericTabularReport,
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListReport
 from dimagi.utils.modules import to_function
+from dimagi.utils.web import json_handler
 from django.template.loader import render_to_string
+
+
+def is_serializable(v):
+    try:
+        json.dumps(v, default=json_handler)
+        return True
+    except TypeError:
+        return False
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
@@ -75,7 +84,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                         depth += 1
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
-                properties = dict((k, v) for k, v in row.iteritems() if k != geo_col)
+                properties = {k: v for k, v in row.iteritems()
+                              if k != geo_col and is_serializable(v)}
                 # handle 'display value / raw value' fields (for backwards compatibility with
                 # existing data sources)
                 # note: this is not ideal for the maps report, as we have no idea how to properly
