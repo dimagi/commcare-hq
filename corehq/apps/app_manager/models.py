@@ -49,6 +49,7 @@ from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
@@ -2797,6 +2798,14 @@ class StaticChoiceListFilter(ReportAppFilter):
     def get_filter_value(self):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=string_value, display=None) for string_value in self.value]
+
+
+class StaticDatespanFilter(ReportAppFilter):
+    start_date = DateTimeProperty()
+    end_date = DateTimeProperty()
+
+    def get_filter_value(self):
+        return DateSpan(startdate=self.start_date, enddate=self.end_date)
 
 
 class ReportAppConfig(DocumentSchema):

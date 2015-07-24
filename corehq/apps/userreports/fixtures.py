@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ReportModule,
     StaticChoiceListFilter,
+    StaticDatespanFilter,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from .models import ReportConfiguration
@@ -13,6 +14,7 @@ from .models import ReportConfiguration
 def wrap_by_filter_type(report_app_filter):
     doc_type_to_filter_class = {
         'StaticChoiceListFilter': StaticChoiceListFilter,
+        'StaticDatespanFilter': StaticDatespanFilter,
     }
     filter_class = doc_type_to_filter_class.get(report_app_filter.doc_type)
     if not filter_class:
