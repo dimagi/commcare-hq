@@ -64,28 +64,30 @@ $(function () {
                     editing: ko.observable(true)
                 };
             }
+            field.isDuplicate = ko.computed(function () {
+                var j, noRepeats = true;
+                var curVal = field.tag();
+                for (j = 0; j < self.fields().length; j += 1) {
+                    var thatField = self.fields()[j];
+                    if (thatField !== field && thatField.tag() === curVal) {
+                        noRepeats = false;
+                    }
+                }
+                return !noRepeats;
+            });
+            field.isBadSlug = ko.computed(function () {
+                var patt = new RegExp("([/\\<> ])");
+                return patt.test(field.tag());
+            });
+            field.noXMLStart = ko.computed(function () {
+                var curVal = field.tag();
+                return curVal.startsWith('xml');
+            });
             field.remove_if_new = function(){
                 if (field.is_new() == true){
                     self.fields.remove(field);
                 }
             };
-            field.editTag = ko.computed({
-                read: function () {
-                    return field.tag();
-                },
-                write: function (tag) {
-                    var j, noRepeats = true;
-                    for (j = 0; j < self.fields().length; j += 1) {
-                        if (self.fields()[j].tag === tag) {
-                            noRepeats = false;
-                        }
-                    }
-                    if (noRepeats) {
-                        var oldTag = field.tag;
-                        field.tag(tag);
-                    }
-                }
-            });
             self.fields.push(field);
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
@@ -114,6 +116,21 @@ $(function () {
                     self.saveState('saved');
                     },
                 success: function (data) {
+                    if (data.validation_errors) {
+                        var $failMsg = $("<p />").text(data.error_msg);
+                        var $failList = $("<ul />");
+                        for (var v=0; v < data.validation_errors.length; v++) {
+                            $failList.append($("<li />").text(data.validation_errors[v]));
+                        }
+                        $("#FailText")
+                            .text('')
+                            .append($failMsg)
+                            .append($failList);
+                        $("#editFailure").show();
+                        self.cancel();
+                        self.saveState('saved');
+                        return;
+                    }
                     self.saveState('saved');
                     if (!self._id()) {
                         self._id(data._id);
