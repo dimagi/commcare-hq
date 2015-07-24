@@ -1663,7 +1663,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     @memoized
     def get_child_case_types(self):
         '''
-        Return a list of each case type for which this module has a form that
+        Return a set of each case type for which this module has a form that
         opens a new child case of that type.
         :return:
         '''
@@ -4407,6 +4407,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 type_.error = _("Error in case type hierarchy")
 
         return meta
+
+    def get_child_case_types_of_module(self, module):
+        """
+        Return the child case types defined across an app for the case type of a module
+        """
+        return {i for m in self.get_modules()
+                if m.case_type == module.case_type
+                for i in m.get_child_case_types()}
 
 
 class RemoteApp(ApplicationBase):
