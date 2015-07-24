@@ -29,8 +29,11 @@ def notify_error(message):
 
 
 def notify_exception(request, message=None, details=None):
+    if request is not None:
+        message = message or request.path
     notify_logger.error(
-        'Notify Exception: %s' % (message or request.path),
+        'Notify Exception: %s' % (message
+                                  or "No message provided, fix error handler"),
         exc_info=sys.exc_info(),
         extra={
             'status_code': 500,
