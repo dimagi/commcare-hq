@@ -30,7 +30,7 @@ from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, Edi
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy

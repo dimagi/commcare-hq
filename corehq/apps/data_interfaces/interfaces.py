@@ -15,9 +15,7 @@ from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
-from corehq.apps.reports.filters.base import (
-    BaseReportFilter, BaseSingleOptionFilter
-)
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.elastic import ADD_TO_ES_FILTER
 
 from .dispatcher import EditDataInterfaceDispatcher

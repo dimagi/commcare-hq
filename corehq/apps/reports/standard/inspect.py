@@ -35,7 +35,7 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
 
 class SubmitHistoryMixin(ElasticProjectInspectionReport,
                          ProjectReportParametersMixin,
-                         CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
+                         CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
                          DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
