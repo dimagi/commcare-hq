@@ -34,10 +34,10 @@ def bulk_archive_forms(domain, user, uploaded_data):
 
 
 @task
-def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_filter_url):
+def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_query_string):
     # bulk archive/restore
-    # form_ids_or_filter_url - can either be list of formids or a BulkFormManagement query url
-    def get_ids_from_url(url, domain, couch_user):
+    # form_ids_or_query_string - can either be list of formids or a BulkFormManagement query url
+    def get_ids_from_url(query_string, domain, couch_user):
         from django.http import HttpRequest, QueryDict
 
         _request = HttpRequest()
@@ -46,7 +46,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         _request.domain = domain
         _request.couch_user.current_domain = domain
 
-        _request.GET = QueryDict(url)
+        _request.GET = QueryDict(query_string)
         dispatcher = EditDataInterfaceDispatcher()
         return dispatcher.dispatch(
             _request,
@@ -59,10 +59,10 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)
 
-    if type(form_ids_or_filter_url) == list:
-        xform_ids = form_ids_or_filter_url
-    elif isinstance(form_ids_or_filter_url, basestring):
-        xform_ids = get_ids_from_url(form_ids_or_filter_url, domain, couch_user)
+    if type(form_ids_or_query_string) == list:
+        xform_ids = form_ids_or_query_string
+    elif isinstance(form_ids_or_query_string, basestring):
+        xform_ids = get_ids_from_url(form_ids_or_query_string, domain, couch_user)
 
     if not xform_ids:
         # should never be the case

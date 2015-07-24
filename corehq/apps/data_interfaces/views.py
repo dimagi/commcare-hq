@@ -462,25 +462,25 @@ class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def _get_form_ids_or_url(self, request):
+    def get_form_ids_or_query_string(self, request):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in in an async task instead
             import urllib
-            filtered_form_url = urllib.unquote(self.request.POST.get('select_all'))
-            return filtered_form_url
+            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            return form_query_string
         else:
             return self.request.POST.getlist('xform_ids')
 
     def post(self, request, *args, **kwargs):
-        form_ids_or_url = self._get_form_ids_or_url(request)
+        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_url
+            form_ids_or_query_string
         )
         task_ref.set_task(task)
 

@@ -82,7 +82,7 @@
                 <div id ="form_options" class="well form-inline" style="marging: 1em">
                     <div>
                         <button id="submitForms" disabled="true" class="btn {{ mode.button_class }}">{{ mode.button_text }}</button>
-                        <input type="checkbox" name="select_all" value="{{ filtered_form_url|urlencode }}" style="margin-left: 1em;">
+                        <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
                         <label for="select_all" >
                             Select all {{ total_xForms }} forms
                         </label>

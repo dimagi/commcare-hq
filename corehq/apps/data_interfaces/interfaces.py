@@ -161,7 +161,7 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
     def template_context(self):
         context = super(BulkArchiveFormInterface, self).template_context
         context.update({
-            "filtered_form_url": self.request.get_full_path(),
+            "form_query_string": self.request.GET.urlencode(),
             "mode": self.mode,
             "total_xForms": int(self.es_results['hits']['total']),
         })
