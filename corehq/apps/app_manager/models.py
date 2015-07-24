@@ -299,7 +299,7 @@ class OpenSubCaseAction(FormAction):
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty(default='child')
+    relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -338,7 +338,7 @@ class AdvancedAction(IndexedSchema):
     parent_reference_id = StringProperty(default='parent')
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty(default='child')
+    relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
