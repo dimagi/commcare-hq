@@ -135,6 +135,12 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             ret.strict = False
         return ret
 
+    def case_count(self):
+        """
+        How many cases are associated with this. Used in reports.
+        """
+        raise NotImplementedError()
+
     def phone_is_holding_case(self, case_id):
         raise NotImplementedError()
 
@@ -223,6 +229,9 @@ class SyncLog(AbstractSyncLog):
     def last_for_user(cls, user_id):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
         return get_last_synclog_for_user(user_id)
+
+    def case_count(self):
+        return len(self.cases_on_phone)
 
     def get_previous_log(self):
         """
@@ -516,6 +525,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.doc_type = "SyncLog"
         super(SimplifiedSyncLog, self).save(*args, **kwargs)
 
+    def case_count(self):
+        return len(self.case_ids_on_phone)
+
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
@@ -681,7 +693,10 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    doc = SyncLog.get_db().get(doc_id)
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+
+
+def properly_wrap_sync_log(doc):
     return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
 
 
