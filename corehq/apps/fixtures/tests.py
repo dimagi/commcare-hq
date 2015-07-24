@@ -208,7 +208,7 @@ class FieldNameCleanTest(TestCase):
         self.data_item = FixtureDataItem(
             domain=self.domain,
             data_type_id=self.data_type.get_id,
-            fields= {
+            fields={
                 "will/crash": FieldList(
                     field_list=[
                         FixtureItemField(
