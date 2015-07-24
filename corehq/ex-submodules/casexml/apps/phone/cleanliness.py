@@ -4,6 +4,7 @@ from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_inde
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
     get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
@@ -43,6 +44,15 @@ def should_create_flags_on_submission(domain):
         if override is not None:
             return override
     return False
+
+
+def set_cleanliness_flags_for_enabled_domains(force_full=False):
+    """
+    Updates cleanliness for all domains that have the toggle enabled
+    """
+    for domain in Domain.get_all_names():
+        if OWNERSHIP_CLEANLINESS.enabled(domain):
+            set_cleanliness_flags_for_domain(domain, force_full=force_full)
 
 
 def set_cleanliness_flags_for_domain(domain, force_full=False):
