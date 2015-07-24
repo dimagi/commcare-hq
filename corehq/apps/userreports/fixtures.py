@@ -3,6 +3,7 @@ from corehq import toggles
 from corehq.apps.app_manager.models import (
     get_apps_in_domain,
     Application,
+    AutoFilter,
     ReportModule,
     StaticChoiceListFilter,
     StaticDatespanFilter,
@@ -13,6 +14,7 @@ from .models import ReportConfiguration
 
 def wrap_by_filter_type(report_app_filter):
     doc_type_to_filter_class = {
+        'AutoFilter': AutoFilter,
         'StaticChoiceListFilter': StaticChoiceListFilter,
         'StaticDatespanFilter': StaticDatespanFilter,
     }
@@ -46,17 +48,17 @@ class ReportFixturesProvider(object):
         reports_elem = ElementTree.Element('reports')
         for report_config in report_configs:
             report = ReportConfiguration.get(report_config.report_id)
-            reports_elem.append(self._report_to_fixture(report, report_config.filters))
+            reports_elem.append(self._report_to_fixture(report, report_config.filters, user))
         root.append(reports_elem)
         return [root]
 
-    def _report_to_fixture(self, report, filters):
+    def _report_to_fixture(self, report, filters, user):
         report_elem = ElementTree.Element('report', attrib={'id': report._id})
         report_elem.append(self._element('name', report.title))
         report_elem.append(self._element('description', report.description))
         data_source = ReportFactory.from_spec(report)
         data_source.set_filter_values({
-            filter_slug: wrap_by_filter_type(filters[filter_slug]).get_filter_value()
+            filter_slug: wrap_by_filter_type(filters[filter_slug]).get_filter_value(user)
             for filter_slug in filters
         })
 

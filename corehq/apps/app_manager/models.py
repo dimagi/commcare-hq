@@ -2792,10 +2792,27 @@ class ReportAppFilter(DocumentSchema):
         raise NotImplementedError
 
 
+def _filter_by_user_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user._id, display=None)
+
+
+_filter_type_to_func = {
+    'user_id': _filter_by_user_id,
+}
+
+
+class AutoFilter(ReportAppFilter):
+    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+
+    def get_filter_value(self, user):
+        return _filter_type_to_func[self.filter_type](user)
+
+
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
 
-    def get_filter_value(self):
+    def get_filter_value(self, user):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=string_value, display=None) for string_value in self.value]
 
@@ -2804,7 +2821,7 @@ class StaticDatespanFilter(ReportAppFilter):
     start_date = DateTimeProperty()
     end_date = DateTimeProperty()
 
-    def get_filter_value(self):
+    def get_filter_value(self, user):
         return DateSpan(startdate=self.start_date, enddate=self.end_date)
 
 
