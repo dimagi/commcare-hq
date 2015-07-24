@@ -114,11 +114,11 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             method = options.keys()
             if 'update' in method:
                 field_name = options['update']
-            if field_name.startswith('xml') and not 'remove' in method:
+            if field_name.startswith('xml') and 'remove' not in method:
                 validation_errors.append(
                     _("Field name \"%s\" cannot begin with 'xml'.") % field_name
                 )
-            if is_field_name_invalid(field_name) and not 'remove' in method:
+            if is_field_name_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(
                     _("Field name \"%s\" cannot include /, "
                       "\\, <, >, or spaces.") % field_name
