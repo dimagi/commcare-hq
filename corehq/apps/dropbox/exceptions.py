@@ -1,0 +1,2 @@
+class DropboxUploadAlreadyInProgress(Exception):
+    pass

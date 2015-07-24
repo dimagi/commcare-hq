@@ -1,0 +1,10 @@
+{% blocktrans %}
+Something went wrong when uploading your file {{ path }} to dropbox:
+{% endblocktrans %}
+
+{{ reason }}
+
+{% blocktrans %}
+Thanks,
+CommCareHQ Team
+{% endblocktrans %}

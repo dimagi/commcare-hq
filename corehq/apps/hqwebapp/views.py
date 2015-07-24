@@ -34,6 +34,10 @@ from restkit import Resource
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.dropbox.decorators import require_dropbox_session
+from corehq.apps.dropbox.models import DropboxUploadHelper
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
@@ -49,7 +53,7 @@ from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
-from soil import heartbeat
+from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
 
@@ -392,6 +396,42 @@ def logout(req):
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
+
+def dropbox_next_url(request, download_id):
+    return request.META.get('HTTP_REFERER', '/')
+
+
+@require_dropbox_session(next_url=dropbox_next_url)
+def dropbox_upload(request, download_id):
+    download = DownloadBase.get(download_id)
+    if download is None:
+        logging.error("Download file request for expired/nonexistent file requested")
+        raise Http404
+    else:
+        filename = download.get_filename()
+        token = request.session.get(DROPBOX_ACCESS_TOKEN)
+        dest = request.POST.get('dropbox-dest', os.path.basename(filename))
+
+        try:
+            uploader = DropboxUploadHelper.create(token, src=filename, dest=dest, download_id=download_id)
+        except DropboxUploadAlreadyInProgress, e:
+            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+            messages.warning(
+                request,
+                u'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+                'complete.'.format(uploader.progress * 100)
+            )
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        uploader.upload()
+
+        messages.success(
+            request,
+            "{} is queued to sync to dropbox! You will receive an email when it complete".format(dest)
+        )
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
 
 @require_superuser
 def debug_notify(request):
