@@ -461,18 +461,24 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, ref):
+    def add_index_ref(self, reference_id, case_type, ref, relationship='child'):
+        """
+        When an index points to a parent case, its relationship attribute is
+        set to "child". When it points to a host case, relationship is set to
+        "extension".
+        """
         index_node = self.elem.find('{cx2}index'.format(**namespaces))
         if index_node is None:
             index_node = make_case_elem('index')
             self.elem.append(index_node)
-        parent_index = make_case_elem(reference_id, {'case_type': case_type})
+        parent_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
         index_node.append(parent_index)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=self.path, ref=reference_id),
             calculate=ref,
         )
+
 
 def autoset_owner_id_for_open_case(actions):
     return not ('update_case' in actions and
