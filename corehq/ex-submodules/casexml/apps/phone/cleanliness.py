@@ -96,15 +96,16 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         cleanliness_object.is_clean = cleanliness_flag.is_clean
         cleanliness_object.hint = cleanliness_flag.hint
 
-    cleanliness_object.last_checked = datetime.utcnow()
-    cleanliness_object.save()
-
     if force_full and not needs_check and previous_clean_flag and not cleanliness_object.is_clean:
         # we went from clean to dirty and would not have checked except that we forced it
         # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
         # flag was turned off for the domain. either way cory probably wants to know.
         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=True)
         _assert(False, 'Cleanliness flags out of sync for owner {} in domain {}!'.format(owner_id, domain))
+
+    else:
+        cleanliness_object.last_checked = datetime.utcnow()
+        cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):
