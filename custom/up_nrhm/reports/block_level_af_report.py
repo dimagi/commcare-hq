@@ -6,7 +6,7 @@ from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
     name = _("Format-4 Block Consolidation of the functionality status")

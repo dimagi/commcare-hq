@@ -10,7 +10,7 @@ from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunct
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 def total_rows(report):
     if report.report_config.get('sf') == "sf2":

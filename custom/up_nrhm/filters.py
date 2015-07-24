@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
@@ -119,7 +119,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 
 class ASHAMonthFilter(MonthFilter):
-    label = ugettext_noop("Last Reporting month of the quarter")
+    label = ugettext_lazy("Last Reporting month of the quarter")
 
 
 class NRHMDatespanFilter(DatespanFilter):

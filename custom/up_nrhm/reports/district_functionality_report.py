@@ -7,7 +7,7 @@ from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy as _
 
 
 class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
