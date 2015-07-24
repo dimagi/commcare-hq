@@ -1,5 +1,10 @@
 from xml.etree import ElementTree
 from corehq import toggles
+from corehq.apps.app_manager.models import (
+    get_apps_in_domain,
+    Application,
+    ReportModule,
+)
 from corehq.apps.userreports.reports.factory import ReportFactory
 from .models import ReportConfiguration
 
@@ -14,7 +19,13 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
-        reports = ReportConfiguration.by_domain(user.domain)
+        reports = [
+            ReportConfiguration.get(report_config.report_id)
+            for app in get_apps_in_domain(user.domain) if isinstance(app, Application)
+            # TODO: pass app_id to reduce size of fixture
+            for module in app.modules if isinstance(module, ReportModule)
+            for report_config in module.report_configs
+        ]
         if not reports:
             return []
 
