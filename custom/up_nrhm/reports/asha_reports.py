@@ -10,7 +10,7 @@ from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunct
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
-
+from django.utils.translation import ugettext_lazy as _
 
 def total_rows(report):
     if report.report_config.get('sf') == "sf2":
@@ -23,7 +23,7 @@ def total_rows(report):
 
 class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     fields = [SampleFormatFilter, NRHMDatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
-    name = "ASHA Sangini Reports"
+    name = _("ASHA Sangini Reports")
     slug = "asha_reports"
     show_all_rows = True
     default_rows = 20
@@ -35,23 +35,34 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     @property
     def report_subtitles(self):
         sf = self.report_config.get('sf')
-        if sf:
-            selected_af = self.request.GET.get('hierarchy_af')
-            user = CommCareUser.get(selected_af)
-            if sf in ['sf5', 'sf4', 'sf3']:
-                return [
-                    "Selected AF: {0} {1}".format(user.first_name, user.last_name),
-                    "Last Reporting Month of the Quarter: {0} {1}".format(
-                        calendar.month_name[int(self.request.GET.get('month'))],
-                        self.request.GET.get('year')
-                    )
-                ]
-            else:
-                return [
-                    "Selected AF: {0} {1}".format(user.first_name, user.last_name),
-                    "For Date: {0} to {1}".format(self.datespan.startdate.strftime("%Y-%m-%d"),
-                                                  self.datespan.enddate.strftime("%Y-%m-%d"))
-                ]
+        selected_af = self.request.GET.get('hierarchy_af')
+        selected_block = self.request.GET.get('hierarchy_block')
+        selected_district = self.request.GET.get('hierarchy_district')
+        subtitles = [
+            _("Selected Report: {0}".format(self.report.name)),
+            _("Selected District: {0}".format(selected_district)),
+        ]
+        if not sf or sf in ['sf2', 'sf3', 'sf4']:
+            subtitles.extend([
+                _("Selected Block: {0}".format(selected_block)),
+            ])
+            if sf != 'sf4' and selected_af:
+                user = CommCareUser.get(selected_af)
+                subtitles.append(_("Selected AF: {0} {1}").format(user.first_name, user.last_name))
+
+        if sf in ['sf5', 'sf4', 'sf3']:
+            subtitles.append(
+                _("Last Reporting Month of the Quarter: {0} {1}").format(
+                    calendar.month_name[int(self.request.GET.get('month'))],
+                    self.request.GET.get('year')
+                )
+            )
+        else:
+            subtitles.append(
+                _("For Date: {0} to {1}").format(self.datespan.startdate.strftime("%Y-%m-%d"),
+                                                 self.datespan.enddate.strftime("%Y-%m-%d"))
+            )
+        return subtitles
 
 
     @property
