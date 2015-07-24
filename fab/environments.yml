@@ -104,6 +104,8 @@ production:
         concurrency: 1
       reminder_case_update_queue:
         concurrency: 4
+      email_queue:
+        concurrency: 2
     hqcelery1:
       reminder_queue:
         concurrency: 8
@@ -114,8 +116,6 @@ production:
       sms_queue:
         concurrency: 8
       ucr_queue:
-        concurrency: 4
-      email_queue:
         concurrency: 4
       flower: {}
 
