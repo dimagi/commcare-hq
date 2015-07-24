@@ -2792,6 +2792,14 @@ class ReportAppFilter(DocumentSchema):
         raise NotImplementedError
 
 
+def _filter_by_case_sharing_group_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return [
+        Choice(value=group._id, display=None)
+        for group in user.get_case_sharing_groups()
+    ]
+
+
 def _filter_by_location_id(user):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.location_id, display=None)
@@ -2808,6 +2816,7 @@ def _filter_by_user_id(user):
 
 
 _filter_type_to_func = {
+    'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
@@ -2819,6 +2828,14 @@ class AutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user):
         return _filter_type_to_func[self.filter_type](user)
+
+
+class CustomDataAutoFilter(ReportAppFilter):
+    custom_data_property = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return Choice(value=user.user_data[self.custom_data_property], display=None)
 
 
 class StaticChoiceListFilter(ReportAppFilter):
