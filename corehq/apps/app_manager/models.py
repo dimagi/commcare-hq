@@ -84,6 +84,7 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
+    NoMatchingFilterException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -2754,12 +2755,25 @@ class CareplanModule(ModuleBase):
         return errors
 
 
+class ReportAppFilter(DocumentSchema):
+    type = StringProperty(choices=['AUTO', 'STATIC'])
+    value = StringProperty()
+
+    def get_filter_value(self):
+        if self.type == 'AUTO':
+            pass
+        elif self.type == 'STATIC':
+            pass
+        raise NoMatchingFilterException
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
 

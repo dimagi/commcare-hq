@@ -33,16 +33,19 @@ class ReportFixturesProvider(object):
         reports_elem = ElementTree.Element('reports')
         for report_config in report_configs:
             report = ReportConfiguration.get(report_config.report_id)
-            reports_elem.append(self._report_to_fixture(report))
+            reports_elem.append(self._report_to_fixture(report, report_config.filters))
         root.append(reports_elem)
         return [root]
 
-    def _report_to_fixture(self, report):
+    def _report_to_fixture(self, report, filters):
         report_elem = ElementTree.Element('report', attrib={'id': report._id})
         report_elem.append(self._element('name', report.title))
         report_elem.append(self._element('description', report.description))
-        # todo: set filter values properly?
         data_source = ReportFactory.from_spec(report)
+        data_source.set_filter_values({
+            filter_slug: filters[filter_slug].get_filter_value()
+            for filter_slug in filters
+        })
 
         rows_elem = ElementTree.Element('rows')
 
