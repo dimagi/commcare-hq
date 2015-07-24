@@ -146,7 +146,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             AggregateColumn(_('Task Name'), aggregate_fn=self.name_link,
                             columns=[SimpleColumn('name'), SimpleColumn('doc_id'), AliasColumn('is_closed')],
                             sortable=False),
-            DatabaseColumn(_('Responsible Party'),  SimpleColumn('task_responsible'),
+            DatabaseColumn(_('Responsible Party'), SimpleColumn('task_responsible'),
                            format_fn=lambda x: x.upper(), sortable=False),
             DatabaseColumn(_('Status'), SimpleColumn('closed', alias='is_closed'),
                            format_fn=lambda x: 'Closed' if x == '0' else 'Open', sortable=False),
