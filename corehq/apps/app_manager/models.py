@@ -297,8 +297,12 @@ class OpenSubCaseAction(FormAction):
     reference_id = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
+    # relationship = "child" for index to a parent case (default)
+    # relationship = "extension" for index to a host case
+    relationship = StringProperty(default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
+
 
 class FormActions(DocumentSchema):
 
@@ -332,6 +336,9 @@ class AdvancedAction(IndexedSchema):
     case_properties = DictProperty()
     parent_tag = StringProperty()
     parent_reference_id = StringProperty(default='parent')
+    # relationship = "child" for index to a parent case (default)
+    # relationship = "extension" for index to a host case
+    relationship = StringProperty(default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
