@@ -1,7 +1,6 @@
 import re
 
-BAD_SLUG_PATTERN = '([/\\<>\s])'
-BAD_XML = '^xml+'
+BAD_SLUG_PATTERN = r"([/\\<>\s])"
 
 
 def clean_fixture_field_name(field_name):
@@ -9,7 +8,10 @@ def clean_fixture_field_name(field_name):
     bad XML back from the phone. Ideally, the fixture name should be
     verified as a good slug before using it.
     """
-    return re.sub(BAD_XML, re.sub(BAD_SLUG_PATTERN, '_', field_name), '')
+    subbed_string = re.sub(BAD_SLUG_PATTERN, '_', field_name)
+    if subbed_string.startswith('xml'):
+        subbed_string = subbed_string.replace('xml', '_', 1)
+    return subbed_string
 
 
 def is_field_name_invalid(field_name):
