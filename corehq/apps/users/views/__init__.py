@@ -495,7 +495,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @property
     def can_edit_roles(self):
         return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
-                and self.couch_user.is_domain_admin
+            and self.couch_user.is_domain_admin
 
     @property
     @memoized
@@ -568,7 +568,7 @@ class ListWebUsersView(BaseUserSettingsView):
     @property
     def can_edit_roles(self):
         return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
-                and self.couch_user.is_domain_admin
+            and self.couch_user.is_domain_admin
 
     @property
     @memoized
