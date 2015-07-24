@@ -1280,7 +1280,8 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow'
+        'custom.succeed.models.UCLAPatientFluffPillow',
+        'custom.succeed.models.UCLATaskActivityFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
