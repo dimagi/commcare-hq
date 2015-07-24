@@ -19,19 +19,20 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
-        reports = [
-            ReportConfiguration.get(report_config.report_id)
+        report_configs = [
+            report_config
             for app in get_apps_in_domain(user.domain) if isinstance(app, Application)
             # TODO: pass app_id to reduce size of fixture
             for module in app.modules if isinstance(module, ReportModule)
             for report_config in module.report_configs
         ]
-        if not reports:
+        if not report_configs:
             return []
 
         root = ElementTree.Element('fixture', attrib={'id': self.id})
         reports_elem = ElementTree.Element('reports')
-        for report in reports:
+        for report_config in report_configs:
+            report = ReportConfiguration.get(report_config.report_id)
             reports_elem.append(self._report_to_fixture(report))
         root.append(reports_elem)
         return [root]
