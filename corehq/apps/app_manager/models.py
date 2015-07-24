@@ -2792,6 +2792,11 @@ class ReportAppFilter(DocumentSchema):
         raise NotImplementedError
 
 
+def _filter_by_location_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.location_id, display=None)
+
+
 def _filter_by_username(user):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.username, display=None)
@@ -2803,6 +2808,7 @@ def _filter_by_user_id(user):
 
 
 _filter_type_to_func = {
+    'location_id': _filter_by_location_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
