@@ -4,9 +4,20 @@ from corehq.apps.app_manager.models import (
     get_apps_in_domain,
     Application,
     ReportModule,
+    StaticChoiceListFilter,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from .models import ReportConfiguration
+
+
+def wrap_by_filter_type(report_app_filter):
+    doc_type_to_filter_class = {
+        'StaticChoiceListFilter': StaticChoiceListFilter,
+    }
+    filter_class = doc_type_to_filter_class.get(report_app_filter.doc_type)
+    if not filter_class:
+        raise Exception
+    return filter_class.wrap(report_app_filter.to_json())
 
 
 class ReportFixturesProvider(object):
@@ -43,7 +54,7 @@ class ReportFixturesProvider(object):
         report_elem.append(self._element('description', report.description))
         data_source = ReportFactory.from_spec(report)
         data_source.set_filter_values({
-            filter_slug: filters[filter_slug].get_filter_value()
+            filter_slug: wrap_by_filter_type(filters[filter_slug]).get_filter_value()
             for filter_slug in filters
         })
 

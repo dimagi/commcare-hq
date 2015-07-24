@@ -2787,19 +2787,16 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
-    type = StringProperty(choices=['AUTO', 'STATIC'])
-    value = Property()
+    def get_filter_value(self):
+        raise NotImplementedError
+
+
+class StaticChoiceListFilter(ReportAppFilter):
+    value = StringListProperty()
 
     def get_filter_value(self):
-        def get_value():
-            if self.type == 'AUTO':
-                pass
-            elif self.type == 'STATIC':
-                return self.value
-            raise NoMatchingFilterException
-
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=get_value(), display=None)
+        return [Choice(value=string_value, display=None) for string_value in self.value]
 
 
 class ReportAppConfig(DocumentSchema):
