@@ -105,7 +105,7 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 
 class SampleFormatFilter(BaseSingleOptionFilter):
     slug = 'sf'
-    label = 'Report type'
+    label = ugettext_noop('Report type')
     default_text = "Format-1 for ASHA Sanginis"
 
     @property
@@ -119,7 +119,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 
 class ASHAMonthFilter(MonthFilter):
-    label = "Last Reporting month of the quarter"
+    label = ugettext_noop("Last Reporting month of the quarter")
 
 
 class NRHMDatespanFilter(DatespanFilter):

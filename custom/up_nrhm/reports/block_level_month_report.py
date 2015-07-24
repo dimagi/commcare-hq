@@ -7,10 +7,10 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-
+from django.utils.translation import ugettext_noop as _
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "Format-3 Block Consolidation of the functionality status"
+    name = _("Format-3 Block Consolidation of the functionality status")
     slug = "block_level_month_wise"
     no_value = '--'
 
@@ -19,13 +19,13 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         date = self.report_config['startdate']
         first = ((date + relativedelta(months=3)).month, (date + relativedelta(months=3)).year)
         second = ((date + relativedelta(months=2)).month, (date + relativedelta(months=2)).year)
-        third = (date.month, date.year)
+        third = ((date + relativedelta(months=1)).month, (date + relativedelta(months=1)).year)
         return DataTablesHeader(*[
-            DataTablesColumn('Number of ASHAs functional on-', sortable=False),
+            DataTablesColumn(_('Number of ASHAs functional on-'), sortable=False),
             DataTablesColumn('%s %d' % (calendar.month_name[first[0]], first[1]), sortable=False),
             DataTablesColumn('%s %d' % (calendar.month_name[second[0]], second[1]), sortable=False),
             DataTablesColumn('%s %d' % (calendar.month_name[third[0]], third[1]), sortable=False),
-            DataTablesColumn('Average', sortable=False)])
+            DataTablesColumn(_('Average'), sortable=False)])
 
     @property
     def report_config(self):
@@ -89,6 +89,6 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         reporting = [self.model.columns[1].get_raw_value(d) for d in data]
         not_reporting = [format_datatables_data(i - (j or 0), i - (j or 0)) for i, j in zip(total, reporting)]
 
-        rows.append(["<b>Total number of ASHAs who did not report/not known</b>"] + not_reporting +
+        rows.append([_("<b>Total number of ASHAs who did not report/not known</b>")] + not_reporting +
                     [avg(not_reporting)])
         return rows, sum(total) / len(total)

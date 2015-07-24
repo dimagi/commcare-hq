@@ -7,10 +7,11 @@ from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
+from django.utils.translation import ugettext_noop as _
 
 
 class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "Format-5 Functionality of ASHAs in blocks"
+    name = _("Format-5 Functionality of ASHAs in blocks")
     slug = "district_functionality_report"
     no_value = '--'
 
@@ -26,12 +27,12 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
         blocks = self.get_blocks_for_district()
         headers = [DataTablesColumnGroup('')]
         headers.extend([DataTablesColumnGroup(block) for block in self.get_blocks_for_district()])
-        columns = [DatabaseColumn("Percentage of ASHAs functional on "
-                                  "(Number of functional ASHAs/total number of ASHAs) x 100", SimpleColumn(''),
+        columns = [DatabaseColumn(_("Percentage of ASHAs functional on "
+                                  "(Number of functional ASHAs/total number of ASHAs) x 100"), SimpleColumn(''),
                                   header_group=headers[0])]
         for i, block in enumerate(blocks):
-            columns.append(DatabaseColumn('% of ASHAs', SimpleColumn(block), header_group=headers[i + 1]))
-            columns.append(DatabaseColumn('Grade of Block', SimpleColumn(block), header_group=headers[i + 1]))
+            columns.append(DatabaseColumn(_('% of ASHAs'), SimpleColumn(block), header_group=headers[i + 1]))
+            columns.append(DatabaseColumn(_('Grade of Block'), SimpleColumn(block), header_group=headers[i + 1]))
         return DataTablesHeader(*headers)
 
     @property
