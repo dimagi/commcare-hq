@@ -347,9 +347,9 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
-        data = self.uploaded_file.file.read()
-        multimedia = self.media_class.get_by_data(data)
-        multimedia.attach_data(data,
+        self.data = self.uploaded_file.file.read()
+        multimedia = self.media_class.get_by_data(self.data)
+        multimedia.attach_data(self.data,
                                original_filename=self.uploaded_file.name,
                                username=self.username)
         multimedia.add_domain(self.domain, owner=True)
@@ -430,6 +430,10 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
     def valid_base_types(cls):
         return ['text']
 
+    def process_upload(self):
+        ret = super(ProcessTextFileUploadView, self).process_upload()
+        ret['text'] = self.data
+        return ret
 
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
