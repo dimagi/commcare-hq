@@ -428,7 +428,10 @@ def has_case_id(case_block):
     return const.CASE_TAG_ID in case_block or const.CASE_ATTR_ID in case_block
 
 
-def extract_case_blocks(doc):
+CaseBlockWithPath = namedtuple('CaseBlockWithPath', ['caseblock', 'path'])
+
+
+def extract_case_blocks(doc, include_path=False):
     """
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case.
@@ -436,26 +439,36 @@ def extract_case_blocks(doc):
     The json returned is not normalized for casexml version;
     for that get_case_updates is better.
 
-    """
+    if `include_path` is True then instead of returning just the case block it will
+    return a dict with the following structure:
 
+    {
+       "caseblock": caseblock
+       "path": ["form", "path", "to", "block"]
+    }
+
+    Repeat nodes will all share the same path.
+    """
     if isinstance(doc, XFormInstance):
         doc = doc.form
-    return list(_extract_case_blocks(doc))
+
+    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
 
 
-def _extract_case_blocks(data):
+def _extract_case_blocks(data, path=None):
     """
     helper for extract_case_blocks
 
     data must be json representing a node in an xform submission
-
     """
+    path = path or []
     if isinstance(data, list):
         for item in data:
-            for case_block in _extract_case_blocks(item):
+            for case_block in _extract_case_blocks(item, path=path):
                 yield case_block
     elif isinstance(data, dict) and not is_device_report(data):
         for key, value in data.items():
+            new_path = path + [key]
             if const.CASE_TAG == key:
                 # it's a case block! Stop recursion and add to this value
                 if isinstance(value, list):
@@ -465,12 +478,10 @@ def _extract_case_blocks(data):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
-                        yield case_block
+                        yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
-                for case_block in _extract_case_blocks(value):
+                for case_block in _extract_case_blocks(value, path=new_path):
                     yield case_block
-    else:
-        return
 
 
 def get_case_updates(xform):

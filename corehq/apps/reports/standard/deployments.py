@@ -5,7 +5,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
@@ -205,7 +205,7 @@ class SyncHistoryReport(DeploymentsReport):
                     id=sync_log_id
                 )
 
-            num_cases = len(sync_log.cases_on_phone)
+            num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
                 format_datatables_data(num_cases, num_cases),
@@ -217,7 +217,7 @@ class SyncHistoryReport(DeploymentsReport):
             return columns
 
         return [
-            _sync_log_to_row(SyncLog.wrap(sync_log_json))
+            _sync_log_to_row(properly_wrap_sync_log(sync_log_json))
             for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
         ]
 

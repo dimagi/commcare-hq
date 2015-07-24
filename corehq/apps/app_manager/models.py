@@ -3137,12 +3137,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # metadata for data platform
     amplifies_workers = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
     amplifies_project = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
 
     # exchange properties

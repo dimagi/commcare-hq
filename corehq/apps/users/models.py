@@ -4,6 +4,7 @@ couch models go here
 from __future__ import absolute_import
 import copy
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import re
 
 from restkit.errors import NoMoreData
@@ -2467,6 +2468,10 @@ class Invitation(Document):
     def send_activation_email(self):
         raise NotImplementedError
 
+    @property
+    def is_expired(self):
+        return False
+
 
 class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     """
@@ -2507,6 +2512,11 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                         include_docs=True,
                         stale=settings.COUCH_STALE_QUERY,
                         ).all()
+
+    @property
+    def is_expired(self):
+        return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
