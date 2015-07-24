@@ -1,3 +1,5 @@
+import datetime
+from datetime import date
 from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
@@ -120,9 +122,24 @@ class ConfigurableReportDataSource(SqlData):
             # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
+                    is_descending = col[1] == DESCENDING
+                    is_date = any(
+                        configured_indicator['datatype'] == 'date'
+                        for configured_indicator in self.config.configured_indicators
+                        if configured_indicator['column_id'] == col[0]
+                    )
+                    default_sort_by_date = (
+                        date(datetime.MINYEAR, 1, 1)
+                        if is_descending else date(datetime.MAXYEAR, 12, 31)
+                    )
+                    value = lambda x: x.get(col[0], None)
+                    sort_by_value = lambda x: (
+                        value(x)
+                        or (default_sort_by_date if is_date else value(x))
+                    )
                     ret.sort(
-                        key=lambda x: x.get(col[0], None),
-                        reverse=col[1] == DESCENDING
+                        key=sort_by_value,
+                        reverse=is_descending
                     )
                 return ret
             # Otherwise sort by the first column

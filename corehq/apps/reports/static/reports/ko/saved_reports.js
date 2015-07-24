@@ -232,7 +232,6 @@ var ReportConfigsViewModel = function (options) {
             changeYear: true,
             showButtonPanel: true,
             dateFormat: 'yy-mm-dd',
-            maxDate: '0',
             numberOfMonths: 2
         });
     };

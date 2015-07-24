@@ -129,9 +129,6 @@ cloudCare.App = LocalizableModel.extend({
     renderFormRoot: function () {
         return this.get("renderFormRoot");
     },
-    renderXmlRoot: function () {
-        return this.get("renderXmlRoot");
-    },
     instanceViewerEnabled: function () {
         return this.get("instanceViewerEnabled");
     },
@@ -692,25 +689,13 @@ cloudCare.AppView = Backbone.View.extend({
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
         data.answerCallback = function(sessionId) {
-
-            var instanceViewerEnabled = self.options.instanceViewerEnabled;
-
-            if(instanceViewerEnabled) {
-                var render_xml_url = self.options.renderXmlRoot;
+            if (self.options.instanceViewerEnabled && $('#auto-sync-control').is(':checked')) {
                 $.ajax({
-                    url: render_xml_url,
+                    url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        showRenderedForm(data, $("#xml-viewer-pretty"));
-                    }
-                });
-
-                var render_form_url = self.options.renderFormRoot;
-                $.ajax({
-                    url: render_form_url,
-                    data: {'session_id': sessionId},
-                    success: function (data) {
-                        showRenderedForm(data, $("#question-viewer-pretty"));
+                        showRenderedForm(data.instance_xml, $("#xml-viewer-pretty"));
+                        showRenderedForm(data.form_data, $("#question-viewer-pretty"));
                     }
                 });
             }
@@ -895,7 +880,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
             submitUrlRoot: self.options.submitUrlRoot,
-            renderXmlRoot: self.options.renderXmlRoot,
             renderFormRoot: self.options.renderFormRoot,
             instanceViewerEnabled: self.options.instanceViewerEnabled
         });

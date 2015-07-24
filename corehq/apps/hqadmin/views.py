@@ -464,13 +464,13 @@ def db_comparisons(request):
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
-            'sql_rows': FormData.objects.count(),
+            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
             'couch_docs': get_total_case_count(),
             'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.count(),
+            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
         }
     ]
 

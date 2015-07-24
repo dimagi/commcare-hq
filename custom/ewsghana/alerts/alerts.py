@@ -376,7 +376,7 @@ def send_message_to_admins(user, message):
     in_charge_users = [
         u
         for u in users
-        if u.get_verified_number() and u.user_data.get('role') == "In Charge"
+        if u.get_verified_number() and "In Charge" in u.user_data.get('role', [])
     ]
     for in_charge_user in in_charge_users:
         send_sms_to_verified_number(in_charge_user.get_verified_number(),

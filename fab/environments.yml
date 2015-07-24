@@ -83,6 +83,10 @@ production:
 
   new_relic_enabled:
     - hqdjango3.internal.commcarehq.org
+    - hqdjango4.internal.commcarehq.org
+    - hqdjango5.internal.commcarehq.org
+    - hqcelery1.internal.commcarehq.org
+    - hqcelery0.internal.commcarehq.org
 
   celery_processes:
     hqcelery0:
@@ -112,11 +116,6 @@ production:
 staging:
   environment: staging
   should_migrate: True
-
-  new_relic_enabled:
-    - hqdjango0-staging.internal.commcarehq.org
-    - hqdjango1-staging.internal.commcarehq.org
-    - hqdb0-staging.internal.commcarehq.org
 
   celery_processes:
     '*':

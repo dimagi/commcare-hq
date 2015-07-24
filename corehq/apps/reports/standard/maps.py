@@ -130,12 +130,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _headers(e, root=[]):
             if hasattr(e, '__iter__'):
                 if hasattr(e, 'html'):
-                    root = list(root) + [e.html]
+                    root = list(root) + [unicode(e.html)]
                 for sub in e:
                     for k in _headers(sub, root):
                         yield k
             else:
-                yield root + [e.html]
+                yield root + [unicode(e.html)]
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
