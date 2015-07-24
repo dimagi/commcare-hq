@@ -2757,14 +2757,18 @@ class CareplanModule(ModuleBase):
 
 class ReportAppFilter(DocumentSchema):
     type = StringProperty(choices=['AUTO', 'STATIC'])
-    value = StringProperty()
+    value = Property()
 
     def get_filter_value(self):
-        if self.type == 'AUTO':
-            pass
-        elif self.type == 'STATIC':
-            pass
-        raise NoMatchingFilterException
+        def get_value():
+            if self.type == 'AUTO':
+                pass
+            elif self.type == 'STATIC':
+                return self.value
+            raise NoMatchingFilterException
+
+        from corehq.apps.reports_core.filters import Choice
+        return Choice(value=get_value(), display=None)
 
 
 class ReportAppConfig(DocumentSchema):
