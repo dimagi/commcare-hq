@@ -82,7 +82,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
@@ -295,7 +295,7 @@ def mass_email(request):
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
 
-                send_HTML_email(subject, recipient.email, html_content, text_content,
+                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')

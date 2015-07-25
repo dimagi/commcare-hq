@@ -1,7 +1,7 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
@@ -31,8 +31,8 @@ def send_confirmation_email(invitation):
                                     context)
     text_content = render_to_string('domain/email/invite_confirmation.txt',
                                     context)
-    send_HTML_email(subject, recipient, html_content,
-                    text_content=text_content)
+    send_html_email_async.delay(subject, recipient, html_content,
+                                text_content=text_content)
 
 
 class InvitationView():

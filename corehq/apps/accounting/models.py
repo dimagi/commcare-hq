@@ -21,8 +21,8 @@ from django_prbac.models import Role
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
@@ -782,7 +782,7 @@ class Subscriber(models.Model):
                 new_plan=email_context['new_plan'],
             )
 
-            send_HTML_email(
+            send_html_email_async.delay(
                 email_subject,
                 sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
@@ -1276,7 +1276,7 @@ class Subscription(models.Model):
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in emails:
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
@@ -1316,7 +1316,7 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        send_HTML_email(
+        send_html_email_async.delay(
             subject, email, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
@@ -1829,7 +1829,7 @@ class BillingRecordBase(models.Model):
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
             email_plaintext = render_to_string(self.text_template, context)
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=email_from,

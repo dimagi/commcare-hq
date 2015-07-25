@@ -27,9 +27,9 @@ from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant, UserRole
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
@@ -1479,8 +1479,9 @@ class EnterprisePlanContactForm(forms.Form):
         Message:
         %(message)s
         """ % context
-        send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
+                                    html_content, text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class TriggerInvoiceForm(forms.Form):
