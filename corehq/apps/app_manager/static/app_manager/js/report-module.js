@@ -185,7 +185,7 @@ var ReportModule = (function () {
             changeSaveButton();
         };
 
-        // add exiting reports to UI
+        // add existing reports to UI
         for (i = 0; i < currentReports.length; i += 1) {
             var report = newReport(currentReports[i]);
             self.reports.push(report);
