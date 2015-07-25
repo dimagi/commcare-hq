@@ -298,7 +298,7 @@ class UsersData(EWSData):
             children = self.location.parent.get_descendants()
             district_in_charges = list(chain.from_iterable([
                 filter(
-                    lambda u: 'In Charge' in u.user_data.get('role'),
+                    lambda u: 'In Charge' in u.user_data.get('role', []),
                     get_users_by_location_id(child.location_id)
                 )
                 for child in children
