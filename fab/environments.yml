@@ -72,7 +72,7 @@ india:
       ucr_queue:
         concurrency: 4
       email_queue:
-        concurrency: 4
+        concurrency: 2
       flower: {}
 
 preview:
