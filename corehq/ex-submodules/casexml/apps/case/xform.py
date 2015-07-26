@@ -344,7 +344,6 @@ def _get_or_update_cases(xforms, case_db):
                 # is fully enabled.
                 if xform._id not in case_doc.xform_ids:
                     case_doc.xform_ids.append(xform.get_id)
-                case_db.set(case_doc.case_id, case_doc)
             else:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
@@ -410,9 +409,9 @@ def _get_or_update_model(case_update, xform, case_db):
     submitted form.  Doesn't save anything.
     """
     case = case_db.get(case_update.id)
-
     if case is None:
         case = CommCareCase.from_case_update(case_update, xform)
+        case_db.set(case['_id'], case)
         return case
     else:
         case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
