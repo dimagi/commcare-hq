@@ -6,17 +6,14 @@
 ├── MediaUploader#0b9546e43b
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
-├── bootstrap-better-typeahead#26036ce250 extraneous
-├── chai#3.0.0
+├── chai#3.0.0 (3.2.0 available)
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
-├─┬ jquery-ui#1.11.4 extraneous
-│ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
 ├── jsdiff#1.4.0
 ├─┬ jstree#3.1.1
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
 ├── langcodes#27dcfc401e
-├── markdown-it#4.2.2 (latest is 4.3.1)
+├── markdown-it#4.2.2 (latest is 4.4.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
 ├── requirejs#2.1.19

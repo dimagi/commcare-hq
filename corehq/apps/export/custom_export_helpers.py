@@ -9,7 +9,7 @@ from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain
@@ -30,8 +30,8 @@ class AbstractProperty(object):
 class DEID(object):
     options = (
         ('', ''),
-        (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
-        (_('Sensitive Date'), 'couchexport.deid.deid_date'),
+        (ugettext_lazy('Sensitive ID'), 'couchexport.deid.deid_ID'),
+        (ugettext_lazy('Sensitive Date'), 'couchexport.deid.deid_date'),
     )
     json_options = [{'label': label, 'value': value}
                     for label, value in options]

@@ -247,6 +247,7 @@ class CommCareMultimedia(SafeSaveDocument):
             'CommCareImage': CommCareImage,
             'CommCareAudio': CommCareAudio,
             'CommCareVideo': CommCareVideo,
+            'CommCareMultimedia': CommCareMultimedia,
         }[doc_type]
 
     @classmethod

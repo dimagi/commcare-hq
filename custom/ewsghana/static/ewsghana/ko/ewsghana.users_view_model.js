@@ -43,21 +43,31 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-function UsersViewModel(sms_users, location_id, submit_url) {
-    var self = this;
+function User(user) {
+    this.id = user.id;
+    this.full_name = user.full_name;
+    this.phone_numbers = user.phone_numbers;
+    this.in_charge = ko.observable(user.in_charge);
+    this.url = user.url;
+    this.locationName = user.location_name;
 
+    this.optionsText = this.full_name + " (" + this.locationName + ")";
+}
+
+function UsersViewModel(sms_users, district_in_charges, location_id, submit_url) {
+    var self = this;
     self.locationId = location_id;
     self.submitUrl = submit_url;
 
-    self.users = ko.observableArray(sms_users);
+    self.users = ko.observableArray(sms_users.map(function(user) { return new User(user);}));
 
-    self.visibleUsers = ko.observableArray(ko.utils.arrayFilter(self.users(), function (user) {
-        return !user.in_charge;
-    }));
+    self.districtInCharges = ko.observableArray(district_in_charges.map(function(user) { return new User(user);}));
 
-    self.inCharges = ko.observableArray(ko.utils.arrayFilter(self.users(), function (user) {
-        return user.in_charge;
-    }));
+    self.inCharges = ko.computed(function() {
+        return ko.utils.arrayFilter(self.districtInCharges(), function (user) {
+            return user.in_charge();
+        });
+    }, this);
 
     var mapInChargesToIds = function() {
         return ko.utils.arrayMap(self.inCharges(), function (user) {
@@ -66,6 +76,12 @@ function UsersViewModel(sms_users, location_id, submit_url) {
     };
 
     self.selectedUsers = ko.observableArray(mapInChargesToIds());
+
+    self.visibleUsers = function() {
+        return ko.utils.arrayFilter(self.users(), function(user) {
+            return mapInChargesToIds().indexOf(user.id) === -1;
+        });
+    };
 
     self.save = function() {
         $('#in_charge_button').attr('disabled', true);
@@ -78,16 +94,12 @@ function UsersViewModel(sms_users, location_id, submit_url) {
                 location_id: self.locationId
             },
             success: function(response) {
-                self.inCharges.removeAll();
-                self.visibleUsers.removeAll();
+                ko.utils.arrayForEach(self.districtInCharges(), function(user) {
+                   user.in_charge(self.selectedUsers.indexOf(user.id) !== -1);
+                });
+
                 ko.utils.arrayForEach(self.users(), function(user) {
-                   if (self.selectedUsers.indexOf(user.id) !== -1) {
-                       user.in_charge = true;
-                       self.inCharges.push(user);
-                   } else {
-                       user.in_charge = false;
-                       self.visibleUsers.push(user);
-                   }
+                   user.in_charge(self.selectedUsers.indexOf(user.id) !== -1);
                 });
 
                 $('#configureInCharge').modal('toggle');

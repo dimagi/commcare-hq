@@ -49,7 +49,7 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
     self.hasAmount = ko.observable(data.credit && data.credit.is_visible);
     self.canPurchaseCredits = ko.observable(can_purchase_credits);
     self.paymentHandler = paymentHandler;
-    self.addAmount = ko.observable(0.5);
+    self.addAmount = ko.observable(0);
 
     self.addAmountValid = ko.computed(function(){
         return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
