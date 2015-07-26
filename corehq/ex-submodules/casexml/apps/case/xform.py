@@ -336,9 +336,11 @@ def _get_or_update_cases(xforms, case_db):
     """
     # have to apply the deprecations before the updates
     sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
             case_doc = _get_or_update_model(case_update, xform, case_db)
+            touched_cases[case_doc['_id']] = case_doc
             if case_doc:
                 # todo: legacy behavior, should remove after new case processing
                 # is fully enabled.
@@ -349,15 +351,6 @@ def _get_or_update_cases(xforms, case_db):
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id
                 )
-
-    # at this point we know which cases we want to update so copy this away
-    # this prevents indices that end up in the cache from being added to the return value
-    # todo from czue as of july 2015:
-    # I think this logic is wrong and this code needs to be updated to make
-    # use of case_db.mark_changed and get_changed.
-    # right now there are scenarios where a casedb persists across calls to this function
-    # which cause this to return more cases than it actually should
-    touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
