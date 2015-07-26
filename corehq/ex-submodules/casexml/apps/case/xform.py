@@ -353,6 +353,11 @@ def _get_or_update_cases(xforms, case_db):
 
     # at this point we know which cases we want to update so copy this away
     # this prevents indices that end up in the cache from being added to the return value
+    # todo from czue as of july 2015:
+    # I think this logic is wrong and this code needs to be updated to make
+    # use of case_db.mark_changed and get_changed.
+    # right now there are scenarios where a casedb persists across calls to this function
+    # which cause this to return more cases than it actually should
     touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
@@ -395,6 +400,7 @@ def _get_or_update_cases(xforms, case_db):
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
         dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 
