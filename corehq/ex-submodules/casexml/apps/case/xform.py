@@ -385,7 +385,7 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case._id, child_case.owner_id)
 
-    dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
     track_cleanliness = should_track_cleanliness(domain)
     if track_cleanliness:
