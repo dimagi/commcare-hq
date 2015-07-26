@@ -63,8 +63,8 @@ class MALTTableGenerator(object):
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
                 'app_id': app_id,
-                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, AMPLIFIES_NOT_SET),
-                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, AMPLIFIES_NOT_SET),
+                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
+                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
                 'is_app_deleted': is_app_deleted,
             }
             malt_row_dicts.append(malt_dict)

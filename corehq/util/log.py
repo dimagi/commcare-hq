@@ -16,13 +16,16 @@ def clean_exception(exception):
         return exception
 
     # couchdbkit doesn't provide a better way for us to catch this exception
-    if exception.message.startswith('received an invalid response of type'):
+    if (
+        isinstance(exception, AssertionError) and
+        exception.message.startswith('received an invalid response of type')
+    ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
                    "so it's being redacted.")
-    else:
-        message = exception.message
-    return exception.__class__(message)
+        return exception.__class__(message)
+
+    return exception
 
 
 class HqAdminEmailHandler(AdminEmailHandler):

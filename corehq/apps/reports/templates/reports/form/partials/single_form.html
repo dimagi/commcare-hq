@@ -31,6 +31,13 @@ requires imports/proptable.html to be included in the main template
     /* TODO: does .hq-help really need to be width 0 by default? */
     width: auto;
 }
+#form-actions-toolbar form {
+    display: inline-block;
+}
+#form-actions-toolbar > * {
+  margin-left: 10px;
+}
+
 </style>
 <script>
     $(function () {
@@ -180,20 +187,21 @@ requires imports/proptable.html to be included in the main template
 
 <div class="tab-content form-details" style="overflow:visible">
     <div class="tab-pane active" id="form-data" style="position:relative">
-        <div style="position: absolute; right: 0; top: 0">
+        <div class="btn-toolbar" id='form-actions-toolbar' style="position: absolute; right: 0; top: 0">
             {% if context_case_id %}
-            <p>
                 <a class="btn"
                     href="{% url "render_form_data" instance.domain instance.get_id %}">
                     {% trans "View standalone form" %}
                 </a>
-            </p>
             {% endif %}
             {% if show_edit_options %}
-            <p>
+                {% if show_edit_submission %}
+                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
+                            <i class="icon-edit"></i> {% trans "Edit submission" %}
+                        </a>
+                {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
-                <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
-                      id="archive-form">
+                <form action="{% url "archive_form" domain instance.get_id %}" method="POST" id="archive-form">
                     <span class="hq-help-template"
                         data-title="{% trans "Archiving Forms" %}"
                         data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
@@ -233,12 +241,7 @@ requires imports/proptable.html to be included in the main template
                     </button>
                 </form>
                 {% endif %}
-                {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
-                            <i class="icon-edit"></i> {% trans "Edit submission" %}
-                        </a>
-                {% endif %}
-            </p>
+
             {% endif %}
         </div>
         {% include 'reports/form/partials/readable_form.html' with questions=form_data %}
