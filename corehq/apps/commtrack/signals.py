@@ -6,6 +6,7 @@ from corehq.apps.commtrack.const import is_supply_point_form
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.util import bootstrap_commtrack_settings_if_necessary
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.util.soft_assert import soft_assert
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
 
@@ -23,7 +24,7 @@ def attach_locations(xform, cases):
         unique_location_ids = set(filter(None, location_ids))
         if unique_location_ids:
             if len(unique_location_ids) != 1:
-                raise Exception(
+                error_message = (
                     'Submitted a commcare supply case with multiple locations '
                     'in a single form. This is currently not allowed. '
                     'Form id: {} case ids: {}'.format(
@@ -31,6 +32,9 @@ def attach_locations(xform, cases):
                         ', '.join([c._id for c in cases]),
                     )
                 )
+                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+                _assert(False, error_message)
+                raise Exception(error_message)
             location_id = unique_location_ids.pop()
             xform.location_id = location_id
 
