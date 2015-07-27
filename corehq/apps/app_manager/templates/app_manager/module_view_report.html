@@ -77,7 +77,10 @@
                                             </select>
                                         </th>
                                         <th data-bind="if: filter.selectedValue.doc_type() == 'AutoFilter'">
-                                            <input type="text" data-bind="value: filter.selectedValue.filter_type">
+                                            <select data-bind="
+                                                options: $parent.autoFilterTypes,
+                                                value: filter.selectedValue.filter_type
+                                            "></select>
                                         </th>
                                     </tr>
                                 </tbody>

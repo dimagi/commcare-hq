@@ -141,7 +141,9 @@ var ReportModule = (function () {
             return self.reportFilters()[self.reportId()];
         });
 
+        // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter'];
+        this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
     function ReportModule(options) {
         var self = this;
