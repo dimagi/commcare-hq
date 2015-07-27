@@ -9,6 +9,7 @@ from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
+from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
@@ -146,7 +147,7 @@ class ApplicationStatusReport(DeploymentsReport):
         def _fmt_ordinal(ordinal):
             if ordinal >= 0:
                 return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
-            return 'Never'
+            return SCALAR_NEVER_WAS
 
         result = super(ApplicationStatusReport, self).export_table
         table = result[0][1]
