@@ -66,16 +66,18 @@
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody data-bind="foreach: { data: filterStructure, as: 'filter' }">
+                                <tbody data-bind="foreach: { data: selectedFilterStructure, as: 'filter' }">
                                     <tr>
                                         <th data-bind="text: filter.display"></th>
-                                        <th data-bind="if: $parent.filterValues[filter.slug]">
-                                            <span data-bind="text: $parent.filterValues[filter.slug].doc_type"/>
-{#                                            <select data-bind="value: $parent.filterValues[filter.slug].doc_type">#}
-{#                                            </select>#}
+                                        <th>
+                                            <select data-bind="
+                                                options: $parent.filterDocTypes,
+                                                value: selectedValue.doc_type
+                                            ">
+                                            </select>
                                         </th>
-                                        <th data-bind="if: $parent.filterValues[filter.slug]">
-                                            <input type="text" data-bind="value: $parent.filterValues[filter.slug].filter_type">
+                                        <th data-bind="if: filter.selectedValue.doc_type() == 'AutoFilter'">
+                                            <input type="text" data-bind="value: filter.selectedValue.filter_type">
                                         </th>
                                     </tr>
                                 </tbody>

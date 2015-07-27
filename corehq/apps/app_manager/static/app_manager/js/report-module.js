@@ -97,27 +97,51 @@ var ReportModule = (function () {
         this.lang = language;
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.reportId = ko.observable(report_id);
+        this.display = ko.observable(this.fullDisplay[this.lang]); // chosen in UI
+        this.reportId = ko.observable(report_id); // chosen in UI
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
-        this.filterValues = filterValues || {};  // this stores the saved filter values
-        this.reportFilters = reportFilters || {};  // stores filter structure
+        this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});  // stores filter structure
+        for(var _id in this.reportFilters()) {
+            for(var i = 0; i < this.reportFilters()[_id].length; i++) {
+                var filter = this.reportFilters()[_id][i];
+                if(_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
+                    filter.selectedValue = filterValues[filter.slug];
+                    filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
+                } else {
+                    filter.selectedValue = {
+                        doc_type: ko.observable(null)
+                    };
+                }
+                filter.selectedValue.filter_type = ko.observable(filter.selectedValue.filter_type || '');
+            }
+        }
+
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
-            var filters = {};
-            for(var filter_slug in self.filterValues) {
-                filters[filter_slug] = self.filterValues[filter_slug];
+            var selectedFilterValues = {};
+            for(var i = 0; i < self.selectedFilterStructure().length; i++) {
+                var filter = self.selectedFilterStructure()[i];
+                if(filter.selectedValue.doc_type()) {
+                    selectedFilterValues[filter.slug] = {};
+                    selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
+                    if(filter.selectedValue.doc_type() == 'AutoFilter') {
+                        selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
+                    }
+                }
             }
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
-                filters: filters,
+                filters: selectedFilterValues,
                 header: self.fullDisplay
             };
         };
-        this.filterStructure = ko.computed(function() { // for the chosen report
-            return self.reportFilters[self.reportId()];
+
+        this.selectedFilterStructure = ko.computed(function() { // for the chosen report
+            return self.reportFilters()[self.reportId()];
         });
+
+        this.filterDocTypes = [null, 'AutoFilter'];
     }
     function ReportModule(options) {
         var self = this;
