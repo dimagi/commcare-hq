@@ -79,19 +79,29 @@ class MALTTableGenerator(object):
         except IntegrityError:
             # no update_or_create in django-1.6
             for malt_dict in malt_rows_to_save:
-                try:
-                    unique_field_dict = {k: v
-                                         for (k, v) in malt_dict.iteritems()
-                                         if k in MALTRow.get_unique_fields()}
-                    prev_obj = MALTRow.objects.get(**unique_field_dict)
-                    for k, v in malt_dict.iteritems():
-                        setattr(prev_obj, k, v)
-                    prev_obj.save()
-                except MALTRow.DoesNotExist:
-                    MALTRow(**malt_dict).save()
+                cls._update_or_create(malt_dict)
         except Exception as ex:
             logger.info("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
                         id=domain_id, ex=str(ex)))
+
+    @classmethod
+    def _update_or_create(cls, malt_dict):
+        try:
+            unique_field_dict = {k: v
+                                 for (k, v) in malt_dict.iteritems()
+                                 if k in MALTRow.get_unique_fields()}
+            prev_obj = MALTRow.objects.get(**unique_field_dict)
+            for k, v in malt_dict.iteritems():
+                setattr(prev_obj, k, v)
+            prev_obj.save()
+        except MALTRow.DoesNotExist:
+            MALTRow(**malt_dict).save()
+        except Exception as ex:
+            logger.info("Failed to insert malt-row {}. Exception is {}".format(
+                str(malt_dict),
+                str(ex)
+            ))
+
 
     def _get_forms_queryset(self, user_id, domain_name, monthspan):
         start_date = monthspan.startdate
