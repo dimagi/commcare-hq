@@ -436,7 +436,7 @@ def dropbox_upload(request, download_id):
 
         messages.success(
             request,
-            "{} is queued to sync to dropbox! You will receive an email when it complete".format(dest)
+            "{} is queued to sync to dropbox! You will receive an email when it completes.".format(dest)
         )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
