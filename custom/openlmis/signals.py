@@ -1,5 +1,4 @@
 from django.dispatch import receiver, Signal
-from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import get_case_updates
 from corehq import Domain
 from corehq.apps.commtrack.const import RequisitionStatus, SUPPLY_POINT_CASE_TYPE, is_supply_point_form
@@ -26,7 +25,10 @@ def supply_point_processing(sender, xform, cases, **kwargs):
         raise_supply_point_events(xform, cases)
 
 
-cases_received.connect(supply_point_processing)
+# note: this is commented out since no one is actually using this functionality
+# if we want to reenable openlmis integrations we will need to uncomment it.
+# the more likely scenario is that all of this code will be deleted sometime in the future.
+# cases_received.connect(supply_point_processing)
 
 
 @receiver(supply_point_modified)
