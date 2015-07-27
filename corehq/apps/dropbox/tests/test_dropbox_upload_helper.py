@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.users.models import WebUser
 
 from ..models import DropboxUploadHelper
 from ..exceptions import DropboxUploadAlreadyInProgress
@@ -6,11 +7,20 @@ from ..exceptions import DropboxUploadAlreadyInProgress
 
 class DropboxUploadHelperTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.user = WebUser.create('adomain', 'ben', '***')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+
     def test_successful_creation(self):
         kwargs = {
             'download_id': 'abc123',
             'src': 'commcare.zip',
-            'dest': 'cc.zip'
+            'dest': 'cc.zip',
+            'user': self.user.get_django_user(),
         }
         helper = DropboxUploadHelper.create('my_bogus_token', **kwargs)
 
@@ -22,7 +32,8 @@ class DropboxUploadHelperTest(TestCase):
         kwargs = {
             'download_id': 'abc123',
             'src': 'commcare.zip',
-            'dest': 'cc.zip'
+            'dest': 'cc.zip',
+            'user': self.user.get_django_user(),
         }
         DropboxUploadHelper.create('my_bogus_token', **kwargs)
 
@@ -33,7 +44,8 @@ class DropboxUploadHelperTest(TestCase):
         kwargs = {
             'download_id': 'abc123',
             'src': 'commcare.zip',
-            'dest': 'cc.zip'
+            'dest': 'cc.zip',
+            'user': self.user.get_django_user(),
         }
         helper = DropboxUploadHelper.create('my_bogus_token', **kwargs)
         helper.failure_reason = 'Dumb reason'
