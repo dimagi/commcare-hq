@@ -76,11 +76,17 @@
                                             ">
                                             </select>
                                         </th>
-                                        <th data-bind="if: filter.selectedValue.doc_type() == 'AutoFilter'">
-                                            <select data-bind="
-                                                options: $parent.autoFilterTypes,
-                                                value: filter.selectedValue.filter_type
-                                            "></select>
+                                        <th>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'AutoFilter'">
+                                                <select data-bind="
+                                                    options: $parent.autoFilterTypes,
+                                                    value: filter.selectedValue.filter_type
+                                                "></select>
+                                            </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticDatespanFilter'">
+                                                <input type="date" data-bind="value: filter.selectedValue.start_date"/>
+                                                <input type="date" data-bind="value: filter.selectedValue.end_date"/>
+                                            </div>
                                         </th>
                                     </tr>
                                 </tbody>

@@ -2847,8 +2847,8 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 
 class StaticDatespanFilter(ReportAppFilter):
-    start_date = DateTimeProperty()
-    end_date = DateTimeProperty()
+    start_date = DateProperty()
+    end_date = DateProperty()
 
     def get_filter_value(self, user):
         return DateSpan(startdate=self.start_date, enddate=self.end_date)

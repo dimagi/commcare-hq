@@ -113,6 +113,8 @@ var ReportModule = (function () {
                     };
                 }
                 filter.selectedValue.filter_type = ko.observable(filter.selectedValue.filter_type || '');
+                filter.selectedValue.start_date = ko.observable(filter.selectedValue.start_date || '');
+                filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
             }
         }
 
@@ -126,6 +128,10 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
                     if(filter.selectedValue.doc_type() == 'AutoFilter') {
                         selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
+                    }
+                    if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
+                        selectedFilterValues[filter.slug]['start_date'] = filter.selectedValue.start_date();
+                        selectedFilterValues[filter.slug]['end_date'] = filter.selectedValue.end_date();
                     }
                 }
             }
@@ -142,7 +148,7 @@ var ReportModule = (function () {
         });
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
     function ReportModule(options) {
