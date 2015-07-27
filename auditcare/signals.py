@@ -1,11 +1,11 @@
-from django.db.models.signals import post_save
+import logging
+
 from dimagi.ext.couchdbkit import Document
 from dimagi.ext.jsonobject import JsonObject
+from django.db.models.signals import post_save
 from django.db import models
 from django.contrib.auth.models import User
-import logging
 from django.forms import model_to_dict
-
 
 import settings
 try:
@@ -15,6 +15,7 @@ except:
 
 from django.dispatch import Signal
 
+log = logging.getLogger(__name__)
 user_login_failed = Signal(providing_args=['request', 'username'])
 
 
@@ -61,7 +62,7 @@ def couch_audit_save(instance, *args, **kwargs):
 
 
 if not hasattr(settings, 'AUDIT_MODEL_SAVE'):
-    logging.warning("You do not have the AUDIT_MODEL_SAVE settings variable setup.  If you want to setup model save audit events, please add the property and populate it with fully qualified model names.")
+    log.warning("You do not have the AUDIT_MODEL_SAVE settings variable setup.  If you want to setup model save audit events, please add the property and populate it with fully qualified model names.")
     settings.AUDIT_MODEL_SAVE = []
 
 if hasattr(settings, 'AUDIT_DJANGO_USER'):

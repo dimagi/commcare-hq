@@ -1,14 +1,16 @@
 from __future__ import absolute_import
+import logging
+import traceback
+
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-import logging
+
 from auditcare.models import AuditEvent
 from auditcare.decorators import watch_login
 from auditcare.decorators import watch_logout
-import traceback
 
-
+log = logging.getLogger(__name__)
 
 
 class AuditMiddleware(object):
@@ -24,9 +26,9 @@ class AuditMiddleware(object):
 
         if not getattr(settings, 'AUDIT_ALL_VIEWS', False):
             if not hasattr(settings, "AUDIT_VIEWS"):
-                logging.warning("You do not have the AUDIT_VIEWS settings variable setup.  If you want to setup central view call audit events, please add the property and populate it with fully qualified view names.")
+                log.warning("You do not have the AUDIT_VIEWS settings variable setup.  If you want to setup central view call audit events, please add the property and populate it with fully qualified view names.")
             elif not hasattr(settings, "AUDIT_MODULES"):
-                logging.warning("You do not have the AUDIT_MODULES settings variable setup.  If you want to setup central module audit events, please add the property and populate it with module names.")
+                log.warning("You do not have the AUDIT_MODULES settings variable setup.  If you want to setup central module audit events, please add the property and populate it with module names.")
 
             if hasattr(settings, "AUDIT_VIEWS") or hasattr(settings, "AUDIT_MODULES"):
                 self.active = True
@@ -43,7 +45,7 @@ class AuditMiddleware(object):
 
 
         #import traceback
-        #logging.error(traceback.print_stack())
+        #log.error(traceback.print_stack())
         #and monitor logouts
         traces = traceback.format_stack(limit=5)
         def is_test_trace(item):
@@ -54,11 +56,11 @@ class AuditMiddleware(object):
             return False
         is_tests = filter(is_test_trace, traces)
         if len(is_tests)  == 0:
-            logging.debug("Middleware is running in a running context")
+            log.debug("Middleware is running in a running context")
             admin.site.login = watch_login(admin.site.login)
             admin.site.logout = watch_logout(admin.site.logout)
         else:
-            logging.debug("Middleware is running in a test context, disabling monkeypatch")
+            log.debug("Middleware is running in a test context, disabling monkeypatch")
 
 
     @staticmethod

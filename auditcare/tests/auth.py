@@ -1,17 +1,17 @@
-from datetime import timedelta
 import time
+from datetime import timedelta
+
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
+from django.test import TestCase
+
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
-from django.test import TestCase
 from auditcare.tests.testutils import delete_all, get_latest_access
-import settings
 from auditcare.utils import _thread_locals
-import logging
 
-
+import settings
 
 
 class authenticationTestCase(TestCase):

@@ -49,10 +49,10 @@ def query2str(items):
 
     return '\n'.join(kvs)
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 if VERBOSE:
-    logging.info('AXES: BEGIN LOG')
-    #logging.info('Using django-axes ' + axes.get_version())
+    log.info('AXES: BEGIN LOG')
+    #log.info('Using django-axes ' + axes.get_version())
 
 def get_user_attempt(request):
     """
@@ -72,7 +72,7 @@ def get_user_attempt(request):
 
     attempts = sorted(attempts, key=lambda x: x.event_date, reverse=True)
     if not attempts:
-        logging.info("No attempts for given access, creating new attempt")
+        log.info("No attempts for given access, creating new attempt")
         return None
 
     #walk the attempts
@@ -91,9 +91,9 @@ def get_user_attempt(request):
 
 
     if COOLOFF_TIME and attempt and datetime.utcnow() - attempt.event_date < COOLOFF_TIME:
-        logging.info("Last login failure is still within the cooloff time, incrementing last access attempt.")
+        log.info("Last login failure is still within the cooloff time, incrementing last access attempt.")
     else:
-        logging.info("Last login failure is outside the cooloff time, creating new access attempt.")
+        log.info("Last login failure is outside the cooloff time, creating new access attempt.")
         return None
     return attempt
 
@@ -101,11 +101,11 @@ def watch_logout(func):
     def decorated_logout (request, *args, **kwargs):
         # share some useful information
         if func.__name__ != 'decorated_logout' and VERBOSE:
-            logging.info('AXES: Calling decorated logout function: %s' % func.__name__)
-            if args: logging.info('args: %s' % args)
-            if kwargs: logging.info('kwargs: %s' % kwargs)
-        logging.info("Function: %s" %(func.__name__))
-        logging.info("Logged logout for user %s" % (request.user.username))
+            log.info('AXES: Calling decorated logout function: %s', func.__name__)
+            if args: log.info('args: %s', args)
+            if kwargs: log.info('kwargs: %s', kwargs)
+        log.info("Function: %s", func.__name__)
+        log.info("Logged logout for user %s", request.user.username)
         user = request.user
         #it's a successful login.
         ip = request.META.get('REMOTE_ADDR', '')
@@ -149,9 +149,9 @@ def watch_login(func):
     def decorated_login(request, *args, **kwargs):
         # share some useful information
         if func.__name__ != 'decorated_login' and VERBOSE:
-            logging.info('AXES: Calling decorated function: %s' % func.__name__)
-            if args: logging.info('args: %s' % args)
-            if kwargs: logging.info('kwargs: %s' % kwargs)
+            log.info('AXES: Calling decorated function: %s', func.__name__)
+            if args: log.info('args: %s', args)
+            if kwargs: log.info('kwargs: %s', kwargs)
 
         # call the login function
         response = func(request, *args, **kwargs)
@@ -211,7 +211,7 @@ def log_request(request, login_unsuccessful):
         # We log them out in case they actually managed to enter
         # the correct password.
         logout(request)
-        logging.warning('AXES: locked out %s after repeated login attempts.' % attempt.ip_address)
+        log.warning('AXES: locked out %s after repeated login attempts.', attempt.ip_address)
         return False
 
     if login_unsuccessful:
@@ -239,9 +239,8 @@ def log_request(request, login_unsuccessful):
             attempt.failures_since_start = failures
             attempt.event_date = datetime.utcnow() #why do we do this?
             attempt.save()
-            logging.info('AXES: Repeated login failure by %s. Updating access '
-                     'record. Count = %s' %
-                     (attempt.ip_address, failures))
+            log.info('AXES: Repeated login failure by %s. Updating access '
+                     'record. Count = %s', attempt.ip_address, failures)
         else:
             ip = request.META.get('REMOTE_ADDR', '')
             ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
@@ -258,7 +257,7 @@ def log_request(request, login_unsuccessful):
             attempt.path_info=request.META.get('PATH_INFO', '<unknown>')
             attempt.failures_since_start=failures
             attempt.save()
-            logging.info('AXES: New login failure by %s. Creating access record.' % ip)
+            log.info('AXES: New login failure by %s. Creating access record.', ip)
     else:
         #it's a successful login.
 
