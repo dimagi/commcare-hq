@@ -1,3 +1,4 @@
+{% load i18n %}
 {% blocktrans %}
 Congrats! Your file has been successfully upload to {{ path }} on your dropbox account. You can share it with this link:
 {% endblocktrans %}

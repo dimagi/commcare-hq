@@ -41,7 +41,7 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
         subject = u'{} has been uploaded to dropbox!'.format(helper.dest)
         context = {
             'share_url': share.get('url', None),
-            'path': upload.get['path']
+            'path': upload['path']
         }
         html_content = render_to_string('dropbox/emails/upload_success.html', context)
         text_content = render_to_string('dropbox/emails/upload_success.txt', context)

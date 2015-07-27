@@ -1,3 +1,4 @@
+{% load i18n %}
 {% blocktrans %}
 Something went wrong when uploading your file {{ path }} to dropbox:
 {% endblocktrans %}
