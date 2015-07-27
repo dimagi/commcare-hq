@@ -28,10 +28,6 @@
                 <h1 class="media-heading">{{ title }}<br/></h1>
               </div>
             </div>
-
-            {% if with_supervision_url %}
-                <span><a href="{% url 'supervision' domain %}">Supervision documents</a><span>
-            {% endif %}
         {% endif %}
     {% endif %}
 {% endblock %}

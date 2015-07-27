@@ -29,7 +29,7 @@ from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
@@ -1324,7 +1324,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
@@ -1339,7 +1339,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
@@ -1365,10 +1365,11 @@ class TransferDomainRequest(models.Model):
             "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
-                        self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content,
-                        text_content=text_content)
+        send_html_email_async.delay(
+            _(u'There has been a transfer of ownership of {domain}').format(
+                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
+            html_content, text_content=text_content
+        )
 
     def as_dict(self):
         return {

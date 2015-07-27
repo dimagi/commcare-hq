@@ -174,7 +174,6 @@ class SohPercentageTableData(ILSData):
                     else:
                         row_data.append("<span class='no_data'>No Data</span>")
                 rows.append(row_data)
-
         return rows
 
 

@@ -1,7 +1,7 @@
 import json
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -206,11 +206,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
     @property
     def allow_deid(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-            return True
-        except PermissionDenied:
-            return False
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     def update_custom_params(self):
         p = self.post_data['custom_export']
