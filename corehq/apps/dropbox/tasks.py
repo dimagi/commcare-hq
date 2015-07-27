@@ -56,7 +56,8 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
 
     send_HTML_email(
         subject,
+        helper.user.email,
         html_content,
-        text_content,
+        text_content=text_content,
         email_from=settings.DEFAULT_FROM_EMAIL,
     )

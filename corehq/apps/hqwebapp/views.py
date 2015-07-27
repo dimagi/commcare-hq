@@ -403,6 +403,7 @@ def dropbox_next_url(request, download_id):
     return request.META.get('HTTP_REFERER', '/')
 
 
+@login_required
 @require_dropbox_session(next_url=dropbox_next_url)
 def dropbox_upload(request, download_id):
     download = DownloadBase.get(download_id)
@@ -415,7 +416,13 @@ def dropbox_upload(request, download_id):
         dest = request.POST.get('dropbox-dest', os.path.basename(filename))
 
         try:
-            uploader = DropboxUploadHelper.create(token, src=filename, dest=dest, download_id=download_id)
+            uploader = DropboxUploadHelper.create(
+                token,
+                src=filename,
+                dest=dest,
+                download_id=download_id,
+                user=request.user,
+            )
         except DropboxUploadAlreadyInProgress:
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(

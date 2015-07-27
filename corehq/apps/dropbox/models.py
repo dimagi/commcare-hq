@@ -1,6 +1,7 @@
 import os
 
 from django.db import models
+from django.contrib.auth.models import User
 
 from .exceptions import DropboxUploadAlreadyInProgress
 from .tasks import upload
@@ -15,6 +16,7 @@ class DropboxUploadHelper(models.Model):
     src = models.CharField(max_length=255)
     progress = models.DecimalField(default=0, decimal_places=2, max_digits=3)
     download_id = models.CharField(max_length=255)
+    user = models.ForeignKey(User)
 
     # If this field is set then the task has failed
     failure_reason = models.CharField(max_length=255, null=True, default=None)
@@ -35,6 +37,7 @@ class DropboxUploadHelper(models.Model):
             src=kwargs.get('src'),
             dest=kwargs.get('dest'),
             download_id=download_id,
+            user=kwargs.get('user'),
         )
         helper.token = token
         return helper
