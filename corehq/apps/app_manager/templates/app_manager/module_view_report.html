@@ -87,6 +87,9 @@
                                                 <input type="date" data-bind="value: filter.selectedValue.start_date"/>
                                                 <input type="date" data-bind="value: filter.selectedValue.end_date"/>
                                             </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'CustomDataAutoFilter'">
+                                                <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
+                                            </div>
                                         </th>
                                     </tr>
                                 </tbody>
