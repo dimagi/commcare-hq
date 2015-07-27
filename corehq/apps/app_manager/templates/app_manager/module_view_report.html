@@ -9,16 +9,17 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
-        $(function () {
+{#        $(function () {#}
             var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
-            ko.applyBindings(new ReportModule({
+            var reportModule = new ReportModule({
                 moduleName: {{ module.name|JSON }},
-                availableReports: {{ all_reports|JSON }},
-                currentReports: {{ current_reports|JSON }},
+                availableReports: {{ all_reports|JSON }}, // structure for all reports
+                currentReports: {{ current_reports|JSON }}, // config data for app reports
                 saveURL: saveURL,
                 lang: {{ lang|JSON }}
-            }), $("#report-module-edit")[0]);
-        });
+            });
+            ko.applyBindings(reportModule, $("#report-module-edit")[0]);
+{#        });#}
     </script>
 {% endblock %}
 {% block form-view %}
@@ -57,6 +58,28 @@
                         </td>
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans 'Filter Name' %}</th>
+                                        <th>{% trans 'Type' %}</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: { data: filterStructure, as: 'filter' }">
+                                    <tr>
+                                        <th data-bind="text: filter.display"></th>
+                                        <th data-bind="if: $parent.filterValues[filter.slug]">
+                                            <span data-bind="text: $parent.filterValues[filter.slug].doc_type"/>
+{#                                            <select data-bind="value: $parent.filterValues[filter.slug].doc_type">#}
+{#                                            </select>#}
+                                        </th>
+                                        <th data-bind="if: $parent.filterValues[filter.slug]">
+                                            <input type="text" data-bind="value: $parent.filterValues[filter.slug].filter_type">
+                                        </th>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
                                 <br/>
                                 <p>

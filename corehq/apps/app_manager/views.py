@@ -911,6 +911,7 @@ def get_module_view_context_and_template(app, module):
                 'report_id': report._id,
                 'title': report.title,
                 'charts': [chart for chart in report.configured_charts if chart['type'] == 'multibar'],
+                'filter_structure': report.filters,
             }
         all_reports = ReportConfiguration.by_domain(app.domain)
         all_report_ids = set([r._id for r in all_reports])
@@ -922,8 +923,8 @@ def get_module_view_context_and_template(app, module):
                 _('Your app contains references to reports that are deleted. These will be removed on save.')
             )
         return 'app_manager/module_view_report.html', {
-            'all_reports': [_report_to_config(r) for r in all_reports],
-            'current_reports': [r.to_json() for r in module.report_configs],
+            'all_reports': [_report_to_config(r) for r in all_reports], # structure for all reports
+            'current_reports': [r.to_json() for r in module.report_configs], # app report data
             'invalid_report_references': invalid_report_references,
             'warnings': warnings,
         }
@@ -1868,6 +1869,7 @@ def edit_report_module(request, domain, app_id, module_id):
     module = app.get_module(module_id)
     assert isinstance(module, ReportModule)
     module.name = params['name']
+    print params['reports']
     module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
     app.save()
     return json_response('success')
