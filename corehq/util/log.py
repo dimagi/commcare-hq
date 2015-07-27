@@ -49,8 +49,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
 
         tb_list = []
         if record.exc_info:
-            exc_info = record.exc_info
-            etype, _value, tb = exc_info
+            etype, _value, tb = record.exc_info
             value = clean_exception(_value)
             tb_list = ['Traceback (most recent call first):\n']
             formatted_exception = traceback.format_exception_only(etype, value)
@@ -68,6 +67,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         context = defaultdict(lambda: '')
         context.update({
             'subject': self.format_subject(subject),
+            'message': record.getMessage(),
             'details': getattr(record, 'details', None),
             'tb_list': tb_list,
             'request_repr': request_repr,
@@ -85,7 +85,12 @@ class HqAdminEmailHandler(AdminEmailHandler):
     def emit(self, record):
         context = self.get_context(record)
 
-        message = "{details}\\n{stack_trace}\n\n{request_repr}".format(**context)
+        message = "\n\n".join(filter(None, [
+            context['message'],
+            self.format_details(context['details']),
+            context['stack_trace'],
+            context['request_repr'],
+        ]))
         html_message = render_to_string('hqadmin/email/error_email.html', context)
         mail.mail_admins(context['subject'], message, fail_silently=True,
                          html_message=html_message)
@@ -94,6 +99,13 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if details:
             formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
             return 'Details:\n{}'.format(formatted)
+
+
+class NotifyExceptionEmailer(HqAdminEmailHandler):
+    def get_context(self, record):
+        context = super(NotifyExceptionEmailer, self).get_context(record)
+        context['subject'] = record.getMessage()
+        return context
 
 
 class SensitiveErrorMail(ErrorMail):
