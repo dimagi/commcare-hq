@@ -279,8 +279,6 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
