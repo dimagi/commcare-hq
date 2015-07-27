@@ -5,7 +5,7 @@ from datetime import date
 import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from xlrd import xldate_as_tuple
+from xlrd import xldate_as_tuple, XL_CELL_NUMBER
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
@@ -121,6 +121,17 @@ class ExcelFile(object):
         except Exception:
             self.has_errors = True
 
+    def _col_values(self, sheet, index):
+        return [self._fmt_value(cell) for cell in sheet.col(index)]
+
+    def _row_values(self, sheet, index):
+        return [self._fmt_value(cell) for cell in sheet.row(index)]
+
+    def _fmt_value(self, cell):
+        if cell.ctype == XL_CELL_NUMBER and int(cell.value) == cell.value:
+            return int(cell.value)
+        return cell.value
+
     def get_first_sheet(self):
         if self.workbook:
             return self.workbook.sheet_by_index(0)
@@ -135,7 +146,7 @@ class ExcelFile(object):
 
             # get columns
             if self.column_headers:
-                columns = sheet.row_values(0)
+                columns = self._row_values(sheet, 0)
             else:
                 for colnum in range(sheet.ncols):
                     columns.append("Column %i" % (colnum,))
@@ -149,9 +160,9 @@ class ExcelFile(object):
 
         if sheet:
             if self.column_headers:
-                return sheet.col_values(column_index)[1:]
+                return self._col_values(sheet, column_index)[1:]
             else:
-                return sheet.col_values(column_index)
+                return self._col_values(sheet, column_index)
         else:
             return []
 
@@ -168,7 +179,7 @@ class ExcelFile(object):
         sheet = self.get_first_sheet()
 
         if sheet:
-            return sheet.row_values(index)
+            return self._row_values(sheet, index)
 
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
