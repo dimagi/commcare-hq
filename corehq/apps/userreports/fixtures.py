@@ -22,7 +22,7 @@ def wrap_by_filter_type(report_app_filter):
     }
     filter_class = doc_type_to_filter_class.get(report_app_filter.doc_type)
     if not filter_class:
-        raise Exception
+        raise Exception("Unknown saved filter type: %s " % report_app_filter.doc_type)
     return filter_class.wrap(report_app_filter.to_json())
 
 
