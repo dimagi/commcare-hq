@@ -1,5 +1,6 @@
 from urlparse import urlparse
 from datetime import datetime
+import logging
 import json
 import os
 import re
@@ -397,6 +398,7 @@ def logout(req):
 def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
 
+
 def dropbox_next_url(request, download_id):
     return request.META.get('HTTP_REFERER', '/')
 
@@ -414,7 +416,7 @@ def dropbox_upload(request, download_id):
 
         try:
             uploader = DropboxUploadHelper.create(token, src=filename, dest=dest, download_id=download_id)
-        except DropboxUploadAlreadyInProgress, e:
+        except DropboxUploadAlreadyInProgress:
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(
                 request,

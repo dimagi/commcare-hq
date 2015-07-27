@@ -1,4 +1,4 @@
-from dropbox.client import DropboxOAuth2Flow, DropboxClient
+from dropbox.client import DropboxOAuth2Flow
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
