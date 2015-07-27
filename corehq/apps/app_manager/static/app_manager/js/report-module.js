@@ -115,6 +115,7 @@ var ReportModule = (function () {
                 filter.selectedValue.filter_type = ko.observable(filter.selectedValue.filter_type || '');
                 filter.selectedValue.start_date = ko.observable(filter.selectedValue.start_date || '');
                 filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
+                filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
             }
         }
 
@@ -128,10 +129,11 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
                     if(filter.selectedValue.doc_type() == 'AutoFilter') {
                         selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
-                    }
-                    if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
+                    } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
                         selectedFilterValues[filter.slug]['start_date'] = filter.selectedValue.start_date();
                         selectedFilterValues[filter.slug]['end_date'] = filter.selectedValue.end_date();
+                    } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
+                        selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
                     }
                 }
             }
@@ -148,7 +150,7 @@ var ReportModule = (function () {
         });
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
     function ReportModule(options) {
