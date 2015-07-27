@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -45,6 +46,7 @@ from .models import (
     METHOD_SMS_CALLBACK,
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
+    METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
     SurveyKeyword,
@@ -456,6 +458,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.initial_event = {
             'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
+            'subject': dict([(l, '') for l in available_languages]),
             'message': dict([(l, '') for l in available_languages]),
         }
 
@@ -486,17 +489,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
-            self.fields['method'].choices = method_choices
+            self.add_method_choices([
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
 
         if is_previewer and can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.extend([
-                (METHOD_IVR_SURVEY, _("IVR Survey")),
-                (METHOD_SMS_CALLBACK, _("SMS Expecting Callback")),
+            self.add_method_choices([
+                (METHOD_IVR_SURVEY, _('IVR Survey')),
+                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
-            self.fields['method'].choices = method_choices
+
+        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
+            self.add_method_choices([
+                (METHOD_EMAIL, _('Email')),
+            ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -525,6 +531,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 )),
             )
         )
+
+    def add_method_choices(self, choice_tuples):
+        method_choices = copy.copy(self.fields['method'].choices)
+        method_choices.extend(choice_tuples)
+        self.fields['method'].choices = method_choices
 
     @property
     def ui_type(self):
@@ -880,6 +891,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
             'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'METHOD_EMAIL': METHOD_EMAIL,
             'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
             'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
             'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
@@ -1058,6 +1070,23 @@ class BaseScheduleCaseReminderForm(forms.Form):
         else:
             return []
 
+    def clean_translated_field(self, translations, default_lang):
+        for lang, msg in translations.items():
+            if msg:
+                msg = msg.strip()
+            if not msg:
+                del translations[lang]
+            else:
+                translations[lang] = msg
+        if default_lang not in translations:
+            default_lang_name = (get_language_name(default_lang) or
+                default_lang)
+            raise ValidationError(_("Please provide messages for the "
+                "default language (%(language)s) or change the default "
+                "language at the bottom of the page.") %
+                {"language": default_lang_name})
+        return translations
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1083,28 +1112,22 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # the reason why we clean the following fields here instead of eventForm is so that
             # we can utilize the ValidationErrors for this field.
 
+            # clean subject:
+            if method == METHOD_EMAIL:
+                event['subject'] = self.clean_translated_field(
+                    event.get('subject', {}), default_lang)
+            else:
+                event['subject'] = {}
+
             # clean message:
-            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-                translations = event.get('message', {})
-                for lang, msg in translations.items():
-                    if msg:
-                        msg = msg.strip()
-                    if not msg:
-                        del translations[lang]
-                    else:
-                        translations[lang] = msg
-                if default_lang not in translations:
-                    default_lang_name = (get_language_name(default_lang) or
-                        default_lang)
-                    raise ValidationError(_("Please provide messages for the "
-                        "default language (%(language)s) or change the default "
-                        "language at the bottom of the page.") %
-                        {"language": default_lang_name})
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+                event['message'] = self.clean_translated_field(
+                    event.get('message', {}), default_lang)
             else:
                 event['message'] = {}
 
             # clean form_unique_id:
-            if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
                 event['form_unique_id'] = None
             else:
                 form_unique_id = event.get('form_unique_id')
@@ -1344,9 +1367,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
                         if not event_json.get("message", None):
                             event_json["message"] = {}
+
+                        if not event_json.get("subject", None):
+                            event_json["subject"] = {}
+
                         for langcode in available_languages:
                             if langcode not in event_json["message"]:
                                 event_json["message"][langcode] = ""
+                            if langcode not in event_json["subject"]:
+                                event_json["subject"][langcode] = ""
 
                         timeouts = [str(i) for i in
                             event_json["callback_timeout_intervals"]]

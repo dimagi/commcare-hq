@@ -366,6 +366,10 @@ var ReminderEvent = function (
             || (self.method() === self.choices.METHOD_IVR_SURVEY);
     });
 
+    self.subjectTranslations = ko.observableArray(_(eventData.subject).map(function (subject, langcode) {
+        return new ReminderMessage(subject, langcode, self.available_languages);
+    }));
+
     self.messageTranslations = ko.observableArray(_(eventData.message).map(function (message, langcode) {
         return new ReminderMessage(message, langcode, self.available_languages);
     }));
@@ -383,6 +387,14 @@ var ReminderEvent = function (
         return translations;
     });
 
+    self.subject_data = ko.computed(function () {
+        var subject_data = {};
+        _.each(self.subjectTranslations(), function (translation) {
+            subject_data[translation.langcode()] = translation.message();
+        });
+        return subject_data;
+    });
+
     self.message_data = ko.computed(function () {
         var message_data = {};
         _.each(self.messageTranslations(), function (translation) {
@@ -390,9 +402,19 @@ var ReminderEvent = function (
         });
         return message_data;
     });
+
+    self.isEmailSelected = ko.computed(function() {
+        return self.method() === self.choices.METHOD_EMAIL;
+    });
+
+    self.isSubjectVisible = ko.computed(function() {
+        return self.isEmailSelected();
+    });
+
     self.isMessageVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS)
-            || (self.method() === self.choices.METHOD_SMS_CALLBACK);
+            || (self.method() === self.choices.METHOD_SMS_CALLBACK)
+            || self.isEmailSelected();
     });
 
     self.asJSON = ko.computed(function () {
@@ -403,6 +425,7 @@ var ReminderEvent = function (
             day_num: self.day_num(),
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
+            subject: self.subject_data(),
             message: self.message_data(),
             callback_timeout_intervals: self.callback_timeout_intervals(),
             time_window_length: self.time_window_length()
