@@ -116,6 +116,7 @@ var ReportModule = (function () {
                 filter.selectedValue.start_date = ko.observable(filter.selectedValue.start_date || '');
                 filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
                 filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
+                filter.selectedValue.value = ko.observable(filter.selectedValue.value || '');
             }
         }
 
@@ -134,6 +135,8 @@ var ReportModule = (function () {
                         selectedFilterValues[filter.slug]['end_date'] = filter.selectedValue.end_date();
                     } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
                         selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
+                    } else if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
+                        selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value();
                     }
                 }
             }
@@ -150,7 +153,7 @@ var ReportModule = (function () {
         });
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
     function ReportModule(options) {
