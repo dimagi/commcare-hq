@@ -464,7 +464,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     try:
                         if XFormInstance.get(form_id).xmlns in form_xmlnses:
                             yield {
-                                'loc': loc,
+                                'parent_name': loc.parent.name if loc.parent else '',
                                 'loc_id': loc.location_id,
                                 'loc_path': loc.path,
                                 'name': loc.name,
@@ -487,7 +487,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         'date'
                     ).order_by('-date')[:1]
                     yield {
-                        'loc': loc,
+                        'parent_name': loc.parent.name if loc.parent else '',
                         'loc_id': loc.location_id,
                         'loc_path': loc.path,
                         'name': loc.name,

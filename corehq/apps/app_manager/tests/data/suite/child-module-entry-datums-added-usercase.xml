@@ -1,0 +1,30 @@
+<partial>
+  <entry>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_new_guppy_0" function="uuid()" />
+      <datum id="usercase_id" function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
+    </session>
+  </entry>
+  <entry>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_new_guppy_0" function="uuid()" />
+      <datum id="usercase_id" function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
+      <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='gold-fish'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='guppy'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m1_case_short"  detail-confirm="m1_case_long"/>
+    </session>
+  </entry>
+</partial>

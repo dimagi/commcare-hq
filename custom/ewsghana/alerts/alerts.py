@@ -346,13 +346,13 @@ def stock_alerts(transactions, user):
     if overstocked:
         if not message:
             products_codes_str = ' '.join([overstock.sql_product.code for overstock in overstocked])
-            message += " " + OVERSTOCKED_MESSAGE % {'username': user.username, 'overstocked': products_codes_str}
+            message += " " + OVERSTOCKED_MESSAGE % {'username': user.full_name, 'overstocked': products_codes_str}
         products_names_str = ' '.join([overstock.sql_product.name for overstock in overstocked])
         super_message += _("overstocked %s; ") % products_names_str
 
     if not message:
         if not receipts:
-            message = COMPLETE_REPORT % user.username
+            message = COMPLETE_REPORT % user.full_name
         else:
             products_str = ' '.join(
                 [
@@ -360,9 +360,9 @@ def stock_alerts(transactions, user):
                     for receipt in receipts
                 ]
             )
-            message = RECEIPT_MESSAGE % {'username': user.username, 'received': products_str}
+            message = RECEIPT_MESSAGE % {'username': user.full_name, 'received': products_str}
     else:
-        message = (_('Dear %s,') % user.username) + message
+        message = (_('Dear %s,') % user.full_name) + message
 
     if super_message:
         stripped_message = super_message.strip().strip(';')
@@ -376,8 +376,8 @@ def send_message_to_admins(user, message):
     in_charge_users = [
         u
         for u in users
-        if u.get_verified_number() and u.user_data.get('role') == "In Charge"
+        if u.get_verified_number() and "In Charge" in u.user_data.get('role', [])
     ]
     for in_charge_user in in_charge_users:
         send_sms_to_verified_number(in_charge_user.get_verified_number(),
-                                    message % (in_charge_user.username, in_charge_user.location.name))
+                                    message % (in_charge_user.full_name, in_charge_user.location.name))

@@ -1,0 +1,175 @@
+{
+    "domains": ["mvp-sauri", "mvp-mbola", "mvp-mwandama", "mvp-ruhiira", "mvp-koraro", "mvp-mayange",
+                "mvp-sada", "mvp-bonsaaso", "mvp-potou", "mvp-pampaida", "mvp-tiby"],
+    "data_source_table": "va_indicators",
+    "report_id": "deidentified-va-report",
+    "config": {
+        "doc_type":"ReportConfiguration",
+        "description":"",
+        "title":"Deidentified Verbal Autopsy Report",
+        "filters":[
+            {
+
+                "type": "date",
+                "field": "timeEnd",
+                "slug": "date",
+                "display": "Date"
+            }
+        ],
+        "report_meta":{
+            "doc_type":"ReportMeta",
+            "builder_report_type":null,
+            "created_by_builder":false
+        },
+        "visible":true,
+        "aggregation_columns":[
+        ],
+        "columns":[
+            {
+                "description":null,
+                "field":"case_id",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"case_id",
+                "alias":null,
+                "type":"field",
+                "display":"#",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"death_year",
+                "format":"default",
+                "transform":{
+                    "type": "date_format",
+                    "format": "%Y"
+                },
+                "column_id":"death_year",
+                "alias":null,
+                "type":"field",
+                "display":"Year of Death",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"death_month",
+                "format":"default",
+                "transform":{
+                    "type": "date_format",
+                    "format": "%B"
+                },
+                "column_id":"death_month",
+                "alias":null,
+                "type":"field",
+                "display":"Month of Death",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"age_category",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"age_category",
+                "alias":null,
+                "type":"field",
+                "display":"Age at Death",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"death_place",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"death_place",
+                "alias":null,
+                "type":"field",
+                "display":"Place of Death",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"medical_reason",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"medical_reason",
+                "alias":null,
+                "type":"field",
+                "display":"Medical Probable Cause of Death",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"no_treatment_reason",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"no_treatment_reason",
+                "alias":null,
+                "type":"field",
+                "display":"Reason for delay and/or not receiving medical care",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"received_treatment",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"received_treatment",
+                "alias":null,
+                "type":"field",
+                "display":"Was any treatment received for the illness that let to death?",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"treatment_provider",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"treatment_provider",
+                "alias":null,
+                "type":"field",
+                "display":"Who provided treatment?",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"treatment_facility_name",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"treatment_facility_name",
+                "alias":null,
+                "type":"field",
+                "display":"Health Facility Providing Treatment",
+                "aggregation":"simple"
+            },
+            {
+                "description":null,
+                "field":"last_chw_visit",
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"last_chw_visit",
+                "alias":null,
+                "type":"field",
+                "display":"Date of Last CHW Visit",
+                "aggregation":"simple"
+            }
+        ]
+    }
+}

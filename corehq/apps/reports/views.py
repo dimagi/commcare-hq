@@ -587,7 +587,7 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    from dimagi.utils.django.email import send_HTML_email
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
     from forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -632,12 +632,13 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
-        send_HTML_email(subject, request.couch_user.get_email(), body,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, request.couch_user.get_email(), body,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body, email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, body,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
@@ -1186,19 +1187,19 @@ def download_cases(request, domain):
     }
     payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
     content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
-    mimetype = "%s" % format.mimetype
+    content_type = "%s" % format.mimetype
 
     def generate_payload(payload_func):
         if async:
             download = DownloadBase()
             a_task = prepare_download.delay(download.download_id, payload_func,
-                                            content_disposition, mimetype)
+                                            content_disposition, content_type)
             download.set_task(a_task)
             return download.get_start_response()
         else:
             payload = payload_func()
             response = HttpResponse(payload)
-            response['Content-Type'] = mimetype
+            response['Content-Type'] = content_type
             response['Content-Disposition'] = content_disposition
             return response
 
@@ -1319,10 +1320,17 @@ def edit_form_instance(request, domain, instance_id):
 
     user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
     edit_session_data = get_user_contributions_to_touchforms_session(user)
-    case_blocks = extract_case_blocks(instance)
 
-    if len(case_blocks) == 1 and case_blocks[0].get(const.CASE_ATTR_ID):
-        edit_session_data["case_id"] = case_blocks[0].get(const.CASE_ATTR_ID)
+    case_blocks = extract_case_blocks(instance, include_path=True)
+    # a bit hacky - the app manager puts the main case directly in the form, so it won't have
+    # any other path associated with it. This allows us to differentiat from parent cases.
+    # One thing this definitely does not do is support advanced modules or forms with case-management
+    # done by hand.
+    # You might think that you need to populate other session variables like parent_id, but those
+    # are never actually used in the form.
+    non_parents = filter(lambda cb: cb.path == [], case_blocks)
+    if len(non_parents) == 1:
+        edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
     edit_session_data['function_context'] = {
         'static-date': [

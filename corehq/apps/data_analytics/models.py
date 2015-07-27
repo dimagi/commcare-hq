@@ -1,5 +1,7 @@
 from django.db import models
 
+from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET
+
 
 class MALTRow(models.Model):
     """
@@ -15,20 +17,20 @@ class MALTRow(models.Model):
     email = models.EmailField()
     is_web_user = models.BooleanField(default=False)
     domain_name = models.TextField(db_index=True)
-    num_of_forms = models.TextField()
-
-    YES = 'yes'
-    NO = 'no'
-    NOT_SET = 'not_set'
-    WAM_PAM_CHOICES = (
-        (YES, 'Yes'),
-        (NO, 'No'),
-        (NOT_SET, 'Not Set')
-    )
+    num_of_forms = models.PositiveIntegerField()
     app_id = models.TextField()
-    wam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
-    pam = models.CharField(choices=WAM_PAM_CHOICES, default=NOT_SET, max_length=7)
     is_app_deleted = models.BooleanField(default=False)
+
+    YES = True  # equivalent to app_manager.const.AMPLIFIES_YES
+    NO = False  # equivalent to app_manager.const.AMPLIFIES_NO
+    NOT_SET = None  # equivalent to app_manager.const.AMPLIFIES_NOT_SET
+    wam = models.NullBooleanField(default=NOT_SET)
+    pam = models.NullBooleanField(default=NOT_SET)
+    AMPLIFY_COUCH_TO_SQL_MAP = {
+        AMPLIFIES_YES: YES,
+        AMPLIFIES_NO: NO,
+        AMPLIFIES_NOT_SET: NOT_SET
+    }
 
     class Meta:
         unique_together = ('month', 'domain_name', 'user_id', 'app_id')

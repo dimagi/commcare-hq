@@ -121,9 +121,11 @@ form_id_references = []
 
 def FormIdProperty(expression, **kwargs):
     """
-    Create a StringProperty that references a form ID.
-    :param level:   From where is the form referenced? One of 'app', 'module', 'form'
-    :param path:    jsonpath to field that holds the form ID
+    Create a StringProperty that references a form ID. This is necessary because
+    form IDs change when apps are copied so we need to make sure we update
+    any references to the them.
+    :param expression:  jsonpath expression that can be used to find the field
+    :param kwargs:      arguments to be passed to the underlying StringProperty
     """
     path_expression = parse(expression)
     assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
@@ -3135,12 +3137,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # metadata for data platform
     amplifies_workers = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
     amplifies_project = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
 
     # exchange properties

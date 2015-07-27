@@ -7,6 +7,27 @@ from django.views.debug import get_exception_reporter_filter
 from django.template.loader import render_to_string
 
 
+def clean_exception(exception):
+    """
+    Takes an Exception instance and strips potentially sensitive information
+    """
+    from django.conf import settings
+    if settings.DEBUG:
+        return exception
+
+    # couchdbkit doesn't provide a better way for us to catch this exception
+    if (
+        isinstance(exception, AssertionError) and
+        exception.message.startswith('received an invalid response of type')
+    ):
+        message = ("It looks like couch returned an invalid response to "
+                   "couchdbkit.  This could contain sensitive information, "
+                   "so it's being redacted.")
+        return exception.__class__(message)
+
+    return exception
+
+
 class HqAdminEmailHandler(AdminEmailHandler):
     """
     Custom AdminEmailHandler to include additional details which can be supplied as follows:
@@ -33,7 +54,8 @@ class HqAdminEmailHandler(AdminEmailHandler):
         tb_list = []
         if record.exc_info:
             exc_info = record.exc_info
-            etype, value, tb = exc_info
+            etype, _value, tb = exc_info
+            value = clean_exception(_value)
             tb_list = ['Traceback (most recent call first):\n']
             formatted_exception = traceback.format_exception_only(etype, value)
             tb_list.extend(formatted_exception)

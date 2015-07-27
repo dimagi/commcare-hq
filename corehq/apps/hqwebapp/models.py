@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain
+from corehq import toggles, privileges, Domain, feature_previews
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
@@ -37,6 +37,7 @@ from corehq.util.markup import mark_up_urls
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
                                             CustomProjectReportDispatcher)
@@ -184,9 +185,15 @@ class UITab(object):
             return shortcircuit
 
         request_path = self._request.get_full_path()
+        url_base = get_url_base()
+
+        def url_matches(url, request_path):
+            if url.startswith(url_base):
+                return request_path.startswith(url[len(url_base):])
+            return request_path.startswith(url)
 
         if self.urls:
-            if (any(request_path.startswith(url) for url in self.urls) or
+            if (any(url_matches(url, request_path) for url in self.urls) or
                     self._current_url_name in self.subpage_url_names):
                 return True
         elif self.subtabs and any(st.is_active for st in self.subtabs):
@@ -1081,7 +1088,8 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if self.project.locations_enabled:
+        if (feature_previews.LOCATIONS.enabled(self.domain) and
+                has_privilege(self._request, privileges.LOCATIONS)):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
@@ -20,14 +21,6 @@ class ConfigurableIndicatorPillow(PythonPillow):
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db)
         self.bootstrapped = False
 
-    @classmethod
-    def get_sql_engine(cls):
-        # todo: switch to connection_manager
-        engine = getattr(cls, '_engine', None)
-        if not engine:
-            cls._engine = connection_manager.get_engine()
-        return cls._engine
-
     def get_all_configs(self):
         return DataSourceConfiguration.all()
 
@@ -40,24 +33,28 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.tables = [IndicatorSqlAdapter(config) for config in configs]
+        self.table_adapters = [IndicatorSqlAdapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
 
     def rebuild_tables_if_necessary(self):
-        table_map = {t.get_table().name: t for t in self.tables}
-        engine = self.get_sql_engine()
-        with engine.begin() as connection:
-            migration_context = get_migration_context(connection, table_map.keys())
-            diffs = compare_metadata(migration_context, metadata)
+        tables_by_engine = defaultdict(dict)
+        for adapter in self.table_adapters:
+            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
-        tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
-        for table_name in tables_to_rebuild:
-            table = table_map[table_name]
-            try:
-                self.rebuild_table(table)
-            except TableRebuildError, e:
-                notify_error(unicode(e))
+        for engine_id, table_map in tables_by_engine.items():
+            engine = connection_manager.get_engine(engine_id)
+            with engine.begin() as connection:
+                migration_context = get_migration_context(connection, table_map.keys())
+                diffs = compare_metadata(migration_context, metadata)
+
+            tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+            for table_name in tables_to_rebuild:
+                table = table_map[table_name]
+                try:
+                    self.rebuild_table(table)
+                except TableRebuildError, e:
+                    notify_error(unicode(e))
 
     def rebuild_table(self, table):
         table.rebuild_table()
@@ -77,7 +74,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
-        for table in self.tables:
+        for table in self.table_adapters:
             if table.config.filter(doc):
                 table.save(doc)
             elif table.config.deleted_filter(doc):

@@ -174,7 +174,6 @@ class SohPercentageTableData(ILSData):
                     else:
                         row_data.append("<span class='no_data'>No Data</span>")
                 rows.append(row_data)
-
         return rows
 
 
@@ -273,7 +272,8 @@ class DistrictSohPercentageTableData(ILSData):
             st = StockTransaction.objects.filter(
                 case_id=supplypoint,
                 type='stockonhand',
-                report__date__lte=last_bd_of_the_month
+                report__date__lte=last_bd_of_the_month,
+                report__domain=self.config['domain']
             ).order_by('-report__date')
             last_of_last_month = datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
             last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
@@ -344,6 +344,7 @@ class DistrictSohPercentageTableData(ILSData):
                     first_of_the_next_month = last_of_the_month + timedelta(days=1)
                     try:
                         srs = StockTransaction.objects.filter(
+                            report__domain=self.config['domain'],
                             report__date__lt=first_of_the_next_month,
                             case_id=supply_point,
                             product_id=product.product_id
@@ -353,9 +354,9 @@ class DistrictSohPercentageTableData(ILSData):
 
                     if srs:
                         def calculate_months_remaining(stock_state, quantity):
-                            consumption = stock_state.get_monthly_consumption()
+                            consumption = stock_state.daily_consumption
                             if consumption is not None and consumption > 0 and quantity is not None:
-                                return float(quantity) / float(consumption)
+                                return float(quantity) / float(30 * consumption)
                             elif quantity == 0:
                                 return 0
                             return None

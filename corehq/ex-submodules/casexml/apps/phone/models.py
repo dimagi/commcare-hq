@@ -3,6 +3,7 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -134,6 +135,12 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             ret.strict = False
         return ret
 
+    def case_count(self):
+        """
+        How many cases are associated with this. Used in reports.
+        """
+        raise NotImplementedError()
+
     def phone_is_holding_case(self, case_id):
         raise NotImplementedError()
 
@@ -174,6 +181,16 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
 
+    @classmethod
+    def from_other_format(cls, other_sync_log):
+        """
+        Convert to an instance of a subclass from another subclass. Subclasses can
+        override this to provide conversion functions.
+        """
+        raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+            type(other_sync_log), cls,
+        ))
+
     # anything prefixed with 'tests_only' is only used in tests
     def tests_only_get_cases_on_phone(self):
         raise NotImplementedError()
@@ -212,6 +229,9 @@ class SyncLog(AbstractSyncLog):
     def last_for_user(cls, user_id):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
         return get_last_synclog_for_user(user_id)
+
+    def case_count(self):
+        return len(self.cases_on_phone)
 
     def get_previous_log(self):
         """
@@ -420,7 +440,8 @@ class IndexTree(DocumentSchema):
     """
     Document type representing a case dependency tree (which is flattened to a single dict)
     """
-    # a flat mapping of cases to lists of cases that they depend on
+    # a flat mapping of cases to dicts of their indices. The keys in each dict are the index identifiers
+    # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
     def __repr__(self):
@@ -504,6 +525,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.doc_type = "SyncLog"
         super(SimplifiedSyncLog, self).save(*args, **kwargs)
 
+    def case_count(self):
+        return len(self.case_ids_on_phone)
+
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
@@ -567,9 +591,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
-        logger.debug('syncing {}'.format(self.user_id))
+        logger.debug('updating sync log for {}'.format(self.user_id))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree before update: {}'.format(self.index_tree))
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -612,9 +637,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree after update: {}'.format(self.index_tree))
         if made_changes or case_list:
             try:
                 if made_changes:
+                    logger.debug('made changes, saving.')
                     self.save()
                 if case_list:
                     self.invalidate_cached_payloads()
@@ -623,6 +650,35 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     id=self._id,
                 ))
                 raise
+
+    @classmethod
+    def from_other_format(cls, other_sync_log):
+        """
+        Migrate from the old SyncLog format to this one.
+        """
+        if isinstance(other_sync_log, SyncLog):
+            def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
+                new_sync_log.case_ids_on_phone.add(case_state.case_id)
+                for index in case_state.indices:
+                    new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                if is_dependent:
+                    new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+
+            ret = cls.wrap(other_sync_log.to_json())
+            for case_state in other_sync_log.cases_on_phone:
+                _add_state_contributions(ret, case_state)
+
+            for case_state in other_sync_log.dependent_cases_on_phone:
+                _add_state_contributions(ret, case_state, is_dependent=True)
+
+            # set and cleanup other properties
+            ret.log_format = LOG_FORMAT_SIMPLIFIED
+            del ret['last_seq']
+            del ret['cases_on_phone']
+            del ret['dependent_cases_on_phone']
+            return ret
+        else:
+            return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
@@ -637,7 +693,10 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    doc = SyncLog.get_db().get(doc_id)
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+
+
+def properly_wrap_sync_log(doc):
     return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
 
 

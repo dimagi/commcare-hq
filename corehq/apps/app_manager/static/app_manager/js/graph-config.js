@@ -309,7 +309,8 @@ var GraphViewModel = function(moduleOptions){
         'show-axes',
         'show-grid',
         'show-legend',
-        'zoom'
+        'zoom',
+        'bar-orientation',
     ];
     // Note: I don't like repeating the list of property options in the hints map.
     // I could use configPropertyHints.keys() to generate the options, but that
@@ -332,7 +333,8 @@ var GraphViewModel = function(moduleOptions){
         'show-axes': 'true() or false()',
         'show-grid': 'true() or false()',
         'show-legend': 'true() or false()',
-        'zoom': 'true() or false()'
+        'zoom': 'true() or false()',
+        'bar-orientation': '\'horizontal\' or \'vertical\'',
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];
     self.fixtures = moduleOptions.fixtures || [];

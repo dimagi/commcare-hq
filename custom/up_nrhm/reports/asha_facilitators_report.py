@@ -1,14 +1,13 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import format_datatables_data
-from custom.up_nrhm.filters import DrillDownOptionFilter
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
+from django.utils.translation import ugettext_lazy as _
 
 
 class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "ASHA Facilitators Report"
+    name = _("Format-2 Consolidation of the Functionality numbers")
     slug = "asha_facilitators_report"
     no_value = '--'
 
@@ -29,9 +28,9 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn('', sortable=False),
-            DataTablesColumn('Total no. of ASHAs functional', sortable=False),
-            DataTablesColumn('Total no. of ASHAs who did not report/not known', sortable=False),
-            DataTablesColumn('Remarks', sortable=False),
+            DataTablesColumn(_('Total no. of ASHAs functional'), sortable=False),
+            DataTablesColumn(_('Total no. of ASHAs who did not report/not known'), sortable=False),
+            DataTablesColumn(_('Remarks'), sortable=False),
         )
 
     @property

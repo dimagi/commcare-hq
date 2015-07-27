@@ -1,5 +1,5 @@
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.users.decorators import require_can_edit_commcare_users

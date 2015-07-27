@@ -55,7 +55,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
@@ -159,10 +159,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
-        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
+        if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
-                'commtrack_enabled': self.request.project.commtrack_enabled,
-                'locations_enabled': self.request.project.locations_enabled,
+                'commtrack_enabled': self.domain_object.commtrack_enabled,
+                'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
@@ -235,11 +235,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     def can_bulk_edit_users(self):
         if not user_can_edit_any_location(self.request.couch_user, self.request.project):
             return False
-        try:
-            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
 
     @property
     def can_add_extra_users(self):
@@ -839,7 +835,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:

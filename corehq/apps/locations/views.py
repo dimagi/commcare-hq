@@ -20,7 +20,6 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -680,7 +679,7 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
     dump_locations(response, domain, include_consumption)
     return response
