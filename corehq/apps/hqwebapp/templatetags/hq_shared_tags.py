@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from corehq.apps.domain.models import Domain
-from dimagi.utils.logging import notify_exception
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 
 import corehq.apps.style.utils as style_utils
@@ -28,8 +28,9 @@ def JSON(obj):
         return mark_safe(json.dumps(obj, default=json_handler))
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
-               "If DEBUG is off, Django will silently swallow this error.")
-        notify_exception(None, message=msg)
+               "If DEBUG is off, Django will silently swallow this error.  "
+               "{}".format(e.message))
+        soft_assert(notify_admins=True)(False, msg)
         raise e
 
 
