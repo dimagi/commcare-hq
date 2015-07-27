@@ -132,7 +132,7 @@ class UCLATaskActivityFluff(fluff.IndicatorDocument):
 
     referenced_id = flat_field(lambda c: c['indices'][0]['referenced_id'])
     full_name = flat_field(lambda c: get_full_name(c))
-    name = flat_field(lambda c: get_property(c, 'name').encode("iso-8859-15", "backslashreplace"))
+    name = flat_field(lambda c: get_property(c, 'name'))
     task_responsible = flat_field(lambda c: get_property(c, 'task_responsible'))
     closed = flat_field(lambda c: '0' if get_property(c, 'closed') else '1')
     task_due = flat_field(lambda c: get_property(c, 'task_due'))

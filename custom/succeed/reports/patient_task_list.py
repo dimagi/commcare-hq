@@ -31,13 +31,8 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def get_link(self, url, field, doc_id):
         if url:
-            try:
-                return html.mark_safe("<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
-                    url, html.escape(field)))
-            # added because we have an one case where in name we have a char \u2022 - middle dot
-            except UnicodeEncodeError:
-                return html.mark_safe("<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
-                    url, html.escape(field.encode("iso-8859-15", "replace"))))
+            return html.mark_safe(u"<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
+                url, html.escape(field)))
         else:
             return "%s (bad ID format)" % doc_id
 
