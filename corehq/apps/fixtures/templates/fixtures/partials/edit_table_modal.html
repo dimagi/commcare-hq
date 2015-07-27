@@ -17,10 +17,10 @@
             <table class="table table-striped table-bordered" style="margin-bottom:0">
                 <thead>
                     <tr>
-                        <th>
+                        <th class="span10">
                             field_name
                         </th>
-                        <th>
+                        <th class="span2">
                             Delete Field?
                         </th>
                     </tr>
@@ -30,7 +30,25 @@
                     <tr>
                         <!-- ko ifnot: with_props -->
                         <td>
-                            <input type="text" class="input-small" data-bind="value: editTag, hasfocus: true"/>
+                            <input type="text" class="input-small" data-bind="value: tag, valueUpdate: 'afterkeydown', hasfocus: true"/>
+                            <p class="help-inline label label-warning" data-bind="visible: isDuplicate">
+                                <i class="icon icon-warning-sign"></i>
+                                {% blocktrans %}
+                                    "<span data-bind="text: tag"></span>" is a duplicate field name.
+                                {% endblocktrans %}
+                            </p>
+                            <p class="help-inline label label-warning" data-bind="visible: isBadSlug">
+                                <i class="icon icon-warning-sign"></i>
+                                {% blocktrans %}
+                                    Field name cannot contain \, /, <, >, or spaces.
+                                {% endblocktrans %}
+                            </p>
+                            <p class="help-inline label label-warning" data-bind="visible: noXMLStart">
+                                <i class="icon icon-warning-sign"></i>
+                                {% blocktrans %}
+                                    Field name cannot start with xml.
+                                {% endblocktrans %}
+                            </p>
                         </td>
                         <td>
                             <input type="checkbox" data-bind="checked: remove, visible: !is_new()"/>
@@ -43,7 +61,7 @@
                         <!-- /ko -->
                         <!-- ko if: with_props -->
                         <td>
-                            <input type="text" class="input-small" data-bind="value: editTag" readonly/>
+                            <input type="text" class="input-small" data-bind="value: tag" readonly/>
                         </td>
                         <td>
                             <span>(Not editable)</span>
