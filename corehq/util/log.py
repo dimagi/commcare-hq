@@ -38,11 +38,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         }
     )
     """
-
-    def emit(self, record):
-        # avoid circular dependency
-        from django.conf import settings
-
+    def get_context(self, record):
         request = None
         try:
             request = record.request
@@ -69,19 +65,13 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 record.levelname,
                 record.getMessage()
             )
-
-        subject = self.format_subject(subject)
-
-        message = "%s\n\n%s" % (stack_trace, request_repr)
-        details = getattr(record, 'details', None)
-        if details:
-            message = "%s\n\n%s" % (self.format_details(details), message)
-
         context = defaultdict(lambda: '')
         context.update({
-            'details': details,
+            'subject': self.format_subject(subject),
+            'details': getattr(record, 'details', None),
             'tb_list': tb_list,
-            'request_repr': request_repr
+            'request_repr': request_repr,
+            'stack_trace': stack_trace,
         })
         if request:
             context.update({
@@ -90,8 +80,15 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 'method': request.method,
                 'url': request.build_absolute_uri(),
             })
+        return context
+
+    def emit(self, record):
+        context = self.get_context(record)
+
+        message = "{details}\\n{stack_trace}\n\n{request_repr}".format(**context)
         html_message = render_to_string('hqadmin/email/error_email.html', context)
-        mail.mail_admins(subject, message, fail_silently=True, html_message=html_message)
+        mail.mail_admins(context['subject'], message, fail_silently=True,
+                         html_message=html_message)
 
     def format_details(self, details):
         if details:
