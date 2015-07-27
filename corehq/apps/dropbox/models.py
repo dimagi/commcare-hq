@@ -46,5 +46,5 @@ class DropboxUploadHelper(models.Model):
         if self.initiated:
             raise DropboxUploadAlreadyInProgress(u'The upload has already been initiated')
         size = max_size or os.path.getsize(self.src)
-        upload(self.id, self.token, size, max_retries)
+        upload.delay(self.id, self.token, size, max_retries)
         self.initiated = True
