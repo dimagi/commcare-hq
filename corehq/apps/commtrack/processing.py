@@ -214,14 +214,22 @@ def _adjust_ledger_values(original_balance, stock_transaction):
     return ledger_values.balance
 
 
-@transaction.atomic
-def rebuild_stock_state(case_id, section_id, product_id):
-    """
-    rebuilds the StockState object
-    and the quantity and stock_on_hand fields of StockTransaction
-    when they are calculated from previous state
-    (as opposed to part of the explict transaction)
+_DeleteStockTransaction = namedtuple(
+    '_DeleteStockTransaction', ['stock_transaction'])
+_SaveStockTransaction = namedtuple(
+    '_SaveStockTransaction',
+    ['stock_transaction', 'previous_quantity', 'previous_stock_on_hand'])
 
+
+def plan_rebuild_stock_state(case_id, section_id, product_id):
+    """
+    planner for rebuild_stock_state
+
+    yields actions for rebuild_stock_state to take,
+    facilitating doing a dry run
+
+    Warning: since some important things are still done through signals
+    rather than here explicitly,
     """
 
     # these come out latest first, so reverse them below
@@ -235,7 +243,29 @@ def rebuild_stock_state(case_id, section_id, product_id):
     balance = None
     for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
-            stock_transaction.delete()
+            yield _DeleteStockTransaction(stock_transaction)
         else:
+            previous_quantity = stock_transaction.quantity
+            previous_stock_on_hand = stock_transaction.stock_on_hand
             balance = _adjust_ledger_values(balance, stock_transaction)
-            stock_transaction.save()
+            yield _SaveStockTransaction(
+                stock_transaction, previous_quantity, previous_stock_on_hand)
+
+
+@transaction.atomic
+def rebuild_stock_state(case_id, section_id, product_id):
+    """
+    rebuilds the StockState object
+    and the quantity and stock_on_hand fields of StockTransaction
+    when they are calculated from previous state
+    (as opposed to part of the explict transaction)
+
+    """
+
+    for action in plan_rebuild_stock_state(case_id, section_id, product_id):
+        if isinstance(action, _DeleteStockTransaction):
+            action.stock_transaction.delete()
+        elif isinstance(action, _SaveStockTransaction):
+            action.stock_transaction.save()
+        else:
+            raise ValueError()
