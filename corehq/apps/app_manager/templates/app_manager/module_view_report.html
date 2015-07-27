@@ -90,6 +90,8 @@
                                             <div data-bind="visible: filter.selectedValue.doc_type() == 'CustomDataAutoFilter'">
                                                 <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
                                             </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticChoiceListFilter'">
+                                            </div>
                                         </th>
                                     </tr>
                                 </tbody>
