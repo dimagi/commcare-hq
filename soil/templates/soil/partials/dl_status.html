@@ -9,7 +9,7 @@
     <div id="ready_{{ download_id }}">
     {% if has_file %}
         <p class="alert alert-success">{% trans "Your export is ready." %}</p>
-        <form class="form-inline" method="POST" action="{% url 'dropbox_upload' download_id %}">
+        <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
                 <i class="icon icon-white icon-download-alt"></i>
                 {% trans "Download File Now" %}
@@ -17,8 +17,8 @@
 
             {% if request|toggle_enabled:"DROPBOX_SYNC" %}
             <div class="input-append">
-                <input class="dropbox-control" name="dropbox-dest" type="text" placeholder="filename">
-                <button type="submit" class="btn dropbox-control" id="dropbox-sync-submit">
+                <input name="dropbox-dest" type="text" placeholder="filename">
+                <button type="submit" class="btn" id="dropbox-sync-submit">
                     <i class="icon icon-inbox"></i> {% trans 'Sync to Dropbox' %}
                 </button>
             </div>
@@ -37,8 +37,8 @@
     {% endif %}
     <script type="text/javascript">
         $("#export-download-status .loading-indicator").addClass('hide');
-        $("#dropbox-sync-submit").click(function() {
-            $(".dropbox-control").prop('disabled', true);
+        $(".download-form").submit(function() {
+            $("#dropbox-sync-submit").prop('disabled', true);
         });
     </script>
     </div>
