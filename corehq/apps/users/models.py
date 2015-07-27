@@ -52,7 +52,7 @@ from corehq.apps.sms.mixin import (
 )
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
@@ -2420,9 +2420,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content,
-                        cc=[self.get_inviter().get_email()],
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, self.email, html_content,
+                                    text_content=text_content,
+                                    cc=[self.get_inviter().get_email()],
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
