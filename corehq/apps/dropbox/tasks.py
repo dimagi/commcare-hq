@@ -2,7 +2,6 @@ from celery.task import task
 from dropbox.client import DropboxClient
 from dropbox.rest import ErrorResponse
 
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
