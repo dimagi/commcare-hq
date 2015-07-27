@@ -4,7 +4,10 @@ from dropbox.rest import ErrorResponse
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
 
+from corehq.apps.users.models import CouchUser
+from corehq.util.translation import localize
 from dimagi.utils.django.email import send_HTML_email
 
 
@@ -36,28 +39,30 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
         helper.failure_reason = str(e)
         helper.save()
 
+    couch_user = CouchUser.get_by_username(helper.user.username)
     if helper.failure_reason is None:
         share = client.share(upload['path'])
-        subject = u'{} has been uploaded to dropbox!'.format(helper.dest)
         context = {
             'share_url': share.get('url', None),
             'path': upload['path']
         }
-        html_content = render_to_string('dropbox/emails/upload_success.html', context)
-        text_content = render_to_string('dropbox/emails/upload_success.txt', context)
+        with localize(couch_user.get_language_code()):
+            subject = _(u'{} has been uploaded to dropbox!'.format(helper.dest))
+            html_content = render_to_string('dropbox/emails/upload_success.html', context)
+            text_content = render_to_string('dropbox/emails/upload_success.txt', context)
     else:
         context = {
             'reason': helper.failure_reason,
             'path': helper.dest
         }
-        subject = u'{} has failed to upload to dropbox'.format(helper.dest)
-        html_content = render_to_string('dropbox/emails/upload_error.html', context)
-        text_content = render_to_string('dropbox/emails/upload_error.txt', context)
+        with localize(couch_user.get_language_code()):
+            subject = _(u'{} has failed to upload to dropbox'.format(helper.dest))
+            html_content = render_to_string('dropbox/emails/upload_error.html', context)
+            text_content = render_to_string('dropbox/emails/upload_error.txt', context)
 
     send_HTML_email(
         subject,
         helper.user.email,
         html_content,
         text_content=text_content,
-        email_from=settings.DEFAULT_FROM_EMAIL,
     )
