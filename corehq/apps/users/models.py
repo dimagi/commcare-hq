@@ -2324,6 +2324,18 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def set_location(self, domain, location_object_or_id):
+        if isinstance(location_object_or_id, basestring):
+            location_id = location_object_or_id
+        else:
+            location_id = location_object_or_id._id
+        self.get_domain_membership(domain).location_id = location_id
+        self.save()
+
+    def unset_location(self, domain):
+        self.get_domain_membership(domain).location_id = None
+        self.save()
+
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
