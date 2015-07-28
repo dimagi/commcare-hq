@@ -26,8 +26,11 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
     @property
     def locations(self):
         locations = self.active_location.get_descendants(
-            include_self=True).filter(location_type__administrative=False)
+            include_self=True
+        ).filter(location_type__administrative=False).exclude(is_archived=True)
         if 'loc_type' in self.config and self.config['loc_type']:
+            if isinstance(self.config['loc_type'], basestring):
+                self.config['loc_type'] = [self.config['loc_type']]
             locations = locations.filter(location_type__pk__in=self.config['loc_type'])
         return locations
 
