@@ -1,23 +1,29 @@
 import copy
-import settings
-from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
-from django.db import models
-import uuid
-from django.contrib.auth.models import User, AnonymousUser
-from datetime import datetime
-from django.contrib.contenttypes.models import ContentType
-import logging
 import hashlib
 import json
-from auditcare import utils
+import logging
 import os
 import platform
+import uuid
+from datetime import datetime
+
+from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+from django.db import models
+from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.contenttypes.models import ContentType
+
+from auditcare import utils
+
+import settings
+
+log = logging.getLogger(__name__)
+
 
 try:
     from django.contrib.auth.signals import user_logged_in, user_logged_out
 except:
     if getattr(settings, 'AUDITCARE_LOG_ERRORS', True):
-        logging.error("Error, django.contrib.auth signals not available in this version of django yet.")
+        log.error("Error, django.contrib.auth signals not available in this version of django yet.")
     user_logged_in = None
     user_logged_out = None
 
@@ -155,10 +161,10 @@ class ModelActionAudit(AuditEvent):
         returns None
         """
         if self.prev_id is None:
-            logging.error("Error, trying to compute changes where a previous pointer isn't set")
+            log.error("Error, trying to compute changes where a previous pointer isn't set")
             return None
         if self.archived_data is None:
-            logging.error("Error, trying to compute changes when the archived_data for CURRENT has not been set")
+            log.error("Error, trying to compute changes when the archived_data for CURRENT has not been set")
             return None
         prev_rev = self.prev()
 
@@ -251,7 +257,7 @@ class ModelActionAudit(AuditEvent):
                 try:
                     audit.revision_id = str(len(prior_revs) + 1) #str(int(last_rev) + 1)
                 except:
-                    logging.error("Error, last revision for object %s is not an integer, resetting to one")
+                    log.error("Error, last revision for object %s is not an integer, resetting to one")
                     audit.revision_id = "1"
             else:
                 #for django set the revision id to the current document's revision id.
@@ -259,7 +265,7 @@ class ModelActionAudit(AuditEvent):
 
             if last_checksum == audit.revision_checksum:
                 #no actual changes made on this save, do nothing
-                logging.debug("No data change, not creating audit event")
+                log.debug("No data change, not creating audit event")
             else:
                 audit.next_id = None #this is the head
                 audit.prev_id = sorted_revs[-1]['id']
@@ -335,7 +341,7 @@ class NavigationEventAudit(AuditEvent):
             audit.save()
             return audit
         except Exception, ex:
-            logging.error("NavigationEventAudit.audit_view error: %s" % ex)
+            log.error("NavigationEventAudit.audit_view error: %s", ex)
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
