@@ -58,7 +58,7 @@ class MALTTableGenerator(object):
                     continue
 
             malt_dict = {
-                'month': monthspan.computed_startdate,
+                'month': monthspan.startdate,
                 'user_id': user._id,
                 'username': user.username,
                 'email': user.email,
