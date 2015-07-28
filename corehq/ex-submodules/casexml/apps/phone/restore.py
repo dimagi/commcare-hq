@@ -282,10 +282,15 @@ class RestoreState(object):
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
                 if computed_hash != parsed_hash:
-                    raise BadStateException(expected=computed_hash,
-                                            actual=parsed_hash,
-                                            case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
-
+                    exception = BadStateException(
+                        expected=computed_hash,
+                        actual=parsed_hash,
+                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
+                    )
+                    if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
+                        _assert(False, str(exception))
+                    raise exception
 
     @property
     @memoized
