@@ -1,10 +1,15 @@
 from collections import namedtuple
 from datetime import datetime
+import re
 from casexml.apps.case.mock import CaseBlock as MockCaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction
+from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock
 from django.test import SimpleTestCase
 from xml.etree import ElementTree
+from mock import patch
 
 
 class ExtCaseTests(SimpleTestCase):
@@ -28,31 +33,89 @@ class ExtCaseTests(SimpleTestCase):
         self.skipTest('Not implemented')
 
 
-class ExtCasePropertiesTests(SimpleTestCase):
+class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
+    file_path = 'data', 'extension_case'
 
-    def test_ext_case_read_host_properties(self):
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.fish_module = self.app.add_module(Module.new_module('Fish Module', lang='en'))
+        self.fish_module.case_type = 'fish'
+        self.fish_form = self.app.new_form(0, 'New Form', lang='en')
+        self.fish_form.source = self.get_xml('original')
+
+        self.freshwater_module = self.app.add_module(Module.new_module('Freshwater Module', lang='en'))
+        self.freshwater_module.case_type = 'freshwater'
+        self.freshwater_form = self.app.new_form(0, 'New Form', lang='en')
+        self.freshwater_form.source = self.get_xml('original')
+
+        self.aquarium_module = self.app.add_module(Module.new_module('Aquarium Module', lang='en'))
+        self.aquarium_module.case_type = 'aquarium'
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
+    def test_ext_case_preload_host_case(self):
         """
         Properties of a host case should be available in a extension case
         """
         self.skipTest('Not implemented')
 
-    def test_host_case_read_ext_properties(self):
+    def test_ext_case_update_host_case(self):
+        """
+        A extension case should be able to save host case properties
+        """
+        self.freshwater_form.requires = 'case'
+        self.freshwater_form.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'hostcase/question1': '/data/question1',
+        })
+        self.freshwater_form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
+
+    def test_host_case_preload_ext_case(self):
         """
         Properties of a extension case should be available in a host case
         """
         self.skipTest('Not implemented')
 
-    def test_ext_case_write_host_properties(self):
+    def test_host_case_update_ext_case(self):
         """
-        A extension case should be available to save host case properties
+        A host case should be able to save extension case properties
         """
-        self.skipTest('Not implemented')
+        self.fish_form.requires = 'case'
+        self.fish_form.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'ext/freshwater/question1': '/data/question1',
+            'ext/aquarium/question1': '/data/question1',
+        })
+        self.fish_form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_host_case'), self.form.render_xform())
 
-    def test_host_case_write_ext_properties(self):
+
+class ExtCasePropertiesTestsAdvanced(SimpleTestCase, TestFileMixin):
+
+    # def test_ext_case_preload_host_case(self):
+
+    def test_ext_case_update_host_case(self):
         """
-        A host case should be available to save extension case properties
+        A extension case should be able to save host case properties in an advanced module
         """
         self.skipTest('Not implemented')
+        # FormPreparationV2Test.test_update_parent_case(self):
+        # self.form.actions.load_update_cases.append(LoadUpdateAction(
+        #     case_type=self.module.case_type,
+        #     case_tag='load_1',
+        #     case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
+        # ))
+        # self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+
+    # def test_host_case_preload_ext_case(self):
+
+    # def test_host_case_update_ext_case(self):
 
 
 class MockCaseBlockIndexTests(SimpleTestCase):
