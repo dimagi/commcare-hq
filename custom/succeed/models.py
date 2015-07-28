@@ -108,42 +108,4 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
     emitter = RandomizationDate()
 
 
-def get_full_name(case):
-    try:
-        return CommCareCase.get(case['indices'][0]['referenced_id'])['full_name']
-    except AttributeError:
-        return None
-
-
-class Emitter(fluff.Calculator):
-
-    @fluff.null_emitter
-    def date(self, case):
-        yield None
-
-
-class UCLATaskActivityFluff(fluff.IndicatorDocument):
-
-    document_class = CommCareCase
-    domains = 'succeed',
-    document_filter = CustomFilter(lambda c: c.type == 'task')
-    group_by = 'domain',
-    save_direct_to_sql = True
-
-    referenced_id = flat_field(lambda c: c['indices'][0]['referenced_id'])
-    full_name = flat_field(lambda c: get_full_name(c))
-    name = flat_field(lambda c: get_property(c, 'name'))
-    task_responsible = flat_field(lambda c: get_property(c, 'task_responsible'))
-    closed = flat_field(lambda c: '0' if get_property(c, 'closed') else '1')
-    task_due = flat_field(lambda c: get_property(c, 'task_due'))
-    task_activity = flat_field(lambda c: get_property(c, 'task_activity'))
-    task_risk_factor = flat_field(lambda c: get_property(c, 'task_risk_factor'))
-    task_details = flat_field(lambda c: get_property(c, 'task_details'))
-    last_update = flat_field(lambda c: get_property(c, 'last_updated'))
-    user_id = flat_field(lambda c: get_property(c, 'user_id'))
-    owner_id = flat_field(lambda c: get_property(c, 'owner_id'))
-
-    emitter = Emitter()
-
 UCLAPatientFluffPillow = UCLAPatientFluff.pillow()
-UCLATaskActivityFluffPillow = UCLATaskActivityFluff.pillow()

@@ -1281,7 +1281,6 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
-        'custom.succeed.models.UCLATaskActivityFluffPillow'
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1364,7 +1363,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
-    ('succeed_full_name', 'custom.succeed.expressions.succeed_full_name')
 ]
 
 CUSTOM_MODULES = [

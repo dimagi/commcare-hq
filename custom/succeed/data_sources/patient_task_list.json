@@ -24,11 +24,20 @@
             },
             {
                 "column_id": "full_name",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "type": "succeed_full_name"
-                },
-                "datatype": "string"
+                    "doc_id_expression": {
+                        "type": "succeed_referenced_id"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "full_name",
+                        "type": "property_name"
+                    }
+                }
             },
             {
                 "column_id": "name",
