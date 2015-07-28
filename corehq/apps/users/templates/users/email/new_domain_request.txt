@@ -1,0 +1,6 @@
+Your request to join {{ domain_name }} has been approved.
+
+You may now visit {{ url }}.
+
+Thanks,
+CommCareHQ
