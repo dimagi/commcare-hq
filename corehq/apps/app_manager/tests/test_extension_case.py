@@ -1,10 +1,16 @@
 from collections import namedtuple
 from datetime import datetime
+from string import lstrip
 from casexml.apps.case.mock import CaseBlock as MockCaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction, OpenSubCaseAction, AdvancedAction
+from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock
+from couchdbkit import BadValueError
 from django.test import SimpleTestCase
 from xml.etree import ElementTree
+from mock import patch
 
 
 class ExtCaseTests(SimpleTestCase):
@@ -21,6 +27,12 @@ class ExtCaseTests(SimpleTestCase):
         """
         self.skipTest('Not implemented')
 
+    def test_ext_case_name(self):
+        """
+        An extension case name should be its host case name
+        """
+        self.skipTest('Not implemented')
+
     def test_ext_case_owner(self):
         """
         An extension case owner should be its host case owner
@@ -28,31 +40,100 @@ class ExtCaseTests(SimpleTestCase):
         self.skipTest('Not implemented')
 
 
-class ExtCasePropertiesTests(SimpleTestCase):
+class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
+    file_path = 'data', 'extension_case'
 
-    def test_ext_case_read_host_properties(self):
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.fish_module = self.app.add_module(Module.new_module('Fish Module', lang='en'))
+        self.fish_module.case_type = 'fish'
+        self.fish_form = self.app.new_form(0, 'New Form', lang='en')
+        self.fish_form.source = self.get_xml('original')
+
+        self.freshwater_module = self.app.add_module(Module.new_module('Freshwater Module', lang='en'))
+        self.freshwater_module.case_type = 'freshwater'
+        self.freshwater_form = self.app.new_form(0, 'New Form', lang='en')
+        self.freshwater_form.source = self.get_xml('original')
+
+        self.aquarium_module = self.app.add_module(Module.new_module('Aquarium Module', lang='en'))
+        self.aquarium_module.case_type = 'aquarium'
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
+    def test_ext_case_preload_host_case(self):
         """
         Properties of a host case should be available in a extension case
         """
         self.skipTest('Not implemented')
 
-    def test_host_case_read_ext_properties(self):
+    def test_ext_case_update_host_case(self):
+        """
+        A extension case should be able to save host case properties
+        """
+        self.freshwater_form.requires = 'case'
+        self.freshwater_form.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'hostcase/question1': '/data/question1',
+        })
+        self.freshwater_form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
+
+    def test_host_case_preload_ext_case(self):
         """
         Properties of a extension case should be available in a host case
         """
         self.skipTest('Not implemented')
 
-    def test_ext_case_write_host_properties(self):
+    def test_host_case_update_ext_case(self):
         """
-        A extension case should be available to save host case properties
+        A host case should be able to save extension case properties
+        """
+        self.fish_form.requires = 'case'
+        self.fish_form.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'ext/freshwater/question1': '/data/question1',
+            'ext/aquarium/question1': '/data/question1',
+        })
+        self.fish_form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('update_host_case'), self.form.render_xform())
+
+    def test_host_case_preload_another_ext_case(self):
+        """
+        Properties of multiple extension cases should be available in a host case
         """
         self.skipTest('Not implemented')
 
-    def test_host_case_write_ext_properties(self):
+    def test_host_case_update_another_ext_case(self):
         """
-        A host case should be available to save extension case properties
+        A host case should be able to save properties of multiple extension cases
+        """
+
+
+class ExtCasePropertiesTestsAdvanced(SimpleTestCase, TestFileMixin):
+
+    # def test_ext_case_preload_host_case(self):
+
+    def test_ext_case_update_host_case(self):
+        """
+        A extension case should be able to save host case properties in an advanced module
         """
         self.skipTest('Not implemented')
+        # FormPreparationV2Test.test_update_parent_case(self):
+        # self.form.actions.load_update_cases.append(LoadUpdateAction(
+        #     case_type=self.module.case_type,
+        #     case_tag='load_1',
+        #     case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
+        # ))
+        # self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+
+    # def test_host_case_preload_ext_case(self):
+
+    # def test_host_case_update_ext_case(self):
 
 
 class MockCaseBlockIndexTests(SimpleTestCase):
@@ -157,19 +238,32 @@ class OpenSubCaseActionTests(SimpleTestCase):
         """
         OpenSubCaseAction should allow relationship to be set
         """
-        self.skipTest('Not implemented')
+        action = OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        self.assertEqual(action.relationship, 'extension')
 
     def test_open_subcase_action_default_relationship(self):
         """
         OpenSubCaseAction relationship should default to "child"
         """
-        self.skipTest('Not implemented')
+        action = OpenSubCaseAction(case_type='mother', case_name='Eva')
+        self.assertEqual(action.relationship, 'child')
 
     def test_open_subcase_action_valid_relationship(self):
         """
         OpenSubCaseAction relationship should only allow valid values
         """
-        self.skipTest('Not implemented')
+        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='child')
+        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        with self.assertRaises(BadValueError):
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='parent')
+        with self.assertRaises(BadValueError):
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='host')
+        with self.assertRaises(BadValueError):
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='master')
+        with self.assertRaises(BadValueError):
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='slave')
+        with self.assertRaises(BadValueError):
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='cousin')
 
 
 class AdvancedActionTests(SimpleTestCase):
@@ -178,16 +272,29 @@ class AdvancedActionTests(SimpleTestCase):
         """
         AdvancedAction should allow relationship to be set
         """
-        self.skipTest('Not implemented')
+        action = AdvancedAction(case_type='mother', case_tag='mother', relationship='extension')
+        self.assertEqual(action.relationship, 'extension')
 
     def test_advanced_action_default_relationship(self):
         """
         AdvancedAction relationship should default to "child"
         """
-        self.skipTest('Not implemented')
+        action = AdvancedAction(case_type='mother', case_tag='mother')
+        self.assertEqual(action.relationship, 'child')
 
     def test_advanced_action_valid_relationship(self):
         """
         AdvancedAction relationship should only allow valid values
         """
-        self.skipTest('Not implemented')
+        AdvancedAction(case_type='mother', case_tag='mother', relationship='child')
+        AdvancedAction(case_type='mother', case_tag='mother', relationship='extension')
+        with self.assertRaises(BadValueError):
+            AdvancedAction(case_type='mother', case_tag='mother', relationship='parent')
+        with self.assertRaises(BadValueError):
+            AdvancedAction(case_type='mother', case_tag='mother', relationship='host')
+        with self.assertRaises(BadValueError):
+            AdvancedAction(case_type='mother', case_tag='mother', relationship='master')
+        with self.assertRaises(BadValueError):
+            AdvancedAction(case_type='mother', case_tag='mother', relationship='slave')
+        with self.assertRaises(BadValueError):
+            AdvancedAction(case_type='mother', case_tag='mother', relationship='cousin')
