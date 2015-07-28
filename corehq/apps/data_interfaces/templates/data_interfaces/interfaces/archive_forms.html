@@ -1,0 +1,99 @@
+{% extends 'reports/async/tabular.html' %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+    function updateFormCounts() {
+        var selectedCount = $('#form-management').find('input.xform-checkbox:checked').length;
+        $(".selectedCount").text(selectedCount);
+        enable_disable_button(selectedCount);
+    }
+
+    function enable_disable_button(count){
+        if (count == 0) {
+            $("#submitForms").attr('disabled', true);
+        }
+        else {
+            $("#submitForms").attr('disabled', false);
+        }
+    }
+
+    (function () {
+        function applyCheckboxBindings() {
+            var $XFormManagement = $('#form-management');
+
+            $XFormManagement.find('a.select-all').click(function () {
+                $XFormManagement.find('input.xform-checkbox').attr('checked', true).change();
+                return false;
+            });
+
+            $XFormManagement.find('a.select-none').click(function() {selectNone(); return false;});
+            $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
+            $XFormManagement.find('.dataTables_length select').change(selectNone);
+
+            function selectNone() {
+                $XFormManagement.find('input.xform-checkbox:checked').attr('checked', false).change();
+                $XFormManagement.find('input[name="select_all"]').attr('checked', false);
+            }
+            $XFormManagement.find('input.xform-checkbox').on('change', function(){
+                // updates text like '3 of 5 selected'
+                updateFormCounts();
+            })
+            $XFormManagement.find('input[name="select_all"]').on('change', function(){
+                if (this.checked) {
+                    $(".selectedCount").text({{ total_xForms }});
+                    $XFormManagement.find('a.select-all').click();
+                    enable_disable_button(1);
+                }
+                else {
+                    $(".selectedCount").text(0);
+                    $XFormManagement.find('a.select-none').click();
+                    enable_disable_button(0);
+                }
+            })
+        }
+
+        var keepTrying = setInterval(function () {
+            if (window.reportTables !== undefined) {
+                clearInterval(keepTrying);
+                applyCheckboxBindings();
+                window.reportTables.fnDrawCallback = applyCheckboxBindings;
+            }
+        }, 1000);
+
+    }());
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    <div id="form-management">
+        <p class="alert fade in hide page-level-alert alert-error" id="errorMessage">
+            {% blocktrans %}
+                Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
+            {% endblocktrans %}
+            </span>
+        </p>
+        <form method="post"
+              action="{% url 'xform_management' domain %}"
+              enctype="multipart/form-data">
+            {% if total_xForms > 0 %}
+                <div id ="form_options" class="well form-inline" style="marging: 1em">
+                    <div>
+                        <button id="submitForms" disabled="true" class="btn {{ mode.button_class }}">{{ mode.button_text }}</button>
+                        <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
+                        <label for="select_all" >
+                            Select all {{ total_xForms }} forms
+                        </label>
+                    </div>
+                    <div>
+                        (<span class="selectedCount">0</span> of {{ total_xForms }} forms selected)
+                    </div>
+                    <input type="hidden" name="mode" value="{{ mode.mode_name }}">
+                </div>
+            {% endif %}
+            {{ block.super }}
+        </form>
+    </div>
+{% endblock %}
