@@ -2,7 +2,7 @@
     "domains": ["succeed"],
     "config": {
         "referenced_doc_type": "CommCareCase",
-        "table_id": "succeed_tasks",
+        "table_id": "patient_task_list",
         "display_name": "Patient Tasks List",
          "configured_filter":  {
             "type": "boolean_expression",
@@ -18,36 +18,17 @@
                 "column_id": "referenced_id",
                 "type": "expression",
                 "expression": {
-                    "type": "property_path",
-                    "property_path": ["indices", "0", "referenced_id"]
+                    "type": "succeed_referenced_id"
                 },
                 "datatype": "string"
             },
             {
                 "column_id": "full_name",
-                "datatype": "string",
+                "type": "expression",
                 "expression": {
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "indices",
-                            "0",
-                            "referenced_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "full_name",
-                        "type": "property_name"
-                    }
+                    "type": "succeed_full_name"
                 },
-                "is_nullable": false,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
+                "datatype": "string"
             },
             {
                 "column_id": "name",
@@ -130,11 +111,11 @@
                 "datatype": "string"
             },
             {
-                "column_id": "last_update",
+                "column_id": "last_updated",
                 "type": "expression",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "last_update"
+                    "property_name": "last_updated"
                 },
                 "datatype": "date"
             },

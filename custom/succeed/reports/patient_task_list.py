@@ -9,6 +9,7 @@ from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
@@ -28,6 +29,10 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
         super(PatientTaskListReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
         self.app_dict = get_cloudcare_app(domain, SUCCEED_CM_APPNAME)
         self.latest_build = get_app_build(self.app_dict)
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], self.slug)
 
     def get_link(self, url, field, doc_id):
         if url:
@@ -68,15 +73,13 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def task_due(self, task_due):
         if task_due and task_due != EMPTY_FIELD:
-            date = datetime.strptime(task_due, INPUT_DATE_FORMAT)
-            return date.strftime(OUTPUT_DATE_FORMAT)
+            return task_due.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
 
     def last_modified(self, last_modified):
         if last_modified and last_modified != EMPTY_FIELD:
-            date = datetime.strptime(last_modified, INPUT_DATE_FORMAT)
-            return date.strftime(OUTPUT_DATE_FORMAT)
+            return last_modified.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
 
@@ -117,7 +120,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     @property
     def filters(self):
-        filters = [EQ('domain', 'domain')]
+        filters = []
         if self.config['task_responsible']:
             filters.append(EQ('task_responsible', 'task_responsible'))
         if self.config['referenced_id']:
@@ -147,7 +150,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
                            format_fn=lambda x: 'Closed' if x == '0' else 'Open', sortable=False),
             DatabaseColumn(_('Action Due'), SimpleColumn('task_due'),
                            format_fn=self.task_due),
-            DatabaseColumn(_('Last Updated'), SimpleColumn('last_update'),
+            DatabaseColumn(_('Last Updated'), SimpleColumn('last_updated'),
                            format_fn=self.last_modified),
             DatabaseColumn(_('Task Type'), SimpleColumn('task_activity'),
                            format_fn=lambda x: TASK_ACTIVITY.get(x, x)),
@@ -160,7 +163,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
     @property
     def group_by(self):
         return ['doc_id', 'referenced_id', 'full_name', 'is_closed', 'task_responsible',
-                'task_due', 'last_update', 'task_activity', 'task_risk_factor',
+                'task_due', 'last_updated', 'task_activity', 'task_risk_factor',
                 'task_details', 'name']
 
     @property
