@@ -114,8 +114,8 @@ class MALTTableGenerator(object):
             ), exc_info=True)
 
     def _get_forms_queryset(self, user_id, domain_name, monthspan):
-        start_date = monthspan.startdate
-        end_date = monthspan.enddate
+        start_date = monthspan.computed_startdate
+        end_date = monthspan.computed_enddate
 
         return FormData.objects.exclude(
             device_id=COMMCONNECT_DEVICE_ID,
