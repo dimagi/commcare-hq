@@ -104,11 +104,3 @@ def _fire_reminder(reminder_id):
             if handler.fire(reminder):
                 handler.set_next_fire(reminder, utcnow)
                 reminder.save()
-
-
-@task(ignore_result=True)
-def send_email(domain, email_address, subject, message):
-    print '************* Email *************'
-    print 'To: %s' % email_address
-    print 'Subject: %s' % subject
-    print 'Message: %s' % message

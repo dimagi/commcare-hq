@@ -1,7 +1,7 @@
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
     METHOD_EMAIL, CaseReminderHandler)
-from corehq.apps.reminders.tasks import send_email
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
@@ -454,7 +454,7 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
                 email_address = None
 
             if email_address:
-                send_email.delay(reminder.domain, email_address, subject, message)
+                send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
             else:
                 logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
                 continue
