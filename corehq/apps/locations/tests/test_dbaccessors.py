@@ -1,9 +1,10 @@
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
-                           get_one_user_at_location, get_user_docs_by_location)
+                           get_one_user_at_location, get_user_docs_by_location,
+                           get_all_users_by_location)
 from .util import make_loc, delete_all_locations
 
 
@@ -24,6 +25,13 @@ class TestUsersByLocation(TestCase):
         cls.varys = make_user('Varys', cls.pentos)
         cls.tyrion = make_user('Tyrion', cls.meereen)
         cls.daenerys = make_user('Daenerys', cls.meereen)
+
+        cls.george = WebUser.create(
+            cls.domain.name,
+            username="George RR Martin",
+            password='password'
+        )
+        cls.george.set_location(cls.domain.name, cls.meereen)
 
     @classmethod
     def tearDownClass(cls):
@@ -47,3 +55,10 @@ class TestUsersByLocation(TestCase):
         users = get_user_docs_by_location(self.meereen._id)
         self.assertItemsEqual([u['doc'] for u in users],
                               [self.tyrion.to_json(), self.daenerys.to_json()])
+
+    def test_get_all_users_by_location(self):
+        users = get_all_users_by_location(self.meereen._id)
+        self.assertItemsEqual(
+            [u._id for u in users],
+            [self.tyrion._id, self.daenerys._id, self.george._id]
+        )
