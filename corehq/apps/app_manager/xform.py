@@ -1370,11 +1370,17 @@ class XForm(WrappedNode):
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
-                    reference_id = subcase.reference_id or 'parent'
+                    if subcase.reference_id:
+                        reference_id = subcase.reference_id
+                    elif subcase.relationship == 'extension':
+                        reference_id = 'host_case'
+                    else:
+                        reference_id = 'parent'
                     subcase_block.add_index_ref(
                         reference_id,
                         form.get_case_type(),
                         self.resolve_path("case/@case_id"),
+                        subcase.relationship,
                     )
 
         case = self.case_node
