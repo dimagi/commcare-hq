@@ -116,7 +116,7 @@ var ReportModule = (function () {
                 filter.selectedValue.start_date = ko.observable(filter.selectedValue.start_date || '');
                 filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
                 filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
-                filter.selectedValue.value = ko.observable(filter.selectedValue.value || '');
+                filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
 
                 filter.dynamicFilterName = ko.computed(function() {
                     return self.reportId() + '/' + filter.slug;
@@ -140,7 +140,7 @@ var ReportModule = (function () {
                     } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
                         selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
                     } else if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
-                        selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value();
+                        selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value().split("\u001F");
                     }
                 }
             }
