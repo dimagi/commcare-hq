@@ -10,7 +10,7 @@ from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocu
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq.const import USER_DATE_FORMAT
@@ -21,8 +21,8 @@ from django_prbac.models import Role
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
@@ -782,7 +782,7 @@ class Subscriber(models.Model):
                 new_plan=email_context['new_plan'],
             )
 
-            send_HTML_email(
+            send_html_email_async.delay(
                 email_subject,
                 sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
@@ -1020,6 +1020,7 @@ class Subscription(models.Model):
             reason=SubscriptionAdjustmentReason.MODIFY
         )
 
+    @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
@@ -1036,6 +1037,16 @@ class Subscription(models.Model):
 
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
+
+        if self.date_start > today:
+            self.date_start = today
+        if self.date_end is None or self.date_end > today:
+            self.date_end = today
+        if (self.date_delay_invoicing is not None
+           and self.date_delay_invoicing > today):
+            self.date_delay_invoicing = today
+        self.is_active = False
+        self.save()
 
         new_subscription = Subscription(
             account=account if account else self.account,
@@ -1054,16 +1065,6 @@ class Subscription(models.Model):
         new_subscription.save()
 
         new_subscription.set_billing_account_entry_point()
-
-        if self.date_start > today:
-            self.date_start = today
-        if self.date_end is None or self.date_end > today:
-            self.date_end = today
-        if (self.date_delay_invoicing is not None
-           and self.date_delay_invoicing > today):
-            self.date_delay_invoicing = today
-        self.is_active = False
-        self.save()
 
         self.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgrades,
@@ -1275,7 +1276,7 @@ class Subscription(models.Model):
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in emails:
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
@@ -1315,7 +1316,7 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        send_HTML_email(
+        send_html_email_async.delay(
             subject, email, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
@@ -1332,7 +1333,8 @@ class Subscription(models.Model):
     def _get_plan_by_subscriber(cls, subscriber):
         active_subscriptions = cls.objects\
             .filter(subscriber=subscriber, is_active=True)\
-            .order_by('-date_created')[:2]
+            .order_by('-date_created')[:2]\
+            .select_related('plan_version__role')
 
         if not active_subscriptions:
             return None, None
@@ -1828,7 +1830,7 @@ class BillingRecordBase(models.Model):
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
             email_plaintext = render_to_string(self.text_template, context)
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=email_from,

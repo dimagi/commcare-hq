@@ -1149,6 +1149,7 @@ def set_celery_supervisorconf():
         'background_queue':             ['supervisor_celery_background_queue.conf'],
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
         'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
+        'email_queue':                  ['supervisor_celery_email_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
         }
 

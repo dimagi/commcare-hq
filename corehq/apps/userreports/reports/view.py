@@ -5,7 +5,7 @@ from StringIO import StringIO
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
@@ -15,7 +15,7 @@ from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     UserReportsFilterError)
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
@@ -37,14 +37,22 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     emailable = True
 
     @property
+    def is_custom(self):
+        return self.report_config_id.startswith(CUSTOM_PREFIX)
+
+    @property
     @memoized
     def spec(self):
-        return get_document_or_not_found(
-            ReportConfiguration, self.domain, self.report_config_id)
+        if self.is_custom:
+            return CustomReportConfiguration.by_id(self.report_config_id)
+        else:
+            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
     def get_spec_or_404(self):
-        return get_document_or_404(
-            ReportConfiguration, self.domain, self.report_config_id)
+        try:
+            return self.spec
+        except DocumentNotFound:
+            raise Http404()
 
     def has_viable_configuration(self):
         try:
