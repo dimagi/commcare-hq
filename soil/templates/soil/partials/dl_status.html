@@ -16,12 +16,9 @@
             </a>
 
             {% if request|toggle_enabled:"DROPBOX_SYNC" %}
-            <div class="input-append">
-                <input name="dropbox-dest" type="text" placeholder="filename">
-                <button type="submit" class="btn" id="dropbox-sync-submit">
-                    <i class="icon icon-inbox"></i> {% trans 'Sync to Dropbox' %}
-                </button>
-            </div>
+            <button type="submit" class="btn" id="dropbox-sync-submit">
+                <i class="icon icon-inbox"></i> {% trans 'Sync to Dropbox' %}
+            </button>
             {% endif %}
         </form>
     {% else %}
