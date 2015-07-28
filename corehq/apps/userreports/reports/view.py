@@ -36,6 +36,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     prefix = slug
     emailable = True
 
+
+
     @property
     def is_custom(self):
         return self.report_config_id.startswith(CUSTOM_PREFIX)
@@ -156,6 +158,15 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         saved_report_config_id = self.request.GET.get('config_id')
         saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
             if saved_report_config_id else None
+
+        datespan_filters = []
+        for f in self.datespan_filters:
+            if f['type'] == 'date':
+                copy = dict(f)
+                if isinstance(copy['display'], dict):
+                    copy['display'] = copy['display'][self.lang]
+                datespan_filters.append(copy)
+
         return {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
@@ -167,7 +178,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             'datespan_filters': [{
                 'display': _('Choose a date filter...'),
                 'slug': None,
-            }] + self.datespan_filters,
+            }] + datespan_filters,
         }
 
     @property
