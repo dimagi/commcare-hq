@@ -159,11 +159,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         datespan_filters = []
         for f in self.datespan_filters:
-            if f['type'] == 'date':
-                copy = dict(f)
-                if isinstance(copy['display'], dict):
-                    copy['display'] = copy['display'][self.lang]
-                datespan_filters.append(copy)
+            copy = dict(f)
+            if isinstance(copy['display'], dict):
+                copy['display'] = copy['display'][self.lang]
+            datespan_filters.append(copy)
 
         return {
             'report_configs': [
