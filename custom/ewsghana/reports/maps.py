@@ -111,6 +111,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     title = ugettext_noop("Maps")
     slug = "ews_mapreport"
     template_report = 'ewsghana/map_template.html'
+    report_partial_path = "ewsghana/partials/map.html"
 
     data_source = {
         'adapter': 'report',
