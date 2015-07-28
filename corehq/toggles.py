@@ -527,3 +527,10 @@ MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+EMAIL_IN_REMINDERS = StaticToggle(
+    'email_in_reminders',
+    'Send emails from reminders',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

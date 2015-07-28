@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
@@ -58,6 +59,7 @@ from corehq.apps.reminders.models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
     METHOD_STRUCTURED_SMS,
+    METHOD_EMAIL,
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
@@ -191,7 +193,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
     timezone = get_timezone_for_user(None, domain) # Use project timezone only
 
     if request.method == "POST":
-        form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(request.POST,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -210,11 +214,15 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.start_datetime = form.cleaned_data.get("datetime")
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
-                day_num = 0,
-                fire_time = time(0,0),
-                form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = {handler.default_lang : form.cleaned_data.get("message")} if content_type == METHOD_SMS else {},
-                callback_timeout_intervals = [],
+                day_num=0,
+                fire_time=time(0, 0),
+                form_unique_id=(form.cleaned_data.get("form_unique_id")
+                                if content_type == METHOD_SMS_SURVEY else None),
+                message=({handler.default_lang: form.cleaned_data.get("message")}
+                         if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
+                subject=({handler.default_lang: form.cleaned_data.get("subject")}
+                         if content_type == METHOD_EMAIL else {}),
+                callback_timeout_intervals=[],
             )]
             handler.schedule_length = 1
             handler.event_interpretation = EVENT_AS_OFFSET
@@ -240,6 +248,11 @@ def add_one_time_reminder(request, domain, handler_id=None):
                     if handler.default_lang in handler.events[0].message
                     else None
                 ),
+                "subject": (
+                    handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject
+                    else None
+                ),
                 "form_unique_id": (
                     handler.events[0].form_unique_id
                     if handler.events[0].form_unique_id is not None
@@ -249,7 +262,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
         else:
             initial = {}
 
-        form = OneTimeReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(initial=initial,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
@@ -257,16 +272,21 @@ def add_one_time_reminder(request, domain, handler_id=None):
 def copy_one_time_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     initial = {
-        "send_type" : SEND_NOW,
-        "recipient_type" : handler.recipient,
-        "case_group_id" : handler.sample_id,
-        "user_group_id" : handler.user_group_id,
-        "content_type" : handler.method,
-        "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
-        "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+        "send_type": SEND_NOW,
+        "recipient_type": handler.recipient,
+        "case_group_id": handler.sample_id,
+        "user_group_id": handler.user_group_id,
+        "content_type": handler.method,
+        "message": (handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message else None),
+        "subject": (handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject else None),
+        "form_unique_id": (handler.events[0].form_unique_id
+                           if handler.events[0].form_unique_id is not None else None),
     }
     form = OneTimeReminderForm(initial=initial,
-        can_use_survey=can_use_survey_reminders(request))
+        can_use_survey=can_use_survey_reminders(request),
+        can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
     return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
