@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -11,7 +10,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, Dat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
-from custom.succeed.reports import EMPTY_FIELD, INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, \
+from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from dimagi.utils.decorators.memoized import memoized
