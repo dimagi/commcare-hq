@@ -117,6 +117,10 @@ var ReportModule = (function () {
                 filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
                 filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value || '');
+
+                filter.dynamicFilterName = ko.computed(function() {
+                    return self.reportId() + '/' + filter.slug;
+                });
             }
         }
 
