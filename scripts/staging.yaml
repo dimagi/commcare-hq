@@ -55,9 +55,9 @@ branches:
   - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
   - icds/scheduler # Farid 7/22
-  - async-email-performance # Biyeun 7/22
   - rm-fr  # Ethan 7/23
   - ckeditor # J$ 7/24
+  - dropbox # Ben 7/27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,3 +77,7 @@ submodules:
   submodules/pillowtop-src:
     branches:
       - django17
+  submodules/django-soil-src:
+    branches:
+      - dropbox # Ben 7/27
+

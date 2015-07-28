@@ -11,7 +11,9 @@ from corehq.util.quickcache import quickcache
 from django.db import IntegrityError
 from django.db.models import Count
 
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger('build_malt_table')
+logger.setLevel(logging.INFO)
 
 
 class MALTTableGenerator(object):
@@ -27,13 +29,14 @@ class MALTTableGenerator(object):
 
         for domain in Domain.get_all():
             malt_rows_to_save = []
+            logger.info("Building MALT for {}".format(domain.name))
             for user in domain.all_users():
                 for monthspan in self.monthspan_list:
                     try:
                         malt_rows_to_save.extend(self._get_malt_row_dicts(user, domain.name, monthspan))
                     except Exception as ex:
-                        logger.info("Failed to get rows for user {id}. Exception is {ex}".format
-                                    (id=user._id, ex=str(ex)))
+                        logger.error("Failed to get rows for user {id}. Exception is {ex}".format
+                                     (id=user._id, ex=str(ex)), exc_info=True)
             self._save_to_db(malt_rows_to_save, domain._id)
 
     def _get_malt_row_dicts(self, user, domain_name, monthspan):
@@ -50,8 +53,8 @@ class MALTTableGenerator(object):
                 if app_id == MISSING_APP_ID:
                     wam, pam, is_app_deleted = AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False
                 else:
-                    logger.info("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
-                                (id=user._id, app_id=app_id, ex=str(ex)))
+                    logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
+                                 (id=user._id, app_id=app_id, ex=str(ex)), exc_info=True)
                     continue
 
             malt_dict = {
@@ -79,19 +82,36 @@ class MALTTableGenerator(object):
         except IntegrityError:
             # no update_or_create in django-1.6
             for malt_dict in malt_rows_to_save:
-                try:
-                    unique_field_dict = {k: v
-                                         for (k, v) in malt_dict.iteritems()
-                                         if k in MALTRow.get_unique_fields()}
-                    prev_obj = MALTRow.objects.get(**unique_field_dict)
-                    for k, v in malt_dict.iteritems():
-                        setattr(prev_obj, k, v)
-                    prev_obj.save()
-                except MALTRow.DoesNotExist:
-                    MALTRow(**malt_dict).save()
+                cls._update_or_create(malt_dict)
         except Exception as ex:
-            logger.info("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
-                        id=domain_id, ex=str(ex)))
+            logger.error("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
+                         id=domain_id, ex=str(ex)), exc_info=True)
+
+    @classmethod
+    def _update_or_create(cls, malt_dict):
+        try:
+            # try update
+            unique_field_dict = {k: v
+                                 for (k, v) in malt_dict.iteritems()
+                                 if k in MALTRow.get_unique_fields()}
+            prev_obj = MALTRow.objects.get(**unique_field_dict)
+            for k, v in malt_dict.iteritems():
+                setattr(prev_obj, k, v)
+            prev_obj.save()
+        except MALTRow.DoesNotExist:
+            # create
+            try:
+                MALTRow(**malt_dict).save()
+            except Exception as ex:
+                logger.error("Failed to insert malt-row {}. Exception is {}".format(
+                    str(malt_dict),
+                    str(ex)
+                ), exc_info=True)
+        except Exception as ex:
+            logger.error("Failed to insert malt-row {}. Exception is {}".format(
+                str(malt_dict),
+                str(ex)
+            ), exc_info=True)
 
     def _get_forms_queryset(self, user_id, domain_name, monthspan):
         start_date = monthspan.startdate
