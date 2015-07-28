@@ -188,7 +188,10 @@ class PercentageColumn(ReportColumn):
     type = TypeProperty('percent')
     numerator = ObjectProperty(FieldColumn, required=True)
     denominator = ObjectProperty(FieldColumn, required=True)
-    format = StringProperty(choices=['percent', 'fraction', 'both'], default='percent')
+    format = StringProperty(
+        choices=['percent', 'fraction', 'both', 'numeric_percent', 'decimal'],
+        default='percent'
+    )
 
     def get_sql_column_config(self, data_source_config, lang):
         # todo: better checks that fields are not expand
@@ -210,21 +213,54 @@ class PercentageColumn(ReportColumn):
         NO_DATA_TEXT = '--'
         CANT_CALCULATE_TEXT = '?'
 
-        def _pct(data):
+        class NoData(Exception):
+            pass
+
+        class BadData(Exception):
+            pass
+
+        def trap_errors(fn):
+            def inner(*args, **kwargs):
+                try:
+                    return fn(*args, **kwargs)
+                except BadData:
+                    return CANT_CALCULATE_TEXT
+                except NoData:
+                    return NO_DATA_TEXT
+            return inner
+
+        def _raw(data):
             if data['denom']:
                 try:
-                    return '{0:.0f}%'.format((float(data['num']) / float(data['denom'])) * 100)
+                    return round(float(data['num']) / float(data['denom']), 3)
                 except (ValueError, TypeError):
-                    return CANT_CALCULATE_TEXT
+                    raise BadData()
+            else:
+                raise NoData()
 
-            return NO_DATA_TEXT
+        def _raw_pct(data, round_type=float):
+            return round_type(_raw(data) * 100)
+
+        @trap_errors
+        def _clean_raw(data):
+            return _raw(data)
+
+        @trap_errors
+        def _numeric_pct(data):
+            return _raw_pct(data, round_type=int)
+
+        @trap_errors
+        def _pct(data):
+            return '{0:.0f}%'.format(_raw_pct(data))
 
         _fraction = lambda data: '{num}/{denom}'.format(**data)
 
         return {
             'percent': _pct,
             'fraction': _fraction,
-            'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data))
+            'both': lambda data: '{} ({})'.format(_pct(data), _fraction(data)),
+            'numeric_percent': _numeric_pct,
+            'decimal': _clean_raw,
         }[self.format]
 
     def get_column_ids(self):
