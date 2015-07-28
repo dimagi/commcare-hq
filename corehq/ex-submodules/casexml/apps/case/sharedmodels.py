@@ -19,7 +19,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     referenced_id = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty('child')
+    relationship = StringProperty('child', choices=['child', 'extension'])
 
     @property
     def referenced_case(self):
