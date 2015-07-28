@@ -128,6 +128,7 @@ class ExcelFile(object):
         return [self._fmt_value(cell) for cell in sheet.row(index)]
 
     def _fmt_value(self, cell):
+        # Explicitly format integers, since xlrd treats all numbers as decimals (adds ".0")
         if cell.ctype == XL_CELL_NUMBER and int(cell.value) == cell.value:
             return int(cell.value)
         return cell.value
