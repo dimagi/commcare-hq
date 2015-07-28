@@ -36,8 +36,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     prefix = slug
     emailable = True
 
-
-
     @property
     def is_custom(self):
         return self.report_config_id.startswith(CUSTOM_PREFIX)
