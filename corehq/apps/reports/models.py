@@ -36,6 +36,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -201,8 +202,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
                             stale=True, skip=None, limit=None):
+        kwargs = {}
         if stale:
-            #kwargs['stale'] = settings.COUCH_STALE_QUERY
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
 
         if report_slug is not None:
@@ -211,7 +213,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        kwargs = {}
         if skip is not None:
             kwargs['skip'] = skip
         if limit is not None:
@@ -692,7 +693,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._get_and_send_report(language, emails)
 
     def _get_and_send_report(self, language, emails):
-        from dimagi.utils.django.email import send_HTML_email
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
@@ -702,9 +702,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self.owner, self.domain, self._id, attach_excel=attach_excel
             )
             for email in emails:
-                send_HTML_email(title, email, body.content,
-                                email_from=settings.DEFAULT_FROM_EMAIL,
-                                file_attachments=excel_files)
+                send_html_email_async.delay(title, email, body.content,
+                                            email_from=settings.DEFAULT_FROM_EMAIL,
+                                            file_attachments=excel_files)
 
 
 class AppNotFound(Exception):

@@ -51,16 +51,19 @@ branches:
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - template-apps # Jenny, July 20
-  - extra-permissions-checks  # Ethan 7/20
+  - opbeat # Simon 7/22
+  - FormArchive # Sravan 7/22
+  - icds/scheduler # Farid 7/22
+  - ckeditor # J$ 7/24
+  - dropbox # Ben 7/27
+  - notify-exception  # Ethan 7/27
 submodules:
-  corehq/apps/prelogin:
-    branches: []
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - threadlocks  # cz 7/21
       - django17
+      - revert-148-revert-147-2.22_jars  # cz 7/23. also love this branch name.
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -73,3 +76,7 @@ submodules:
   submodules/pillowtop-src:
     branches:
       - django17
+  submodules/django-soil-src:
+    branches:
+      - dropbox # Ben 7/27
+

@@ -19,7 +19,7 @@ from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 
 
-@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='background_queue')
 def migration_task():
     from custom.ilsgateway.stock_data import ILSStockDataSynchronization
@@ -27,7 +27,8 @@ def migration_task():
         if config.enabled:
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
-            stock_data_task.delay(ILSStockDataSynchronization(config.domain, endpoint))
+            stock_data_task(ILSStockDataSynchronization(config.domain, endpoint))
+            report_run.delay(config.domain)
 
 
 @task(queue='background_queue')
@@ -192,12 +193,14 @@ def report_run(domain, locations=None, strict=True):
         run.complete = False
         run.save()
     else:
+        if start_date == end_date:
+            return
         # start new run
         run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
     has_error = True
     try:
-        populate_report_data(start_date, end_date, domain, run, locations, strict=strict)
+        populate_report_data(run.start, run.end, domain, run, locations, strict=strict)
         has_error = False
     except Exception, e:
         # just in case something funky happened in the DB

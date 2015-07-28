@@ -1,5 +1,7 @@
 from collections import OrderedDict
 from datetime import timedelta
+from itertools import chain
+import datetime
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.timesince import timesince
@@ -13,8 +15,9 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
-from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
+from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
@@ -83,13 +86,6 @@ class FacilityReportData(EWSData):
             sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk))
         ).order_by('-last_modified_date')
 
-        st = StockTransaction.objects.filter(
-            case_id=loc.supply_point_id,
-            sql_product__in=self.unique_products(SQLLocation.objects.filter(pk=loc.pk)),
-            report__date__lte=self.config['enddate'],
-            type='stockonhand',
-        ).order_by('-report__date')
-
         for state in stock_states:
             if state.daily_consumption:
                 monthly_consumption = round(state.get_monthly_consumption())
@@ -98,32 +94,34 @@ class FacilityReportData(EWSData):
                 monthly_consumption = None
                 max_level = 0
 
-            if state.product_id not in state_grouping:
-                state_grouping[state.product_id] = {
-                    'commodity': state.sql_product.name,
-                    'months_until_stockout': "%.1f" % (float(state.stock_on_hand) / monthly_consumption)
-                    if state.stock_on_hand and monthly_consumption else 0,
-                    'stockout_duration': '',
-                    'stockout_duration_helper': True,
-                    'current_stock': None,
-                    'monthly_consumption': monthly_consumption,
-                    'reorder_level': round(max_level / 2.0),
-                    'maximum_level': max_level,
-                    'last_report': ''
-                }
+            state_grouping[state.product_id] = {
+                'commodity': state.sql_product.name,
+                'months_until_stockout': "%.1f" % (float(state.stock_on_hand) / monthly_consumption)
+                if state.stock_on_hand and monthly_consumption else 0,
+                'stockout_duration': '',
+                'stockout_duration_helper': True,
+                'current_stock': state.stock_on_hand,
+                'monthly_consumption': monthly_consumption,
+                'reorder_level': round(max_level / 2.0),
+                'maximum_level': max_level,
+                'last_report': ews_date_format(state.last_modified_date)
+            }
 
-        for state in st:
-            if state_grouping[state.product_id]['stockout_duration_helper']:
-                if not state.stock_on_hand:
-                    state_grouping[state.product_id]['stockout_duration'] = timesince(state.report.date,
-                                                                                      now=self.config['enddate'])
-                else:
-                    state_grouping[state.product_id]['stockout_duration_helper'] = False
+            if state.stock_on_hand == 0:
+                try:
+                    st = StockTransaction.objects.filter(
+                        case_id=loc.supply_point_id,
+                        product_id=state.product_id,
+                        stock_on_hand__gt=0
+                    ).latest('report__date')
+                    state_grouping[state.product_id]['stockout_duration'] = timesince(
+                        st.report.date, now=datetime.datetime.now()
+                    )
+                except StockTransaction.DoesNotExist:
+                    state_grouping[state.product_id]['stockout_duration'] = 'Always'
 
-                if not state_grouping[state.product_id]['last_report']:
-                    state_grouping[state.product_id]['last_report'] = ews_date_format(state.report.date)
-                if state_grouping[state.product_id]['current_stock'] is None:
-                    state_grouping[state.product_id]['current_stock'] = state.stock_on_hand
+            else:
+                state_grouping[state.product_id]['stockout_duration_helper'] = False
 
         for values in state_grouping.values():
             if values['monthly_consumption'] is not None or values['current_stock'] == 0:
@@ -292,12 +290,25 @@ class UsersData(EWSData):
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
         users = get_users_by_location_id(self.config['location_id'])
-
+        in_charges = FacilityInCharge.objects.filter(
+            location=self.location
+        ).values_list('user_id', flat=True)
+        district_in_charges = []
+        if self.location.parent.location_type.name == 'district':
+            children = self.location.parent.get_descendants()
+            district_in_charges = list(chain.from_iterable([
+                filter(
+                    lambda u: 'In Charge' in u.user_data.get('role', []),
+                    get_users_by_location_id(child.location_id)
+                )
+                for child in children
+            ]))
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
             'phone_numbers': sms_user.phone_numbers,
-            'in_charge': user.user_data.get('role') == 'In Charge',
+            'in_charge': sms_user.get_id in in_charges,
+            'location_name': sms_user.location.sql_location.name,
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
@@ -316,7 +327,8 @@ class UsersData(EWSData):
             'users': [user_to_dict(user) for user in users],
             'domain': self.domain,
             'location_id': self.location_id,
-            'web_users': web_users
+            'web_users': web_users,
+            'district_in_charges': [user_to_dict(user) for user in district_in_charges]
         })
 
 

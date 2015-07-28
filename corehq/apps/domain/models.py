@@ -29,7 +29,7 @@ from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
@@ -399,7 +399,20 @@ class Domain(Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
-    def active_for_user(user, is_active=True):
+    @skippable_quickcache(['couch_user._id', 'is_active'],
+                          skip_arg='strict', timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True, strict=False):
+        domain_names = couch_user.get_domains()
+        return Domain.view(
+            "domain/by_status",
+            keys=[[is_active, d] for d in domain_names],
+            reduce=False,
+            include_docs=True,
+            stale=settings.COUCH_STALE_QUERY if not strict else None,
+        ).all()
+
+    @staticmethod
+    def active_for_user(user, is_active=True, strict=False):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -408,13 +421,8 @@ class Domain(Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.get_domains()
-            return cache_core.cached_view(Domain.get_db(), "domain/by_status",
-                                          keys=[[is_active, d] for d in domain_names],
-                                          reduce=False,
-                                          include_docs=True,
-                                          wrapper=Domain.wrap
-            )
+            return Domain.active_for_couch_user(
+                couch_user, is_active=is_active, strict=strict)
         else:
             return []
 
@@ -1315,7 +1323,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
@@ -1330,7 +1338,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
@@ -1356,10 +1364,11 @@ class TransferDomainRequest(models.Model):
             "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
-                        self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content,
-                        text_content=text_content)
+        send_html_email_async.delay(
+            _(u'There has been a transfer of ownership of {domain}').format(
+                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
+            html_content, text_content=text_content
+        )
 
     def as_dict(self):
         return {

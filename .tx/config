@@ -7,5 +7,6 @@ source_file = locale/en/LC_MESSAGES/django.po
 source_lang = en
 trans.fr = locale/fra/LC_MESSAGES/django.po
 trans.es = locale/es/LC_MESSAGES/django.po
+trans.hi = locale/hin/LC_MESSAGES/django.po
 trans.pt = locale/por/LC_MESSAGES/django.po
 type = PO

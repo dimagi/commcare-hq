@@ -1109,6 +1109,14 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def requires_referral(self):
         return self.requires == "referral"
 
+    def uses_parent_case(self):
+        """
+        Returns True if any of the load/update properties references the
+        parent case; False otherwise
+        """
+        return any([name.startswith('parent/')
+            for name in self.actions.all_property_names()])
+
     def is_registration_form(self, case_type=None):
         return not self.requires_case() and 'open_case' in self.active_actions() and \
             (not case_type or self.get_module().case_type == case_type)
@@ -3137,12 +3145,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # metadata for data platform
     amplifies_workers = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
     amplifies_project = StringProperty(
-        choices=['yes', 'no', 'not_set'],
-        default='not_set'
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
     )
 
     # exchange properties

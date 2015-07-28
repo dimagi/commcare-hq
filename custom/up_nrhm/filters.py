@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
@@ -34,7 +34,7 @@ class HierarchySqlData(SqlData):
 
 
 class DrillDownOptionFilter(BaseDrilldownOptionFilter):
-    label = ugettext_noop("Hierarchy")
+    label = ugettext_lazy("Hierarchy")
     slug = "hierarchy"
 
     @property
@@ -105,7 +105,7 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 
 class SampleFormatFilter(BaseSingleOptionFilter):
     slug = 'sf'
-    label = 'Report type'
+    label = ugettext_lazy('Report type')
     default_text = "Format-1 for ASHA Sanginis"
 
     @property
@@ -119,7 +119,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 
 class ASHAMonthFilter(MonthFilter):
-    label = "Last Reporting month of the quarter"
+    label = ugettext_lazy("Last Reporting month of the quarter")
 
 
 class NRHMDatespanFilter(DatespanFilter):

@@ -169,7 +169,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3):
+def iter_update(db, fn, ids, max_retries=3, verbose=False):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -245,4 +245,10 @@ def iter_update(db, fn, ids, max_retries=3):
                "change or remove the '_id' field?".format(fn.__name__) +
                ", ".join(results.error_ids))
         raise IterUpdateError(results, msg)
+
+    if verbose:
+        print "couldn't find {} docs".format(len(results.not_found_ids))
+        print "ignored {} docs".format(len(results.ignored_ids))
+        print "deleted {} docs".format(len(results.deleted_ids))
+        print "updated {} docs".format(len(results.updated_ids))
     return results

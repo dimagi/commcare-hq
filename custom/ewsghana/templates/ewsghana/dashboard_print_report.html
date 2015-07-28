@@ -1,0 +1,74 @@
+{% extends original_template %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+{% if show_time_notice %}{% endif %}
+
+{% block js %}
+    <script src="/static/hqstyle/js/core/bootstrap.min.js"></script>
+    <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    {{ block.super }}
+{% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            if (!document.hidden) {
+                setTimeout(function() {
+                    $('.hq-loading').hide();
+                    window.print();
+                }, 4000);
+            } else {
+                $(document).one('visibilitychange', function() {
+                    if (!document.hidden) {
+                        setTimeout(function() {
+                            $('.hq-loading').hide();
+                            window.print();
+                        }, 4000);
+                    }
+                });
+            }
+
+        });
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+    {% endcompress %}
+
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+    <style>
+            button {
+                display: none !important;
+            }
+            
+            #chart_dashboard_report_11 {
+                height: 300px;
+            }
+
+            @media print {
+                .nv-point-paths {
+                    display: none;
+                }
+                .hq-loading {
+                    display: none;
+                }
+            }
+    </style>
+{{ block.super }}
+{% endblock %}
+
+{% block modals %}
+    <div class="hq-loading">
+        <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator">
+        <h6>{% trans "Loading ..." %}</h6>
+    </div>
+{% endblock %}

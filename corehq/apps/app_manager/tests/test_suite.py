@@ -891,9 +891,9 @@ class ModuleAsChildTestBase(TestFileMixin):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         update_toggle_cache(MODULE_FILTER.slug, self.app.domain, True, NAMESPACE_DOMAIN)
         self.module_0 = self.app.add_module(Module.new_module('parent', None))
-        self.module_0.unique_id = 'm1'
-        self.module_1 = self.app.add_module(self.child_module_class.new_module("Untitled Module", None))
-        self.module_1.unique_id = 'm2'
+        self.module_0.unique_id = 'm0'
+        self.module_1 = self.app.add_module(self.child_module_class.new_module("child", None))
+        self.module_1.unique_id = 'm1'
 
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
@@ -1031,6 +1031,85 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             module = child_module_form.get_module()
             module.parent_select.active = True
             module.parent_select.module_id = parent_module.unique_id
+
+    def test_grandparent_as_child_module(self):
+        """
+        Module 0 case_type = gold-fish
+        Module 1 case_type = guppy (child of gold-fish)
+        Module 2 case_type = tadpole (child of guppy, grandchild of gold-fish)
+
+        Module 2's parent module = Module 1
+        """
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        self._load_case(m0f0, 'gold-fish')
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='guppy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.module_1.case_type = 'guppy'
+        m1f0 = self.module_1.get_form(0)
+        self._load_case(m1f0, 'guppy', parent_module=self.module_0)
+        m1f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='tadpole',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.module_2 = self.app.add_module(self.child_module_class.new_module("grandchild", None))
+        self.module_2.unique_id = 'm2'
+        self.app.new_form(2, 'grandchild form', None)
+
+        self.module_2.case_type = 'tadpole'
+        m2f0 = self.module_2.get_form(0)
+        self._load_case(m2f0, 'tadpole', parent_module=self.module_1)
+
+        self.module_2.root_module_id = self.module_1.unique_id
+
+        self.assertXmlPartialEqual(self.get_xml('child-module-grandchild-case'), self.app.create_suite(), "./entry")
+
+
+class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
+    """
+    Even though a module might be usercase-only, if it acts as a parent module
+    then the user should still be prompted for a case of the parent module's
+    case type.
+
+    The rationale is that child cases of the usercase never need to be
+    filtered by a parent module, because they can't be filtered any more than
+    they already are; there is only one usercase.
+    """
+
+    def setUp(self):
+        super(UserCaseOnlyModuleAsChildTest, self).setUp()
+        self.is_usercase_in_use_mock.return_value = True
+
+    def test_child_module_session_datums_added(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        # m0 is a user-case-only module. m0f0 does not update a normal case, only the user case.
+        m0f0.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
+        m0f0.actions.usercase_preload.condition.type = 'always'
+
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='guppy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.module_1.case_type = 'guppy'
+        m1f0 = self.module_1.get_form(0)
+        self._load_case(m1f0, 'gold-fish')
+        self._load_case(m1f0, 'guppy', parent_module=self.module_0)
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-added-usercase'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
 
 class RegexTest(SimpleTestCase):

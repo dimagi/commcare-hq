@@ -52,7 +52,7 @@
             td {
                 border: 1px solid black;
             }
-        {% else %}
+        {% elif rendered_as != 'print' %}
             .firstreport, .inventory_chart {
                 width: 68%;
                 float: left;
@@ -72,7 +72,7 @@
                 margin-top: -20px;
             }
         {% endif %}
-        {% if report.slug == "reporting_page" %}
+        {% if report.slug == "reporting_page" and rendered_as != 'print' %}
             .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
                 display: inline-table !important;
                 width: 48% !important;
@@ -91,7 +91,7 @@
                 width: 100%;
                 display: inline-table;
             }
-        {% elif report.slug == "stock_status"%}
+        {% elif report.slug == "stock_status" and rendered_as != 'print'%}
             .product-selection-pane {
                 float: right !important;
                 width: 30%;
@@ -173,6 +173,13 @@
             {% endif %}
         {% else %}
             <span class="report">
+                {% if thisreport.report_table.slug == 'mos_product' %}
+                    <div style="font-size: 14px; margin-bottom: 10px;">
+                        For any facility which has not reported stock on a product within the set date range,
+                        that product's MOS value will appear blank in the Current MOS by Product
+                        table and will have that product listed under "No stock data" in the Product Availability graph.
+                    </div>
+                {% endif %}
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% if thisreport.report_table.slug == 'stockouts_product' %}
                     <div class="row" style="margin: 0 !important">

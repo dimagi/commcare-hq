@@ -10,7 +10,6 @@ from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from django.db.models import Sum
@@ -21,6 +20,7 @@ from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -86,7 +86,6 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
@@ -99,17 +98,18 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
-    400: _('Your request was not formatted properly.'),
-    403: _('Forbidden.'),
-    404: _('Page not found.'),
-    500: _("There was an error processing your request."
+    400: ugettext_lazy('Your request was not formatted properly.'),
+    403: ugettext_lazy('Forbidden.'),
+    404: ugettext_lazy('Page not found.'),
+    500: ugettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
@@ -123,7 +123,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = DomainInvitation.by_email(email)
+    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
@@ -599,24 +599,15 @@ class DomainSubscriptionView(DomainAccountingSettings):
             if subscription.date_end is not None:
                 if subscription.is_renewed:
 
-                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                    next_product = self.get_product_summary(subscription.next_subscription.plan_version,
                                                              self.account,
                                                              subscription)
-
-                    if len(next_products) > 1:
-                        accounting_logger.error(
-                            "[BILLING] "
-                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
-                            "subscriber %s. Odd, right? The latest one by "
-                            "date_created was used, but consider this an issue."
-                            % self.account
-                        )
 
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
-                        'price': next_products[0]['monthly_fee'],
+                        'price': next_product['monthly_fee'],
                     })
 
                 else:
@@ -631,10 +622,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         if general_credits:
             general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
-        products = self.get_product_summary(plan_version, self.account, subscription)
         info = {
-            'products': products,
-            'is_multiproduct': len(products) > 1,
+            'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
             'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
@@ -664,27 +653,35 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_summary = []
-        for product_rate in plan_version.product_rates.all():
-            product_info = {
-                'name': product_rate.product.product_type,
-                'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-                'credit': None,
-                'type': product_rate.product.product_type,
-            }
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, product_type=product_rate.product.product_type
-                )
-            if credit_lines:
-                product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-            product_summary.append(product_info)
-        return product_summary
+        product_rates = plan_version.product_rates.all()
+        if len(product_rates) > 1:
+            # Models and UI are both written to support multiple products,
+            # but for now, each subscription can only have one product.
+            accounting_logger.error(
+                "[BILLING] "
+                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
+                "Odd, right? The latest one by date_created was used, but consider this an issue."
+                % self.account
+            )
+        product_rate = product_rates[0]
+        product_info = {
+            'name': product_rate.product.product_type,
+            'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
+            'credit': None,
+            'type': product_rate.product.product_type,
+        }
+        credit_lines = None
+        if subscription is not None:
+            credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                subscription, product_type=product_rate.product.product_type
+            )
+        elif account is not None:
+            credit_lines = CreditLine.get_credits_for_account(
+                account, product_type=product_rate.product.product_type
+            )
+        if credit_lines:
+            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []
@@ -1130,14 +1127,14 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         try:
-            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
+            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id,
+                                          subscription__subscriber__domain=domain)
         except Invoice.DoesNotExist:
             try:
-                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id)
+                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id,
+                                                  domain=domain)
             except WireInvoice.DoesNotExist:
                 raise Http404()
-        if invoice.get_domain() != domain:
-            raise Http404()
 
         if invoice.is_wire:
             edition = 'Bulk'
@@ -1175,9 +1172,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         form = self.get_post_form
         if form.is_valid():
             try:
-                with transaction.atomic():
-                    form.process_subscription_management()
-                    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                form.process_subscription_management()
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except NewSubscriptionError as e:
                 messages.error(self.request, e.message)
         return self.get(request, *args, **kwargs)
@@ -2225,8 +2221,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                     can_use_data_old=old_attrs.can_use_data,
                     can_use_data_new=self.domain_object.internal.can_use_data,
                 )
-                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
-                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+                send_mail_async.delay(
+                    'Custom EULA or data use flags changed for {}'.format(self.domain),
+                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                )
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
@@ -2300,9 +2298,9 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)
@@ -2681,9 +2679,9 @@ def _send_request_notification_email(request, org, dom):
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)

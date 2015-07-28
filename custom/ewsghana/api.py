@@ -1,8 +1,10 @@
 import logging
 from django.core.validators import validate_email
+import requests
 from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
     get_supply_point_case_by_domain_external_id
 from corehq.apps.products.models import SQLProduct
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
@@ -11,7 +13,6 @@ from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
-from custom.ilsgateway.api import ProductStock, StockTransaction
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
@@ -35,6 +36,7 @@ class SupplyPoint(JsonObject):
     type = StringProperty()
     location_id = IntegerProperty()
     products = ListProperty()
+    incharges = ListProperty()
 
 
 class SMSUser(JsonObject):
@@ -99,6 +101,7 @@ class Product(JsonObject):
 
 
 class GhanaEndpoint(LogisticsEndpoint):
+    from custom.ilsgateway.api import ProductStock, StockTransaction
     models_map = {
         'product': Product,
         'webuser': EWSUser,
@@ -121,6 +124,10 @@ class GhanaEndpoint(LogisticsEndpoint):
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]
 
+    def get_smsuser(self, user_id, **kwargs):
+        response = requests.get(self.smsusers_url + str(user_id) + "/", auth=self._auth())
+        return SMSUser(response.json())
+
 
 class EWSApi(APISynchronization):
     LOCATION_CUSTOM_FIELDS = [
@@ -134,7 +141,9 @@ class EWSApi(APISynchronization):
             'name': 'role',
             'choices': [
                 'In Charge', 'Nurse', 'Pharmacist', 'Laboratory Staff', 'Other', 'Facility Manager'
-            ]
+            ],
+            'label': 'roles',
+            'is_multiple_choice': True
         }
     ]
     PRODUCT_CUSTOM_FIELDS = []
@@ -408,6 +417,13 @@ class EWSApi(APISynchronization):
         loc_parent = self.location_sync(Location(parent))
         return loc_parent.get_id
 
+    def _set_in_charges(self, ews_user_id, location):
+        sms_user = self.sms_user_sync(self.endpoint.get_smsuser(ews_user_id))
+        FacilityInCharge.objects.get_or_create(
+            location=location,
+            user_id=sms_user.get_id
+        )
+
     def location_sync(self, ews_location):
         try:
             sql_loc = SQLLocation.objects.get(
@@ -477,6 +493,9 @@ class EWSApi(APISynchronization):
                         code__in=supply_point.products
                     )
                     sql_location.save()
+
+                for in_charge in supply_point.incharges:
+                    self._set_in_charges(in_charge, sql_location)
         return location
 
     def web_user_sync(self, ews_webuser):
@@ -544,6 +563,10 @@ class EWSApi(APISynchronization):
         if not sms_user:
             return None
         sms_user.user_data['to'] = ews_smsuser.to
+
+        if ews_smsuser.role:
+            sms_user.user_data['role'] = [ews_smsuser.role]
+
         sms_user.save()
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:

@@ -59,7 +59,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
@@ -336,8 +336,8 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = _(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
@@ -411,40 +411,40 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=_("Project Name"))
+    hr_name = forms.CharField(label=ugettext_lazy("Project Name"))
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
-        label=_("Custom Logo"),
+        label=ugettext_lazy("Custom Logo"),
         required=False,
-        help_text=_("Upload a custom image to display instead of the "
+        help_text=ugettext_lazy("Upload a custom image to display instead of the "
                     "CommCare HQ logo.  It will be automatically resized to "
                     "a height of 32 pixels.")
     )
     delete_logo = BooleanField(
-        label=_("Delete Logo"),
+        label=ugettext_lazy("Delete Logo"),
         required=False,
-        help_text=_("Delete your custom logo and use the standard one.")
+        help_text=ugettext_lazy("Delete your custom logo and use the standard one.")
     )
     call_center_enabled = BooleanField(
-        label=_("Call Center Application"),
+        label=ugettext_lazy("Call Center Application"),
         required=False,
-        help_text=_("Call Center mode is a CommCareHQ module for managing "
+        help_text=ugettext_lazy("Call Center mode is a CommCareHQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
     )
     call_center_case_owner = ChoiceField(
-        label=_("Call Center Case Owner"),
+        label=ugettext_lazy("Call Center Case Owner"),
         initial=None,
         required=False,
-        help_text=_("Select the person who will be listed as the owner "
+        help_text=ugettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
     )
     call_center_case_type = CharField(
-        label=_("Call Center Case Type"),
+        label=ugettext_lazy("Call Center Case Type"),
         required=False,
-        help_text=_("Enter the case type to be used for FLWs in call center apps")
+        help_text=ugettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
     def __init__(self, *args, **kwargs):
@@ -538,14 +538,14 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=_("CloudCare should use"),
+        label=ugettext_lazy("CloudCare should use"),
         initial=None,
         required=False,
         choices=(
-            ('stars', _('Latest starred version')),
-            ('nostars', _('Highest numbered version (not recommended)')),
+            ('stars', ugettext_lazy('Latest starred version')),
+            ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=_("Choose whether CloudCare should use the latest "
+        help_text=ugettext_lazy("Choose whether CloudCare should use the latest "
                     "starred build or highest numbered build in your "
                     "application.")
     )
@@ -587,15 +587,15 @@ def tuple_of_copies(a_list, blank=True):
 
 class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
-        label=_("Restrict Dimagi Staff Access"),
+        label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=_("If access to a project space is restricted only users added " +
+        help_text=ugettext_lazy("If access to a project space is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
     secure_submissions = BooleanField(
-        label=_("Secure submissions"),
+        label=ugettext_lazy("Secure submissions"),
         required=False,
-        help_text=_(mark_safe(
+        help_text=ugettext_lazy(mark_safe(
             "Secure Submissions prevents others from impersonating your mobile workers."
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -648,10 +648,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
     is_test = ChoiceField(
-        label=_("Real Project"),
-        choices=(('none', _('Unknown')),
-                 ('true', _('Test')),
-                 ('false', _('Real')),)
+        label=ugettext_lazy("Real Project"),
+        choices=(('none', ugettext_lazy('Unknown')),
+                 ('true', ugettext_lazy('Test')),
+                 ('false', ugettext_lazy('Real')),)
     )
     area = ChoiceField(
         label=ugettext_noop("Sector*"),
@@ -664,18 +664,18 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     organization_name = CharField(
         label=ugettext_noop("Organization Name*"),
         required=False,
-        help_text=_("Quick 1-2 sentence summary of the project."),
+        help_text=ugettext_lazy("Quick 1-2 sentence summary of the project."),
     )
     notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
     phone_model = CharField(
         label=ugettext_noop("Device Model"),
-        help_text=_("Add CloudCare, if this project is using CloudCare as well"),
+        help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
     )
     deployment_date = CharField(
         label=ugettext_noop("Deployment date"),
         required=False,
-        help_text=_("Date that the project went live (usually right after training).")
+        help_text=ugettext_lazy("Date that the project went live (usually right after training).")
     )
     business_unit = forms.ChoiceField(
         label=ugettext_noop('Business Unit'),
@@ -691,7 +691,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("CommCare Supply Project"),
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=_("This app aims to improve the supply of goods and materials")
+        help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
     )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
@@ -834,7 +834,6 @@ class HQPasswordResetForm(forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
-        from django.core.mail import send_mail
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
 
@@ -870,7 +869,7 @@ class HQPasswordResetForm(forms.Form):
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             email = render_to_string(email_template_name, c)
-            send_mail(subject, email, from_email, [user.email])
+            send_mail_async.delay(subject, email, from_email, [user.email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -1130,21 +1129,21 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.EmailField(label=_("Contact email"))
-    organization = forms.CharField(label=_("Organization"))
+    contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
+    organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
-    duration_of_project = forms.CharField(help_text=_(
+    duration_of_project = forms.CharField(help_text=ugettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
         "project, up to a maximum of 12 months at a time (at which point "
         "you need to reapply)."
     ))
-    domain = forms.CharField(label=_("Project Space"))
+    domain = forms.CharField(label=ugettext_lazy("Project Space"))
     dimagi_contact = forms.CharField(
-        help_text=_("If you have already been in touch with someone from "
+        help_text=ugettext_lazy("If you have already been in touch with someone from "
                     "Dimagi, please list their name."),
         required=False)
-    num_expected_users = forms.CharField(label=_("Number of expected users"))
+    num_expected_users = forms.CharField(label=ugettext_lazy("Number of expected users"))
 
     def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
@@ -1186,7 +1185,7 @@ class ProBonoForm(forms.Form):
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
@@ -1551,10 +1550,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        # I remember being worried about exceptions here,
-        # so let's ensure atomicity of the transaction
-        with transaction.atomic():
-            if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+
+        if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+            with transaction.atomic():
+                # atomically create new subscription
                 new_subscription = Subscription.new_domain_subscription(
                     self.next_account,
                     self.domain,
@@ -1562,13 +1561,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     date_start=self.cleaned_data['start_date'],
                     **self.subscription_default_fields
                 )
-            else:
-                new_subscription = self.current_subscription.change_plan(
-                    new_plan_version,
-                    transfer_credits=self.current_subscription.account == self.next_account,
-                    account=self.next_account,
-                    **self.subscription_default_fields
-                )
+        else:
+            # change plan method is already atomic
+            new_subscription = self.current_subscription.change_plan(
+                new_plan_version,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                account=self.next_account,
+                **self.subscription_default_fields
+            )
 
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],
