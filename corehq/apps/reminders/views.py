@@ -215,7 +215,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
                 day_num=0,
-                fire_time=time(0,0),
+                fire_time=time(0, 0),
                 form_unique_id=(form.cleaned_data.get("form_unique_id")
                                 if content_type == METHOD_SMS_SURVEY else None),
                 message=({handler.default_lang: form.cleaned_data.get("message")}
