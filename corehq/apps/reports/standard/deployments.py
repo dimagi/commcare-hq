@@ -145,7 +145,7 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def export_table(self):
         def _fmt_ordinal(ordinal):
-            if ordinal >= 0:
+            if ordinal is not None and ordinal >= 0:
                 return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
             return SCALAR_NEVER_WAS
 
