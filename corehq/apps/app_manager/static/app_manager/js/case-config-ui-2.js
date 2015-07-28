@@ -185,7 +185,6 @@ var CaseConfig = (function () {
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
         }));
-
         self.getCaseTypeLabel = function (caseType) {
             var module_names = [], label;
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {
@@ -198,6 +197,12 @@ var CaseConfig = (function () {
                 label = '*' + label;
             }
             return label + ' (' + caseType + ')';
+        };
+        self.relationshipTypes = ['child', 'extension'];
+        self.getRelationshipTypeLabel = function (relationshipType) {
+            var verb = (relationshipType === 'extension') ? ' is a ... ': ' has a ... ';
+            // TODO: Get current value of case_type
+            return relationshipType + ' case: ' + self.caseConfig.caseType + verb;
         };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
         self.usercase_transaction = HQFormActions.to_usercase_transaction(caseConfig.actions, caseConfig);
@@ -253,6 +258,7 @@ var CaseConfig = (function () {
                     'case_properties',
                     'case_preload',
                     'close_condition',
+                    'relationship',
                     'allow'
                 ],
                 case_properties: {
@@ -739,6 +745,7 @@ var CaseConfig = (function () {
                 case_preload: case_preload,
                 condition: self.open_case.condition,
                 close_condition: self.close_case.condition,
+                relationship: null, // only used in subcases
                 suggestedProperties: function () {
                     if (_(caseConfig.propertiesMap).has(this.case_type())) {
                         return caseConfig.propertiesMap[this.case_type()]();
@@ -865,6 +872,7 @@ var CaseConfig = (function () {
             self.condition = o.condition || DEFAULT_CONDITION_ALWAYS;
             self.close_condition = o.close_condition || DEFAULT_CONDITION_NEVER;
             self.repeat_context = o.repeat_context;
+            self.relationship = o.relationship || null;
             return self;
         },
         to_case_transaction: function (o, caseConfig) {
@@ -874,7 +882,7 @@ var CaseConfig = (function () {
                     key: 'name',
                     required: true
                 }], self.case_properties, caseConfig);
-
+            // TODO: For extension cases, either set name = hostcase/name or don't make mandatory.
 
             return CaseTransaction.wrap({
                 case_type: self.case_type,
@@ -882,6 +890,7 @@ var CaseConfig = (function () {
                 case_properties: case_properties,
                 condition: self.condition,
                 close_condition: self.close_condition,
+                relationship: self.relationship,
                 suggestedProperties: function () {
                     if (this.case_type() && _(caseConfig.propertiesMap).has(this.case_type())) {
                         var all = caseConfig.propertiesMap[this.case_type()]();
@@ -910,6 +919,7 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
+            // TODO: name not required for extension cases?
             var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
 
@@ -920,7 +930,8 @@ var CaseConfig = (function () {
                 reference_id: o.reference_id,
                 condition: cleanCondition(o.condition),
                 close_condition: cleanCondition(o.close_condition),
-                repeat_context: case_transaction.repeat_context()
+                repeat_context: case_transaction.repeat_context(),
+                relationship: o.relationship
             };
         }
     };

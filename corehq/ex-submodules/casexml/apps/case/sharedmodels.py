@@ -17,7 +17,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     identifier = StringProperty()
     referenced_type = StringProperty()
     referenced_id = StringProperty()
-    
+    # relationship = "child" for index to a parent case (default)
+    # relationship = "extension" for index to a host case
+    relationship = StringProperty('child', choices=['child', 'extension'])
+
     @property
     def referenced_case(self):
         if not hasattr(self, "_case"):

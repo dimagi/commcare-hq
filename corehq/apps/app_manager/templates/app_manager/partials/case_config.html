@@ -75,11 +75,19 @@
         </div>
         <!--ko if: actionType() !== 'none'-->
         <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
+            {% if show_ext_cases %}
+            <h5 class="pull-left">{% trans "Subcases" %}</h5>
+            <span data-bind="makeHqHelp: {}"
+              data-title="{% trans "Subcases" %}"
+              data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother. Extension Cases let you extend a case type with a set of additional properties. Where child cases complete a 'has a' relationship, extension cases complete an 'is a' relationship." %}"
+            ></span>
+            {% else %}
             <h5 class="pull-left">{% trans "Child Cases" %}</h5>
             <span data-bind="makeHqHelp: {}"
               data-title="{% trans "Child Cases" %}"
               data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
             ></span>
+            {% endif %}
         </header>
 
         <div data-bind="foreach: subcases" class="form">
@@ -94,6 +102,14 @@
                         optionsCaption: 'Choose a Module...'
                     "></select>
                     <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                    {% if show_ext_cases %}
+                        <select data-bind="
+                            options: $parent.relationshipTypes,
+                            optionsText: $parent.getRelationshipTypeLabel,
+                            optionsCaption: 'Child case or extension case?',
+                            value: relationship
+                        "></select>
+                    {% endif %}
                     {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
                         <input type="text" data-bind="value: reference_id"/>

@@ -460,18 +460,26 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, ref):
+    def add_index_ref(self, reference_id, case_type, ref, relationship='child'):
+        """
+        When an index points to a parent case, its relationship attribute is
+        set to "child". When it points to a host case, relationship is set to
+        "extension".
+        """
         index_node = self.elem.find('{cx2}index'.format(**namespaces))
         if index_node is None:
             index_node = make_case_elem('index')
             self.elem.append(index_node)
-        parent_index = make_case_elem(reference_id, {'case_type': case_type})
+        if relationship not in ('child', 'extension'):
+            raise CaseError('Valid values for an index relationship are "child" and "extension"')
+        parent_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
         index_node.append(parent_index)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=self.path, ref=reference_id),
             calculate=ref,
         )
+
 
 def autoset_owner_id_for_open_case(actions):
     return not ('update_case' in actions and
@@ -1356,11 +1364,17 @@ class XForm(WrappedNode):
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
-                    reference_id = subcase.reference_id or 'parent'
+                    if subcase.reference_id:
+                        reference_id = subcase.reference_id
+                    elif subcase.relationship == 'extension':
+                        reference_id = 'hostcase'
+                    else:
+                        reference_id = 'parent'
                     subcase_block.add_index_ref(
                         reference_id,
                         form.get_case_type(),
                         self.resolve_path("case/@case_id"),
+                        subcase.relationship,
                     )
 
         case = self.case_node

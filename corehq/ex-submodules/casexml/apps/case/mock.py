@@ -203,10 +203,18 @@ class CaseBlock(dict):
                 self['update'] = CaseBlock.undefined
         if index and version == V2:
             self['index'] = {}
-            for name, (case_type, case_id) in index.items():
+            for name in index.keys():
+                case_type = index[name][0]
+                case_id = index[name][1]
+                # relationship = "child" for index to a parent case (default)
+                # relationship = "extension" for index to a host case
+                relationship = index[name][2] if len(index[name]) > 2 else 'child'
+                if relationship not in ('child', 'extension'):
+                    raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
                 self['index'][name] = {
                     '_attrib': {
-                        'case_type': case_type
+                        'case_type': case_type,
+                        'relationship': relationship,
                     },
                     '_text': case_id
                 }
