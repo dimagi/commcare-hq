@@ -214,14 +214,15 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.start_datetime = form.cleaned_data.get("datetime")
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
-                day_num = 0,
-                fire_time = time(0,0),
-                form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = ({handler.default_lang: form.cleaned_data.get("message")}
-                           if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
-                subject = ({handler.default_lang: form.cleaned_data.get("subject")}
-                           if content_type == METHOD_EMAIL else {}),
-                callback_timeout_intervals = [],
+                day_num=0,
+                fire_time=time(0,0),
+                form_unique_id=(form.cleaned_data.get("form_unique_id")
+                                if content_type == METHOD_SMS_SURVEY else None),
+                message=({handler.default_lang: form.cleaned_data.get("message")}
+                         if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
+                subject=({handler.default_lang: form.cleaned_data.get("subject")}
+                         if content_type == METHOD_EMAIL else {}),
+                callback_timeout_intervals=[],
             )]
             handler.schedule_length = 1
             handler.event_interpretation = EVENT_AS_OFFSET
