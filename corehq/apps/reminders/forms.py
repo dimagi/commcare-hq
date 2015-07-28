@@ -122,6 +122,12 @@ EVENT_CHOICES = (
 )
 
 
+def add_field_choices(form, field_name, choice_tuples):
+    choices = copy.copy(form.fields[field_name].choices)
+    choices.extend(choice_tuples)
+    form.fields[field_name].choices = choices
+
+
 def validate_integer(value, error_msg, nonnegative=False):
     try:
         assert value is not None
@@ -489,18 +495,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
-            self.add_method_choices([
+            add_field_choices(self, 'method', [
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
 
         if is_previewer and can_use_survey:
-            self.add_method_choices([
+            add_field_choices(self, 'method', [
                 (METHOD_IVR_SURVEY, _('IVR Survey')),
                 (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
 
         if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
-            self.add_method_choices([
+            add_field_choices(self, 'method', [
                 (METHOD_EMAIL, _('Email')),
             ])
 
@@ -531,11 +537,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 )),
             )
         )
-
-    def add_method_choices(self, choice_tuples):
-        method_choices = copy.copy(self.fields['method'].choices)
-        method_choices.extend(choice_tuples)
-        self.fields['method'].choices = method_choices
 
     @property
     def ui_type(self):
@@ -1742,14 +1743,22 @@ class OneTimeReminderForm(Form):
     content_type = ChoiceField(choices=(
         (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
+    subject = TrimmedCharField(required=False)
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
+        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
-            self.fields['content_type'].choices = CONTENT_CHOICES
+            add_field_choices(self, 'content_type', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
+        if can_use_email:
+            add_field_choices(self, 'content_type', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -1784,9 +1793,19 @@ class OneTimeReminderForm(Form):
             validate_time(value)
             return parse(value).time()
 
+    def clean_subject(self):
+        value = self.cleaned_data.get("subject")
+        if self.cleaned_data.get("content_type") == METHOD_EMAIL:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
+
     def clean_message(self):
         value = self.cleaned_data.get("message")
-        if self.cleaned_data.get("content_type") == METHOD_SMS:
+        if self.cleaned_data.get("content_type") in (METHOD_SMS, METHOD_EMAIL):
             if value:
                 return value
             else:
