@@ -1171,16 +1171,16 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return []
 
     @memoized
-    def get_child_case_types(self):
+    def get_subcase_types(self):
         '''
-        Return a list of each case type for which this Form opens a new child case.
+        Return a list of each case type for which this Form opens a new subcase.
         :return:
         '''
-        child_case_types = set()
+        subcase_types = set()
         for subcase in self.actions.subcases:
             if subcase.close_condition.type == "never":
-                child_case_types.add(subcase.case_type)
-        return child_case_types
+                subcase_types.add(subcase.case_type)
+        return subcase_types
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -1672,17 +1672,16 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         return errors
 
     @memoized
-    def get_child_case_types(self):
+    def get_subcase_types(self):
         '''
         Return a set of each case type for which this module has a form that
-        opens a new child case of that type.
-        :return:
+        opens a new subcase of that type.
         '''
-        child_case_types = set()
+        subcase_types = set()
         for form in self.get_forms():
-            if hasattr(form, 'get_child_case_types'):
-                child_case_types.update(form.get_child_case_types())
-        return child_case_types
+            if hasattr(form, 'get_subcase_types'):
+                subcase_types.update(form.get_subcase_types())
+        return subcase_types
 
     def get_custom_entries(self):
         """
@@ -4474,13 +4473,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return meta
 
-    def get_child_case_types_of_module(self, module):
+    def get_subcase_types_of_module(self, module):
         """
-        Return the child case types defined across an app for the case type of a module
+        Return the subcase types defined across an app for the case type of a module
         """
         return {i for m in self.get_modules()
                 if m.case_type == module.case_type
-                for i in m.get_child_case_types()}
+                for i in m.get_subcase_types()}
 
 
 class RemoteApp(ApplicationBase):
