@@ -69,7 +69,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
             case_type='at_risk',
             date_modified=self.now,
             index={
-                'host_case': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
+                'hostcase': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
             version=V2,
         )
@@ -81,7 +81,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
                     '<case_type>at_risk</case_type>'
                 '</update>'
                 '<index>'
-                    '<host_case case_type="newborn" relationship="extension">123456</host_case>'
+                    '<hostcase case_type="newborn" relationship="extension">123456</hostcase>'
                 '</index>'
             '</case>'
         )
@@ -123,7 +123,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
                 case_type='at_risk',
                 date_modified=self.now,
                 index={
-                    'host_case': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
+                    'hostcase': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
                 },
                 version=V2,
             )
