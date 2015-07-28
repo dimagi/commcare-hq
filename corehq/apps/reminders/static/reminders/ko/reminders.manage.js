@@ -366,7 +366,7 @@ var ReminderEvent = function (
             || (self.method() === self.choices.METHOD_IVR_SURVEY);
     });
 
-    var initialMessagesArray = []
+    var initialMessagesArray = [];
     for(var langcode in eventData.message) {
         initialMessagesArray.push(
             new ReminderMessage(
@@ -406,9 +406,9 @@ var ReminderEvent = function (
     });
 
     self.isMessageVisible = ko.computed(function () {
-        return (self.method() === self.choices.METHOD_SMS)
-            || (self.method() === self.choices.METHOD_SMS_CALLBACK)
-            || self.isEmailSelected();
+        return (self.method() === self.choices.METHOD_SMS) ||
+               (self.method() === self.choices.METHOD_SMS_CALLBACK) ||
+               self.isEmailSelected();
     });
 
     self.asJSON = ko.computed(function () {

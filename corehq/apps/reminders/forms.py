@@ -1705,7 +1705,7 @@ class CaseReminderEventMessageForm(forms.Form):
                 InlineField(
                     'subject',
                     data_bind="value: subject, valueUpdate: 'keyup',"
-                        "visible: $parent.isEmailSelected()",
+                              "visible: $parent.isEmailSelected()",
                     css_class="input-xlarge",
                     rows="2",
                 ),
@@ -1718,7 +1718,7 @@ class CaseReminderEventMessageForm(forms.Form):
                 crispy.Div(
                     style="padding-top: 10px; padding-left: 5px;",
                     data_bind="template: { name: 'event-message-length-template' },"
-                        "visible: !$parent.isEmailSelected()"
+                              "visible: !$parent.isEmailSelected()"
                 )
             ),
         )

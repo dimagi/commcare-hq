@@ -217,10 +217,10 @@ def add_one_time_reminder(request, domain, handler_id=None):
                 day_num = 0,
                 fire_time = time(0,0),
                 form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = {handler.default_lang: form.cleaned_data.get("message")} \
-                    if content_type in (METHOD_SMS, METHOD_EMAIL) else {},
-                subject = {handler.default_lang: form.cleaned_data.get("subject")} \
-                    if content_type == METHOD_EMAIL else {},
+                message = ({handler.default_lang: form.cleaned_data.get("message")}
+                           if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
+                subject = ({handler.default_lang: form.cleaned_data.get("subject")}
+                           if content_type == METHOD_EMAIL else {}),
                 callback_timeout_intervals = [],
             )]
             handler.schedule_length = 1
@@ -276,11 +276,12 @@ def copy_one_time_reminder(request, domain, handler_id):
         "case_group_id": handler.sample_id,
         "user_group_id": handler.user_group_id,
         "content_type": handler.method,
-        "message": handler.events[0].message[handler.default_lang] \
-            if handler.default_lang in handler.events[0].message else None,
-        "subject": handler.events[0].subject[handler.default_lang] \
-            if handler.default_lang in handler.events[0].subject else None,
-        "form_unique_id": handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+        "message": (handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message else None),
+        "subject": (handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject else None),
+        "form_unique_id": (handler.events[0].form_unique_id
+                           if handler.events[0].form_unique_id is not None else None),
     }
     form = OneTimeReminderForm(initial=initial,
         can_use_survey=can_use_survey_reminders(request),
