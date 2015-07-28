@@ -258,6 +258,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.dropbox',
     'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
@@ -934,6 +935,10 @@ DEFAULT_PROTOCOL = 'http'
 ####### South Settings #######
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = False
+
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
 
 
 try:
