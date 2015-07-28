@@ -62,13 +62,13 @@
                    class="input-xxlarge" />
         </td>
         <td data-bind="visible: isSubjectVisible">
-            <div data-bind="foreach: subjectTranslations">
+            <div data-bind="foreach: messageTranslations">
                 <label><strong data-bind="text: languageLabel"></strong></label>
                 <textarea rows="2"
                           class="input-xxlarge"
-                          data-bind="value: message, valueUpdate: 'keyup'"></textarea>
-                <hr data-bind="visible: $parent.subjectTranslations().length > 1
-                               && $index() + 1 !== $parent.subjectTranslations().length" />
+                          data-bind="value: subject, valueUpdate: 'keyup'"></textarea>
+                <hr data-bind="visible: $parent.messageTranslations().length > 1
+                               && $index() + 1 !== $parent.messageTranslations().length" />
             </div>
         </td>
         <td data-bind="visible: isMessageVisible">

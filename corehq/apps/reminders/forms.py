@@ -1190,6 +1190,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
+            del event['subject_data']
             del event['is_immediate']
 
         event_interpretation = self.cleaned_data["event_interpretation"]
@@ -1595,7 +1596,14 @@ class CaseReminderEventForm(forms.Form):
         required=False
     )
 
-    # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
+    # subject is visible when the method of the reminder is METHOD_EMAIL
+    # value will be a dict of {langcode: message}
+    subject_data = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    # message is visible when the method of the reminder is (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL)
     # value will be a dict of {langcode: message}
     message_data = forms.CharField(
         required=False,
@@ -1639,6 +1647,7 @@ class CaseReminderEventForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
+            crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
             crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
@@ -1672,6 +1681,10 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.HiddenInput
     )
+    subject = forms.CharField(
+        required=False,
+        widget=forms.Textarea
+    )
     message = forms.CharField(
         required=False,
         widget=forms.Textarea
@@ -1689,14 +1702,22 @@ class CaseReminderEventMessageForm(forms.Form):
                 '(<span data-bind="text:languageLabel"></span>)</span>' %
                 _("Message"),
                 InlineField(
+                    'subject',
+                    data_bind="value: subject, valueUpdate: 'keyup',"
+                        "visible: $parent.isEmailSelected()",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
+                InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
                     css_class="input-xlarge",
                     rows="2",
                 ),
                 crispy.Div(
-                    style="padding-top: 10px",
-                    data_bind="template: { name: 'event-message-length-template' }"
+                    style="padding-top: 10px; padding-left: 5px;",
+                    data_bind="template: { name: 'event-message-length-template' },"
+                        "visible: !$parent.isEmailSelected()"
                 )
             ),
         )
