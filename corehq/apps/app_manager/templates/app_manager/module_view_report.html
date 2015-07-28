@@ -1,11 +1,17 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load reports_core_tags %}
 {% load i18n %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -19,6 +25,49 @@
                 lang: {{ lang|JSON }}
             });
             ko.applyBindings(reportModule, $("#report-module-edit")[0]);
+
+
+        var select2s = $('.choice_filter');
+        for(var i = 0; i < select2s.length; i++) {
+            var element = select2s.eq(i);
+            var pageSize = 20;
+            // TODO: Ideally the separator would be defined in one place. Right now it is
+            //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+            var separator = "\u001F";
+            var initialValues = element.val() !== "" ? element.val().split(separator) : [];
+            element.select2({
+                minimumInputLength: 0,
+                multiple: true,
+                separator: separator,
+                allowClear: true,
+                // allowClear only respected if there is a non empty placeholder
+                placeholder: " ",
+                ajax: {
+                    url: "/a/staging/configurable_reports/api/choice_list/" + element.parent()[0].lastElementChild.value + "/",
+                    dataType: 'json',
+                    quietMillis: 250,
+                    data: function (term, page) {
+                        return {
+                            q: term, // search term
+                            page: page,
+                            limit: pageSize
+                        };
+                    },
+                    results: function (data, page) {
+                        // parse the results into the format expected by Select2.
+                        var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
+                        return {
+                            results: formattedData,
+                            more: data.length === pageSize
+                        };
+                    },
+                    cache: true
+                }
+            });
+            element.select2('data', _.map(initialValues, function(v){
+                return {id: v, text: v};
+            }));
+        }
 {#        });#}
     </script>
 {% endblock %}
@@ -91,6 +140,11 @@
                                                 <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
                                             </div>
                                             <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticChoiceListFilter'">
+                                                <input type="text"
+                                                       class="choice_filter"
+                                                       style="width:300px"
+                                                       data-bind="value: filter.selectedValue.value"/>
+                                                <input type="hidden" data-bind="value: dynamicFilterName">
                                             </div>
                                         </th>
                                     </tr>
