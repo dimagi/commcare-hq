@@ -2784,11 +2784,18 @@ class ReportAppConfig(DocumentSchema):
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='bar',
+                                type='xy', # 'xy' or 'bar'
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                                configuration=suite_xml.ConfigurationGroup(config=[
+                                    suite_xml.ConfigurationItem(id='bar-orientation', xpath_function="'vertical'") # orientation
+                                ]),
                             )
                         )
                     )
+
+        for graph in _get_graph_fields():
+            print graph.template
+            print hasattr(graph.template, 'graph')
 
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.summary'.format(self.report_id),
