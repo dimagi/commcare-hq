@@ -412,12 +412,11 @@ def dropbox_upload(request, download_id):
         raise Http404
     else:
         filename = download.get_filename()
-        token = request.session.get(DROPBOX_ACCESS_TOKEN)
-        dest = request.POST.get('dropbox-dest', os.path.basename(filename))
+        dest = os.path.basename(filename)
 
         try:
             uploader = DropboxUploadHelper.create(
-                token,
+                request.session.get(DROPBOX_ACCESS_TOKEN),
                 src=filename,
                 dest=dest,
                 download_id=download_id,
