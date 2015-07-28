@@ -7,11 +7,11 @@ from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext_noop
 
 
 class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = _("Format-5 Functionality of ASHAs in blocks")
+    name = ugettext_noop("Format-5 Functionality of ASHAs in blocks")
     slug = "district_functionality_report"
     no_value = '--'
 
