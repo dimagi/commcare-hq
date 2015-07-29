@@ -1,7 +1,5 @@
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-
-
 def _cc_users_by_location(location_id, include_docs=True, wrap=True):
+    from corehq.apps.users.models import CommCareUser
     view = CommCareUser.view if wrap else CommCareUser.get_db().view
     return view(
         'locations/users_by_location_id',
@@ -14,7 +12,7 @@ def _cc_users_by_location(location_id, include_docs=True, wrap=True):
 
 def get_users_by_location_id(location_id):
     """
-    Get all users for a given location
+    Get all mobile_workers for a given location
     """
     return _cc_users_by_location(location_id)
 
@@ -33,6 +31,7 @@ def get_one_user_at_location(location_id):
 
 
 def get_all_users_by_location(location_id):
+    from corehq.apps.users.models import CouchUser
     results = CouchUser.get_db().view(
         'locations/users_by_location_id',
         startkey=[location_id],
