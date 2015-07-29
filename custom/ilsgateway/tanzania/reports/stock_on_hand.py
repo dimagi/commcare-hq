@@ -141,24 +141,6 @@ class SohPercentageTableData(ILSData):
             percent_stockouts = 0
         return percent_stockouts
 
-    def get_product_data(self, products_ids, sql_location):
-        row_data = []
-        for product_id in products_ids:
-            product_availability = ProductAvailabilityData.objects.filter(
-                location_id=sql_location.location_id,
-                product=product_id,
-                date__range=(self.config['startdate'], self.config['enddate'])
-            ).aggregate(without_stock=Avg('without_stock'), total=Max('total'))
-            if product_availability['without_stock'] and product_availability['total']:
-                row_data.append(
-                    format_percent(
-                        product_availability['without_stock'] * 100 / float(product_availability['total'])
-                    )
-                )
-            else:
-                row_data.append("<span class='no_data'>No Data</span>")
-        return row_data
-
     def get_products_ids(self):
         if not self.config['products']:
             products_ids = SQLProduct.objects.filter(
@@ -218,7 +200,13 @@ class SohPercentageTableData(ILSData):
         sql_locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         is_mohsw = False
         stockouts_map = {}
-
+        product_availabilities = {
+            (pa['location_id'], pa['product']): (pa['without_stock'], pa['total'])
+            for pa in ProductAvailabilityData.objects.filter(
+                location_id__in=list(sql_locations.values_list('location_id', flat=True)),
+                date__range=(self.config['startdate'], self.config['enddate'])
+            ).values('location_id', 'product').annotate(without_stock=Avg('without_stock'), total=Max('total'))
+        }
         if location.location_type.name == 'MOHSW':
             is_mohsw = True
             stockouts_map = self.get_stockouts_map(self.config['enddate'], location)
@@ -240,7 +228,16 @@ class SohPercentageTableData(ILSData):
             row_data = self._format_row(
                 percent_stockouts, soh_late, soh_not_responding, soh_on_time, sql_location
             )
-            row_data.extend(self.get_product_data(products_ids, sql_location))
+            for product_id in products_ids:
+                product_availability = product_availabilities.get((sql_location.location_id, product_id))
+                if product_availability:
+                    row_data.append(
+                        format_percent(
+                            product_availability[0] * 100 / float(product_availability[1])
+                        )
+                    )
+                else:
+                    row_data.append("<span class='no_data'>No Data</span>")
             rows.append(row_data)
         return rows
 
