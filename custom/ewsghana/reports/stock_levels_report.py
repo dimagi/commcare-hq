@@ -136,13 +136,13 @@ class FacilityReportData(EWSData):
             else:
                 monthly_consumption = 'not enough data'
 
-            if values['reorder_level'] and values['reorder_level'] != 0.00:
-                maximum_level = int(values['reorder_level'])
+            if values['maximum_level'] and values['maximum_level'] != 0.00:
+                maximum_level = int(values['maximum_level'])
             else:
                 maximum_level = 'unknown'
 
-            if values['maximum_level'] and values['maximum_level'] != 0.00:
-                reorder_level = int(values['maximum_level'])
+            if values['reorder_level'] and values['reorder_level'] != 0.00:
+                reorder_level = int(values['reorder_level'])
             else:
                 reorder_level = 'unknown'
 
