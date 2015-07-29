@@ -85,6 +85,8 @@ var ReportModule = (function () {
             }
             return chartsToConfigs;
         };
+
+        this.allGraphTypes = ['bar', 'xy'];
     }
 
     function ReportConfig(report_id, display, availableReportIds, reportCharts, graph_configs, language) {

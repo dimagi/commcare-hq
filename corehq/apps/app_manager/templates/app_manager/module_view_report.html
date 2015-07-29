@@ -64,9 +64,10 @@
                                 </p>
                                 <p>
                                     <span>{% trans 'Graph type' %}:</span>
-                                    <input type="text" data-bind="
+                                    <select type="text" data-bind="
+                                        options: $parent.graphConfig.allGraphTypes,
                                         value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
-                                    "></span>
+                                    "></select>
                                 </p>
                                 <p>
                                     {% trans 'Configuration' %}:
