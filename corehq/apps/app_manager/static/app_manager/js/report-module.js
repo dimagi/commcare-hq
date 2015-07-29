@@ -28,15 +28,19 @@ var ReportModule = (function () {
                 var currentChart = reportCharts[currentReportId][j];
                 var graph_config = graph_configs[currentChart.chart_id] || {};
                 var series_config = {};
+                var chart_series = [];
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
                     var series = currentChart.y_axis_columns[k];
+                    chart_series.push(series);
                     series_config[series] = new Config(
-                        currentReportId == report_id ? graph_config.series_configs[series] || {} : {}
+                        currentReportId == report_id ? (graph_config.series_config || {})[series] || {} : {}
                     );
                 }
+
                 self.graphConfigs[currentReportId][currentChart.chart_id] = {
                     graph_type: ko.observable(currentReportId == report_id ? graph_config.graph_type || 'bar' : 'bar'),
                     series_config: series_config,
+                    chart_series: chart_series,
                     config: new Config(
                         currentReportId == report_id ? graph_config.config || {} : {}
                     )

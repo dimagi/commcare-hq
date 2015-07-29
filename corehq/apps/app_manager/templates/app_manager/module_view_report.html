@@ -49,7 +49,7 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody data-bind="sortable: reports">
+                <tbody data-bind="sortable: { data: reports, as: 'report' }">
                     <tr class="row control-group"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
@@ -81,6 +81,23 @@
                                         {% trans "Add Configuration" %}
                                     </button>
                                 </p>
+                                <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
+                                    <p>
+                                        {% trans 'Series' %}:
+                                        <span data-bind="text: series"></span>
+                                        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_config[series].keyValuePairs, as: 'keyValuePair' }">
+                                            <p>
+                                                <input type="text" data-bind="value: keyValuePair[0]">
+                                                -->
+                                                <input type="text" data-bind="value: keyValuePair[1]">
+                                            </p>
+                                        </div>
+                                        <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_config[series].addConfig">
+                                            <i class="icon-plus"></i>
+                                            {% trans "Add Configuration" %}
+                                        </button>
+                                    </p>
+                                </div>
                             </div>
                         </td>
                         <td>
