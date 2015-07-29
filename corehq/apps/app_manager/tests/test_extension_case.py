@@ -3,6 +3,7 @@ from datetime import datetime
 from casexml.apps.case.mock import CaseBlock as MockCaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
     Application,
     Module,
@@ -12,7 +13,8 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
 )
 from corehq.apps.app_manager.tests import TestFileMixin
-from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock
+from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock, XForm, _make_elem
+from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
 from django.test import SimpleTestCase
 from xml.etree import ElementTree
@@ -216,26 +218,85 @@ class MockCaseBlockIndexTests(SimpleTestCase):
             )
 
 
-class XFormCaseBlockIndexTest(SimpleTestCase):
+class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
+    file_path = 'data', 'extension_case'
+
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+        self.is_usercase_in_use_mock.return_value = True
+
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.module = self.app.add_module(Module.new_module('Fish Module', None))
+        self.module.case_type = 'fish'
+        self.form = self.module.new_form('New Form', None)
+        self.subcase = OpenSubCaseAction(
+            case_type='freshwater',
+            case_name='Wanda',
+            condition=FormActionCondition(type='always'),
+            case_properties={'name': '/data/question1'},
+            relationship='extension',
+        )
+        self.form.actions.subcases.append(self.subcase)
+        self.xform = XForm(self.get_xml('original'))
+        self.add_subcase_block()
+
+    def add_subcase_block(self):
+        ### messy messy messy
+        parent_node = self.xform.data_node
+        case_id = session_var(self.form.session_var_for_action('subcases', 0))
+        #name = 'subcase_0'
+        subcase_node = _make_elem('{x}subcase_0')
+        parent_node.append(subcase_node)
+        path = 'subcase_0/'
+        self.subcase_block = XFormCaseBlock(self.xform, path)
+        subcase_node.insert(0, self.subcase_block.elem)
+        self.subcase_block.add_create_block(
+            relevance=self.xform.action_relevance(self.subcase.condition),
+            case_name=self.subcase.case_name,
+            case_type=self.subcase.case_type,
+            delay_case_id=bool(self.subcase.repeat_context),
+            autoset_owner_id=True,
+            has_case_sharing=self.form.get_app().case_sharing,
+            case_id=case_id
+        )
+        self.subcase_block.add_update_block(self.subcase.case_properties)
 
     def test_xform_case_block_index_supports_relationship(self):
         """
         XForm CaseBlock index should allow the relationship to be set
         """
-        # case_block = XFormCaseBlock(xform, node_path)
-        self.skipTest('Not implemented')
+        self.subcase_block.add_index_ref(
+            'host',
+            self.form.get_case_type(),
+            self.xform.resolve_path("case/@case_id"),
+            self.subcase.relationship,
+        )
+        self.assertXmlEqual(self.get_xml('open_subcase'), str(self.xform))
 
     def test_xform_case_block_index_default_relationship(self):
         """
         XForm CaseBlock index relationship should default to "child"
         """
-        self.skipTest('Not implemented')
+        self.subcase_block.add_index_ref(
+            'host',
+            self.form.get_case_type(),
+            self.xform.resolve_path("case/@case_id")
+        )
+        self.assertXmlEqual(self.get_xml('open_subcase_child'), str(self.xform))
 
     def test_xform_case_block_index_valid_relationship(self):
         """
         XForm CaseBlock index relationship should only allow valid values
         """
-        self.skipTest('Not implemented')
+        with self.assertRaisesRegex(CaseError,
+                                    'Valid values for an index relationship are "child" and "extension"'):
+            self.subcase_block.add_index_ref(
+                'host',
+                self.form.get_case_type(),
+                self.xform.resolve_path("case/@case_id"),
+                'cousin',
+            )
 
 
 class OpenSubCaseActionTests(SimpleTestCase):
