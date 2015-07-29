@@ -91,35 +91,24 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         self.freshwater_form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
 
-    def test_host_case_preload_ext_case(self):
+    def test_host_case_preload_ext_cases(self):
         """
-        Properties of a extension case should be available in a host case
+        Properties of one or more extension cases should be available in a host case
         """
         self.skipTest('Not implemented')
 
-    def test_host_case_update_ext_case(self):
+    def test_host_case_update_ext_cases(self):
         """
-        A host case should be able to save extension case properties
+        A host case should be able to save properties of one or more extension cases
         """
         self.fish_form.requires = 'case'
         self.fish_form.actions.update_case = UpdateCaseAction(update={
             'question1': '/data/question1',
-            'ext/freshwater/question1': '/data/question1',
-            'ext/aquarium/question1': '/data/question1',
+            '#freshwater/question1': '/data/question1',
+            '#aquarium/question1': '/data/question1',
         })
         self.fish_form.actions.update_case.condition.type = 'always'
-        self.assertXmlEqual(self.get_xml('update_host_case'), self.form.render_xform())
-
-    def test_host_case_preload_another_ext_case(self):
-        """
-        Properties of multiple extension cases should be available in a host case
-        """
-        self.skipTest('Not implemented')
-
-    def test_host_case_update_another_ext_case(self):
-        """
-        A host case should be able to save properties of multiple extension cases
-        """
+        self.assertXmlEqual(self.get_xml('update_ext_case'), self.fish_form.render_xform())
 
 
 class ExtCasePropertiesTestsAdvanced(SimpleTestCase, TestFileMixin):
