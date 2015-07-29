@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from .exceptions import UnsupportedSavedReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.display import xmlns_to_name
 from dimagi.ext.couchdbkit import *
@@ -272,7 +273,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             self._id,
             self.report_type
         ))
-        raise Exception("Unknown dispatcher: %s" % self.report_type)
+        raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
