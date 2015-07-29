@@ -190,7 +190,7 @@ def process_stock(xform, case_db=None):
     )
 
 
-def _adjust_ledger_values(original_balance, stock_transaction):
+def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         quantity = stock_transaction.stock_on_hand
     elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
@@ -201,24 +201,25 @@ def _adjust_ledger_values(original_balance, stock_transaction):
     ledger_values = compute_ledger_values(
         lambda: original_balance, stock_transaction.report.type, quantity)
 
+    # check that the reported value (either transfer quantity or balance)
+    # is not being changed; don't know why it would be, but that would be
+    # a red flag
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         assert stock_transaction.stock_on_hand == ledger_values.balance
-        # this is currently always 0 because of inferred transactions
-        stock_transaction.quantity = ledger_values.delta
     elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
-        stock_transaction.stock_on_hand = ledger_values.balance
-        assert stock_transaction.quantity == ledger_values.delta, (stock_transaction.quantity, ledger_values.delta)
+        assert stock_transaction.quantity == ledger_values.delta, \
+            (stock_transaction.quantity, ledger_values.delta)
     else:
         raise ValueError()
 
-    return ledger_values.balance
+    return ledger_values
 
 
 _DeleteStockTransaction = namedtuple(
     '_DeleteStockTransaction', ['stock_transaction'])
 _SaveStockTransaction = namedtuple(
     '_SaveStockTransaction',
-    ['stock_transaction', 'previous_quantity', 'previous_stock_on_hand'])
+    ['stock_transaction', 'previous_ledger_values', 'ledger_values'])
 
 
 def plan_rebuild_stock_state(case_id, section_id, product_id):
@@ -245,11 +246,12 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
             yield _DeleteStockTransaction(stock_transaction)
         else:
-            previous_quantity = stock_transaction.quantity
-            previous_stock_on_hand = stock_transaction.stock_on_hand
-            balance = _adjust_ledger_values(balance, stock_transaction)
-            yield _SaveStockTransaction(
-                stock_transaction, previous_quantity, previous_stock_on_hand)
+            before = LedgerValues(balance=stock_transaction.stock_on_hand,
+                                  delta=stock_transaction.quantity)
+            after = _compute_ledger_values(balance, stock_transaction)
+            # update balance for the next iteration
+            balance = after.balance
+            yield _SaveStockTransaction(stock_transaction, before, after)
 
 
 @transaction.atomic
@@ -266,6 +268,8 @@ def rebuild_stock_state(case_id, section_id, product_id):
         if isinstance(action, _DeleteStockTransaction):
             action.stock_transaction.delete()
         elif isinstance(action, _SaveStockTransaction):
+            action.stock_transaction.stock_on_hand = action.ledger_values.balance
+            action.stock_transaction.quantity = action.ledger_values.delta
             action.stock_transaction.save()
         else:
             raise ValueError()
