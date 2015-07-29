@@ -325,6 +325,7 @@ class NumericFilterSpec(FilterSpec):
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)
     title = StringProperty()
+    chart_id = StringProperty()
 
 
 class PieChartSpec(ChartSpec):
