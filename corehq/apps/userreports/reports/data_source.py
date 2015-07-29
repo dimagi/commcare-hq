@@ -10,7 +10,8 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.specs import DESCENDING, ASCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value
+from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
@@ -134,9 +135,9 @@ class ConfigurableReportDataSource(SqlData):
                         from the data source config of the db column it points at. Defaults to "string"
                         """
                         try:
-                            field = matching_report_column.field
+                            field = report_column.field
                         except AttributeError:
-                            # if the report column doesn't have a field object, default to this
+                            # if the report column doesn't have a field object, default to string.
                             # necessary for percent columns
                             return 'string'
 
@@ -154,23 +155,6 @@ class ConfigurableReportDataSource(SqlData):
                         return matching_indicators[0]['datatype']
 
                     datatype = get_datatype(matching_report_column)
-
-                    def get_default_sort_value(datatype, order):
-                        defaults = {
-                            "date": {
-                                ASCENDING: datetime.date.max,
-                                DESCENDING: datetime.date.min,
-                            },
-                            "datetime": {
-                                ASCENDING: datetime.datetime.max,
-                                DESCENDING: datetime.datetime.min,
-                            },
-                        }
-                        global_defaults = {
-                            ASCENDING: None,
-                            DESCENDING: None
-                        }
-                        return defaults.get(datatype, global_defaults)[order]
 
                     def sort_by(row):
                         value = row.get(sort_column_id, None)
