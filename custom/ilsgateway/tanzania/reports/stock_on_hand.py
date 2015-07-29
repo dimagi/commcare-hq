@@ -1,3 +1,4 @@
+from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
 from datetime import timedelta, datetime
 from django.template.defaultfilters import floatformat
@@ -115,13 +116,17 @@ class SohPercentageTableData(ILSData):
             soh_not_responding = None
         return soh_late, soh_not_responding, soh_on_time
 
+    def get_previous_month(self, enddate):
+        month = enddate.month - 1 if enddate.month != 1 else 12
+        year = enddate.year - 1 if enddate.month == 1 else enddate.year
+        return month, year
+
     def get_stockouts(self, facs):
         facs_count = facs.count()
         if facs_count > 0:
             fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
             enddate = self.config['enddate']
-            month = enddate.month - 1 if enddate.month != 1 else 12
-            year = enddate.year - 1 if enddate.month == 1 else enddate.year
+            month, year = self.get_previous_month(enddate)
             stockouts = StockTransaction.objects.filter(
                 case_id__in=list(fac_ids),
                 stock_on_hand__lte=0,
@@ -181,6 +186,26 @@ class SohPercentageTableData(ILSData):
         ]
         return row_data
 
+    def get_stockouts_map(self, enddate, location):
+        month, year = self.get_previous_month(enddate)
+        transactions = StockTransaction.objects.filter(
+            stock_on_hand__lte=0,
+            report__domain=self.config['domain'],
+            report__date__range=[
+                datetime(year, month, 1),
+                datetime(enddate.year, enddate.month, 1)
+            ]
+        ).order_by('case_id').distinct('case_id')
+        location_parent_dict = dict(
+            location.get_descendants().filter(
+                location_type__administrative=False
+            ).values_list('supply_point_id', 'parent__parent__parent__location_id')
+        )
+        stockouts_map = defaultdict(lambda: 0)
+        for transaction in transactions:
+            stockouts_map[location_parent_dict[transaction.case_id]] += 1
+        return stockouts_map
+
     @property
     def rows(self):
         rows = []
@@ -189,15 +214,32 @@ class SohPercentageTableData(ILSData):
         if not self.config['location_id']:
             return rows
 
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
         sql_locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+        is_mohsw = False
+        stockouts_map = {}
+
+        if location.location_type.name == 'MOHSW':
+            is_mohsw = True
+            stockouts_map = self.get_stockouts_map(self.config['enddate'], location)
+
         for sql_location in sql_locations.exclude(is_archived=True):
             facilities = get_facilities(sql_location, self.config['domain'])
+            facilities_count = facilities.count()
 
-            soh_late, soh_not_responding, soh_on_time = self.get_soh_data(sql_location, facilities.count())
+            soh_late, soh_not_responding, soh_on_time = self.get_soh_data(sql_location, facilities_count)
+            if not is_mohsw:
+                percent_stockouts = self.get_stockouts(facilities)
+            else:
+                if facilities_count > 0:
+                    stockouts = stockouts_map.get(sql_location.location_id, 0)
+                    percent_stockouts = stockouts * 100 / float(facilities_count)
+                else:
+                    percent_stockouts = 0
 
-            percent_stockouts = self.get_stockouts(facilities)
-
-            row_data = self._format_row(percent_stockouts, soh_late, soh_not_responding, soh_on_time, sql_location)
+            row_data = self._format_row(
+                percent_stockouts, soh_late, soh_not_responding, soh_on_time, sql_location
+            )
             row_data.extend(self.get_product_data(products_ids, sql_location))
             rows.append(row_data)
         return rows
