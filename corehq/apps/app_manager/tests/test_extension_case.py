@@ -1,10 +1,16 @@
 from collections import namedtuple
 from datetime import datetime
-from string import lstrip
 from casexml.apps.case.mock import CaseBlock as MockCaseBlock, CaseBlockError
 from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction, OpenSubCaseAction, AdvancedAction
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
+    UpdateCaseAction,
+    OpenSubCaseAction,
+    AdvancedAction,
+    FormActionCondition,
+)
 from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock
 from couchdbkit import BadValueError
@@ -78,7 +84,7 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         self.freshwater_form.requires = 'case'
         self.freshwater_form.actions.update_case = UpdateCaseAction(update={
             'question1': '/data/question1',
-            'hostcase/question1': '/data/question1',
+            'host/question1': '/data/question1',
         })
         self.freshwater_form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
@@ -150,7 +156,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
             case_type='at_risk',
             date_modified=self.now,
             index={
-                'hostcase': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
+                'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
             version=V2,
         )
@@ -162,7 +168,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
                     '<case_type>at_risk</case_type>'
                 '</update>'
                 '<index>'
-                    '<hostcase case_type="newborn" relationship="extension">123456</hostcase>'
+                    '<host case_type="newborn" relationship="extension">123456</host>'
                 '</index>'
             '</case>'
         )
@@ -204,7 +210,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
                 case_type='at_risk',
                 date_modified=self.now,
                 index={
-                    'hostcase': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
+                    'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
                 },
                 version=V2,
             )

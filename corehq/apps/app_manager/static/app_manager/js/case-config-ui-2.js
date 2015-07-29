@@ -882,7 +882,7 @@ var CaseConfig = (function () {
                     key: 'name',
                     required: true
                 }], self.case_properties, caseConfig);
-            // TODO: For extension cases, either set name = hostcase/name or don't make mandatory.
+            // TODO: For extension cases, either set name = host/name or don't make mandatory.
 
             return CaseTransaction.wrap({
                 case_type: self.case_type,

@@ -1373,7 +1373,7 @@ class XForm(WrappedNode):
                     if subcase.reference_id:
                         reference_id = subcase.reference_id
                     elif subcase.relationship == 'extension':
-                        reference_id = 'hostcase'
+                        reference_id = 'host'
                     else:
                         reference_id = 'parent'
                     subcase_block.add_index_ref(
