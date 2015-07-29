@@ -21,7 +21,7 @@ setup(
         "greenlet",
         "rawes",
         "elasticsearch==0.4.4",
-        'django>=1.6,<1.8',
+        'django>=1.6,<1.7',
         'dimagi-utils>=1.3usec',
         'psycopg2==2.5.2',
     ],
