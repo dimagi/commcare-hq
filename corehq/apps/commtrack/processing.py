@@ -88,6 +88,7 @@ def compute_ledger_values(lazy_original_balance, report_type, quantity):
     """
     if report_type == stockconst.REPORT_TYPE_BALANCE:
         new_balance = quantity
+        # this is currently always 0 because of inferred transactions
         new_delta = 0
     elif report_type == stockconst.REPORT_TYPE_TRANSFER:
         original_balance = lazy_original_balance()
