@@ -24,6 +24,7 @@ setup(
         'django>=1.6,<1.7',
         'dimagi-utils>=1.3usec',
         'psycopg2==2.5.2',
+        'south==1.0.2',
     ],
     tests_require=[
         'unittest2',
