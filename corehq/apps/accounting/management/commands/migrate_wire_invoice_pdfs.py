@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management import BaseCommand
 
 from dimagi.utils.couch.database import iter_docs
