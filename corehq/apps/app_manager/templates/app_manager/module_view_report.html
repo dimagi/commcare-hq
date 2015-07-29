@@ -58,8 +58,9 @@
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
                             <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
+                                <br/>
                                 <p>
-                                    <span data-bind="text: chart.title"></span>
+                                    {% trans 'Chart Title' %}: <span data-bind="text: chart.title"></span>
                                 </p>
                                 <p>
                                     <span>{% trans 'Graph type' %}:</span>
@@ -78,12 +79,12 @@
                                     </div>
                                     <button class="btn" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
                                         <i class="icon-plus"></i>
-                                        {% trans "Add Configuration" %}
+                                        {% trans "Add Configuration Item" %}
                                     </button>
                                 </p>
                                 <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
                                     <p>
-                                        {% trans 'Series' %}:
+                                        {% trans 'Series Configuration' %}:
                                         <span data-bind="text: series"></span>
                                         <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
                                             <p>
@@ -94,7 +95,7 @@
                                         </div>
                                         <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
                                             <i class="icon-plus"></i>
-                                            {% trans "Add Configuration" %}
+                                            {% trans "Add Series Configuration Item" %}
                                         </button>
                                     </p>
                                 </div>
