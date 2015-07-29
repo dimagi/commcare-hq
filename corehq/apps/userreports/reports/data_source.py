@@ -121,8 +121,14 @@ class ConfigurableReportDataSource(SqlData):
             # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
-                    field, order = col
+                    sort_column_id, order = col
                     is_descending = order == DESCENDING
+                    try:
+                        matching_report_column = self._column_configs[sort_column_id]
+                    except KeyError:
+                        raise SortConfigurationError('Sort column {} not found in report!'.format(sort_column_id))
+
+                    field = matching_report_column.field
                     matching_indicators = filter(
                         lambda configured_indicator: configured_indicator['column_id'] == field,
                         self.config.configured_indicators
@@ -155,7 +161,7 @@ class ConfigurableReportDataSource(SqlData):
                         return defaults.get(datatype, global_defaults)[order]
 
                     def sort_by(row):
-                        value = row.get(field, None)
+                        value = row.get(sort_column_id, None)
                         return value or get_default_sort_value(datatype, order)
 
                     ret.sort(
