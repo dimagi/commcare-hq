@@ -214,7 +214,6 @@ def _compute_ledger_values(original_balance, stock_transaction):
 
     return ledger_values
 
-
 _DeleteStockTransaction = namedtuple(
     '_DeleteStockTransaction', ['stock_transaction'])
 _SaveStockTransaction = namedtuple(

@@ -8,6 +8,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
+from corehq.apps.commtrack.processing import plan_rebuild_stock_state
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -293,12 +295,25 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @property
     def page_context(self, **kwargs):
-        stock_transactions = (
+        stock_state_keys = sorted([
+            (txn.case_id, txn.section_id, txn.product_id)
+            for txn in
             StockTransaction.objects.filter(report__domain=self.domain)
-            .order_by('case_id', 'section_id', 'product_id',
-                      'report__date', 'pk')
-            .select_related('report__type', 'report__date', 'sql_product__name')
-        )
+            .distinct('case_id', 'section_id', 'product_id')
+        ])
+
+        actions_by_stock_state_key = []
+
+        for stock_state_key in stock_state_keys:
+            case_id, section_id, product_id = stock_state_key
+            actions_by_stock_state_key.append(
+                (stock_state_key,
+                 [(action.__class__.__name__, action) for action in
+                  plan_rebuild_stock_state(case_id, section_id, product_id)],
+                 get_doc_info_by_id(self.domain, case_id))
+            )
+
+        assert len(set(stock_state_keys)) == len(stock_state_keys)
         return {
-            'stock_transactions': stock_transactions
+            'actions_by_stock_state_key': actions_by_stock_state_key
         }
