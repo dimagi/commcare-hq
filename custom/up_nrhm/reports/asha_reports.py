@@ -39,16 +39,16 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
         selected_block = self.request.GET.get('hierarchy_block')
         selected_district = self.request.GET.get('hierarchy_district')
         subtitles = [
-            _("Selected Report: {0}".format(self.report.name)),
-            _("Selected District: {0}".format(selected_district)),
+            _("Report: {0}".format(self.report.name)),
+            _("District: {0}".format(selected_district)),
         ]
         if not sf or sf in ['sf2', 'sf3', 'sf4']:
             subtitles.extend([
-                _("Selected Block: {0}".format(selected_block)),
+                _("Block: {0}".format(selected_block)),
             ])
             if sf != 'sf4' and selected_af:
                 user = CommCareUser.get(selected_af)
-                subtitles.append(_("Selected AF: {0} {1}").format(user.first_name, user.last_name))
+                subtitles.append(_("AF: {0} {1}").format(user.first_name, user.last_name))
 
         if sf in ['sf5', 'sf4', 'sf3']:
             subtitles.append(
