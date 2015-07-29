@@ -123,8 +123,12 @@ class RRReportingHistory(ILSData):
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
                 org_summary__location_id=child.location_id,
-                title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                total=1
             )
+
+            if not group_summaries:
+                continue
 
             for group_summary in group_summaries:
                 if group_summary:
