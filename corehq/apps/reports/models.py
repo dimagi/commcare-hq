@@ -268,6 +268,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
+        logging.error("This saved-report (id: %s) is unknown (report_type: %s). (Might be a legacy report)" % (
+            self._id,
+            self.report_type
+        ))
         raise Exception("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
@@ -511,7 +515,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return isinstance(self._dispatcher, ConfigurableReport)
+        return ConfigurableReport.prefix == self.report_type
 
     @property
     @memoized
