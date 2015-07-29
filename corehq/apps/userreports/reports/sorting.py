@@ -26,5 +26,3 @@ def get_default_sort_value(datatype, order):
         DESCENDING: None
     }
     return defaults.get(datatype, global_defaults)[order]
-
-
