@@ -1,5 +1,7 @@
 from datetime import timedelta, datetime, time
+from django.db.models import Q
 from django.db.models.aggregates import Avg
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     OrganizationSummary
@@ -168,3 +170,57 @@ def randr_value(location_id, start_date, end_date):
         return True, latest_submit.status_date
     else:
         return False, latest_not_submit.status_date if latest_not_submit else None
+
+
+def get_hisp_resp_rate(location):
+    statuses = SupplyPointStatus.objects.filter(
+        location_id=location.location_id,
+        status_type=SupplyPointStatusTypes.SOH_FACILITY
+    )
+    if not statuses:
+        return None
+    status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
+    denom = len(status_month_years)
+    num = 0
+    for s in status_month_years:
+        f = statuses.filter(status_date__month=s[0], status_date__year=s[1]).filter(
+            Q(status_value=SupplyPointStatusValues.SUBMITTED) |
+            Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
+            Q(status_value=SupplyPointStatusValues.RECEIVED) |
+            Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)
+        ).order_by("-status_date")
+        if f.count():
+            num += 1
+
+    return float(num) / float(denom), num, denom
+
+
+def get_last_reported(supplypoint, domain, enddate):
+    from custom.ilsgateway.tanzania.reports.stock_on_hand import _reported_on_time, OnTimeStates
+    last_bd_of_the_month = get_business_day_of_month(enddate.year,
+                                                     enddate.month,
+                                                     -1)
+    st = StockTransaction.objects.filter(
+        case_id=supplypoint,
+        type='stockonhand',
+        report__date__lte=last_bd_of_the_month,
+        report__domain=domain
+    ).order_by('-report__date')
+    last_of_last_month = datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
+    last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
+                                             last_of_last_month.month,
+                                             -1), time())
+    if st:
+        sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
+        return sts, st[0].report.date.date()
+    else:
+        sts = OnTimeStates.NO_DATA
+        return sts, None
+
+
+def calculate_months_remaining(stock_state, quantity):
+    consumption = stock_state.daily_consumption
+    if consumption is not None and consumption > 0 and quantity is not None:
+        return float(quantity) / float(30 * consumption)
+    elif quantity == 0:
+        return 0
