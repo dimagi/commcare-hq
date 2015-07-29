@@ -31,9 +31,6 @@ requires imports/proptable.html to be included in the main template
     /* TODO: does .hq-help really need to be width 0 by default? */
     width: auto;
 }
-#submit-info {
-    padding-bottom: 20px;
-}
 #form-actions-toolbar form {
     display: inline-block;
 }
@@ -131,7 +128,7 @@ requires imports/proptable.html to be included in the main template
     {% endblocktrans %}
 </div>
 {% endif %}
-<div id="submit-info">
+<div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}
             <i class="icon-lock"></i>
