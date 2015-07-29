@@ -128,20 +128,32 @@ class ConfigurableReportDataSource(SqlData):
                     except KeyError:
                         raise SortConfigurationError('Sort column {} not found in report!'.format(sort_column_id))
 
-                    field = matching_report_column.field
-                    matching_indicators = filter(
-                        lambda configured_indicator: configured_indicator['column_id'] == field,
-                        self.config.configured_indicators
-                    )
-                    if not len(matching_indicators) == 1:
-                        raise SortConfigurationError(
-                            'Number of indicators matching column %(col)s is %(num_matching)d' % {
-                                'col': col[0],
-                                'num_matching': len(matching_indicators),
-                            }
+                    def get_datatype(report_column):
+                        """
+                        Given a report column, get the data type by trying to pull it out
+                        from the data source config of the db column it points at. Defaults to "string"
+                        """
+                        try:
+                            field = matching_report_column.field
+                        except AttributeError:
+                            # if the report column doesn't have a field object, default to this
+                            # necessary for percent columns
+                            return 'string'
+
+                        matching_indicators = filter(
+                            lambda configured_indicator: configured_indicator['column_id'] == field,
+                            self.config.configured_indicators
                         )
-                    matching_indicator = matching_indicators[0]
-                    datatype = matching_indicator['datatype']
+                        if not len(matching_indicators) == 1:
+                            raise SortConfigurationError(
+                                'Number of indicators matching column %(col)s is %(num_matching)d' % {
+                                    'col': col[0],
+                                    'num_matching': len(matching_indicators),
+                                }
+                            )
+                        return matching_indicators[0]['datatype']
+
+                    datatype = get_datatype(matching_report_column)
 
                     def get_default_sort_value(datatype, order):
                         defaults = {
@@ -152,7 +164,7 @@ class ConfigurableReportDataSource(SqlData):
                             "datetime": {
                                 ASCENDING: datetime.datetime.max,
                                 DESCENDING: datetime.datetime.min,
-                            }
+                            },
                         }
                         global_defaults = {
                             ASCENDING: None,
