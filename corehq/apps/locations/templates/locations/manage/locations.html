@@ -37,7 +37,7 @@ function loc_unarchive_url(loc_id) {
 }
 
 archive_loc = function(button, name, loc_id) {
-    $(button).button('loading');
+    $(button).disableButton();
     alert_user("You have successfully archived the location " + name, "success");
     $.ajax({
         type: 'POST',
@@ -51,7 +51,7 @@ archive_loc = function(button, name, loc_id) {
 }
 
 unarchive_loc = function(button, loc_id) {
-    $(button).button('loading');
+    $(button).disableButton();
     $.ajax({
         type: 'POST',
         url: loc_unarchive_url(loc_id),
@@ -150,15 +150,15 @@ $(function() {
                     {% endif %}
 
                     {% if show_inactive %}
-                        <a class="btn btn-inverse"
+                        <button class="btn btn-inverse"
                             data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
                             {% trans "Unarchive" %}
-                        </a>
+                        </button>
                     {% else %}
-                        <a class="btn btn-inverse"
+                        <button class="btn btn-inverse"
                             data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
                             {% trans "Archive" %}
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
 
