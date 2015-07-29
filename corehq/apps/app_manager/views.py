@@ -9,6 +9,7 @@ from lxml import etree
 import os
 import re
 import json
+import yaml
 from collections import defaultdict, OrderedDict
 from xml.dom.minidom import parseString
 
@@ -1272,8 +1273,30 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'sessionid': request.COOKIES.get('sessionid'),
         'features': vellum_features,
         'plugins': vellum_plugins,
+        'app_callout_templates': next(_app_callout_templates),
     })
     return render(request, 'app_manager/form_designer.html', context)
+
+
+def _app_callout_templates():
+    """Load app callout templates from config file on disk
+
+    Generator function defers file access until needed, acts like a
+    constant thereafter.
+    """
+    path = os.path.join(
+        os.path.dirname(__file__),
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+    )
+    if os.path.exists(path):
+        with open(path) as f:
+            data = yaml.load(f)
+    else:
+        logger.info("not found: %s", path)
+        data = []
+    while True:
+        yield data
+_app_callout_templates = _app_callout_templates()
 
 
 @require_GET

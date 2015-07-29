@@ -58,6 +58,9 @@
                 {% endif %}
                 sessionid: {{ sessionid|JSON }}
             },
+            intents: {
+                templates: {{ app_callout_templates|JSON }}
+            },
             itemset: {
                 dataSourcesFilter: function (sources) {
                     return _.filter(sources, function (source) {
