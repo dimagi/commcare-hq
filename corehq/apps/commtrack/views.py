@@ -3,12 +3,13 @@ import copy
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.apps.commtrack.processing import plan_rebuild_stock_state
+from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
+    rebuild_stock_state
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 
 from dimagi.utils.decorators.memoized import memoized
@@ -307,7 +308,8 @@ class RebuildStockStateView(BaseCommTrackManageView):
         for stock_state_key in stock_state_keys:
             case_id, section_id, product_id = stock_state_key
             actions_by_stock_state_key.append(
-                (stock_state_key,
+                ({'case_id': case_id, 'section_id': section_id,
+                  'product_id': product_id},
                  [(action.__class__.__name__, action) for action in
                   plan_rebuild_stock_state(case_id, section_id, product_id)],
                  get_doc_info_by_id(self.domain, case_id))
@@ -317,3 +319,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
         return {
             'actions_by_stock_state_key': actions_by_stock_state_key
         }
+
+    def post(self, request, *args, **kwargs):
+        case_id = request.POST.get('case_id')
+        section_id = request.POST.get('section_id')
+        product_id = request.POST.get('product_id')
+        if None in (case_id, section_id, product_id):
+            return HttpResponseBadRequest()
+        rebuild_stock_state(case_id, section_id, product_id)
+        return HttpResponseRedirect('.')
