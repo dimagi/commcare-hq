@@ -8,7 +8,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-)
+    SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.specs import DESCENDING, ASCENDING
 from corehq.apps.userreports.sql import get_table_name
@@ -128,7 +128,7 @@ class ConfigurableReportDataSource(SqlData):
                         self.config.configured_indicators
                     )
                     if not len(matching_indicators) == 1:
-                        raise UserReportsError(
+                        raise SortConfigurationError(
                             'Number of indicators matching column %(col)s is %(num_matching)d' % {
                                 'col': col[0],
                                 'num_matching': len(matching_indicators),
@@ -169,8 +169,7 @@ class ConfigurableReportDataSource(SqlData):
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
-        except TypeError:
-            print 'something failed'
+        except (SortConfigurationError, TypeError):
             # if the first column isn't sortable just return the data in the order we got it
             return ret
 
