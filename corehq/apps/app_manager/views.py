@@ -1273,12 +1273,12 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'sessionid': request.COOKIES.get('sessionid'),
         'features': vellum_features,
         'plugins': vellum_plugins,
-        'app_callout_templates': next(app_callout_templates),
+        'app_callout_templates': next(_app_callout_templates),
     })
     return render(request, 'app_manager/form_designer.html', context)
 
 
-def app_callout_templates():
+def _app_callout_templates():
     """Load app callout templates from config file on disk
 
     Generator function defers file access until needed, acts like a
@@ -1296,7 +1296,7 @@ def app_callout_templates():
         data = []
     while True:
         yield data
-app_callout_templates = app_callout_templates()
+_app_callout_templates = _app_callout_templates()
 
 
 @require_GET
