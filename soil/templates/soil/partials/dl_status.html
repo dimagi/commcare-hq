@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 {% if error %}
     <h4>{% trans "There was an error processing your request" %}</h4>
     <div class="alert alert-error">
@@ -8,10 +9,18 @@
     <div id="ready_{{ download_id }}">
     {% if has_file %}
         <p class="alert alert-success">{% trans "Your export is ready." %}</p>
-        <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
-            <i class="icon icon-white icon-download-alt"></i>
-            {% trans "Download File Now" %}
-        </a>
+        <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">
+            <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
+                <i class="icon icon-white icon-download-alt"></i>
+                {% trans "Download File Now" %}
+            </a>
+
+            {% if request|toggle_enabled:"DROPBOX_SYNC" %}
+            <button type="submit" class="btn" id="dropbox-sync-submit">
+                <i class="icon icon-inbox"></i> {% trans 'Sync to Dropbox' %}
+            </button>
+            {% endif %}
+        </form>
     {% else %}
         <p class="alert alert-success">{% trans "Process complete." %}</p>
     {% endif %}
@@ -25,6 +34,9 @@
     {% endif %}
     <script type="text/javascript">
         $("#export-download-status .loading-indicator").addClass('hide');
+        $(".download-form").submit(function() {
+            $("#dropbox-sync-submit").prop('disabled', true);
+        });
     </script>
     </div>
 {% else %}
