@@ -68,7 +68,9 @@ from corehq.apps.app_manager.util import (
     save_xform,
     get_correct_app_class,
     ParentCasePropertyBuilder,
-    is_usercase_in_use)
+    is_usercase_in_use,
+    actions_use_usercase
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1690,6 +1692,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return True
 
+
 class Module(ModuleBase):
     """
     A group of related forms, and configuration that applies to them all.
@@ -1927,6 +1930,24 @@ class Module(ModuleBase):
                 'type': 'no ref detail',
                 'module': module_info,
             }
+
+    def is_usercaseonly(self):
+        """
+        Return False is the usercase is unused, or if any forms update a
+        different case type. If the only case type updated in the module is
+        the usercase, return True.
+        """
+        def actions_use_another_case(actions):
+            return (actions.get('update_case', {'update': None})['update'] or
+                    actions.get('case_preload', {'preload': None})['preload'])
+
+        uses_usercase = False
+        for form in self.forms:
+            if actions_use_another_case(form.active_actions()):
+                return False
+            if actions_use_usercase(form.active_actions()):
+                uses_usercase = True
+        return uses_usercase
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2397,6 +2418,22 @@ class AdvancedModule(ModuleBase):
                     })
 
         return errors
+
+    def is_usercaseonly(self):
+        """
+        Return False is the usercase is unused, or if any forms update a
+        different case type. If the only case type updated in the module is
+        the usercase, return True.
+        """
+        uses_usercase = False
+        for form in self.forms:
+            if form.actions.load_update_cases:
+                for action in form.actions.load_update_cases:
+                    if action.case_type == USERCASE_TYPE:
+                        uses_usercase = True
+                    else:
+                        return False
+        return uses_usercase
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
