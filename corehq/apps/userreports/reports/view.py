@@ -17,6 +17,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsFilterError)
 from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.util import localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -160,8 +161,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         datespan_filters = []
         for f in self.datespan_filters:
             copy = dict(f)
-            if isinstance(copy['display'], dict):
-                copy['display'] = copy['display'][self.lang]
+            copy['display'] = localize(copy['display'], self.lang)
             datespan_filters.append(copy)
 
         return {
