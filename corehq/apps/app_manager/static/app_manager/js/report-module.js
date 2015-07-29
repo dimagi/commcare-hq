@@ -1,11 +1,12 @@
 
 var ReportModule = (function () {
 
-    function ReportConfig(report_id, display, availableReportIds, language) {
+    function ReportConfig(report_id, display, availableReportIds, reportCharts, language) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
+        this.reportCharts = JSON.parse(JSON.stringify(reportCharts || {}));
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.reportId = ko.observable(report_id);
         this.toJSON = function () {
@@ -15,6 +16,9 @@ var ReportModule = (function () {
                 header: self.fullDisplay
             };
         };
+        this.charts = ko.computed(function() {
+            return self.reportCharts[self.reportId()];
+        });
     }
     function ReportModule(options) {
         var self = this;
@@ -25,10 +29,15 @@ var ReportModule = (function () {
         self.moduleName = options.moduleName;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.reportTitles = {};
+        self.reportCharts = {};
         self.reports = ko.observableArray([]);
         for (var i = 0; i < availableReports.length; i++) {
-            self.reportTitles[availableReports[i].report_id] = availableReports[i].title;
+            var report = availableReports[i];
+            var report_id = report.report_id;
+            self.reportTitles[report_id] = report.title;
+            self.reportCharts[report_id] = report.charts;
         }
+
         self.availableReportIds = _.map(options.availableReports, function (r) { return r.report_id; });
 
         self.defaultReportTitle = function (reportId) {
@@ -66,7 +75,13 @@ var ReportModule = (function () {
 
         function newReport(options) {
             options = options || {};
-            var report = new ReportConfig(options.report_id, options.header, self.availableReportIds, self.lang);
+            var report = new ReportConfig(
+                options.report_id,
+                options.header,
+                self.availableReportIds,
+                self.reportCharts,
+                self.lang
+            );
             report.display.subscribe(changeSaveButton);
             report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
