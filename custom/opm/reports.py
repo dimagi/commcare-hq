@@ -19,7 +19,7 @@ from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter, IN, EQFilter
+from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from custom.common import ALL_OPTION
@@ -28,15 +28,14 @@ from custom.opm.utils import numeric_fn
 from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
-from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
+from sqlagg.columns import SimpleColumn, SumColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import make_form_couch_key
@@ -44,8 +43,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, normal_format, format_percent,
-                    get_matching_users, UserSqlData)
+from .utils import (BaseMixin, get_matching_users, UserSqlData)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import AWCHealthStatus
 from .incentive import Worker
