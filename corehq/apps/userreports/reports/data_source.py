@@ -10,7 +10,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
 )
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.specs import DESCENDING
+from corehq.apps.userreports.reports.specs import DESCENDING, ASCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
@@ -121,36 +121,42 @@ class ConfigurableReportDataSource(SqlData):
             # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
-                    is_descending = col[1] == DESCENDING
+                    field, order = col
+                    is_descending = order == DESCENDING
+                    matching_indicators = filter(
+                        lambda configured_indicator: configured_indicator['column_id'] == field,
+                        self.config.configured_indicators
+                    )
+                    if not len(matching_indicators) == 1:
+                        raise UserReportsError(
+                            'Number of indicators matching column %(col)s is %(num_matching)d' % {
+                                'col': col[0],
+                                'num_matching': len(matching_indicators),
+                            }
+                        )
+                    matching_indicator = matching_indicators[0]
+                    datatype = matching_indicator['datatype']
+
+                    def get_default_sort_value(datatype, order):
+                        defaults = {
+                            "date": {
+                                ASCENDING: datetime.date.max,
+                                DESCENDING: datetime.date.min,
+                            },
+                            "datetime": {
+                                ASCENDING: datetime.datetime.max,
+                                DESCENDING: datetime.datetime.min,
+                            }
+                        }
+                        global_defaults = {
+                            ASCENDING: None,
+                            DESCENDING: None
+                        }
+                        return defaults.get(datatype, global_defaults)[order]
 
                     def sort_by(row):
-                        value = row.get(col[0], None)
-                        if not value:
-                            matching_indicators = filter(
-                                lambda configured_indicator: configured_indicator['column_id'] == col[0],
-                                self.config.configured_indicators
-                            )
-                            if not len(matching_indicators) == 1:
-                                raise UserReportsError(
-                                    'Number of indicators matching column %(col)s is %(num_matching)d' % {
-                                        'col': col[0],
-                                        'num_matching': len(matching_indicators),
-                                    }
-                                )
-                            if matching_indicators[0]['datatype'] == 'date':
-                                return (
-                                    datetime.date(datetime.MINYEAR, 1, 1)
-                                    if is_descending else datetime.date(datetime.MAXYEAR, 12, 31)
-                                )
-                            elif matching_indicators[0]['datatype'] == 'datetime':
-                                return (
-                                    datetime.datetime(datetime.MINYEAR, 1, 1)
-                                    if is_descending else datetime.datetime(
-                                        datetime.MAXYEAR, 12, 31,
-                                        23, 59, 59, 999999
-                                    )
-                                )
-                        return value
+                        value = row.get(field, None)
+                        return value or get_default_sort_value(datatype, order)
 
                     ret.sort(
                         key=sort_by,
@@ -164,6 +170,7 @@ class ConfigurableReportDataSource(SqlData):
                     next(x.itervalues())
                 ))
         except TypeError:
+            print 'something failed'
             # if the first column isn't sortable just return the data in the order we got it
             return ret
 
