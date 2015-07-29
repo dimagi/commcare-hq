@@ -58,7 +58,6 @@ def populate_sql_product(instance):
 
 
 def update_stock_state_for_transaction(instance):
-    from casexml.apps.case.models import CommCareCase
     from corehq.apps.commtrack.models import StockState
     from corehq.apps.locations.models import SQLLocation
     from corehq.apps.products.models import SQLProduct
@@ -69,14 +68,13 @@ def update_stock_state_for_transaction(instance):
     # - one postgres write (to save the state)
     # and that doesn't even include the consumption calc, which can do a whole
     # bunch more work and hit the database.
+    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
     try:
         domain_name = instance.domain
     except AttributeError:
-        domain_name = CommCareCase.get(instance.case_id).domain
+        domain_name = sql_product.domain
 
     domain = Domain.get_by_name(domain_name)
-
-    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
     try:
         sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
