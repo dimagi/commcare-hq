@@ -57,7 +57,7 @@ var ReportModule = (function () {
         });
 
         this.getCurrentGraphConfig = function(chart_id) {
-            return self.currentGraphConfigs()[chart_id] || {};
+            return self.currentGraphConfigs()[chart_id] || {config: {keyValuePairs: []}};
         };
 
         this.toJSON = function () {
