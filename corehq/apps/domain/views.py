@@ -1127,14 +1127,18 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         try:
-            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id,
-                                          subscription__subscriber__domain=domain)
-        except Invoice.DoesNotExist:
-            try:
-                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id,
-                                                  domain=domain)
-            except WireInvoice.DoesNotExist:
-                raise Http404()
+            if invoice_pdf.is_wire:
+                invoice = WireInvoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    domain=domain
+                )
+            else:
+                invoice = Invoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    subscription__subscriber__domain=domain
+                )
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist):
+            raise Http404()
 
         if invoice.is_wire:
             edition = 'Bulk'
