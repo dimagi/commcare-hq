@@ -27,19 +27,19 @@ var ReportModule = (function () {
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
                 var graph_config = graph_configs[currentChart.chart_id] || {};
-                var series_config = {};
+                var series_configs = {};
                 var chart_series = [];
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
                     var series = currentChart.y_axis_columns[k];
                     chart_series.push(series);
-                    series_config[series] = new Config(
-                        currentReportId == report_id ? (graph_config.series_config || {})[series] || {} : {}
+                    series_configs[series] = new Config(
+                        currentReportId == report_id ? (graph_config.series_configs || {})[series] || {} : {}
                     );
                 }
 
                 self.graphConfigs[currentReportId][currentChart.chart_id] = {
                     graph_type: ko.observable(currentReportId == report_id ? graph_config.graph_type || 'bar' : 'bar'),
-                    series_config: series_config,
+                    series_configs: series_configs,
                     chart_series: chart_series,
                     config: new Config(
                         currentReportId == report_id ? graph_config.config || {} : {}
@@ -75,10 +75,10 @@ var ReportModule = (function () {
             for (var chart_id in currentChartsToConfigs) {
                 var graph_config = currentChartsToConfigs[chart_id];
                 chartsToConfigs[chart_id] = {
-                    series_config: {}
+                    series_configs: {}
                 };
-                for (var series in graph_config.series_config) {
-                    chartsToConfigs[chart_id].series_config[series] = configToDict(graph_config.series_config[series])
+                for (var series in graph_config.series_configs) {
+                    chartsToConfigs[chart_id].series_configs[series] = configToDict(graph_config.series_configs[series])
                 }
                 chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
                 chartsToConfigs[chart_id].config = configToDict(graph_config.config);

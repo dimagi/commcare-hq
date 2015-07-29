@@ -85,14 +85,14 @@
                                     <p>
                                         {% trans 'Series' %}:
                                         <span data-bind="text: series"></span>
-                                        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_config[series].keyValuePairs, as: 'keyValuePair' }">
+                                        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
                                             <p>
                                                 <input type="text" data-bind="value: keyValuePair[0]">
                                                 -->
                                                 <input type="text" data-bind="value: keyValuePair[1]">
                                             </p>
                                         </div>
-                                        <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_config[series].addConfig">
+                                        <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
                                             <i class="icon-plus"></i>
                                             {% trans "Add Configuration" %}
                                         </button>
