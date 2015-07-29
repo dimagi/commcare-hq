@@ -1,24 +1,109 @@
 
 var ReportModule = (function () {
 
-    function ReportConfig(report_id, display, availableReportIds, reportCharts, language) {
+    function observableDict() {
+        var self = this;
+        self.keys = ko.observableArray();
+        self.values = ko.observableArray();
+
+    }
+
+    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs) {
+        var self = this;
+
+        graph_configs = graph_configs || {};
+
+        function new_config(dict) {
+            var config = {
+                keys: ko.observableArray(),
+                values: ko.observableArray()
+            };
+            var dict = dict || {};
+            for (var key in dict) {
+                config.keys.push(key);
+                config.values.push(dict[key]);
+            }
+            return config;
+        }
+
+        this.graphConfigs = {};
+        for (var i = 0; i < availableReportIds.length; i++) {
+            var currentReportId = availableReportIds[i];
+            self.graphConfigs[currentReportId] = {};
+            for (var j = 0; j < reportCharts[currentReportId].length; j++) {
+                var currentChart = reportCharts[currentReportId][j];
+                var graph_config = graph_configs[currentChart.chart_id] || {};
+                var series_config = {};
+                for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
+                    var series = currentChart.y_axis_columns[k];
+                    series_config[series] = new_config(
+                        currentReportId == report_id ? graph_config.series_configs[series] || {} : {}
+                    );
+                }
+                self.graphConfigs[currentReportId][currentChart.chart_id] = {
+                    graph_type: ko.observable(currentReportId == report_id ? graph_config.graph_type || 'bar' : 'bar'),
+                    series_config: series_config,
+                    config: new_config(
+                        currentReportId == report_id ? graph_config.config || {} : {}
+                    )
+                }
+            }
+        }
+
+        this.currentGraphConfigs = ko.computed(function() {
+            return self.graphConfigs[reportId()];
+        });
+
+        this.currentCharts = ko.computed(function() {
+            return reportCharts[reportId()];
+        });
+
+        this.getCurrentGraphConfig = function(chart_id) {
+            return self.currentGraphConfigs()[chart_id] || {};
+        };
+
+        this.toJSON = function () {
+            function configToDict(config) {
+                var dict = {};
+                for (var i = 0; i < config.keys.length; i++) {
+                    dict[config.keys[i]] = config.values[i];
+                }
+                return dict;
+            }
+
+            var chartsToConfigs = {};
+            var currentChartsToConfigs = self.currentGraphConfigs();
+            for (var chart_id in currentChartsToConfigs) {
+                var graph_config = currentChartsToConfigs[chart_id];
+                chartsToConfigs[chart_id] = {
+                    series_config: {}
+                };
+                for (var series in graph_config.series_config) {
+                    chartsToConfigs[chart_id].series_config[series] = configToDict(graph_config.series_config[series])
+                }
+                chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
+                chartsToConfigs[chart_id].config = configToDict(graph_config.config);
+            }
+            return chartsToConfigs;
+        };
+    }
+
+    function ReportConfig(report_id, display, availableReportIds, reportCharts, graph_configs, language) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
-        this.reportCharts = JSON.parse(JSON.stringify(reportCharts || {}));
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.reportId = ko.observable(report_id);
+        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
             return {
                 report_id: self.reportId(),
+                graph_configs: self.graphConfig.toJSON(),
                 header: self.fullDisplay
             };
         };
-        this.charts = ko.computed(function() {
-            return self.reportCharts[self.reportId()];
-        });
     }
     function ReportModule(options) {
         var self = this;
@@ -80,6 +165,7 @@ var ReportModule = (function () {
                 options.header,
                 self.availableReportIds,
                 self.reportCharts,
+                options.graph_configs,
                 self.lang
             );
             report.display.subscribe(changeSaveButton);

@@ -57,7 +57,13 @@
                         </td>
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
-                            <div data-bind="foreach: { data: charts, as: 'chart' }">
+                            <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
+                                <span data-bind="text: chart.chart_id"></span>
+                                <br/>
+                                <span>Graph type:</span>
+                                <input type="text" data-bind="
+                                    value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+                                "></span>
                             </div>
                         </td>
                         <td>
