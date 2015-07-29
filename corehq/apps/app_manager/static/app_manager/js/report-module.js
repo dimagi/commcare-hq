@@ -1,30 +1,24 @@
 
 var ReportModule = (function () {
 
-    function observableDict() {
+    function Config(dict) {
         var self = this;
-        self.keys = ko.observableArray();
-        self.values = ko.observableArray();
 
-    }
+        var dict = dict || {};
+        self.keyValuePairs = ko.observableArray();
+        for (var key in dict) {
+            self.keyValuePairs.push([ko.observable(key), ko.observable(dict[key])]);
+        }
+
+        self.addConfig = function() {
+            self.keyValuePairs.push([ko.observable(''), ko.observable('')]);
+        };
+    };
 
     function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs) {
         var self = this;
 
         graph_configs = graph_configs || {};
-
-        function new_config(dict) {
-            var config = {
-                keys: ko.observableArray(),
-                values: ko.observableArray()
-            };
-            var dict = dict || {};
-            for (var key in dict) {
-                config.keys.push(key);
-                config.values.push(dict[key]);
-            }
-            return config;
-        }
 
         this.graphConfigs = {};
         for (var i = 0; i < availableReportIds.length; i++) {
@@ -36,14 +30,14 @@ var ReportModule = (function () {
                 var series_config = {};
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
                     var series = currentChart.y_axis_columns[k];
-                    series_config[series] = new_config(
+                    series_config[series] = new Config(
                         currentReportId == report_id ? graph_config.series_configs[series] || {} : {}
                     );
                 }
                 self.graphConfigs[currentReportId][currentChart.chart_id] = {
                     graph_type: ko.observable(currentReportId == report_id ? graph_config.graph_type || 'bar' : 'bar'),
                     series_config: series_config,
-                    config: new_config(
+                    config: new Config(
                         currentReportId == report_id ? graph_config.config || {} : {}
                     )
                 }
@@ -65,8 +59,9 @@ var ReportModule = (function () {
         this.toJSON = function () {
             function configToDict(config) {
                 var dict = {};
-                for (var i = 0; i < config.keys.length; i++) {
-                    dict[config.keys[i]] = config.values[i];
+                var keyValuePairs = config.keyValuePairs();
+                for (var i = 0; i < keyValuePairs.length; i++) {
+                    dict[keyValuePairs[i][0]()] = keyValuePairs[i][1]();
                 }
                 return dict;
             }

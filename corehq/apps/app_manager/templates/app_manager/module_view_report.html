@@ -58,12 +58,29 @@
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
                             <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
-                                <span data-bind="text: chart.title"></span>
-                                <br/>
-                                <span>Graph type:</span>
-                                <input type="text" data-bind="
-                                    value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
-                                "></span>
+                                <p>
+                                    <span data-bind="text: chart.title"></span>
+                                </p>
+                                <p>
+                                    <span>{% trans 'Graph type' %}:</span>
+                                    <input type="text" data-bind="
+                                        value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+                                    "></span>
+                                </p>
+                                <p>
+                                    {% trans 'Configuration' %}:
+                                    <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
+                                        <p>
+                                            <input type="text" data-bind="value: keyValuePair[0]">
+                                            -->
+                                            <input type="text" data-bind="value: keyValuePair[1]">
+                                        </p>
+                                    </div>
+                                    <button class="btn" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
+                                        <i class="icon-plus"></i>
+                                        {% trans "Add Configuration" %}
+                                    </button>
+                                </p>
                             </div>
                         </td>
                         <td>
