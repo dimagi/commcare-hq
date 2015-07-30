@@ -11,7 +11,7 @@ import json
 import types
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
@@ -93,6 +93,7 @@ from .exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager import id_strings
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -2855,11 +2856,18 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 
 class StaticDatespanFilter(ReportAppFilter):
-    start_date = DateProperty()
-    end_date = DateProperty()
+    date_range = StringProperty(
+        choices=[
+            'last7',
+            'last30',
+            'lastmonth',
+        ],
+        required=True,
+    )
 
     def get_filter_value(self, user):
-        return DateSpan(startdate=self.start_date, enddate=self.end_date)
+        start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
 
 
 class ReportAppConfig(DocumentSchema):
