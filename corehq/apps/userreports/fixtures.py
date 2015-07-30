@@ -6,6 +6,7 @@ from corehq.apps.app_manager.models import (
     AutoFilter,
     CustomDataAutoFilter,
     ReportModule,
+    StaticChoiceFilter,
     StaticChoiceListFilter,
     StaticDatespanFilter,
 )
@@ -17,6 +18,7 @@ def wrap_by_filter_type(report_app_filter):
     doc_type_to_filter_class = {
         'AutoFilter': AutoFilter,
         'CustomDataAutoFilter': CustomDataAutoFilter,
+        'StaticChoiceFilter': StaticChoiceFilter,
         'StaticChoiceListFilter': StaticChoiceListFilter,
         'StaticDatespanFilter': StaticDatespanFilter,
     }

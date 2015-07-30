@@ -2838,6 +2838,14 @@ class CustomDataAutoFilter(ReportAppFilter):
         return Choice(value=user.user_data[self.custom_data_property], display=None)
 
 
+class StaticChoiceFilter(ReportAppFilter):
+    select_value = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=self.select_value, display=None)]
+
+
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
 
