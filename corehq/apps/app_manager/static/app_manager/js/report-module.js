@@ -4,7 +4,8 @@ var ReportModule = (function () {
     function Config(dict) {
         var self = this;
 
-        var dict = dict || {};
+        dict = dict || {};
+
         self.keyValuePairs = ko.observableArray();
         for (var key in dict) {
             self.keyValuePairs.push([ko.observable(key), ko.observable(dict[key])]);
@@ -13,7 +14,7 @@ var ReportModule = (function () {
         self.addConfig = function() {
             self.keyValuePairs.push([ko.observable(''), ko.observable('')]);
         };
-    };
+    }
 
     function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs) {
         var self = this;
@@ -44,7 +45,7 @@ var ReportModule = (function () {
                     config: new Config(
                         currentReportId == report_id ? graph_config.config || {} : {}
                     )
-                }
+                };
             }
         }
 
@@ -78,7 +79,7 @@ var ReportModule = (function () {
                     series_configs: {}
                 };
                 for (var series in graph_config.series_configs) {
-                    chartsToConfigs[chart_id].series_configs[series] = configToDict(graph_config.series_configs[series])
+                    chartsToConfigs[chart_id].series_configs[series] = configToDict(graph_config.series_configs[series]);
                 }
                 chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
                 chartsToConfigs[chart_id].config = configToDict(graph_config.config);
