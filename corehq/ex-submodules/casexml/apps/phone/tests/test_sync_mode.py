@@ -546,6 +546,20 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
 
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_close_in_same_form(self):
+        self.factory.create_case(owner_id='irrelevant_1', close=True)
+
+    @run_with_all_restore_configs
+    def test_reassign_and_close_in_same_form(self):
+        case_id = self.factory.create_case()._id
+        self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=case_id,
+                attrs={'owner_id': 'irrelevant', 'close': True},
+            )
+        )
+
 
 class SyncTokenCachingTest(SyncBaseTest):
 
