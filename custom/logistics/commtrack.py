@@ -133,7 +133,7 @@ def bootstrap_domain(api_object, **kwargs):
             limit = 100
             offset = 0
 
-        save_checkpoint(checkpoint, 'product', 100, 0, start_date, False)
+        save_checkpoint(checkpoint, 'product', 100, 0, checkpoint.start_date, False)
         checkpoint.start_date = None
         checkpoint.save()
     except ConnectionError as e:
