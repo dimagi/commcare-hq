@@ -26,3 +26,7 @@ class TableRebuildError(UserReportsError):
 
 class UserReportsFilterError(UserReportsError):
     pass
+
+
+class SortConfigurationError(UserReportsError):
+    pass
