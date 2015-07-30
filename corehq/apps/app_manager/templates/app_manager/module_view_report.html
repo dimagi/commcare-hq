@@ -133,8 +133,10 @@
                                                 "></select>
                                             </div>
                                             <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticDatespanFilter'">
-                                                <input type="date" data-bind="value: filter.selectedValue.start_date"/>
-                                                <input type="date" data-bind="value: filter.selectedValue.end_date"/>
+                                                <select data-bind="
+                                                    options: report.filterConfig.date_range_options,
+                                                    value: filter.selectedValue.date_range
+                                                "></select>
                                             </div>
                                             <div data-bind="visible: filter.selectedValue.doc_type() == 'CustomDataAutoFilter'">
                                                 <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
