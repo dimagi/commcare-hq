@@ -541,7 +541,10 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
-        self.clean = False
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
+        self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
 
 
 class SyncTokenCachingTest(SyncBaseTest):
