@@ -349,6 +349,7 @@ var AdvancedCase = (function () {
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
                     parent_reference_id: 'parent',
+                    relationship: 'child',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -383,6 +384,7 @@ var AdvancedCase = (function () {
                     repeat_context: '',
                     parent_tag: '',
                     parent_reference_id: 'parent',
+                    relationship: 'child',
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
@@ -459,7 +461,7 @@ var AdvancedCase = (function () {
                     return "Subcase must be in same repeat context as parent.";
                 }
             }
-                    return null;
+            return null;
         },
         close_case: function (self) {
             return {
@@ -776,6 +778,7 @@ var AdvancedCase = (function () {
                     'case_tag',
                     'parent_tag',
                     'parent_reference_id',
+                    'relationship',
                     'open_condition',
                     'close_condition'
                 ],
@@ -874,6 +877,16 @@ var AdvancedCase = (function () {
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
             };
+
+            self.relationshipTypes = ko.observableArray(['child', 'extension']);
+            self.relationship = ko.observable('child');
+            self.relationship.subscribe(function (rel) {
+                if (rel == 'extension' && self.parent_reference_id() == 'parent') {
+                    self.parent_reference_id('host');
+                } else if (rel == 'child' && self.parent_reference_id() == 'host') {
+                    self.parent_reference_id('parent');
+                }
+            });
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
