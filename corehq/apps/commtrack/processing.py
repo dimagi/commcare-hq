@@ -230,7 +230,10 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
     facilitating doing a dry run
 
     Warning: since some important things are still done through signals
-    rather than here explicitly,
+    rather than here explicitly, there may be some effects that aren't
+    represented in the plan. For example, inferred transaction creation
+    will not be represented, nor will updates to the StockState object.
+
     """
 
     # these come out latest first, so reverse them below
