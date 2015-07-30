@@ -11,7 +11,7 @@ import json
 import types
 import re
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import datetime
 from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen

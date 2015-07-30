@@ -923,8 +923,8 @@ def get_module_view_context_and_template(app, module):
                 _('Your app contains references to reports that are deleted. These will be removed on save.')
             )
         return 'app_manager/module_view_report.html', {
-            'all_reports': [_report_to_config(r) for r in all_reports], # structure for all reports
-            'current_reports': [r.to_json() for r in module.report_configs], # app report data
+            'all_reports': [_report_to_config(r) for r in all_reports],
+            'current_reports': [r.to_json() for r in module.report_configs],
             'invalid_report_references': invalid_report_references,
             'warnings': warnings,
         }
