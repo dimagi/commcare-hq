@@ -66,6 +66,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id,
     for case in cases_to_rebuild - deleted_cases:
         _rebuild_case_with_retries.delay(case)
 
+
 @task(bind=True, rate_limit=2, queue='background_queue', ignore_result=True,
       default_retry_delay=5, max_retries=3)
 def _rebuild_case_with_retries(self, case_id):
