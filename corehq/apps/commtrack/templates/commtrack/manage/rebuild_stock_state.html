@@ -10,31 +10,33 @@
         {% if forloop.first %}
         <tr>
             <td colspan="6" style="text-align: center">
-                <strong>{{ case_doc_info|pretty_doc_info }}</strong>
-                {{ stock_transaction.section_id }}
-                for <em>{{ stock_transaction.sql_product.name }}</em>
+                {% blocktrans with case_display=case_doc_info|pretty_doc_info section_display=stock_transaction.section_id product_name=stock_transaction.sql_product.name %}
+                <strong>{{ case_display }}</strong>
+                {{ section_display }}
+                for <em>{{ product_name }}</em>
+                {% endblocktrans %}
                 {% if request.user.is_superuser and request|toggle_enabled:'SUPPORT' %}
                 <form method="post" action="" class="pull-right">
                     <input type="hidden" name="case_id" value="{{ key.case_id }}">
                     <input type="hidden" name="section_id" value="{{ key.section_id }}">
                     <input type="hidden" name="product_id" value="{{ key.product_id }}">
-                    <input type="submit" class="btn btn-primary" value="Rebuild"/>
+                    <input type="submit" class="btn btn-primary" value="{% trans "Rebuild" %}"/>
                 </form>
                 {% endif %}
             </td>
         </tr>
         <tr>
             <th colspan="2"></th>
-            <th colspan="2">Current Values</th>
-            <th colspan="2">Rebuilt Values</th>
+            <th colspan="2">{% trans "Current Values" %}</th>
+            <th colspan="2">{% trans "Rebuilt Values" %}</th>
         </tr>
         <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Quantity</th>
-            <th>Stock on Hand</th>
-            <th>Quantity</th>
-            <th>Stock on Hand</th>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Quantity" %}</th>
+            <th>{% trans "Stock on Hand" %}</th>
+            <th>{% trans "Quantity" %}</th>
+            <th>{% trans "Stock on Hand" %}</th>
         </tr>
         {% endif %}
         <tr>
@@ -60,7 +62,7 @@
                 {{ action.ledger_values.balance }}</span>
             </td>
             {% else %}
-            <td colspan="2">(will be deleted)</td>
+            <td colspan="2">{% trans "(will be deleted)" %}</td>
             {% endif %}
         </tr>
         {% endwith %}
