@@ -113,7 +113,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             'referenced_id': patient_id,
             'closed': task_status,
             'owner_ids': owner_ids,
-            'users_id': user_id,
+            'user_id': user_id,
         }
 
     @property
