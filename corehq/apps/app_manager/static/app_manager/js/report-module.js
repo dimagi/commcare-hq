@@ -105,8 +105,7 @@ var ReportModule = (function () {
                     };
                 }
                 filter.selectedValue.filter_type = ko.observable(filter.selectedValue.filter_type || '');
-                filter.selectedValue.start_date = ko.observable(filter.selectedValue.start_date || '');
-                filter.selectedValue.end_date = ko.observable(filter.selectedValue.end_date || '');
+                filter.selectedValue.date_range = ko.observable(filter.selectedValue.date_range || '');
                 filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
                 filter.selectedValue.select_value = ko.observable(filter.selectedValue.select_value || '');
@@ -136,10 +135,9 @@ var ReportModule = (function () {
                     // Depending on doc_type, pull the correct observables' values
                     if (filter.selectedValue.doc_type() == 'AutoFilter') {
                         selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
-                    } else if (filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
-                        selectedFilterValues[filter.slug]['start_date'] = filter.selectedValue.start_date();
-                        selectedFilterValues[filter.slug]['end_date'] = filter.selectedValue.end_date();
-                    } else if (filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
+                    } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
+                        selectedFilterValues[filter.slug]['date_range'] = filter.selectedValue.date_range();
+                    } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
                         selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
                     } else if (filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value().split("\u001F");
@@ -165,6 +163,7 @@ var ReportModule = (function () {
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
+        this.date_range_options = ['last7', 'last30', 'lastmonth'];
     }
 
     function ReportConfig(report_id, display, availableReportIds,
