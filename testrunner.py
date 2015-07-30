@@ -1,16 +1,17 @@
+import datetime
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
 from couchdbkit import Database, ResourceNotFound
+
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
-import datetime
 from django.conf import settings
-from django.utils import unittest
-import settingshelper
-
 from django.test import TransactionTestCase
+from django.utils import unittest
 from mock import patch, Mock
+
+import settingshelper
 
 
 def set_db_enabled(is_enabled):
