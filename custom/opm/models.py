@@ -5,7 +5,6 @@ from corehq.fluff.calculators.case import CasePropertyFilter
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
-from .constants import *
 import fluff
 
 from . import case_calcs, user_calcs

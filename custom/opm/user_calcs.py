@@ -30,6 +30,7 @@ class WomenRegistered(fluff.Calculator):
         if case.type == "Pregnancy":
             yield case.opened_on
 
+
 class ChildrenRegistered(fluff.Calculator):
     """
     "No. of children registered under BCSP"
@@ -91,7 +92,6 @@ class GrowthMonitoring(fluff.Calculator):
                         form.metadata.userID,
                     ],
                 }
-
 
     def get_result(self, key, date_range=None, reduce=True):
         # This block is pretty much a stripped copy-paste from fluff
