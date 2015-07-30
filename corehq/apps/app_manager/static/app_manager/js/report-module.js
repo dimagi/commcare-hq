@@ -1,17 +1,14 @@
 
 var ReportModule = (function () {
 
-    function ReportConfig(report_id, display, availableReportIds, language, filterValues, reportFilters) {
+    function FilterConfig(report_id, reportId, filterValues, reportFilters) {
         var self = this;
-        this.lang = language;
-        this.fullDisplay = display || {};
-        this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]); // chosen in UI
-        this.reportId = ko.observable(report_id); // chosen in UI
-        this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});  // stores filter structure
-        for(var _id in this.reportFilters()) {
-            for(var i = 0; i < this.reportFilters()[_id].length; i++) {
-                var filter = this.reportFilters()[_id][i];
+
+        this.reportFilters = JSON.parse(JSON.stringify(reportFilters)) || {};
+        for(var _id in this.reportFilters) {
+            for(var i = 0; i < this.reportFilters[_id].length; i++) {
+                // Get saved values for initial report, then make observables
+                var filter = this.reportFilters[_id][i];
                 if(_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
@@ -27,19 +24,24 @@ var ReportModule = (function () {
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
 
                 filter.dynamicFilterName = ko.computed(function() {
-                    return self.reportId() + '/' + filter.slug;
+                    return reportId() + '/' + filter.slug;
                 });
             }
         }
 
-        this.toJSON = function () {
-            self.fullDisplay[self.lang] = self.display();
+        this.selectedFilterStructure = ko.computed(function() { // for the chosen report
+            return self.reportFilters[reportId()];
+        });
+
+        this.toJSON = function() {
+            var selectedFilterStructure = self.selectedFilterStructure();
             var selectedFilterValues = {};
-            for(var i = 0; i < self.selectedFilterStructure().length; i++) {
-                var filter = self.selectedFilterStructure()[i];
+            for(var i = 0; i < selectedFilterStructure.length; i++) {
+                var filter = selectedFilterStructure[i];
                 if(filter.selectedValue.doc_type()) {
                     selectedFilterValues[filter.slug] = {};
                     selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
+                    // Depending on doc_type, pull the correct observables' values
                     if(filter.selectedValue.doc_type() == 'AutoFilter') {
                         selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
                     } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
@@ -52,31 +54,42 @@ var ReportModule = (function () {
                     }
                 }
             }
-            return {
-                report_id: self.reportId(),
-                header: self.fullDisplay,
-                filters: selectedFilterValues
-            };
+            return selectedFilterValues;
         };
-
-        this.selectedFilterStructure = ko.computed(function() { // for the chosen report
-            return self.reportFilters()[self.reportId()];
-        });
 
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
+
+    function ReportConfig(report_id, display, availableReportIds, language, filterValues, reportFilters) {
+        var self = this;
+        this.lang = language;
+        this.fullDisplay = display || {};
+        this.availableReportIds = availableReportIds;
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.reportId = ko.observable(report_id);
+        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters);
+
+        this.toJSON = function () {
+            self.fullDisplay[self.lang] = self.display();
+            return {
+                report_id: self.reportId(),
+                filters: self.filterConfig.toJSON(),
+                header: self.fullDisplay
+            };
+        };
+    }
     function ReportModule(options) {
         var self = this;
-        var currentReports = options.currentReports || []; // structure for all reports
-        var availableReports = options.availableReports || []; // config data for app reports
+        var currentReports = options.currentReports || [];
+        var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
-        self.reportTitles = {}; // all reports (titles)
-        self.reportFilters = {}; // id -> filter structure (all reports, filters)
+        self.reportTitles = {};
+        self.reportFilters = {};
         self.reports = ko.observableArray([]);
         for (var i = 0; i < availableReports.length; i++) {
             self.reportTitles[availableReports[i].report_id] = availableReports[i].title;
