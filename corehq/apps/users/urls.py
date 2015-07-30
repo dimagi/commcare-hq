@@ -3,9 +3,7 @@ from django.conf.urls import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
 from .views import (DefaultProjectUserSettingsView, EditWebUserView,
-    EditMyAccountDomainView, ListWebUsersView, InviteWebUserView,
-    NewListWebUsersView,
-)
+    ListWebUsersView, InviteWebUserView, NewListWebUsersView)
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
     BulkSMSVerificationView)
@@ -16,7 +14,6 @@ from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
 
 urlpatterns = patterns('corehq.apps.users.views',
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
-    url(r'^my_account/$', EditMyAccountDomainView.as_view(), name=EditMyAccountDomainView.urlname),
     url(r'^change_password/(?P<login_id>[\w-]+)/$', 'change_password', name="change_password"),
     url(r'^domain_accounts/(?P<couch_user_id>[\w-]+)/$', 'domain_accounts', name='domain_accounts'),
     url(r'^delete_phone_number/(?P<couch_user_id>[\w-]+)/$',

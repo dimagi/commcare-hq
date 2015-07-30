@@ -1062,7 +1062,6 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views import (
                 EditWebUserView,
-                EditMyAccountDomainView,
                 get_web_user_list_view,
             )
             items.append((_('Project Users'), [
@@ -1078,10 +1077,6 @@ class ProjectUsersTab(UITab):
                         {
                             'title': web_username,
                             'urlname': EditWebUserView.urlname
-                        },
-                        {
-                            'title': _('My Information'),
-                            'urlname': EditMyAccountDomainView.urlname
                         }
                     ],
                     'show_in_dropdown': True,

@@ -279,8 +279,6 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -341,46 +339,6 @@ class BaseFullEditUserView(BaseEditUserView):
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
-
-
-class EditMyAccountDomainView(BaseFullEditUserView):
-    template_name = "users/edit_full_user.html"
-    urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
-    user_update_form_class = UpdateMyAccountInfoForm
-
-    @property
-    def editable_user_id(self):
-        return self.couch_user._id
-
-    @property
-    def editable_user(self):
-        return self.couch_user
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {
-            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
-        }
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
-            context.update({
-                'update_form': self.commtrack_form,
-            })
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if self.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
 class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
@@ -822,11 +780,8 @@ def make_phone_number_default(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -842,11 +797,8 @@ def delete_phone_number(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -871,11 +823,8 @@ def verify_phone_number(request, domain, couch_user_id):
     elif result == VERIFICATION__WORKFLOW_STARTED:
         messages.success(request, _('Verification workflow started.'))
 
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
