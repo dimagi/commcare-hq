@@ -185,7 +185,6 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
