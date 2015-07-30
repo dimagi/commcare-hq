@@ -885,7 +885,7 @@ class SQLPillowMixIn(object):
             return None
         return super(SQLPillowMixIn, self).change_trigger(changes_dict)
 
-    @db.transaction.commit_on_success
+    @db.transaction.atomic
     @retry_on_connection_failure
     def change_transport(self, doc_dict, delete=False):
         self.process_sql(doc_dict, delete)
