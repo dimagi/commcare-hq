@@ -1118,16 +1118,15 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 if form.form_type == 'module_form':
                     datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
-                    for meta in datums_meta:
-                        if meta['requires_selection']:
-                            raise SuiteError("Form selected as case list form requires a case: {}".format(form.unique_id))
-                        s_datum = meta['datum']
-                        frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
                 elif form.form_type == 'advanced_form':
-                    # match case session variable
-                    reg_action = form.get_registration_actions(module.case_type)[0]
-                    case_session_var = reg_action.case_session_var
-                    frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
+                    datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                    datums_meta.extend(self.get_new_case_id_datums_meta(form))
+
+                for meta in datums_meta:
+                    if meta['requires_selection']:
+                        raise SuiteError("Form selected as case list form requires a case: {}".format(form.unique_id))
+                    s_datum = meta['datum']
+                    frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
                 frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)

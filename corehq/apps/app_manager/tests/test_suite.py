@@ -618,6 +618,43 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced'), app.create_suite())
 
+    def test_case_list_registration_form_advanced_autoload(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        register_module = app.add_module(AdvancedModule.new_module('create', None))
+        register_module.unique_id = 'register_module'
+        register_module.case_type = 'dugong'
+        register_form = app.new_form(0, 'Register Case', lang='en')
+        register_form.unique_id = 'register_case_form'
+        register_form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='dugong',
+            case_tag='open_dugong',
+            name_path='/data/name'
+        ))
+        register_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='usercase',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_USERCASE,
+            )
+        ))
+
+        case_module = app.add_module(AdvancedModule.new_module('update', None))
+        case_module.unique_id = 'case_module'
+        case_module.case_type = 'dugong'
+        update_form = app.new_form(1, 'Update Case', lang='en')
+        update_form.unique_id = 'update_case_form'
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='dugong',
+            case_tag='load_dugong',
+            details_module=case_module.unique_id
+        ))
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'Register another Dugong'
+        }
+        self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), app.create_suite())
+
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
