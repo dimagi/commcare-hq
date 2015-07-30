@@ -158,6 +158,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <div data-bind="subscribeFilters: filterConfig.addSubscribersToSaveButton()"></div>
                             <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
                                 <br/>
                                 <p>

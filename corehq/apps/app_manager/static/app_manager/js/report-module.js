@@ -89,7 +89,7 @@ var ReportModule = (function () {
         this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
-    function FilterConfig(report_id, reportId, filterValues, reportFilters) {
+    function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
         this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});
@@ -151,6 +151,17 @@ var ReportModule = (function () {
             return selectedFilterValues;
         }
 
+        this.addSubscribersToSaveButton = function() {
+            for(var _id in this.reportFilters) {
+                for (var i = 0; i < this.reportFilters[_id].length; i++) {
+                    var filter = this.reportFilters[_id][i];
+                    for (var key in filter.selectedValue) {
+                        filter.selectedValue[key].subscribe(changeSaveButton);
+                    }
+                }
+            }
+        };
+
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
@@ -159,7 +170,7 @@ var ReportModule = (function () {
     function ReportConfig(report_id, display, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
-                          language) {
+                          language, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
@@ -167,7 +178,7 @@ var ReportModule = (function () {
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
-        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters);
+        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
@@ -245,7 +256,8 @@ var ReportModule = (function () {
                 options.graph_configs,
                 options.filters,
                 self.reportFilters,
-                self.lang
+                self.lang,
+                changeSaveButton
             );
             report.display.subscribe(changeSaveButton);
             report.reportId.subscribe(changeSaveButton);
