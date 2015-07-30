@@ -414,10 +414,7 @@ def dropbox_upload(request, download_id):
         filename = download.get_filename()
         # Hack to get target filename from content disposition
         match = re.search('filename="([^"]*)"', download.content_disposition)
-        if match:
-            dest = match.group(1)
-        else:
-            dest = 'download.txt'
+        dest = match.group(1) if match else 'download.txt'
 
         try:
             uploader = DropboxUploadHelper.create(
