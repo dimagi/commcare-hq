@@ -296,28 +296,48 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @property
     def page_context(self, **kwargs):
-        stock_state_keys = sorted([
+        stock_state_limit = 100
+        stock_transaction_limit = 10000
+        stock_state_limit_exceeded = False
+        stock_transaction_limit_exceeded = False
+
+        stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
             for txn in
             StockTransaction.objects.filter(report__domain=self.domain)
+            .order_by('case_id', 'section_id', 'product_id')
             .distinct('case_id', 'section_id', 'product_id')
-        ])
+            [:stock_state_limit]
+        ]
+        if len(stock_state_keys) >= stock_state_limit:
+            stock_state_limit_exceeded = True
 
         actions_by_stock_state_key = []
-
+        stock_transaction_count = 0
         for stock_state_key in stock_state_keys:
             case_id, section_id, product_id = stock_state_key
+            actions = [
+                (action.__class__.__name__, action) for action in
+                plan_rebuild_stock_state(case_id, section_id, product_id)
+            ]
+            stock_transaction_count += len(actions)
+            if stock_transaction_count > stock_transaction_limit:
+                stock_transaction_limit_exceeded = True
+                break
             actions_by_stock_state_key.append(
                 ({'case_id': case_id, 'section_id': section_id,
                   'product_id': product_id},
-                 [(action.__class__.__name__, action) for action in
-                  plan_rebuild_stock_state(case_id, section_id, product_id)],
+                 actions,
                  get_doc_info_by_id(self.domain, case_id))
             )
 
         assert len(set(stock_state_keys)) == len(stock_state_keys)
         return {
-            'actions_by_stock_state_key': actions_by_stock_state_key
+            'actions_by_stock_state_key': actions_by_stock_state_key,
+            'stock_state_limit_exceeded': stock_state_limit_exceeded,
+            'stock_state_limit': stock_state_limit,
+            'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
+            'stock_transaction_limit': stock_transaction_limit,
         }
 
     def post(self, request, *args, **kwargs):

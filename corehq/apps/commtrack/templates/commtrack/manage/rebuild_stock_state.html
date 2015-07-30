@@ -3,6 +3,26 @@
 {% load hq_shared_tags %}
 
 {% block main_column %}
+    {% if stock_state_limit_exceeded %}
+    <div class="alert alert-warning">
+    {% blocktrans %}
+    <strong>Warning:</strong>
+    You have more than {{ stock_state_limit }} stocks in your project space.
+    Only {{ stock_state_limit }} are shown.
+    {% endblocktrans %}
+    </div>
+    {% endif %}
+
+    {% if stock_transaction_limit_exceeded %}
+    <div class="alert alert-warning">
+    {% blocktrans %}
+    <strong>Warning:</strong>
+    You have more than {{ stock_transaction_limit }} stock transactions in your project space.
+    Only {{ stock_transaction_limit }} are shown.
+    {% endblocktrans %}
+    </div>
+    {% endif %}
+
     <table class="table table-bordered table-striped">
     {% for key, actions, case_doc_info in actions_by_stock_state_key %}
     {% for action_type, action in actions %}
