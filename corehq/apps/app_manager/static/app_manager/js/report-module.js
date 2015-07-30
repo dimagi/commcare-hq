@@ -114,7 +114,7 @@ var ReportModule = (function () {
                     return reportId() + '/' + filter.slug;
                 });
 
-                if(filter.choices != undefined && filter.show_all) {
+                if(filter.choices !== undefined && filter.show_all) {
                     filter.choices.unshift({value: "_all", display: "Show All"}); // TODO: translate
                 }
             }
@@ -131,18 +131,18 @@ var ReportModule = (function () {
                 var filter = selectedFilterStructure[i];
                 if (filter.selectedValue.doc_type()) {
                     selectedFilterValues[filter.slug] = {};
-                    selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
+                    selectedFilterValues[filter.slug].doc_type = filter.selectedValue.doc_type();
                     // Depending on doc_type, pull the correct observables' values
-                    if (filter.selectedValue.doc_type() == 'AutoFilter') {
-                        selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
+                    if(filter.selectedValue.doc_type() == 'AutoFilter') {
+                        selectedFilterValues[filter.slug].filter_type = filter.selectedValue.filter_type();
                     } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
-                        selectedFilterValues[filter.slug]['date_range'] = filter.selectedValue.date_range();
+                        selectedFilterValues[filter.slug].date_range = filter.selectedValue.date_range();
                     } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
-                        selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
-                    } else if (filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
-                        selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value().split("\u001F");
+                        selectedFilterValues[filter.slug].custom_data_property = filter.selectedValue.custom_data_property();
+                    } else if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
+                        selectedFilterValues[filter.slug].value = filter.selectedValue.value().split("\u001F");
                     } else if(filter.selectedValue.doc_type() == 'StaticChoiceFilter') {
-                        selectedFilterValues[filter.slug]['select_value'] = filter.selectedValue.select_value();
+                        selectedFilterValues[filter.slug].select_value = filter.selectedValue.select_value();
                     }
                 }
             }
@@ -162,7 +162,7 @@ var ReportModule = (function () {
 
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
-        this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
+        this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
         this.date_range_options = ['last7', 'last30', 'lastmonth'];
     }
 
