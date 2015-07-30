@@ -104,11 +104,16 @@ var ReportModule = (function () {
                         doc_type: ko.observable(null)
                     };
                 }
-                filter.selectedValue.filter_type = ko.observable(filter.selectedValue.filter_type || '');
-                filter.selectedValue.date_range = ko.observable(filter.selectedValue.date_range || '');
-                filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
+                var filterFields = [
+                    'custom_data_property',
+                    'date_range',
+                    'filter_type',
+                    'select_value'
+                ];
+                for(var filterFieldsIndex in filterFields) {
+                    filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
+                }
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
-                filter.selectedValue.select_value = ko.observable(filter.selectedValue.select_value || '');
 
                 filter.dynamicFilterName = ko.computed(function () {
                     return reportId() + '/' + filter.slug;
