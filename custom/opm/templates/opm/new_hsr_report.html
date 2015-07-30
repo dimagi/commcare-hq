@@ -34,6 +34,28 @@
                 if (id in totalValues) $(this).text(total[id]);
             });
         };
+
+        var warning_element = $('#s2id_multi_sel > ul').first();
+        warning_element.popover({
+            template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>',
+            content: 'Warning: using "All" for Gram Panchayat may result in slowness or error because of the size of this report.',
+            placement: 'right',
+            trigger: 'manual'
+        });
+        var gp = $('#report_filter_hierarchy_gp').val();
+        if (gp === null || gp[0] === 'all') {
+             warning_element.popover('show')
+        }
+
+        $('#report_filter_hierarchy_gp').on('change', function() {
+            var gp = $('#report_filter_hierarchy_gp').val();
+            if (gp === null || gp[0] === 'all') {
+                warning_element.popover('show')
+            } else {
+                warning_element.popover('hide')
+            }
+        });
+
         var updateTotalRow = function () {
             var fixedTotal = {};
             var fixedTotalValues = {};

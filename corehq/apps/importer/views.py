@@ -341,6 +341,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context['is_alive'] = alive
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
+    context['url'] = base.ImportCases.get_url(domain=domain)
     return render_to_response(template, context_instance=context)
 
 

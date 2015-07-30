@@ -358,6 +358,19 @@ class TestPercentageColumn(SimpleTestCase):
                              'non-numeric value failed for denominator {}'. format(unexpected_value))
             self.assertEqual('?', wrapped.get_format_fn()({'num': unexpected_value, 'denom': 1}))
 
+    def test_format_numeric_pct(self):
+        spec = self._test_spec()
+        spec['format'] = 'numeric_percent'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual(33, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
+
+    def test_format_float(self):
+        spec = self._test_spec()
+        spec['format'] = 'decimal'
+        wrapped = ReportColumnFactory.from_spec(spec)
+        self.assertEqual(.333, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
+        self.assertEqual(.25, wrapped.get_format_fn()({'num': 1, 'denom': 4}))
+
     def _test_spec(self):
         return {
             'type': 'percent',

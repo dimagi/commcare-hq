@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 
 from dimagi.utils.decorators.memoized import memoized
@@ -283,3 +284,21 @@ class StockLevelsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
+
+
+class RebuildStockStateView(BaseCommTrackManageView):
+    urlname = 'rebuild_stock_state'
+    page_title = ugettext_noop("Rebuild Stock State")
+    template_name = 'commtrack/manage/rebuild_stock_state.html'
+
+    @property
+    def page_context(self, **kwargs):
+        stock_transactions = (
+            StockTransaction.objects.filter(report__domain=self.domain)
+            .order_by('case_id', 'section_id', 'product_id',
+                      'report__date', 'pk')
+            .select_related('report__type', 'report__date', 'sql_product__name')
+        )
+        return {
+            'stock_transactions': stock_transactions
+        }

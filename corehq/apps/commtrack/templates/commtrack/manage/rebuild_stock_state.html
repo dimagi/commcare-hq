@@ -1,0 +1,41 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+    <table class="table">
+        <tr>
+            <th>Case</th>
+            <th>Section</th>
+            <th>Product</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Stock on Hand</th>
+        </tr>
+    {% for stock_transaction in stock_transactions %}
+        <tr>
+            <td>
+                {% ifchanged %}{{ stock_transaction.case_id }}{% endifchanged %}
+            </td>
+            <td>
+                {% ifchanged %}
+                    <!--{{ stock_transaction.case_id }}-->
+                    {{ stock_transaction.section_id }}
+                {% endifchanged %}
+            </td>
+            <td>
+                {% ifchanged %}
+                    <!--{{ stock_transaction.case_id }}-->
+                    <!--{{ stock_transaction.section_id }}-->
+                    {{ stock_transaction.sql_product.name }}
+                {% endifchanged %}
+            </td>
+                <td>{{ stock_transaction.report.date }} ({{ stock_transaction.pk }})</td>
+                <td>{{ stock_transaction.report.type }}</td>
+                <td>{{ stock_transaction.quantity }}</td>
+                <td>{{ stock_transaction.stock_on_hand }}</td>
+            </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

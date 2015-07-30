@@ -51,13 +51,12 @@ branches:
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - template-apps # Jenny, July 20
-  - extra-permissions-checks  # Ethan 7/20
   - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
   - icds/scheduler # Farid 7/22
-  - rm-fr  # Ethan 7/23
   - ckeditor # J$ 7/24
-  - dropbox # Ben 7/27
+  - notify-exception-code-context  # Ben 7/30
+  - due-list # TS 7/30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -78,6 +77,5 @@ submodules:
     branches:
       - django17
   submodules/django-soil-src:
-    branches:
-      - dropbox # Ben 7/27
+    branches: []
 
