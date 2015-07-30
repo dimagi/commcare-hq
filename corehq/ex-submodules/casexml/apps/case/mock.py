@@ -232,7 +232,7 @@ class CaseBlock(dict):
             elif isinstance(value, (basestring, int)):
                 return unicode(value)
             else:
-                raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
+                raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(type(value), value))
 
         def dict_to_xml(block, dct):
             if dct.has_key('_attrib'):
