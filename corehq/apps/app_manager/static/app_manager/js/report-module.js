@@ -1,7 +1,7 @@
 
 var ReportModule = (function () {
 
-    function FilterConfig(report_id, reportId, filterValues, reportFilters) {
+    function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
         this.reportFilters = JSON.parse(JSON.stringify(reportFilters)) || {};
@@ -64,19 +64,30 @@ var ReportModule = (function () {
             return selectedFilterValues;
         };
 
+        this.addSubscribersToSaveButton = function() {
+            for(var _id in this.reportFilters) {
+                for (var i = 0; i < this.reportFilters[_id].length; i++) {
+                    var filter = this.reportFilters[_id][i];
+                    for (var key in filter.selectedValue) {
+                        filter.selectedValue[key].subscribe(changeSaveButton);
+                    }
+                }
+            }
+        };
+
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
 
-    function ReportConfig(report_id, display, availableReportIds, language, filterValues, reportFilters) {
+    function ReportConfig(report_id, display, availableReportIds, language, changeSaveButton, filterValues, reportFilters) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.reportId = ko.observable(report_id);
-        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters);
+        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
@@ -142,7 +153,7 @@ var ReportModule = (function () {
 
         function newReport(options) {
             options = options || {};
-            var report = new ReportConfig(options.report_id, options.header, self.availableReportIds, self.lang, options.filters, self.reportFilters);
+            var report = new ReportConfig(options.report_id, options.header, self.availableReportIds, self.lang, changeSaveButton, options.filters, self.reportFilters);
             report.display.subscribe(changeSaveButton);
             report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
