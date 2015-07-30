@@ -519,7 +519,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return ConfigurableReport.prefix == self.report_type
+        return self.report_type == ConfigurableReport.prefix
 
     @property
     @memoized
