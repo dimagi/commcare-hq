@@ -7,7 +7,7 @@ from django.test import Client
 from couchforms.models import XFormInstance
 from django_prbac.models import UserRole, Role, Grant
 from corehq.apps.users.models import WebUser
-from corehq.apps.data_interfaces.utils import archive_forms
+from corehq.apps.data_interfaces.utils import archive_forms_old
 from dimagi.utils.excel import WorkbookJSONReader
 from corehq import privileges, toggles
 from corehq.apps.accounting import generator
@@ -128,7 +128,7 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():
@@ -139,7 +139,7 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
-        response = archive_forms(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
             self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
@@ -151,6 +151,6 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_wrong_domain(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms('wrong_domain', self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old('wrong_domain', self.user, list(uploaded_file.get_worksheet()))
 
         self.assertEqual(len(response['errors']), len(self.xforms), "Error when wrong domain")
