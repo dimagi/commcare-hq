@@ -146,6 +146,14 @@
                                                        data-bind="value: filter.selectedValue.value"/>
                                                 <input type="hidden" data-bind="value: dynamicFilterName">
                                             </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticChoiceFilter'">
+                                                <select data-bind="
+                                                    options: filter.choices,
+                                                    optionsText: 'display',
+                                                    optionsValue: 'value',
+                                                    value: filter.selectedValue.select_value
+                                                "></select>
+                                            </div>
                                         </th>
                                     </tr>
                                 </tbody>
