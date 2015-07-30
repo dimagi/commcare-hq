@@ -55,8 +55,7 @@ branches:
   - FormArchive # Sravan 7/22
   - icds/scheduler # Farid 7/22
   - ckeditor # J$ 7/24
-  - dropbox # Ben 7/27
-  - notify-exception  # Ethan 7/27
+  - notify-exception-code-context  # Ben 7/30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,6 +76,5 @@ submodules:
     branches:
       - django17
   submodules/django-soil-src:
-    branches:
-      - dropbox # Ben 7/27
+    branches: []
 
