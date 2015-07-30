@@ -412,7 +412,12 @@ def dropbox_upload(request, download_id):
         raise Http404
     else:
         filename = download.get_filename()
-        dest = os.path.basename(filename)
+        # Hack to get target filename from content disposition
+        match = re.search('filename="([^"]*)"', download.content_disposition)
+        if match:
+            dest = match.group(1)
+        else:
+            dest = 'download.txt'
 
         try:
             uploader = DropboxUploadHelper.create(
