@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import date
 
 import xlrd
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 from xlrd import xldate_as_tuple, XL_CELL_NUMBER
@@ -229,7 +230,11 @@ class ImportErrorDetail(object):
         ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
 
         ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
-                                        "uploaded case.")
+                                        "uploaded case."),
+        ImportErrors.DuplicateLocationName: _(
+            "There are multiple locations with this same name, try using "
+            "site-code instead."
+        ),
     }
 
     def __init__(self, *args, **kwargs):
@@ -423,28 +428,40 @@ def is_valid_id(uploaded_id, domain, cache):
     )
 
 
-def get_id_from_name(uploaded_name, domain, cache):
+def get_id_from_name(name, domain, cache):
     '''
-    :param uploaded_name: A username or group name
+    :param name: A username, group name, or location name/site_code
     :param domain:
     :param cache:
     :return: Looks for the given name and returns the corresponding id if the
     user or group exists and None otherwise. Searches for user first, then
-    group.
+    group, then location
     '''
-    if uploaded_name in cache:
-        return cache[uploaded_name]
-    try:
-        name_as_address = uploaded_name
-        if '@' not in name_as_address:
-            name_as_address = format_username(uploaded_name, domain)
-        user = CouchUser.get_by_username(name_as_address)
-        id = getattr(user, 'couch_id', None)
-    except NoResultFound:
-        id = None
-    if not id:
-        group = Group.by_name(domain, uploaded_name, one=True)
-        id = getattr(group, 'get_id', None)
+    if name in cache:
+        return cache[name]
 
-    cache[uploaded_name] = id
+    def get_from_user(name):
+        try:
+            name_as_address = name
+            if '@' not in name_as_address:
+                name_as_address = format_username(name, domain)
+            user = CouchUser.get_by_username(name_as_address)
+            return getattr(user, 'couch_id', None)
+        except NoResultFound:
+            return None
+
+    def get_from_group(name):
+        group = Group.by_name(domain, name, one=True)
+        return getattr(group, 'get_id', None)
+
+    def get_from_location(name):
+        try:
+            return SQLLocation.objects.get(
+                Q(site_code=name) | Q(name=name)
+            ).location_id
+        except SQLLocation.DoesNotExist:
+            return None
+
+    id = get_from_user(name) or get_from_group(name) or get_from_location(name)
+    cache[name] = id
     return id
