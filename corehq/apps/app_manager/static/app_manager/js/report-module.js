@@ -89,22 +89,14 @@ var ReportModule = (function () {
         this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
-    function ReportConfig(report_id, display, availableReportIds,
-                          reportCharts, graph_configs,
-                          filterValues, reportFilters,
-                          language) {
+    function FilterConfig(report_id, reportId, filterValues, reportFilters) {
         var self = this;
-        this.lang = language;
-        this.fullDisplay = display || {};
-        this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]); // chosen in UI
-        this.reportId = ko.observable(report_id); // chosen in UI
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
-        this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});  // stores filter structure
-        for(var _id in this.reportFilters()) {
-            for(var i = 0; i < this.reportFilters()[_id].length; i++) {
+
+        this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});
+        for (var _id in this.reportFilters()) {
+            for (var i = 0; i < this.reportFilters()[_id].length; i++) {
                 var filter = this.reportFilters()[_id][i];
-                if(_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
+                if (_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
@@ -118,52 +110,73 @@ var ReportModule = (function () {
                 filter.selectedValue.custom_data_property = ko.observable(filter.selectedValue.custom_data_property || '');
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
 
-                filter.dynamicFilterName = ko.computed(function() {
-                    return self.reportId() + '/' + filter.slug;
+                filter.dynamicFilterName = ko.computed(function () {
+                    return reportId() + '/' + filter.slug;
                 });
             }
         }
 
+        this.selectedFilterStructure = ko.computed(function () { // for the chosen report
+            return self.reportFilters[reportId()];
+        });
+
         this.toJSON = function () {
-            self.fullDisplay[self.lang] = self.display();
+            var selectedFilterStructure = self.selectedFilterStructure();
             var selectedFilterValues = {};
-            for(var i = 0; i < self.selectedFilterStructure().length; i++) {
-                var filter = self.selectedFilterStructure()[i];
-                if(filter.selectedValue.doc_type()) {
+            for (var i = 0; i < selectedFilterStructure.length; i++) {
+                var filter = selectedFilterStructure[i];
+                if (filter.selectedValue.doc_type()) {
                     selectedFilterValues[filter.slug] = {};
                     selectedFilterValues[filter.slug]['doc_type'] = filter.selectedValue.doc_type();
-                    if(filter.selectedValue.doc_type() == 'AutoFilter') {
+                    // Depending on doc_type, pull the correct observables' values
+                    if (filter.selectedValue.doc_type() == 'AutoFilter') {
                         selectedFilterValues[filter.slug]['filter_type'] = filter.selectedValue.filter_type();
-                    } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
+                    } else if (filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
                         selectedFilterValues[filter.slug]['start_date'] = filter.selectedValue.start_date();
                         selectedFilterValues[filter.slug]['end_date'] = filter.selectedValue.end_date();
-                    } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
+                    } else if (filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
                         selectedFilterValues[filter.slug]['custom_data_property'] = filter.selectedValue.custom_data_property();
-                    } else if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
+                    } else if (filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug]['value'] = filter.selectedValue.value().split("\u001F");
                     }
                 }
             }
-            return {
-                report_id: self.reportId(),
-                graph_configs: self.graphConfig.toJSON(),
-                filters: selectedFilterValues,
-                header: self.fullDisplay
-            };
-        };
-
-        this.selectedFilterStructure = ko.computed(function() { // for the chosen report
-            return self.reportFilters()[self.reportId()];
-        });
+            return selectedFilterValues;
+        }
 
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id']
     }
+
+    function ReportConfig(report_id, display, availableReportIds,
+                          reportCharts, graph_configs,
+                          filterValues, reportFilters,
+                          language) {
+        var self = this;
+        this.lang = language;
+        this.fullDisplay = display || {};
+        this.availableReportIds = availableReportIds;
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.reportId = ko.observable(report_id);
+        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
+        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters);
+
+        this.toJSON = function () {
+            self.fullDisplay[self.lang] = self.display();
+            return {
+                report_id: self.reportId(),
+                graph_configs: self.graphConfig.toJSON(),
+                filters: self.filterConfig.toJSON(),
+                header: self.fullDisplay
+            };
+        };
+    }
+
     function ReportModule(options) {
         var self = this;
-        var currentReports = options.currentReports || []; // structure for all reports
-        var availableReports = options.availableReports || []; // config data for app reports
+        var currentReports = options.currentReports || [];
+        var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;

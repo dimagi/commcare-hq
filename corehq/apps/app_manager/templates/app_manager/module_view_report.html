@@ -115,12 +115,12 @@
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody data-bind="foreach: { data: selectedFilterStructure, as: 'filter' }">
+                                <tbody data-bind="foreach: { data: filterConfig.selectedFilterStructure, as: 'filter' }">
                                     <tr>
                                         <th data-bind="text: filter.display"></th>
                                         <th>
                                             <select data-bind="
-                                                options: $parent.filterDocTypes,
+                                                options: report.filterConfig.filterDocTypes,
                                                 value: selectedValue.doc_type
                                             ">
                                             </select>
@@ -128,7 +128,7 @@
                                         <th>
                                             <div data-bind="visible: filter.selectedValue.doc_type() == 'AutoFilter'">
                                                 <select data-bind="
-                                                    options: $parent.autoFilterTypes,
+                                                    options: report.filterConfig.autoFilterTypes,
                                                     value: filter.selectedValue.filter_type
                                                 "></select>
                                             </div>
