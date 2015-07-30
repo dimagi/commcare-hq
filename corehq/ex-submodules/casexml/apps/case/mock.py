@@ -189,7 +189,7 @@ class CaseBlock(dict):
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
         if strict:
             for key in create_or_update:
-                if create_or_update[key] is not CaseBlock.undefined and self['update'].has_key(key):
+                if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
                     raise CaseBlockError("Key %r specified twice" % key)
 
         if create:
