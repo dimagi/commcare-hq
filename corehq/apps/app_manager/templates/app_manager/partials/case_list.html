@@ -215,3 +215,7 @@
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
     {% include "app_manager/partials/case_list_lookup.html" %}
 {% endif %}
+
+{% if request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
+    {% include "app_manager/partials/fixture_case_selection.html" %}
+{% endif %}

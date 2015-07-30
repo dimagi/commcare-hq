@@ -32,6 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
+    ScheduleError,
 )
 
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -166,7 +167,10 @@ from corehq.apps.app_manager.models import (
     load_app_template,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    FixtureSelect,
+    SchedulePhaseForm,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -418,6 +422,17 @@ def default(request, domain):
     """
     return view_app(request, domain)
 
+def get_schedule_context(form):
+        from corehq.apps.app_manager.models import SchedulePhase
+        schedule_context = {}
+        module = form.get_module()
+        if module.has_schedule:
+            phase = form.get_phase()
+            if phase is not None:
+                schedule_context.update({'schedule_phase': phase})
+            else:
+                schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+        return schedule_context
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
@@ -545,6 +560,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
+        context.update(get_schedule_context(form))
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
@@ -873,6 +889,7 @@ def get_module_view_context_and_template(app, module):
                 })
         else:
             item['parent_select'] = module.parent_select
+            item['fixture_select'] = module.fixture_select
             details = [item]
 
         return details
@@ -1803,7 +1820,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
-    and sort_elements.
+    fixture_select and sort_elements.
     """
     params = json_request(request.POST)
     detail_type = params.get('type')
@@ -1813,6 +1830,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
+    fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
@@ -1865,6 +1883,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+    if fixture_select is not None:
+        module.fixture_select = FixtureSelect.wrap(fixture_select)
 
     resp = {}
     app.save(resp)
@@ -2070,9 +2090,20 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 @require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+
     json_loads = json.loads(request.POST.get('schedule'))
+    anchor = json_loads.pop('anchor')
+
+    try:
+        phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
+
     form.schedule = FormSchedule.wrap(json_loads)
+    phase.add_form(form)
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
