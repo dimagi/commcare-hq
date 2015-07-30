@@ -6,7 +6,7 @@ from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
-from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes
+from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes, GroupSummary
 from custom.ilsgateway.tanzania.reports.mixins import DeliverySubmissionData
 from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, latest_status_or_none,\
     get_this_lead_time, get_avg_lead_time
@@ -96,6 +96,15 @@ class DeliveryStatus(ILSData):
             dg.extend(DeliveryGroups().delivering(locations, date.month))
 
         for child in dg:
+            group_summary = GroupSummary.objects.filter(
+                org_summary__date__lte=self.config['startdate'],
+                org_summary__location_id=child.location_id,
+                title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                total=1
+            ).exists()
+            if not group_summary:
+                continue
+
             latest = latest_status_or_none(
                 child.location_id,
                 SupplyPointStatusTypes.DELIVERY_FACILITY,

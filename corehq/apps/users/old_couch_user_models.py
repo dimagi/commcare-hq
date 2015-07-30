@@ -280,7 +280,7 @@ class CouchUser(Document, UnicodeMixIn):
         """
         Adds a commcare account to this.
         """
-        commcare_account = CommCareAccount(login_id=django_user.get_profile()._id,
+        commcare_account = CommCareAccount(login_id=django_user.couch_user._id,
                                            domain=domain,
                                            registering_device_id=device_id,
                                            user_data=user_data,

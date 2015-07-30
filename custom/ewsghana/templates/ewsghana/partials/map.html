@@ -1,0 +1,56 @@
+{% extends 'reports/partials/base_maps.html' %}
+{% load static %}
+{% load hq_shared_tags %}
+{% block js-libs %}
+    <script>L_PREFER_CANVAS = true;</script>
+    {{ block.super }}
+{% endblock %}
+{% block js-script %}
+    <script src="{% static 'reports/javascripts/maps.js' %}"></script>
+    <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+    <script>
+
+    CONTEXT = {{ context|JSON }};
+    ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+    MIN_HEIGHT = 300; //px
+
+    function load(context, iconPath) {
+        L.Icon.Default.imagePath = iconPath;
+        var map = mapsInit(context);
+
+        var resize = function() {
+            setMapHeight(map);
+        };
+        $(window).resize(resize);
+        var $reportFiltersAccordion = $('#reportFiltersAccordion');
+        $reportFiltersAccordion.on('shown', resize);
+        $reportFiltersAccordion.on('hidden', resize);
+        resize();
+        return map;
+    }
+
+    $(document).ready(function() {
+        if (CONTEXT !== '') {
+            var map = load(CONTEXT, ICON_PATH);
+            $('#export-jpg').click(function() {
+                var $button = $(this);
+                var text = $button.text();
+                $button.text('Loading...');
+                $button.prop('disabled', true);
+                leafletImage(map, function(err, canvas) {
+                    var data = canvas.toDataURL("image/jpeg", 1);
+                    var a = document.createElement('a');
+                    a.href = data;
+                    a.download = 'map.jpg';
+                    $('body').append(a);
+                    a.click();
+                    a.remove();
+                    $button.text(text);
+                    $button.prop('disabled', false);
+                });
+            });
+        }
+    });
+
+    </script>
+{% endblock js-script %}

@@ -1527,7 +1527,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
-                crispy.Hidden('software_plan_edition', plan_edition),
+                crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
                 TextField('start_date', self.current_subscription.date_start),

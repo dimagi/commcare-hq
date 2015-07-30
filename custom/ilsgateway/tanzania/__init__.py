@@ -208,6 +208,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     use_datatables = False
     exportable = False
     base_template = 'ilsgateway/base_template.html'
+    emailable = False
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

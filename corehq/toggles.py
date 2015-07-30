@@ -527,3 +527,17 @@ MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+DROPBOX_SYNC = StaticToggle(
+    'dropbox_sync',
+    'Allows users to sync their file downloads to Dropbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+EMAIL_IN_REMINDERS = StaticToggle(
+    'email_in_reminders',
+    'Send emails from reminders',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

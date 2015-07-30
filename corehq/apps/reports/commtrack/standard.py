@@ -416,7 +416,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         for status in statuses:
             results.append([
                 status['name'],
-                status['loc'].parent.name if status['loc'].parent else '',
+                status['parent_name'],
                 status['last_reporting_date'].date() if status['last_reporting_date'] else _('Never'),
                 _('Yes') if status['reporting_status'] == 'reporting' else _('No'),
             ])

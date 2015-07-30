@@ -1,5 +1,5 @@
 # coding=utf-8
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
@@ -9,6 +9,7 @@ from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
+from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
@@ -16,11 +17,13 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
+from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import safe_strftime
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -138,6 +141,22 @@ class ApplicationStatusReport(DeploymentsReport):
                 [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
             )
         return rows
+
+    @property
+    def export_table(self):
+        def _fmt_ordinal(ordinal):
+            if ordinal is not None and ordinal >= 0:
+                return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
+            return SCALAR_NEVER_WAS
+
+        result = super(ApplicationStatusReport, self).export_table
+        table = result[0][1]
+        for row in table[1:]:
+            # Last submission
+            row[1] = _fmt_ordinal(row[1])
+            # Last sync
+            row[2] = _fmt_ordinal(row[2])
+        return result
 
 
 class SyncHistoryReport(DeploymentsReport):

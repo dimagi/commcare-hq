@@ -107,4 +107,5 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
 
     emitter = RandomizationDate()
 
+
 UCLAPatientFluffPillow = UCLAPatientFluff.pillow()

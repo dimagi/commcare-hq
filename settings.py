@@ -185,7 +185,6 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -258,6 +257,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.dropbox',
     'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
@@ -829,6 +829,11 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
+        'notify_exception': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -853,7 +858,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['mail_admins'],
+            'handlers': ['notify_exception'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -929,6 +934,10 @@ DEFAULT_PROTOCOL = 'http'
 ####### South Settings #######
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = False
+
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
 
 
 try:
@@ -1280,7 +1289,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow'
+        'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1298,6 +1307,7 @@ CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
@@ -1361,6 +1371,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
+    ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
 ]
 
 CUSTOM_MODULES = [

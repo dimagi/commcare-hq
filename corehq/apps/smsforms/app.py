@@ -44,17 +44,16 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     session_data = get_session_data(domain, contact, case_id, device_id=COMMCONNECT_DEVICE_ID)
     
     # since the API user is a superuser, force touchforms to query only
-    # the contact's cases by specifying it as an additional filterp
-    if contact.doc_type == "CommCareCase":
+    # the contact's cases by specifying it as an additional filter
+    if contact.doc_type == "CommCareCase" and form.requires_case():
         session_data["additional_filters"] = {
-            "case_id": contact.get_id,
-            "footprint": "True",
-            "include_children": "True" if case_for_case_submission else "False",
+            "case_id": case_id,
+            "footprint": "true" if form.uses_parent_case() else "false",
         }
-    else:
+    elif contact.doc_type in ("CommCareUser", "WebUser"):
         session_data["additional_filters"] = {
             "user_id": contact.get_id,
-            "footprint": "True"
+            "footprint": "true"
         }
     
     if app and form:

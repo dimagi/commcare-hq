@@ -5,12 +5,26 @@
 {% block js %}
     {{ block.super }}
     <style>
+        @page {
+            size: A4 landscape;
+        }
+        tr {
+                page-break-inside: avoid;
+            }
         @media print {
             .table th, .table td {
                 border-right: 1px solid #dddddd;
             }
         }
     </style>
+    <script>
+        {% if rendered_as == 'print' and not sf %}
+            $(function() {
+                document.body.style.zoom="80%";
+                $('.hq-loading').hide();
+            });
+        {% endif %}
+    </script>
 {% endblock js %}
 
 {% block pretable %}
