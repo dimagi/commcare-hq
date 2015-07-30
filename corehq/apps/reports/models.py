@@ -297,7 +297,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             )
         except InvalidDaterangeException:
             # this is due to bad validation. see: http://manage.dimagi.com/default.asp?110906
-            logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
+            logging.error('saved report %s is in a bad state - date range is misconfigured' % self._id)
             return {}
 
         dates = {
