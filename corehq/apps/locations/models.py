@@ -675,7 +675,7 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
-    for user in get_all_users_by_location(location_id):
+    for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
             user.unset_location(domain)
         elif user.is_commcare_user():
