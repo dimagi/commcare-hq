@@ -595,19 +595,22 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree before update: {}'.format(self.index_tree))
+        skipped = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = action.updated_known_properties.get("owner_id")
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
-
+                log_has_case = case._id not in skipped
                 if action.action_type == const.CASE_ACTION_CREATE:
                     if phone_owns_case:
                         self._add_primary_case(case._id)
                         made_changes = True
+                    else:
+                        skipped.add(case._id)
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    if not phone_owns_case:
+                    if not phone_owns_case and log_has_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
                         self.prune_case(case._id)
@@ -630,10 +633,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # this case is being closed.
-                    # we can try pruning this case since it's no longer relevant
-                    self.prune_case(case._id)
-                    made_changes = True
+                    if log_has_case:
+                        # this case is being closed. we can try pruning this case since it's no longer relevant
+                        self.prune_case(case._id)
+                        made_changes = True
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
