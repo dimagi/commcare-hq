@@ -343,7 +343,6 @@ class BaseFullEditUserView(BaseEditUserView):
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
-<<<<<<< HEAD
 class EditMyAccountDomainView(BaseFullEditUserView):
     template_name = "users/edit_full_user.html"
     urlname = "domain_my_account"
