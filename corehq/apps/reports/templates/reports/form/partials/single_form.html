@@ -128,28 +128,30 @@ requires imports/proptable.html to be included in the main template
     {% endblocktrans %}
 </div>
 {% endif %}
-<div class="pull-right">
-    {% if auth_context.authenticated %}
-        <i class="icon-lock"></i>
-        {% if user_info.id != auth_user_info.id %}
-        {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
-            Submitted by {{ auth_user }} on behalf of {{ user }}
-        {% endblocktrans %}
+<div class="clearfix">
+    <div class="pull-right">
+        {% if auth_context.authenticated %}
+            <i class="icon-lock"></i>
+            {% if user_info.id != auth_user_info.id %}
+            {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
+                Submitted by {{ auth_user }} on behalf of {{ user }}
+            {% endblocktrans %}
+            {% endif %}
+            {% if user_info.id == auth_user_info.id %}
+            {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
+                Submitted by {{ auth_user }}
+            {% endblocktrans %}
+            {% endif %}
         {% endif %}
-        {% if user_info.id == auth_user_info.id %}
-        {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
-            Submitted by {{ auth_user }}
-        {% endblocktrans %}
+        {% if not auth_context.authenticated %}
+            <i class="icon-unlock"></i>
+            {% blocktrans with user=user_info|pretty_doc_info %}
+            Submitted as {{ user }}
+            {% endblocktrans %}
         {% endif %}
-    {% endif %}
-    {% if not auth_context.authenticated %}
-        <i class="icon-unlock"></i>
-        {% blocktrans with user=user_info|pretty_doc_info %}
-        Submitted as {{ user }}
-        {% endblocktrans %}
-    {% endif %}
+    </div>
 </div>
-<ul class="nav nav-tabs clearfix">
+<ul class="nav nav-tabs">
     <li class="active">
         <a href="#form-data" data-toggle="tab">
             {% trans "Form Properties" %}
@@ -184,7 +186,6 @@ requires imports/proptable.html to be included in the main template
         </a>
     </li>
 </ul>
-
 <div class="tab-content form-details" style="overflow:visible">
     <div class="tab-pane active" id="form-data" style="position:relative">
         <div class="btn-toolbar" id='form-actions-toolbar' style="position: absolute; right: 0; top: 0">
