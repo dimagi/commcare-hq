@@ -22,6 +22,7 @@ class RRStatus(ILSData):
     title = "R&R Status"
     slug = "rr_status"
     show_chart = False
+    searchable = True
 
     @property
     def rows(self):
@@ -92,6 +93,7 @@ class RRReportingHistory(ILSData):
     show_table = True
     slug = "rr_reporting_history"
     show_chart = False
+    searchable = True
 
     def __init__(self, config=None, css_class='row_chart'):
         super(RRReportingHistory, self).__init__(config, css_class)

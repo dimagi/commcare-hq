@@ -69,6 +69,7 @@ class SohPercentageTableData(ILSData):
     slug = 'inventory_region_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -214,6 +215,7 @@ class DistrictSohPercentageTableData(ILSData):
     slug = 'inventory_district_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def title(self):
