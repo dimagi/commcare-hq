@@ -198,12 +198,6 @@ var CaseConfig = (function () {
             }
             return label + ' (' + caseType + ')';
         };
-        self.relationshipTypes = ['child', 'extension'];
-        self.getRelationshipTypeLabel = function (relationshipType) {
-            var verb = (relationshipType === 'extension') ? ' is a ... ': ' has a ... ';
-            // TODO: Get current value of case_type
-            return relationshipType + ' case: ' + self.caseConfig.caseType + verb;
-        };
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
         self.usercase_transaction = HQFormActions.to_usercase_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(
@@ -258,7 +252,6 @@ var CaseConfig = (function () {
                     'case_properties',
                     'case_preload',
                     'close_condition',
-                    'relationship',
                     'allow'
                 ],
                 case_properties: {
@@ -745,7 +738,6 @@ var CaseConfig = (function () {
                 case_preload: case_preload,
                 condition: self.open_case.condition,
                 close_condition: self.close_case.condition,
-                relationship: null, // only used in subcases
                 suggestedProperties: function () {
                     if (_(caseConfig.propertiesMap).has(this.case_type())) {
                         return caseConfig.propertiesMap[this.case_type()]();
@@ -882,7 +874,6 @@ var CaseConfig = (function () {
                     key: 'name',
                     required: true
                 }], self.case_properties, caseConfig);
-            // TODO: For extension cases, either set name = host/name or don't make mandatory.
 
             return CaseTransaction.wrap({
                 case_type: self.case_type,
@@ -919,7 +910,6 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
-            // TODO: name not required for extension cases?
             var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
 
@@ -930,8 +920,7 @@ var CaseConfig = (function () {
                 reference_id: o.reference_id,
                 condition: cleanCondition(o.condition),
                 close_condition: cleanCondition(o.close_condition),
-                repeat_context: case_transaction.repeat_context(),
-                relationship: o.relationship
+                repeat_context: case_transaction.repeat_context()
             };
         }
     };
