@@ -559,6 +559,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
+    def test_case_list_registration_form_usercase(self):
+        app = self._prep_case_list_form_app()
+        register_module = app.get_module(1)
+        register_form = register_module.get_form(0)
+        register_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
+        register_form.actions.usercase_preload.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
+
     def test_case_list_registration_form_end_for_form_nav(self):
         app = self._prep_case_list_form_app()
         app.build_spec.version = '2.9'
