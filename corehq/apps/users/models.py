@@ -4,6 +4,7 @@ couch models go here
 from __future__ import absolute_import
 import copy
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import re
 
 from restkit.errors import NoMoreData
@@ -51,7 +52,7 @@ from corehq.apps.sms.mixin import (
 )
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
@@ -875,6 +876,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
+        # Do not change the name of this method because this ends up implementing
+        # get_email() from the CommCareMobileContactMixin for the CommCareUser
         return self.email
 
     def is_commcare_user(self):
@@ -2183,6 +2186,8 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return True
 
     def get_email(self):
+        # Do not change the name of this method because this is implementing
+        # get_email() from the CommCareMobileContactMixin
         return self.email or self.username
 
     def get_time_zone(self):
@@ -2398,6 +2403,10 @@ class Invitation(Document):
     def send_activation_email(self):
         raise NotImplementedError
 
+    @property
+    def is_expired(self):
+        return False
+
 
 class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     """
@@ -2415,9 +2424,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content,
-                        cc=[self.get_inviter().get_email()],
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, self.email, html_content,
+                                    text_content=text_content,
+                                    cc=[self.get_inviter().get_email()],
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
@@ -2438,6 +2448,11 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                         include_docs=True,
                         stale=settings.COUCH_STALE_QUERY,
                         ).all()
+
+    @property
+    def is_expired(self):
+        return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()

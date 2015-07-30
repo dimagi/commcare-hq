@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.display import xmlns_to_name
 from dimagi.ext.couchdbkit import *
@@ -36,6 +37,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -267,7 +269,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
-        raise Exception("Unknown dispatcher: %s" % self.report_type)
+        notify_exception(
+            None,
+            "This saved-report (id: %s) is unknown (report_type: %s). Might be a legacy report" % (
+                self._id,
+                self.report_type
+            )
+        )
+        raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
@@ -510,7 +519,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return isinstance(self._dispatcher, ConfigurableReport)
+        return self.report_type == ConfigurableReport.prefix
 
     @property
     @memoized
@@ -535,10 +544,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
-
-
-class UnsupportedScheduledReportError(Exception):
-    pass
 
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
@@ -692,7 +697,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._get_and_send_report(language, emails)
 
     def _get_and_send_report(self, language, emails):
-        from dimagi.utils.django.email import send_HTML_email
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
@@ -702,9 +706,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self.owner, self.domain, self._id, attach_excel=attach_excel
             )
             for email in emails:
-                send_HTML_email(title, email, body.content,
-                                email_from=settings.DEFAULT_FROM_EMAIL,
-                                file_attachments=excel_files)
+                send_html_email_async.delay(title, email, body.content,
+                                            email_from=settings.DEFAULT_FROM_EMAIL,
+                                            file_attachments=excel_files)
 
 
 class AppNotFound(Exception):

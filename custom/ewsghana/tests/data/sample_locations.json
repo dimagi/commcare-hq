@@ -35,7 +35,10 @@
                 "products":["ad", "al"],
                 "supervised_by": null,
                 "supplied_by": null,
-                "type": "Hospital"
+                "type": "Hospital",
+                "incharges":[
+                    2342
+                ]
             }
         ]
     },

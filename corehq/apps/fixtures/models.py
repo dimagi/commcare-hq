@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
+from corehq.apps.fixtures.utils import clean_fixture_field_name
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
@@ -277,12 +278,13 @@ class FixtureDataItem(Document):
                     % (self.data_type.tag, self.get_id)
                 )
         for field in self.data_type.fields:
+            escaped_field_name = clean_fixture_field_name(field.field_name)
             if not self.fields.has_key(field.field_name):
-                xField = ElementTree.SubElement(xData, field.field_name)
+                xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
-                    xField = ElementTree.SubElement(xData, field.field_name)
+                    xField = ElementTree.SubElement(xData, escaped_field_name)
                     xField.text = _serialize(field_with_attr.field_value)
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]

@@ -361,6 +361,13 @@ VELLUM_EXPERIMENTAL_UI = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_PRINTING = StaticToggle(
+    'printing',
+    "Enables the Print Android App Callout",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 VELLUM_RICH_TEXT = StaticToggle(
     'rich_text',
     "Enables rich text for the form builder",
@@ -396,13 +403,6 @@ BULK_PAYMENTS = StaticToggle(
     TAG_PRODUCT_CORE
 )
 
-
-USER_AS_A_CASE = StaticToggle(
-    'user_as_a_case',
-    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
@@ -524,6 +524,20 @@ BASIC_CHILD_MODULE = StaticToggle(
 MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     'messaging_status',
     'View the Messaging Status and Error Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+DROPBOX_SYNC = StaticToggle(
+    'dropbox_sync',
+    'Allows users to sync their file downloads to Dropbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+EMAIL_IN_REMINDERS = StaticToggle(
+    'email_in_reminders',
+    'Send emails from reminders',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

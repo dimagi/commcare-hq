@@ -44,6 +44,9 @@ class SMSUsersSyncTest(TestCase):
         self.assertEqual(verified_number.phone_number, '2222222222')
         domain_name = ewsghana_smsuser.get_domains()[0]
         self.assertEqual(TEST_DOMAIN, domain_name)
+        self.assertIsInstance(ewsghana_smsuser.user_data['role'], list)
+        self.assertEqual(len(ewsghana_smsuser.user_data['role']), 1)
+        self.assertEqual(ewsghana_smsuser.user_data['role'][0], 'Other')
 
     def test_edit_smsuser(self):
         with open(os.path.join(self.datapath, 'sample_smsusers.json')) as f:

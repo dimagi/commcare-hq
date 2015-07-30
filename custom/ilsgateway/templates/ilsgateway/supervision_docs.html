@@ -1,21 +1,16 @@
 {% extends 'style/bootstrap2/two_column.html' %}
 {% load i18n %}
 
-{% block stylesheets %}
-    <style>
-        ul#report-links li {
-            display: inline;
-            padding-right: 10px;
-        }
-    </style>
-{% endblock %}
-
 {% block main_column %}
     <h2>Supervision Documents</h2>
-    <ul id="report-links">
+    <ul class="nav nav-pills">
         {% for title, href in report_links %}
             <li><a href='{{ href }}'>{{ title }}</a></li>
         {% endfor %}
+    </ul>
+    <ul class="nav nav-pills">
+        <li><a href="{{ report_links.4.1 }}">Supervision Report</a></li>
+        <li class="active"><a href="{% url 'supervision' domain %}">Supervision Documents</a></li>
     </ul>
     <table class="table table-striped">
         {% for document in documents %}

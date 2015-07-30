@@ -9,6 +9,7 @@ from lxml import etree
 import os
 import re
 import json
+import yaml
 from collections import defaultdict, OrderedDict
 from xml.dom.minidom import parseString
 
@@ -174,7 +175,7 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
     require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege, has_privilege
+from django_prbac.utils import has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 from corehq.apps.style.decorators import use_bootstrap3
@@ -916,8 +917,8 @@ def get_module_view_context_and_template(app, module):
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
-            ]
-
+            ],
+            'child_module_enabled': True
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
@@ -1026,6 +1027,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         template, form_context = get_form_view_context_and_template(request, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
+            'usercase_properties': get_usercase_properties(app),
         })
 
         if toggles.FORM_LINK_WORKFLOW.enabled(domain):
@@ -1045,12 +1047,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
                     linkable_forms
                 )
             })
-
-        uc_on = toggles.USER_AS_A_CASE.enabled(domain)
-        context.update({
-            'usercase_toggle_on': uc_on,
-            'usercase_properties': get_usercase_properties(app) if uc_on else None,
-        })
 
         context.update(form_context)
     elif module:
@@ -1292,8 +1288,30 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'sessionid': request.COOKIES.get('sessionid'),
         'features': vellum_features,
         'plugins': vellum_plugins,
+        'app_callout_templates': next(_app_callout_templates),
     })
     return render(request, 'app_manager/form_designer.html', context)
+
+
+def _app_callout_templates():
+    """Load app callout templates from config file on disk
+
+    Generator function defers file access until needed, acts like a
+    constant thereafter.
+    """
+    path = os.path.join(
+        os.path.dirname(__file__),
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+    )
+    if os.path.exists(path):
+        with open(path) as f:
+            data = yaml.load(f)
+    else:
+        logger.info("not found: %s", path)
+        data = []
+    while True:
+        yield data
+_app_callout_templates = _app_callout_templates()
 
 
 @require_GET
@@ -2416,9 +2434,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        try:
-            ensure_request_has_privilege(request, privileges.CLOUDCARE)
-        except PermissionDenied:
+        if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
 
     if should_edit('show_user_registration'):

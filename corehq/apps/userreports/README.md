@@ -607,11 +607,14 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 
 The following percentage formats are supported.
 
-Format    | Description                                    | example
---------- | -----------------------------------------------| --------
-percent   | A whole number percentage (the default format) | 33%
-fraction  | A fraction                                     | 1/3
-both      | Percentage and fraction                        | 33% (1/3)
+Format          | Description                                    | example
+--------------- | -----------------------------------------------| --------
+percent         | A whole number percentage (the default format) | 33%
+fraction        | A fraction                                     | 1/3
+both            | Percentage and fraction                        | 33% (1/3)
+numeric_percent | Percentage as a number                         | 33
+decimal         | Fraction as a decimal number                   | .333
+
 
 #### Column IDs
 
@@ -831,6 +834,9 @@ Here's a sample spec:
 ## Sort Expression
 
 A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
+
+Field should refer to report column IDs, not database fields.
+
 ```
 [
   {

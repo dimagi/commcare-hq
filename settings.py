@@ -258,6 +258,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.dropbox',
     'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
@@ -461,7 +462,7 @@ FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
+INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
@@ -829,6 +830,11 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
+        'notify_exception': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -853,7 +859,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['mail_admins'],
+            'handlers': ['notify_exception'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -929,6 +935,10 @@ DEFAULT_PROTOCOL = 'http'
 ####### South Settings #######
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = False
+
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
 
 
 try:
@@ -1280,7 +1290,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow'
+        'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1289,14 +1299,20 @@ PILLOWTOPS = {
 }
 
 
+CUSTOM_UCR_REPORTS = [
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
+]
+
+
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
-    os.path.join('custom', 'mvp_ucr', 'reports', 'data_sources', 'va_datasource.json'),
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
 ]
 
 
@@ -1351,11 +1367,12 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('mvp_medical_cause', 'custom.mvp_ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'custom.mvp_ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'custom.mvp_ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'custom.mvp_ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'custom.mvp_ucr.reports.expressions.death_place_expression'),
+    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
+    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
+    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
+    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
+    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
+    ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
 ]
 
 CUSTOM_MODULES = [
