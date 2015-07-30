@@ -31,7 +31,8 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
                                   "(Number of functional ASHAs/total number of ASHAs) x 100"), SimpleColumn(''),
                                   header_group=headers[0])]
         for i, block in enumerate(blocks):
-            columns.append(DatabaseColumn(_('% of ASHAs'), SimpleColumn(block), header_group=headers[i + 1]))
+            columns.append(DatabaseColumn(_('%s of ASHAs' % '%'),
+                                          SimpleColumn(block), header_group=headers[i + 1]))
             columns.append(DatabaseColumn(_('Grade of Block'), SimpleColumn(block), header_group=headers[i + 1]))
         return DataTablesHeader(*headers)
 
