@@ -5,24 +5,15 @@ ASCENDING = "ASC"
 DESCENDING = "DESC"
 
 
-def get_default_sort_value(datatype, order):
+def get_default_sort_value(datatype):
     """
-    Gets a default sort value based on a datatype and order
+    Gets a default sort value based on a datatype and order for null values.
 
-    order must be one of ASCENDING or DESCENDING fro mreports
+    Generally tries to return the first possible value
     """
     defaults = {
-        "date": {
-            ASCENDING: datetime.date.max,
-            DESCENDING: datetime.date.min,
-        },
-        "datetime": {
-            ASCENDING: datetime.datetime.max,
-            DESCENDING: datetime.datetime.min,
-        },
+        'date': datetime.date.min,
+        'datetime': datetime.datetime.min,
+        'string': ''
     }
-    global_defaults = {
-        ASCENDING: None,
-        DESCENDING: None
-    }
-    return defaults.get(datatype, global_defaults)[order]
+    return defaults.get(datatype, None)
