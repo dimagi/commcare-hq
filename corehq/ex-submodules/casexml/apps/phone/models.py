@@ -596,6 +596,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree before update: {}'.format(self.index_tree))
         skipped = set()
+        to_prune = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
@@ -613,7 +614,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     if not phone_owns_case and log_has_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
-                        self.prune_case(case._id)
+                        to_prune.add(case._id)
                         made_changes = True
                     else:
                         if case._id in self.dependent_case_ids_on_phone:
@@ -635,8 +636,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     if log_has_case:
                         # this case is being closed. we can try pruning this case since it's no longer relevant
-                        self.prune_case(case._id)
+                        to_prune.add(case._id)
                         made_changes = True
+
+        for case_to_prune in to_prune:
+            self.prune_case(case_to_prune)
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
