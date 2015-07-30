@@ -138,16 +138,20 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug] = {};
                     selectedFilterValues[filter.slug].doc_type = filter.selectedValue.doc_type();
                     // Depending on doc_type, pull the correct observables' values
-                    if(filter.selectedValue.doc_type() == 'AutoFilter') {
-                        selectedFilterValues[filter.slug].filter_type = filter.selectedValue.filter_type();
-                    } else if(filter.selectedValue.doc_type() == 'StaticDatespanFilter') {
-                        selectedFilterValues[filter.slug].date_range = filter.selectedValue.date_range();
-                    } else if(filter.selectedValue.doc_type() == 'CustomDataAutoFilter') {
-                        selectedFilterValues[filter.slug].custom_data_property = filter.selectedValue.custom_data_property();
-                    } else if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
+                    var docTypeToField = {
+                        AutoFilter: 'filter_type',
+                        CustomDataAutoFilter: 'custom_data_property',
+                        StaticChoiceFilter: 'select_value',
+                        StaticDatespanFilter: 'date_range'
+                    };
+                    for(var docType in docTypeToField) {
+                        if(filter.selectedValue.doc_type() == docType) {
+                            var field = docTypeToField[docType];
+                            selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
+                        }
+                    }
+                    if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug].value = filter.selectedValue.value().split("\u001F");
-                    } else if(filter.selectedValue.doc_type() == 'StaticChoiceFilter') {
-                        selectedFilterValues[filter.slug].select_value = filter.selectedValue.select_value();
                     }
                 }
             }
