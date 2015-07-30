@@ -2415,6 +2415,8 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
+    program = None
+    supply_point = None
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
