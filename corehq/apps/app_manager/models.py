@@ -2714,7 +2714,15 @@ class CareplanModule(ModuleBase):
 
 
 class ReportGraphConfig(DocumentSchema):
-    graph_type = StringProperty(choices=['bar', 'xy'], default='bar', required=True)
+    graph_type = StringProperty(
+        choices=[
+            'bar',
+            'time',
+            'xy',
+        ],
+        default='bar',
+        required=True,
+    )
     series_configs = DictProperty(DictProperty)
     config = DictProperty()
 
