@@ -62,7 +62,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             tb_list = ['Traceback (most recent call first):\n']
             formatted_exception = traceback.format_exception_only(etype, value)
             tb_list.extend(formatted_exception)
-            extracted_tb = reversed(traceback.extract_tb(tb))
+            extracted_tb = list(reversed(traceback.extract_tb(tb)))
             try:
                 code = self.get_code(extracted_tb)
             except Exception, e:
