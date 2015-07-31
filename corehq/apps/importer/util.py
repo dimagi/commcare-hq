@@ -231,8 +231,9 @@ class ImportErrorDetail(object):
         ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
                                         "uploaded case."),
         ImportErrors.DuplicateLocationName: _(
-            "There are multiple locations with this same name, try using "
-            "site-code instead."
+            "Owner ID was used in the mapping, but there were errors when "
+            "uploading because of these values. There are multiple locations "
+            "with this same name, try using site-code instead."
         ),
     }
 
