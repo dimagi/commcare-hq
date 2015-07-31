@@ -82,7 +82,7 @@ class RegistrationData(ILSData):
         elif self.config['loc_type'] == 'REGION':
             location = location.parent.parent
 
-        users = get_user_docs_by_location(location.location_id)
+        users = get_user_docs_by_location(self.config['domain'], location.location_id)
         if users:
             for user in users:
                 u = user['doc']

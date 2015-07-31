@@ -289,7 +289,8 @@ class UsersData(EWSData):
     @property
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
-        users = get_users_by_location_id(self.config['location_id'])
+        users = get_users_by_location_id(self.config['domain'],
+                                         self.config['location_id'])
         in_charges = FacilityInCharge.objects.filter(
             location=self.location
         ).values_list('user_id', flat=True)
@@ -298,7 +299,7 @@ class UsersData(EWSData):
             availaible_in_charges = list(chain.from_iterable([
                 filter(
                     lambda u: 'In Charge' in u.user_data.get('role', []),
-                    get_users_by_location_id(child.location_id)
+                    get_users_by_location_id(self.config['domain'], child.location_id)
                 )
                 for child in children
             ]))

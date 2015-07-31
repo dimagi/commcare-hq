@@ -145,7 +145,7 @@ class RRReportingHistory(ILSData):
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
-            contact = get_one_user_at_location(child.location_id)
+            contact = get_one_user_at_location(self.config['domain'], child.location_id)
 
             if contact:
                 role = contact.user_data.get('role') or ""
