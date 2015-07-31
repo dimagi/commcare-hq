@@ -4,7 +4,6 @@ import json
 import itertools
 import uuid
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -501,6 +500,7 @@ def prefix_usercase_properties(properties):
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+    from corehq.apps.app_manager.suite_xml import SuiteGenerator
 
     datums = SuiteGenerator.get_new_case_id_datums_meta(form)
     session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
