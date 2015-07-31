@@ -1325,7 +1325,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         )) as f:
             return f.read().decode('utf-8')
 
-    def get_filter_xpath(self, module, delegation=False):
+    @staticmethod
+    def get_filter_xpath(module, delegation=False):
         filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % filter
@@ -1342,7 +1343,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             filter_xpath=self.get_filter_xpath(module) if use_filter else '',
         )
 
-    def get_parent_filter(self, relationship, parent_id):
+    @staticmethod
+    def get_parent_filter(relationship, parent_id):
         return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
             relationship=relationship,
             parent_id=parent_id,
@@ -1563,7 +1565,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return results
 
-    def get_assertion(self, test, locale_id, locale_arguments=None):
+    @staticmethod
+    def get_assertion(test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
         if locale_arguments:
@@ -1611,7 +1614,8 @@ class SuiteGenerator(SuiteGeneratorBase):
     def any_usercase_datums(datums):
         return any(d['case_type'] == USERCASE_TYPE for d in datums)
 
-    def get_new_case_id_datums_meta(self, form):
+    @staticmethod
+    def get_new_case_id_datums_meta(form):
         if not form:
             return []
 
@@ -1651,7 +1655,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return datums
 
-    def configure_entry_as_case_list_form(self, form, entry):
+    @staticmethod
+    def configure_entry_as_case_list_form(form, entry):
         target_module = form.case_list_module
         if form.form_type == 'module_form':
             source_session_var = form.session_var_for_action('open_case')
