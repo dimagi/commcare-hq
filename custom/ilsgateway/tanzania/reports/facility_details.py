@@ -55,6 +55,7 @@ class InventoryHistoryData(ILSData):
 class RegistrationData(ILSData):
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def title(self):
