@@ -293,16 +293,20 @@ class UsersData(EWSData):
         in_charges = FacilityInCharge.objects.filter(
             location=self.location
         ).values_list('user_id', flat=True)
-        district_in_charges = []
         if self.location.parent.location_type.name == 'district':
             children = self.location.parent.get_descendants()
-            district_in_charges = list(chain.from_iterable([
+            availaible_in_charges = list(chain.from_iterable([
                 filter(
                     lambda u: 'In Charge' in u.user_data.get('role', []),
                     get_users_by_location_id(child.location_id)
                 )
                 for child in children
             ]))
+        else:
+            availaible_in_charges = filter(
+                lambda u: 'In Charge' in u.user_data.get('role', []),
+                get_users_by_location_id(self.location_id)
+            )
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
@@ -328,7 +332,7 @@ class UsersData(EWSData):
             'domain': self.domain,
             'location_id': self.location_id,
             'web_users': web_users,
-            'district_in_charges': [user_to_dict(user) for user in district_in_charges]
+            'district_in_charges': [user_to_dict(user) for user in availaible_in_charges]
         })
 
 
