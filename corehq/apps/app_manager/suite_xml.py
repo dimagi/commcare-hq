@@ -2309,7 +2309,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             if self.app.build_version >= '2.9':
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
-                                "CommCareVideo": "Video"}
+                                "CommCareVideo": "Video",
+                                "CommCareMultimedia": "Text"}
                 descriptor = u"{filetype} File: {name}".format(
                     filetype=type_mapping.get(m.media_type, "Media"),
                     name=name
