@@ -956,6 +956,10 @@ try:
             # localsettings.py will reveal the real error.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
