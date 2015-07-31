@@ -35,7 +35,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
-from corehq.util.quickcache import quickcache
+from corehq.util.quickcache import quickcache, skippable_quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
@@ -654,25 +654,27 @@ class FormBase(DocumentSchema):
         return hex(random.getrandbits(160))[2:-1]
 
     @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
+    def get_form(cls, form_unique_id, and_app=False, skip_cache=False):
+        @skippable_quickcache(['form_id'], skip_arg='skip_cache', timeout=30 * 60)
+        def get_app_from_form_id(form_id, skip_cache):
+            try:
+                d = get_db().view(
+                    'app_manager/xforms_index',
+                    key=form_id,
+                    include_docs=True
+                ).one()
+            except MultipleResultsFound as e:
+                raise XFormIdNotUnique(
+                    "xform id '%s' not unique: %s" % (form_unique_id, e)
+                )
+            if d:
+                doc = d['doc']
+                return get_correct_app_class(doc).wrap(doc)
+            else:
+                raise ResourceNotFound()
 
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
+        app = get_app_from_form_id(form_unique_id, skip_cache)
+        form = app.get_form(form_unique_id)
         if and_app:
             return form, app
         else:
@@ -4616,13 +4618,13 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     return filter(remote_app_filter, wrapped_apps)
 
 
+@quickcache(['domain', 'app_id', 'wrap_cls', 'latest', 'target'])
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
 
     """
-
     if latest:
         try:
             original_app = get_db().get(app_id)

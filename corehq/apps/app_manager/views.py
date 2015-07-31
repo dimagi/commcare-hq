@@ -302,16 +302,6 @@ def xform_display(request, domain, form_unique_id):
         return json_response(questions)
 
 
-@require_can_edit_apps
-def form_casexml(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    return HttpResponse(form.create_casexml())
-
 @login_or_digest
 @require_can_edit_apps
 def app_source(request, domain, app_id):
@@ -2067,7 +2057,7 @@ def rename_language(request, domain, form_unique_id):
     old_code = request.POST.get('oldCode')
     new_code = request.POST.get('newCode')
     try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
+        form, app = Form.get_form(form_unique_id, and_app=True, skip_cache=True)
     except ResourceConflict:
         raise Http404()
     if app.domain != domain:
