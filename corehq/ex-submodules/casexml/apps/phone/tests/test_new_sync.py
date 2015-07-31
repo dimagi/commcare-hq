@@ -4,7 +4,6 @@ from django.test import TestCase, SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.checksum import Checksum
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
     CaseState
