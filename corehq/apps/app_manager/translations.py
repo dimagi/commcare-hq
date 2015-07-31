@@ -577,7 +577,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
 def escape_output_value(value):
     try:
         return etree.fromstring(u"<value>{}</value>".format(
-            re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value))
+            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:
         # if something went horribly wrong just don't bother with escaping
