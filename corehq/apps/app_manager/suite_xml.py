@@ -1979,6 +1979,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     # update any reference to previously changed datums
                     for change in changed_ids_[parent_tag]:
                         nodeset = datum.nodeset
+                        if not nodeset:
+                            return
                         old = session_var(change['old_id'])
                         new = session_var(change['new_id'])
                         datum.nodeset = nodeset.replace(old, new)
