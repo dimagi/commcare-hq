@@ -22,6 +22,9 @@ class FakeCache(object):
     def set(self, key, value, timeout=None):
         self.cache_dict[key] = value
 
+    def exists(self, key):
+        return key in self.cache_dict
+
 
 fake_cache = FakeCache()
 
