@@ -3,6 +3,7 @@ from django.utils.html import escape
 from lxml import etree
 import copy
 import re
+from lxml.etree import XMLSyntaxError, Element
 from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
@@ -560,7 +561,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     value_node.xml.tail = ''
                     for node in value_node.findall("./*"):
                         node.xml.getparent().remove(node.xml)
-                    escaped_trans = _escape_output_value(new_translation)
+                    escaped_trans = escape_output_value(new_translation)
                     value_node.xml.text = escaped_trans.text
                     for n in escaped_trans.getchildren():
                         value_node.xml.append(n)
@@ -573,11 +574,16 @@ def update_form_translations(sheet, rows, missing_cols, app):
     return msgs
 
 
-def _escape_output_value(value):
-    return etree.fromstring("<value>" +
-        re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value)) +
-        "</value>")
-
+def escape_output_value(value):
+    try:
+        return etree.fromstring(u"<value>{}</value>".format(
+            re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value))
+        ))
+    except XMLSyntaxError:
+        # if something went horribly wrong just don't bother with escaping
+        element = Element('value')
+        element.text = value
+        return element
 
 
 def update_case_list_translations(sheet, rows, app):
