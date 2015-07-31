@@ -303,8 +303,11 @@ var AdvancedCase = (function () {
                 if (!parentOnly && action.case_tag() === oldTag) {
                     action.case_tag(newTag);
                 }
-                if (action.parent_tag() === oldTag) {
-                    action.parent_tag(newTag);
+                for (var j = 0; j < action.parents.length; j++) {
+                    var parentIndex = action.parents[j];
+                    if (parentIndex.tag() === oldTag) {
+                        parentIndex.tag(newTag);
+                    }
                 }
             }
         };
@@ -347,9 +350,7 @@ var AdvancedCase = (function () {
                     case_type: config.caseType,
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    parent_tag: '',
-                    parent_reference_id: 'parent',
-                    relationship: 'child',
+                    parents: [],
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -382,9 +383,7 @@ var AdvancedCase = (function () {
                             required: true
                         }],
                     repeat_context: '',
-                    parent_tag: '',
-                    parent_reference_id: 'parent',
-                    relationship: 'child',
+                    parents: [],
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
@@ -406,8 +405,12 @@ var AdvancedCase = (function () {
                 var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
                 for (var i = index; i < loadUpdateCases.length; i++) {
                     potential_child = loadUpdateCases[i];
-                    if (potential_child.parent_tag() === action.case_tag()) {
-                        potential_child.parent_tag('');
+                    for (var j = 0; j < potential_child.parents.length; j++) {
+                        var parentIndex = potential_child.parents[i];
+                        if (parentIndex.tag() === action.case_tag()) {
+                            parentIndex.tag('');
+                        }
+
                     }
                 }
             }
@@ -419,6 +422,14 @@ var AdvancedCase = (function () {
                 open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap)
             };
         };
+    };
+
+    var ParentIndex = function () {
+        var self = this;
+
+        self.tag = ko.observable();
+        self.reference_id = ko.observable('parent');
+        self.relationship = ko.observable('child');
     };
 
     var  ActionBase = {
@@ -444,21 +455,24 @@ var AdvancedCase = (function () {
             if (!self.config.caseConfigViewModel) {
                 return;
             }
-            if (!self.parent_tag()) {
+            if (!self.parents) {
                 return null;
             }
-            var parent = self.config.caseConfigViewModel.getActionFromTag(self.parent_tag());
-            if (!parent) {
-                return "Subcase parent reference is missing";
-            } else if (!self.parent_reference_id()) {
-                return "Parent reference ID required for subcases";
-            } else if (parent.actionType === 'open') {
-                if (!parent.repeat_context()) {
-                    return null;
-                } else if (!self.repeat_context() ||
-                    // manual string startsWith
-                    self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                    return "Subcase must be in same repeat context as parent.";
+            for (var i = 0; i < self.parents.length; i++) {
+                var parentIndex = self.parents[i];
+                var parent = self.config.caseConfigViewModel.getActionFromTag(parentIndex.tag());
+                if (!parent) {
+                    return "Subcase parent reference is missing";
+                } else if (!parentIndex.reference_id()) {
+                    return 'Parent "' + parentIndex.tag() + '" reference ID required for subcases';
+                } else if (parent.actionType === 'open') {
+                    if (!parent.repeat_context()) {
+                        return null;
+                    } else if (!self.repeat_context() ||
+                        // manual string startsWith
+                        self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
+                        return 'Subcase must be in same repeat context as parent "' + parentIndex.tag() + '".';
+                    }
                 }
             }
             return null;
@@ -504,9 +518,11 @@ var AdvancedCase = (function () {
             var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
             var spanSnip = '<span class="muted" style="font-weight: normal;">';
             if (action.actionType === 'open') {
-                return _.template(nameSnip + spanSnip +
-                    '<% if (action.subcase()) { %> : subcase of <span style="font-weight: bold;"><%= action.parent_tag() %></span><% } %>' +
-                    closeSnip + "</span>",
+                return _.template(
+                    nameSnip + spanSnip +
+                    '<% if (action.subcase()) { %> : ' +
+                    'subcase of <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
+                    '<% } %>' + closeSnip + "</span>",
                     action, {variable: 'action'});
             } else {
                 if (action.auto_select) {
@@ -529,6 +545,13 @@ var AdvancedCase = (function () {
                 });
             }
             return properties;
+        },
+        getParentTags: function (parents) {
+            var tags = [];
+            for (var i = 0; i < parents.length; i++) {
+                tags.append(parents[i].tag)
+            }
+            return tags.join(', ');
         }
     };
 
@@ -539,7 +562,7 @@ var AdvancedCase = (function () {
                     'case_type',
                     'details_module',
                     'case_tag',
-                    'parent_tag',
+                    'parents',
                     'close_condition',
                     'show_product_stock',
                     'product_program'],
@@ -620,19 +643,32 @@ var AdvancedCase = (function () {
                 }
             });
 
+            self.parent_tags = function () {
+                return ActionBase.getParentTags(self.parents);
+            };
+
             self.subcase = ko.computed({
                 read: function () {
-                    return self.parent_tag();
+                    return self.parent_tags();
                 },
                 write: function (value) {
+                    /***
+                     * We are addressing a vector (parents) as if it's scalar
+                     * (subcase). We are forced to do this because a subcase
+                     * used to have a single parent, but now it can have more
+                     * than one. Assigning a value appends a parent. Assigning
+                     * no value empties the parents list.
+                     */
                     if (value) {
                         var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
+                            var parentIndex = new ParentIndex();
                             var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
-                            self.parent_tag(parent.case_tag());
+                            parentIndex.tag = parent.case_tag();
+                            self.parents.append(parentIndex);
                         }
                     } else {
-                        self.parent_tag('');
+                        self.parents = [];
                     }
                 }
             });
@@ -776,9 +812,7 @@ var AdvancedCase = (function () {
                     'case_type',
                     'name_path',
                     'case_tag',
-                    'parent_tag',
-                    'parent_reference_id',
-                    'relationship',
+                    'parents',
                     'open_condition',
                     'close_condition'
                 ],
@@ -826,15 +860,21 @@ var AdvancedCase = (function () {
                 return ActionBase.validate(self, self.case_type(), self.case_tag());
             });
 
+            self.parent_tags = function () {
+                return ActionBase.getParentTags(self.parents);
+            };
+
             self.subcase = ko.computed({
                 read: function () {
-                    return self.parent_tag();
+                    return self.parent_tags();
                 },
                 write: function (value) {
                     if (value) {
-                        self.parent_tag('Select parent');
+                        var parentIndex = new ParentIndex();
+                        parentIndex.tag = 'Select parent';
+                        self.parents = [parentIndex];
                     } else {
-                        self.parent_tag('');
+                        self.parents = [];
                     }
                 }
             });
@@ -890,7 +930,7 @@ var AdvancedCase = (function () {
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
-                    return self.parent_tag() || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
+                    return self.parents || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
                 self.validate_subcase = ko.computed(function () {
                     return ActionBase.validate_subcase(self);
@@ -909,8 +949,8 @@ var AdvancedCase = (function () {
             self.case_properties.remove(function (prop) {
                 return prop.isBlank();
             });
-            if (self.parent_tag() && !self.allow_subcase()) {
-                self.parent_tag('');
+            if (self.parents && !self.allow_subcase()) {
+                self.parents = [];
             }
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
