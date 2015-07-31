@@ -1941,7 +1941,7 @@ class Module(ModuleBase):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form for form in self.forms if actions_use_usercase(form.active_actions()))
+        return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
 
     def is_usercaseonly(self):
         """
