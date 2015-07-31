@@ -954,6 +954,8 @@ try:
             # is a syntax error in any module imported by corehq/__init__.py
             # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
             # localsettings.py will reveal the real error.
+            # Note that changing this means you will not be able to use/test anything
+            # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
                     handler["class"] = "logging.StreamHandler"
