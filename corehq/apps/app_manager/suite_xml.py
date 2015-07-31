@@ -699,7 +699,6 @@ class SuiteGeneratorBase(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-        self.id_strings = id_strings
 
     def generate_suite(self):
         suite = Suite(
@@ -867,13 +866,13 @@ class SuiteGenerator(SuiteGeneratorBase):
             :returns:   list of strings and DatumMeta objects. String represent stack commands
                         and DatumMeta's represent stack datums.
             """
-            target_form_command = self.id_strings.form_command(target_form)
+            target_form_command = id_strings.form_command(target_form)
             target_module_id, target_form_id = target_form_command.split('-')
-            module_command = self.id_strings.menu_id(target_form.get_module())
+            module_command = id_strings.menu_id(target_form.get_module())
             module_datums = self.get_module_datums(suite, target_module_id)
             form_datums = module_datums[target_form_id]
 
-            if module_command == self.id_strings.ROOT:
+            if module_command == id_strings.ROOT:
                 datums_list = root_module_datums
             else:
                 datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
@@ -881,7 +880,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             common_datums = commonprefix(datums_list)
             remaining_datums = form_datums[len(common_datums):]
 
-            frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+            frame_children = [module_command] if module_command != id_strings.ROOT else []
             frame_children.extend(common_datums)
             if not module_only:
                 frame_children.append(target_form_command)
@@ -918,13 +917,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if form.post_form_workflow == WORKFLOW_DEFAULT:
                     continue
 
-                form_command = self.id_strings.form_command(form)
+                form_command = id_strings.form_command(form)
 
                 if form.post_form_workflow == WORKFLOW_ROOT:
                     create_workflow_stack(suite, form_command, [], True)
                 elif form.post_form_workflow == WORKFLOW_MODULE:
-                    module_command = self.id_strings.menu_id(module)
-                    frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+                    module_command = id_strings.menu_id(module)
+                    frame_children = [module_command] if module_command != id_strings.ROOT else []
                     create_workflow_stack(suite, form_command, frame_children)
                 elif form.post_form_workflow == WORKFLOW_PREVIOUS:
                     frame_children = get_frame_children(form)
@@ -1007,7 +1006,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 path = './user_registration.xml'
                 this_list = last
             resource = XFormResource(
-                id=self.id_strings.xform_resource(form),
+                id=id_strings.xform_resource(form),
                 version=form.get_version(),
                 local=path,
                 remote=path,
@@ -1031,7 +1030,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             path = './{lang}/app_strings.txt'.format(lang=lang)
             resource = LocaleResource(
                 language=lang,
-                id=self.id_strings.locale_resource(lang),
+                id=id_strings.locale_resource(lang),
                 version=self.app.version,
                 local=path,
                 remote=path,
@@ -1059,7 +1058,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_column_infos,
                     [],
                     None,
-                    Text(locale_id=self.id_strings.detail_tab_title_locale(
+                    Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
                     tab_spans[tab.id][0],
@@ -1107,14 +1106,14 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 d.action = Action(
                     display=Display(
-                        text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
+                        text=Text(locale_id=id_strings.case_list_form_locale(module)),
                         media_image=module.case_list_form.media_image,
                         media_audio=module.case_list_form.media_audio,
                     ),
                     stack=Stack()
                 )
                 frame = PushFrame()
-                frame.add_command(XPath.string(self.id_strings.form_command(form)))
+                frame.add_command(XPath.string(id_strings.form_command(form)))
 
                 if form.form_type == 'module_form':
                     datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
@@ -1128,7 +1127,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     s_datum = meta['datum']
                     frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
-                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)
 
             try:
@@ -1171,8 +1170,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         detail,
                                         detail_column_infos,
                                         list(detail.get_tabs()),
-                                        self.id_strings.detail(module, detail_type),
-                                        Text(locale_id=self.id_strings.detail_title_locale(
+                                        id_strings.detail(module, detail_type),
+                                        Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
                                         0,
@@ -1193,7 +1192,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not (form.schedule and form.schedule.anchor):
                     raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
 
-                fixture_id = self.id_strings.schedule_fixture(form)
+                fixture_id = id_strings.schedule_fixture(form)
                 anchor = form.schedule.anchor
 
                 # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
@@ -1273,8 +1272,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
 
         template_args = {
-            "detail_id": self.id_strings.detail(module, detail_type),
-            "title_text_id": self.id_strings.detail_title_locale(
+            "detail_id": id_strings.detail(module, detail_type),
+            "title_text_id": id_strings.detail_title_locale(
                 module, detail_type
             )
         }
@@ -1293,7 +1292,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 "prop_name": get_column_xpath_generator(
                     self.app, module, detail, column
                 ).xpath,
-                "locale_id": self.id_strings.detail_column_header_locale(
+                "locale_id": id_strings.detail_column_header_locale(
                     module, detail_type, column,
                 ),
                 # Just using default language for now
@@ -1306,7 +1305,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 template_args[template_field]["enum_keys"] = {}
                 for mapping in column.enum:
                     template_args[template_field]["enum_keys"][mapping.key] = \
-                        self.id_strings.detail_column_enum_variable(
+                        id_strings.detail_column_enum_variable(
                             module, detail_type, column, mapping.key_as_variable
                         )
         # Populate the template
@@ -1381,7 +1380,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         return relevance_by_menu, menu_by_command
 
     def get_detail_id_safe(self, module, detail_type):
-        detail_id = self.id_strings.detail(
+        detail_id = id_strings.detail(
             module=module,
             detail_type=detail_type,
         )
@@ -1494,8 +1493,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 e = Entry()
                 e.form = form.xmlns
                 e.command = Command(
-                    id=self.id_strings.form_command(form),
-                    locale_id=self.id_strings.form_locale(form),
+                    id=id_strings.form_command(form),
+                    locale_id=id_strings.form_locale(form),
                     media_image=form.media_image,
                     media_audio=form.media_audio,
                 )
@@ -1524,8 +1523,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             if hasattr(module, 'case_list') and module.case_list.show:
                 e = Entry(
                     command=Command(
-                        id=self.id_strings.case_list_command(module),
-                        locale_id=self.id_strings.case_list_locale(module),
+                        id=id_strings.case_list_command(module),
+                        locale_id=id_strings.case_list_locale(module),
                         media_image=module.case_list.media_image,
                         media_audio=module.case_list.media_audio,
                     )
@@ -1747,7 +1746,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     and (detail.use_case_tiles or detail.custom_xml)
                     and enabled
                 ):
-                    detail_persistent = self.id_strings.detail(datum['module'], detail_type)
+                    detail_persistent = id_strings.detail(datum['module'], detail_type)
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
@@ -2119,19 +2118,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -2140,10 +2139,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         frame.if_clause = '{count} >= 1'.format(count=count)
 
                         frame.add_command(XPath.string(
-                            self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
+                            id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
                         ))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':
@@ -2162,30 +2161,30 @@ class SuiteGenerator(SuiteGeneratorBase):
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 update_menu = Menu(
-                    id=self.id_strings.menu_id(module),
-                    locale_id=self.id_strings.module_locale(module),
+                    id=id_strings.menu_id(module),
+                    locale_id=id_strings.module_locale(module),
                 )
 
                 if not module.display_separately:
                     parent = self.app.get_module_by_unique_id(module.parent_select.module_id)
                     create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
                     create_menu = Menu(
-                        id=self.id_strings.menu_id(parent),
-                        locale_id=self.id_strings.module_locale(parent),
+                        id=id_strings.menu_id(parent),
+                        locale_id=id_strings.module_locale(parent),
                     )
-                    create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
+                    create_menu.commands.append(Command(id=id_strings.form_command(create_goal_form)))
                     menus.append(create_menu)
 
-                    update_menu.root = self.id_strings.menu_id(parent)
+                    update_menu.root = id_strings.menu_id(parent)
                 else:
                     update_menu.commands.extend([
-                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
+                        Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
                     ])
 
                 update_menu.commands.extend([
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
                 menus.append(update_menu)
             elif hasattr(module, 'get_menus'):
@@ -2193,13 +2192,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     menus.append(menu)
             else:
                 menu_kwargs = {
-                    'id': self.id_strings.menu_id(module),
-                    'locale_id': self.id_strings.module_locale(module),
+                    'id': id_strings.menu_id(module),
+                    'locale_id': id_strings.module_locale(module),
                     'media_image': module.media_image,
                     'media_audio': module.media_audio,
                 }
-                if self.id_strings.menu_root(module):
-                    menu_kwargs['root'] = self.id_strings.menu_root(module)
+                if id_strings.menu_root(module):
+                    menu_kwargs['root'] = id_strings.menu_root(module)
 
                 if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                         self.app.enable_module_filtering and
@@ -2210,7 +2209,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                 def get_commands():
                     for form in module.get_forms():
-                        command = Command(id=self.id_strings.form_command(form))
+                        command = Command(id=id_strings.form_command(form))
                         if module.all_forms_require_a_case() and \
                                 not module.put_in_root and \
                                 getattr(form, 'form_filter', None):
@@ -2228,7 +2227,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:
-                        yield Command(id=self.id_strings.case_list_command(module))
+                        yield Command(id=id_strings.case_list_command(module))
 
                 menu.commands.extend(get_commands())
 
@@ -2257,7 +2256,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         for form in schedule_forms:
             schedule = form.schedule
             fx = ScheduleFixture(
-                id=self.id_strings.schedule_fixture(form),
+                id=id_strings.schedule_fixture(form),
                 schedule=Schedule(
                     expires=schedule.expires,
                     post_schedule_increment=schedule.post_schedule_increment
@@ -2313,7 +2312,7 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 )
 
             yield MediaResource(
-                id=self.id_strings.media_resource(m.unique_id, name),
+                id=id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
                 descriptor=descriptor,
