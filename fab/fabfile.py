@@ -147,7 +147,9 @@ def _setup_path():
     # See bug-ticket: http://code.fabfile.org/attachments/61/posixpath.patch
     env.root = posixpath.join(env.home, 'www', env.environment)
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
-    env.code_root = posixpath.join(env.root, 'code_root')
+    env.releases = posixpath.join(env.root, 'releases')
+    env.code_current = posixpath.join(env.root, 'current')
+    env.code_root = posixpath.join(env.releases, int(time.time()))
     env.code_root_preindex = posixpath.join(env.root, 'code_root_preindex')
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
@@ -724,9 +726,16 @@ def _deploy_without_asking():
         _execute_with_timing(services_restart)
         raise
     else:
+        _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
         url = _tag_commit()
         _execute_with_timing(record_successful_deploy, url)
+
+
+@task
+def update_current():
+    # Symlink most recent deploy to the current
+    pass
 
 
 @task
