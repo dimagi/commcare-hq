@@ -1564,9 +1564,9 @@ class XForm(WrappedNode):
             if action.case_properties:
                 open_case_block.add_update_block(action.case_properties)
 
-            if action.parent_tag:
-                parent_meta = form.actions.actions_meta_by_tag.get(action.parent_tag)
-                reference_id = action.parent_reference_id or 'parent'
+            for parent_index in action.parents:
+                parent_meta = form.actions.actions_meta_by_tag.get(parent_index.tag)
+                reference_id = parent_index.reference_id or 'parent'
                 if parent_meta['type'] == 'load':
                     ref = CaseIDXPath(session_var(parent_meta['action'].case_session_var))
                 else:

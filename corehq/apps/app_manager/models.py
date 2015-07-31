@@ -473,16 +473,17 @@ class AdvancedFormActions(DocumentSchema):
         return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
 
     def get_subcase_actions(self):
-        return (a for a in self.get_all_actions() if a.parent_tag)
+        return (a for a in self.get_all_actions() if a.parents)
 
     def get_open_subcase_actions(self, parent_case_type=None):
-        for action in [a for a in self.open_cases if a.parent_tag]:
+        for action in [a for a in self.open_cases if a.parents]:
             if not parent_case_type:
                 yield action
             else:
-                parent = self.actions_meta_by_tag[action.parent_tag]['action']
-                if parent.case_type == parent_case_type:
-                    yield action
+                for parent_index in action.parents:
+                    parent = self.actions_meta_by_tag[parent_index.tag]['action']
+                    if parent.case_type == parent_case_type:
+                        yield action
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -502,14 +503,15 @@ class AdvancedFormActions(DocumentSchema):
     def get_action_hierarchy(self, action):
         current = action
         hierarchy = [current]
-        while current and current.parent_tag:
-            parent = self.get_action_from_tag(current.parent_tag)
-            current = parent
-            if parent:
-                if parent in hierarchy:
-                    circular = [a.case_tag for a in hierarchy + [parent]]
-                    raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
-                hierarchy.append(parent)
+        while current and current.parents:
+            for parent_index in current.parents:
+                parent = self.get_action_from_tag(parent_index.tag)
+                current = parent
+                if parent:
+                    if parent in hierarchy:
+                        circular = [a.case_tag for a in hierarchy + [parent]]
+                        raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
+                    hierarchy.append(parent)
 
         return hierarchy
 
@@ -537,11 +539,12 @@ class AdvancedFormActions(DocumentSchema):
                     'type': type,
                     'action': action
                 }
-                if action.parent_tag:
-                    meta['by_parent_tag'][action.parent_tag] = {
-                        'type': type,
-                        'action': action
-                    }
+                if action.parents:
+                    for parent in action.parents:
+                        meta['by_parent_tag'][parent.tag] = {
+                            'type': type,
+                            'action': action
+                        }
                 if type == 'load' and action.auto_select and action.auto_select.mode:
                     meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
@@ -549,6 +552,7 @@ class AdvancedFormActions(DocumentSchema):
         add_actions('open', self.get_open_actions())
 
         return meta
+
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -2049,17 +2053,25 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         errors = []
 
         for action in self.actions.get_subcase_actions():
-            if action.parent_tag not in self.actions.get_case_tags():
-                errors.append({'type': 'missing parent tag', 'case_tag': action.parent_tag})
+            case_tags = self.actions.get_case_tags()
+            # TODO: "any" or "all" ?
+            for parent in action.parents:
+                if parent.tag not in case_tags:
+                    errors.append({'type': 'missing parent tag', 'case_tag': parent.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
                     errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
-                meta = self.actions.actions_meta_by_tag.get(action.parent_tag)
-                if meta and meta['type'] == 'open' and meta['action'].repeat_context:
-                    if not action.repeat_context or not action.repeat_context.startswith(meta['action'].repeat_context):
-                        errors.append({'type': 'subcase repeat context', 'case_tag': action.case_tag})
+                # TODO: Test
+                for parent in action.parents:
+                    meta = self.actions.actions_meta_by_tag.get(parent.tag)
+                    if meta and meta['type'] == 'open' and meta['action'].repeat_context:
+                        if (
+                            not action.repeat_context or
+                            not action.repeat_context.startswith(meta['action'].repeat_context)
+                        ):
+                            errors.append({'type': 'subcase repeat context', 'case_tag': action.case_tag})
 
             try:
                 self.actions.get_action_hierarchy(action)
@@ -2160,9 +2172,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_properties.update(
                     subcase.case_properties.keys()
                 )
-                parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                if parent:
-                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                for parent_index in subcase.parents:
+                    parent = self.actions.get_action_from_tag(parent_index.tag)
+                    if parent:
+                        parent_types.add((parent.case_type, parent_index.reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -2324,10 +2337,12 @@ class AdvancedModule(ModuleBase):
                             case_type=module.case_type,
                             case_tag='_'.join(['parent'] * (i + 1)),
                             details_module=module.unique_id,
-                            parent_tag='_'.join(['parent'] * (i + 2)) if n > 0 else ''
+                            parents=[
+                                ParentIndex(tag='_'.join(['parent'] * (i + 2)) if n > 0 else '')
+                            ]
                         ))
 
-                    base_action.parent_tag = 'parent'
+                    base_action.parents = [ParentIndex(tag='parent')]
 
                 if close:
                     base_action.close_condition = close.condition
@@ -2342,8 +2357,10 @@ class AdvancedModule(ModuleBase):
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
-                        parent_reference_id=subcase.reference_id,
-                        parent_tag=base_action.case_tag if base_action else ''
+                        parents=[ParentIndex(
+                            tag=base_action.case_tag if base_action else '',
+                            reference_id=subcase.reference_id,
+                        )]
                     )
                     new_form.actions.open_cases.append(open_subcase_action)
         else:
