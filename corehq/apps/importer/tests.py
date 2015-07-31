@@ -302,9 +302,9 @@ class ImporterTest(TestCase):
         # This is actually testing several different things, but I figure it's
         # worth it, as each of these tests takes a non-trivial amount of time.
         bootstrap_location_types(self.domain)
-        location = make_loc('loc-1', name='loc-1', domain=self.domain)
-        make_loc('loc-2', name='loc-2', domain=self.domain)
-        duplicate_loc = make_loc('loc-3', name='loc-2', domain=self.domain)
+        location = make_loc('loc-1', name='Loc 1', domain=self.domain)
+        make_loc('loc-2', name='Loc 2', domain=self.domain)
+        duplicate_loc = make_loc('loc-3', name='Loc 2', domain=self.domain)
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],

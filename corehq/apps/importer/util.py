@@ -3,7 +3,6 @@ from collections import defaultdict
 from datetime import date
 
 import xlrd
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 from xlrd import xldate_as_tuple, XL_CELL_NUMBER
@@ -455,12 +454,11 @@ def get_id_from_name(name, domain, cache):
         return getattr(group, 'get_id', None)
 
     def get_from_location(name):
-        try:
-            return SQLLocation.objects.get(
-                Q(site_code=name) | Q(name=name)
-            ).location_id
-        except SQLLocation.DoesNotExist:
-            return None
+        for filter_ in [{'site_code': name}, {'name__iexact': name}]:
+            try:
+                return SQLLocation.objects.get(**filter_).location_id
+            except SQLLocation.DoesNotExist:
+                pass
 
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id
