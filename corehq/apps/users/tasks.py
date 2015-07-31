@@ -8,7 +8,8 @@ from couchdbkit import ResourceConflict
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
@@ -43,33 +44,42 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
     cls.get_db().bulk_save(docs)
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True,
-      default_retry_delay=5 * 60, max_retries=3)
-def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id,
+@task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
+def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
                                                   deleted_cases=None):
-    """ Upon user deletion, mark associated forms as deleted and prep cases
+    """
+    Upon user deletion, mark associated forms as deleted and prep cases
     for a rebuild.
     - 2 saves/sec for cloudant slowness (rate_limit)
-    - retry in 5 min if failure occurs after (default_retry_delay)
-    - retry a total of 3 times
     """
     if deleted_cases is None:
         deleted_cases = set()
 
     cases_to_rebuild = set()
-    for form in formlist:
-        form['doc_type'] += DELETED_SUFFIX
-        form['-deletion_id'] = deletion_id
-        cases_to_rebuild.update(get_case_ids_from_form(form))
-    XFormInstance.get_db().bulk_save(formlist)
+    forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
+    forms_to_save = []
+    for form in forms_to_check:
+        if not is_deleted(form):
+            form['doc_type'] += DELETED_SUFFIX
+            form['-deletion_id'] = deletion_id
+            forms_to_save.append(form)
 
+        # rebuild all cases anyways since we don't know if this has run or not if the task was killed
+        cases_to_rebuild.update(get_case_ids_from_form(form))
+
+    XFormInstance.get_db().bulk_save(forms_to_save)
     for case in cases_to_rebuild - deleted_cases:
         _rebuild_case_with_retries.delay(case)
 
 
-@task(bind=True, rate_limit=2, queue='background_queue', ignore_result=True,
-      default_retry_delay=5, max_retries=3)
+@task(bind=True, queue='background_queue', ignore_result=True,
+      default_retry_delay=5 * 60, max_retries=3, acks_late=True)
 def _rebuild_case_with_retries(self, case_id):
+    """
+    Rebuild a case with retries
+    - retry in 5 min if failure occurs after (default_retry_delay)
+    - retry a total of 3 times
+    """
     from casexml.apps.case.cleanup import rebuild_case
     try:
         rebuild_case(case_id)
