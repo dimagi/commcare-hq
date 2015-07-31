@@ -2276,8 +2276,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
-                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    select_chain = suite_xml.SuiteGenerator.get_select_chain(app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -3992,7 +3991,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()

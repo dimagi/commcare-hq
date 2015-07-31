@@ -206,8 +206,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app)
-    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
+    session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
@@ -290,7 +289,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     auth_cookie = request.COOKIES.get('sessionid')
 
     suite_gen = SuiteGenerator(app)
-    xpath = suite_gen.get_filter_xpath(module)
+    xpath = SuiteGenerator.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
