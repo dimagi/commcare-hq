@@ -118,6 +118,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # save state errors and hashes here
+    had_state_error = BooleanProperty(default=False)
+    error_date = DateTimeProperty()
+    error_hash = StringProperty()
+
     strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
