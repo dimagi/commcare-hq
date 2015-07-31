@@ -185,6 +185,7 @@ class SyncHistoryReport(DeploymentsReport):
             headers.add_column(DataTablesColumn(_("Sync Log")))
             headers.add_column(DataTablesColumn(_("Sync Log Type")))
             headers.add_column(DataTablesColumn(_("Previous Sync Log")))
+            headers.add_column(DataTablesColumn(_("Error Info")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -234,6 +235,14 @@ class SyncHistoryReport(DeploymentsReport):
                     id=sync_log_id
                 )
 
+            def _fmt_error_info(sync_log):
+                if not sync_log.had_state_error:
+                    return u'<span class="label label-success">&#10003;</span>'
+                else:
+                    return u'<span class="label label-important">X</span> State error {}'.format(
+                        naturaltime(sync_log.error_date),
+                    )
+
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
@@ -244,6 +253,7 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(_fmt_id(sync_log.get_id))
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
+                columns.append(_fmt_error_info(sync_log))
 
             return columns
 
