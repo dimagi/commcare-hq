@@ -944,13 +944,13 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return format_html(
                 "Snapshot of {0} &gt; {1}",
-                self.get_organization().title,
+                self.organization_title(),
                 self.copied_from.display_name()
             )
         if self.organization:
             return format_html(
                 '{0} &gt; {1}',
-                self.get_organization().title,
+                self.organization_title(),
                 self.hr_name or self.name
             )
         else:
