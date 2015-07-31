@@ -1688,7 +1688,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
         datums.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
-        datums.extend(self.get_extra_case_id_datums(form))
+        datums.extend(SuiteGenerator.get_extra_case_id_datums(form))
         return datums
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
