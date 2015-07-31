@@ -21,10 +21,9 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE
-from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException, \
-    ModuleNotFoundException
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE,\
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
     actions_use_usercase
@@ -911,7 +910,7 @@ class WorkflowHelper(object):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_children,
-                                  allow_empty_stack=False, if_clause=None):
+                              allow_empty_stack=False, if_clause=None):
         if not frame_children and not allow_empty_stack:
             return
 
