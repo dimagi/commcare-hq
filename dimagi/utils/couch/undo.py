@@ -3,10 +3,12 @@ from dimagi.ext.couchdbkit import *
 
 DELETED_SUFFIX = '-Deleted'
 
+
 class DeleteRecord(Document):
     base_doc = 'DeleteRecord'
     domain = StringProperty()
     datetime = DateTimeProperty()
+
 
 class DeleteDocRecord(DeleteRecord):
     doc_id = StringProperty()
@@ -15,6 +17,7 @@ class DeleteDocRecord(DeleteRecord):
         doc = self.get_doc()
         doc.doc_type = doc.doc_type.rstrip(DELETED_SUFFIX)
         doc.save()
+
 
 class UndoableDocument(Document):
     def soft_delete(self, domain_included=True):
@@ -32,3 +35,13 @@ class UndoableDocument(Document):
             record.save()
             self.save()
             return record
+
+
+def is_deleted(doc):
+    """
+    Guess if a document is deleted. Returns False if we're not sure.
+    """
+    try:
+        return doc['doc_type'].endswith(DELETED_SUFFIX)
+    except KeyError:
+        return False
