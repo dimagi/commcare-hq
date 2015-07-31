@@ -93,11 +93,11 @@ from .exceptions import (
 from corehq.apps.app_manager import id_strings
 from jsonpath_rw import jsonpath, parse
 
-WORKFLOW_DEFAULT = 'default'
-WORKFLOW_ROOT = 'root'
-WORKFLOW_MODULE = 'module'
-WORKFLOW_PREVIOUS = 'previous_screen'
-WORKFLOW_FORM = 'form'
+WORKFLOW_DEFAULT = 'default'  # go to the app main screen
+WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_MODULE = 'module'  # go to the current module's screen
+WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
+WORKFLOW_FORM = 'form'  # go straight to another form
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
