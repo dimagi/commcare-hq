@@ -1779,17 +1779,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
-            return Location.get(self.location_id)
-        else:
-            return None
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
     @property
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            return SQLLocation.objects.get(location_id=self.location_id)
-        else:
-            return None
+            try:
+                return SQLLocation.objects.get(location_id=self.location_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     def set_location(self, location):
         """
@@ -2321,6 +2325,18 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def set_location(self, domain, location_object_or_id):
+        if isinstance(location_object_or_id, basestring):
+            location_id = location_object_or_id
+        else:
+            location_id = location_object_or_id._id
+        self.get_domain_membership(domain).location_id = location_id
+        self.save()
+
+    def unset_location(self, domain):
+        self.get_domain_membership(domain).location_id = None
+        self.save()
+
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
@@ -2328,13 +2344,23 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_sql_location(self, domain):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
-        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
+        if loc_id:
+            try:
+                return SQLLocation.objects.get(loc_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
-        return Location.get(loc_id) if loc_id else None
+        if loc_id:
+            try:
+                return Location.get(loc_id)
+            except ResourceNotFound:
+                pass
+        return None
 
 
 class FakeUser(WebUser):
