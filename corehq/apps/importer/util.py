@@ -456,7 +456,7 @@ def get_id_from_name(name, domain, cache):
     def get_from_location(name):
         for filter_ in [{'site_code': name}, {'name__iexact': name}]:
             try:
-                return SQLLocation.objects.get(**filter_).location_id
+                return SQLLocation.objects.get(domain=domain, **filter_).location_id
             except SQLLocation.DoesNotExist:
                 pass
 
