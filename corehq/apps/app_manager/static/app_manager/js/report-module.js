@@ -12,7 +12,7 @@ var ReportModule = (function () {
         }
 
         self.addConfig = function() {
-            self.keyValuePairs.push([ko.observable(''), ko.observable('')]);
+            self.keyValuePairs.push([ko.observable(), ko.observable()]);
         };
     }
 
