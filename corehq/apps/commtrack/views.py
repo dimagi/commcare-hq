@@ -3,11 +3,14 @@ import copy
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
+from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
+    rebuild_stock_state
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -293,12 +296,55 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @property
     def page_context(self, **kwargs):
-        stock_transactions = (
+        stock_state_limit = 100
+        stock_transaction_limit = 10000
+        stock_state_limit_exceeded = False
+        stock_transaction_limit_exceeded = False
+
+        stock_state_keys = [
+            (txn.case_id, txn.section_id, txn.product_id)
+            for txn in
             StockTransaction.objects.filter(report__domain=self.domain)
-            .order_by('case_id', 'section_id', 'product_id',
-                      'report__date', 'pk')
-            .select_related('report__type', 'report__date', 'sql_product__name')
-        )
+            .order_by('case_id', 'section_id', 'product_id')
+            .distinct('case_id', 'section_id', 'product_id')
+            [:stock_state_limit]
+        ]
+        if len(stock_state_keys) >= stock_state_limit:
+            stock_state_limit_exceeded = True
+
+        actions_by_stock_state_key = []
+        stock_transaction_count = 0
+        for stock_state_key in stock_state_keys:
+            case_id, section_id, product_id = stock_state_key
+            actions = [
+                (action.__class__.__name__, action) for action in
+                plan_rebuild_stock_state(case_id, section_id, product_id)
+            ]
+            stock_transaction_count += len(actions)
+            if stock_transaction_count > stock_transaction_limit:
+                stock_transaction_limit_exceeded = True
+                break
+            actions_by_stock_state_key.append(
+                ({'case_id': case_id, 'section_id': section_id,
+                  'product_id': product_id},
+                 actions,
+                 get_doc_info_by_id(self.domain, case_id))
+            )
+
+        assert len(set(stock_state_keys)) == len(stock_state_keys)
         return {
-            'stock_transactions': stock_transactions
+            'actions_by_stock_state_key': actions_by_stock_state_key,
+            'stock_state_limit_exceeded': stock_state_limit_exceeded,
+            'stock_state_limit': stock_state_limit,
+            'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
+            'stock_transaction_limit': stock_transaction_limit,
         }
+
+    def post(self, request, *args, **kwargs):
+        case_id = request.POST.get('case_id')
+        section_id = request.POST.get('section_id')
+        product_id = request.POST.get('product_id')
+        if None in (case_id, section_id, product_id):
+            return HttpResponseBadRequest()
+        rebuild_stock_state(case_id, section_id, product_id)
+        return HttpResponseRedirect('.')
