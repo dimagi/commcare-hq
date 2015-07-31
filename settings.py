@@ -958,6 +958,10 @@ try:
             # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
