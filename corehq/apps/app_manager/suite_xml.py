@@ -772,9 +772,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         'fixtures',
     )
 
-    def __init__(self, app, is_usercase_enabled=None):
+    def __init__(self, app):
         super(SuiteGenerator, self).__init__(app)
-        self.is_usercase_enabled = is_usercase_enabled
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1599,8 +1598,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
-            if not self.is_usercase_enabled:
-                raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
             datums.append({
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
