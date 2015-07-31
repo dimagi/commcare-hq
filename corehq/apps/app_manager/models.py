@@ -2,6 +2,7 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
+from corehq.util.soft_assert import soft_assert
 from mock import Mock
 import os
 import logging
@@ -333,15 +334,20 @@ class FormActions(DocumentSchema):
         return names
 
 
+class ParentIndex(DocumentSchema):
+    tag = StringProperty()
+    reference_id = StringProperty(default='parent')
+    relationship = StringProperty(choices=['child', 'extension'], default='child')
+
+
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
-    parent_tag = StringProperty()
-    parent_reference_id = StringProperty(default='parent')
-    # relationship = "child" for index to a parent case (default)
-    # relationship = "extension" for index to a host case
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    # parent_tag = StringProperty()
+    # parent_reference_id = StringProperty(default='parent')
+    # relationship = StringProperty(choices=['child', 'extension'], default='child')
+    parents = SchemaListProperty(ParentIndex)
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -359,7 +365,28 @@ class AdvancedAction(IndexedSchema):
 
     @property
     def is_subcase(self):
-        return self.parent_tag
+        return bool(self.parents)
+
+    @classmethod
+    def wrap(cls, data):
+        _assert = soft_assert(to=['nhooper@dimagi.com'])
+        if not _assert('parent_tag' not in data,
+                       'AdvancedAction not migrated. Old application build may have been reverted.'):
+            if data['parent_tag']:
+                # Lazy-migrate single parent index to list of parent/host indices
+                parent = {
+                    'tag': data['parent_tag'],
+                    'reference_id': data.get('parent_reference_id', 'parent'),
+                    'relationship': data.get('relationship', 'child')
+                }
+                if hasattr(data.get('parents'), 'append'):
+                    data['parents'].append(parent)
+                else:
+                    data['parents'] = [parent]
+                del data['parent_tag']
+                data.pop('parent_reference_id', None)
+                data.pop('relationship', None)
+        return super(AdvancedAction, cls).wrap(data)
 
 
 class AutoSelectCase(DocumentSchema):
