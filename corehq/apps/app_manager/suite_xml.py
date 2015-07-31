@@ -1085,7 +1085,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             # Add variables
             variables = list(
-                self.detail_variables(module, detail, detail_column_infos[start:end])
+                SuiteGenerator.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
@@ -1181,7 +1181,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
         return r
 
-    def detail_variables(self, module, detail, detail_column_infos):
+    @staticmethod
+    def detail_variables(module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
         if hasattr(module, 'has_schedule') and \
                 module.has_schedule and \
