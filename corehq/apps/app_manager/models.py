@@ -303,6 +303,7 @@ class OpenSubCaseAction(FormAction):
 
     close_condition = SchemaProperty(FormActionCondition)
 
+
 class FormActions(DocumentSchema):
 
     open_case = SchemaProperty(OpenCaseAction)
@@ -319,6 +320,7 @@ class FormActions(DocumentSchema):
     usercase_preload = SchemaProperty(PreloadAction)
 
     subcases = SchemaListProperty(OpenSubCaseAction)
+    usercase_subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
         names = set()
@@ -1024,6 +1026,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if opens_case:
                 subcase_index += 1
             return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
+        if action_type == 'usercase_subcases':
+            subcase_type = self.actions.usercase_subcases[subcase_index].case_type
+            return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
 
     def _get_active_actions(self, types):
         actions = {}
@@ -1047,19 +1052,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             if self.requires == 'none':
                 action_types = (
                     'open_case', 'update_case', 'close_case', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'usercase_subcases',
                 )
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'usercase_subcases',
                 )
             else:
                 # this is left around for legacy migrated apps
                 action_types = (
                     'open_case', 'update_case', 'close_case',
                     'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'usercase_subcases',
                 )
         return self._get_active_actions(action_types)
 
@@ -1072,7 +1077,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         errors = []
 
         subcase_names = set()
-        for subcase_action in self.actions.subcases:
+        for subcase_action in self.actions.subcases + self.actions.usercase_subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
 
@@ -1093,8 +1098,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                     actions = action
                 else:
                     actions = [action]
-                for action in actions:
-                    for path in FormAction.get_action_paths(action):
+                for act in actions:
+                    for path in FormAction.get_action_paths(act):
                         yield path
 
         errors.extend(self.check_paths(generate_paths()))
@@ -1189,6 +1194,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
                     parent_types.add((module_case_type, subcase.reference_id or 'parent'))
+        for subcase in self.actions.usercase_subcases:
+            if subcase.case_type == case_type:
+                case_properties.update(
+                    subcase.case_properties.keys()
+                )
+                parent_types.add((USERCASE_TYPE, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
     def update_app_case_meta(self, app_case_meta):
@@ -1229,7 +1240,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         questions,
                         question_path
                     )
-            if type_ == 'subcases':
+            if type_ in ('subcases', 'usercase_subcases'):
                 for act in action:
                     if act.is_active():
                         sub_type_meta = app_case_meta.get_type(act.case_type)

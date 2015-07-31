@@ -1306,8 +1306,8 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 self.add_case_preloads(actions['case_preload'].preload)
 
-        if 'subcases' in actions:
-            subcases = actions['subcases']
+        if 'subcases' in actions or 'usercase_subcases' in actions:
+            subcases = actions.get('subcases', []) + actions.get('usercase_subcases', [])
             repeat_contexts = defaultdict(int)
             for subcase in subcases:
                 if subcase.repeat_context:

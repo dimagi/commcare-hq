@@ -14,11 +14,12 @@ var CaseConfig = (function () {
 
         self.home = params.home;
         self.actions = (function (a) {
-            var actions = {}, i;
+            var actions = {};
             _(action_names).each(function (action_name) {
                 actions[action_name] = a[action_name];
             });
             actions.subcases = a.subcases;
+            actions.usercase_subcases = a.usercase_subcases;
             return actions;
         }(params.actions));
         self.questions = params.questions;
@@ -74,8 +75,11 @@ var CaseConfig = (function () {
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged user case settings",
             save: function () {
+                var usercase_subcases = _(self.caseConfigViewModel.usercase_subcases()).map(
+                    HQOpenSubCaseAction.from_case_transaction);
                 var actions = JSON.stringify(_(self.actions).extend(
-                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
+                    {usercase_subcases: usercase_subcases}
                 ));
                 self.saveUsercaseButton.ajax({
                     type: 'post',
@@ -211,6 +215,17 @@ var CaseConfig = (function () {
         };
         self.removeSubCase = function (subcase) {
             self.subcases.remove(subcase);
+        };
+        self.usercase_subcases = ko.observableArray(
+            _(caseConfig.actions.subcases).map(function (subcase) {
+                return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig);
+            })
+        );
+        self.addUserCaseSubCase = function () {
+            self.usercase_subcases.push(HQOpenSubCaseAction.to_case_transaction({}, caseConfig));
+        };
+        self.removeUserCaseSubCase = function (subcase) {
+            self.usercase_subcases.remove(subcase);
         };
 
         self.actionType = ko.observable((function () {
