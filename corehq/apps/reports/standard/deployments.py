@@ -160,14 +160,19 @@ class ApplicationStatusReport(DeploymentsReport):
 
 
 class SyncHistoryReport(DeploymentsReport):
+    DEFAULT_LIMIT = 10
+    MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
-    report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
+
+    @property
+    def report_subtitles(self):
+        return [_('Shows the last (up to) {} times a user has synced.').format(self.limit)]
 
     @property
     def disable_pagination(self):
-        return self.limit == 10
+        return self.limit == self.DEFAULT_LIMIT
 
     @property
     def headers(self):
@@ -195,14 +200,13 @@ class SyncHistoryReport(DeploymentsReport):
         # security check
         get_document_or_404(CommCareUser, self.domain, user_id)
 
-        kwargs = {'limit': self.limit} if self.limit != 0 else {}
         sync_log_ids = [row['id'] for row in SyncLog.view(
             "phone/sync_logs_by_user",
             startkey=[user_id, {}],
             endkey=[user_id],
             descending=True,
             reduce=False,
-            **kwargs
+            limit=self.limit,
         )]
 
         def _sync_log_to_row(sync_log):
@@ -255,9 +259,9 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def limit(self):
         try:
-            return int(self.request.GET.get('limit', '10'))
+            return min(self.MAX_LIMIT, int(self.request.GET.get('limit', self.DEFAULT_LIMIT)))
         except ValueError:
-            return 10
+            return self.DEFAULT_LIMIT
 
 
 def _fmt_date(date):
