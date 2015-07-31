@@ -230,7 +230,7 @@ class SohPercentageTableData(ILSData):
             )
             for product_id in products_ids:
                 product_availability = product_availabilities.get((sql_location.location_id, product_id))
-                if product_availability:
+                if product_availability and product_availability[1] != 0:
                     row_data.append(
                         format_percent(
                             product_availability[0] * 100 / float(product_availability[1])
