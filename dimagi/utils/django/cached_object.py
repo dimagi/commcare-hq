@@ -259,28 +259,7 @@ class CachedImage(CachedObject):
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(image_meta.to_json()))
 
     def is_cached(self):
-        try:
-            metas, streams = self.get_all_keys()
-            if len(metas) == 0:
-                return False
-            else:
-                return True
-        except AssertionError:
-            # maybe one of our keys was purged. Oh well.
-            return False
-
-    def get_all_keys(self):
-        """
-        Returns all FULL keys
-        """
-        full_stream_keys = self.rcache.keys(self.stream_key(WILDCARD))
-        full_meta_keys = self.rcache.keys(self.meta_key(WILDCARD))
-
-        assert len(full_stream_keys) == len(full_meta_keys),\
-            "Error stream and meta keys must be 1:1 - something went wrong in the configuration "\
-            "for key=%s, full_stream_keys=%s, full_meta_keys=%s"\
-            % (self.cache_key, str(full_stream_keys), str(full_meta_keys))
-        return full_stream_keys, full_meta_keys
+        return self.rcache.exists(self.meta_key(OBJECT_ORIGINAL))
 
     def get(self, size_key=OBJECT_ORIGINAL, **kwargs):
         """
@@ -333,11 +312,7 @@ class CachedImage(CachedObject):
         """
         Is a given sized image cached already
         """
-        full_stream_keys, full_meta_keys = self.get_all_keys()
-        if self.stream_key(size_key) in full_stream_keys and self.meta_key(size_key) in full_meta_keys:
-            return True
-        else:
-            return False
+        return self.rcache.exists(self.stream_key(size_key)) and self.rcache.exists(self.meta_key(size_key))
 
     def make_size(self, size_key):
         """
