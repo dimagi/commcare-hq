@@ -1,5 +1,6 @@
 import sqlalchemy
 from sqlagg import SumWhen
+from django.utils.translation import ugettext as _
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
@@ -50,12 +51,13 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
         data_source_configuration, column_config, MAXIMUM_EXPANSION
     )
     if over_expansion_limit:
-        column_warnings.append(
-            'The "{}" column had too many values to expand! '
-            'Expansion limited to {} distinct values.'.format(
-                column_config.get_header(lang), MAXIMUM_EXPANSION
-            )
-        )
+        column_warnings.append(_(
+            u'The "{header}" column had too many values to expand! '
+            u'Expansion limited to {max} distinct values.'
+        ).format(
+            header=column_config.get_header(lang),
+            max=MAXIMUM_EXPANSION
+        ))
     return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
