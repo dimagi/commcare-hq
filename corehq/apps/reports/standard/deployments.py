@@ -164,7 +164,10 @@ class SyncHistoryReport(DeploymentsReport):
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
     report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
-    disable_pagination = True
+
+    @property
+    def disable_pagination(self):
+        return self.limit == 10
 
     @property
     def headers(self):
@@ -175,6 +178,8 @@ class SyncHistoryReport(DeploymentsReport):
         )
         if self.show_extra_columns:
             headers.add_column(DataTablesColumn(_("Sync Log")))
+            headers.add_column(DataTablesColumn(_("Sync Log Type")))
+            headers.add_column(DataTablesColumn(_("Previous Sync Log")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -190,13 +195,14 @@ class SyncHistoryReport(DeploymentsReport):
         # security check
         get_document_or_404(CommCareUser, self.domain, user_id)
 
+        kwargs = {'limit': self.limit} if self.limit != 0 else {}
         sync_log_ids = [row['id'] for row in SyncLog.view(
             "phone/sync_logs_by_user",
             startkey=[user_id, {}],
             endkey=[user_id],
             descending=True,
             reduce=False,
-            limit=10
+            **kwargs
         )]
 
         def _sync_log_to_row(sync_log):
@@ -232,6 +238,8 @@ class SyncHistoryReport(DeploymentsReport):
             ]
             if self.show_extra_columns:
                 columns.append(_fmt_id(sync_log.get_id))
+                columns.append(sync_log.log_format)
+                columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
 
             return columns
 
@@ -243,6 +251,13 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def show_extra_columns(self):
         return self.request.user and toggles.SUPPORT.enabled(self.request.user.username)
+
+    @property
+    def limit(self):
+        try:
+            return int(self.request.GET.get('limit', '10'))
+        except ValueError:
+            return 10
 
 
 def _fmt_date(date):
