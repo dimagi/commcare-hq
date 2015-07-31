@@ -43,7 +43,11 @@ def process_bulk_app_translation_upload(app, f):
         workbook = WorkbookJSONReader(f)
     except (HeaderValueError, InvalidFileException) as e:
         msgs.append(
-            (messages.error, _("App Translation Failed! " + str(e)))
+            (messages.error, _(
+                "App Translation Failed! "
+                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+                "Error details: {}."
+            ).format(e))
         )
         return msgs
 
