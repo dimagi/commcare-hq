@@ -1977,7 +1977,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
-        return bool(self.actions.load_update_cases)
+        """Form requires a case that must be selected by the user (excludes autoloaded cases)
+        """
+        return any(not action.auto_select for action in self.actions.load_update_cases)
 
     @property
     def requires(self):

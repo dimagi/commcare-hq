@@ -1104,12 +1104,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
-                if form.form_type == 'module_form':
-                    case_session_var = form.session_var_for_action('open_case')
-                elif form.form_type == 'advanced_form':
-                    # match case session variable
-                    reg_action = form.get_registration_actions(module.case_type)[0]
-                    case_session_var = reg_action.case_session_var
 
                 d.action = Action(
                     display=Display(
@@ -1121,7 +1115,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 )
                 frame = PushFrame()
                 frame.add_command(XPath.string(self.id_strings.form_command(form)))
-                frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
+
+                if form.form_type == 'module_form':
+                    datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+                elif form.form_type == 'advanced_form':
+                    datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                    datums_meta.extend(self.get_new_case_id_datums_meta(form))
+
+                for meta in datums_meta:
+                    if meta['requires_selection']:
+                        raise SuiteError("Form selected as case list form requires a case: {}".format(form.unique_id))
+                    s_datum = meta['datum']
+                    frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
+
                 frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)
 
