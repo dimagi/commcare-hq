@@ -56,16 +56,22 @@ class TestSyncLogMigration(SimpleTestCase):
             self.assertFalse(case_id in migrated.dependent_case_ids_on_phone)
 
     def test_dependent_cases_on_phone(self):
-        case_ids = ['summer', 'ghost']
         sync_log = SyncLog(
-            dependent_cases_on_phone=[CaseState(case_id=case_id) for case_id in case_ids],
+            cases_on_phone=[
+                CaseState(
+                    case_id='bran',
+                    indices=[CommCareCaseIndex(identifier='legs', referenced_id='hodor')],
+                ),
+            ],
+            dependent_cases_on_phone=[CaseState(case_id='hodor')]
         )
         migrated = SimplifiedSyncLog.from_other_format(sync_log)
-        for case_id in case_ids:
-            self.assertTrue(case_id in migrated.case_ids_on_phone)
-            self.assertTrue(case_id in migrated.dependent_case_ids_on_phone)
+        self.assertTrue('bran' in migrated.case_ids_on_phone)
+        self.assertTrue('hodor' in migrated.case_ids_on_phone)
+        self.assertTrue('hodor' in migrated.dependent_case_ids_on_phone)
 
     def test_indices(self):
+        parents = ['catelyn', 'ned', 'cersei', 'jaimie']
         index_structure = {
             'bran': [
                 {'identifier': 'mom', 'referenced_id': 'catelyn'},
@@ -80,12 +86,13 @@ class TestSyncLogMigration(SimpleTestCase):
             cases_on_phone=[
                 CaseState(case_id='bran', indices=[
                     CommCareCaseIndex(**args) for args in index_structure['bran']
-                ])
-            ],
-            dependent_cases_on_phone=[
+                ]),
                 CaseState(case_id='myrcella', indices=[
                     CommCareCaseIndex(**args) for args in index_structure['myrcella']
                 ])
+            ],
+            dependent_cases_on_phone=[
+                CaseState(case_id=parent) for parent in parents
             ]
         )
         migrated = SimplifiedSyncLog.from_other_format(sync_log)
@@ -94,6 +101,23 @@ class TestSyncLogMigration(SimpleTestCase):
             for index in indices:
                 self.assertEqual(index['referenced_id'],
                                  migrated.index_tree.indices[case_id][index['identifier']])
+        for parent in parents:
+            self.assertTrue(parent in migrated.case_ids_on_phone)
+            self.assertTrue(parent in migrated.dependent_case_ids_on_phone)
+
+    def test_prune_on_migrate(self):
+        sync_log = SyncLog(
+            cases_on_phone=[
+                CaseState(case_id='robert'),
+                CaseState(case_id='cersei'),
+            ],
+            dependent_cases_on_phone=[
+                CaseState(case_id='gendry')
+            ]
+        )
+        migrated = SimplifiedSyncLog.from_other_format(sync_log)
+        self.assertTrue('gendry' not in migrated.case_ids_on_phone)
+        self.assertEqual(sync_log.get_state_hash(), migrated.get_state_hash())
 
     def test_migrate_backwards(self):
         with self.assertRaises(IncompatibleSyncLogType):
