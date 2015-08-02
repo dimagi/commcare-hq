@@ -1042,7 +1042,6 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.nutritional_status_this_month = EMPTY_FIELD
         self.nutritional_status_bonus = EMPTY_FIELD
 
-
     def get_first_or_empty(self, list):
         return (list[0] or EMPTY_FIELD) if list else EMPTY_FIELD
 
