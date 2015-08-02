@@ -129,6 +129,7 @@ class NRHMDatespanFilter(DatespanFilter):
 class NRHMDatespanMixin(DatespanMixin):
     datespan_field = NRHMDatespanFilter
 
+
 class LanguageFilter(BaseSingleOptionFilter):
     slug = 'lang'
     label = ugettext_lazy('Language')
