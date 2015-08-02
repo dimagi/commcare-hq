@@ -44,7 +44,7 @@ from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
 from .utils import (BaseMixin, get_matching_users, UserSqlData)
-from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
+from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
 from .health_status import AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
@@ -328,7 +328,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
-    is_cacheable = True
+    # is_cacheable = True
     include_out_of_range_cases = False
 
     _debug_data = []
@@ -690,6 +690,7 @@ class MetReport(CaseReportMixin, BaseReport):
     exportable = False
     default_rows = 5
     cache_key = 'opm-report'
+    show_total = True
 
     @property
     def row_objects(self):
@@ -698,7 +699,7 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['awc']: user['awc_code']
+        awc_codes = {user['awc']: (user['awc_code'], user['gp'])
                      for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):
@@ -720,10 +721,10 @@ class MetReport(CaseReportMixin, BaseReport):
             except InvalidRow as e:
                 if self.debug:
                     self.add_debug_data(row._id, e)
-
-        self.total_row = ["" for __ in self.model.method_map]
-        self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
+        if self.show_total:
+            self.total_row = ["" for __ in self.model.method_map]
+            self.total_row[0] = _("Total Payment")
+            self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
 
     def add_debug_data(self, row_id, e):
@@ -1349,3 +1350,10 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         self.override_template = "opm/map_template.html"
 
         return HttpResponse(self._async_context()['report'])
+
+
+class LongitudinalCMRReport(MetReport):
+    name = "Longitudinal CMR"
+    slug = 'longitudinal_cmr'
+    model = LongitudinalConditionsMet
+    show_total = False

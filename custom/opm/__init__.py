@@ -7,6 +7,7 @@ CUSTOM_REPORTS = (
         reports.NewHealthStatusReport,
         reports.MetReport,
         reports.HealthMapReport,
+        reports.LongitudinalCMRReport,
     )),
 )
 
