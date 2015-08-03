@@ -300,59 +300,16 @@ class FixtureDataItem(Document):
 
         return xData
 
-    def _get_reporting_groups(self, group_ids):
-        groups = []
-
-        reporting_group_ids = set([
-            gid for gid in group_ids
-            if gid.startswith(LOCATION_REPORTING_PREFIX)
-        ])
-        reporting_location_ids = [
-            group_id[group_id.index('-') + 1:]
-            for group_id in reporting_group_ids
-        ]
-        reporting_locations = SQLLocation.objects.filter(
-            location_id__in=reporting_location_ids
-        )
-
-        for reporting_location in reporting_locations:
-            groups.append(reporting_location.reporting_group_object())
-
-        return groups
-
-    def _get_case_sharing_groups(self, group_ids):
-        groups = []
-
-        case_sharing_locations = SQLLocation.objects.filter(
-            location_id__in=group_ids
-        ).values_list('location_id', flat=True).distinct()
-
-        for case_sharing_location in case_sharing_locations:
-            groups.append(case_sharing_location.case_sharing_group_object())
-
-        return groups
-
     def get_groups(self, wrap=True):
-        group_ids = set(get_owner_ids_by_type(self.domain, 'group', self.get_id))
+        group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
         if wrap:
-            # if any fixtures are referencing location group IDs,
-            # make sure that those get wrapped properly as group-looking
-            # things
-
-            groups = []
-            groups += self._get_reporting_groups(group_ids)
-            groups += self._get_case_sharing_groups(group_ids)
-
-            return set(
-                list(Group.view(
-                    '_all_docs',
-                    keys=list(group_ids),
-                    include_docs=True
-                )) +
-                groups
-            )
+            return set(Group.view(
+                '_all_docs',
+                keys=list(group_ids),
+                include_docs=True,
+            ))
         else:
-            return group_ids
+            return set(group_ids)
 
     @property
     @memoized
