@@ -115,24 +115,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
     growth_monitoring = user_calcs.GrowthMonitoring()
 
 
-class OPMHierarchyFluff(fluff.IndicatorDocument):
-    def user_data(property):
-        """
-        returns a flat field with a callable looking for `property` on the user
-        """
-        return flat_field(lambda user: user.user_data.get(property))
-
-    document_class = CommCareUser
-    domains = ('opm',)
-    group_by = ('domain',)
-
-    save_direct_to_sql = True
-    numerator = Numerator()
-    block = user_data('block')
-    gp = user_data('gp')
-    awc = user_data('awc')
-
-
 class VhndAvailabilityFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
@@ -149,4 +131,3 @@ OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
 VhndAvailabilityFluffPillow = VhndAvailabilityFluff.pillow()
-OPMHierarchyFluffPillow = OPMHierarchyFluff.pillow()
