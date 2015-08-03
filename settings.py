@@ -383,6 +383,11 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
+OPBEAT = {
+    'ORGANIZATION_ID': None,
+    'APP_ID': None,
+    'SECRET_TOKEN': None,
+}
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -984,6 +989,17 @@ else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
+
+### Opbeat ###
+# only set it up if all the config keys are present and it is installed
+if all(value for key, value in OPBEAT.items()):
+    try:
+        import opbeat
+    except ImportError:
+        pass
+    else:
+        INSTALLED_APPS = ('opbeat.contrib.django',) + INSTALLED_APPS
+        MIDDLEWARE_CLASSES = ['opbeat.contrib.django.middleware.OpbeatAPMMiddleware'] + MIDDLEWARE_CLASSES
 
 ### Reporting database - use same DB as main database
 db_settings = DATABASES["default"].copy()
