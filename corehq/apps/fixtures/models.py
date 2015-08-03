@@ -10,6 +10,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
@@ -380,6 +381,10 @@ class FixtureDataItem(Document):
         group_ids = Group.by_user(user, wrap=False)
 
         if isinstance(user, dict):
+            # Added 2015-07-31, feel free to remove eventually.
+            _assert = soft_assert('@'.join(['esoergel', 'dimagi.com']))
+            _assert(False, "This apparently IS called with a user dict. How?")
+
             user_id = user.get('user_id')
             user_domain = domain
         else:
