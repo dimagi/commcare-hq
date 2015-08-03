@@ -329,7 +329,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
-    # is_cacheable = True
+    is_cacheable = True
     include_out_of_range_cases = False
 
     _debug_data = []
