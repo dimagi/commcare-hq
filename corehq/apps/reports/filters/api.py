@@ -7,6 +7,7 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
+from corehq import toggles
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.elastic import es_wrapper, ESError
@@ -70,12 +71,19 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
-        ]
+        if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
+        else:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_users_size, self.get_users),
+            ]
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
