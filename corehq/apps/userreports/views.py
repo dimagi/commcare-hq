@@ -224,7 +224,7 @@ class EditReportInBuilder(View):
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
             except Exception, e:
-                raise Http404("Report was probably not created by the report builder")
+                raise Http404("Report builder can no longer parse report")
         raise Http404("Report was not created by the report builder")
 
 
