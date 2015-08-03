@@ -19,11 +19,13 @@ class LocationSetTest(SimpleTestCase):
         )
 
         location1 = SQLLocation(
+            id="58302461",
             location_id="1",
             name="Some Parent Location",
             location_type=parent
         )
         location2 = SQLLocation(
+            id="39825",
             location_id="2",
             name="Some Child Location",
             location_type=child,

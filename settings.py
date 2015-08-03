@@ -185,7 +185,6 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -955,8 +954,14 @@ try:
             # is a syntax error in any module imported by corehq/__init__.py
             # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
             # localsettings.py will reveal the real error.
+            # Note that changing this means you will not be able to use/test anything
+            # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
@@ -1260,8 +1265,6 @@ PILLOWTOPS = {
         'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',

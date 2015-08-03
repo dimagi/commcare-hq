@@ -1,6 +1,6 @@
 # encoding: utf-8
 from south.v2 import DataMigration
-from corehq.apps.app_manager.migrations import AppFilterMigrationMixIn
+from corehq.apps.app_manager.south_migrations import AppFilterMigrationMixIn
 
 
 class Migration(AppFilterMigrationMixIn, DataMigration):

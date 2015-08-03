@@ -160,11 +160,19 @@ class ApplicationStatusReport(DeploymentsReport):
 
 
 class SyncHistoryReport(DeploymentsReport):
+    DEFAULT_LIMIT = 10
+    MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
-    report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
-    disable_pagination = True
+
+    @property
+    def report_subtitles(self):
+        return [_('Shows the last (up to) {} times a user has synced.').format(self.limit)]
+
+    @property
+    def disable_pagination(self):
+        return self.limit == self.DEFAULT_LIMIT
 
     @property
     def headers(self):
@@ -175,6 +183,9 @@ class SyncHistoryReport(DeploymentsReport):
         )
         if self.show_extra_columns:
             headers.add_column(DataTablesColumn(_("Sync Log")))
+            headers.add_column(DataTablesColumn(_("Sync Log Type")))
+            headers.add_column(DataTablesColumn(_("Previous Sync Log")))
+            headers.add_column(DataTablesColumn(_("Error Info")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -196,7 +207,7 @@ class SyncHistoryReport(DeploymentsReport):
             endkey=[user_id],
             descending=True,
             reduce=False,
-            limit=10
+            limit=self.limit,
         )]
 
         def _sync_log_to_row(sync_log):
@@ -224,6 +235,14 @@ class SyncHistoryReport(DeploymentsReport):
                     id=sync_log_id
                 )
 
+            def _fmt_error_info(sync_log):
+                if not sync_log.had_state_error:
+                    return u'<span class="label label-success">&#10003;</span>'
+                else:
+                    return u'<span class="label label-important">X</span> State error {}'.format(
+                        naturaltime(sync_log.error_date),
+                    )
+
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
@@ -232,6 +251,9 @@ class SyncHistoryReport(DeploymentsReport):
             ]
             if self.show_extra_columns:
                 columns.append(_fmt_id(sync_log.get_id))
+                columns.append(sync_log.log_format)
+                columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
+                columns.append(_fmt_error_info(sync_log))
 
             return columns
 
@@ -243,6 +265,13 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def show_extra_columns(self):
         return self.request.user and toggles.SUPPORT.enabled(self.request.user.username)
+
+    @property
+    def limit(self):
+        try:
+            return min(self.MAX_LIMIT, int(self.request.GET.get('limit', self.DEFAULT_LIMIT)))
+        except ValueError:
+            return self.DEFAULT_LIMIT
 
 
 def _fmt_date(date):

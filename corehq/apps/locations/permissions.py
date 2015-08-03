@@ -106,10 +106,15 @@ def can_edit_location_types(view_fn):
 
 
 def can_edit_form_location(domain, user, form):
-    if not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain):
+    # Domain admins can always edit locations.  If the user isn't an admin and
+    # the location restriction is enabled, they can only edit forms that are
+    # explicitly at or below them in the location tree.
+    domain_obj = Domain.get_by_name(domain)
+    if (not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain)
+            or user_can_edit_any_location(user, domain_obj)):
         return True
 
     location = get_xform_location(form)
     if not location:
-        return True
-    return user_can_edit_location(user, location, Domain.get_by_name(domain))
+        return False
+    return user_can_edit_location(user, location, domain_obj)

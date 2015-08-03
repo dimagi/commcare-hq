@@ -1,6 +1,7 @@
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from django.utils.translation import ugettext_lazy
 
+
 class ImportCases(DataInterface):
     name = ugettext_lazy("Import Cases from Excel")
     slug = "import_cases"
