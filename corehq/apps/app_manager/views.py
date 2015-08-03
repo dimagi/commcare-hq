@@ -1869,7 +1869,6 @@ def edit_report_module(request, domain, app_id, module_id):
     module = app.get_module(module_id)
     assert isinstance(module, ReportModule)
     module.name = params['name']
-    print params['reports']
     module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
     app.save()
     return json_response('success')
