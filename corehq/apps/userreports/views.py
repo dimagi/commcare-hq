@@ -222,7 +222,7 @@ class EditReportInBuilder(View):
             }[report.report_meta.builder_report_type]
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
-            except ApplicationNotFoundError, e:
+            except ApplicationNotFoundError as e:
                 messages.error(request, e.message)
                 return configurable_reports_home(request, request.domain)
         raise Http404("Report was not created by the report builder")
