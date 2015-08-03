@@ -53,8 +53,8 @@ branches:
   - template-apps # Jenny, July 20
   - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
-  - due-list+icds/scheduler # TS 7/30
-  - icds/scheduler # Farid 7/22
+  # - due-list+icds/scheduler # TS 7/30
+  # - icds/scheduler # Farid 7/22
   - ckeditor # J$ 7/24
   - notify-exception-code-context  # Ben 7/30
   - due-list # TS 7/30
