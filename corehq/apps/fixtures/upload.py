@@ -405,6 +405,9 @@ def run_upload(domain, workbook, replace=False, task=None):
                 old_users = old_data_item.users
                 for user in old_users:
                     old_data_item.remove_user(user)
+                old_locations = old_data_item.locations
+                for location in old_locations:
+                    old_data_item.remove_location(location)
 
                 for group_name in di.get('group', []):
                     group = group_memoizer.by_name(group_name)
@@ -424,5 +427,22 @@ def run_upload(domain, workbook, replace=False, task=None):
                         old_data_item.add_user(user)
                     else:
                         return_val.errors.append(_("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+
+                for name in di.get('location', []):
+                    try:
+                        location = SQLLocation.objects.get_from_user_input(domain, name)
+                    except SQLLocation.DoesNotExist:
+                        return_val.errors.append(_(
+                            "Unknown location: '%(name)s'. But the row is "
+                            "successfully added"
+                        ) % {'name': name})
+                    except SQLLocation.MultipleObjectsReturned:
+                        return_val.errors.append(_(
+                            "Multiple locations found with the name: "
+                            "'%(name)s'.  Try using site code instead. "
+                            "But the row is successfully added"
+                        ) % {'name': name})
+                    else:
+                        old_data_item.add_location(location, transaction=transaction)
 
     return return_val
