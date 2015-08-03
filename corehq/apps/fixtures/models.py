@@ -3,6 +3,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
+from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.fixtures.utils import clean_fixture_field_name
 from corehq.apps.users.models import CommCareUser
@@ -325,15 +326,7 @@ class FixtureDataItem(Document):
         return groups
 
     def get_groups(self, wrap=True):
-        group_ids = set(
-            FixtureOwnership.get_db().view(
-                'fixtures/ownership',
-                key=[self.domain, 'group by data_item', self.get_id],
-                reduce=False,
-                wrapper=lambda r: r['value']
-            )
-        )
-
+        group_ids = set(get_owner_ids_by_type(self.domain, 'group', self.get_id))
         if wrap:
             # if any fixtures are referencing location group IDs,
             # make sure that those get wrapped properly as group-looking
@@ -360,13 +353,7 @@ class FixtureDataItem(Document):
         return self.get_groups()
 
     def get_users(self, wrap=True, include_groups=False):
-        user_ids = set(
-            self.get_db().view('fixtures/ownership',
-                key=[self.domain, 'user by data_item', self.get_id],
-                reduce=False,
-                wrapper=lambda r: r['value']
-            )
-        )
+        user_ids = set(get_owner_ids_by_type(self.domain, 'user', self.get_id))
         if include_groups:
             group_ids = self.get_groups(wrap=False)
         else:
