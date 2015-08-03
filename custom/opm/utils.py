@@ -54,6 +54,25 @@ class UserSqlData(SqlData):
             data.append(transformed_user)
         return data
 
+    def data_as_hierarchy(self):
+        """
+        Creates a location hierarchy structured as follows:
+        hierarchy = {"Atri": {
+                        "Sahora": {
+                            "Sohran Bigha (34)": None}}}
+        """
+        hierarchy = {}
+        for location in self.transformed_data():
+            block = location['block']
+            gp = location['gp']
+            awc_name_with_code = location['awc_with_code']
+            if not (awc_name_with_code and gp and block):
+                continue
+            hierarchy[block] = hierarchy.get(block, {})
+            hierarchy[block][gp] = hierarchy[block].get(gp, {})
+            hierarchy[block][gp][awc_name_with_code] = None
+        return hierarchy
+
 
 def get_matching_users(awcs=None, gps=None, blocks=None):
     """

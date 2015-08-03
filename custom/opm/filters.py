@@ -7,28 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
-
 from .utils import UserSqlData
-
-
-def get_hierarchy():
-    """
-    Creates a location hierarchy structured as follows:
-    hierarchy = {"Atri": {
-                    "Sahora": {
-                        "Sohran Bigha (34)": None}}}
-    """
-    hierarchy = {}
-    for location in UserSqlData().transformed_data():
-        block = location['block']
-        gp = location['gp']
-        awc_name_with_code = location['awc_with_code']
-        if not (awc_name_with_code and gp and block):
-            continue
-        hierarchy[block] = hierarchy.get(block, {})
-        hierarchy[block][gp] = hierarchy[block].get(gp, {})
-        hierarchy[block][gp][awc_name_with_code] = None
-    return hierarchy
 
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
@@ -72,7 +51,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(get_hierarchy())
+        return make_drilldown(UserSqlData().data_as_hierarchy())
 
     @classmethod
     def get_labels(cls):
