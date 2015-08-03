@@ -1171,7 +1171,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             # Add variables
             variables = list(
-                SuiteGenerator.detail_variables(module, detail, detail_column_infos[start:end])
+                self.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
@@ -1291,7 +1291,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='next_due < today()')
 
-    @staticmethod
     def detail_variables(self, module, detail, detail_column_infos):
         return chain(self._schedule_detail_variables(module, detail, detail_column_infos),)
 
