@@ -14,6 +14,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+        var CKEDITOR_BASEPATH = "{% static 'app_manager/js/vellum/lib/ckeditor/' %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
