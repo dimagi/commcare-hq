@@ -89,6 +89,18 @@
 
             <!-- ko if:  actionType === 'open' -->
             <div class="control-group" data-bind="visible: allow_subcase, css: {warning: validate_subcase()}">
+
+                <span style="font-weight: bold;">Parent Indices</span>
+                <ul data-bind="foreach: parents">
+                    <li>
+                        Parent Tag: <span data-bind="text: tag"></span><br />
+                        Reference ID: <span data-bind="text: reference_id"></span><br />
+                        Relationship: <span data-bind="text: relationship"></span><br />
+                        <i class="icon-trash"></i>
+                        <a href="#" data-bind="click: $parent.removeParentIndex">Remove index</a>
+                    </li>
+                </ul>
+
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: subcase"/>
                     {% trans "Make this case a subcase" %}
@@ -97,25 +109,26 @@
                     </span>
                 </label>
                 <span data-bind="if: subcase">
-                    <select data-bind="optstr: $parent.getCaseTags('subcase', $data),
-                        value: parent_tag">
+                <span data-bind="with: newParent">
+                    <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
+                        value: tag">
                     </select>
+                    <br />
+
                     {% if show_custom_ref %}
-                    <div>
-                        <label>{% trans "Parent reference id: " %}</label>
-                        <input type="text" data-bind="value: parent_reference_id"/>
-                    </div>
+                    <label>{% trans "Parent reference id: " %}</label>
+                    <input type="text" data-bind="value: reference_id"/>
+                    <br />
                     {% endif %}
 
-                    {% if show_ext_cases %}
-                    <div>
-                        <label>{% trans "Relationship:" %}</label>
-                        <select data-bind="options: relationshipTypes,
-                                           optionsCaption: 'Child case or extension case?',
-                                           value: relationship"></select>
-                    </div>
-                    {% endif %}
+                    <label>{% trans "Relationship:" %}</label>
+                    <select data-bind="options: $parent.relationshipTypes,
+                                       optionsCaption: 'Child case or extension case?',
+                                       value: relationship"></select>
+                    <br />
 
+                    <button data-bind="click: $parent.addParentIndex">Add</button>
+                </span>
                 </span>
                 <span class="help-inline" data-bind="text: validate_subcase"></span>
             </div>
