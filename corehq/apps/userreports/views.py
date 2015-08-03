@@ -52,6 +52,7 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.context_processors import domain as domain_context
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -220,7 +221,10 @@ class EditReportInBuilder(View):
                 'worker': ConfigureWorkerReport,
                 'table': ConfigureTableReport
             }[report.report_meta.builder_report_type]
-            return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            try:
+                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            except Exception, e:
+                raise Http404("Report was probably not created by the report builder")
         raise Http404("Report was not created by the report builder")
 
 

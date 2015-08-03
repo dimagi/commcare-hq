@@ -1,3 +1,5 @@
+class ApplicationNotFoundError(Exception):
+    pass
 
 
 class UserReportsError(Exception):
