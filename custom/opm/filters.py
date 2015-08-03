@@ -1,36 +1,14 @@
 from custom.common import ALL_OPTION
 
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.columns import SimpleColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 from .utils import UserSqlData
-
-
-class HierarchySqlData(SqlData):
-    table_name = "fluff_OPMHierarchyFluff"
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def group_by(self):
-        return ['block', 'gp', 'awc']
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('Block', SimpleColumn('block')),
-            DatabaseColumn('Gram Panchayat', SimpleColumn('gp')),
-            DatabaseColumn('AWC', SimpleColumn('awc'))
-        ]
 
 
 def get_hierarchy():
