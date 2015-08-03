@@ -37,7 +37,7 @@ class FixtureDataType(Document):
         # Migrate fixtures without attributes on item-fields to fields with attributes
         if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
-        
+
         # Migrate fixtures without attributes on items to items with attributes
         if 'item_attributes' not in obj:
             obj['item_attributes'] = []
@@ -93,7 +93,7 @@ class FixtureDataType(Document):
 class FixtureItemField(DocumentSchema):
     """
         "field_value": "Delhi_IN_HIN",
-        "properties": {"lang": "hin"} 
+        "properties": {"lang": "hin"}
     """
     field_value = StringProperty()
     properties = DictProperty()
@@ -133,7 +133,7 @@ class FixtureDataItem(Document):
             ]},
             "state_name": {"field_list": [
                 {"field_value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
-                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},                
+                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
             ]},
             "state_id": {"field_list": [
                 {"field_value": "DEL", "properties": {}}
@@ -153,7 +153,7 @@ class FixtureDataItem(Document):
             raise ResourceNotFound
         if not obj["fields"]:
             return super(FixtureDataItem, cls).wrap(obj)
-        
+
         # Migrate old basic fields to fields with attributes
 
         is_of_new_type = False
@@ -250,6 +250,12 @@ class FixtureDataItem(Document):
 
     def remove_group(self, group):
         return self.remove_owner(group, 'group')
+
+    def add_location(self, location, transaction=None):
+        return self.add_owner(location, 'location', transaction=transaction)
+
+    def remove_location(self, location):
+        return self.remove_owner(location, 'location')
 
     def type_check(self):
         fields = set(self.fields.keys())
@@ -376,6 +382,12 @@ class FixtureDataItem(Document):
     def users(self):
         return self.get_users()
 
+    @property
+    @memoized
+    def locations(self):
+        loc_ids = get_owner_ids_by_type(self.domain, 'location', self.get_id)
+        return SQLLocation.objects.filter(location_id__in=loc_ids)
+
     @classmethod
     def by_user(cls, user, wrap=True, domain=None):
         group_ids = Group.by_user(user, wrap=False)
@@ -387,13 +399,23 @@ class FixtureDataItem(Document):
 
             user_id = user.get('user_id')
             user_domain = domain
+            location = CommCareUser.get(user_id).sql_location
         else:
             user_id = user.user_id
             user_domain = user.domain
+            location = user.sql_location
+
+        loc_ids = location.path if location else []
+
+        def make_keys(owner_type, ids):
+            return [[user_domain, 'data_item by {}'.format(owner_type), id_]
+                    for id_ in ids]
 
         fixture_ids = set(
             FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=[[user_domain, 'data_item by user', user_id]] + [[user_domain, 'data_item by group', group_id] for group_id in group_ids],
+                keys=(make_keys('user', [user_id]) +
+                      make_keys('group', group_ids) +
+                      make_keys('location', loc_ids)),
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )
@@ -497,7 +519,7 @@ class FixtureOwnership(Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
-    owner_type = StringProperty(choices=['user', 'group'])
+    owner_type = StringProperty(choices=['user', 'group', 'location'])
 
     @classmethod
     def by_item_id(cls, item_id, domain):
