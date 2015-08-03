@@ -10,6 +10,8 @@ from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
+from .utils import UserSqlData
+
 
 class HierarchySqlData(SqlData):
     table_name = "fluff_OPMHierarchyFluff"
@@ -36,18 +38,18 @@ def get_hierarchy():
     Creates a location hierarchy structured as follows:
     hierarchy = {"Atri": {
                     "Sahora": {
-                        "Sohran Bigha": None}}}
+                        "Sohran Bigha (34)": None}}}
     """
     hierarchy = {}
-    for location in HierarchySqlData().get_data():
+    for location in UserSqlData().transformed_data():
         block = location['block']
         gp = location['gp']
-        awc = location['awc']
-        if not (awc and gp and block):
+        awc_name_with_code = location['awc_with_code']
+        if not (awc_name_with_code and gp and block):
             continue
         hierarchy[block] = hierarchy.get(block, {})
         hierarchy[block][gp] = hierarchy[block].get(gp, {})
-        hierarchy[block][gp][awc] = None
+        hierarchy[block][gp][awc_name_with_code] = None
     return hierarchy
 
 
