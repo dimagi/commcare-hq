@@ -2054,7 +2054,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         for action in self.actions.get_subcase_actions():
             case_tags = self.actions.get_case_tags()
-            # TODO: "any" or "all" ?
             for parent in action.parents:
                 if parent.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': parent.tag})
@@ -2063,7 +2062,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 if not action.name_path:
                     errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
-                # TODO: Test
                 for parent in action.parents:
                     meta = self.actions.actions_meta_by_tag.get(parent.tag)
                     if meta and meta['type'] == 'open' and meta['action'].repeat_context:
@@ -2071,7 +2069,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                             not action.repeat_context or
                             not action.repeat_context.startswith(meta['action'].repeat_context)
                         ):
-                            errors.append({'type': 'subcase repeat context', 'case_tag': action.case_tag})
+                            errors.append({'type': 'subcase repeat context',
+                                           'case_tag': action.case_tag,
+                                           'parent_tag': parent.tag})
 
             try:
                 self.actions.get_action_hierarchy(action)
