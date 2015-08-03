@@ -857,7 +857,7 @@ cloudCare.AppMainView = Backbone.View.extend({
         self._urlParams = {};
 
         // http://stackoverflow.com/a/2880929/835696
-        // populates a dictionary that of key values from the url
+        // populates a dictionary of key values from the url
         (window.onpopstate = function () {
             var match,
                 pl     = /\+/g,  // Regex for replacing addition symbol with a space
