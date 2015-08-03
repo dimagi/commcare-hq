@@ -43,7 +43,9 @@
                 // allowClear only respected if there is a non empty placeholder
                 placeholder: " ",
                 ajax: {
-                    url: "/a/staging/configurable_reports/api/choice_list/" + element.parent()[0].lastElementChild.value + "/",
+                    // TODO - this is pretty hackish
+                    url: ("{% url 'choice_list_api' domain 'report_id' 'filter_id' %}".split('report_id')[0]
+                          + element.parent()[0].lastElementChild.value + "/"),
                     dataType: 'json',
                     quietMillis: 250,
                     data: function (term, page) {
