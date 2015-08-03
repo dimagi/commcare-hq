@@ -22,6 +22,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
+from corehq.toggles import OPM_LONGITUDINAL_CMR
 from custom.common import ALL_OPTION
 from custom.opm.utils import numeric_fn
 
@@ -1357,3 +1358,10 @@ class LongitudinalCMRReport(MetReport):
     slug = 'longitudinal_cmr'
     model = LongitudinalConditionsMet
     show_total = False
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if not user or not OPM_LONGITUDINAL_CMR.enabled(user.username):
+            return False
+
+        return super(LongitudinalCMRReport, cls).show_in_navigation(domain, project, user)
