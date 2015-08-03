@@ -350,7 +350,7 @@ var AdvancedCase = (function () {
                     case_type: config.caseType,
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    parents: [],
+                    parents: ko.observableArray([]),
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -383,7 +383,7 @@ var AdvancedCase = (function () {
                             required: true
                         }],
                     repeat_context: '',
-                    parents: [],
+                    parents: ko.observableArray([]),
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
@@ -430,6 +430,13 @@ var AdvancedCase = (function () {
         self.tag = ko.observable();
         self.reference_id = ko.observable('parent');
         self.relationship = ko.observable('child');
+        self.relationship.subscribe(function (rel) {
+            if (rel == 'extension' && self.reference_id() == 'parent') {
+                self.reference_id('host');
+            } else if (rel == 'child' && self.reference_id() == 'host') {
+                self.reference_id('parent');
+            }
+        });
     };
 
     var  ActionBase = {
@@ -549,9 +556,31 @@ var AdvancedCase = (function () {
         getParentTags: function (parents) {
             var tags = [];
             for (var i = 0; i < parents.length; i++) {
-                tags.append(parents[i].tag)
+                tags.push(parents[i].tag());
             }
             return tags.join(', ');
+        },
+        addParentIndex: function (self) {
+            /**
+             * Copy newParent form values, and push them to parents array.
+             *
+             * Reference in 'data-bind="with: newParent"' does not change, so
+             * we need to copy values to another instance, and then reset the
+             * values in the form.
+             */
+            var newParent = new ParentIndex();
+            newParent.tag(self.newParent.tag());
+            newParent.reference_id(self.newParent.reference_id());
+            newParent.relationship(self.newParent.relationship());
+            self.parents.push(newParent);
+
+            var blankParent = new ParentIndex();
+            self.newParent.tag(blankParent.tag());
+            self.newParent.reference_id(blankParent.reference_id());
+            self.newParent.relationship(blankParent.relationship());
+        },
+        removeParentIndex: function (self, viewModel) {
+            self.parents.remove(viewModel);
         }
     };
 
@@ -644,7 +673,7 @@ var AdvancedCase = (function () {
             });
 
             self.parent_tags = function () {
-                return ActionBase.getParentTags(self.parents);
+                return ActionBase.getParentTags(self.parents());
             };
 
             self.subcase = ko.computed({
@@ -668,10 +697,20 @@ var AdvancedCase = (function () {
                             self.parents.append(parentIndex);
                         }
                     } else {
-                        self.parents = [];
+                        self.parents = ko.observableArray([]);
                     }
                 }
             });
+
+            self.newParent = new ParentIndex();
+
+            self.addParentIndex = function () {
+                return ActionBase.addParentIndex(self);
+            };
+
+            self.removeParentIndex = function (viewModel) {
+                return ActionBase.removeParentIndex(self, viewModel)
+            };
 
             self.case_tag.extend({ withPrevious: 1 });
             self.case_tag.subscribe(function (tag) {
@@ -861,7 +900,7 @@ var AdvancedCase = (function () {
             });
 
             self.parent_tags = function () {
-                return ActionBase.getParentTags(self.parents);
+                return ActionBase.getParentTags(self.parents());
             };
 
             self.subcase = ko.computed({
@@ -872,12 +911,22 @@ var AdvancedCase = (function () {
                     if (value) {
                         var parentIndex = new ParentIndex();
                         parentIndex.tag = 'Select parent';
-                        self.parents = [parentIndex];
+                        self.parents = ko.observableArray([parentIndex]);
                     } else {
-                        self.parents = [];
+                        self.parents = ko.observableArray([]);
                     }
                 }
             });
+
+            self.newParent = new ParentIndex();
+
+            self.addParentIndex = function () {
+                return ActionBase.addParentIndex(self);
+            };
+
+            self.removeParentIndex = function (viewModel) {
+                return ActionBase.removeParentIndex(self, viewModel)
+            };
 
             self.case_tag.extend({ withPrevious: 1 });
             self.case_tag.subscribe(function (tag) {
@@ -919,14 +968,6 @@ var AdvancedCase = (function () {
             };
 
             self.relationshipTypes = ko.observableArray(['child', 'extension']);
-            self.relationship = ko.observable('child');
-            self.relationship.subscribe(function (rel) {
-                if (rel == 'extension' && self.parent_reference_id() == 'parent') {
-                    self.parent_reference_id('host');
-                } else if (rel == 'child' && self.parent_reference_id() == 'host') {
-                    self.parent_reference_id('parent');
-                }
-            });
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
@@ -950,7 +991,7 @@ var AdvancedCase = (function () {
                 return prop.isBlank();
             });
             if (self.parents && !self.allow_subcase()) {
-                self.parents = [];
+                self.parents = ko.observableArray([]);
             }
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
