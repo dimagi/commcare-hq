@@ -29,7 +29,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadSpecError, UserQueryError
+from corehq.apps.userreports.exceptions import ApplicationNotFoundError, BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -52,7 +52,6 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.context_processors import domain as domain_context
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -223,8 +222,8 @@ class EditReportInBuilder(View):
             }[report.report_meta.builder_report_type]
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
-            except Exception, e:
-                messages.error(request, "Builder could not understand report. Has it been customized?")
+            except ApplicationNotFoundError, e:
+                messages.error(request, e.message)
                 return configurable_reports_home(request, request.domain)
         raise Http404("Report was not created by the report builder")
 
