@@ -4,10 +4,10 @@ CUSTOM_REPORTS = (
     ('Custom Reports', (
         reports.BeneficiaryPaymentReport,
         reports.IncentivePaymentReport,
-        reports.HealthStatusReport,
         reports.NewHealthStatusReport,
         reports.MetReport,
         reports.HealthMapReport,
+        reports.LongitudinalCMRReport,
     )),
 )
 

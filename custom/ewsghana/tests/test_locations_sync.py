@@ -8,7 +8,9 @@ from corehq.apps.commtrack.tests.util import (bootstrap_products,
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.api import Location, EWSApi, Product
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.tests import MockEndpoint
 
 TEST_DOMAIN = 'ewsghana-commtrack-locations-test'
@@ -192,3 +194,13 @@ class LocationSyncTest(TestCase):
 
         self.assertEqual(ewsghana_location.name, "edited")
         self.assertEqual(ewsghana_location.site_code, "edited")
+
+    def test_facility_in_charge(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[1])
+
+        ewsghana_location = self.api_object.location_sync(location)
+        in_charges = FacilityInCharge.objects.filter(location=ewsghana_location.sql_location)
+        self.assertEqual(in_charges.count(), 1)
+        user = CommCareUser.get_by_user_id(in_charges[0].user_id)
+        self.assertIsNotNone(user)

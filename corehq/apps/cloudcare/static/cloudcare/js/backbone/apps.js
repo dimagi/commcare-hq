@@ -854,6 +854,21 @@ cloudCare.AppMainView = Backbone.View.extend({
         self._navEnabled = true;
         self.router = new cloudCare.AppNavigation();
         self._sessionsEnabled = self.options.sessionsEnabled;
+        self._urlParams = {};
+
+        // http://stackoverflow.com/a/2880929/835696
+        // populates a dictionary of key values from the url
+        (window.onpopstate = function () {
+            var match,
+                pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                search = /([^&=]+)=?([^&]*)/g,
+                decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                query  = window.location.search.substring(1);
+
+            self._urlParams = {};
+            while (match = search.exec(query))
+               self._urlParams[decode(match[1])] = decode(match[2]);
+        })();
 
         // set initial data, if any
         if (self.options.initialApp) {
@@ -1227,8 +1242,9 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
 
     navigate: function (path, options) {
+        var params = _.map(this._urlParams, function(value, key) { return key + '=' + value; }).join('&');
         if (this._navEnabled) {
-            this.router.navigate(path, options);
+            this.router.navigate(params.length ? path + '?' + params : path, options);
         }
     },
     selectApp: function (appId, options) {

@@ -1,12 +1,34 @@
-from django.dispatch import receiver
+from django.dispatch import receiver, Signal
+from casexml.apps.case.xform import get_case_updates
 from corehq import Domain
-from corehq.apps.commtrack.const import RequisitionStatus
+from corehq.apps.commtrack.const import RequisitionStatus, SUPPLY_POINT_CASE_TYPE, is_supply_point_form
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
-from corehq.apps.commtrack.signals import supply_point_modified
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis, requisition_approved, approve_requisition, requisition_receipt, delivery_update, sync_stock_data_to_openlmis, sync_requisition_from_openlmis
-import logging
 from custom.requisitions.signals import send_notifications, requisition_modified
+
+
+supply_point_modified = Signal(providing_args=['supply_point', 'created'])
+
+
+def raise_supply_point_events(xform, cases):
+    supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == SUPPLY_POINT_CASE_TYPE]
+    case_updates = get_case_updates(xform)
+    for sp in supply_points:
+        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
+        supply_point_modified.send(sender=None, supply_point=sp, created=created)
+
+
+def supply_point_processing(sender, xform, cases, **kwargs):
+    if is_supply_point_form(xform):
+        raise_supply_point_events(xform, cases)
+
+
+# note: this is commented out since no one is actually using this functionality
+# if we want to reenable openlmis integrations we will need to uncomment it.
+# the more likely scenario is that all of this code will be deleted sometime in the future.
+# cases_received.connect(supply_point_processing)
 
 
 @receiver(supply_point_modified)

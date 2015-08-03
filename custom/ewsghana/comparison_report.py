@@ -8,7 +8,6 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import WebUser
-from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
 
 
@@ -19,6 +18,7 @@ class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def endpoint(self):
+        from custom.ewsghana.api import GhanaEndpoint
         return GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(self.domain))
 
 

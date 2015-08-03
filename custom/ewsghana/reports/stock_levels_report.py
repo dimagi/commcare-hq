@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+from itertools import chain
 import datetime
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
@@ -14,8 +15,9 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
-from custom.ewsghana.utils import has_input_stock_permissions, drange, ews_date_format
+from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
@@ -134,13 +136,13 @@ class FacilityReportData(EWSData):
             else:
                 monthly_consumption = 'not enough data'
 
-            if values['reorder_level'] and values['reorder_level'] != 0.00:
-                maximum_level = int(values['reorder_level'])
+            if values['maximum_level'] and values['maximum_level'] != 0.00:
+                maximum_level = int(values['maximum_level'])
             else:
                 maximum_level = 'unknown'
 
-            if values['maximum_level'] and values['maximum_level'] != 0.00:
-                reorder_level = int(values['maximum_level'])
+            if values['reorder_level'] and values['reorder_level'] != 0.00:
+                reorder_level = int(values['reorder_level'])
             else:
                 reorder_level = 'unknown'
 
@@ -287,13 +289,31 @@ class UsersData(EWSData):
     @property
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
-        users = get_users_by_location_id(self.config['location_id'])
-
+        users = get_users_by_location_id(self.config['domain'],
+                                         self.config['location_id'])
+        in_charges = FacilityInCharge.objects.filter(
+            location=self.location
+        ).values_list('user_id', flat=True)
+        if self.location.parent.location_type.name == 'district':
+            children = self.location.parent.get_descendants()
+            availaible_in_charges = list(chain.from_iterable([
+                filter(
+                    lambda u: 'In Charge' in u.user_data.get('role', []),
+                    get_users_by_location_id(self.config['domain'], child.location_id)
+                )
+                for child in children
+            ]))
+        else:
+            availaible_in_charges = filter(
+                lambda u: 'In Charge' in u.user_data.get('role', []),
+                get_users_by_location_id(self.location_id)
+            )
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
             'phone_numbers': sms_user.phone_numbers,
-            'in_charge': user.user_data.get('role') == 'In Charge',
+            'in_charge': sms_user.get_id in in_charges,
+            'location_name': sms_user.location.sql_location.name,
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
@@ -312,7 +332,8 @@ class UsersData(EWSData):
             'users': [user_to_dict(user) for user in users],
             'domain': self.domain,
             'location_id': self.location_id,
-            'web_users': web_users
+            'web_users': web_users,
+            'district_in_charges': [user_to_dict(user) for user in availaible_in_charges]
         })
 
 

@@ -90,6 +90,7 @@ class Command(BaseCommand):
             grantee = Role.objects.get(slug=grantee_slug)
             priv = Role.objects.get(slug=priv_slug)
 
+            Role.get_cache().clear()
             if grantee.has_privilege(priv):
                 if self.verbose:
                     logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)

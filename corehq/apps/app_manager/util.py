@@ -303,8 +303,6 @@ def get_session_schema(form):
 
 
 def get_usercase_properties(app):
-    # No need to check toggles.USER_AS_A_CASE. This function is only called
-    # from app_manager.views, and it checks the toggle.
     if is_usercase_in_use(app.domain):
         return get_case_properties(app, [USERCASE_TYPE])
     return {USERCASE_TYPE: []}
@@ -500,19 +498,20 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
-def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
+def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+    from corehq.apps.app_manager.suite_xml import SuiteGenerator
 
-    datums = suite_gen.get_new_case_id_datums_meta(form)
+    datums = SuiteGenerator.get_new_case_id_datums_meta(form)
     session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
-            extra_datums = suite_gen.get_extra_case_id_datums(form)
+            extra_datums = SuiteGenerator.get_extra_case_id_datums(form)
         except SuiteError as err:
             _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
-            if suite_gen.any_usercase_datums(extra_datums):
+            if SuiteGenerator.any_usercase_datums(extra_datums):
                 usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
                     session_data[USERCASE_ID] = usercase.get_id
