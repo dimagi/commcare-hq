@@ -909,7 +909,8 @@ def get_module_view_context_and_template(app, module):
         def _report_to_config(report):
             return {
                 'report_id': report._id,
-                'title': report.title
+                'title': report.title,
+                'charts': [chart for chart in report.configured_charts if chart['type'] == 'multibar'],
             }
         all_reports = ReportConfiguration.by_domain(app.domain)
         all_report_ids = set([r._id for r in all_reports])

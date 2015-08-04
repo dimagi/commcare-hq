@@ -49,7 +49,7 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody data-bind="sortable: reports">
+                <tbody data-bind="sortable: { data: reports, as: 'report' }">
                     <tr class="row control-group"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
@@ -57,6 +57,50 @@
                         </td>
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
+                            <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
+                                <br/>
+                                <p>
+                                    {% trans 'Chart Title' %}: <span data-bind="text: chart.title"></span>
+                                </p>
+                                <p>
+                                    <span>{% trans 'Graph type' %}:</span>
+                                    <select type="text" data-bind="
+                                        options: $parent.graphConfig.allGraphTypes,
+                                        value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+                                    "></select>
+                                </p>
+                                <p>
+                                    {% trans 'Configuration' %}:
+                                    <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
+                                        <p>
+                                            <input type="text" data-bind="value: keyValuePair[0]">
+                                            -->
+                                            <input type="text" data-bind="value: keyValuePair[1]">
+                                        </p>
+                                    </div>
+                                    <button class="btn" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
+                                        <i class="icon-plus"></i>
+                                        {% trans "Add Configuration Item" %}
+                                    </button>
+                                </p>
+                                <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
+                                    <p>
+                                        {% trans 'Series Configuration' %}:
+                                        <span data-bind="text: series"></span>
+                                        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
+                                            <p>
+                                                <input type="text" data-bind="value: keyValuePair[0]">
+                                                -->
+                                                <input type="text" data-bind="value: keyValuePair[1]">
+                                            </p>
+                                        </div>
+                                        <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
+                                            <i class="icon-plus"></i>
+                                            {% trans "Add Series Configuration Item" %}
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
                         </td>
                         <td>
                             <input type="text" data-bind="value: display">
