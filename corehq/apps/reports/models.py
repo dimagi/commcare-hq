@@ -614,6 +614,13 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
+
+            def _sort_key(config_id):
+                if config_id in self.config_ids:
+                    return self.config_ids.index(config_id)
+                else:
+                    return len(self.config_ids)
+            configs = sorted(configs, key=_sort_key)
         elif self.report_slug == 'admin_domains':
             raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")
