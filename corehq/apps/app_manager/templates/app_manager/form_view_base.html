@@ -291,13 +291,13 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-{#            {%  if form.form_type == 'module_form' %}#}
-{#            <li>#}
-{#                <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">#}
-{#                    {% trans "User Case Management" %}#}
-{#                </a>#}
-{#            </li>#}
-{#            {%  endif %}#}
+            {%  if allow_usercase and form.form_type == 'module_form' %}
+            <li>
+                <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+                    {% trans "User Case Management" %}
+                </a>
+            </li>
+            {%  endif %}
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                  <li>
                      <a href="#visit-scheduler" data-toggle="tab">
