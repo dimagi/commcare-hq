@@ -1229,6 +1229,8 @@ class RegexTest(SimpleTestCase):
             ('"jack" = #session/username', '"jack" = {session}/username'),
             ('./@case_id = #session/userid', '{case}/@case_id = {session}/userid'),
             ('#case/@case_id = #user/@case_id', '{case}/@case_id = {user}/@case_id'),
+            ('#host/foo = 42', "instance('casedb')/casedb/case[@case_id={case}/index/host]/foo = 42"),
+            ("'ham' = #parent/spam", "'ham' = instance('casedb')/casedb/case[@case_id={case}/index/parent]/spam"),
         ]
         for case in cases:
             self.assertEqual(
