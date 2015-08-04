@@ -14,6 +14,10 @@ class BadBuilderConfigError(UserReportsError):
     pass
 
 
+class ColumnNotFoundError(UserReportsError):
+    pass
+
+
 class BadSpecError(UserReportsError):
     pass
 

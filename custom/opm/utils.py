@@ -46,6 +46,33 @@ class UserSqlData(SqlData):
             DatabaseColumn('block', SimpleColumn('block')),
         ]
 
+    def transformed_data(self):
+        data = []
+        for user in self.get_data():
+            transformed_user = user
+            transformed_user['awc_with_code'] = "{} - ({})".format(user['awc'], user['awc_code'])
+            data.append(transformed_user)
+        return data
+
+    def data_as_hierarchy(self):
+        """
+        Creates a location hierarchy structured as follows:
+        hierarchy = {"Atri": {
+                        "Sahora": {
+                            "Sohran Bigha (34)": None}}}
+        """
+        hierarchy = {}
+        for location in self.transformed_data():
+            block = location['block']
+            gp = location['gp']
+            awc_name_with_code = location['awc_with_code']
+            if not (awc_name_with_code and gp and block):
+                continue
+            hierarchy[block] = hierarchy.get(block, {})
+            hierarchy[block][gp] = hierarchy[block].get(gp, {})
+            hierarchy[block][gp][awc_name_with_code] = None
+        return hierarchy
+
 
 def get_matching_users(awcs=None, gps=None, blocks=None):
     """
@@ -56,13 +83,13 @@ def get_matching_users(awcs=None, gps=None, blocks=None):
     """
     non_null = filter(
         lambda (k, v): bool(v),
-        [('awc', awcs), ('gp', gps), ('block', blocks)]
+        [('awc_with_code', awcs), ('gp', gps), ('block', blocks)]
     )
     if not len(non_null) > 0:
         raise TypeError("You must pass at least one of awc, gp, or block")
     key, selected = non_null[0]  # get most specific selection
     return [
-        user for user in UserSqlData().get_data()
+        user for user in UserSqlData().transformed_data()
         if user[key] in selected
     ]
 

@@ -102,17 +102,17 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
         else:
             task_status = None
         user = self.request.couch_user
-        owner_ids = []
+        owner_ids = tuple()
         user_id = None
         if not user.is_web_user():
             owner_ids = user.get_group_ids()
-            user_id = user._id
+            user_id = user.get_id
         return {
             'domain': self.domain,
             'task_responsible': responsible_party,
             'referenced_id': patient_id,
             'closed': task_status,
-            'owner_ids': owner_ids,
+            'owner_ids': tuple(owner_ids),
             'user_id': user_id,
         }
 
