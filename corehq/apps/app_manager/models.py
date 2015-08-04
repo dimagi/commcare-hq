@@ -148,6 +148,13 @@ def _rename_key(dct, old, new):
 
 
 @memoized
+def load_app_template(slug):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
+    with open(os.path.join(path, slug + '.json')) as f:
+        return json.load(f)
+
+
+@memoized
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
@@ -3880,6 +3887,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    created_from = StringProperty()
 
     @property
     @memoized
@@ -4737,6 +4745,16 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
+def domain_has_apps(domain):
+    results = Application.get_db().view('app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+        limit=1,
+    ).all()
+    return len(results) > 0
+
+
 def get_apps_in_domain(domain, full=False, include_remote=True):
     """
     Returns all apps(not builds) in a domain
@@ -4835,7 +4853,7 @@ str_to_cls = {
 }
 
 
-def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
         source = get_app(None, app_id)
@@ -4852,8 +4870,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
         attachments = {}
     finally:
         source['_attachments'] = {}
-    if name:
-        source['name'] = name
+    if source_properties is not None:
+        for key, value in source_properties.iteritems():
+            source[key] = value
     cls = str_to_cls[source['doc_type']]
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
