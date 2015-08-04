@@ -1,37 +1,47 @@
 {% extends "settings/base_template.html" %}
 {% load i18n %}
+{% block head %}{{ block.super }}
+<style type="text/css">
+    th.checkmark-column, td.checkmark-column {
+        white-space: nowrap;
+        text-align: center;
+    }
+</style>
+{% endblock %}
 {% block main_column %}
     <div class="row-fluid">
         <div class="span6">
             <p>
                 {% url 'toggle_list' as toggle_url %}
                 {% blocktrans %}
-                    Feature Flags are superuser-only things that can be turn on features for individual users or projects.
-                    They can be edited manually at the <a href="{{ toggle_url }}">Feature Flag edit UI</a> (also super-only).
-                    In addition, some feature flags are randomly enabled by a domain.
+                    Feature Flags turn on features for individual users or projects. They are editable only by
+                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+                    In addition, some feature flags are randomly enabled by domain.
                 {% endblocktrans %}
             </p>
             <p>
                 {% blocktrans %}
-                    You can see a list of all enabled flags for this domain here.
-                    This does not include any flags set for users within the domain.
+                    Following are all flags enabled for this domain and/or for you.
+                    This does not include any flags set for other users in this domain.
                 {% endblocktrans %}
             </p>
         </div>
     </div>
     <div class="row-fluid">
-        <div class="span6">
+        <div class="span8">
             <table class="table table-striped">
                 <thead>
                     <th>{% trans "Feature" %}</th>
-                    <th>{% trans "Enabled?" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for me?" %}</th>
                     <th>{% trans "Edit" %}</th>
                 </thead>
                 <tbody>
-                    {% for feature, enabled in flags %}
-                    <tr {% if enabled %}class="info"{% endif %}>
+                    {% for feature, enabled_for_domain, enabled_for_user in flags %}
+                    <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
                         <td>{{ feature.label }}</td>
-                        <td>{{ enabled }}</td>
+                        <td class="checkmark-column">{% if enabled_for_domain %}<i class="icon-ok"></i>{% endif %}</td>
+                        <td class="checkmark-column">{% if enabled_for_user %}<i class="icon-ok"></i>{% endif %}</td>
                         <td><a href="{% url 'edit_toggle' feature.slug %}">{% trans "change" %}</a></td>
                     </tr>
                     {% endfor %}
