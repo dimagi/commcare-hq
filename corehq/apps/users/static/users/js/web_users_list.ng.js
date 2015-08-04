@@ -11,6 +11,7 @@
 
     var WebUser = function (data) {
         var self = this;
+        self.id = data.id;
         self.email = data.email;
         self.name = data.name;
         self.role = data.role;
@@ -48,6 +49,9 @@
                 if ($scope.notLoaded) {
                     $scope.notLoaded = false;
                 }
+            }
+            else {
+                throw data.error;
             }
         };
 
