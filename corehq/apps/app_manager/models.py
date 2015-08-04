@@ -1606,6 +1606,10 @@ class ParentSelect(DocumentSchema):
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
 
+class FixtureSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    xpath = StringProperty(default='')
+
 
 class DetailPair(DocumentSchema):
     short = SchemaProperty(Detail)
@@ -1830,6 +1834,7 @@ class Module(ModuleBase):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    fixture_select = SchemaProperty(FixtureSelect)
 
     @classmethod
     def wrap(cls, data):
