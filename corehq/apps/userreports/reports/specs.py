@@ -1,3 +1,4 @@
+import json
 from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
@@ -330,8 +331,7 @@ class ChartSpec(JsonObject):
     @classmethod
     def wrap(cls, obj):
         if obj.get('chart_id') is None:
-            # http://stackoverflow.com/questions/5884066/hashing-a-python-dictionary
-            obj['chart_id'] = (obj.get('title') or '') + str(hash(frozenset(sorted(obj.items()))))
+            obj['chart_id'] = (obj.get('title') or '') + str(hash(json.dumps(sorted(obj.items()))))
         return super(ChartSpec, cls).wrap(obj)
 
 
