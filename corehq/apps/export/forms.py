@@ -5,7 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
-from corehq.apps.app_manager.models import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
 class CreateFormExportForm(forms.Form):
