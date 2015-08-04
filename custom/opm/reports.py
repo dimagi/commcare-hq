@@ -698,7 +698,7 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['awc']: user['awc_code']
+        awc_codes = {user['doc_id']: user['awc_code']
                      for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):

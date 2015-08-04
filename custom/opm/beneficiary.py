@@ -830,7 +830,7 @@ class ConditionsMet(OPMCaseRow):
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = numeric_fn(awc_codes.get(self.awc_name, EMPTY_FIELD))
+        self.awc_code = numeric_fn(awc_codes.get(self.owner_id, EMPTY_FIELD))
         self.issue = ''
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
