@@ -136,6 +136,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     AdvancedForm,
@@ -162,12 +163,12 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ReportModule,
     SavedAppBuild,
-    get_app,
+    SortElement,
     load_app_template,
     load_case_reserved_words,
     str_to_cls,
     ReportAppConfig)
-from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
+from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
