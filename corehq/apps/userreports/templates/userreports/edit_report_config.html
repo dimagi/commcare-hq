@@ -1,6 +1,16 @@
 {% extends "userreports/userreports_base.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% block breadcrumbs %}
+<li>
+    <span class="divider">&gt;</span>
+    {% trans "Edit Report" %}
+</li>
+<li>
+    <span class="divider">&gt;</span>
+    {{ report.title }}
+</li>
+{% endblock %}
 {% block main_column %}
     {% crispy form %}
 {% if report.get_id %}
