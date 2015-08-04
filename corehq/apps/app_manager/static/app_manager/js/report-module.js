@@ -92,10 +92,10 @@ var ReportModule = (function () {
     function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
-        this.reportFilters = ko.observable(JSON.parse(JSON.stringify(reportFilters)) || {});
-        for (var _id in this.reportFilters()) {
-            for (var i = 0; i < this.reportFilters()[_id].length; i++) {
-                var filter = this.reportFilters()[_id][i];
+        this.reportFilters = JSON.parse(JSON.stringify(reportFilters)) || {};
+        for (var _id in this.reportFilters) {
+            for (var i = 0; i < this.reportFilters[_id].length; i++) {
+                var filter = this.reportFilters[_id][i];
                 if (_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
@@ -156,7 +156,7 @@ var ReportModule = (function () {
                 }
             }
             return selectedFilterValues;
-        }
+        };
 
         this.addSubscribersToSaveButton = function() {
             for(var _id in this.reportFilters) {
