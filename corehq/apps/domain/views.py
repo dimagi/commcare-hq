@@ -2444,7 +2444,6 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
 
     @memoized
-    #jls
     def enabled_flags(self):
         #request.couch_user.get_id
         def _sort_key(toggle_enabled_tuple):
