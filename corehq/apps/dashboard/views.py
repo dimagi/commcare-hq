@@ -7,7 +7,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import domain_has_apps
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,

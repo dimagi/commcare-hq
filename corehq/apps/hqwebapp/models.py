@@ -16,7 +16,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
-from corehq.apps.app_manager.models import domain_has_apps
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,

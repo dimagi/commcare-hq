@@ -4613,16 +4613,6 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-def domain_has_apps(domain):
-    results = Application.get_db().view('app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-        limit=1,
-    ).all()
-    return len(results) > 0
-
-
 def get_apps_in_domain(domain, full=False, include_remote=True):
     """
     Returns all apps(not builds) in a domain
