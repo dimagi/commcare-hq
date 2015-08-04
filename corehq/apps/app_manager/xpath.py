@@ -23,8 +23,8 @@ def interpolate_xpath(string, case_xpath=None):
     }
     if case_xpath:
         replacements['#case'] = case_xpath
-        replacements['#parent'] = "instance('casedb')/casedb/case[@case_id={}/index/parent]".format(case_xpath)
-        replacements['#host'] = "instance('casedb')/casedb/case[@case_id={}/index/host]".format(case_xpath)
+        replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()
+        replacements['#host'] = CaseIDXPath(case_xpath + '/index/host').case()
 
     for pattern, repl in replacements.items():
         string = string.replace(pattern, repl)
