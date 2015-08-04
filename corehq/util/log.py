@@ -1,6 +1,5 @@
 from collections import defaultdict
 from itertools import islice
-import logging
 import traceback
 
 from pygments import highlight
@@ -62,6 +61,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             tb_list = ['Traceback (most recent call first):\n']
             formatted_exception = traceback.format_exception_only(etype, value)
             tb_list.extend(formatted_exception)
+<<<<<<< HEAD
             extracted_tb = list(reversed(traceback.extract_tb(tb)))
             try:
                 code = self.get_code(extracted_tb)
@@ -69,6 +69,10 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 logging.error('[EMAIL HANDLER] {}'.format(e))
                 code = None
 
+=======
+            extracted_tb = reversed(traceback.extract_tb(tb))
+            code = self.get_code(extracted_tb)
+>>>>>>> parent of 7e0785e... watch the watchers
             tb_list.extend(traceback.format_list(extracted_tb))
             stack_trace = '\n'.join(tb_list)
             subject = '%s: %s' % (record.levelname,
