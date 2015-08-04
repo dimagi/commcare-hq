@@ -450,7 +450,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             try:
                 case = self.get_row_data(row)
                 if self.include_out_of_range_cases or not case.case_is_out_of_range:
-                    rows.append(self.get_row_data(row))
+                    rows.append(case)
                 else:
                     if self.debug:
                         self._debug_data.append({
