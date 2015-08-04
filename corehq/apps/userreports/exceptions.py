@@ -1,5 +1,3 @@
-
-
 class UserReportsError(Exception):
     pass
 
@@ -9,6 +7,10 @@ class UserReportsWarning(Warning):
 
 
 class TableNotFoundWarning(UserReportsWarning):
+    pass
+
+
+class BadBuilderConfigError(UserReportsError):
     pass
 
 
