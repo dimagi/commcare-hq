@@ -989,7 +989,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         super(LongitudinalConditionsMet, self).__init__(case, report,
                                                         child_index=child_index,
                                                         awc_codes=awc_codes, **kwargs)
-        awc_data = awc_codes.get(self.awc_name, None)
+        awc_data = awc_codes.get(self.owner_id, None)
         self.gp = awc_data[1] if awc_data else EMPTY_FIELD
         self.bank_branch_code = self.case_property('bank_branch_code', EMPTY_FIELD)
         self.caste_tribe_status = self.get_value_from_form(PREG_REG_XMLNS, 'form/caste_tribe_status')
