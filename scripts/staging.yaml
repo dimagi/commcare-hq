@@ -58,7 +58,6 @@ branches:
   - notify-exception-code-context  # Ben 7/30
   - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
-  - django17 # J$ 8/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,6 +76,5 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: 
-      - django18 # J$ 8/4 (keeping in sync with https://github.com/dimagi/django-prbac/pull/13
+    branches: []
 
