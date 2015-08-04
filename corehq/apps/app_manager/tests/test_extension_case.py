@@ -321,3 +321,56 @@ class ParentIndexTests(SimpleTestCase):
             ParentIndex(tag='mother', relationship='slave')
         with self.assertRaises(BadValueError):
             ParentIndex(tag='mother', relationship='cousin')
+
+
+class AdvancedActionMigrationTests(SimpleTestCase):
+
+    def test_advanced_action_parent_tag(self):
+        """
+        AdvancedAction migration should create a ParentIndex if a parent tag is given
+        """
+        action = AdvancedAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+        })
+        self.assertEqual(action.parents[0].tag, 'eggs')
+
+    def test_advanced_action_parent_defaults(self):
+        """
+        AdvancedAction migration should create a ParentIndex with property defaults
+        """
+        action = AdvancedAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+        })
+        self.assertEqual(action.parents[0].reference_id, 'parent')
+        self.assertEqual(action.parents[0].relationship, 'child')
+
+    def test_advanced_action_parent_properties(self):
+        """
+        AdvancedAction migration should create a ParentIndex with given properties
+        """
+        action = AdvancedAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+            'parent_reference_id': 'spam',
+            'relationship': 'extension',
+        })
+        self.assertEqual(action.parents[0].tag, 'eggs')
+        self.assertEqual(action.parents[0].reference_id, 'spam')
+        self.assertEqual(action.parents[0].relationship, 'extension')
+
+    def test_advanced_action_no_parent_tag(self):
+        """
+        AdvancedAction migration should not create a ParentIndex without parent_tag
+        """
+        action = AdvancedAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_reference_id': 'spam',
+            'relationship': 'extension',
+        })
+        self.assertEqual(len(action.parents), 0)
