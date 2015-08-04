@@ -913,15 +913,6 @@ def get_module_view_context_and_template(app, module):
                 'charts': [chart for chart in report.configured_charts if chart['type'] == 'multibar'],
             }
         all_reports = ReportConfiguration.by_domain(app.domain)
-        for report in all_reports:
-            for i in range(len(report.configured_charts)):
-                chart_id = report.configured_charts[i].get('chart_id')
-                if not chart_id:
-                    report.configured_charts[i]['chart_id'] = (
-                        report.configured_charts[i].get('title') or ''
-                    ) + '-' + uuid.uuid4().hex
-            report.save()
-
         all_report_ids = set([r._id for r in all_reports])
         invalid_report_references = filter(lambda r: r.report_id not in all_report_ids, module.report_configs)
         warnings = []

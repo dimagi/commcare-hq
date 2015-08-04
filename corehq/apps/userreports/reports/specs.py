@@ -327,6 +327,13 @@ class ChartSpec(JsonObject):
     title = StringProperty()
     chart_id = StringProperty()
 
+    @classmethod
+    def wrap(cls, obj):
+        if obj.get('chart_id') is None:
+            # http://stackoverflow.com/questions/5884066/hashing-a-python-dictionary
+            obj['chart_id'] = (obj.get('title') or '') + str(hash(frozenset(sorted(obj.items()))))
+        return super(ChartSpec, cls).wrap(obj)
+
 
 class PieChartSpec(ChartSpec):
     type = TypeProperty('pie')
