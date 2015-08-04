@@ -2445,7 +2445,6 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
 
     @memoized
     def enabled_flags(self):
-        #request.couch_user.get_id
         def _sort_key(toggle_enabled_tuple):
             return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
         return sorted(
