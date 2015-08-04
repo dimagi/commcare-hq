@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 
 from ..models import LocationType
+from ..util import get_locations_and_children
 from .util import delete_all_locations, setup_locations_and_types
 
 
@@ -51,3 +52,23 @@ class TestLocationsSetup(MassachusettsTestCase):
         cambridge = self.locations['Cambridge']
         self.assertEqual(cambridge.parent.name, 'Middlesex')
         self.assertEqual(cambridge.parent.parent.name, 'Massachusetts')
+
+
+class TestGetLocationsAndChildren(MassachusettsTestCase):
+    def test_get_locations_and_children(self):
+        names = ['Middlesex', 'Somerville', 'Suffolk']
+        result = get_locations_and_children([self.locations[name].location_id
+                                             for name in names])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston']
+        )
+
+    def test_get_locations_and_children2(self):
+        names = ['Middlesex', 'Boston']
+        result = get_locations_and_children([self.locations[name].location_id
+                                             for name in names])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Middlesex', 'Cambridge', 'Somerville', 'Boston']
+        )
