@@ -9,8 +9,6 @@ from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
-from corehq.apps.userreports.ui.help_text import TABLE_ID
-from dimagi.utils.decorators.memoized import memoized
 
 
 class DocumentFormBase(forms.Form):
