@@ -1,9 +1,7 @@
-import os
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta
 
-from django.contrib import messages
 from django.template.defaultfilters import yesno
 from django.utils.translation import ugettext as _
 
@@ -12,7 +10,6 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_fr
 from corehq.apps.fixtures.upload import DELETE_HEADER
 from couchexport.export import export_raw
 from couchexport.models import Format
-from dimagi.utils.web import json_response
 
 from soil import DownloadBase
 from soil.util import expose_cached_download
@@ -145,16 +142,16 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         data_items_book_by_type[data_type.tag] = []
         max_users = 0
         max_groups = 0
+        max_locations = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         fixture_data = FixtureDataItem.by_data_type(domain, data_type.get_id)
         num_rows = len(fixture_data)
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)
             data_items_book_by_type[data_type.tag].append(item_row)
-            group_len = len(item_row.groups)
-            max_groups = group_len if group_len > max_groups else max_groups
-            user_len = len(item_row.users)
-            max_users = user_len if user_len > max_users else max_users
+            max_groups = max(max_groups, len(item_row.groups))
+            max_users = max(max_users, len(item_row.users))
+            max_locations = max(max_locations, len(item_row.locations))
             for field_key in item_row.fields:
                 if field_key in max_field_prop_combos:
                     max_combos = max_field_prop_combos[field_key]
@@ -165,6 +162,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers = {
             "max_users": max_users,
             "max_groups": max_groups,
+            "max_locations": max_locations,
             "max_field_prop_combos": max_field_prop_combos,
         }
         item_helpers_by_type[data_type.tag] = item_helpers
@@ -207,10 +205,12 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers = item_helpers_by_type[data_type.tag]
         max_users = item_helpers["max_users"]
         max_groups = item_helpers["max_groups"]
+        max_locations = item_helpers["max_locations"]
         max_field_prop_combos = item_helpers["max_field_prop_combos"]
         common_headers = ["UID", DELETE_HEADER]
         user_headers = ["user %d" % x for x in range(1, max_users + 1)]
         group_headers = ["group %d" % x for x in range(1, max_groups + 1)]
+        location_headers = ["location %d" % x for x in range(1, max_locations + 1)]
         field_headers = []
         item_att_headers = ["property: " + attribute for attribute in data_type.item_attributes]
         for field in data_type.fields:
@@ -236,6 +236,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             + item_att_headers
             + user_headers
             + group_headers
+            + location_headers
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
@@ -244,6 +245,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                          + empty_padding_list(max_users - len(item_row.users)))
             group_vals = ([group.name for group in item_row.groups]
                           + empty_padding_list(max_groups - len(item_row.groups)))
+            location_vals = ([loc.site_code for loc in item_row.locations]
+                             + empty_padding_list(max_groups - len(item_row.locations)))
             field_vals = []
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
@@ -272,6 +275,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                 + item_att_vals
                 + user_vals
                 + group_vals
+                + location_vals
             )
             item_sheet["rows"].append(row)
         item_sheet["rows"] = tuple(item_sheet["rows"])

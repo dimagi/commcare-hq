@@ -455,11 +455,10 @@ def get_id_from_name(name, domain, cache):
         return getattr(group, 'get_id', None)
 
     def get_from_location(name):
-        for filter_ in [{'site_code': name}, {'name__iexact': name}]:
-            try:
-                return SQLLocation.objects.get(domain=domain, **filter_).location_id
-            except SQLLocation.DoesNotExist:
-                pass
+        try:
+            return SQLLocation.objects.get_from_user_input(domain, name).location_id
+        except SQLLocation.DoesNotExist:
+            return None
 
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id
