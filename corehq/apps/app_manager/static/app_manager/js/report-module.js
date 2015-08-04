@@ -73,8 +73,7 @@ var ReportModule = (function () {
 
             var chartsToConfigs = {};
             var currentChartsToConfigs = self.currentGraphConfigs();
-            for (var chart_id in currentChartsToConfigs) {
-                var graph_config = currentChartsToConfigs[chart_id];
+            _.each(currentChartsToConfigs, function(graph_config, chart_id) {
                 chartsToConfigs[chart_id] = {
                     series_configs: {}
                 };
@@ -83,7 +82,7 @@ var ReportModule = (function () {
                 }
                 chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
                 chartsToConfigs[chart_id].config = configToDict(graph_config.config);
-            }
+            });
             return chartsToConfigs;
         };
 
