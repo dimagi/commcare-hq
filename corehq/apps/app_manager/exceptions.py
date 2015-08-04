@@ -118,3 +118,11 @@ class LocationXpathValidationError(AppManagerException):
 
 class UnknownInstanceError(SuiteError):
     pass
+
+
+class ConfigurableReportException(AppManagerException):
+    pass
+
+
+class NoMatchingFilterException(ConfigurableReportException):
+    pass
