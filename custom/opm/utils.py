@@ -30,7 +30,8 @@ def _safeint(value):
 
 class UserSqlData(SqlData):
     table_name = "fluff_OpmUserFluff"
-    group_by = ['doc_id', 'awc', 'awc_code', 'gp', 'block']
+    group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
+                'ifs_code', 'account_number', 'gp', 'block', 'village', 'gps']
 
     @property
     def filters(self):
@@ -40,10 +41,16 @@ class UserSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('name', SimpleColumn('name')),
             DatabaseColumn('awc', SimpleColumn('awc')),
             DatabaseColumn('awc_code', SimpleColumn('awc_code')),
+            DatabaseColumn('bank_name', SimpleColumn('bank_name')),
+            DatabaseColumn('ifs_code', SimpleColumn('ifs_code')),
+            DatabaseColumn('account_number', SimpleColumn('account_number')),
             DatabaseColumn('gp', SimpleColumn('gp')),
             DatabaseColumn('block', SimpleColumn('block')),
+            DatabaseColumn('village', SimpleColumn('village')),
+            DatabaseColumn('gps', SimpleColumn('gps'))
         ]
 
     def transformed_data(self):

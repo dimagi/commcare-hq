@@ -1052,18 +1052,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     @property
     @memoized
-    def users_matching_filter(self):
-        config = {}
-        for lvl in ['awc', 'gp', 'block']:
-            req_prop = 'hierarchy_%s' % lvl
-            request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == ALL_OPTION:
-                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
-                break
-        return UsersIdsData(config=config).get_data()
-
-    @property
-    @memoized
     def awc_data(self):
         """
         Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
