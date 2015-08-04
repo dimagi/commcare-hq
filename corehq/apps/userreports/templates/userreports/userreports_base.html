@@ -1,15 +1,63 @@
 {% extends "style/bootstrap2/two_column.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% block js %}{{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/mode/javascript/javascript.min.js"></script>
+{% endblock %}
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/codemirror.css" />
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.jsonwidget').each(function () {
+            var elem = this;
+            var codeMirror = CodeMirror.fromTextArea(elem, {
+                lineNumbers: true,
+                mode: {name: "javascript", json: true}
+            });
+
+            var toggleLabel = $('label[for="' + this.id + '"]').click(function (e) {
+                $(codeMirror.display.wrapper).toggle();
+                setTimeout(adjustToggleAppearance, 0);
+                e.preventDefault();
+            });
+            var toggleIcon = $('<a href="#"></a>').prependTo(toggleLabel);
+            function adjustToggleAppearance() {
+                if ($(codeMirror.display.wrapper).is(':hidden')) {
+                    toggleIcon.html('<i class="icon-angle-right"></i>');
+                } else {
+                    toggleIcon.html('<i class="icon-angle-down"></i>');
+                }
+                codeMirror.setSize(null, 10 + codeMirror.doc.lineCount() * codeMirror.defaultTextHeight());
+            }
+            adjustToggleAppearance();
+        });
+
+    });
+</script>
+{% endblock %}
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <strong>{% trans "Configurable Reports" %}</strong>
+        </li>
+        {% block breadcrumbs %}
+        {% endblock %}
+    </ul>
+{% endblock %}
 {% block sidebar %}
 <nav class="user-reports">
     <ul class="nav nav-list">
         <li class="nav-header">{% trans "Edit Reports" %}</li>
+{% with report as selected_report %}
 {% for report in reports %}
-        <li>
+        <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
         </li>
 {% endfor %}
+{% endwith %}
         <li>
             <a href="{% url 'create_configurable_report' domain %}">
                 <i class="icon-plus icon-blue"></i>
@@ -21,11 +69,13 @@
             </a>
         </li>
         <li class="nav-header">{% trans "Edit Data Sources" %}</li>
+{% with data_source as selected_data_source %}
 {% for data_source in data_sources %}
-        <li>
+        <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
         </li>
 {% endfor %}
+{% endwith %}
         <li>
             <a href="{% url 'create_configurable_data_source' domain %}">
                 <i class="icon-plus icon-blue"></i>

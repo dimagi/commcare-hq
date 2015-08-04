@@ -1,7 +1,6 @@
 import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.datastructures import MultiValueDictKeyError
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_properties, \
     get_case_types_for_domain
 from corehq.apps.importer import base
@@ -341,6 +340,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context['is_alive'] = alive
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
+    context['url'] = base.ImportCases.get_url(domain=domain)
     return render_to_response(template, context_instance=context)
 
 

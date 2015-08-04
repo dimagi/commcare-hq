@@ -5,12 +5,12 @@ from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from corehq.util.global_request import get_request
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq.const import USER_DATE_FORMAT
@@ -21,8 +21,8 @@ from django_prbac.models import Role
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
@@ -120,10 +120,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
         (TRIAL, "This is a Trial Plan"),
+        (TRIAL_INTERNAL, "This is special Trial plan that Dimagi manages."),
     )
 
 
@@ -171,11 +173,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
-        (TRIAL, "30 Day Trial")
+        (TRIAL, "30 Day Trial"),
+        (TRIAL_INTERNAL, "Custom Trial Period"),
     )
 
 
@@ -778,7 +782,7 @@ class Subscriber(models.Model):
                 new_plan=email_context['new_plan'],
             )
 
-            send_HTML_email(
+            send_html_email_async.delay(
                 email_subject,
                 sub_change_email_address,
                 render_to_string('accounting/subscription_change_email.html', email_context),
@@ -901,6 +905,74 @@ class Subscription(models.Model):
             self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
         )
 
+    def raise_conflicting_dates(self, date_start, date_end):
+        """Raises a subscription Adjustment error if the specified date range
+        conflicts with other subscriptions related to this subscriber.
+        """
+        for sub in Subscription.objects.filter(
+            subscriber=self.subscriber).exclude(id=self.id
+        ).all():
+            related_has_no_end = sub.date_end is None
+            current_has_no_end = date_end is None
+            start_before_related_end = (
+                date_start is not None and sub.date_end is not None
+                and date_start < sub.date_end
+            )
+            start_before_related_start = (
+                date_start is not None and date_start < sub.date_start
+            )
+            start_after_related_start = (
+                date_start is not None and date_start > sub.date_start
+            )
+            end_before_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end < sub.date_end
+            )
+            end_after_related_end = (
+                date_end is not None and sub.date_end is not None
+                and date_end > sub.date_end
+            )
+            end_after_related_start = (
+                date_end is not None and date_end > sub.date_start
+            )
+
+            if ((start_before_related_end and start_after_related_start)
+                or (start_after_related_start and related_has_no_end)
+                or (end_after_related_start and end_before_related_end)
+                or (end_after_related_start and related_has_no_end)
+                or (start_before_related_start and end_after_related_end)
+                or (start_before_related_end and current_has_no_end)
+            ):
+                raise SubscriptionAdjustmentError(
+                    "The start date of %(start_date)s conflicts with the "
+                    "subscription dates to %(related_sub)s." % {
+                        'start_date': self.date_start.strftime(USER_DATE_FORMAT),
+                        'related_sub': sub,
+                   }
+                )
+
+    def terminate_all_active_subscriptions(self, excluded_id=None,
+                                           web_user=None, note=None,
+                                           method=None):
+        active_subs = Subscription.objects.filter(
+            subscriber=self.subscriber, is_active=True
+        )
+        if excluded_id is not None:
+            active_subs = active_subs.exclude(id=excluded_id)
+        today = datetime.date.today()
+
+        for sub in active_subs:
+            if sub.id == self.id:
+                sub = self
+            sub.is_active = False
+            if sub.date_end is None or sub.date_end > today:
+                sub.date_end = today
+            sub.save()
+            SubscriptionAdjustment.record_adjustment(
+                sub, reason=SubscriptionAdjustmentReason.MODIFY,
+                method=method, note=note, web_user=web_user,
+            )
+
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
                             salesforce_contract_id=None,
@@ -916,7 +988,7 @@ class Subscription(models.Model):
             self.is_active = False
 
         if (self.date_start > today and date_start is not None
-            and date_start > today and not date_start > self.date_end
+            and date_start > today and (self.date_end is None or not date_start > self.date_end)
         ):
             self.date_start = date_start
         elif self.date_end is not None and date_start > self.date_end:
@@ -928,6 +1000,8 @@ class Subscription(models.Model):
                 "Can't change the start date of a subscription to a date that "
                 "is today or in the past."
             )
+
+        self.raise_conflicting_dates(self.date_start, self.date_end)
 
         if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
             self.date_delay_invoicing = date_delay_invoicing
@@ -946,6 +1020,7 @@ class Subscription(models.Model):
             reason=SubscriptionAdjustmentReason.MODIFY
         )
 
+    @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
@@ -962,6 +1037,16 @@ class Subscription(models.Model):
 
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
+
+        if self.date_start > today:
+            self.date_start = today
+        if self.date_end is None or self.date_end > today:
+            self.date_end = today
+        if (self.date_delay_invoicing is not None
+           and self.date_delay_invoicing > today):
+            self.date_delay_invoicing = today
+        self.is_active = False
+        self.save()
 
         new_subscription = Subscription(
             account=account if account else self.account,
@@ -980,16 +1065,6 @@ class Subscription(models.Model):
         new_subscription.save()
 
         new_subscription.set_billing_account_entry_point()
-
-        if self.date_start > today:
-            self.date_start = today
-        if self.date_end is None or self.date_end > today:
-            self.date_end = today
-        if (self.date_delay_invoicing is not None
-           and self.date_delay_invoicing > today):
-            self.date_delay_invoicing = today
-        self.is_active = False
-        self.save()
 
         self.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgrades,
@@ -1201,7 +1276,7 @@ class Subscription(models.Model):
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in emails:
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=get_dimagi_from_email_by_product(product),
@@ -1241,7 +1316,7 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        send_HTML_email(
+        send_html_email_async.delay(
             subject, email, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
@@ -1258,7 +1333,8 @@ class Subscription(models.Model):
     def _get_plan_by_subscriber(cls, subscriber):
         active_subscriptions = cls.objects\
             .filter(subscriber=subscriber, is_active=True)\
-            .order_by('-date_created')[:2]
+            .order_by('-date_created')[:2]\
+            .select_related('plan_version__role')
 
         if not active_subscriptions:
             return None, None
@@ -1754,7 +1830,7 @@ class BillingRecordBase(models.Model):
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
             email_plaintext = render_to_string(self.text_template, context)
-            send_HTML_email(
+            send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
                 email_from=email_from,
@@ -1887,6 +1963,7 @@ class BillingRecord(BillingRecordBase):
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
+    is_wire = BooleanProperty(default=False)
 
     def generate_pdf(self, invoice):
         self.save()
@@ -1947,6 +2024,7 @@ class InvoicePdf(SafeSaveDocument):
 
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.utcnow()
+        self.is_wire = invoice.is_wire
         self.save()
 
     def get_filename(self, invoice):

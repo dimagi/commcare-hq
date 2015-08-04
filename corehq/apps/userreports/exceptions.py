@@ -12,6 +12,10 @@ class TableNotFoundWarning(UserReportsWarning):
     pass
 
 
+class ColumnNotFoundError(UserReportsError):
+    pass
+
+
 class BadSpecError(UserReportsError):
     pass
 
@@ -25,4 +29,8 @@ class TableRebuildError(UserReportsError):
 
 
 class UserReportsFilterError(UserReportsError):
+    pass
+
+
+class SortConfigurationError(UserReportsError):
     pass

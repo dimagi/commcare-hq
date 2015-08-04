@@ -24,6 +24,7 @@ class ILSData(object):
     title_url_name = None
     subtitle = None
     default_rows = 10
+    searchable = False
 
     chart_config = {
         'on_time': {
@@ -208,6 +209,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     use_datatables = False
     exportable = False
     base_template = 'ilsgateway/base_template.html'
+    emailable = False
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
@@ -343,7 +345,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
                 start_at_row=0,
                 subtitle=data_provider.subtitle,
                 location=self.location.id if self.location else '',
-                default_rows=data_provider.default_rows
+                default_rows=data_provider.default_rows,
+                searchable=data_provider.searchable
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,

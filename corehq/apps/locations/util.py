@@ -252,6 +252,9 @@ def get_xform_location(xform):
     """
     from corehq.apps.users.models import CouchUser
     user_id = getattr(xform.metadata, 'userID', None)
+    if not user_id:
+        return None
+
     user = CouchUser.get_by_user_id(user_id)
     if hasattr(user, 'get_sql_location'):
         return user.get_sql_location(xform.domain)

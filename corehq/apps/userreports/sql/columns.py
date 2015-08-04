@@ -1,5 +1,7 @@
 import sqlalchemy
 from sqlagg import SumWhen
+from django.utils.translation import ugettext as _
+from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
@@ -46,17 +48,22 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
     """
     MAXIMUM_EXPANSION = 10
     column_warnings = []
-    vals, over_expansion_limit = _get_distinct_values(
-        data_source_configuration, column_config, MAXIMUM_EXPANSION
-    )
-    if over_expansion_limit:
-        column_warnings.append(
-            'The "{}" column had too many values to expand! '
-            'Expansion limited to {} distinct values.'.format(
-                column_config.get_header(lang), MAXIMUM_EXPANSION
-            )
+    try:
+        vals, over_expansion_limit = _get_distinct_values(
+            data_source_configuration, column_config, MAXIMUM_EXPANSION
         )
-    return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
+    except ColumnNotFoundError as e:
+        return SqlColumnConfig([], warnings=[unicode(e)])
+    else:
+        if over_expansion_limit:
+            column_warnings.append(_(
+                u'The "{header}" column had too many values to expand! '
+                u'Expansion limited to {max} distinct values.'
+            ).format(
+                header=column_config.get_header(lang),
+                max=MAXIMUM_EXPANSION
+            ))
+        return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
 def _get_distinct_values(data_source_configuration, column_config, expansion_limit=10):
@@ -81,6 +88,12 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
         table = get_indicator_table(data_source_configuration)
         if not table.exists(bind=connection):
             return [], False
+
+        if column_config.field not in table.c:
+            raise ColumnNotFoundError(_(
+                'The column "{}" does not exist in the report source! '
+                'Please double check your report configuration.').format(column_config.field)
+            )
         column = table.c[column_config.field]
 
         query = sqlalchemy.select([column], limit=expansion_limit + 1).distinct()

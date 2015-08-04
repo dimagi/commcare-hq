@@ -187,10 +187,10 @@ class ASHAFacilitatorsData(SqlData):
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
             AggregateColumn(
-                "<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>",
+                "<b>Total number of ASHAs who are functional on at least %s of the tasks</b>" % "60%",
                 aggregate_fn=lambda x, y: {
                     'sort_key': ((x or 0) * 100 / (y or 1)),
-                    'html': '{0}/{1} {2}%'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
+                    'html': '{0}/{1} ({2}%)'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
                 },
                 columns=[
                     FunctionalityChecklistColumn(
