@@ -1925,7 +1925,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     for parent in action.parents:
                         parent_action = form.actions.actions_meta_by_tag[parent.tag]['action']
                         parent_filter = SuiteGenerator.get_parent_filter(
-                            action.parent_reference_id,
+                            parent.reference_id,
                             parent_action.case_session_var
                         )
                         datums.append({
