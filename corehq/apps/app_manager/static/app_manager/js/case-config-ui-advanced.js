@@ -709,7 +709,7 @@ var AdvancedCase = (function () {
             };
 
             self.removeParentIndex = function (viewModel) {
-                return ActionBase.removeParentIndex(self, viewModel)
+                return ActionBase.removeParentIndex(self, viewModel);
             };
 
             self.case_tag.extend({ withPrevious: 1 });
@@ -925,7 +925,7 @@ var AdvancedCase = (function () {
             };
 
             self.removeParentIndex = function (viewModel) {
-                return ActionBase.removeParentIndex(self, viewModel)
+                return ActionBase.removeParentIndex(self, viewModel);
             };
 
             self.case_tag.extend({ withPrevious: 1 });

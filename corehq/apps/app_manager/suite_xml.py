@@ -1899,7 +1899,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             return SessionDatum(
                 id=action_.case_session_var,
-                nodeset=(SuiteGenerator.get_nodeset_xpath(action_.case_type, target_module_, True) + parent_filter_),
+                nodeset=(SuiteGenerator.get_nodeset_xpath(action_.case_type, target_module_, True) +
+                         parent_filter_),
                 value="./@case_id",
                 detail_select=self.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(

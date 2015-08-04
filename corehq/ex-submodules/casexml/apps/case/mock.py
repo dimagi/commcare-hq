@@ -213,11 +213,11 @@ class CaseBlock(dict):
                 relationship = index[name][2] if len(index[name]) > 2 else 'child'
                 if relationship not in ('child', 'extension'):
                     raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
+                _attrib = {'case_type': case_type}
+                if relationship != 'child':
+                    _attrib['relationship'] = relationship
                 self['index'][name] = {
-                    '_attrib': {
-                        'case_type': case_type,
-                        'relationship': relationship,
-                    },
+                    '_attrib': _attrib,
                     '_text': case_id
                 }
 

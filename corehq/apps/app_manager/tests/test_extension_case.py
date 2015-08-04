@@ -168,6 +168,32 @@ class MockCaseBlockIndexTests(SimpleTestCase):
             '</case>'
         )
 
+    def test_mock_case_block_index_omit_child(self):
+        """
+        mock.CaseBlock index relationship omit relationship attribute if set to "child"
+        """
+        case_block = MockCaseBlock(
+            case_id='123456',
+            case_type='newborn',
+            date_modified=self.now,
+            index={
+                'parent': ('mother', '789abc', 'child')
+            },
+            version=V2,
+        )
+
+        self.assertEqual(
+            ElementTree.tostring(case_block.as_xml()),
+            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
+                '<update>'
+                    '<case_type>newborn</case_type>'
+                '</update>'
+                '<index>'
+                    '<parent case_type="mother">789abc</parent>'
+                '</index>'
+            '</case>'
+        )
+
     def test_mock_case_block_index_default_relationship(self):
         """
         mock.CaseBlock index relationship should default to "child"
@@ -189,7 +215,7 @@ class MockCaseBlockIndexTests(SimpleTestCase):
                     '<case_type>newborn</case_type>'
                 '</update>'
                 '<index>'
-                    '<parent case_type="mother" relationship="child">789abc</parent>'
+                    '<parent case_type="mother">789abc</parent>'
                 '</index>'
             '</case>'
         )
@@ -198,8 +224,8 @@ class MockCaseBlockIndexTests(SimpleTestCase):
         """
         mock.CaseBlock index relationship should only allow valid values
         """
-        with self.assertRaisesRegex(CaseBlockError,
-                                    'Valid values for an index relationship are "child" and "extension"'):
+        with self.assertRaisesRegexp(CaseBlockError,
+                                     'Valid values for an index relationship are "child" and "extension"'):
             MockCaseBlock(
                 case_id='abcdef',
                 case_type='at_risk',
@@ -282,8 +308,8 @@ class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
         """
         XForm CaseBlock index relationship should only allow valid values
         """
-        with self.assertRaisesRegex(CaseError,
-                                    'Valid values for an index relationship are "child" and "extension"'):
+        with self.assertRaisesRegexp(CaseError,
+                                     'Valid values for an index relationship are "child" and "extension"'):
             self.subcase_block.add_index_ref(
                 'host',
                 self.form.get_case_type(),
