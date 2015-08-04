@@ -344,9 +344,6 @@ class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
-    # parent_tag = StringProperty()
-    # parent_reference_id = StringProperty(default='parent')
-    # relationship = StringProperty(choices=['child', 'extension'], default='child')
     parents = SchemaListProperty(ParentIndex)
 
     close_condition = SchemaProperty(FormActionCondition)
