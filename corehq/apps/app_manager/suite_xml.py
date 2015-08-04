@@ -1680,13 +1680,22 @@ class SuiteGenerator(SuiteGeneratorBase):
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
         return_to = session_var(RETURN_TO)
-        frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
-        frame_case_created.add_command(return_to)
+        target_command = XPath.string(id_strings.menu_id(target_module))
+
+        def get_create_frame(case_count_xpath):
+            return CreateFrame(if_clause=XPath.and_(
+                return_to.count().eq(1),
+                return_to.eq(target_command),
+                case_count_xpath
+            ))
+
+        frame_case_created = get_create_frame(case_count.gt(0))
+        frame_case_created.add_command(target_command)
         frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
         entry.stack.add_frame(frame_case_created)
 
-        frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
-        frame_case_not_created.add_command(return_to)
+        frame_case_not_created = get_create_frame(case_count.eq(0))
+        frame_case_not_created.add_command(target_command)
         entry.stack.add_frame(frame_case_not_created)
 
     def get_case_datums_basic_module(self, module, form):
