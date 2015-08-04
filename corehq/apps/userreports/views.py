@@ -97,7 +97,7 @@ def create_report(request, domain):
 class ReportBuilderView(TemplateView):
 
     @cls_to_view_login_and_domain
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    @method_decorator(toggles.REPORT_BUILDER.required_decorator())
     @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
@@ -335,7 +335,7 @@ def _edit_report_shared(request, domain, config):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER)
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
