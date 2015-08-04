@@ -1,8 +1,7 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -91,7 +90,8 @@ class FormManagementMode(object):
     ARCHIVE_MODE = "archive"
     RESTORE_MODE = "restore"
 
-    filter_options = [(ARCHIVE_MODE, _('Normal Forms')), (RESTORE_MODE, _('Archived Forms'))]
+    filter_options = [(ARCHIVE_MODE, ugettext_lazy('Normal Forms')), 
+            (RESTORE_MODE, ugettext_lazy('Archived Forms'))]
 
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:
@@ -135,7 +135,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     slug = 'archive_or_restore'
     default_text = ugettext_noop("Select...")
     placeholder = ''
-    label = _('Archived/Restored')
+    label = ugettext_lazy('Archived/Restored')
 
     @property
     def options(self):
