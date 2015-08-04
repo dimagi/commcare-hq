@@ -224,7 +224,7 @@ class EditReportInBuilder(View):
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
-                configurable_reports_home(request, request.domain)
+                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
