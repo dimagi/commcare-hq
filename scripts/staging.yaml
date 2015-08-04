@@ -51,7 +51,6 @@ branches:
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - template-apps # Jenny, July 20
-  - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
   # - due-list+icds/scheduler # TS 7/30
   # - icds/scheduler # Farid 7/22
