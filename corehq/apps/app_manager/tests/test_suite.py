@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig)
+    ReportModule, ReportAppConfig, ParentSelect)
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
                                            interpolate_xpath, session_var)
@@ -1113,7 +1113,46 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.module_2.root_module_id = self.module_1.unique_id
 
-        self.assertXmlPartialEqual(self.get_xml('child-module-grandchild-case'), self.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-grandchild-case'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
+    def test_child_module_with_parent_select_entry_datums(self):
+        """
+            m0 - opens 'gold-fish' case.
+            m1 - has m0 as root-module, has parent-select, updates 'guppy' case, creates
+                 'pregnancy' subcases to guppy
+        """
+        self.module_1.root_module_id = self.module_0.unique_id
+
+        # m0f0 registers gold-fish case
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question2': '/data/question2'})
+        m0f0.actions.update_case.condition.type = 'always'
+
+        # m1f0 has parent-select, updates `guppy` case, and opens sub-subcase 'pregnancy'
+        self.module_1.case_type = 'guppy'
+        self.module_1.parent_select = ParentSelect(
+            active=True, module_id=self.module_0.unique_id
+        )
+        m1f0 = self.module_1.get_form(0)
+        m1f0.requires = 'case'
+        m1f0.actions.update_case = UpdateCaseAction(update={'question2': '/data/question2'})
+        m1f0.actions.update_case.condition.type = 'always'
+        m1f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='pregnancy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-with-parent-select-entry-datums-added'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
 
 class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):

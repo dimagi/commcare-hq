@@ -528,6 +528,13 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
+
+        if self.action:
+            for frame in self.action.stack.frames:
+                result.add(frame.if_clause)
+                for datum in getattr(frame, 'datums', []):
+                    result.add(datum.value)
+
         for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)
@@ -1980,6 +1987,13 @@ class SuiteGenerator(SuiteGeneratorBase):
             because the case referred to by "parent_id" in the child module has the ID "case_id" in the parent
             module.
             """
+            def _apply_change_to_datum_attr(datum, attr, change):
+                xpath = getattr(datum, attr, None)
+                if xpath:
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    setattr(datum, attr, xpath.replace(old, new))
+
             datum = datum_meta['datum']
             action = datum_meta['action']
             if action:
@@ -1988,10 +2002,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if parent_tag in changed_ids_:
                     # update any reference to previously changed datums
                     for change in changed_ids_[parent_tag]:
-                        nodeset = datum.nodeset
-                        old = session_var(change['old_id'])
-                        new = session_var(change['new_id'])
-                        datum.nodeset = nodeset.replace(old, new)
+                        _apply_change_to_datum_attr(datum, 'nodeset', change)
+                        _apply_change_to_datum_attr(datum, 'function', change)
 
         def rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
             """

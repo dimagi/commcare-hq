@@ -1142,20 +1142,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def wrap_correctly(cls, source):
-        if source['doc_type'] == 'CouchUser' and \
-                source.has_key('commcare_accounts') and \
-                source.has_key('web_accounts'):
-            from . import old_couch_user_models
-            # todo: remove this functionality and the old user models module
-            logging.error('still accessing old user models')
-            user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
-            return cls.get_by_user_id(user_id)
-        else:
-            return {
-                'WebUser': WebUser,
-                'CommCareUser': CommCareUser,
-                'FakeUser': FakeUser,
-            }[source['doc_type']].wrap(source)
+        return {
+            'WebUser': WebUser,
+            'CommCareUser': CommCareUser,
+            'FakeUser': FakeUser,
+        }[source['doc_type']].wrap(source)
 
     @classmethod
     @skippable_quickcache(['username'], skip_arg='strict')
