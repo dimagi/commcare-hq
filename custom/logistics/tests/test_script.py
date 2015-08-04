@@ -44,7 +44,7 @@ class TestScript(TestCase):
                 incoming(phone_number, command['text'], v.backend_id, domain_scope=v.domain)
             else:
                 msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
-                self.assertEqual(msg.text, command['text'])
+                self.assertEqual(msg.text, unicode(command['text']))
                 self.assertEqual(strip_plus(msg.phone_number), strip_plus(phone_number))
                 msg.delete()
 

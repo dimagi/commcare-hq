@@ -1,6 +1,6 @@
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM
-from custom.ilsgateway.tanzania.test import ILSTestScript
+from custom.ilsgateway.tests import ILSTestScript
 
 
 class ILSLanguageTest(ILSTestScript):
@@ -14,7 +14,7 @@ class ILSLanguageTest(ILSTestScript):
         language_message = """
             5551234 > language hin
             5551234 < {0}
-        """.format(LANGUAGE_CONFIRM % dict(language='Hindi'))
+        """.format(unicode(LANGUAGE_CONFIRM) % dict(language='Hindi'))
         self.run_script(language_message)
         user = CommCareUser.get_by_username('stella')
         self.assertEqual(user.language, 'hin')

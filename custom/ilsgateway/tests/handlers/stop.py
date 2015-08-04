@@ -1,6 +1,6 @@
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import STOP_CONFIRM
-from custom.ilsgateway.tanzania.test.utils import ILSTestScript
+from custom.ilsgateway.tests import ILSTestScript
 from custom.logistics.tests.utils import bootstrap_user
 
 
@@ -16,7 +16,7 @@ class TestStop(ILSTestScript):
         script = """
           643 > stop
           643 < {0}
-        """.format(STOP_CONFIRM)
+        """.format(unicode(STOP_CONFIRM))
         self.run_script(script)
         contact = CommCareUser.get_by_username('stop_person')
         self.assertFalse(contact.is_active)

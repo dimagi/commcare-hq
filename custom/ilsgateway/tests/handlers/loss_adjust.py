@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.models import StockState
-from custom.ilsgateway.tanzania.test.utils import ILSTestScript
+from custom.ilsgateway.tanzania.reminders import SOH_THANK_YOU
+from custom.ilsgateway.tests import ILSTestScript
 
 
 class ILSLossesAdjustmentsTest(ILSTestScript):
@@ -13,7 +14,7 @@ class ILSLossesAdjustmentsTest(ILSTestScript):
         script = """
             5551234 > soh jd 400 mc 569
             5551234 < {0}
-        """.format(_("received stock report for loc1(Test Facility 1) SOH jd400 mc569"))
+        """.format(unicode(SOH_THANK_YOU))
         self.run_script(script)
 
         self.run_script(script)

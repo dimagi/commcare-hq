@@ -2,7 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import DELIVERY_PARTIAL_CONFIRM, NOT_DELIVERED_CONFIRM, \
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_CONFIRM_CHILDREN
-from custom.ilsgateway.tanzania.test.utils import ILSTestScript
+from custom.ilsgateway.tests import ILSTestScript
 
 
 class ILSDeliveredTest(ILSTestScript):
@@ -15,7 +15,7 @@ class ILSDeliveredTest(ILSTestScript):
         script = """
             5551234 > delivered
             5551234 < {0}
-        """.format(DELIVERY_PARTIAL_CONFIRM)
+        """.format(unicode(DELIVERY_PARTIAL_CONFIRM))
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
@@ -41,7 +41,7 @@ class ILSDeliveredTest(ILSTestScript):
         script = """
             5551234 > sijapokea
             5551234 < {0}
-            """.format(NOT_DELIVERED_CONFIRM)
+            """.format(unicode(NOT_DELIVERED_CONFIRM))
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
@@ -57,10 +57,13 @@ class ILSDeliveredTest(ILSTestScript):
           555 < {0}
           5551234 < {1}
           5555678 < {1}
-        """.format(DELIVERY_CONFIRM_DISTRICT % dict(contact_name="{0} {1}".format(self.user_dis.first_name,
-                                                                                  self.user_dis.last_name),
-                                                    facility_name=self.dis.name),
-                   DELIVERY_CONFIRM_CHILDREN % dict(district_name=self.dis.name))
+        """.format(
+            unicode(DELIVERY_CONFIRM_DISTRICT) % dict(contact_name="{0} {1}".format(
+                self.user_dis.first_name,
+                self.user_dis.last_name
+            ), facility_name=self.dis.name),
+            DELIVERY_CONFIRM_CHILDREN % dict(district_name=self.dis.name)
+        )
 
         self.run_script(script)
 
@@ -75,7 +78,7 @@ class ILSDeliveredTest(ILSTestScript):
         script = """
           555 > sijapokea
           555 < {0}
-        """.format(NOT_DELIVERED_CONFIRM)
+        """.format(unicode(NOT_DELIVERED_CONFIRM))
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
