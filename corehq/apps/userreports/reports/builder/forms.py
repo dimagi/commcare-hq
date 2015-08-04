@@ -41,7 +41,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
-from corehq.apps.userreports.exceptions import ApplicationNotFoundError
+from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
@@ -496,7 +496,10 @@ class ConfigureNewReportBase(forms.Form):
         if app_id:
             self.app = Application.get(app_id)
         else:
-            raise ApplicationNotFoundError("Config application not found. Has report been customized?")
+            raise BadBuilderConfigError(_(
+                "Report builder data source doesn't reference an application. "
+                "It is likely this report has been customized and it is no longer editable. "
+            ))
 
     @property
     def column_config_template(self):
