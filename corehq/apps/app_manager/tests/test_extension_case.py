@@ -11,7 +11,10 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     AdvancedAction,
     FormActionCondition,
-    ParentIndex)
+    ParentIndex,
+    AdvancedModule,
+    LoadUpdateAction,
+    PreloadAction)
 from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock, XForm, _make_elem
 from corehq.apps.app_manager.xpath import session_var
@@ -50,7 +53,13 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         """
         Properties of a host case should be available in a extension case
         """
-        self.skipTest('Not implemented')
+        self.freshwater_form.requires = 'case'
+        self.freshwater_form.actions.case_preload = PreloadAction(preload={
+            '/data/question1': 'question1',
+            '/data/question2': 'host/question2',
+        })
+        self.freshwater_form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('preload_host_case'), self.freshwater_form.render_xform())
 
     def test_ext_case_update_host_case(self):
         """
@@ -68,36 +77,64 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         """
         Properties of one or more extension cases should be available in a host case
         """
-        self.skipTest('Not implemented')
+        self.skipTest('TODO: Write this test')
 
     def test_host_case_update_ext_cases(self):
         """
         A host case should be able to save properties of one or more extension cases
         """
-        self.skipTest('Not implemented')
-        # TODO: Use model iteration
+        self.skipTest('TODO: Write this test')
 
 
-class ExtCasePropertiesTestsAdvanced(SimpleTestCase, TestFileMixin):
+class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
+    file_path = 'data', 'extension_case'
 
-    # def test_ext_case_preload_host_case(self):
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
+        self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
+        self.module.case_type = 'test_case_type'
+        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original'))
+
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
+    def test_ext_case_preload_host_case(self):
+        """
+        A extension case should be able to preload host case properties in an advanced module
+        """
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            preload={
+                '/data/question1': 'question1',
+                '/data/question2': 'host/question2'
+            },
+        ))
+        self.assertXmlEqual(self.get_xml('preload_host_case_adv'), self.form.render_xform())
 
     def test_ext_case_update_host_case(self):
         """
         A extension case should be able to save host case properties in an advanced module
         """
-        self.skipTest('Not implemented')
-        # FormPreparationV2Test.test_update_parent_case(self):
-        # self.form.actions.load_update_cases.append(LoadUpdateAction(
-        #     case_type=self.module.case_type,
-        #     case_tag='load_1',
-        #     case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
-        # ))
-        # self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module.case_type,
+            case_tag='load_1',
+            case_properties={
+                'question1': '/data/question1',
+                'host/question1': '/data/question1'
+            },
+        ))
+        self.assertXmlEqual(self.get_xml('update_host_case_adv'), self.form.render_xform())
 
-    # def test_host_case_preload_ext_case(self):
+    def test_host_case_preload_ext_case(self):
+        self.skipTest('TODO: Write this test')
 
-    # def test_host_case_update_ext_case(self):
+    def test_host_case_update_ext_case(self):
+        self.skipTest('TODO: Write this test')
 
 
 class MockCaseBlockIndexTests(SimpleTestCase):
