@@ -272,7 +272,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not location_ids:
             return []
         return map(self.utils.location_tuple,
-                   SQLLocation.objects.get(location_id__in=location_ids))
+                   SQLLocation.objects.filter(location_id__in=location_ids))
 
     @property
     def filter_context(self):
