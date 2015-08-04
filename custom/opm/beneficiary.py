@@ -830,7 +830,7 @@ class ConditionsMet(OPMCaseRow):
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        awc_data = awc_codes.get(self.awc_name, None)
+        awc_data = awc_codes.get(self.owner_id, None)
         self.awc_code = numeric_fn(awc_data[0] if awc_data else EMPTY_FIELD)
         self.issue = ''
         if self.status == 'mother':
@@ -989,7 +989,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         super(LongitudinalConditionsMet, self).__init__(case, report,
                                                         child_index=child_index,
                                                         awc_codes=awc_codes, **kwargs)
-        awc_data = awc_codes.get(self.awc_name, None)
+        awc_data = awc_codes.get(self.owner_id, None)
         self.gp = awc_data[1] if awc_data else EMPTY_FIELD
         self.bank_branch_code = self.case_property('bank_branch_code', EMPTY_FIELD)
         self.caste_tribe_status = self.get_value_from_form(PREG_REG_XMLNS, 'form/caste_tribe_status')

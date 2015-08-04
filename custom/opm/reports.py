@@ -700,7 +700,7 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['awc']: (user['awc_code'], user['gp'])
+        awc_codes = {user['doc_id']: (user['awc_code'], user['gp'])
                      for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):
@@ -1051,18 +1051,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     def get_model_kwargs(self):
         return {'last_month_totals': self.last_month_totals}
-
-    @property
-    @memoized
-    def users_matching_filter(self):
-        config = {}
-        for lvl in ['awc', 'gp', 'block']:
-            req_prop = 'hierarchy_%s' % lvl
-            request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == ALL_OPTION:
-                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
-                break
-        return UsersIdsData(config=config).get_data()
 
     @property
     @memoized
