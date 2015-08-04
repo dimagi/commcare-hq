@@ -1278,9 +1278,20 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         .format(module_name=module.default_name()))
 
                 for form in phase.get_forms():
+                    """
+                    Adds the following variables for each form:
+                    <anchor_{form_id} function="{anchor}"/>
+                    <last_visit_number_{form_id} function="{last_visit_number}"/>
+                    <next_{form_id} function={phase_set}/>
+                    """
                     form_xpath = ScheduleFormXPath(form, phase, module)
                     name = "next_{}".format(form.schedule_form_id)
-                    forms_due.append(name)
+                    forms_due.append("${}".format(name))
+
+                    # Add an anchor and last_visit variables so we can reference it in the calculation
+                    yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=form_xpath.anchor)
+                    yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
                     if phase.id == 1:
                         # If this is the first phase, `current_schedule_phase` and
                         # last_visit_num might not be set yet
@@ -1289,7 +1300,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
             yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
-            yield DetailVariable(name='is_late', function='next_due < today()')
+            yield DetailVariable(name='is_late', function='$next_due < today()')
 
     def detail_variables(self, module, detail, detail_column_infos):
         return chain(self._schedule_detail_variables(module, detail, detail_column_infos),)
