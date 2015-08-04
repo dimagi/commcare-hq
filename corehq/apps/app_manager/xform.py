@@ -473,7 +473,10 @@ class CaseBlock(object):
             self.elem.append(index_node)
         if relationship not in ('child', 'extension'):
             raise CaseError('Valid values for an index relationship are "child" and "extension"')
-        parent_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
+        if relationship == 'child':
+            parent_index = make_case_elem(reference_id, {'case_type': case_type})
+        else:
+            parent_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
         index_node.append(parent_index)
 
         self.xform.add_bind(

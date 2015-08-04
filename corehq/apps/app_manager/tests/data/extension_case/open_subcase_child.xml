@@ -16,7 +16,7 @@
                 <case_name/>
               </update>
               <index>
-                <host case_type="fish" relationship="child"/>
+                <host case_type="fish"/>
               </index>
             </case>
           </subcase_0>

@@ -11,7 +11,7 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     AdvancedAction,
     FormActionCondition,
-)
+    ParentIndex)
 from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock, XForm, _make_elem
 from corehq.apps.app_manager.xpath import session_var
@@ -322,35 +322,35 @@ class OpenSubCaseActionTests(SimpleTestCase):
             OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='cousin')
 
 
-class AdvancedActionTests(SimpleTestCase):
+class ParentIndexTests(SimpleTestCase):
 
-    def test_advanced_action_supports_relationship(self):
+    def test_parent_index_support_relationship(self):
         """
-        AdvancedAction should allow relationship to be set
+        ParentIndex should allow relationship to be set
         """
-        action = AdvancedAction(case_type='mother', case_tag='mother', relationship='extension')
-        self.assertEqual(action.relationship, 'extension')
+        parent_index = ParentIndex(tag='mother', relationship='extension')
+        self.assertEqual(parent_index.relationship, 'extension')
 
-    def test_advanced_action_default_relationship(self):
+    def test_advanced_action_parents_default_relationship(self):
         """
-        AdvancedAction relationship should default to "child"
+        ParentIndex relationship should default to "child"
         """
-        action = AdvancedAction(case_type='mother', case_tag='mother')
-        self.assertEqual(action.relationship, 'child')
+        parent_index = ParentIndex(tag='mother')
+        self.assertEqual(parent_index.relationship, 'child')
 
-    def test_advanced_action_valid_relationship(self):
+    def test_parent_index_valid_relationship(self):
         """
-        AdvancedAction relationship should only allow valid values
+        ParentIndex relationship should only allow valid values
         """
-        AdvancedAction(case_type='mother', case_tag='mother', relationship='child')
-        AdvancedAction(case_type='mother', case_tag='mother', relationship='extension')
+        ParentIndex(tag='mother', relationship='child')
+        ParentIndex(tag='mother', relationship='extension')
         with self.assertRaises(BadValueError):
-            AdvancedAction(case_type='mother', case_tag='mother', relationship='parent')
+            ParentIndex(tag='mother', relationship='parent')
         with self.assertRaises(BadValueError):
-            AdvancedAction(case_type='mother', case_tag='mother', relationship='host')
+            ParentIndex(tag='mother', relationship='host')
         with self.assertRaises(BadValueError):
-            AdvancedAction(case_type='mother', case_tag='mother', relationship='master')
+            ParentIndex(tag='mother', relationship='master')
         with self.assertRaises(BadValueError):
-            AdvancedAction(case_type='mother', case_tag='mother', relationship='slave')
+            ParentIndex(tag='mother', relationship='slave')
         with self.assertRaises(BadValueError):
-            AdvancedAction(case_type='mother', case_tag='mother', relationship='cousin')
+            ParentIndex(tag='mother', relationship='cousin')
