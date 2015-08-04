@@ -1142,20 +1142,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def wrap_correctly(cls, source):
-        if source['doc_type'] == 'CouchUser' and \
-                source.has_key('commcare_accounts') and \
-                source.has_key('web_accounts'):
-            from . import old_couch_user_models
-            # todo: remove this functionality and the old user models module
-            logging.error('still accessing old user models')
-            user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
-            return cls.get_by_user_id(user_id)
-        else:
-            return {
-                'WebUser': WebUser,
-                'CommCareUser': CommCareUser,
-                'FakeUser': FakeUser,
-            }[source['doc_type']].wrap(source)
+        return {
+            'WebUser': WebUser,
+            'CommCareUser': CommCareUser,
+            'FakeUser': FakeUser,
+        }[source['doc_type']].wrap(source)
 
     @classmethod
     @skippable_quickcache(['username'], skip_arg='strict')
@@ -1674,8 +1665,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
+        for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(
+                form_id_list, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
@@ -1778,17 +1770,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
-            return Location.get(self.location_id)
-        else:
-            return None
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
     @property
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            return SQLLocation.objects.get(location_id=self.location_id)
-        else:
-            return None
+            try:
+                return SQLLocation.objects.get(location_id=self.location_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     def set_location(self, location):
         """
@@ -2320,6 +2316,18 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def set_location(self, domain, location_object_or_id):
+        if isinstance(location_object_or_id, basestring):
+            location_id = location_object_or_id
+        else:
+            location_id = location_object_or_id._id
+        self.get_domain_membership(domain).location_id = location_id
+        self.save()
+
+    def unset_location(self, domain):
+        self.get_domain_membership(domain).location_id = None
+        self.save()
+
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
@@ -2327,13 +2335,23 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_sql_location(self, domain):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
-        return SQLLocation.objects.get(location_id=loc_id) if loc_id else None
+        if loc_id:
+            try:
+                return SQLLocation.objects.get(loc_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
-        return Location.get(loc_id) if loc_id else None
+        if loc_id:
+            try:
+                return Location.get(loc_id)
+            except ResourceNotFound:
+                pass
+        return None
 
 
 class FakeUser(WebUser):
@@ -2415,6 +2433,8 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
+    program = None
+    supply_point = None
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",

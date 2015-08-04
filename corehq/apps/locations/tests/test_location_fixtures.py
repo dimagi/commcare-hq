@@ -39,6 +39,7 @@ class LocationFixturesTest(TestCase):
 
     def test_metadata(self):
         location = SQLLocation(
+            id="854208",
             location_id="unique-id",
             domain="test-domain",
             name="Braavos",

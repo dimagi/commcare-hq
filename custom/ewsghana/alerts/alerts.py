@@ -372,7 +372,7 @@ def stock_alerts(transactions, user):
 
 
 def send_message_to_admins(user, message):
-    users = get_users_by_location_id(user.location.get_id)
+    users = get_users_by_location_id(user.domain, user.location.get_id)
     in_charge_users = [
         u
         for u in users

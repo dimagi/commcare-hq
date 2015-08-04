@@ -15,7 +15,7 @@ class DropboxUploadHelper(models.Model):
     dest = models.CharField(max_length=255)
     src = models.CharField(max_length=255)
     progress = models.DecimalField(default=0, decimal_places=2, max_digits=3)
-    download_id = models.CharField(max_length=255)
+    download_id = models.CharField(max_length=255, db_index=True)
     user = models.ForeignKey(User)
 
     # If this field is set then the task has failed

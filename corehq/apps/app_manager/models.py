@@ -93,11 +93,11 @@ from .exceptions import (
 from corehq.apps.app_manager import id_strings
 from jsonpath_rw import jsonpath, parse
 
-WORKFLOW_DEFAULT = 'default'
-WORKFLOW_ROOT = 'root'
-WORKFLOW_MODULE = 'module'
-WORKFLOW_PREVIOUS = 'previous_screen'
-WORKFLOW_FORM = 'form'
+WORKFLOW_DEFAULT = 'default'  # go to the app main screen
+WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_MODULE = 'module'  # go to the current module's screen
+WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
+WORKFLOW_FORM = 'form'  # go straight to another form
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -1693,6 +1693,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return True
 
+    def uses_usercase(self):
+        return False
+
+    def is_usercaseonly(self):
+        return False
+
 
 class Module(ModuleBase):
     """
@@ -1932,6 +1938,11 @@ class Module(ModuleBase):
                 'module': module_info,
             }
 
+    def uses_usercase(self):
+        """Return True if this module has any forms that use the usercase.
+        """
+        return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
+
     def is_usercaseonly(self):
         """
         Return False if the usercase is unused, or if any forms update a
@@ -1945,13 +1956,10 @@ class Module(ModuleBase):
             return ((update_case.update and update_case.condition.type != 'never') or
                     (case_preload.preload and case_preload.condition.type != 'never'))
 
-        uses_usercase = False
-        for form in self.forms:
-            if actions_use_another_case(form.active_actions()):
-                return False
-            if actions_use_usercase(form.active_actions()):
-                uses_usercase = True
-        return uses_usercase
+        return self.uses_usercase() and not any(
+            form for form in self.forms
+            if actions_use_another_case(form.active_actions())
+        )
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -1977,7 +1985,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
-        return bool(self.actions.load_update_cases)
+        """Form requires a case that must be selected by the user (excludes autoloaded cases)
+        """
+        return any(not action.auto_select for action in self.actions.load_update_cases)
 
     @property
     def requires(self):
@@ -2274,8 +2284,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
-                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    select_chain = suite_xml.SuiteGenerator.get_select_chain(app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -2423,21 +2432,29 @@ class AdvancedModule(ModuleBase):
 
         return errors
 
+    def _uses_case_type(self, case_type, invert_match=False):
+        def match(ct):
+            matches = ct == case_type
+            return not matches if invert_match else matches
+
+        return any(
+            action for form in self.forms
+            for action in form.actions.load_update_cases
+            if match(action.case_type)
+        )
+
+    def uses_usercase(self):
+        """Return True if this module has any forms that use the usercase.
+        """
+        return self._uses_case_type(USERCASE_TYPE)
+
     def is_usercaseonly(self):
         """
         Return False is the usercase is unused, or if any forms update a
         different case type. If the only case type updated in the module is
         the usercase, return True.
         """
-        uses_usercase = False
-        for form in self.forms:
-            if form.actions.load_update_cases:
-                for action in form.actions.load_update_cases:
-                    if action.case_type == USERCASE_TYPE:
-                        uses_usercase = True
-                    else:
-                        return False
-        return uses_usercase
+        return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3990,7 +4007,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -4721,6 +4738,11 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     for name, attachment in attachments.items():
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)
+
+    if any(module.uses_usercase() for module in app.get_modules()):
+        from corehq.apps.app_manager.util import enable_usercase
+        enable_usercase(domain)
+
     return app
 
 

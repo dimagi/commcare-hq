@@ -177,7 +177,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             )
 
             for l in loc.get_descendants(include_self=True):
-                results += get_user_ids_by_location(l.location_id)
+                results += get_user_ids_by_location(self.domain, l.location_id)
 
         return results
 

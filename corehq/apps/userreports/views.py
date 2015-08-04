@@ -29,7 +29,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadSpecError, UserQueryError
+from corehq.apps.userreports.exceptions import BadBuilderConfigError, BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -220,7 +220,11 @@ class EditReportInBuilder(View):
                 'worker': ConfigureWorkerReport,
                 'table': ConfigureTableReport
             }[report.report_meta.builder_report_type]
-            return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            try:
+                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            except BadBuilderConfigError as e:
+                messages.error(request, e.message)
+                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 

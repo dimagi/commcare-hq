@@ -118,6 +118,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # save state errors and hashes here
+    had_state_error = BooleanProperty(default=False)
+    error_date = DateTimeProperty()
+    error_hash = StringProperty()
+
     strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
@@ -675,14 +680,24 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for case_state in other_sync_log.cases_on_phone:
                 _add_state_contributions(ret, case_state)
 
+            dependent_case_ids = set()
             for case_state in other_sync_log.dependent_cases_on_phone:
                 _add_state_contributions(ret, case_state, is_dependent=True)
+                dependent_case_ids.add(case_state.case_id)
+
+            for dependent_case_id in dependent_case_ids:
+                # try to prune any dependent cases - the old format does this on
+                # access, but the new format does it ahead of time and always assumes
+                # its current state is accurate.
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                ret.prune_case(dependent_case_id)
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
             del ret['last_seq']
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
+
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
