@@ -3,7 +3,6 @@ import copy
 import logging
 import hashlib
 import itertools
-import uuid
 from django.utils.decorators import method_decorator
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
