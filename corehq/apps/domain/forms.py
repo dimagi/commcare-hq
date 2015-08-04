@@ -603,9 +603,9 @@ class PrivacySecurityForm(forms.Form):
             "Read more about secure submissions here</a>"))
     )
     allow_domain_requests = BooleanField(
-        label=_("Web user requests"),
+        label=ugettext_lazy("Web user requests"),
         required=False,
-        help_text=_("Allow unknown users to request web access to the domain."),
+        help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
     )
 
     def save(self, domain):
