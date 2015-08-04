@@ -450,7 +450,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             try:
                 case = self.get_row_data(row)
                 if self.include_out_of_range_cases or not case.case_is_out_of_range:
-                    rows.append(self.get_row_data(row))
+                    rows.append(case)
                 else:
                     if self.debug:
                         self._debug_data.append({
@@ -665,7 +665,9 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         if len(rows) == 1:
             return rows[0]
         def zip_fn((i, values)):
-            if isinstance(values[0], int):
+            if i == self.column_index('num_children'):
+                return values[0]
+            elif isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
                 unique_values = set(v for v in values if v is not None)

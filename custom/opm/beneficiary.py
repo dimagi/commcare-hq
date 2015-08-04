@@ -891,7 +891,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('block_name', ugettext_lazy("Block Name"), True, None),
         ('village', ugettext_lazy("Village Name"), True, None),
-        ('child_count', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('num_children', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
         ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
         ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
         ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
@@ -907,7 +907,6 @@ class Beneficiary(OPMCaseRow):
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(Beneficiary, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.child_count = numeric_fn(0 if self.status == "pregnant" else 1)
 
         # Show only cases that require payment
         if self.total_cash == 0:
