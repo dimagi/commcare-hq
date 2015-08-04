@@ -12,6 +12,10 @@ class TableNotFoundWarning(UserReportsWarning):
     pass
 
 
+class ColumnNotFoundError(UserReportsError):
+    pass
+
+
 class BadSpecError(UserReportsError):
     pass
 
