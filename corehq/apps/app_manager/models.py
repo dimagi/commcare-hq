@@ -24,11 +24,10 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError, DocTypeError
+from couchdbkit.exceptions import BadValueError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import Http404
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -68,7 +67,6 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
-    get_correct_app_class,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
     actions_use_usercase
