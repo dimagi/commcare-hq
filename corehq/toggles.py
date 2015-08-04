@@ -242,6 +242,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+REPORT_BUILDER = StaticToggle(
+    'report_builder',
+    'Report Builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
