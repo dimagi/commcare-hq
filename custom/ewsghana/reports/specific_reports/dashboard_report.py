@@ -1,6 +1,8 @@
 from collections import defaultdict
 from datetime import datetime
+from django.http import HttpResponse
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.cache import request_cache
 from custom.ewsghana.filters import EWSLocationFilter
 from custom.ewsghana.reports import MultiReport, ProductSelectionPane
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
@@ -103,3 +105,14 @@ class DashboardReport(MultiReport):
             ReportingRates(config=config),
             ReportingDetails(config=config)
         ]
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "ewsghana/dashboard_print_report.html"
+        return HttpResponse(self._async_context()['report'])

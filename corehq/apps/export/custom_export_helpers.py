@@ -1,14 +1,15 @@
 import json
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain
@@ -29,8 +30,8 @@ class AbstractProperty(object):
 class DEID(object):
     options = (
         ('', ''),
-        (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
-        (_('Sensitive Date'), 'couchexport.deid.deid_date'),
+        (ugettext_lazy('Sensitive ID'), 'couchexport.deid.deid_ID'),
+        (ugettext_lazy('Sensitive Date'), 'couchexport.deid.deid_date'),
     )
     json_options = [{'label': label, 'value': value}
                     for label, value in options]
@@ -150,6 +151,7 @@ class CustomExportHelper(object):
         self.update_custom_params()
         self.custom_export.custom_validate()
         self.custom_export.save()
+        touch_exports(self.domain)
 
         if self.presave:
             HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
@@ -204,11 +206,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
     @property
     def allow_deid(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-            return True
-        except PermissionDenied:
-            return False
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     def update_custom_params(self):
         p = self.post_data['custom_export']

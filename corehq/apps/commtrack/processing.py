@@ -1,3 +1,4 @@
+from collections import namedtuple
 import logging
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -66,6 +67,37 @@ def _create_model_for_stock_report(domain, stock_report_helper):
         domain=domain,
     )
 
+LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
+
+
+def compute_ledger_values(lazy_original_balance, report_type, quantity):
+    """
+    lazy_original_balance:
+        a zero-argument function returning original balance
+        the original_balance is only used in the case of a transfer
+        and it may be computationally expensive for the caller to provide
+        putting it behind a function lets compute_ledger_values decide
+        whether it's necessary to do that work
+    report_type:
+        a string in VALID_REPORT_TYPES
+        says whether it's a transfer or balance
+    quantity:
+        the associated quantity, interpreted as a delta for transfers
+        and a total balance for balances
+
+    """
+    if report_type == stockconst.REPORT_TYPE_BALANCE:
+        new_balance = quantity
+        # this is currently always 0 because of inferred transactions
+        new_delta = 0
+    elif report_type == stockconst.REPORT_TYPE_TRANSFER:
+        original_balance = lazy_original_balance()
+        new_delta = quantity
+        new_balance = new_delta + (original_balance if original_balance else 0)
+    else:
+        raise ValueError()
+    return LedgerValues(new_balance, new_delta)
+
 
 def _create_model_for_stock_transaction(report, transaction_helper):
     assert report.type in stockconst.VALID_REPORT_TYPES
@@ -77,18 +109,21 @@ def _create_model_for_stock_transaction(report, transaction_helper):
         type=transaction_helper.action,
         subtype=transaction_helper.subaction,
     )
-    if report.type == stockconst.REPORT_TYPE_BALANCE:
-        txn.stock_on_hand = transaction_helper.quantity
-        txn.quantity = 0
-    elif report.type == stockconst.REPORT_TYPE_TRANSFER:
+
+    def lazy_original_balance():
         previous_transaction = txn.get_previous_transaction()
-        txn.quantity = transaction_helper.relative_quantity
-        txn.stock_on_hand = txn.quantity + (
-            previous_transaction.stock_on_hand
-            if previous_transaction else 0
-        )
-    else:
-        raise ValueError()
+        if previous_transaction:
+            return previous_transaction.stock_on_hand
+        else:
+            return None
+
+    new_ledger_values = compute_ledger_values(
+        lazy_original_balance, report.type,
+        transaction_helper.relative_quantity)
+
+    txn.stock_on_hand = new_ledger_values.balance
+    txn.quantity = new_ledger_values.delta
+
     if report.domain:
         # set this as a shortcut for post save signal receivers
         txn.domain = report.domain
@@ -154,3 +189,90 @@ def process_stock(xform, case_db=None):
         relevant_cases=relevant_cases,
         stock_report_helpers=stock_report_helpers,
     )
+
+
+def _compute_ledger_values(original_balance, stock_transaction):
+    if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
+        quantity = stock_transaction.stock_on_hand
+    elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
+        quantity = stock_transaction.quantity
+    else:
+        raise ValueError()
+
+    ledger_values = compute_ledger_values(
+        lambda: original_balance, stock_transaction.report.type, quantity)
+
+    # check that the reported value (either transfer quantity or balance)
+    # is not being changed; don't know why it would be, but that would be
+    # a red flag
+    if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
+        assert stock_transaction.stock_on_hand == ledger_values.balance
+    elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
+        assert stock_transaction.quantity == ledger_values.delta, \
+            (stock_transaction.quantity, ledger_values.delta)
+    else:
+        raise ValueError()
+
+    return ledger_values
+
+_DeleteStockTransaction = namedtuple(
+    '_DeleteStockTransaction', ['stock_transaction'])
+_SaveStockTransaction = namedtuple(
+    '_SaveStockTransaction',
+    ['stock_transaction', 'previous_ledger_values', 'ledger_values'])
+
+
+def plan_rebuild_stock_state(case_id, section_id, product_id):
+    """
+    planner for rebuild_stock_state
+
+    yields actions for rebuild_stock_state to take,
+    facilitating doing a dry run
+
+    Warning: since some important things are still done through signals
+    rather than here explicitly, there may be some effects that aren't
+    represented in the plan. For example, inferred transaction creation
+    will not be represented, nor will updates to the StockState object.
+
+    """
+
+    # these come out latest first, so reverse them below
+    stock_transactions = (
+        StockTransaction
+        .get_ordered_transactions_for_stock(
+            case_id=case_id, section_id=section_id, product_id=product_id)
+        .reverse()  # we want earliest transactions first
+        .select_related('report__type')
+    )
+    balance = None
+    for stock_transaction in stock_transactions:
+        if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
+            yield _DeleteStockTransaction(stock_transaction)
+        else:
+            before = LedgerValues(balance=stock_transaction.stock_on_hand,
+                                  delta=stock_transaction.quantity)
+            after = _compute_ledger_values(balance, stock_transaction)
+            # update balance for the next iteration
+            balance = after.balance
+            yield _SaveStockTransaction(stock_transaction, before, after)
+
+
+@transaction.atomic
+def rebuild_stock_state(case_id, section_id, product_id):
+    """
+    rebuilds the StockState object
+    and the quantity and stock_on_hand fields of StockTransaction
+    when they are calculated from previous state
+    (as opposed to part of the explict transaction)
+
+    """
+
+    for action in plan_rebuild_stock_state(case_id, section_id, product_id):
+        if isinstance(action, _DeleteStockTransaction):
+            action.stock_transaction.delete()
+        elif isinstance(action, _SaveStockTransaction):
+            action.stock_transaction.stock_on_hand = action.ledger_values.balance
+            action.stock_transaction.quantity = action.ledger_values.delta
+            action.stock_transaction.save()
+        else:
+            raise ValueError()

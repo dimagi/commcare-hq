@@ -14,7 +14,7 @@ from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
@@ -27,9 +27,9 @@ from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
 from django_prbac.models import Role, Grant, UserRole
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
@@ -69,34 +69,34 @@ from corehq.apps.accounting.models import (
 
 class BillingAccountBasicForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label=_("Salesforce Account ID"),
+    salesforce_account_id = forms.CharField(label=ugettext_lazy("Salesforce Account ID"),
                                             max_length=80,
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
     emails = forms.CharField(
-        label=_('Client Contact Emails'),
+        label=ugettext_lazy('Client Contact Emails'),
         widget=forms.Textarea,
         max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
     is_active = forms.BooleanField(
-        label=_("Account is Active"),
+        label=ugettext_lazy("Account is Active"),
         required=False,
         initial=True,
     )
     active_accounts = forms.IntegerField(
-        label=_("Transfer Subscriptions To"),
-        help_text=_("Transfer any existing subscriptions to the "
+        label=ugettext_lazy("Transfer Subscriptions To"),
+        help_text=ugettext_lazy("Transfer any existing subscriptions to the "
                     "Billing Account specified here."),
         required=False,
     )
     dimagi_contact = forms.EmailField(
-        label=_("Dimagi Contact Email"),
+        label=ugettext_lazy("Dimagi Contact Email"),
         max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
         required=False,
     )
     entry_point = forms.ChoiceField(
-        label=_("Entry Point"),
+        label=ugettext_lazy("Entry Point"),
         choices=EntryPoint.CHOICES,
     )
 
@@ -308,47 +308,47 @@ class BillingAccountContactForm(forms.ModelForm):
 
 class SubscriptionForm(forms.Form):
     account = forms.IntegerField(
-        label=_("Billing Account")
+        label=ugettext_lazy("Billing Account")
     )
     start_date = forms.DateField(
-        label=_("Start Date"), widget=forms.DateInput()
+        label=ugettext_lazy("Start Date"), widget=forms.DateInput()
     )
     end_date = forms.DateField(
-        label=_("End Date"), widget=forms.DateInput(), required=False
+        label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     delay_invoice_until = forms.DateField(
-        label=_("Delay Invoice Until"), widget=forms.DateInput(), required=False
+        label=ugettext_lazy("Delay Invoice Until"), widget=forms.DateInput(), required=False
     )
     plan_product = forms.ChoiceField(
-        label=_("Core Product"), initial=SoftwareProductType.COMMCARE,
+        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
         choices=SoftwareProductType.CHOICES,
     )
     plan_edition = forms.ChoiceField(
-        label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.IntegerField(label=_("Software Plan"))
-    domain = forms.CharField(label=_("Project Space"))
+    plan_version = forms.IntegerField(label=ugettext_lazy("Software Plan"))
+    domain = forms.CharField(label=ugettext_lazy("Project Space"))
     salesforce_contract_id = forms.CharField(
-        label=_("Salesforce Deployment ID"), max_length=80, required=False
+        label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
     do_not_invoice = forms.BooleanField(
-        label=_("Do Not Invoice"), required=False
+        label=ugettext_lazy("Do Not Invoice"), required=False
     )
     auto_generate_credits = forms.BooleanField(
-        label=_("Auto-generate Plan Credits"), required=False
+        label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
     active_accounts = forms.IntegerField(
-        label=_("Transfer Subscription To"),
+        label=ugettext_lazy("Transfer Subscription To"),
         required=False,
     )
     service_type = forms.ChoiceField(
-        label=_("Type"),
+        label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=_("Pro-Bono"),
+        label=ugettext_lazy("Pro-Bono"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )
@@ -614,29 +614,29 @@ class SubscriptionForm(forms.Form):
 
 class ChangeSubscriptionForm(forms.Form):
     subscription_change_note = forms.CharField(
-        label=_("Note"),
+        label=ugettext_lazy("Note"),
         required=True,
         widget=forms.Textarea,
     )
     new_plan_product = forms.ChoiceField(
-        label=_("Core Product"), initial=SoftwareProductType.COMMCARE,
+        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
         choices=SoftwareProductType.CHOICES,
     )
     new_plan_edition = forms.ChoiceField(
-        label=_("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    new_plan_version = forms.CharField(label=_("New Software Plan"))
+    new_plan_version = forms.CharField(label=ugettext_lazy("New Software Plan"))
     new_date_end = forms.DateField(
-        label=_("End Date"), widget=forms.DateInput(), required=False
+        label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     service_type = forms.ChoiceField(
-        label=_("Type"),
+        label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=_("Pro-Bono"),
+        label=ugettext_lazy("Pro-Bono"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )
@@ -690,7 +690,7 @@ class CreditForm(forms.Form):
     amount = forms.DecimalField(label="Amount (USD)")
     note = forms.CharField(required=True)
     rate_type = forms.ChoiceField(
-        label=_("Rate Type"),
+        label=ugettext_lazy("Rate Type"),
         choices=(
             ('', 'Any'),
             ('Product', 'Product'),
@@ -698,8 +698,8 @@ class CreditForm(forms.Form):
         ),
         required=False,
     )
-    product_type = forms.ChoiceField(required=False, label=_("Product Type"))
-    feature_type = forms.ChoiceField(required=False, label=_("Feature Type"))
+    product_type = forms.ChoiceField(required=False, label=ugettext_lazy("Product Type"))
+    feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
 
     def __init__(self, account, subscription, *args, **kwargs):
         self.account = account
@@ -1456,7 +1456,7 @@ class EnterprisePlanContactForm(forms.Form):
                 ),
                 crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
                             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
-                            'title': ugettext("Select different plan"),
+                            'title': _("Select different plan"),
                 }),
             )
         )
@@ -1479,8 +1479,9 @@ class EnterprisePlanContactForm(forms.Form):
         Message:
         %(message)s
         """ % context
-        send_HTML_email(subject, settings.BILLING_EMAIL, html_content, text_content,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
+                                    html_content, text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class TriggerInvoiceForm(forms.Form):

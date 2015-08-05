@@ -1,7 +1,18 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% block breadcrumbs %}
+<li>
+    <span class="divider">&gt;</span>
+    {% trans "Edit Data Source" %}
+</li>
+<li>
+    <span class="divider">&gt;</span>
+    {{ data_source.display_name }}
+</li>
+{% endblock %}
 {% block main_column %}
+    <h2>Edit Data Source</h2>
     {% if read_only %}
         <div class="alert alert-info">
           {% trans "This datasource is read only, any changes made can not be saved." %}

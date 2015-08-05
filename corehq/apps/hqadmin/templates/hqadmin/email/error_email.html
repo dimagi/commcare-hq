@@ -1,5 +1,6 @@
 <html>
 <body>
+<h3>{{ message }}</h3>
 {% if details %}
 <h3>Details</h3>
 <table>
@@ -26,6 +27,13 @@
 <pre style="background-color: #FFFFE0">{{ line }}</pre>
 {% endif %}
 {% endfor %}
+
+<h3>Code Context</h3>
+{% if code %}
+<div>{{ code|safe }}</div>
+{% else %}
+<div>Not available.</div>
+{% endif %}
 
 <h3>Parameters</h3>
 

@@ -118,6 +118,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # save state errors and hashes here
+    had_state_error = BooleanProperty(default=False)
+    error_date = DateTimeProperty()
+    error_hash = StringProperty()
+
     strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
@@ -134,6 +139,12 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    def case_count(self):
+        """
+        How many cases are associated with this. Used in reports.
+        """
+        raise NotImplementedError()
 
     def phone_is_holding_case(self, case_id):
         raise NotImplementedError()
@@ -223,6 +234,9 @@ class SyncLog(AbstractSyncLog):
     def last_for_user(cls, user_id):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
         return get_last_synclog_for_user(user_id)
+
+    def case_count(self):
+        return len(self.cases_on_phone)
 
     def get_previous_log(self):
         """
@@ -516,6 +530,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.doc_type = "SyncLog"
         super(SimplifiedSyncLog, self).save(*args, **kwargs)
 
+    def case_count(self):
+        return len(self.case_ids_on_phone)
+
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
@@ -583,22 +600,26 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree before update: {}'.format(self.index_tree))
+        skipped = set()
+        to_prune = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = action.updated_known_properties.get("owner_id")
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
-
+                log_has_case = case._id not in skipped
                 if action.action_type == const.CASE_ACTION_CREATE:
                     if phone_owns_case:
                         self._add_primary_case(case._id)
                         made_changes = True
+                    else:
+                        skipped.add(case._id)
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    if not phone_owns_case:
+                    if not phone_owns_case and log_has_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
-                        self.prune_case(case._id)
+                        to_prune.add(case._id)
                         made_changes = True
                     else:
                         if case._id in self.dependent_case_ids_on_phone:
@@ -618,10 +639,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # this case is being closed.
-                    # we can try pruning this case since it's no longer relevant
-                    self.prune_case(case._id)
-                    made_changes = True
+                    if log_has_case:
+                        # this case is being closed. we can try pruning this case since it's no longer relevant
+                        to_prune.add(case._id)
+                        made_changes = True
+
+        for case_to_prune in to_prune:
+            self.prune_case(case_to_prune)
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
@@ -656,14 +680,24 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for case_state in other_sync_log.cases_on_phone:
                 _add_state_contributions(ret, case_state)
 
+            dependent_case_ids = set()
             for case_state in other_sync_log.dependent_cases_on_phone:
                 _add_state_contributions(ret, case_state, is_dependent=True)
+                dependent_case_ids.add(case_state.case_id)
+
+            for dependent_case_id in dependent_case_ids:
+                # try to prune any dependent cases - the old format does this on
+                # access, but the new format does it ahead of time and always assumes
+                # its current state is accurate.
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                ret.prune_case(dependent_case_id)
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
             del ret['last_seq']
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
+
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
@@ -681,7 +715,10 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    doc = SyncLog.get_db().get(doc_id)
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+
+
+def properly_wrap_sync_log(doc):
     return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
 
 

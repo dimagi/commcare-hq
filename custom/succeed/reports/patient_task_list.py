@@ -1,66 +1,48 @@
-from datetime import datetime
-import logging
-
 from django.core.urlresolvers import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
-import json
-
-from corehq.apps.api.es import ReportCaseES
+from sqlagg.base import AliasColumn
+from sqlagg.columns import SimpleColumn
+from sqlagg.filters import EQ, OR, IN
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.generic import ElasticProjectInspectionReport
+from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
+    TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.elastic import es_query
-from corehq.pillows.base import restore_property_dict
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
-from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, \
-    INPUT_DATE_FORMAT, OUTPUT_DATE_FORMAT, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
-from custom.succeed.utils import is_succeed_admin, has_any_role, SUCCEED_CM_APPNAME, get_app_build
-from casexml.apps.case.models import CommCareCase
+from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
+    CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
+from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from dimagi.utils.decorators.memoized import memoized
 
 
-class PatientTaskListReportDisplay(CaseDisplay):
-    def __init__(self, report, case_dict):
+class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    name = ugettext_noop('Patient Tasks')
+    slug = 'patient_task_list'
+    fields = ['custom.succeed.fields.ResponsibleParty',
+              'custom.succeed.fields.PatientName',
+              'custom.succeed.fields.TaskStatus']
 
-        next_visit = VISIT_SCHEDULE[0]
-        last_inter = None
-        for action in case_dict['actions']:
-            if action['xform_xmlns'] in LAST_INTERACTION_LIST:
-                last_inter = action
-
-        for visit_key, visit in enumerate(VISIT_SCHEDULE):
-            for key, action in enumerate(case_dict['actions']):
-                if visit['xmlns'] == action['xform_xmlns']:
-                    try:
-                        next_visit = VISIT_SCHEDULE[visit_key + 1]
-                        del case_dict['actions'][key]
-                        break
-                    except IndexError:
-                        next_visit = 'last'
-        self.next_visit = next_visit
-        if last_inter:
-            self.last_interaction = last_inter['date']
-        self.domain = report.domain
-        self.app_dict = get_cloudcare_app(self.domain, SUCCEED_CM_APPNAME)
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
+        super(PatientTaskListReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
+        self.app_dict = get_cloudcare_app(domain, SUCCEED_CM_APPNAME)
         self.latest_build = get_app_build(self.app_dict)
-        super(PatientTaskListReportDisplay, self).__init__(report, case_dict)
 
-    def get_property(self, key):
-        if key in self.case:
-            return self.case[key]
-        else:
-            return EMPTY_FIELD
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], self.slug)
 
-    def get_link(self, url, field):
+    def get_link(self, url, field, doc_id):
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, html.escape(field)))
+            return html.mark_safe(u"<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
+                url, html.escape(field)))
         else:
-            return "%s (bad ID format)" % self.case["indices"][0]["referenced_id"]
+            return "%s (bad ID format)" % doc_id
+
+    def case_link(self, referenced_id, full_name):
+        url = html.escape(
+            PatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % referenced_id)
+        return self.get_link(url, full_name, referenced_id)
 
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
         try:
@@ -75,98 +57,29 @@ class PatientTaskListReportDisplay(CaseDisplay):
                                                   form_id=form_idx,
                                                   case_id=case_id) + '/enter/')
 
-    @property
-    @memoized
-    def full_name(self):
-        return CommCareCase.get(self.get_property("indices")[0]["referenced_id"])["full_name"]
-
-    @property
-    def full_name_url(self):
-        return html.escape(
-                PatientInfoReport.get_url(*[self.case["domain"]]) + "?patient_id=%s" % self.case["indices"][0]["referenced_id"])
-
-    @property
-    def full_name_link(self):
-        return self.get_link(self.full_name_url, self.full_name)
-
-    @property
-    def name(self):
-        return self.get_property("name")
-
-    @property
-    def name_url(self):
-        if self.status == "Closed":
-            url = reverse('case_details', args=[self.domain, self.get_property("_id")])
-            return url + '#!history'
+    def name_link(self, name, doc_id, is_closed):
+        if is_closed:
+            details_url = reverse('case_details', args=[self.domain, doc_id])
+            url = details_url + '#!history'
         else:
-            return self.get_form_url(self.app_dict, self.latest_build, CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, self.get_property("_id"))
+            url = self.get_form_url(self.app_dict,
+                                    self.latest_build,
+                                    CM_APP_UPDATE_VIEW_TASK_MODULE,
+                                    CM_UPDATE_TASK,
+                                    doc_id)
+        return self.get_link(url, name, doc_id)
 
-
-    @property
-    def name_link(self):
-        return self.get_link(self.name_url, self.name)
-
-    @property
-    def task_responsible(self):
-        return self.get_property("task_responsible")
-
-    @property
-    def case_filter(self):
-        filters = []
-        care_site = self.request_params.get('task_responsible', '')
-        if care_site != '':
-            filters.append({'term': {'task_responsible.#value': care_site.lower()}})
-        return {'and': filters} if filters else {}
-
-    @property
-    def status(self):
-        return self.get_property("closed") and "Closed" or "Open"
-
-    @property
-    def task_due(self):
-        rand_date = self.get_property("task_due")
-        if rand_date and rand_date != EMPTY_FIELD:
-            date = datetime.strptime(rand_date, INPUT_DATE_FORMAT)
-            return date.strftime(OUTPUT_DATE_FORMAT)
+    def task_due(self, task_due):
+        if task_due and task_due != EMPTY_FIELD:
+            return task_due.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
 
-    @property
-    def last_modified(self):
-        rand_date = self.get_property("last_updated")
-        if rand_date and rand_date != EMPTY_FIELD:
-            date = datetime.strptime(rand_date, INPUT_DATE_FORMAT)
-            return date.strftime(OUTPUT_DATE_FORMAT)
+    def last_modified(self, last_modified):
+        if last_modified and last_modified != EMPTY_FIELD:
+            return last_modified.strftime(OUTPUT_DATE_FORMAT)
         else:
             return EMPTY_FIELD
-
-    @property
-    def task_activity(self):
-        key = self.case.get("task_activity", EMPTY_FIELD)
-        return TASK_ACTIVITY.get(key, key)
-
-    @property
-    def task_risk_factor(self):
-        key = self.case.get("task_risk_factor", EMPTY_FIELD)
-        return TASK_RISK_FACTOR.get(key, key)
-
-    @property
-    def task_details(self):
-        return self.get_property("task_details")
-
-
-class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
-    ajax_pagination = True
-    name = ugettext_noop('Patient Tasks')
-    slug = 'patient_task_list'
-    default_sort = {'task_due.#value': 'asc'}
-    base_template_filters = 'succeed/report.html'
-    case_type = 'task'
-
-    fields = ['custom.succeed.fields.ResponsibleParty',
-              'custom.succeed.fields.PatientName',
-              'custom.succeed.fields.TaskStatus',
-              'corehq.apps.reports.standard.cases.filters.CaseSearchFilter']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -178,186 +91,81 @@ class PatientTaskListReport(CustomProjectReport, ElasticProjectInspectionReport,
         return self.name
 
     @property
-    @memoized
-    def case_es(self):
-        return ReportCaseES(self.domain)
-
-    @property
-    def case_filter(self):
-        filters = []
-        care_site = self.request_params.get('care_site', '')
-        if care_site != '':
-            filters.append({'term': {'care_site.#value': care_site.lower()}})
-        return {'and': filters} if filters else {}
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(
-            DataTablesColumn(_("Patient Name"), sortable=False),
-            DataTablesColumn(_("Task Name"), prop_name="name"),
-            DataTablesColumn(_("Responsible Party"), prop_name="task_responsible", sortable=False),
-            DataTablesColumn(_("Status"), prop_name='status', sortable=False),
-            DataTablesColumn(_("Action Due"), prop_name="task_due.#value"),
-            DataTablesColumn(_("Last Update"), prop_name='last_updated.#value'),
-            DataTablesColumn(_("Task Type"), prop_name="task_activity.#value"),
-            DataTablesColumn(_("Associated Risk Factor"), prop_name="task_risk_factor.#value"),
-            DataTablesColumn(_("Details"), prop_name="task_details", sortable=False),
-        )
-        return headers
-
-    @property
-    @memoized
-    def es_results(self):
-        q = { "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "filter": {
-                        "and": [
-                            {"term": { "domain.exact": "succeed" }},
-                        ]
-                    }
-                }
-            },
-            'sort': self.get_sorting_block(),
-            'from': self.pagination.start if self.pagination else None,
-            'size': self.pagination.count if self.pagination else None,
-        }
-        search_string = SearchFilter.get_value(self.request, self.domain)
-        es_filters = q["query"]["filtered"]["filter"]
-
-        responsible_party = self.request_params.get('responsible_party', '')
-        if responsible_party != '':
-            if responsible_party == 'Care Manager':
-                es_filters["and"].append({"term": {"task_responsible.#value": "cm"}})
-            else:
-                es_filters["and"].append({"term": {"task_responsible.#value": "chw"}})
-
-
-        task_status = self.request_params.get('task_status', '')
-        if task_status != '':
-            if task_status == 'closed':
-                es_filters["and"].append({"term": {"closed": True}})
-            else:
-                es_filters["and"].append({"term": {"closed": False}})
-
-        patient_id = self.request_params.get('patient_id', '')
-        if patient_id != '':
-            es_filters["and"].append({"term": {"indices.referenced_id": patient_id}})
-
-        def _filter_gen(key, flist):
-            return {"terms": {
-                key: [item.lower() for item in flist if item]
-            }}
-
+    def config(self):
+        responsible_party = self.request.GET.get('responsible_party', None)
+        patient_id = self.request.GET.get('patient_id', None)
+        task_status = self.request.GET.get('task_status')
+        if task_status == 'open':
+            task_status = '1'
+        elif task_status == 'closed':
+            task_status = '0'
+        else:
+            task_status = None
         user = self.request.couch_user
+        owner_ids = tuple()
+        user_id = None
         if not user.is_web_user():
             owner_ids = user.get_group_ids()
-            user_ids = [user._id]
-            owner_filters = _filter_gen('owner_id', owner_ids)
-            user_filters = _filter_gen('user_id', user_ids)
-            filters = filter(None, [owner_filters, user_filters])
-            subterms = []
-            subterms.append({'or': filters})
-            es_filters["and"].append({'and': subterms} if subterms else {})
-
-        if self.case_type:
-            es_filters["and"].append({"term": {"type.exact": 'task'}})
-        if search_string:
-            query_block = {"queryString": {"query": "*" + search_string + "*"}}
-            q["query"]["filtered"]["query"] = query_block
-
-        sorting_block = self.get_sorting_block()[0].keys()[0] if len(self.get_sorting_block()) != 0 else None
-        order = self.get_sorting_block()[0].values()[0] if len(self.get_sorting_block()) != 0 else None
-        if sorting_block == 'task_risk_factor.#value':
-            sort = {
-                "_script": {
-                    "script":
-                        """
-                            foreach(String key : task_risk_factor_list.keySet()) {
-                                String value = _source.task_risk_factor.get('#value');
-                                if (value == null) {
-                                    return '';
-                                } else {
-                                    return task_risk_factor_list.get(value);
-                                }
-                            }
-                            return ''
-                        """,
-                    "type": "string",
-                    "params": {
-                        "task_risk_factor_list": TASK_RISK_FACTOR
-                    },
-                    "order": order
-                }
-            }
-            q['sort'] = sort
-
-        if sorting_block == 'task_activity.#value':
-            sort = {
-                "_script": {
-                    "script":
-                        """
-                            foreach(String key : task_activity_list.keySet()) {
-                                String value = _source.task_activity.get('#value');
-                                if (value == null) {
-                                    return value;
-                                } else {
-                                    return task_activity_list.get(value);
-                                }
-                            }
-                            return ''
-                        """,
-                    "type": "string",
-                    "params": {
-                        "task_activity_list": TASK_ACTIVITY
-                    },
-                    "order": order
-                }
-            }
-            q['sort'] = sort
-
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
-
-        if self.pagination:
-            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False, start_at=self.pagination.start)
-        else:
-            return es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+            user_id = user.get_id
+        return {
+            'domain': self.domain,
+            'task_responsible': responsible_party,
+            'referenced_id': patient_id,
+            'closed': task_status,
+            'owner_ids': tuple(owner_ids),
+            'user_id': user_id,
+        }
 
     @property
-    def get_all_rows(self):
-        return self.rows
+    def filters(self):
+        filters = []
+        if self.config['task_responsible']:
+            filters.append(EQ('task_responsible', 'task_responsible'))
+        if self.config['referenced_id']:
+            filters.append(EQ('referenced_id', 'referenced_id'))
+        if self.config['closed']:
+            filters.append(EQ('closed', 'closed'))
+        or_filter = []
+        if self.config['owner_ids']:
+            or_filter.append(IN('owner_id', 'owner_ids'))
+        if or_filter:
+            or_filter.append(EQ('user_id', 'user_id'))
+            filters.append(OR(filters=or_filter))
+        return filters
+
+    @property
+    def columns(self):
+        return [
+            AggregateColumn(_('Patient Name'), aggregate_fn=self.case_link,
+                            columns=[SimpleColumn('referenced_id'), SimpleColumn('full_name')],
+                            sortable=False),
+            AggregateColumn(_('Task Name'), aggregate_fn=self.name_link,
+                            columns=[SimpleColumn('name'), SimpleColumn('doc_id'), AliasColumn('is_closed')],
+                            sortable=False),
+            DatabaseColumn(_('Responsible Party'), SimpleColumn('task_responsible'),
+                           format_fn=lambda x: x.upper(), sortable=False),
+            DatabaseColumn(_('Status'), SimpleColumn('closed', alias='is_closed'),
+                           format_fn=lambda x: 'Closed' if x == '0' else 'Open', sortable=False),
+            DatabaseColumn(_('Action Due'), SimpleColumn('task_due'),
+                           format_fn=self.task_due),
+            DatabaseColumn(_('Last Updated'), SimpleColumn('last_updated'),
+                           format_fn=self.last_modified),
+            DatabaseColumn(_('Task Type'), SimpleColumn('task_activity'),
+                           format_fn=lambda x: TASK_ACTIVITY.get(x, x)),
+            DatabaseColumn(_('Associated Risk Factor'), SimpleColumn('task_risk_factor'),
+                           format_fn=lambda x: TASK_RISK_FACTOR.get(x, x)),
+            DatabaseColumn(_('Details'), SimpleColumn('task_details'), sortable=False)
+
+        ]
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'referenced_id', 'full_name', 'is_closed', 'task_responsible',
+                'task_due', 'last_updated', 'task_activity', 'task_risk_factor',
+                'task_details', 'name']
 
     @property
     def rows(self):
-        case_displays = (PatientTaskListReportDisplay(self, restore_property_dict(self.get_case(case)))
-                         for case in self.es_results['hits'].get('hits', []))
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        return formatter.format(self.data, keys=self.keys, group_by=self.group_by)
 
-        for disp in case_displays:
-            yield [
-                disp.full_name_link,
-                disp.name_link,
-                disp.task_responsible,
-                disp.status,
-                disp.task_due,
-                disp.last_modified,
-                disp.task_activity,
-                disp.task_risk_factor,
-                disp.task_details
-            ]
-
-    @property
-    def user_filter(self):
-        return super(PatientTaskListReport, self).user_filter
-
-    def get_case(self, row):
-        if '_source' in row:
-            case_dict = row['_source']
-        else:
-            raise ValueError("Case object is not in search result %s" % row)
-
-        if case_dict['domain'] != self.domain:
-            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain))
-
-        return case_dict

@@ -55,7 +55,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
@@ -235,11 +235,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     def can_bulk_edit_users(self):
         if not user_can_edit_any_location(self.request.couch_user, self.request.project):
             return False
-        try:
-            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
 
     @property
     def can_add_extra_users(self):

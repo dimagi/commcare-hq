@@ -38,22 +38,9 @@
         }
 
         var checkFilterAccordionToggleState = function () {
-            var _setShowFilterCookie = function (show) {
-                var showStr = show ? 'in' : '';
-                $.cookie(standardHQReport.toggleFiltersCookie, showStr, {path: standardHQReport.urlRoot, expires: 1});
-            };
+            $(standardHQReport.filterAccordion).addClass('in');
+            $(standardHQReport.toggleFiltersButton).button('close');
 
-            if ($.cookie(standardHQReport.toggleFiltersCookie) === null) {
-                // default to showing filters
-                _setShowFilterCookie(true);
-            }
-            $(standardHQReport.filterAccordion).addClass($.cookie(standardHQReport.toggleFiltersCookie));
-
-            if ($.cookie(standardHQReport.toggleFiltersCookie) == 'in') {
-                $(standardHQReport.toggleFiltersButton).button('close');
-            } else {
-                $(standardHQReport.toggleFiltersButton).button('open');
-            }
 
             $(standardHQReport.filterAccordion).on('hidden', function (data) {
                 if (!(data.target && $(data.target).hasClass('modal'))) {
@@ -66,7 +53,6 @@
                 _setShowFilterCookie(true);
                 $(standardHQReport.toggleFiltersButton).button('close');
             });
-
         };
 
         var standardHQReport = new HQReport({
@@ -108,6 +94,21 @@
             standardReport: standardHQReport
         });
         asyncHQReport.init();
+        var defaultConfig = {{ default_config|JSON }};
+        {% if report.has_datespan %}
+            defaultConfig.date_range = 'last7';
+        {% else %}
+            defaultConfig.date_range = null;
+        {% endif %}
+        defaultConfig.has_ucr_datespan = false;
+        defaultConfig.datespan_filters = [];
+        defaultConfig.datespan_slug = null;
+        $("#savedReports").reportConfigEditor({
+            filterForm: $("#reportFilters"),
+            items: {{ report_configs|JSON }},
+            defaultItem: defaultConfig,
+            saveUrl: '{% url "add_report_config" domain %}'
+        });
 
     </script>
 {% endblock %}

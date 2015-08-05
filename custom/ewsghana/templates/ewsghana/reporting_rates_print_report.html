@@ -20,10 +20,22 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function() {
-            setTimeout(function() {
-                $('.hq-loading').hide();
-                window.print();
-            }, 2000);
+            if (!document.hidden) {
+                setTimeout(function() {
+                    $('.hq-loading').hide();
+                    window.print();
+                }, 4000);
+            } else {
+                $(document).one('visibilitychange', function() {
+                    if (!document.hidden) {
+                        setTimeout(function() {
+                            $('.hq-loading').hide();
+                            window.print();
+                        }, 4000);
+                    }
+                });
+            }
+
         });
     </script>
 {% endblock %}
@@ -46,6 +58,22 @@
 
         tr {
             display: table-row !important;
+        }
+
+        button {
+            display: none !important;
+        }
+        .report:nth-of-type(1), .report:nth-of-type(2) {
+            float: left;
+            width: 50%;
+        }
+
+        .report:nth-of-type(2) .row {
+            page-break-after: always;
+        }
+
+        #report_table_summary_reporting {
+            page-break-after: always;
         }
     </style>
 {{ block.super }}

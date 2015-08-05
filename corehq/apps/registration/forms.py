@@ -14,6 +14,11 @@ from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.utils.functional import lazy
+import six
+mark_safe_lazy = lazy(mark_safe, six.text_type)
+
 
 class DomainRegistrationForm(forms.Form):
     """
@@ -58,7 +63,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
-                                        help_text=mark_safe(_(
+                                        help_text=mark_safe_lazy(_(
                                             """I have read and agree to the
                                                <a data-toggle='modal'
                                                   data-target='#eulaModal'

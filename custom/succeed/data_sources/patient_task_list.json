@@ -1,0 +1,151 @@
+{
+    "domains": ["succeed"],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "table_id": "patient_task_list",
+        "display_name": "Patient Tasks List",
+         "configured_filter":  {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "property_value": "task"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "referenced_id",
+                "type": "expression",
+                "expression": {
+                    "type": "succeed_referenced_id"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "full_name",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "doc_id_expression": {
+                        "type": "succeed_referenced_id"
+                    },
+                    "related_doc_type": "CommCareCase",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "full_name",
+                        "type": "property_name"
+                    }
+                }
+            },
+            {
+                "column_id": "name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "task_responsible",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "task_responsible"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "closed",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "expression_if_false" : {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_true" : {
+                        "type": "constant",
+                        "constant": 0
+                    },
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "closed",
+                            "datatype": "string"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "true"
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "task_due",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "task_due"
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "task_activity",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "task_activity"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "task_risk_factor",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "task_risk_factor"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "task_details",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "task_details"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "last_updated",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "last_updated"
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "user_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "user_id"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "owner_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                },
+                "datatype": "string"
+            }
+        ]
+    }
+}

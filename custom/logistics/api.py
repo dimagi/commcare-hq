@@ -5,7 +5,6 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
-from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
@@ -184,6 +183,7 @@ class APISynchronization(object):
             need_save = False
             for custom_field in custom_fields:
                 name = custom_field.get('name')
+                label = custom_field.get('label')
                 choices = custom_field.get('choices') or []
                 existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
                 if not existing_fields:
@@ -191,9 +191,10 @@ class APISynchronization(object):
                     fields_definitions.fields.append(
                         CustomDataField(
                             slug=name,
-                            label=name,
+                            label=label or name,
                             is_required=False,
-                            choices=choices
+                            choices=choices,
+                            is_multiple_choice=custom_field.get('is_multiple_choice', False)
                         )
                     )
                 else:
@@ -207,6 +208,7 @@ class APISynchronization(object):
 
     @memoized
     def _get_logistics_domains(self):
+        from custom.ewsghana.models import EWSGhanaConfig
         return ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
 
     def set_default_backend(self):

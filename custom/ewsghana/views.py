@@ -15,21 +15,20 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from custom.common import ALL_OPTION
 from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
     urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm
-from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
 from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
     third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    delete_last_migrated_stock_data
+    delete_last_migrated_stock_data, convert_user_data_fields_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -266,6 +265,11 @@ def delete_last_stock_data(request, domain):
     return HttpResponse('OK')
 
 
+def convert_user_data_fields(request, domain):
+    convert_user_data_fields_task.delay(domain)
+    return HttpResponse('OK')
+
+
 @require_GET
 def inventory_management(request, domain):
 
@@ -304,10 +308,8 @@ def stockouts_product(request, domain):
 def configure_in_charge(request, domain):
     in_charge_ids = request.POST.getlist('users[]')
     location_id = request.POST.get('location_id')
-    all_users = get_users_by_location_id(location_id)
-
-    for u in all_users:
-        if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):
-            u.user_data['role'] = 'In Charge' if u._id in in_charge_ids else 'Other'
-            u.save()
+    location = SQLLocation.objects.get(location_id=location_id)
+    for user_id in in_charge_ids:
+        FacilityInCharge.objects.get_or_create(user_id=user_id, location=location)
+    FacilityInCharge.objects.filter(location=location).exclude(user_id__in=in_charge_ids).delete()
     return HttpResponse('OK')

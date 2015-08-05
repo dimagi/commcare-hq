@@ -250,7 +250,7 @@
                             ng-model="currentPage"
                             ng-change="pageChanged()"></pagination>
 
-                {% if domain_object.locations_enabled and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
+                {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
                     <div class="checkbox">
                         <label>
                             <input type="checkbox"

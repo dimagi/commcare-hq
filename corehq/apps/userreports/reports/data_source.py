@@ -1,3 +1,4 @@
+import datetime
 from django.utils.datastructures import SortedDict
 from sqlagg import (
     ColumnNotFoundException,
@@ -7,8 +8,9 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-)
+    SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.reports.sorting import get_default_sort_value
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
@@ -120,9 +122,47 @@ class ConfigurableReportDataSource(SqlData):
             # If a sort order is specified, sort by it.
             if self._order_by:
                 for col in reversed(self._order_by):
+                    sort_column_id, order = col
+                    is_descending = order == DESCENDING
+                    try:
+                        matching_report_column = self._column_configs[sort_column_id]
+                    except KeyError:
+                        raise SortConfigurationError('Sort column {} not found in report!'.format(sort_column_id))
+
+                    def get_datatype(report_column):
+                        """
+                        Given a report column, get the data type by trying to pull it out
+                        from the data source config of the db column it points at. Defaults to "string"
+                        """
+                        try:
+                            field = report_column.field
+                        except AttributeError:
+                            # if the report column doesn't have a field object, default to string.
+                            # necessary for percent columns
+                            return 'string'
+
+                        matching_indicators = filter(
+                            lambda configured_indicator: configured_indicator['column_id'] == field,
+                            self.config.configured_indicators
+                        )
+                        if not len(matching_indicators) == 1:
+                            raise SortConfigurationError(
+                                'Number of indicators matching column %(col)s is %(num_matching)d' % {
+                                    'col': col[0],
+                                    'num_matching': len(matching_indicators),
+                                }
+                            )
+                        return matching_indicators[0]['datatype']
+
+                    datatype = get_datatype(matching_report_column)
+
+                    def sort_by(row):
+                        value = row.get(sort_column_id, None)
+                        return value or get_default_sort_value(datatype)
+
                     ret.sort(
-                        key=lambda x: x.get(col[0], None),
-                        reverse=col[1] == DESCENDING
+                        key=sort_by,
+                        reverse=is_descending
                     )
                 return ret
             # Otherwise sort by the first column
@@ -131,7 +171,7 @@ class ConfigurableReportDataSource(SqlData):
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
-        except TypeError:
+        except (SortConfigurationError, TypeError):
             # if the first column isn't sortable just return the data in the order we got it
             return ret
 

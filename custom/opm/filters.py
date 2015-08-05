@@ -1,54 +1,13 @@
 from custom.common import ALL_OPTION
 
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.columns import SimpleColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-
-
-class HierarchySqlData(SqlData):
-    table_name = "fluff_OPMHierarchyFluff"
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def group_by(self):
-        return ['block', 'gp', 'awc']
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('Block', SimpleColumn('block')),
-            DatabaseColumn('Gram Panchayat', SimpleColumn('gp')),
-            DatabaseColumn('AWC', SimpleColumn('awc'))
-        ]
-
-
-def get_hierarchy():
-    """
-    Creates a location hierarchy structured as follows:
-    hierarchy = {"Atri": {
-                    "Sahora": {
-                        "Sohran Bigha": None}}}
-    """
-    hierarchy = {}
-    for location in HierarchySqlData().get_data():
-        block = location['block']
-        gp = location['gp']
-        awc = location['awc']
-        if not (awc and gp and block):
-            continue
-        hierarchy[block] = hierarchy.get(block, {})
-        hierarchy[block][gp] = hierarchy[block].get(gp, {})
-        hierarchy[block][gp][awc] = None
-    return hierarchy
+from .utils import UserSqlData
 
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
@@ -92,7 +51,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(get_hierarchy())
+        return make_drilldown(UserSqlData().data_as_hierarchy())
 
     @classmethod
     def get_labels(cls):

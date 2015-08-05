@@ -102,7 +102,7 @@ class CaseAPIHelper(object):
     Simple config object for querying the APIs
     """
     def __init__(self, domain, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
-                 footprint=False, strip_history=False, filters=None, include_children=False):
+                 footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
         self.domain = domain
@@ -113,7 +113,6 @@ class CaseAPIHelper(object):
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
-        self.include_children = include_children
 
     def _case_results(self, case_id_list):
         def _filter(res):
@@ -129,7 +128,7 @@ class CaseAPIHelper(object):
                             return False
                 return True
 
-        if not self.ids_only or self.filters or self.footprint or self.include_children:
+        if not self.ids_only or self.filters or self.footprint:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
             base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
@@ -141,7 +140,7 @@ class CaseAPIHelper(object):
         if self.filters and not self.footprint:
             base_results = filter(_filter, base_results)
 
-        if not self.footprint and not self.include_children:
+        if not self.footprint:
             return base_results
 
         case_list = [res.couch_doc for res in base_results]
@@ -150,14 +149,6 @@ class CaseAPIHelper(object):
                             case_list,
                             self.domain,
                             strip_history=self.strip_history,
-                        ).values()
-
-        if self.include_children:
-            case_list = get_related_cases(
-                            case_list,
-                            self.domain,
-                            strip_history=self.strip_history,
-                            search_up=False,
                         ).values()
 
         return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in case_list]
@@ -214,13 +205,13 @@ class CaseAPIHelper(object):
 
 def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
-                       strip_history=True, include_children=False):
+                       strip_history=True):
 
     # a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
-                           filters=filters, include_children=include_children)
+                           filters=filters)
     if user_id:
         return helper.get_owned(user_id)
     else:
@@ -352,7 +343,7 @@ def get_filters_from_request(request, limit_top_level=None):
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
     for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only', 'include_children', 'use_cache']:
+                            'ids_only', 'use_cache']:
         if system_property in filters:
             del filters[system_property]
     return filters

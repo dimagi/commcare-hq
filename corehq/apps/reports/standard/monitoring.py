@@ -17,6 +17,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
@@ -766,8 +767,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     @property
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_("User")),
-            DataTablesColumn(_("Completion Time")),
-            DataTablesColumn(_("Submission Time")),
+            DataTablesColumn(_("Completion Time"), sort_type=DTSortType.DATE),
+            DataTablesColumn(_("Submission Time"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Form Name")),
             DataTablesColumn(_("View"), sortable=False),
             DataTablesColumn(_("Difference"), sort_type=DTSortType.NUMERIC)
@@ -831,8 +832,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         """
 
         return self.table_cell(
-            date,
-            ServerTime(date).user_time(self.timezone).ui_string()
+            ServerTime(date).user_time(self.timezone).ui_string(fmt=SERVER_DATETIME_FORMAT),
+            ServerTime(date).user_time(self.timezone).ui_string(),
         )
 
     def _format_td_status(self, td, use_label=True):

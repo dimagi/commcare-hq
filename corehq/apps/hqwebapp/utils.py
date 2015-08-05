@@ -1,9 +1,7 @@
-from datetime import datetime
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from dateutil.relativedelta import relativedelta
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
@@ -33,8 +31,8 @@ def send_confirmation_email(invitation):
                                     context)
     text_content = render_to_string('domain/email/invite_confirmation.txt',
                                     context)
-    send_HTML_email(subject, recipient, html_content,
-                    text_content=text_content)
+    send_html_email_async.delay(subject, recipient, html_content,
+                                text_content=text_content)
 
 
 class InvitationView():
@@ -106,7 +104,7 @@ class InvitationView():
 
         self.validate_invitation(invitation)
 
-        if invitation.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()  and isinstance(invitation, DomainInvitation):
+        if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():

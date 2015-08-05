@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -30,7 +30,6 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re
-import settings
 
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
@@ -56,7 +55,7 @@ class LanguageField(forms.CharField):
         self.max_length = 3
 
     default_error_messages = {
-        'invalid': _(u'Please enter a valid two or three digit language code.'),
+        'invalid': ugettext_lazy(u'Please enter a valid two or three digit language code.'),
     }
     default_validators = [wrapped_language_validation]
 
@@ -168,7 +167,7 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     email_opt_out = forms.BooleanField(
         required=False,
-        label=ugettext_noop("Opt out of emails about CommCare updates."),
+        label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
     def __init__(self, *args, **kwargs):
@@ -237,7 +236,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
         required=False, min_value=1, max_value=50000,
-        help_text=_(u"Multiply this user's case load by a number for load testing on phones. "
+        help_text=ugettext_lazy(u"Multiply this user's case load by a number for load testing on phones. "
                     u"Leave blank for normal users."),
         widget=forms.HiddenInput())
 
@@ -367,9 +366,10 @@ class CommCareAccountForm(forms.Form):
 import django
 if django.VERSION < (1, 6):
     from django.core.validators import email_re
-    validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+    validate_username = EmailValidator(email_re,
+            ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
 else:
-    validate_username = EmailValidator(message=_(u'Username contains invalid characters.'))
+    validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
 class MultipleSelectionForm(forms.Form):

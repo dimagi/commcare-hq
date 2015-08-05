@@ -25,7 +25,7 @@ class MessageInitiatior(KeywordHandler):
             return None
 
     def send_message(self, sql_location, message, **kwargs):
-        for user in get_users_by_location_id(sql_location.location_id):
+        for user in get_users_by_location_id(self.domain, sql_location.location_id):
             send_sms_to_verified_number(user.get_verified_number(), message % kwargs)
 
     def handle(self):

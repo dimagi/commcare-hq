@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq import Domain
@@ -72,7 +73,9 @@ class EWSData(object):
 
     @property
     def location_id(self):
-        return self.config.get('location_id')
+        return self.config.get('location_id') or get_object_or_404(
+            SQLLocation, domain=self.domain, location_type__name='country'
+        ).location_id
 
     @property
     @memoized
@@ -155,6 +158,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
     is_rendered_as_email = False
+    is_rendered_as_print = False
 
     @property
     @memoized
@@ -162,6 +166,8 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         loc_id = self.request_params.get('location_id')
         if loc_id:
             return SQLLocation.objects.get(location_id=loc_id)
+        else:
+            return get_object_or_404(SQLLocation, location_type__name='country', domain=self.domain)
 
     @property
     @memoized
@@ -214,10 +220,20 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
-            url = '%s?location_id=%s&filter_by_program=%s' % (
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
+                    location = location.parent
+                loc_id = location.location_id
+
+            start_date, end_date = EWSDateFilter.last_reporting_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
-                dm.location_id if dm.location_id else '',
-                program_id if program_id else ''
+                loc_id,
+                program_id if program_id else '',
+                start_date.strftime('%Y-%m-%d'),
+                end_date.strftime('%Y-%m-%d')
             )
 
         return url

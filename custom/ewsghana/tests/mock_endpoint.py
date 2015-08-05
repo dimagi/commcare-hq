@@ -1,6 +1,6 @@
 import json
 import os
-from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.api import GhanaEndpoint, SMSUser
 
 
 class MockEndpoint(GhanaEndpoint):
@@ -54,3 +54,9 @@ class MockEndpoint(GhanaEndpoint):
             return objects[7]
         elif id == 900:
             return objects[8]
+
+    def get_smsuser(self, user_id, **kwargs):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            objects = json.loads(f.read())
+            if user_id == 2342:
+                return SMSUser(objects[0])

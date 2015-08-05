@@ -15,7 +15,6 @@ $(function() {
         changeYear: true,
         showButtonPanel: true,
         dateFormat: 'yy-mm-dd',
-        maxDate: '0',
         numberOfMonths: 2
         /*onClose: function(dateText, inst) {
             var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();

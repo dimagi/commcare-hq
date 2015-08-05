@@ -1,17 +1,23 @@
 from datetime import datetime
+from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
+from celery.utils.log import get_task_logger
+from couchdbkit import ResourceConflict
 from corehq.util.log import SensitiveErrorMail
-import settings
+from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from django.core.cache import cache
-import uuid
-from soil import CachedDownload, DownloadBase
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
+from dimagi.utils.logging import notify_exception
+from soil import DownloadBase
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.models import XFormInstance
+
+logger = get_task_logger(__name__)
+
 
 @task(ErrorMail=SensitiveErrorMail)
 def bulk_upload_async(domain, user_specs, group_specs, location_specs):
@@ -38,21 +44,53 @@ def tag_docs_as_deleted(cls, docs, deletion_id):
     cls.get_db().bulk_save(docs)
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True)  # 2 saves/sec for cloudant slowness
-def tag_forms_as_deleted_rebuild_associated_cases(formlist, deletion_id, deleted_cases=None):
-    from casexml.apps.case.cleanup import rebuild_case
+@task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
+def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
+                                                  deleted_cases=None):
+    """
+    Upon user deletion, mark associated forms as deleted and prep cases
+    for a rebuild.
+    - 2 saves/sec for cloudant slowness (rate_limit)
+    """
     if deleted_cases is None:
         deleted_cases = set()
 
     cases_to_rebuild = set()
-    for form in formlist:
-        form['doc_type'] += DELETED_SUFFIX
-        form['-deletion_id'] = deletion_id
-        cases_to_rebuild.update(get_case_ids_from_form(form))
-    XFormInstance.get_db().bulk_save(formlist)
+    forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
+    forms_to_save = []
+    for form in forms_to_check:
+        if not is_deleted(form):
+            form['doc_type'] += DELETED_SUFFIX
+            form['-deletion_id'] = deletion_id
+            forms_to_save.append(form)
 
+        # rebuild all cases anyways since we don't know if this has run or not if the task was killed
+        cases_to_rebuild.update(get_case_ids_from_form(form))
+
+    XFormInstance.get_db().bulk_save(forms_to_save)
     for case in cases_to_rebuild - deleted_cases:
-        rebuild_case(case)
+        _rebuild_case_with_retries.delay(case)
+
+
+@task(bind=True, queue='background_queue', ignore_result=True,
+      default_retry_delay=5 * 60, max_retries=3, acks_late=True)
+def _rebuild_case_with_retries(self, case_id):
+    """
+    Rebuild a case with retries
+    - retry in 5 min if failure occurs after (default_retry_delay)
+    - retry a total of 3 times
+    """
+    from casexml.apps.case.cleanup import rebuild_case
+    try:
+        rebuild_case(case_id)
+    except (UnexpectedDeletedXForm, ResourceConflict) as exc:
+        try:
+            self.retry(exc=exc)
+        except MaxRetriesExceededError:
+            notify_exception(
+                "Maximum Retries Exceeded while rebuilding case {} during deletion.".format(case_id)
+            )
+
 
 @periodic_task(
     run_every=crontab(hour=23, minute=55),

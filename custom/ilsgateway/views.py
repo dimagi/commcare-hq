@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import DeleteView
@@ -153,7 +154,11 @@ class SupervisionDocumentListView(BaseDomainView):
     def _ils_make_url(self, cls):
         params = '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s'
         return make_url(cls, self.domain, params, (
-            self.request.GET.get('location_id', ''),
+            self.request.GET.get(
+                'location_id', get_object_or_404(
+                    SQLLocation, domain=self.domain, location_type__name='MOHSW'
+                ).location_id
+            ),
             self.request.GET.get('filter_by_program', ''),
             self.request.GET.get('datespan_type', ''),
             self.request.GET.get('datespan_first', ''),

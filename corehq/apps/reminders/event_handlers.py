@@ -1,6 +1,7 @@
-from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
-    METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    CaseReminderHandler)
+from corehq.apps.reminders.models import (Message, METHOD_SMS,
+    METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
+    METHOD_EMAIL, CaseReminderHandler)
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
@@ -416,15 +417,56 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
                 logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
 
 
-# The dictionary which maps an event type to its event handling method
+def fire_email_event(reminder, handler, recipients, verified_numbers, logged_event):
+    current_event = reminder.current_event
+    case = reminder.case
+    template_params = get_message_template_params(case)
 
+    uses_custom_content_handler, content_handler = get_custom_content_handler(handler, logged_event)
+    if uses_custom_content_handler and not content_handler:
+        return
+
+    for recipient in recipients:
+        logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
+
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
+
+        if content_handler:
+            subject, message = content_handler(reminder, handler, recipient)
+        else:
+            subject = current_event.subject.get(lang, current_event.subject[handler.default_lang])
+            message = current_event.message.get(lang, current_event.message[handler.default_lang])
+            try:
+                subject = Message.render(subject, **template_params)
+                message = Message.render(message, **template_params)
+            except Exception:
+                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+                continue
+
+        subject = subject or '(No Subject)'
+        if message:
+            try:
+                email_address = recipient.get_email()
+            except:
+                email_address = None
+
+            if email_address:
+                send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+            else:
+                logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+                continue
+
+        logged_subevent.completed()
+
+
+# The dictionary which maps an event type to its event handling method
 EVENT_HANDLER_MAP = {
     METHOD_SMS: fire_sms_event,
     METHOD_SMS_CALLBACK: fire_sms_callback_event,
     METHOD_SMS_SURVEY: fire_sms_survey_event,
     METHOD_IVR_SURVEY: fire_ivr_survey_event,
-    # METHOD_EMAIL is a placeholder at the moment; it's not implemented yet anywhere in the framework
+    METHOD_EMAIL: fire_email_event,
 }
-
-
-

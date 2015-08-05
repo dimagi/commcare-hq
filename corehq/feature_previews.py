@@ -17,13 +17,9 @@ class FeaturePreview(StaticToggle):
 
     e.g.
 
-    if feature_previews.BETA_FEATURE.enabled(domain):
-        try:
-            ensure_request_has_privilege(request, privileges.BETA_FEATURE)
-        except PermissionDenied:
-            pass
-        else:
-            # do cool thing for BETA_FEATURE
+    if feature_previews.BETA_FEATURE.enabled(domain) \
+            and has_privilege(request, privileges.BETA_FEATURE):
+        # do cool thing for BETA_FEATURE
     """
     def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
         self.privilege = privilege

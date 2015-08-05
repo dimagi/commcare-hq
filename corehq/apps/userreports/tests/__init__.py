@@ -1,6 +1,7 @@
 from .test_app_manager_integration import *
 from .test_columns import *
 from .test_custom_data_sources import *
+from .test_custom_reports import *
 from .test_export import *
 from .test_expressions import *
 from .test_filters import *
@@ -14,6 +15,7 @@ from .test_report_builder import *
 from .test_report_charts import *
 from .test_report_config import *
 from .test_report_filters import *
+from .test_sorting import *
 from .test_transforms import *
 from .test_utils import *
 from .test_view import *

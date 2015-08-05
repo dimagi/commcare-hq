@@ -69,7 +69,6 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
-        var renderXmlRoot = "{% url "cloudcare_render_xml" domain %}";
         var renderFormRoot = "{% url "cloudcare_render_form" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
@@ -94,7 +93,6 @@
             initialCase: initialCase,
             initialParent: initialParent,
             sessionsEnabled: sessionsEnabled,
-            renderXmlRoot: renderXmlRoot,
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled
         });

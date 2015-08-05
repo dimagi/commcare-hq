@@ -12,6 +12,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
+from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
     CaseExportInterface,
@@ -240,6 +241,7 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
             raise ExportNotFound()
         self.export_type = saved_export.type
         saved_export.delete()
+        touch_exports(self.domain)
         messages.success(request, _("Custom export was deleted."))
 
 

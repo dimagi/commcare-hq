@@ -51,16 +51,19 @@ branches:
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - template-apps # Jenny, July 20
-  - extra-permissions-checks  # Ethan 7/20
+  - FormArchive # Sravan 7/22
+  # - due-list+icds/scheduler # TS 7/30
+  # - icds/scheduler # Farid 7/22
+  - ckeditor # J$ 7/24
+  - notify-exception-code-context  # Ben 7/30
+  - due-list # TS 7/30
+  - fixture-locations  # Ethan 8/3
+  - hide-report-locations  # Ethan 8/4
 submodules:
-  corehq/apps/prelogin:
-    branches: []
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - threadlocks  # cz 7/21
-      - django17
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -68,8 +71,11 @@ submodules:
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
-    branches:
-      - django17
+    branches: []
   submodules/pillowtop-src:
-    branches:
-      - django17
+    branches: []
+  submodules/django-soil-src:
+    branches: []
+  submodules/django-prbac-src:
+    branches: []
+

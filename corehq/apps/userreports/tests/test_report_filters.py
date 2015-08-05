@@ -6,7 +6,7 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER
+    CHOICE_DELIMITER, NumericFilterValue
 from corehq.apps.userreports.reports.specs import ReportFilter
 
 
@@ -121,6 +121,18 @@ class NumericFilterTestCase(SimpleTestCase):
         self.assertEqual(NumericFilter, type(filter))
         self.assertEqual("number_of_children_slug", filter.name)
         self.assertEqual("Number of Children", filter.label)
+
+    def test_numeric_filter_value(self):
+        filter = ReportFilter.wrap({
+            "type": "numeric",
+            "field": "number_of_children_field",
+            "slug": "number_of_children_slug",
+            "display": "Number of Children",
+        })
+        NumericFilterValue(filter, None)
+        NumericFilterValue(filter, {'operator': '<', 'operand': 3})
+        with self.assertRaises(AssertionError):
+            NumericFilterValue(filter, {'operator': 'sql injection', 'operand': 3})
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):

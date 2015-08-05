@@ -90,6 +90,7 @@ class Command(BaseCommand):
             grantee = Role.objects.get(slug=grantee_slug)
             priv = Role.objects.get(slug=priv_slug)
 
+            Role.get_cache().clear()
             if grantee.has_privilege(priv):
                 if self.verbose:
                     logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
@@ -139,6 +140,9 @@ class Command(BaseCommand):
         Role(slug=privileges.COMMCARE_LOGO_UPLOADER, name='Custom CommCare Logo Uploader', description=''),
         Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
+        Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
+        Role(slug=privileges.DATA_CLEANUP, name='Data Cleanup Tools',
+             description='Tools for cleaning up data, including editing submissions and archiving forms.'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -164,6 +168,7 @@ class Command(BaseCommand):
         privileges.BULK_CASE_MANAGEMENT,
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
+        privileges.USER_CASE,
     ]
 
     pro_plan_features = standard_plan_features + [
@@ -173,6 +178,7 @@ class Command(BaseCommand):
         privileges.HIPAA_COMPLIANCE_ASSURANCE,
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
+        privileges.DATA_CLEANUP,
     ]
 
     advanced_plan_features = pro_plan_features + [

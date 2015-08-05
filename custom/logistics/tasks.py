@@ -67,7 +67,7 @@ def stock_data_task(api_object):
             )
 
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
-    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
+    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, checkpoint.start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
 

@@ -10,8 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.logging import notify_exception
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 
 import corehq.apps.style.utils as style_utils
@@ -25,7 +24,14 @@ def JSON(obj):
     # json.dumps does not properly convert QueryDict array parameter to json
     if isinstance(obj, QueryDict):
         obj = dict(obj)
-    return mark_safe(json.dumps(obj, default=json_handler))
+    try:
+        return mark_safe(json.dumps(obj, default=json_handler))
+    except TypeError as e:
+        msg = ("Unserializable data was sent to the `|JSON` template tag.  "
+               "If DEBUG is off, Django will silently swallow this error.  "
+               "{}".format(e.message))
+        soft_assert(notify_admins=True)(False, msg)
+        raise e
 
 
 @register.filter
@@ -132,19 +138,7 @@ def domains_for_user(context, request, selected_domain=None):
     """
     domain_list = []
     if selected_domain != 'public':
-        cached_domains = cache_core.get_cached_prop(request.couch_user.get_id, 'domain_list')
-        if cached_domains:
-            domain_list = [Domain.wrap(x) for x in cached_domains]
-        else:
-            try:
-                domain_list = Domain.active_for_user(request.couch_user)
-                cache_core.cache_doc_prop(request.couch_user.get_id, 'domain_list', [x.to_json() for x in domain_list])
-            except Exception:
-                if settings.DEBUG:
-                    raise
-                else:
-                    domain_list = Domain.active_for_user(request.user)
-                    notify_exception(request)
+        domain_list = Domain.active_for_user(request.couch_user)
     domain_list = [dict(
         url=reverse('domain_homepage', args=[d.name]),
         name=d.long_display_name()

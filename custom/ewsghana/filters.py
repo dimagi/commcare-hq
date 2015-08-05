@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -234,12 +234,16 @@ class EWSDateFilter(BaseReportFilter):
 
         ]
 
-    @property
-    def default_week(self):
+    @staticmethod
+    def last_reporting_period():
         now = datetime.utcnow()
         date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
-        return '{0}|{1}'.format((date - relativedelta(days=7)).strftime("%Y-%m-%d"), date.strftime("%Y-%m-%d"))
+        return date - relativedelta(days=7), date
 
+    @property
+    def default_week(self):
+        start_date, end_date = self.last_reporting_period()
+        return '{0}|{1}'.format(start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
     @property
     def filter_context(self):
@@ -249,3 +253,18 @@ class EWSDateFilter(BaseReportFilter):
             selected_first=self.selected('first') if self.selected('first') else self.default_week,
             selected_second=self.selected('second') if self.selected('second') else ''
         )
+
+
+class LocationTypeFilter(BaseMultipleOptionFilter):
+    slug = 'loc_type'
+    label = "Location Type"
+    placeholder = 'Click to select location type'
+
+    @property
+    def options(self):
+        return [
+            (unicode(loc_type.pk), loc_type.name) for loc_type in
+            LocationType.objects.filter(
+                domain=self.domain, administrative=False
+            )
+        ]

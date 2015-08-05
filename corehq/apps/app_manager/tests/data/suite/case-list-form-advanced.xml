@@ -124,12 +124,12 @@
         <datum id="case_id_new_dugong_0" function="uuid()"/>
     </session>
     <stack>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) &gt; 0">
-            <command value="instance('commcaresession')/session/data/return_to"/>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm1' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) &gt; 0">
+            <command value="'m1'"/>
             <datum id="case_id_load_dugong" value="instance('commcaresession')/session/data/case_id_new_dugong_0"/>
         </create>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) = 0">
-            <command value="instance('commcaresession')/session/data/return_to"/>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm1' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) = 0">
+            <command value="'m1'"/>
         </create>
     </stack>
   </entry>
