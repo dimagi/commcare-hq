@@ -4514,13 +4514,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return meta
 
-    def get_subcase_types_of_module(self, module):
+    def get_subcase_types(self, case_type):
         """
-        Return the subcase types defined across an app for the case type of a module
+        Return the subcase types defined across an app for the given case type
         """
-        return {i for m in self.get_modules()
-                if m.case_type == module.case_type
-                for i in m.get_subcase_types()}
+        return {t for m in self.get_modules()
+                if m.case_type == case_type
+                for t in m.get_subcase_types()}
 
 
 class RemoteApp(ApplicationBase):

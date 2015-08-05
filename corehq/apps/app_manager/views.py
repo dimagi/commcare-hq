@@ -793,7 +793,7 @@ def get_module_view_context_and_template(app, module):
     if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
-    subcase_types = list(app.get_subcase_types_of_module(module))
+    subcase_types = list(app.get_subcase_types(module.case_type))
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
     def get_parent_modules(case_type_):
