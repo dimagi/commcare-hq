@@ -480,7 +480,8 @@ class DemoMapReport(GenericMapReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and toggles.DEMO_REPORTS.enabled(user.username) or domain and toggles.DEMO_REPORTS.enabled(domain)
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 class DemoMapReport2(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
@@ -561,7 +562,8 @@ class DemoMapReport2(GenericMapReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and toggles.DEMO_REPORTS.enabled(user.username) or domain and toggles.DEMO_REPORTS.enabled(domain)
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 class GenericCaseListMap(GenericMapReport):
     fields = CaseListMixin.fields
@@ -638,7 +640,8 @@ class DemoMapCaseList(GenericCaseListMap):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and toggles.DEMO_REPORTS.enabled(user.username) or domain and toggles.DEMO_REPORTS.enabled(domain)
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 """
 metrics:
