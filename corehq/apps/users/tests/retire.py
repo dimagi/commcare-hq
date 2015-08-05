@@ -46,7 +46,7 @@ class RetireUserTestCase(TestCase):
         child, parent = factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             relationships=[
-                 CaseRelationship(CaseStructure(case_id=parent_id))
+                CaseRelationship(CaseStructure(case_id=parent_id))
             ]
         ))
         # confirm the child has an index, and 1 form
