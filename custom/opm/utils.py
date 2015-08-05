@@ -29,6 +29,7 @@ def _safeint(value):
         return 0
 
 
+@memoized
 class UserSqlData(SqlData):
     table_name = "fluff_OpmUserFluff"
     group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
@@ -87,9 +88,6 @@ class UserSqlData(SqlData):
         return {user['doc_id']: (user['awc_code'], user['gp']) for user in self.get_data()}
 
 
-USER_DATA = UserSqlData()
-
-
 def get_matching_users(awcs=None, gps=None, blocks=None):
     """
     Accepts a list of one or more of `awcs`, `gps`, and `blocks`,
@@ -105,7 +103,7 @@ def get_matching_users(awcs=None, gps=None, blocks=None):
         raise TypeError("You must pass at least one of awc, gp, or block")
     key, selected = non_null[0]  # get most specific selection
     return [
-        user for user in USER_DATA.transformed_data()
+        user for user in UserSqlData().transformed_data()
         if user[key] in selected
     ]
 
