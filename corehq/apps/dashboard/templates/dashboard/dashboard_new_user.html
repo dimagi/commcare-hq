@@ -16,15 +16,7 @@
 {% endblock uncompressed-js %}
 
 {% block dashboard-content %}
-<div class="page-header">
-    <h1>
-        {% if project.commtrack_enabled %}
-            {% trans 'Welcome to CommCare Supply' %}
-        {% else %}
-            {% trans 'Welcome to CommCare HQ' %}
-        {% endif %}
-         <small>{% trans 'What type of app would you like to build?' %}</small></h1>
-</div>
+<br>
 <div class="row">
     {% for template in templates %}
         <div class="col-md-4">
