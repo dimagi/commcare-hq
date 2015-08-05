@@ -93,10 +93,10 @@ var ReportModule = (function () {
         var self = this;
 
         this.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
-        _.each(this.reportFilters, function(filtersInReport, _id) {
+        _.each(this.reportFilters, function(filtersInReport, id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
-                if (_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
+                if (id == report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
