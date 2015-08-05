@@ -471,9 +471,9 @@ class CommtrackUserForm(forms.Form):
 class DomainRequestForm(forms.Form):
     full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True)
     email = forms.CharField(
-        label=ugettext_noop('Email Address'),
+        label=ugettext_lazy('Email Address'),
         required=True,
-        help_text=ugettext_noop('You will use this email to log in.'),
+        help_text=ugettext_lazy('You will use this email to log in.'),
     )
     domain = forms.CharField(widget=forms.HiddenInput(), required=True)
 
@@ -483,7 +483,7 @@ class DomainRequestForm(forms.Form):
             crispy.ButtonHolder(
                 crispy.Submit(
                     'submit',
-                    ugettext_noop('Request Access')
+                    ugettext_lazy('Request Access')
                 )
             )
         )
