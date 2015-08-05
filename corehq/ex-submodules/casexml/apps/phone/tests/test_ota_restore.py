@@ -1,11 +1,15 @@
+import uuid
 from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.xml import V2
 from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
+    assert_user_has_cases, assert_user_has_case, assert_user_doesnt_have_case
 from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
@@ -170,6 +174,44 @@ class OtaRestoreTest(TestCase):
             dummy_restore_xml(sync_log_id, expected_case_block, items=4),
             restore_payload
         )
+
+    def test_restore_with_bad_index_ref_blows_away(self):
+        user = dummy_user()
+        user.domain = self.project.name
+        factory = CaseFactory(
+            self.project.name,
+            case_defaults={
+                'user_id': user.user_id,
+                'owner_id': user.user_id,
+                'case_type': 'a-case',
+            },
+        )
+        # create a parent/child set of cases
+        parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
+        child, parent = factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            relationships=[
+                 CaseRelationship(CaseStructure(case_id=parent_id))
+            ]
+        ))
+        assert_user_has_cases(self, user, [parent_id, child_id])
+
+        # delete the parent
+        parent.doc_type = 'CommCareCase-Deleted'
+        parent.save()
+
+        # check cases in payload
+        assert_user_has_case(self, user, child_id)
+        assert_user_doesnt_have_case(self, user, parent_id)
+
+        # also ensure parent_id isn't in payload - e.g. in an index
+        self.assertTrue(parent_id not in generate_restore_payload(
+            project=self.project,
+            version=V2,
+            user=user,
+            items=True,
+        ), 'Deleting parent should remove index from the restore!')
+
 
     def testSyncTokenWithItems(self):
         self._test_sync_token(items=True)
