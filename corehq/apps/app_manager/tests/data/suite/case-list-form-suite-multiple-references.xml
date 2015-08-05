@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <suite version="1" descriptor="Suite File">
   <xform>
     <resource id="22d1de45951bf13617ccf67363a17654fd6a7e4b" version="1" descriptor="Form: (Module Untitled Module) - Create Case">
@@ -16,6 +15,12 @@
     <resource id="register_case_form" version="1" descriptor="Form: (Module register) - Register Case Form">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="update_case_form2" version="1" descriptor="Form: (Module update2) - Update Case Form2">
+      <location authority="local">./modules-2/forms-0.xml</location>
+      <location authority="remote">./modules-2/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
@@ -187,7 +192,6 @@
         <push>
           <command value="'m1-f0'"/>
           <datum id="case_id_new_suite_test_0" value="uuid()"/>
-          <datum id="usercase_id" value="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
           <datum id="return_to" value="'m0'"/>
         </push>
       </stack>
@@ -341,6 +345,58 @@
       </template>
     </field>
   </detail>
+  <detail id="m2_case_short">
+    <title>
+      <text>
+        <locale id="m2.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <action>
+      <display>
+        <text>
+          <locale id="case_list_form.m2"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <command value="'m1-f0'"/>
+          <datum id="case_id_new_suite_test_0" value="uuid()"/>
+          <datum id="return_to" value="'m2'"/>
+        </push>
+      </stack>
+    </action>
+  </detail>
+  <detail id="m2_case_long">
+    <title>
+      <text>
+        <locale id="m2.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
   <entry>
     <form>http://openrosa.org/formdesigner/0260EE34-0345-490B-A1ED-B32361750D36</form>
     <command id="m0-f0">
@@ -360,7 +416,6 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="indicators:call-center" src="jr://fixture/indicators:call-center"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open'][(filter = 'danny')]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
@@ -376,17 +431,34 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_new_suite_test_0" function="uuid()"/>
-      <datum id="usercase_id" function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
     </session>
     <stack>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm0' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) &gt; 0">
-            <command value="'m0'"/>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_suite_test_0"/>
-        </create>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm0' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) = 0">
-            <command value="'m0'"/>
-        </create>
+      <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm0' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) &gt; 0">
+        <command value="'m0'"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_suite_test_0"/>
+      </create>
+      <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm0' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) = 0">
+        <command value="'m0'"/>
+      </create>
+      <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) &gt; 0">
+        <command value="'m2'"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_suite_test_0"/>
+      </create>
+      <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) = 0">
+        <command value="'m2'"/>
+      </create>
     </stack>
+  </entry>
+  <entry>
+    <command id="m2-f0">
+      <text>
+        <locale id="forms.m2f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>
@@ -400,5 +472,11 @@
       <locale id="modules.m1"/>
     </text>
     <command id="m1-f0"/>
+  </menu>
+  <menu id="m2">
+    <text>
+      <locale id="modules.m2"/>
+    </text>
+    <command id="m2-f0"/>
   </menu>
 </suite>

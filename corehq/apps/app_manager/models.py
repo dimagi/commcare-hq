@@ -48,6 +48,7 @@ from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
@@ -83,12 +84,14 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
+    NoMatchingFilterException,
     RearrangeError,
     VersioningError,
     XFormException,
     XFormIdNotUnique,
     XFormValidationError,
 )
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -751,14 +754,6 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        try:
-            self.case_list_module
-        except AssertionError:
-            msg = _("Form referenced as the registration form for multiple modules.")
-            error = {'type': 'validation error', 'validation_message': msg}
-            error.update(meta)
-            errors.append(error)
-
         if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
             errors.append(dict(type="no form links", **meta))
 
@@ -890,16 +885,15 @@ class FormBase(DocumentSchema):
 
     @property
     @memoized
-    def case_list_module(self):
+    def case_list_modules(self):
         case_list_modules = [
             mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
         ]
-        assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
-        return case_list_modules[0] if case_list_modules else None
+        return case_list_modules
 
     @property
     def is_case_list_form(self):
-        return self.case_list_module is not None
+        return bool(self.case_list_modules)
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -2776,12 +2770,110 @@ class CareplanModule(ModuleBase):
         return errors
 
 
+class ReportGraphConfig(DocumentSchema):
+    graph_type = StringProperty(
+        choices=[
+            'bar',
+            'time',
+            'xy',
+        ],
+        default='bar',
+        required=True,
+    )
+    series_configs = DictProperty(DictProperty)
+    config = DictProperty()
+
+
+class ReportAppFilter(DocumentSchema):
+    def get_filter_value(self):
+        raise NotImplementedError
+
+
+def _filter_by_case_sharing_group_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return [
+        Choice(value=group._id, display=None)
+        for group in user.get_case_sharing_groups()
+    ]
+
+
+def _filter_by_location_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.location_id, display=None)
+
+
+def _filter_by_username(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.username, display=None)
+
+
+def _filter_by_user_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user._id, display=None)
+
+
+_filter_type_to_func = {
+    'case_sharing_group': _filter_by_case_sharing_group_id,
+    'location_id': _filter_by_location_id,
+    'username': _filter_by_username,
+    'user_id': _filter_by_user_id,
+}
+
+
+class AutoFilter(ReportAppFilter):
+    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+
+    def get_filter_value(self, user):
+        return _filter_type_to_func[self.filter_type](user)
+
+
+class CustomDataAutoFilter(ReportAppFilter):
+    custom_data_property = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return Choice(value=user.user_data[self.custom_data_property], display=None)
+
+
+class StaticChoiceFilter(ReportAppFilter):
+    select_value = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=self.select_value, display=None)]
+
+
+class StaticChoiceListFilter(ReportAppFilter):
+    value = StringListProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=string_value, display=None) for string_value in self.value]
+
+
+class StaticDatespanFilter(ReportAppFilter):
+    date_range = StringProperty(
+        choices=[
+            'last7',
+            'last30',
+            'lastmonth',
+        ],
+        required=True,
+    )
+
+    def get_filter_value(self, user):
+        start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    graph_configs = DictProperty(ReportGraphConfig)
+    filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
 
@@ -2836,20 +2928,30 @@ class ReportAppConfig(DocumentSchema):
             # todo: make this less hard-coded
             for chart_config in self.report.charts:
                 if isinstance(chart_config, MultibarChartSpec):
+                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
                             x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
+                            configuration=suite_xml.ConfigurationGroup(configs=[
+                                suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                for key, value in graph_config.series_configs.get(column, {}).items()
+                            ])
                         )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='bar',
+                                type=graph_config.graph_type,
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                            )
+                                configuration=suite_xml.ConfigurationGroup(configs=[
+                                    suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                    for key, value in graph_config.config.items()
+                                ]),
+                            ),
                         )
                     )
 
