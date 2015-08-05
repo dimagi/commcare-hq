@@ -327,21 +327,22 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
-    def __init__(self, form, phase, module, include_casedb=False):
+    def __init__(self, form, phase, module):
         self.form = form
         self.phase = phase
         self.module = module
 
         try:
-            self.anchor = self.phase.anchor
+            self.phase.anchor
         except AttributeError:
             raise ScheduleError("Phase needs an Anchor")
 
         self.anchor_detail_variable_name = "anchor_{}".format(self.form.schedule_form_id)
-        self.anchor_detail_variable_ref = "${}".format(self.anchor_detail_variable_name)
         self.last_visit_detail_variable_name = "last_visit_number_{}".format(self.form.schedule_form_id)
-        if include_casedb:
-            self.case_id_xpath = CaseIDXPath(session_var('case_id')).case()
+
+        self.anchor = "${}".format(self.anchor_detail_variable_name)
+        self.last_visit = "${}".format(self.last_visit_detail_variable_name)
+        self.current_schedule_phase = SCHEDULE_PHASE
 
     @property
     def fixture(self):
@@ -360,11 +361,7 @@ class ScheduleFormXPath(object):
         returns the first due date if the case hasn't been visited yet
         otherwise, returns the next due date of valid upcoming schedules
         """
-        try:
-            current_schedule_phase = self.case_id_xpath.slash(SCHEDULE_PHASE)
-        except AttributeError:
-            current_schedule_phase = SCHEDULE_PHASE
-        zeroth_phase = XPath(current_schedule_phase).eq(XPath.string(''))  # No visits yet
+        zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))  # No visits yet
         return XPath.if_(zeroth_phase, self.first_due_date(), self.xpath_phase_set)
 
     @property
@@ -403,38 +400,23 @@ class ScheduleFormXPath(object):
            today() < (date(anchor) + instance(...)/schedule/@expires)
          )
         """
-        try:
-            anchor = self.case_id_xpath.slash(self.anchor)
-        except AttributeError:
-            anchor = self.anchor_detail_variable_ref
-
-        try:
-            current_schedule_phase = self.case_id_xpath.slash(SCHEDULE_PHASE)
-        except AttributeError:
-            current_schedule_phase = SCHEDULE_PHASE
-
         expires = self.fixture.expires()
 
         valid_not_expired = XPath.and_(
-            XPath(current_schedule_phase).eq(self.phase.id),
-            XPath(anchor).neq(XPath.string('')),
+            XPath(self.current_schedule_phase).eq(self.phase.id),
+            XPath(self.anchor).neq(XPath.string('')),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
-                "today() < ({} + {})".format(XPath.date(anchor), expires)
+                "today() < ({} + {})".format(XPath.date(self.anchor), expires)
             ))
         return valid_not_expired
 
     def within_window(self):
         """@late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))"""
-        try:
-            anchor = self.case_id_xpath.slash(self.anchor)
-        except AttributeError:
-            anchor = self.anchor_detail_variable_ref
-
         return XPath.or_(
             XPath('@late_window').eq(XPath.string('')),
             XPath('today() <= ({} + {} + {})'.format(
-                XPath.date(anchor),
+                XPath.date(self.anchor),
                 XPath.int('@due'),
                 XPath.int('@late_window'))
             )
@@ -443,15 +425,6 @@ class ScheduleFormXPath(object):
     def due_first(self):
         """instance(...)/schedule/visit[within_window][1]/@due"""
         return self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
-
-    @property
-    def last_visit(self):
-        try:
-            last_visit = self.case_id_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
-        except AttributeError:
-            last_visit = "${}".format(self.last_visit_detail_variable_name)
-
-        return last_visit
 
     def next_visits(self):
         """@id > last_visit_num_{form_unique_id}"""
@@ -471,17 +444,21 @@ class ScheduleFormXPath(object):
                 slash("@due"))
 
     def first_due_date(self):
-        try:
-            anchor = self.case_id_xpath.slash(self.anchor)
-        except AttributeError:
-            anchor = self.anchor_detail_variable_ref
-
-        return "{} + {}".format(XPath.date(anchor), XPath.int(self.due_first()))
+        return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
 
     def due_date(self):
-        try:
-            anchor = self.case_id_xpath.slash(self.anchor)
-        except AttributeError:
-            anchor = self.anchor_detail_variable_ref
+        return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_later()))
 
-        return "{} + {}".format(XPath.date(anchor), XPath.int(self.due_later()))
+
+class QualifiedScheduleFormXPath(ScheduleFormXPath):
+    """
+    Fully Qualified XPath queries for scheduled forms
+
+    Instead of raw case properties, this fetches the properties from the casedb
+    """
+    def __init__(self, form, phase, module, case_xpath):
+        super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
+        self.case_xpath = case_xpath
+        self.last_visit = self.case_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
+        self.anchor = self.case_xpath.slash(self.phase.anchor)
+        self.current_schedule_phase = self.case_xpath.slash(SCHEDULE_PHASE)

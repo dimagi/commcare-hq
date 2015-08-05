@@ -22,7 +22,7 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE,\
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,\
     RETURN_TO, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -31,8 +31,8 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath, \
-    ScheduleFormXPath
+    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    ScheduleFormXPath, QualifiedScheduleFormXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -1289,7 +1289,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     forms_due.append("${}".format(name))
 
                     # Add an anchor and last_visit variables so we can reference it in the calculation
-                    yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=form_xpath.anchor)
+                    yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
                     yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
                                          function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
                     if phase.id == 1:
@@ -2165,9 +2165,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
-    def _schedule_filter_conditions(self, form, module):
+    def _schedule_filter_conditions(self, form, module, case):
         try:
-            form_xpath = ScheduleFormXPath(form, form.get_phase(), module, include_casedb=True)
+            form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), module, case_xpath=case)
             relevant = form_xpath.filter_condition
         except ScheduleError:
             relevant = None
@@ -2232,17 +2232,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                 def get_commands():
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
+                        if isinstance(form, AdvancedForm):
+                            try:
+                                action = next(a for a in form.actions.load_update_cases if not a.auto_select)
+                                case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
+                            except IndexError:
+                                case = None
+                        else:
+                            case = SESSION_CASE_ID.case()
+
                         if module.all_forms_require_a_case() and \
                                 not module.put_in_root and \
                                 getattr(form, 'form_filter', None):
-                            if isinstance(form, AdvancedForm):
-                                try:
-                                    action = next(a for a in form.actions.load_update_cases if not a.auto_select)
-                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
-                                except IndexError:
-                                    case = None
-                            else:
-                                case = SESSION_CASE_ID.case()
 
                             if case:
                                 command.relevant = interpolate_xpath(form.form_filter, case)
@@ -2251,7 +2252,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                             # If there is a schedule and another filter condition, disregard it...
                             # Other forms of filtering are disabled in the UI
                             # TODO: disable filtering in the UI
-                            schedule_filter_condition = self._schedule_filter_conditions(form, module)
+                            schedule_filter_condition = self._schedule_filter_conditions(form, module, case)
                             if schedule_filter_condition is not None:
                                 command.relevant = schedule_filter_condition
 

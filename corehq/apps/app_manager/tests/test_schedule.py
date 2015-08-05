@@ -219,23 +219,23 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self._apply_schedule_phases()
         suite = self.app.create_suite()
         form_ids = (self.form_1.schedule_form_id, self.form_2.schedule_form_id)
-        anchor = "instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/edd"
-        current_schedule_phase = ("instance('casedb')/casedb/case"
-                                  "[@case_id=instance('commcaresession')/session/data/case_id]/"
-                                  "current_schedule_phase")
+        case_load_actions = ["case_id_case_clinic", "case_id_load_clinic0"]
+        case = ["instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/{}]"
+                .format(action) for action in case_load_actions]
         for form_num, form_id in enumerate(form_ids):
+            anchor = "{case}/edd".format(case=case[form_num])
+            current_schedule_phase = "{case}/current_schedule_phase".format(case=case[form_num])
             filter_condition = (
                 "({current_schedule_phase} = 1 "     # form phase == current phase
                 "and {anchor} != '' "                # anchor not empty
                 "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
                 "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
                 "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
-                "[@id &gt; instance('casedb')/casedb/case"   # where id > last_visit_number
-                    "[@case_id=instance('commcaresession')/session/data/case_id]/last_visit_number_{form_id}]"
+                "[@id &gt; {case}/last_visit_number_{form_id}]"   # where id > last_visit_number
                 "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "  # not late
                 "&gt; 0"
             ).format(current_schedule_phase=current_schedule_phase,
-                     form_num=form_num, form_id=form_id, anchor=anchor)
+                     form_num=form_num, form_id=form_id, anchor=anchor, case=case[form_num])
 
             partial = """
             <partial>
