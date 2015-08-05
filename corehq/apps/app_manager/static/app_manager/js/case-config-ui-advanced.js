@@ -628,7 +628,7 @@ var AdvancedCase = (function () {
 
             self.subcase = ko.computed({
                 read: function () {
-                    return self.case_index.tag();
+                    return (self.case_index) ? self.case_index.tag() : null;
                 },
                 write: function (value) {
                     if (value) {
