@@ -96,12 +96,12 @@ var ReportModule = (function () {
      * View-model for the filters of a mobile UCR.
      *
      * @param report_id - the id of the report, currently saved
-     * @param reportId - KO observable for the id of the currently selected report
+     * @param selectedReportId - KO observable for the id of the currently selected report
      * @param filterValues - { slug : saved filter data } for each saved filter
      * @param reportFilters - { report id --> [ { slug: filter slug } for each filter in report ] for each report }
      * @param changeSaveButton - function that enables the "Save" button
      */
-    function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
+    function FilterConfig(report_id, selectedReportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
         this.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
@@ -128,7 +128,7 @@ var ReportModule = (function () {
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
 
                 filter.dynamicFilterName = ko.computed(function () {
-                    return reportId() + '/' + filter.slug;
+                    return selectedReportId() + '/' + filter.slug;
                 });
 
                 if(filter.choices !== undefined && filter.show_all) {
@@ -138,7 +138,7 @@ var ReportModule = (function () {
         });
 
         this.selectedFilterStructure = ko.computed(function () { // for the chosen report
-            return self.reportFilters[reportId()];
+            return self.reportFilters[selectedReportId()];
         });
 
         this.toJSON = function () {
