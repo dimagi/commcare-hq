@@ -1,14 +1,10 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-#
 # Translators:
 msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-05 17:43+0000\n"
-"PO-Revision-Date: 2015-06-26 09:30+0000\n"
+"POT-Creation-Date: 2015-08-05 18:00+0000\n"
+"PO-Revision-Date: 2015-08-05 18:00+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/projects/p/commcare-hq/"
 "language/sw/)\n"
@@ -491,9 +487,9 @@ msgid "Name '%s' is already taken."
 msgstr ""
 
 #: corehq/apps/accounting/forms.py:183
-#, python-format
+#, fuzzy, python-format
 msgid "Invalid emails: %s"
-msgstr ""
+msgstr "Namba ya MSD sio sahihi %(code)s"
 
 #: corehq/apps/accounting/forms.py:194
 msgid ""
@@ -17912,9 +17908,8 @@ msgid "(Deleted Reminder)"
 msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:480
-#, fuzzy
 msgid "View Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:502
 msgid "Past Events"
@@ -25882,9 +25877,8 @@ msgid "Dob Known"
 msgstr ""
 
 #: custom/opm/beneficiary.py:928
-#, fuzzy
 msgid "Mother's Age"
-msgstr "Outros (negativos / indeterminados) "
+msgstr ""
 
 #: custom/opm/beneficiary.py:929
 msgid "Caste tribe status"
@@ -26039,9 +26033,8 @@ msgid "Opened on"
 msgstr ""
 
 #: custom/opm/beneficiary.py:977
-#, fuzzy
 msgid "Closed on"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: custom/opm/beneficiary.py:978
 msgid "Close mother dup"
@@ -28062,26 +28055,196 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
-#~ msgid "Requisition Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+#~ msgid ""
+#~ "To register send reg <name> <msd code> or reg <name> at <district name>. "
+#~ "Example:reg john patel d34002 or reg john patel : tandahimba"
+#~ msgstr ""
+#~ "Kujisajili tuma sajili <Jina> <namba ya MSD> au sajili <jina> kwa <jina "
+#~ "la wilaya>. Mfano: sajili John Patel d34002 au sajili John Patel : "
+#~ "tandahimba"
 
-#~ msgid "Date Closed"
-#~ msgstr "Casos IRA Tratados"
+#~ msgid ""
+#~ "I didn't recognize your msd code.  To register, send register <name> <msd "
+#~ "code>. example: register Peter Juma d34002"
+#~ msgstr ""
+#~ "msd code yako haitambuliki, Kujisajili, andika 'sajili<nafasi><jina "
+#~ "lako><nafasi><msd code ya kituo chako>. Mfano 'sajili Peter Juma d34002'"
 
-#~ msgid "Commtrack"
-#~ msgstr "CommCare Supply"
+#~ msgid "Sorry, can't find the location with MSD CODE %(msd_code)s"
+#~ msgstr "Samahani, Eneo lenye MSD CODE %(msd_code)s halipo"
 
-#~ msgid "Create New Report > Configure Table Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+#~ msgid "Sorry, can't find the location with the name %(name)s"
+#~ msgstr "Samahani sioni jina linaloendana na eneo %(name)s"
 
-#~ msgid "No more visits"
-#~ msgstr "Visitas Domiciliáres"
+#~ msgid ""
+#~ "Thank you for registering at %(sdp_name)s, %(msd_code)s, %(contact_name)s"
+#~ msgstr ""
+#~ "Asante kwa kujisajili katika %(sdp_name)s, %(msd_code)s, %(contact_name)s"
 
-#~ msgid "New Mothers"
-#~ msgstr "Outros (negativos / indeterminados) "
+#~ msgid "Thank you for registering at %(sdp_name)s, %(contact_name)s"
+#~ msgstr "Asante kwa kujisajili katika %(sdp_name)s, %(contact_name)s"
 
-#~ msgid "Manage SMS Backend Rates"
-#~ msgstr "Diagnóstico de Casos"
+#~ msgid ""
+#~ "Please send in your stock on hand information in the format 'soh "
+#~ "<product> <amount> <product> <amount>...'"
+#~ msgstr ""
+#~ "Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu "
+#~ "'hmk <jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
-#~ msgid "Company Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+#~ msgid ""
+#~ "Have you sent in your R&R form yet for this quarter? Please reply "
+#~ "\"submitted\" or \"not submitted\""
+#~ msgstr ""
+#~ "Je? Umetuma R&R fomu yako kwa kota hii? Tafadhal jibu \"nimetuma\" au "
+#~ "\"sijatuma\""
+
+#~ msgid ""
+#~ "How many R&R forms have you submitted to MSD? Reply with 'submitted A "
+#~ "<number of R&Rs submitted for group A> B <number of R&Rs submitted for "
+#~ "group B>'"
+#~ msgstr ""
+#~ "Ni R&R fomu ngapi umetuma MSD mpaka sasa? tafadhali jibu 'nimetuma A "
+#~ "<idadi ya R&R fomu za kundi a> B <idadi ya R&R fomu za kundi B>...'"
+
+#~ msgid ""
+#~ "Did you receive your delivery yet? Please reply 'delivered <product> "
+#~ "<amount> <product> <amount>...'"
+#~ msgstr ""
+#~ "Je? Umekwishapokea vifaa ulivyoagiza robo mwaka huu, kama umepokea jibu "
+#~ "'nimepokea <jina la vifaa> <idadi ya vifaa>...', kama haujapokea jibu "
+#~ "'sijapokea'"
+
+#~ msgid ""
+#~ "Did you receive your delivery yet? Please reply 'delivered' or 'not "
+#~ "delivered'"
+#~ msgstr ""
+#~ "Je? Umekwishapokea vifaa ulivyoagiza robo mwaka huu, kama umepokea jibu "
+#~ "'nimepokea', kama haujapokea jibu 'sijapokea'"
+
+#~ msgid ""
+#~ "Have you received supervision this month? Please reply 'supervision yes' "
+#~ "or 'supervision no'"
+#~ msgstr ""
+#~ "Asante. Je umefanyiwa usimamizi kwa mwezi huu? Tafadhali jibu 'usimamizi "
+#~ "ndiyo' au 'usimamizi hapana'"
+
+#~ msgid "Thank you for reporting your stock on hand this month"
+#~ msgstr "Asante kwa kutoa taarifa za hesabu ya mkono kwa mwezi huu"
+
+#~ msgid ""
+#~ "Supervision reminders will come monthly, and you can respond 'supervision "
+#~ "yes' if you have received supervision or 'supervision no' if you have not"
+#~ msgstr ""
+#~ "Ujumbe wa usimamizi hutumwa kila mwisho wa mwezi, tafadhali jibu "
+#~ "'usimamizi ndiyo' kama umefanyiwa usimamizi au 'usimamizi hapana' kama "
+#~ "haujafanyiwa usimamizi."
+
+#~ msgid ""
+#~ "Thank you %(contact_name)s for reporting your delivery for "
+#~ "%(facility_name)s"
+#~ msgstr ""
+#~ "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
+#~ "%(facility_name)s"
+
+#~ msgid ""
+#~ "To record a delivery, respond with \"delivered product amount product "
+#~ "amount...\""
+#~ msgstr ""
+#~ "Kutuma taarifa za kupokea vifaa, jibu  \"nimepokea<acha nafasi><jina la "
+#~ "kifaa><acha nafasi><idadi ya kifaa><acha nafasi>...\""
+
+#~ msgid ""
+#~ "Facility deliveries for group %(group_name)s (out of %(group_total)d): "
+#~ "%(not_responded_count)d haven't responded and %(not_received_count)d have "
+#~ "reported not receiving. See ilsgateway.com"
+#~ msgstr ""
+#~ "Vituo vya kundi la upokeaji %(group_name)s (kati ya %(group_total)d): "
+#~ "%(not_responded_count)d havijajibu na %(not_received_count)d vimetoa "
+#~ "taarifa kua havijapokea vifaa. Tizama kwenye ilsgateway.com"
+
+#~ msgid ""
+#~ "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
+#~ "Group A, %(group_b)s for Group B, %(group_c)s for Group C"
+#~ msgstr ""
+#~ "%(district_name)s imetuma R&R fomu kwenda MSD: %(group_a)s kwa ajili ya "
+#~ "Kundi A, %(group_b)s kwa ajili ya Kundi B %(group_c)s kwa ajili ya Kundi C"
+
+#~ msgid ""
+#~ "District %(district_name)s has reported that they sent their R&R forms to "
+#~ "MSD"
+#~ msgstr ""
+#~ "Wilaya %(district_name)s imetoa taarifa kuwa fomu za R&R zimewasilishwa "
+#~ "MSD"
+
+#~ msgid "Thank you for confirming your arrival at the health facility."
+#~ msgstr "Asante kwa kuthibitisha kufika kwako katika Kituo cha Afya"
+
+#~ msgid "Thank you for confirming your arrival at %(facility)s."
+#~ msgstr "Asante kwa kuthibitisha kufika kwako katika %(facility)s"
+
+#~ msgid ""
+#~ "Welcome to ILSGateway. Available commands are soh, delivered, not "
+#~ "delivered, submitted, not submitted, language, sw, en, stop, supervision, "
+#~ "la"
+#~ msgstr ""
+#~ "Karibu kwenye mfumo wa ILSGateway.maneno yaliyopo ya kuamrisha ni hmk, "
+#~ "nimepokea, sijapokea, nimetuma, sijatuma, lugha sw, lugha en, acha, "
+#~ "usimamizi, um"
+
+#~ msgid "To set your language, send LANGUAGE <CODE>"
+#~ msgstr "Kubadilisha lugha, tuma LUGHA <KIFUPISHO>"
+
+#~ msgid ""
+#~ "You must JOIN or IDENTIFY yourself before you can set your language "
+#~ "preference"
+#~ msgstr "Lazima kujiunga kwanza kabla ya kuchagua lugha unayotaka"
+
+#~ msgid "I will speak to you in %(language)s."
+#~ msgstr "Nitaongea na wewe kwa %(language)s."
+
+#~ msgid "Sorry, I don't speak \"%(language)s\"."
+#~ msgstr "Samahani, sielewi \"%(language)s\""
+
+#~ msgid ""
+#~ "You have requested to stop reminders to this number.  Send 'help' to this "
+#~ "number for instructions on how to reactivate."
+#~ msgstr ""
+#~ "Umesitisha kukumbushwa kwenye hii namba. tafadhali tuma 'msaada' kupata "
+#~ "maelekezo jinsi ya kujiunga tena"
+
+#~ msgid ""
+#~ "If you have submitted your R&R, respond \"submitted\".  If you have "
+#~ "received your delivery, respond \"delivered\""
+#~ msgstr ""
+#~ "Kama umetuma R&R fomu yako jibu 'nimetuma', kama umepokea vifaa jibu "
+#~ "'nimepokea'"
+
+#~ msgid ""
+#~ "To test a reminder, send \"test [remindername] [msd code]\"; valid tests "
+#~ "are soh, delivery, randr. Remember to setup your contact details!"
+#~ msgstr ""
+#~ "_To test a reminder, send \"test [remindername] [msd code]\"; valid tests "
+#~ "are soh, delivery, randr. Remember to setup your contact details!"
+
+#~ msgid ""
+#~ "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s did "
+#~ "not submit, %(not_responding)s/%(total)s did not reply"
+#~ msgstr ""
+#~ "Uwasilishaji wa R&R: %(submitted)s/%(total)s wamewasilisha R&R, "
+#~ "%(not_submitted)s/%(total)s hawajawasilisha R&R, %(not_responding)s/"
+#~ "%(total)s hawajajibu ujumbe"
+
+#~ msgid ""
+#~ "SOH - %(submitted)s/%(total)s reported, %(not_responding)s/%(total)s did "
+#~ "not reply"
+#~ msgstr ""
+#~ "Hesabu ya mkono: %(submitted)s/%(total)s wametoa taarifa ya hmk, "
+#~ "%(not_responding)s/%(total)s hawajajibu ujumbe"
+
+#~ msgid ""
+#~ "Deliveries - %(received)s/%(total)s received, %(not_received)s/%(total)s "
+#~ "did not receive, %(not_responding)s/%(total)s did not reply"
+#~ msgstr ""
+#~ "Upokeaji wa Shehena: %(received)s/%(total)s wamepokea shehena, "
+#~ "%(not_received)s/%(total)s hawajapokea shehena, %(not_responding)s/"
+#~ "%(total)s hawajajibu ujumbe"
