@@ -867,7 +867,7 @@ var AdvancedCase = (function () {
                 write: function (value) {
                     if (value) {
                         var caseIndex = new CaseIndex();
-                        caseIndex.tag = 'Select parent';
+                        caseIndex.tag('Select parent');
                         self.case_indices = ko.observableArray([caseIndex]);
                     } else {
                         self.case_indices = ko.observableArray([]);
