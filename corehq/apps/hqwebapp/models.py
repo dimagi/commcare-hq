@@ -672,35 +672,11 @@ class ApplicationsTab(UITab):
 
         if self.couch_user.can_edit_apps():
             submenu_context.append(dropdown_dict(None, is_divider=True))
-            newapp_options = [
-                dropdown_dict(
-                    _('Blank Application...'),
-                    url=reverse('default_app', args=[self.domain]),
-                ),
-                dropdown_dict(
-                    None,
-                    html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
-                                            is_remote=True)
-                ),
-                dropdown_dict(
-                    _('Visit CommCare Exchange to copy existing app...'),
-                    url=reverse('appstore')
-                ),
-            ]
             submenu_context.append(dropdown_dict(
-                _('New Application'),
-                '#',
-                second_level_dropdowns=newapp_options
+                _('New Application...'),
+                url=reverse('default_app', args=[self.domain]),
             ))
         return submenu_context
-
-    def _new_app_link(self, title, is_remote=False):
-        template = "app_manager/partials/new_app_link.html"
-        return mark_safe(render_to_string(template, {
-            'domain': self.domain,
-            'is_remote': is_remote,
-            'action_text': title,
-        }))
 
     @property
     def is_viewable(self):

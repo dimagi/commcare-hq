@@ -39,4 +39,10 @@
         </div>
     {% endfor %}
 </div>
+
+<form class="pull-right form" action="{% url "new_app" domain %}" method="post">
+    <input type="hidden" name="type" value="RemoteApp" />
+    <button class="btn default-btn" href="#" type="submit">{% trans "Create a new RemoteApp (Advanced Users Only)" %}</button>
+</form>
+
 {% endblock dashboard-content %}
