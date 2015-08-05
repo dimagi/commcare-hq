@@ -149,6 +149,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_load_dugong" nodeset="instance('casedb')/casedb/case[@case_type='dugong'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
     </session>

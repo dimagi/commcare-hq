@@ -2771,12 +2771,27 @@ class CareplanModule(ModuleBase):
         return errors
 
 
+class ReportGraphConfig(DocumentSchema):
+    graph_type = StringProperty(
+        choices=[
+            'bar',
+            'time',
+            'xy',
+        ],
+        default='bar',
+        required=True,
+    )
+    series_configs = DictProperty(DictProperty)
+    config = DictProperty()
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    graph_configs = DictProperty(ReportGraphConfig)
 
     _report = None
 
@@ -2831,20 +2846,30 @@ class ReportAppConfig(DocumentSchema):
             # todo: make this less hard-coded
             for chart_config in self.report.charts:
                 if isinstance(chart_config, MultibarChartSpec):
+                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
                             x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
+                            configuration=suite_xml.ConfigurationGroup(configs=[
+                                suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                for key, value in graph_config.series_configs.get(column, {}).items()
+                            ])
                         )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='bar',
+                                type=graph_config.graph_type,
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                            )
+                                configuration=suite_xml.ConfigurationGroup(configs=[
+                                    suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                    for key, value in graph_config.config.items()
+                                ]),
+                            ),
                         )
                     )
 

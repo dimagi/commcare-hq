@@ -528,6 +528,13 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
+
+        if self.action:
+            for frame in self.action.stack.frames:
+                result.add(frame.if_clause)
+                for datum in getattr(frame, 'datums', []):
+                    result.add(datum.value)
+
         for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)

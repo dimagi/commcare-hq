@@ -94,6 +94,30 @@ NAMESPACE_DOMAIN = 'domain'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
+def any_toggle_enabled(*toggles):
+    """
+    Return a view decorator for allowing access if any of the given toggles are
+    enabled. Example usage:
+
+    @toggles.any_toggle_enabled(REPORT_BUILDER, USER_CONFIGURABLE_REPORTS)
+    def delete_custom_report():
+        pass
+
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped_view(request, *args, **kwargs):
+            for t in toggles:
+                if (
+                    (hasattr(request, 'user') and t.enabled(request.user.username))
+                    or (hasattr(request, 'domain') and t.enabled(request.domain))
+                ):
+                    return view_func(request, *args, **kwargs)
+            raise Http404()
+        return wrapped_view
+    return decorator
+
+
 def all_toggles():
     """
     Loads all toggles
@@ -214,6 +238,13 @@ EDIT_SUBMISSIONS = StaticToggle(
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+REPORT_BUILDER = StaticToggle(
+    'report_builder',
+    'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

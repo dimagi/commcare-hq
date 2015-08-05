@@ -32,6 +32,8 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 
 LOCATIONS = 'locations'
 
+USER_CASE = 'user_case'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -53,6 +55,7 @@ MAX_PRIVILEGES = [
     COMMCARE_LOGO_UPLOADER,
     LOCATIONS,
     REPORT_BUILDER,
+    USER_CASE,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
