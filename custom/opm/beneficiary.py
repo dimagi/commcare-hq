@@ -11,7 +11,7 @@ from django.template.defaultfilters import yesno
 from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
     MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, PREG_REG_XMLNS, CLOSE_FORM
-from custom.opm.utils import numeric_fn
+from custom.opm.utils import numeric_fn, format_bool, EMPTY_FIELD
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -22,7 +22,6 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.util.translation import localize
 
 
-EMPTY_FIELD = "---"
 M_ATTENDANCE_Y = 'attendance_vhnd_y.png'
 M_ATTENDANCE_N = 'attendance_vhnd_n.png'
 C_ATTENDANCE_Y = 'child_attendance_vhnd_y.png'
@@ -1008,28 +1007,17 @@ class LongitudinalConditionsMet(ConditionsMet):
             setattr(self, 'child%s_age' % str(idx), child_age)
             setattr(self, 'child%s_sex' % str(idx),
                     self.case_property('child%s_sex' % str(idx), EMPTY_FIELD))
-        self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
-                                        "पोषण दिवस में उपस्थित नही", self.preg_attended_vhnd)
-        self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न हुआ",
-                                        "गर्भवती का वज़न नही हुआा", self.preg_weighed_trimestered(6))
-        self.two_two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न हुआ",
-                                            "गर्भवती का वज़न नही हुआा", self.preg_weighed_trimestered(9))
-        self.three = self.three = self.condition_image(IFA_Y, IFA_N, "तीस आयरन की गोलियां लेना",
-                                                       "तीस आयरन की गोलियां नही लिया", self.preg_received_ifa)
-        self.four = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
-                                         "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
-        self.five = self.condition_image(C_REGISTER_Y, C_REGISTER_N, "जन्म पंजीकृत",
-                                         "जन्म पंजीकृत नहीं", self.child_age == 6)
-        self.six = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "बच्चे का वज़न लिया गया",
-                                        "बच्चे का वज़न लिया गया", self.child_growth_calculated)
-        self.seven = self.condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, "केवल माँ का दूध खिलाया गया",
-                                          "केवल माँ का दूध नहीं खिलाया गया", self.child_breastfed)
-        self.eight = self.condition_image(CHILD_WEIGHT_Y, CHILD_WEIGHT_N, "जन्म के समय वजन लिया गया",
-                                          "जन्म के समय वजन नहीं लिया गया", self.child_age == 3)
-        self.nine = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "", "",
-                                         self.child_received_ors if self.status == 'mother' else False)
-        self.ten = self.condition_image(MEASLEVACC_Y, MEASLEVACC_N, "खसरे का टिका लगाया",
-                                        "खसरे का टिका नहीं लगाया", self.child_age == 12)
+        self.one = format_bool(self.preg_attended_vhnd)
+        self.two = format_bool(self.preg_weighed_trimestered(6))
+        self.two_two = format_bool(self.preg_weighed_trimestered(9))
+        self.three = format_bool(self.preg_received_ifa)
+        self.four = format_bool(self.child_attended_vhnd)
+        self.five = format_bool(self.child_age == 6)
+        self.six = format_bool(self.child_growth_calculated)
+        self.seven = format_bool(self.child_breastfed)
+        self.eight = format_bool(self.child_age == 3)
+        self.nine = format_bool(self.child_received_ors if self.status == 'mother' else False)
+        self.ten = format_bool(self.child_age == 12)
         self.opened_on = self.case_property('opened_on', EMPTY_FIELD)
         self.closed_on = self.case_property('closed_on', False)
         self.close_mother_dup = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_dup')
