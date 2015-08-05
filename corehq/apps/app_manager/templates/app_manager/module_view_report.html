@@ -29,9 +29,7 @@
         for(var i = 0; i < select2s.length; i++) {
             var element = select2s.eq(i);
             var pageSize = 20;
-            // TODO: Ideally the separator would be defined in one place. Right now it is
-            //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-            var separator = "\u001F";
+            var separator = select2Separator;
             var initialValues = element.val() !== "" ? element.val().split(separator) : [];
             element.select2({
                 minimumInputLength: 0,

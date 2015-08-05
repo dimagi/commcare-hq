@@ -1,3 +1,6 @@
+// TODO: Ideally the separator would be defined in one place. Right now it is
+//       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+var select2Separator = "\u001F";
 
 var ReportModule = (function () {
 
@@ -113,9 +116,7 @@ var ReportModule = (function () {
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
                 }
-                // TODO: Ideally the separator would be defined in one place. Right now it is
-                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-                filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
+                filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
 
                 filter.dynamicFilterName = ko.computed(function () {
                     return reportId() + '/' + filter.slug;
@@ -152,7 +153,7 @@ var ReportModule = (function () {
                         }
                     });
                     if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
-                        selectedFilterValues[filter.slug].value = filter.selectedValue.value().split("\u001F");
+                        selectedFilterValues[filter.slug].value = filter.selectedValue.value().split(select2Separator);
                     }
                 }
             }
