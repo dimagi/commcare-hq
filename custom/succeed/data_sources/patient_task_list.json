@@ -78,7 +78,7 @@
                             "datatype": "string"
                         },
                         "type": "boolean_expression",
-                        "property_value": "true"
+                        "property_value": "True"
                     }
                 },
                 "datatype": "integer"
