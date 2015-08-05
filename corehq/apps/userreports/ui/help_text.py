@@ -4,7 +4,7 @@ TABLE_ID = _(
     "Choose something short, unique, and memorable using "
     "lowercase letters, numbers, and underscores")
 DISPLAY_NAME = _(
-    "This is what the report will be called in navigation, page title, etc.")
+    "This is what the data source will be called in navigation, page title, etc.")
 DESCRIPTION = _(
     "Write yourself a little note if you like, it's optional")
 BASE_ITEM_EXPRESSION = _(

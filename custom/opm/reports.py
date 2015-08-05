@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
-from corehq.toggles import OPM_LONGITUDINAL_CMR
 from custom.common import ALL_OPTION
 from custom.opm.utils import numeric_fn
 
@@ -44,7 +43,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, get_matching_users, UserSqlData)
+from .utils import (BaseMixin, get_matching_users)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
 from .health_status import AWCHealthStatus
 from .incentive import Worker
@@ -450,7 +449,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             try:
                 case = self.get_row_data(row)
                 if self.include_out_of_range_cases or not case.case_is_out_of_range:
-                    rows.append(self.get_row_data(row))
+                    rows.append(case)
                 else:
                     if self.debug:
                         self._debug_data.append({
@@ -665,7 +664,9 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         if len(rows) == 1:
             return rows[0]
         def zip_fn((i, values)):
-            if isinstance(values[0], int):
+            if i == self.column_index('num_children'):
+                return values[0]
+            elif isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
                 unique_values = set(v for v in values if v is not None)
@@ -700,12 +701,10 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['doc_id']: (user['awc_code'], user['gp'])
-                     for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):
             try:
-                case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
+                case_row = self.get_row_data(row, index=1)
                 if not case_row.case_is_out_of_range:
                     total_payment += case_row.cash_amt
                     rows.append(case_row)
@@ -739,7 +738,7 @@ class MetReport(CaseReportMixin, BaseReport):
         })
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
+        return self.model(row, self, child_index=kwargs.get('index', 1))
 
     def get_rows(self):
         result = super(MetReport, self).get_rows()
@@ -1346,10 +1345,3 @@ class LongitudinalCMRReport(MetReport):
     slug = 'longitudinal_cmr'
     model = LongitudinalConditionsMet
     show_total = False
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if not user or not OPM_LONGITUDINAL_CMR.enabled(user.username):
-            return False
-
-        return super(LongitudinalCMRReport, cls).show_in_navigation(domain, project, user)

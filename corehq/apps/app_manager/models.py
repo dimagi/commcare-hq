@@ -746,14 +746,6 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        try:
-            self.case_list_module
-        except AssertionError:
-            msg = _("Form referenced as the registration form for multiple modules.")
-            error = {'type': 'validation error', 'validation_message': msg}
-            error.update(meta)
-            errors.append(error)
-
         if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
             errors.append(dict(type="no form links", **meta))
 
@@ -885,16 +877,15 @@ class FormBase(DocumentSchema):
 
     @property
     @memoized
-    def case_list_module(self):
+    def case_list_modules(self):
         case_list_modules = [
             mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
         ]
-        assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
-        return case_list_modules[0] if case_list_modules else None
+        return case_list_modules
 
     @property
     def is_case_list_form(self):
-        return self.case_list_module is not None
+        return bool(self.case_list_modules)
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -2771,12 +2762,27 @@ class CareplanModule(ModuleBase):
         return errors
 
 
+class ReportGraphConfig(DocumentSchema):
+    graph_type = StringProperty(
+        choices=[
+            'bar',
+            'time',
+            'xy',
+        ],
+        default='bar',
+        required=True,
+    )
+    series_configs = DictProperty(DictProperty)
+    config = DictProperty()
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    graph_configs = DictProperty(ReportGraphConfig)
 
     _report = None
 
@@ -2831,20 +2837,30 @@ class ReportAppConfig(DocumentSchema):
             # todo: make this less hard-coded
             for chart_config in self.report.charts:
                 if isinstance(chart_config, MultibarChartSpec):
+                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
                             x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
+                            configuration=suite_xml.ConfigurationGroup(configs=[
+                                suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                for key, value in graph_config.series_configs.get(column, {}).items()
+                            ])
                         )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='bar',
+                                type=graph_config.graph_type,
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                            )
+                                configuration=suite_xml.ConfigurationGroup(configs=[
+                                    suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                    for key, value in graph_config.config.items()
+                                ]),
+                            ),
                         )
                     )
 
