@@ -1662,7 +1662,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(CommCareCase, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
