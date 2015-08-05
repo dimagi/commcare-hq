@@ -1992,18 +1992,55 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def is_registration_form(self, case_type=None):
         """
-        Defined as form that opens a single case. Excludes forms that register
-        sub-cases and forms that require a case.
+        Defined as form that opens a single case. If the case is a sub-case then
+        the form is only allowed to load parent cases (and any auto-select cases).
         """
         reg_actions = self.get_registration_actions(case_type)
-        return not self.requires_case() and reg_actions and \
-            len(reg_actions) == 1
+        if not reg_actions or len(reg_actions) != 1:
+            return False
+
+        load_actions = [action for action in self.actions.load_update_cases if not action.auto_select]
+        if not load_actions:
+            return True
+
+        reg_action = reg_actions[0]
+        parent_tag = reg_action.parent_tag
+        if not parent_tag:
+            return False
+
+        actions_by_tag = deepcopy(self.actions.actions_meta_by_tag)
+        actions_by_tag.pop(reg_action.case_tag)
+        def check_parents(tag):
+            """Recursively check parent actions to ensure that all action for this form are
+            either parents or the registration action or else auto-select actions.
+            """
+            if not tag:
+                return not actions_by_tag or all(a['action'].auto_select for a in actions_by_tag.values())
+
+            try:
+                parent = actions_by_tag.pop(tag)
+            except KeyError:
+                return False
+
+            next_tag = parent['action'].parent_tag
+            return check_parents(next_tag)
+
+        return check_parents(parent_tag)
 
     def get_registration_actions(self, case_type=None):
-        return [
+        """
+        :return: List of actions that create a case. Subcase actions are included
+                 as long as they are not inside a repeat. If case_type is not None
+                 only return actions that create a case of the specified type.
+        """
+        registration_actions = [
             action for action in self.actions.get_open_actions()
-            if not action.is_subcase and (not case_type or action.case_type == case_type)
+            if not action.is_subcase or not action.repeat_context
         ]
+        if case_type:
+            registration_actions = [a for a in registration_actions if a.case_type == case_type]
+
+        return registration_actions
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
