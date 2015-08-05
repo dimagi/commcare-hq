@@ -1662,41 +1662,42 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @staticmethod
     def configure_entry_as_case_list_form(form, entry):
-        target_module = form.case_list_module
-        if form.form_type == 'module_form':
-            source_session_var = form.session_var_for_action('open_case')
-        if form.form_type == 'advanced_form':
-            # match case session variable
-            reg_action = form.get_registration_actions(target_module.case_type)[0]
-            source_session_var = reg_action.case_session_var
-
-        target_session_var = 'case_id'
-        if target_module.module_type == 'advanced':
-            # match case session variable for target module
-            form = target_module.forms[0]
-            target_session_var = form.actions.load_update_cases[0].case_session_var
-
+        target_modules = form.case_list_modules
         entry.stack = Stack()
-        source_case_id = session_var(source_session_var)
-        case_count = CaseIDXPath(source_case_id).case().count()
-        return_to = session_var(RETURN_TO)
-        target_command = XPath.string(id_strings.menu_id(target_module))
+        for target_module in target_modules:
+            if form.form_type == 'module_form':
+                source_session_var = form.session_var_for_action('open_case')
+            if form.form_type == 'advanced_form':
+                # match case session variable
+                reg_action = form.get_registration_actions(target_module.case_type)[0]
+                source_session_var = reg_action.case_session_var
 
-        def get_create_frame(case_count_xpath):
-            return CreateFrame(if_clause=XPath.and_(
-                return_to.count().eq(1),
-                return_to.eq(target_command),
-                case_count_xpath
-            ))
+            target_session_var = 'case_id'
+            if target_module.module_type == 'advanced':
+                # match case session variable for target module
+                form = target_module.forms[0]
+                target_session_var = form.actions.load_update_cases[0].case_session_var
 
-        frame_case_created = get_create_frame(case_count.gt(0))
-        frame_case_created.add_command(target_command)
-        frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
-        entry.stack.add_frame(frame_case_created)
+            source_case_id = session_var(source_session_var)
+            case_count = CaseIDXPath(source_case_id).case().count()
+            return_to = session_var(RETURN_TO)
+            target_command = XPath.string(id_strings.menu_id(target_module))
 
-        frame_case_not_created = get_create_frame(case_count.eq(0))
-        frame_case_not_created.add_command(target_command)
-        entry.stack.add_frame(frame_case_not_created)
+            def get_create_frame(case_count_xpath):
+                return CreateFrame(if_clause=XPath.and_(
+                    return_to.count().eq(1),
+                    return_to.eq(target_command),
+                    case_count_xpath
+                ))
+
+            frame_case_created = get_create_frame(case_count.gt(0))
+            frame_case_created.add_command(target_command)
+            frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
+            entry.stack.add_frame(frame_case_created)
+
+            frame_case_not_created = get_create_frame(case_count.eq(0))
+            frame_case_not_created.add_command(target_command)
+            entry.stack.add_frame(frame_case_not_created)
 
     def get_case_datums_basic_module(self, module, form):
         datums = []
