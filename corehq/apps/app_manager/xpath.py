@@ -364,10 +364,9 @@ class ScheduleFormXPath(object):
         zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))  # No visits yet
         return XPath.if_(zeroth_phase, self.first_due_date(), self.xpath_phase_set)
 
-    @property
-    def filter_condition(self):
+    def filter_condition(self, phase_id):
         """returns the `relevant` condition on whether to show this form in the list"""
-        next_valid_schedules = self.next_valid_schedules()
+        next_valid_schedules = self.next_valid_schedules(phase_id)
         num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
         num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
         return XPath.and_(next_valid_schedules, num_upcoming_visits_gt_0)
@@ -392,18 +391,25 @@ class ScheduleFormXPath(object):
             ),
         )
 
-    def next_valid_schedules(self):
+    def next_valid_schedules(self, phase_id=None):
         """
          current_schedule_phase = phase.id and (
-           instance(...)/schedule/@expires = ''
+           instance(...)/schedule/fixture/@expires = ''
            or
            today() < (date(anchor) + instance(...)/schedule/@expires)
          )
         """
+
+        current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
+        if phase_id == 1:
+            # No visits yet
+            zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))
+            current_phase_query = XPath.or_(zeroth_phase, current_phase_query)
+
         expires = self.fixture.expires()
 
         valid_not_expired = XPath.and_(
-            XPath(self.current_schedule_phase).eq(self.phase.id),
+            current_phase_query,
             XPath(self.anchor).neq(XPath.string('')),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
@@ -427,8 +433,10 @@ class ScheduleFormXPath(object):
         return self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
 
     def next_visits(self):
-        """@id > last_visit_num_{form_unique_id}"""
-        return XPath('@id > {}'.format(self.last_visit))
+        """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
+        next_visits = XPath('@id > {}'.format(self.last_visit))
+        first_visit = XPath("{} = ''".format(self.last_visit))
+        return XPath.or_(first_visit, next_visits)
 
     def upcoming_scheduled_visits(self):
         """instance(...)/schedule/visit/[next_visits][within_window]"""

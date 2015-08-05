@@ -2166,9 +2166,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
     def _schedule_filter_conditions(self, form, module, case):
+        phase = form.get_phase()
         try:
-            form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), module, case_xpath=case)
-            relevant = form_xpath.filter_condition
+            form_xpath = QualifiedScheduleFormXPath(form, phase, module, case_xpath=case)
+            relevant = form_xpath.filter_condition(phase.id)
         except ScheduleError:
             relevant = None
         return relevant

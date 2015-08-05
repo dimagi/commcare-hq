@@ -226,12 +226,12 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             anchor = "{case}/edd".format(case=case[form_num])
             current_schedule_phase = "{case}/current_schedule_phase".format(case=case[form_num])
             filter_condition = (
-                "({current_schedule_phase} = 1 "     # form phase == current phase
+                "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
                 "and {anchor} != '' "                # anchor not empty
                 "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
                 "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
                 "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
-                "[@id &gt; {case}/last_visit_number_{form_id}]"   # where id > last_visit_number
+                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"   # where id > last_visit_number
                 "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "  # not late
                 "&gt; 0"
             ).format(current_schedule_phase=current_schedule_phase,
