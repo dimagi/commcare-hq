@@ -3753,7 +3753,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
-    created_from = StringProperty()
+    created_from_template = StringProperty()
 
     @property
     @memoized

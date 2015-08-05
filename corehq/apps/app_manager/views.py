@@ -342,7 +342,7 @@ def app_from_template(request, domain, slug):
     _clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
-        'created_from': 'template_%s' % slug,
+        'created_from_template': '%s' % slug,
     })
     module_id = 0
     form_id = 0
