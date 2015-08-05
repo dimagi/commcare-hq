@@ -1067,6 +1067,11 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def __init__(self, app):
         super(SuiteGenerator, self).__init__(app)
+        self.detail_ids = {
+            id_strings.detail(module, detail_type)
+            for module in self.modules for detail_type, detail, enabled in module.get_details()
+            if enabled and detail.get_columns()
+        }
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1469,7 +1474,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             module=module,
             detail_type=detail_type,
         )
-        return detail_id if detail_id in self.get_detail_mapping() else None
+        return detail_id if detail_id in self.detail_ids else None
 
     def get_instances_for_module(self, module, additional_xpaths=None):
         """
