@@ -92,7 +92,7 @@ var ReportModule = (function () {
     function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
-        this.reportFilters = JSON.parse(JSON.stringify(reportFilters)) || {};
+        this.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
         _.each(this.reportFilters, function(filtersInReport, _id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
