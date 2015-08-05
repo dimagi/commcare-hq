@@ -54,7 +54,9 @@ def stock_data_task(api_object):
         for chunk in facilities_chunked_list:
             api_object.process_data(process_facility_task, chunk)
     else:
-        for stock_api in api_object.get_stock_apis_objects():
+        for stock_api in itertools.dropwhile(
+            lambda x: x.name != checkpoint.api, api_object.get_stock_apis_objects()
+        ):
             stock_api.add_date_filter(checkpoint.date, checkpoint.start_date)
             synchronization(
                 stock_api,
