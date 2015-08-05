@@ -41,9 +41,11 @@
                     class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
-                        event: {
-                            click: setCustomPath
-                        }">
+                        click: function () {
+                            setCustomPath();
+                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'image');
+                        }
+            ">
                 <i class="icon icon-cog"></i>
                 {% trans 'Set Icon Path...' %}
             </button>
@@ -77,6 +79,7 @@
         </div>
     </div>
 </div>
+{% if not EXCLUDE_AUDIO %}
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
     <div class="control-group">
         <label class="control-label" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
@@ -119,8 +122,9 @@
                     class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
-                        event: {
-                            click: setCustomPath
+                        click: function () {
+                            setCustomPath();
+                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'audio');
                         }">
                 <i class="icon icon-cog"></i>
                 {% trans 'Set Audio Path...' %}
@@ -163,3 +167,4 @@
         </div>
     </div>
 </div>
+{% endif %}

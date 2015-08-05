@@ -1,8 +1,18 @@
 {% extends "userreports/userreports_base.html" %}
-{% load crispy_forms_tags_b3 %}
+{% load crispy_forms_tags %}
 {% load i18n %}
+{% block breadcrumbs %}
+<li>
+    <span class="divider">&gt;</span>
+    {% trans "Edit Report" %}
+</li>
+<li>
+    <span class="divider">&gt;</span>
+    {{ report.title }}
+</li>
+{% endblock %}
 {% block main_column %}
-    {% crispy_b3 form %}
+    {% crispy form %}
 {% if report.get_id %}
 <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
     <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit">

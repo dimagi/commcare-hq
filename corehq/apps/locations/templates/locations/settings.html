@@ -97,7 +97,7 @@
                                 <span class="hq-help-template"
                                       data-title="{% trans "View Child Location Data" %}"
                                       data-content="{% blocktrans %}
-                                          Mobile workers assigned to locations off this
+                                          Mobile workers assigned to locations of this
                                           type will be able to view any cases owned by
                                           their child locations.
                                       {% endblocktrans %}">
@@ -115,7 +115,7 @@
                             </div>
                         </td>
                         <td class="control-group">
-                            <select data-bind="options: $root.loc_types,
+                            <select data-bind="options: $root.loc_type_options($data),
                                                optionsText: 'name',
                                                optionsValue: 'pk',
                                                value: parent_type,
@@ -144,7 +144,7 @@
             </div>
         </fieldset>
 
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" class="btn btn-primary" disabled>
             {% trans "Save Location Types" %}
         </button>
         <input name="json" type="hidden" data-bind="value: json_payload" />

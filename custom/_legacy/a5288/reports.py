@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 import pytz
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -40,15 +41,10 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
             group_ids = self.request.couch_user.get_group_ids()
             if len(group_ids) > 0:
                 group_id = group_ids[0]
-        
-        cases = CommCareCase.view("hqcase/types_by_domain",
-                                  key=[self.domain, "participant"],
-                                  reduce=False,
-                                  include_docs=True).all()
-        
+
         data = {}
-        
-        for case in cases:
+
+        for case in get_cases_in_domain(self.domain, type='participant'):
             if case.closed:
                 continue
 

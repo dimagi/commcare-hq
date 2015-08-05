@@ -35,6 +35,17 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return false;
     };
 
+    view_model.unsuccessful_archive_action = function (button, index) {
+        return function (data) {
+            if (data.message && data.product_id) {
+                var alert_container = $('#alert_' + data.product_id);
+                alert_container.text(data.message);
+                alert_container.show();
+            }
+            $(button).button('unsuccessful');
+        };
+    };
+
     var reloadList = function(data) {
         view_model.currently_searching(false);
         if (data.success) {
@@ -46,7 +57,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
             view_model.data_list(data.data_list);
             view_model.archive_action_items([]);
         }
-    }
+    };
     var format_url = function(page) {
         if (!page) {
             return "#";
@@ -54,7 +65,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
         return view_model.list_url +'?page=' + page +
             "&limit=" + view_model.page_limit() +
             "&show_inactive=" + view_model.show_inactive;
-    }
+    };
 
     return view_model;
 };

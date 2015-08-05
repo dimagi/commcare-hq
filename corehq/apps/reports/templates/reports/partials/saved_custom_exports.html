@@ -70,15 +70,20 @@
                 <td class="cell-vertical-centered">
                     {% with property_hash|dict_lookup:export.name as properties %}
                       {% if properties.size %}
-                          {% if export.app_id %}
-                          <a href="{% url "form_multimedia_export" domain %}?app_id={{export.app_id}}&amp;xmlns={{export.xmlns}}&amp;export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}"
-                             class="btn btn-primary dl-export" ><i
-                             class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{properties.size}})</a>
-                         {% else %}
-                          <a href="{% url "form_multimedia_export" domain %}?xmlns={{export.xmlns}}&amp;export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}"
-                             class="btn btn-primary dl-export" ><i
-                             class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{properties.size}})</a>
-                         {% endif %}
+                        <a  data-toggle='modal' href="#export-download-status"
+                            {% if export.app.id %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?app_id={{export.app_id}}&amp;export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'
+                            {% else %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'
+                            {% endif %}
+                            data-xmlns="{{export.xmlns}}"
+                            data-modulename="{{ export.name|default:"[blank]" }}"
+                            data-formname=""
+                            data-bind='click: requestMultimediaDownload'
+                            class="btn btn-primary dl-export" >
+                                <i class="icon-download-alt icon-white"></i>
+                                {% trans "Download " %} <br> ({{properties.size}})
+                        </a>
                       {% else %}
                           <span class="label">{% trans "No Multimedia" %}</span>
                       {% endif %}

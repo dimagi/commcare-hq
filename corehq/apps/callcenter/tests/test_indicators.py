@@ -13,6 +13,8 @@ from django.test import TestCase
 
 from django.core import cache
 
+CASE_TYPE = 'cc_flw'
+
 locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
 
 
@@ -22,7 +24,7 @@ def create_domain_and_user(domain_name, username):
 
     domain.call_center_config.enabled = True
     domain.call_center_config.case_owner_id = user.user_id
-    domain.call_center_config.case_type = 'cc_flw'
+    domain.call_center_config.case_type = CASE_TYPE
     domain.save()
 
     sync_call_center_user_case(user)
@@ -94,11 +96,7 @@ class BaseCCTests(TestCase):
         locmem_cache.clear()
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = get_case_by_domain_hq_user_id(
-            user.domain,
-            user.user_id,
-            include_docs=True
-        )
+        user_case = get_case_by_domain_hq_user_id(user.domain, user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
@@ -158,11 +156,7 @@ class CallCenterTests(BaseCCTests):
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
     def test_sync_log(self):
-        user_case = get_case_by_domain_hq_user_id(
-            self.cc_domain.name,
-            self.cc_user.get_id,
-            include_docs=True
-        )
+        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -206,7 +200,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, include_docs=True)
+        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,

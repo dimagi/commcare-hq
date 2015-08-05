@@ -66,6 +66,24 @@ class GenerateCodeTest(unittest.TestCase):
             'taco4'
         )
 
+    def test_doesnt_strip_numbers(self):
+        name = 'taco1'
+        existing = []
+
+        self.assertEqual(
+            generate_code(name, existing),
+            'taco1'
+        )
+
+    def test_doesnt_die_on_only_numbers(self):
+        name = '1'
+        existing = []
+
+        self.assertEqual(
+            generate_code(name, existing),
+            '1'
+        )
+
     def test_empty_values(self):
         empty_default = 'no_name'
         self.assertEqual(

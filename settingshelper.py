@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uuid
 
 
 class SharedDriveConfiguration(object):
@@ -33,6 +34,10 @@ class SharedDriveConfiguration(object):
     def transfer_enabled(self):
         from django_transfer import is_enabled
         return is_enabled() and self.transfer_dir
+
+    def get_temp_file(self, suffix="", prefix="tmp"):
+        name = '{}{}{}'.format(prefix, uuid.uuid4().hex, suffix)
+        return os.path.join(self.temp_dir, name)
 
 
 def get_server_url(http_method, server_root, username, password):

@@ -29,8 +29,8 @@ from .utils import device_users_by_xform
 logger = logging.getLogger(__name__)
 
 DATA_NOTICE = ugettext_noop(
-    "This report may not always show the latest log data but will "
-    "be updated over time",
+    "This report will only show data for the past 60 days. Furthermore the report may not "
+    "always show the latest log data but will be updated over time",
 )
 
 TAGS = {

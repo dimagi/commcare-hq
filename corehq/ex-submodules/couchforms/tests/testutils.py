@@ -3,10 +3,9 @@ from dimagi.utils.couch import LockManager, ReleaseOnError
 from django.conf import settings
 
 
-def create_and_save_xform(xml_string, attachments=None, _id=None, process=None):
+def create_and_save_xform(xml_string):
     assert getattr(settings, 'UNIT_TESTING', False)
-    xform, lock = create_xform(
-        xml_string, attachments=attachments or {}, _id=_id, process=process)
+    xform, lock = create_xform(xml_string, attachments={})
     with ReleaseOnError(lock):
         xform.save()
     return LockManager(xform.get_id, lock)
@@ -21,6 +20,9 @@ def post_xform_to_couch(instance, attachments=None, process=None,
 
     """
     assert getattr(settings, 'UNIT_TESTING', False)
+    if not process:
+        def process(xform):
+            xform.domain = domain
     xform_lock = process_xform(instance, attachments=attachments,
                                process=process, domain=domain)
     with xform_lock as xforms:

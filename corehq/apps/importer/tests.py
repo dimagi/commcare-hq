@@ -2,8 +2,10 @@ from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
 
+from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.utils import get_case_ids_in_domain, get_cases_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
+    get_cases_in_domain
 from corehq.apps.importer.tasks import do_import
 from corehq.apps.importer.util import ImporterConfig
 from corehq.apps.users.models import WebUser
@@ -284,3 +286,39 @@ class ImporterTest(TestCase):
         self.assertEqual(rows,
                          len(res['errors'][ImportErrors.InvalidParentId]['rows']),
                          "All cases should have missing parent")
+
+    def import_mock_file(self, rows):
+        config = self._config(rows[0])
+        case_rows = rows[1:]
+        num_rows = len(case_rows)
+        xls_file = MockExcelFile(
+            header_columns=rows[0],
+            num_rows=num_rows,
+            row_generator=lambda _, i: case_rows[i],
+        )
+        return do_import(xls_file, config, self.domain)
+
+    def testLocationOwner(self):
+        # This is actually testing several different things, but I figure it's
+        # worth it, as each of these tests takes a non-trivial amount of time.
+        bootstrap_location_types(self.domain)
+        location = make_loc('loc-1', name='Loc 1', domain=self.domain)
+        make_loc('loc-2', name='Loc 2', domain=self.domain)
+        duplicate_loc = make_loc('loc-3', name='Loc 2', domain=self.domain)
+
+        res = self.import_mock_file([
+            ['case_id', 'name', 'owner_id', 'owner_name'],
+            ['', 'location-owner-id', location.group_id, ''],
+            ['', 'location-owner-code', '', location.site_code],
+            ['', 'location-owner-name', '', location.name],
+            ['', 'duplicate-location-name', '', duplicate_loc.name],
+        ])
+        cases = {c.name: c for c in list(get_cases_in_domain(self.domain))}
+
+        self.assertEqual(cases['location-owner-id'].owner_id, location.group_id)
+        self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
+        self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
+
+        error_message = ImportErrors.DuplicateLocationName
+        self.assertIn(error_message, res['errors'])
+        self.assertEqual(res['errors'][error_message]['rows'], [4])

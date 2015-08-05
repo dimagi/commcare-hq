@@ -1,16 +1,16 @@
 from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.models import SyncLog, User
+from casexml.apps.phone.models import User, get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
-from casexml.apps.phone.tests.utils import generate_restore_payload, generate_restore_response
-from corehq import toggles
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from casexml.apps.phone.tests.utils import generate_restore_response, \
+    get_exactly_one_wrapped_sync_log, generate_restore_payload
+from corehq.apps.domain.models import Domain
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -20,32 +20,33 @@ class StateHashTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
-
+        self.project = Domain(name='state-hash-tests-project')
         self.user = User(user_id="state_hash", username="state_hash",
                          password="changeme", date_joined=datetime(2011, 6, 9))
 
         # this creates the initial blank sync token in the database
-        generate_restore_payload(self.user)
-        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        self.sync_log = sync_log
+        generate_restore_payload(self.project, self.user)
+        self.sync_log = get_exactly_one_wrapped_sync_log()
 
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
         self.assertEqual(empty_hash, self.sync_log.get_state_hash())
-        response = generate_restore_response(self.user, self.sync_log.get_id, version=V2)
+        response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2)
         self.assertEqual(200, response.status_code)
         
         try:
-            generate_restore_payload(self.user, self.sync_log.get_id,
-                                                version=V2, state_hash=str(wrong_hash))
+            generate_restore_payload(
+                self.project, self.user, self.sync_log.get_id,
+                version=V2, state_hash=str(wrong_hash)
+            )
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
             self.assertEqual(empty_hash, e.expected)
             self.assertEqual(wrong_hash, e.actual)
             self.assertEqual(0, len(e.case_ids))
 
-        response = generate_restore_response(self.user, self.sync_log.get_id, version=V2,
+        response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2,
                                              state_hash=str(wrong_hash))
         self.assertEqual(412, response.status_code)
 
@@ -59,16 +60,18 @@ class StateHashTest(TestCase):
         post_case_blocks([c1, c2], 
                          form_extras={"last_sync_token": self.sync_log.get_id})
         
-        self.sync_log = SyncLog.get(self.sync_log.get_id)
+        self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
         bad_hash = CaseStateHash("thisisntright")
         self.assertEqual(real_hash, self.sync_log.get_state_hash())
-        generate_restore_payload(self.user, self.sync_log.get_id,
-                                 version=V2, state_hash=str(real_hash))
+        generate_restore_payload(
+            self.project, self.user, self.sync_log.get_id,
+            version=V2, state_hash=str(real_hash)
+        )
         
         try:
-            generate_restore_payload(self.user, self.sync_log.get_id,
-                                                version=V2, state_hash=str(bad_hash))
+            generate_restore_payload(self.project, self.user, self.sync_log.get_id,
+                                     version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
             self.assertEqual(real_hash, e.expected)
@@ -76,13 +79,3 @@ class StateHashTest(TestCase):
             self.assertEqual(2, len(e.case_ids))
             self.assertTrue("abc123" in e.case_ids)
             self.assertTrue("123abc" in e.case_ids)
-
-
-class FileResponseStateHashTest(StateHashTest):
-
-    def setUp(self):
-        super(FileResponseStateHashTest, self).setUp()
-        update_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username, True)
-
-    def tearDown(self):
-        clear_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username)

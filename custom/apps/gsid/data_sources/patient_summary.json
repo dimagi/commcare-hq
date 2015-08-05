@@ -1,0 +1,173 @@
+{
+    "domains": ["gsid", "gsid-demo"],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "table_id": "patient_summary",
+        "display_name": "Patient Summary",
+        "configured_filter":  {
+        },
+        "configured_indicators": [
+             {
+                "column_id": "domain",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "domain"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "gt",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "test_date",
+                            "datatype": "date"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": ""
+                    },
+                    "expression_if_true": {
+                       "type": "property_name",
+                       "property_name": "test_date"
+                    },
+                    "expression_if_false": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "disease_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "disease"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "test_version",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "test_version"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "country",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "country"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "province",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "province"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "district",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "district"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "clinic",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "clinic"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "gender",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "sex"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "diagnosis",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnosis"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "lot_number",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "lot_number"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "gps",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "gps"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "gps_country",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "gps_country"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "gps_province",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "gps_province"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "gps_district",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "gps_district"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "age",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "age"
+                },
+                "datatype": "integer"
+            }
+        ]
+    }
+}

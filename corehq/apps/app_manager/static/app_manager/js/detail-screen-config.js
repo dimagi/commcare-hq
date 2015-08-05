@@ -193,6 +193,198 @@ var filterViewModel = function(filterText, saveButton){
     };
 };
 
+var caseListLookupViewModel = function($el, state, saveButton){
+    'use strict';
+    var self = this,
+        detail_type = $el.data('detail-type');
+
+    var ObservableKeyValue = function(obs){
+        this.key = ko.observable(obs.key);
+        this.value = ko.observable(obs.value);
+    };
+
+    var _fireChange = function(){
+        saveButton.fire('change');
+    };
+
+    self.initSaveButtonListeners = function($el){
+        $el.find('input[type=text], textarea').bind('textchange', _fireChange);
+        $el.find('input[type=checkbox]').bind('change', _fireChange);
+        $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+    };
+
+    var _remove_empty = function(type){
+        self[type].remove(function(t){
+            var is_blank = (!t.key() && !t.value());
+            return is_blank;
+        });
+    };
+
+    self.add_item = function(type){
+        _remove_empty(type);
+        var data = (type === 'extras') ? {key: '', value: ''} : {key: ''};
+        self[type].push(new ObservableKeyValue(data));
+    };
+
+    self.remove_item = function(type, item){
+        self[type].remove(item);
+        if (self[type]().length === 0){
+            self.add_item(type);
+        }
+        _fireChange();
+    };
+
+    var _trimmed_extras = function(){
+        return _.compact(_.map(self.extras(), function(extra){
+            if (!(extra.key() === "" && extra.value() ==="")){
+                return {key: extra.key(), value: extra.value()};
+            }
+        }));
+    };
+
+    var _trimmed_responses = function(){
+        return _.compact(_.map(self.responses(), function(response){
+            if (response.key() !== ""){
+                return {key: response.key()};
+            }
+        }));
+    };
+
+    self.serialize = function(){
+        var image_path = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
+
+        var data = {
+            lookup_enabled: self.lookup_enabled(),
+            lookup_action: self.lookup_action(),
+            lookup_name: self.lookup_name(),
+            lookup_extras: _trimmed_extras(),
+            lookup_responses: _trimmed_responses(),
+            lookup_image: image_path,
+        };
+
+        return data;
+    };
+
+    var _validate_inputs = function(errors){
+        errors = errors || [];
+        $el.find('input[required]').each(function(){
+            var $this = $(this);
+            if ($this.val().trim().length === 0){
+                $this.closest('.control-group').addClass('error');
+                var $help = $this.siblings('.help-inline');
+                $help.show();
+                errors.push($help.text());
+            }
+            else {
+                $this.closest('.control-group').removeClass('error');
+                $this.siblings('.help-inline').hide();
+            }
+        });
+        return errors;
+    };
+
+    var _validate_extras = function(errors){
+        errors = errors || [];
+        var $extra = $el.find("#" + detail_type + "-extras"),
+            $extra_help = $extra.find(".help-inline");
+
+        if (!_trimmed_extras().length){
+            $extra.addClass('error');
+            $extra_help.show();
+            errors.push($extra_help.text());
+        }
+        else {
+            $extra.removeClass('error');
+            $extra_help.hide();
+        }
+        return errors;
+    };
+
+    var _validate_responses = function(errors){
+        errors = errors || [];
+        var $response = $el.find("#" + detail_type + "-responses"),
+            $response_help = $response.find(".help-inline");
+
+        if (!_trimmed_responses().length){
+            $response.addClass('error');
+            $response_help.show();
+            errors.push($response_help.text());
+        }
+        else {
+            $response.removeClass('error');
+            $response_help.hide();
+        }
+        return errors;
+    };
+
+    self.validate = function(){
+        var errors = [];
+
+        $("#message-alerts > div").each(function(){
+            $(this).alert('close');
+        });
+
+        if (self.lookup_enabled()){
+            _validate_inputs(errors);
+            _validate_extras(errors);
+            _validate_responses(errors);
+        }
+
+        if (errors.length){
+            _.each(errors, function(error){
+                alert_user(error, "error");
+            });
+            return false;
+        }
+        return true;
+    };
+
+    self.$el = $el;
+    self.$form = $el.find('form');
+
+    self.lookup_enabled = ko.observable(state.lookup_enabled);
+    self.lookup_action = ko.observable(state.lookup_action);
+    self.lookup_name = ko.observable(state.lookup_name);
+    self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
+        return new ObservableKeyValue(extra);
+    }));
+    self.responses = ko.observableArray(ko.utils.arrayMap(state.lookup_responses, function(response){
+        return new ObservableKeyValue(response);
+    }));
+
+    if (self.extras().length === 0){
+        self.add_item('extras');
+    }
+    if (self.responses().length === 0){
+        self.add_item('responses');
+    }
+
+    self.show_add_extra = ko.computed(function(){
+        if (self.extras().length){
+            var last_key = self.extras()[self.extras().length - 1].key(),
+                last_value = self.extras()[self.extras().length - 1].value();
+            return !(last_key === "" && last_value === "");
+        }
+        return true;
+    });
+
+    self.show_add_response = ko.computed(function(){
+        if (self.responses().length){
+            var last_key = self.responses()[self.responses().length - 1].key();
+            return last_key !== "";
+        }
+        return true;
+    });
+
+    self.initSaveButtonListeners(self.$el);
+};
+
+ko.bindingHandlers.addSaveButtonListener = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        bindingContext.$parent.initSaveButtonListeners($(element).parent());
+    }
+};
+
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -557,6 +749,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
@@ -684,16 +877,23 @@ var DetailScreenConfig = (function () {
                         }
                     }
                 }
-
-                this.saveButton.ajax({
-                    url: this.saveUrl,
-                    type: "POST",
-                    data: this.serialize(),
-                    dataType: 'json',
-                    success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
-                    }
-                });
+                if (this.validate()){
+                    this.saveButton.ajax({
+                        url: this.saveUrl,
+                        type: "POST",
+                        data: this.serialize(),
+                        dataType: 'json',
+                        success: function (data) {
+                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                        }
+                    });
+                }
+            },
+            validate: function(){
+                if (this.containsCaseListLookupConfiguration){
+                    return this.config.caseListLookup.validate();
+                }
+                return true;
             },
             serialize: function () {
                 var columns = this.columns();
@@ -749,6 +949,9 @@ var DetailScreenConfig = (function () {
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
+                }
+                if (this.containsCaseListLookupConfiguration){
+                    data.case_list_lookup = JSON.stringify(this.config.caseListLookup.serialize());
                 }
                 if (this.containsCustomXMLConfiguration){
                     data.custom_xml = this.config.customXMLViewModel.xml();
@@ -831,6 +1034,7 @@ var DetailScreenConfig = (function () {
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
+                        containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
                         containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long',
                         allowsEmptyColumns: columnType == 'long'
@@ -864,6 +1068,8 @@ var DetailScreenConfig = (function () {
                 this.customXMLViewModel.xml.subscribe(function(v){
                     that.shortScreen.saveButton.fire("change");
                 });
+                var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
+                this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long");

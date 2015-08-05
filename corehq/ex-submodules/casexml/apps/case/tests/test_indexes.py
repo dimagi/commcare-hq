@@ -157,8 +157,8 @@ class IndexTest(TestCase):
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        xform = post_case_blocks([block.as_xml()],
-                                 form_extras={'domain': child_domain})
+        xform, _ = post_case_blocks([block.as_xml()],
+                                    form_extras={'domain': child_domain})
 
         self.assertIsInstance(xform, XFormError)
         self.assertEqual(xform.doc_type, 'XFormError')

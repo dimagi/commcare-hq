@@ -3,12 +3,14 @@
 ########################
 
 # GENERAL PROCESS
-# From your commcare-hq directory with the virtualenv turned on
-# to safely push your changes to scripts/staging.yaml
+# From your commcare-hq directory with the virtualenv turned on and master
+# checked out to safely push your changes to scripts/staging.yaml
 #     $ scripts/commit-staging --push
+# to check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging --deploy
-# Both commands commands can be run without the flag as well.
+# Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
 # First, determine where the conflict lies.
@@ -21,7 +23,7 @@
 #     you can't just merge foo into bar or vice versa, otherwise the PR
 #     for foo will contain commits from bar.  Instead make a third,
 #     conflict-resolution branch:
-#       $ git checkout -b foo+bar origin/foo
+#       $ git checkout -b foo+bar --no-track origin/foo
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
@@ -43,35 +45,38 @@
 trunk: master
 name: autostaging
 branches:
-  - fix-time-ago-sort  # danny 5/15
-  - process-timezone  # danny 5/7
-  - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
-  - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - usercase # Norman 3/27
-  - case-list-menu-icons # TS 5/4
   - update-submodules # TS 5/6
-  - locations-for-robber-barons  # Ethan 5/7
-  - form-context-simple # Ben 5/13
-  - abt-report-2 # Noah 5/14
+  - languageMedia # Sravan 6/10
+  - web-user-requests # Jenny, July 16
+  - template-apps # Jenny, July 20
+  - FormArchive # Sravan 7/22
+  # - due-list+icds/scheduler # TS 7/30
+  # - icds/scheduler # Farid 7/22
+  - ckeditor # J$ 7/24
+#  - due-list # TS 7/30
+  - fixture-locations  # Ethan 8/3
+  - hide-report-locations  # Ethan 8/4
+  #- django17 # J$ 8/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-    #  - tf-persistence  # wsp 3/10
-      - tf-persistence  # wsp 5/7
-      - use-classes # ben 5/7
-      - form-context-simple # ben 5/13
-
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/ctable-src:
+    branches: []
   submodules/django-digest-src:
-    branches:
-      - atomic  # Ethan 4/22
+    branches: []
   submodules/pillowtop-src:
-    branches:
-      - atomic  # Ethan 4/22
+    branches: []
+  submodules/django-soil-src:
+    branches: []
+  submodules/django-prbac-src:
+    branches: []
+      #- django18
+

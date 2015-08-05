@@ -4,11 +4,12 @@ import string
 
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_xforms
-from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_transactions_multi
-from corehq.apps.commtrack.models import NewStockReport, SQLProduct, StockTransaction as STrans
+from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_state
+from corehq.apps.commtrack.models import StockReportHelper, SQLProduct, StockTransactionHelper as STrans
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack.processing import create_models_for_stock_report
 from corehq.apps.domain.shortcuts import create_domain
 from couchforms.models import XFormInstance
 
@@ -26,7 +27,7 @@ class StockReportDomainTest(TestCase):
     def create_report(self, transactions=None, tag=None, date=None):
         form = XFormInstance(domain=self.domain)
         form.save()
-        report = NewStockReport(
+        report = StockReportHelper(
             form,
             date or datetime.utcnow(),
             tag or REPORT_TYPE_BALANCE,
@@ -64,7 +65,7 @@ class StockReportDomainTest(TestCase):
                     self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
 
         self.new_stock_report, self.form = self.create_report(transactions_flat)
-        self.new_stock_report.create_models(self.domain)
+        create_models_for_stock_report(self.domain, self.new_stock_report)
 
     def tearDown(self):
         delete_all_xforms()
@@ -103,7 +104,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=864)
         ], date=date)
-        report.create_models(self.domain)
+        create_models_for_stock_report(self.domain, report)
 
         # create second report with the same date
         # results should have this transaction and not the previous one
@@ -115,7 +116,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=1)
         ], date=date)
-        report.create_models(self.domain)
+        create_models_for_stock_report(self.domain, report)
 
         new_trans = self.transactions.copy()
         new_trans['c1']['s1']['p1'] = 1
@@ -132,12 +133,12 @@ class StockReportDomainTest(TestCase):
 
         self.assertEqual({}, get_current_ledger_transactions('non-existent'))
 
-    def test_get_current_ledger_transactions_multi(self):
+    def test_get_current_ledger_state(self):
         def test_transactions(expected):
-            transactions = get_current_ledger_transactions_multi(self.case_ids.keys())
-            for case, sections in transactions.items():
+            state = get_current_ledger_state(self.case_ids.keys())
+            for case, sections in state.items():
                 self._validate_case_data(sections, expected[case])
 
         self._test_get_current_ledger_transactions(test_transactions)
 
-        self.assertEqual({}, get_current_ledger_transactions_multi([]))
+        self.assertEqual({}, get_current_ledger_state([]))

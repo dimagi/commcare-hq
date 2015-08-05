@@ -27,6 +27,13 @@ def AND(*filters):
     return {"and": filters}
 
 
+def NOT(filter):
+    """
+    Exclude docs matching the filter passed in
+    """
+    return {"not": filter}
+
+
 def range_filter(field, gt=None, gte=None, lt=None, lte=None):
     """
     You must specify either gt (greater than) or gte (greater than or

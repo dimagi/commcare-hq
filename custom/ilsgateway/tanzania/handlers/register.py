@@ -2,7 +2,7 @@ import re
 
 from django.contrib.auth.models import User
 
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CommCareUser
@@ -28,18 +28,11 @@ class RegisterHandler(KeywordHandler):
         return sp['location']
 
     def _get_district_location(self, domain, sp):
-        locs = Location.view('locations/by_name',
-                             startkey=[domain, "DISTRICT", sp],
-                             endkey=[domain, "DISTRICT", sp + "z"],
-                             reduce=False,
-                             include_docs=True)
-        if len(locs) > 1:
-            locs = Location.view('locations/by_name',
-                                 startkey=[domain, "DISTRICT", sp],
-                                 endkey=[domain, "DISTRICT", sp],
-                                 reduce=False,
-                                 include_docs=True)
-        return locs[0]
+        return SQLLocation.objects.filter(
+            domain=domain,
+            location_type__name="DISTRICT",
+            name=sp,
+        )[0].couch_location
 
     def handle(self):
         text = ' '.join(self.msg.text.split()[1:])

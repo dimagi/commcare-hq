@@ -2,6 +2,7 @@
 {% load proptable_tags %}
 {% load xform_tags %}
 {% load hq_shared_tags %}
+{% load humanize %}
 {% comment %}
 requires imports/proptable.html to be included in the main template
 {% endcomment %}
@@ -26,85 +27,37 @@ requires imports/proptable.html to be included in the main template
     overflow: scroll;
     width: 800px;
 }
+.hq-help {
+    /* TODO: does .hq-help really need to be width 0 by default? */
+    width: auto;
+}
+#form-actions-toolbar form {
+    display: inline-block;
+}
+#form-actions-toolbar > * {
+  margin-left: 10px;
+}
+
 </style>
 <script>
     $(function () {
-        var help_text = {
-            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}",
-            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
-            "{% trans "Resaving Forms" %}": "{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
-        };
-        $('.help_popover').popover({
-            placement: 'left',
-            trigger: 'hover',
-            title: function () {
-                return $(this).attr('data-help-key');
-            },
-            content: function () {
-                return help_text[$(this).attr('data-help-key')];
-            }
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
         });
-    });
-    $(function () {
-        $('.hq-help').hqHelp();
-        function showReadable() {
-            $('.form-data-raw').hide();
-            $('.form-data-readable').show();
-        }
-        function showRaw() {
-            $('.form-data-readable').hide();
-            $('.form-data-raw').show();
-        }
-        $('.showReadable').click(showReadable);
-        $('.showRaw').click(showRaw);
-        $('.formDisplayToggle a').click(function () {
-            $(this).tab('show');
-            return false;
-        });
-
-        // On page load, initially set show readable
-        showReadable();
-
-        function showSkipped(show) {
-            if (show) {
-                $('.form-data-skipped').show();
-                $('.form-data-skipped-spacer').hide();
-                $('.form-data-hidden-values').each(function () {
-                    $(this).show();
-                });
-            } else {
-                $('.form-data-skipped').hide();
-                $('.form-data-skipped-spacer').show();
-                $('.form-data-hidden-values').each(function () {
-                    var current = $(this).next();
-                    while (current.is('.form-data-question')) {
-                        console.log(current);
-                        if (!current.is('.form-data-skipped')) {
-                            return;
-                        }
-                        current = current.next();
-                    }
-                    $(this).hide();
-                });
-            }
-        }
-        $('.showSkippedToggle').change(function () {
-            showSkipped($(this).is(':checked'));
-        }).each(function () {
-            if ($('.form-data-skipped').length == 0) {
-                $(this).parent('label').hide();
-            }
-        });
-        showSkipped(false);
 
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
             document.getElementById('archive-spinner').style.display='inline-block';
-            ga_track_event('Reports', 'Case History', 'Archive this form', {
-                'hitCallback': function () {
+
+            // _.after(2,...) means the callback will only be called after *both* analytics
+            // functions have finished.
+            var analyticsCallback = _.after(2, function() {
                     document.getElementById('archive-form').submit();
                 }
-            });
+            );
+            analytics.usage('Reports', 'Case History', 'Archive this form', {'hitCallback': analyticsCallback});
+            analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
+
             return false;
         });
         $("#unarchive-form").submit(function() {
@@ -159,28 +112,46 @@ requires imports/proptable.html to be included in the main template
 {% endif %}
 </div>
 {% endif %}
-<div class="pull-right">
-    {% if auth_context.authenticated %}
-        <i class="icon-lock"></i>
-        {% if user_info.id != auth_user_info.id %}
-        {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
-            Submitted by {{ auth_user }} on behalf of {{ user }}
-        {% endblocktrans %}
-        {% endif %}
-        {% if user_info.id == auth_user_info.id %}
-        {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
-            Submitted by {{ auth_user }}
-        {% endblocktrans %}
-        {% endif %}
-    {% endif %}
-    {% if not auth_context.authenticated %}
-        <i class="icon-unlock"></i>
-        {% blocktrans with user=user_info|pretty_doc_info %}
-        Submitted as {{ user }}
-        {% endblocktrans %}
-    {% endif %}
+{% if edit_info.was_edited %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
+    {% blocktrans %}
+    This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+    {% endblocktrans %}
 </div>
-<ul class="nav nav-tabs clearfix">
+{% endif %}
+{% if edit_info.is_edit %}
+<div class="alert alert-full alert-block">
+    {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
+    {% blocktrans with when=edit_info.edit_on|naturaltime %}
+        This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
+    {% endblocktrans %}
+</div>
+{% endif %}
+<div class="clearfix">
+    <div class="pull-right">
+        {% if auth_context.authenticated %}
+            <i class="icon-lock"></i>
+            {% if user_info.id != auth_user_info.id %}
+            {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
+                Submitted by {{ auth_user }} on behalf of {{ user }}
+            {% endblocktrans %}
+            {% endif %}
+            {% if user_info.id == auth_user_info.id %}
+            {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
+                Submitted by {{ auth_user }}
+            {% endblocktrans %}
+            {% endif %}
+        {% endif %}
+        {% if not auth_context.authenticated %}
+            <i class="icon-unlock"></i>
+            {% blocktrans with user=user_info|pretty_doc_info %}
+            Submitted as {{ user }}
+            {% endblocktrans %}
+        {% endif %}
+    </div>
+</div>
+<ul class="nav nav-tabs">
     <li class="active">
         <a href="#form-data" data-toggle="tab">
             {% trans "Form Properties" %}
@@ -215,37 +186,42 @@ requires imports/proptable.html to be included in the main template
         </a>
     </li>
 </ul>
-
 <div class="tab-content form-details" style="overflow:visible">
     <div class="tab-pane active" id="form-data" style="position:relative">
-        <div style="position: absolute; right: 0; top: 0">
+        <div class="btn-toolbar" id='form-actions-toolbar' style="position: absolute; right: 0; top: 0">
             {% if context_case_id %}
-            <p>
                 <a class="btn"
                     href="{% url "render_form_data" instance.domain instance.get_id %}">
                     {% trans "View standalone form" %}
                 </a>
-            </p>
             {% endif %}
-            {% if user.can_edit_data %}
-            <p>
-                {% if not is_archived %}
-                <form action="{% url "archive_form" domain instance.get_id %}" method="POST"
-                      id="archive-form">
-                    <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+            {% if show_edit_options %}
+                {% if show_edit_submission %}
+                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
+                            <i class="icon-edit"></i> {% trans "Edit submission" %}
+                        </a>
+                {% endif %}
+                {% if not is_archived and not edit_info.was_edited %}
+                <form action="{% url "archive_form" domain instance.get_id %}" method="POST" id="archive-form">
+                    <span class="hq-help-template"
+                        data-title="{% trans "Archiving Forms" %}"
+                        data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
-                {% else %}
+                {% endif %}
+                {% if is_archived %}
                 <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
                       id="unarchive-form">
-                    <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Restoring Forms" %}"
+                        data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn btn-primary" id="unarchive-form-btn">
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
@@ -255,58 +231,21 @@ requires imports/proptable.html to be included in the main template
                 {% if show_resave %}
                 <form action="{% url "resave_form" domain instance.get_id %}" method="POST"
                       id="resave-form">
-                    <span class="help_popover" data-help-key="{% trans "Resaving Forms" %}">
-                        <i class="icon icon-question-sign"></i>
-                    </span>
+                    <span class="hq-help-template"
+                        data-title="{% trans "Resaving Forms" %}"
+                        data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                        data-placement="left"
+                    ></span>
                     <button type="submit" class="btn" id="resave-form-btn">
                         {% trans "Resave this form" %}
                         <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>
                     </button>
                 </form>
                 {% endif %}
-                {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
-                            <i class="icon-edit"></i> {% trans "Edit submission" %}
-                        </a>
-                {% endif %}
-            </p>
+
             {% endif %}
         </div>
-
-        {% if question_list_not_found %}
-        <div class="row-fluid">
-            <div class="alert alert-warning clear-fix span6">
-                <strong>{{ question_list_not_found.message }}</strong>
-                <br/>
-                {% trans "All data is listed as Unrecognized Data." %}
-            </div>
-        </div>
-        {% else %}
-        <ul class="nav nav-pills formDisplayToggle">
-            <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
-            <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
-        </ul>
-        <label class="checkbox">
-            <input type="checkbox" class="showSkippedToggle"/>
-            {% trans "Show questions in form that were not shown to the user" %}
-            <a href="#" class="hq-help no-click">
-                <i class="icon-question-sign"
-                   data-title="{% trans "Questions not shown to the user" %}"
-                   data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
-                   data-trigger="hover"></i>
-            </a>
-        </label>
-        {% endif %}
-        <table class="table table-bordered form-data-table">
-            <tr>
-                <th class="span6">
-                    <span class="form-data-readable">{% trans "Question" %}</span>
-                    <span class="form-data-raw">{% trans "Question ID" %}</span>
-                </th>
-                <th class="span6">{% trans "Response" %}</th>
-            </tr>
-            {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
-        </table>
+        {% include 'reports/form/partials/readable_form.html' with questions=form_data %}
     </div>
 
     {% if cases %}

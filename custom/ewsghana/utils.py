@@ -9,6 +9,7 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
+from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
@@ -18,19 +19,10 @@ from custom.ewsghana.models import EWSGhanaConfig
 TEST_DOMAIN = 'ewsghana-receipts-test'
 
 
-def get_supply_points(location_id, domain):
-    loc = SQLLocation.objects.get(location_id=location_id)
-    if loc.location_type.name == 'district':
-        locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type.name == 'region':
-        locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__administrative=False)
-        )
-    elif not loc.location_type.administrative:
-        locations = SQLLocation.objects.filter(id=loc.id)
-    else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
-    return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
+def get_descendants(location_id):
+    return SQLLocation.objects.get(
+        location_id=location_id
+    ).get_descendants().exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
 
 def get_second_week(start_date, end_date):
@@ -200,10 +192,6 @@ class ProductsReportHelper(object):
         self.location = location
         self.transactions = transactions
 
-    @property
-    def sql_location(self):
-        return self.location.sql_location
-
     def reported_products_ids(self):
         return {transaction.product_id for transaction in self.transactions}
 
@@ -218,9 +206,9 @@ class ProductsReportHelper(object):
         date = datetime.utcnow() - timedelta(days=7)
         earlier_reported_products = StockState.objects.filter(
             product_id__in=products_ids,
-            case_id=self.location.sql_location.supply_point_id
+            case_id=self.location.supply_point_id
         ).exclude(last_modified_date__lte=date).values_list('product_id', flat=True).distinct()
-        missing_products = self.location.sql_location.products.distinct().values_list(
+        missing_products = self.location.products.distinct().values_list(
             'product_id', flat=True
         ).exclude(product_id__in=earlier_reported_products).exclude(product_id__in=self.reported_products_ids())
         if not missing_products:
@@ -231,7 +219,7 @@ class ProductsReportHelper(object):
         product_ids = [product.product_id for product in self.reported_products()]
         return StockState.objects.filter(
             product_id__in=product_ids,
-            case_id=self.sql_location.supply_point_id
+            case_id=self.location.supply_point_id
         )
 
     def stockouts(self):
@@ -270,17 +258,11 @@ class ProductsReportHelper(object):
         ]
 
 
-def get_reporting_types(domain):
-    return [
-        location_type for location_type in Domain.get_by_name(domain).location_types
-        if not location_type.administrative
-    ]
-
-
 def can_receive_email(user, verified_number):
     return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
 
 
+@quickcache(['domain'])
 def get_country_id(domain):
     return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
 
@@ -308,3 +290,87 @@ def first_item(items, f):
     for item in items:
         if f(item):
             return item
+
+REPORT_MAPPING = {
+    'dashboard_report': 'custom.ewsghana.reports.specific_reports.dashboard_report.DashboardReport',
+    'stock_status': 'custom.ewsghana.reports.specific_reports.stock_status_report.StockStatus',
+    'reporting_page': 'custom.ewsghana.reports.specific_reports.reporting_rates.ReportingRatesReport',
+    'ews_mapreport': 'custom.ewsghana.reports.maps.EWSMapReport',
+    'cms_rms_summary_report': 'custom.ewsghana.reports.email_reports.CMSRMSReport',
+    'stock_summary_report': 'custom.ewsghana.reports.email_reports.StockSummaryReport'
+}
+
+
+def filter_slugs_by_role(couch_user, domain):
+    slugs = [
+        ['dashboard_report', 'Dashboard'],
+        ['stock_status', 'Stock Status'],
+        ['reporting_page', 'Reporting'],
+        ['ews_mapreport', 'Maps'],
+        ['stock_summary_report', 'Stock Summary'],
+        ['cms_rms_summary_report', 'CMS and RMS Summary']
+    ]
+    if couch_user.is_domain_admin(domain) or couch_user.is_superuser:
+        return slugs
+    domain_membership = couch_user.get_domain_membership(domain)
+    permissions = domain_membership.permissions
+    if not permissions.view_reports:
+        return [slug for slug in slugs if REPORT_MAPPING[slug[0]] in permissions.view_report_list]
+
+
+def ews_date_format(date):
+    return date.strftime("%b %d, %Y")
+
+TEACHING_HOSPITAL_MAPPING = {
+    'kath': {'parent_external_id': '319'},
+    'kbth': {'parent_external_id': '2'},
+}
+
+TEACHING_HOSPITALS = ['kath', 'kbth', 'ccmh', 'trh']
+
+
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step
+
+
+def get_products_for_locations(locations):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+    ).exclude(is_archived=True)
+
+
+def get_products_for_locations_by_program(locations, program):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+        program_id=program
+    ).exclude(is_archived=True)
+
+
+def get_products_for_locations_by_products(locations, products):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+    ).filter(pk__in=products).exclude(is_archived=True)
+
+
+def get_supply_points(domain, location_id):
+    supply_points = []
+    if location_id:
+        location = SQLLocation.objects.get(
+            domain=domain,
+            location_id=location_id
+        )
+        if location.location_type.name == 'country':
+            supply_points = SQLLocation.objects.filter(
+                Q(parent__location_id=location_id, is_archived=False) |
+                Q(location_type__name='Regional Medical Store', domain=domain) |
+                Q(location_type__name='Teaching Hospital', domain=domain)
+            ).order_by('name').exclude(supply_point_id__isnull=True)
+        else:
+            supply_points = SQLLocation.objects.filter(
+                parent__location_id=location_id, is_archived=False,
+                location_type__administrative=False,
+            ).order_by('name').exclude(supply_point_id__isnull=True)
+    return supply_points

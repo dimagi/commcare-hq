@@ -103,6 +103,10 @@ var showSuccess = function (message, location, autoHideTime) {
     _show(message, location, autoHideTime, "alert alert-success");
 };
 
+var showRenderedForm = function (message, $location) {
+    $location.html(message || "Could not render form");
+};
+
 var _show = function (message, location, autoHideTime, classes) {
     var alert = $("<div />");
     alert.addClass(classes).text(message);

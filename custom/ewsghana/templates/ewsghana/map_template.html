@@ -5,14 +5,16 @@
 
 {% block js %} {{ block.super }}
     <script src="{% static 'ewsghana/report_links.js' %}"></script>
+    <script src='{% static 'ewsghana/js/lib/leaflet-image/leaflet-image.min.js' %}'></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
     <script>
-        var slugs = [['dashboard_report', 'Dashboard'], ['stock_status', 'Stock Status Report'],
-            ['reporting_page', 'Reporting Rates'], ['ews_mapreport', 'Maps'],
-            ['stock_summary_report', 'Stock Summary Report'],
-            ['cms_rms_summary_report', 'CMS and RMS Summary Report']];
-        add_report_links(slugs);
+        add_report_links({{ context.slugs|JSON }});
     </script>
+{% endblock %}
+
+{% block reportcontent %}
+    <button style="margin: 10px;" class="btn btn-default" id="export-jpg">Save this map to .jpg</button>
+    {{ block.super }}
 {% endblock %}

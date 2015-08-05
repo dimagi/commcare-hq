@@ -4,6 +4,8 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
+    get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
@@ -72,8 +74,7 @@ def active_mobile_users(domain, *args):
 
 
 def cases(domain, *args):
-    row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
-    return row["value"] if row else 0
+    return get_number_of_cases_in_domain(domain)
 
 
 def cases_in_last(domain, days):
@@ -290,9 +291,7 @@ def _all_domain_stats():
                                     endkey=key+[{}]
                              ).all()]))
 
-    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
-                             get_db().view("hqcase/types_by_domain",
-                                           group=True,group_level=1).all()]))
+    case_counts.update(get_number_of_cases_per_domain())
 
     return {"web_users": webuser_counts,
             "commcare_users": commcare_counts,

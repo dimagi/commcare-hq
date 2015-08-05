@@ -88,7 +88,7 @@
              <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
         </form>
     {% endif %}
-    {% if not case.closed %}
+    {% if not case.closed and not is_usercase %}
         <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case">
              <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
         </form>

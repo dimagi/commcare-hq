@@ -14,20 +14,9 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-       var help_text = {
-           "Released": "This is used for automatically updating CommCare applications. If the \"Auto-update\" setting is " +
-                   "set to Daily or Weekly, any application versions that are marked as released will update to the latest" +
-                   "released version when checking for updates.",
-       };
-       $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
-            });
+       $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+       });
     });
     $(function () {
         // init releases
@@ -58,7 +47,7 @@
         el.show();
     });
 
-    analytics.track('Visited the Release Manager');
+    analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     function track_deploy_type(type) {
@@ -138,7 +127,7 @@
         </div>
         <button class="btn btn-primary" data-bind="
             click: function() {
-                analytics.track('Clicked Make New Version');
+                analytics.workflow('Clicked Make New Version');
                 return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -154,10 +143,14 @@
                 <th></th>
                 <th></th>
                 <th>{% trans "Comment" %}</th>
-                <th class="help_popover" data-help-key="Released">
-                    <a href="#">{% trans "Released" %} <i class="icon icon-question-sign"></i></a>
+                <th>
+                    {% trans "Released" %}
+                    <span class="hq-help-template"
+                        data-title="Released"
+                        data-content="This is used for automatically updating CommCare applications. If the &quot;Auto-update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
+                        data-placement="left"
+                    ></span>
                 </th>
-
             </tr>
             <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
@@ -216,7 +209,7 @@
                                 click: function() {
                                     generate_short_url('short_odk_url');
                                     ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.track('Clicked Deploy');
+                                    analytics.workflow('Clicked Deploy');
                                 }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
@@ -383,11 +376,18 @@
                                                 <div data-bind="ifnot: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0')">
                                                     Upgrade to CommCare 2.13 to use this feature
                                                 </div>
-                                                <div data-bind="if: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0')">
+                                                <div data-bind="ifnot: allow_media_install">
+                                                    Offline install is unavailable for Remote Apps.
+                                                </div>
+                                                <div data-bind="if: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a data-bind="attr: {href: $root.url('ccz', id)}">CommCare.ccz</a>
+                                                            <a href="#" data-bind="click: function () {
+                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                            }">
+                                                                CommCare.ccz
+                                                            </a>
                                                         </li>
                                                         <li>
                                                             {% trans "Transfer it to your Android phone's file system" %}
@@ -401,7 +401,7 @@
                                                     </ol>
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
-                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android#InstallingCommCareODKAndroid-C.OfflineInstall'>Help Site</a> for more info." %}
+                                                        {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
                                                 </div>
                                             </div>
@@ -501,15 +501,16 @@
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia" data-bind="
+                                <a class="accordion-toggle" data-toggle="collapse" data-bind="
                                     click: function() { track_deploy_type('Download Multimedia'); },
+                                    attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
                                 ">
                                     {% trans 'Download Multimedia' %}
                                 </a>
                             </div>
-                            <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                            <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
-                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
                             </div>
                         </div>
@@ -532,4 +533,8 @@
             </div>
         </script>
     </div>
+
+<!-- Async Download Modals -->
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' include_js=False%}
 {% endblock %}

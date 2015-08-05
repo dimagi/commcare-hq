@@ -7,13 +7,14 @@ from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.backend import test
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.utils import prepare_domain, bootstrap_user
-from custom.logistics.test.test_script import TestScript
+from custom.logistics.tests.test_script import TestScript
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.models import DocDomainMapping
 
@@ -90,9 +91,11 @@ class EWSScriptTest(TestScript):
         p5.save()
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
         test.bootstrap(TEST_BACKEND, to_console=True)
-        bootstrap_user(username='stella', domain=domain.name, home_loc=loc)
-        bootstrap_user(username='super', domain=domain.name, home_loc=loc,
-                       phone_number='222222', user_data={'role': 'In Charge'})
+        cls.user1 = bootstrap_user(username='stella', first_name='test1', last_name='test1',
+                                   domain=domain.name, home_loc=loc)
+        cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc,
+                                   first_name='test2', last_name='test2',
+                                   phone_number='222222', user_data={'role': 'In Charge'})
 
         try:
             XFormInstance.get(docid='test-xform')
@@ -118,14 +121,13 @@ class EWSScriptTest(TestScript):
         MobileBackend.load_by_name(TEST_DOMAIN, TEST_BACKEND).delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
-        SQLLocation.objects.all().delete()
+        delete_all_locations()
         LocationType.objects.all().delete()
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        Location.by_site_code(TEST_DOMAIN, 'garms').delete()
         generator.delete_all_subscriptions()
         Domain.get_by_name(TEST_DOMAIN).delete()
 

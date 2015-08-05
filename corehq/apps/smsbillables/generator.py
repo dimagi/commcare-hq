@@ -185,7 +185,10 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
 
 def arbitrary_currency():
     return Currency.objects.get_or_create(
-        rate_to_default=Decimal('%5.f' % random.uniform(0.5, 2.0)),
+        code='OTH',
+        defaults={
+            'rate_to_default': Decimal('%5.f' % random.uniform(0.5, 2.0)),
+        },
     )[0]
 
 

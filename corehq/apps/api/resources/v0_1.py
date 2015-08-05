@@ -1,30 +1,38 @@
 
 # Standard library imports
 from functools import wraps
+from itertools import imap
 import json
 
 # Django imports
 import datetime
+from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
 
 # Tastypie imports
 from tastypie import fields
-from tastypie.authentication import Authentication
+from tastypie.authentication import Authentication, ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
 
 # External imports
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
-from corehq.apps.domain.decorators import login_or_digest, login_or_basic
+from corehq.apps.domain.decorators import (
+    login_or_digest,
+    login_or_basic,
+    login_or_api_key
+)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -44,6 +52,8 @@ def determine_authtype(request):
         return 'basic'
     elif auth_header.startswith('digest '):
         return 'digest'
+    elif all(ApiKeyAuthentication().extract_credentials(request)):
+        return 'api_key'
 
     # the initial digest request doesn't have any authorization, so default to
     # digest in order to send back
@@ -75,6 +85,7 @@ class LoginAndDomainAuthentication(Authentication):
         decorator_map = {
             'digest': login_or_digest,
             'basic': login_or_basic,
+            'api_key': login_or_api_key,
         }
         return decorator_map[determine_authtype(request)]
 
@@ -302,7 +313,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        closed_only = {
+        include_closed = {
             'true': True,
             'false': False,
             'any': True
@@ -312,10 +323,15 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         key = [domain]
         if case_type:
             key.append(case_type)
-        status = 'all' if closed_only else 'open'
-        cases = CommCareCase.get_all_cases(domain, case_type=case_type, status=status, include_docs=True)
-        return list(cases)
 
+        if include_closed:
+            case_ids = get_case_ids_in_domain(domain, type=case_type)
+        else:
+            case_ids = get_open_case_ids_in_domain(domain, type=case_type)
+
+        cases = imap(CommCareCase.wrap,
+                     iter_docs(CommCareCase.get_db(), case_ids))
+        return list(cases)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)

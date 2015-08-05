@@ -1,3 +1,4 @@
+import traceback
 import requests
 import json
 from copy import deepcopy
@@ -10,26 +11,50 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.requestskit import get_auth
 
 
+class DocumentNotFound(Exception):
+    pass
+
+
+def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
+    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
+    try:
+        unwrapped = cls.get_db().get(doc_id)
+    except ResourceNotFound:
+        raise DocumentNotFound("Document {} of class {} not found!".format(
+            doc_id,
+            cls.__name__
+        ))
+
+    if ((unwrapped.get('domain', None) != domain and
+         domain not in unwrapped.get('domains', [])) or
+        unwrapped['doc_type'] not in allowed_doc_types):
+
+        raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+            doc_id,
+            cls.__name__,
+            domain,
+        ))
+
+    try:
+        return cls.wrap(unwrapped)
+    except WrappingAttributeError:
+        raise DocumentNotFound("Issue wrapping document {} of class {}!".format(
+            doc_id,
+            cls.__name__
+        ))
+
+
 def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     """
     Gets a document and enforces its domain and doc type.
     Raises Http404 if the doc isn't found or domain/doc_type don't match.
     """
-    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
     try:
-        unwrapped = cls.get_db().get(doc_id)
-    except ResourceNotFound:
-        raise Http404()
-
-    if ((unwrapped.get('domain', None) != domain and
-         domain not in unwrapped.get('domains', [])) or
-        unwrapped['doc_type'] not in allowed_doc_types):
-        raise Http404()
-
-    try:
-        return cls.wrap(unwrapped)
-    except WrappingAttributeError:
-        raise Http404()
+        return get_document_or_not_found(
+            cls, domain, doc_id, additional_doc_types=additional_doc_types)
+    except DocumentNotFound as e:
+        tb = traceback.format_exc()
+        raise Http404("{}\n\n{}".format(e, tb))
 
 
 def categorize_bulk_save_errors(error):
@@ -144,7 +169,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3):
+def iter_update(db, fn, ids, max_retries=3, verbose=False):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -152,7 +177,7 @@ def iter_update(db, fn, ids, max_retries=3):
     DocUpdate or None (which will skip the doc)
 
     iter_update returns an object with the following properties:
-    saved_ids, deleted_ids, ignored_ids,
+    'ignored_ids', 'not_found_ids', 'deleted_ids', 'updated_ids', 'error_ids'
 
     Ex: mark dimagi users as cool, delete the Canadians, and ignore the rest
 
@@ -220,4 +245,10 @@ def iter_update(db, fn, ids, max_retries=3):
                "change or remove the '_id' field?".format(fn.__name__) +
                ", ".join(results.error_ids))
         raise IterUpdateError(results, msg)
+
+    if verbose:
+        print "couldn't find {} docs".format(len(results.not_found_ids))
+        print "ignored {} docs".format(len(results.ignored_ids))
+        print "deleted {} docs".format(len(results.deleted_ids))
+        print "updated {} docs".format(len(results.updated_ids))
     return results

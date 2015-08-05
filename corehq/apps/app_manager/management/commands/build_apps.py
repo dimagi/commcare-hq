@@ -1,5 +1,6 @@
 import contextlib
 import json
+from optparse import make_option
 from django.core.management.base import BaseCommand
 from lxml import etree
 import os
@@ -30,6 +31,10 @@ def record_performance_stats(filepath, slug):
 
 class Command(BaseCommand):
     args = '<path_to_dir> <build-slug>'
+    option_list = BaseCommand.option_list + (
+        make_option('--perf', action='store_true', dest='track_perf', default=False,
+            help='Output performance metrics'),
+    )
     help = """
         Pass in a path to a directory (dir, below) with the following layout:
         dir/
@@ -66,7 +71,10 @@ class Command(BaseCommand):
                 app.domain = "test"
             build_path = os.path.join(path, build_slug, slug)
             print ' Creating files...'
-            with record_performance_stats(perfpath, slug):
+            if options.get('track_perf'):
+                with record_performance_stats(perfpath, slug):
+                    files = app.create_all_files()
+            else:
                 files = app.create_all_files()
 
             self.write_files(files, build_path)

@@ -1,11 +1,12 @@
-from couchforms.exceptions import ViewTooLarge
+from corehq.util.test_utils import unit_testing_only
+from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
 from django.conf import settings
 
 
 def get_form_ids_by_type(domain, type_, start=None, end=None):
     assert type_ in doc_types()
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     if end:
         endkey = startkey + end.isoformat()
     else:
@@ -27,7 +28,7 @@ def get_forms_by_type(domain, type_, recent_first=False,
     assert type_ in doc_types()
     # no production code should be pulling all forms in one go!
     assert limit is not None
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     endkey = startkey + [{}]
     if recent_first:
         startkey, endkey = endkey, startkey
@@ -45,7 +46,7 @@ def get_forms_by_type(domain, type_, recent_first=False,
 
 def get_forms_of_all_types(domain):
     assert settings.UNIT_TESTING
-    startkey = [domain, 'by_type']
+    startkey = [domain]
     endkey = startkey + [{}]
     return XFormInstance.view(
         "couchforms/all_submissions_by_domain",
@@ -59,7 +60,7 @@ def get_forms_of_all_types(domain):
 
 def get_number_of_forms_by_type(domain, type_):
     assert type_ in doc_types()
-    startkey = [domain, 'by_type', type_]
+    startkey = [domain, type_]
     endkey = startkey + [{}]
     submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
@@ -71,7 +72,7 @@ def get_number_of_forms_by_type(domain, type_):
 
 
 def get_number_of_forms_of_all_types(domain):
-    startkey = [domain, 'by_type']
+    startkey = [domain]
     endkey = startkey + [{}]
     submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",
@@ -82,24 +83,29 @@ def get_number_of_forms_of_all_types(domain):
     return submissions['value'] if submissions else 0
 
 
-def get_forms_in_date_range(domain, start, end):
-    # arbitrary hard limit of 10,000; can expand if this disturbs anything
-    limit = 10000
-    forms = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=[domain, "by_date", start.isoformat()],
-        endkey=[domain, "by_date", end.isoformat(), {}],
-        include_docs=True,
-        reduce=False,
-        limit=limit + 1
-    ).all()
-    if len(forms) > limit:
-        forms.pop(limit)
-        raise ViewTooLarge(forms)
-    return forms
-
-
-def clear_all_forms(domain):
+@unit_testing_only
+def clear_forms_in_domain(domain):
     items = get_forms_of_all_types(domain)
     for item in items:
         item.delete()
+
+
+def get_number_of_forms_all_domains_in_couch():
+    """
+    Return number of non-error, non-log forms total across all domains
+    specifically as stored in couch.
+
+    (Can't rewrite to pull from ES or SQL; this function is used as a point
+    of comparison between row counts in other stores.)
+
+    """
+    all_forms = (
+        XFormInstance.get_db().view('couchforms/by_xmlns').one()
+        or {'value': 0}
+    )['value']
+    device_logs = (
+        XFormInstance.get_db().view('couchforms/by_xmlns',
+                                    key=DEVICE_LOG_XMLNS).one()
+        or {'value': 0}
+    )['value']
+    return all_forms - device_logs

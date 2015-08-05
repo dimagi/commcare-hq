@@ -1,0 +1,28 @@
+# Android App Callout templates for Vellum
+#
+# Expected format (a list of app callout templates):
+#
+#   -
+#       icon: icon-vellum-android-intent
+#       name: Pretty App Name
+#       id: com.google.some.app.id
+#       extra:
+#           arg: ""
+#       response:
+#           r1: x
+#           r2: y
+#           r3: z
+#   -
+#       icon: icon-other
+#       name: Other App Name
+#       id: com.google.other.app.id
+#
+# "icon", "extra" and "response" are optional
+-
+   icon: icon-map-marker
+   name: Area Mapper
+   id: com.richard.lu.areamapper
+-
+   icon: icon-vellum-android-intent
+   name: Breath Counter
+   id: org.commcare.respiratory.BREATHCOUNT

@@ -6,10 +6,14 @@ import collections
 to_ts = dateparse.json_format_datetime
 
 MockTransaction = collections.namedtuple('MockTransaction', ['action', 'value', 'received_on'])
+
+
 def mock_transaction(action, value, age):
     return MockTransaction(action, value, ago(age))
 
 now = datetime.utcnow()
+
+
 def ago(days):
     return now - timedelta(days=days)
 
@@ -25,6 +29,3 @@ def mock_consumption(txdata, window, params=None):
         ago(window),
         config,
     )
-
-
-

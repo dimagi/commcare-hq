@@ -1,5 +1,13 @@
 """
-Basic usage:
+ESQuery
+=======
+
+ESQuery is a library for building elasticsearch queries in a friendly,
+more readable manner.
+
+Basic usage
+-----------
+
 There should be a file and subclass of ESQuery for each index we have.
 
 Each method returns a new object, so you can chain calls together like
@@ -7,16 +15,16 @@ SQLAlchemy. Here's an example usage:
 
 .. code-block:: python
 
-    q = FormsES()\\
-        .domain(self.domain)\\
-        .xmlns(self.xmlns)\\
-        .submitted(gte=self.datespan.startdate_param,
-                    lt=self.datespan.enddateparam)\\
-        .fields(['xmlns', 'domain', 'app_id'])\\
-        .sort('received_on', desc=False)\\
-        .size(self.pagination.count)\\
-        .start(self.pagination.start)\\
-        .terms_facet('babies.count', 'babies_saved', size=10)
+    q = (FormsES()
+         .domain(self.domain)
+         .xmlns(self.xmlns)
+         .submitted(gte=self.datespan.startdate_param,
+                    lt=self.datespan.enddateparam)
+         .fields(['xmlns', 'domain', 'app_id'])
+         .sort('received_on', desc=False)
+         .size(self.pagination.count)
+         .start(self.pagination.start)
+         .terms_facet('babies.count', 'babies_saved', size=10))
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -114,6 +122,7 @@ class ESQuery(object):
             filters.term,
             filters.OR,
             filters.AND,
+            filters.NOT,
             filters.range_filter,
             filters.date_range,
             filters.exists,
@@ -178,7 +187,6 @@ class ESQuery(object):
     def _query(self):
         return self.es_query['query']['filtered']['query']
 
-    @property
     def set_query(self, query):
         """
         Add a query.  Most stuff we want is better done with filters, but
@@ -188,7 +196,7 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
-    def assemble(self):
+    def _assemble(self):
         """
         Build out the es_query dict
         """
@@ -231,7 +239,7 @@ class ESQuery(object):
     @property
     def raw_query(self):
         query = deepcopy(self)
-        query.assemble()
+        query._assemble()
         return query.es_query
 
     def dumps(self, pretty=False):

@@ -111,32 +111,21 @@ class AsyncLocationFilter(BaseReportFilter):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                         'resource_name': 'location',
                                                         'api_name': 'v0.3'})
-        selected_loc_id = self.request.GET.get('location_id')
-        user = CouchUser.get_by_username(unicode(self.request.user))
-        domain = Domain.get_by_name(self.domain)
+        user = self.request.couch_user
+        loc_id = self.request.GET.get('location_id')
+        if not loc_id:
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership:
+                loc_id = domain_membership.location_id
 
-        context = {}
-        location_id = None
-
-        domain_membership = user.get_domain_membership(self.domain)
-        if domain_membership:
-            location_id = domain_membership.location_id
-
-        if not selected_loc_id and location_id and domain.commtrack_enabled:
-            selected_loc_id = location_id
-            if domain.location_restriction_for_users:
-                context.update({'restriction': domain.location_restriction_for_users})
-
-        context.update({
+        return {
             'api_root': api_root,
             'control_name': self.label, # todo: cleanup, don't follow this structure
             'control_slug': self.slug, # todo: cleanup, don't follow this structure
-            'loc_id': selected_loc_id,
-            'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
+            'loc_id': loc_id,
+            'locations': load_locs_json(self.domain, loc_id, user=user),
             'hierarchy': location_hierarchy_config(self.domain)
-        })
-
-        return context
+        }
 
     @classmethod
     def get_value(cls, request, domain):

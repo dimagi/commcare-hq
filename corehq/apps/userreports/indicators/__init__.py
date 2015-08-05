@@ -1,3 +1,4 @@
+from corehq.apps.userreports.sql import truncate_value
 from fluff import TYPE_INTEGER
 
 
@@ -7,6 +8,13 @@ class Column(object):
         self.datatype = datatype
         self.is_nullable = is_nullable
         self.is_primary_key = is_primary_key
+
+    @property
+    def database_column_name(self):
+        """
+        Column name going into the database - needs to be truncated according to db limitations
+        """
+        return truncate_value(self.id)
 
     def __repr__(self):
         return self.id

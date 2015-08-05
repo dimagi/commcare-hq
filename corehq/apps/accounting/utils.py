@@ -77,15 +77,19 @@ def fmt_product_rate_dict(product, product_rate=None):
 
 
 def get_privileges(plan_version):
-    role = plan_version.role
+    role = plan_version.role.get_cached_role()
     return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
 def get_change_status(from_plan_version, to_plan_version):
-    all_privs = set(privileges.MAX_PRIVILEGES)
+    from_privs = (
+        get_privileges(from_plan_version)
+        if from_plan_version is not None
+        else set(privileges.MAX_PRIVILEGES)
+    )
     to_privs = get_privileges(to_plan_version) if to_plan_version is not None else set()
 
-    downgraded_privs = all_privs.difference(to_privs)
+    downgraded_privs = from_privs.difference(to_privs)
     upgraded_privs = to_privs
 
     from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
@@ -112,10 +116,9 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
         plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
-        roles = Role.objects.filter(slug=privilege_slug)
-        if not roles:
+        privilege = Role.get_privilege(privilege_slug, assignment)
+        if privilege is None:
             return False
-        privilege = roles[0].instantiate(assignment)
         if plan_version.role.has_privilege(privilege):
             return True
     except ProductPlanNotFoundError:
@@ -191,30 +194,25 @@ def fmt_dollar_amount(decimal_value):
 
 def get_customer_cards(account, username, domain):
     from corehq.apps.accounting.models import (
-        PaymentMethod, BillingAccountAdmin, PaymentMethodType,
+        PaymentMethod, PaymentMethodType,
     )
     from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
     try:
         payment_method = PaymentMethod.objects.get(
-            account=account,
-            billing_admin=BillingAccountAdmin.objects.get(
-                web_user=username,
-                domain=domain,
-            ),
+            web_user=username,
             method_type=PaymentMethodType.STRIPE
         )
         stripe_customer = get_or_create_stripe_customer(payment_method)
         return stripe_customer.cards
-    except (PaymentMethod.DoesNotExist, BillingAccountAdmin.DoesNotExist):
+    except (PaymentMethod.DoesNotExist):
         pass
     return None
 
 
 def is_accounting_admin(user):
-    roles = Role.objects.filter(slug=privileges.ACCOUNTING_ADMIN)
-    if not roles:
+    accounting_privilege = Role.get_privilege(privileges.ACCOUNTING_ADMIN)
+    if accounting_privilege is None:
         return False
-    accounting_privilege = roles[0].instantiate({})
     try:
         return user.prbac_role.has_privilege(accounting_privilege)
     except (AttributeError, UserRole.DoesNotExist):

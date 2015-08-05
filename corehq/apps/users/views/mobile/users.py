@@ -20,10 +20,10 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     EntryPoint,
 )
@@ -46,6 +46,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -54,9 +55,9 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_download
+from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -158,10 +159,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
-        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
+        if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
-                'commtrack_enabled': self.request.project.commtrack_enabled,
-                'locations_enabled': self.request.project.locations_enabled,
+                'commtrack_enabled': self.domain_object.commtrack_enabled,
+                'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
@@ -232,11 +233,9 @@ class ListCommCareUsersView(BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-        except PermissionDenied:
+        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
             return False
-        return True
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
 
     @property
     def can_add_extra_users(self):
@@ -248,9 +247,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
             (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
 
     @property
-    def is_billing_admin(self):
-        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
-                or self.couch_user.is_superuser)
+    def can_edit_billing_info(self):
+        return self.couch_user.is_domain_admin(self.domain) or self.couch_user.is_superuser
 
     def _escape_val_error(self, expression, default):
         try:
@@ -333,7 +331,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
-            'is_billing_admin': self.is_billing_admin,
+            'can_edit_billing_info': self.can_edit_billing_info,
         }
 
 
@@ -439,7 +437,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             if self.more_columns:
                 u_data.update({
                     'form_count': user.form_count,
-                    'case_count': user.case_count,
+                    'case_count': user.analytics_only_case_count,
                 })
                 if self.show_case_sharing:
                     u_data.update({
@@ -491,7 +489,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
@@ -710,8 +708,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
+        upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
@@ -760,7 +758,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             return HttpResponseBadRequest(e)
 
-        task_ref = expose_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),
@@ -790,7 +788,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -837,7 +835,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:

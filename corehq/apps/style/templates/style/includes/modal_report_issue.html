@@ -45,7 +45,7 @@
                         </div>
 
                         {% if request.couch_user.is_commcare_user %}
-                        <div class="form-group">
+                        <div class="form-group" id="bug-report-email-form-group">
                             <label class="col-sm-3 control-label" for="bug-report-email">{% trans "Email" %}
                             </label>
                             <div class="col-sm-9">
@@ -57,6 +57,9 @@
                                     {% blocktrans %}
                                         Please enter your email here so that we can follow up with you regarding this issue
                                     {% endblocktrans %}
+                                    <span class="label label-danger hide">
+                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+                                    </span>
                                 </p>
                             </div>
                         </div>

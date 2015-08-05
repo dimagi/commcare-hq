@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
 from django.utils.translation import ugettext as _
+from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
@@ -252,7 +253,7 @@ class LocationImporter(object):
 
             loc = form.save()
 
-            sp = SupplyPointCase.get_by_location(loc) if consumption else None
+            sp = get_supply_point_case_by_location(loc) if consumption else None
 
             if consumption and sp:
                 for product_code, value in consumption:

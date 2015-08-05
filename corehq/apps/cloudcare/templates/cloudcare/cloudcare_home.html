@@ -2,7 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %} {{ block.super }}
+{% block head %}
+        {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
@@ -10,21 +13,20 @@
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
 
-<script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/backbone.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
     <script src="{% static 'cloudcare/js/post.js' %}"></script>
-    
+
     {# touchforms includes #}
     <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
-    
+
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
@@ -65,12 +67,18 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
+        var renderFormRoot = "{% url "cloudcare_render_form" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
         var initialCase = {{ case|JSON }};
         var initialParent = {{ parent|JSON }};
         var sessionsEnabled = {{ sessions_enabled|JSON }};
+        var instanceViewerEnabled = false;
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                instanceViewerEnabled = true;
+        {% endif %}
+
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
             language: language,
@@ -82,7 +90,9 @@
             initialApp: initialApp,
             initialCase: initialCase,
             initialParent: initialParent,
-            sessionsEnabled: sessionsEnabled
+            sessionsEnabled: sessionsEnabled,
+            renderFormRoot: renderFormRoot,
+            instanceViewerEnabled: instanceViewerEnabled
         });
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
@@ -143,7 +153,8 @@
                 {% blocktrans %}
                     You are using CloudCare as a Web User!
                     Any data you submit will show up in reports as submitted by "Unknown User".
-                    Features that rely on mobile workers, like case sharing and lookup tables, will not work properly.
+                    Features that rely on mobile workers, like case sharing, lookup tables and user-as-a-case,
+                    will not work properly.
                     For the best experience please logout and login as a Mobile Worker.
                     More information on CloudCare can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
@@ -185,6 +196,32 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            <hr/>
+            <div id="instance-xml-home" name="instance-xml-home">
+                <form class="form-horizontal debug-controls">
+                    <div class="control-group">
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
+                                <span class="help-block">
+                                {% blocktrans %}
+                                    When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                {% endblocktrans %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+                <input id="evaluate-result" style="display: block;"/>
+                <section>
+                    <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
+                    <input id="evaluate-button" type="submit" value="Evaluate" />
+                </section>
+                <div id="question-viewer-pretty"></div>
+                <div id="xml-viewer-pretty"></div>
+            </div>
+        {% endif %}
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}

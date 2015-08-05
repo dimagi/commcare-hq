@@ -1,0 +1,58 @@
+{% load hq_shared_tags %}
+<script type="text/javascript">
+
+    var moveLegend = function (chart_id) {
+        var x = ($(chart_id).width() / 2) - 20;
+        d3.select(chart_id + ' svg').select('.nv-legendWrap').attr("transform", "translate(" + (-x) + ", -30)");
+    };
+
+    nv.addGraph(function() {
+        var chart_config = {{ chart.config_dict|JSON }};
+        var chart_data = {{ chart.data|JSON }};
+        var chart_id = '#{{ chart_id }}';
+
+        $(chart_id).show();
+
+        var chart = nv.models.pieChart()
+          .x(function(d) { return d.label })
+          .y(function(d) { return d.value });
+
+        chart.showLabels(chart_config.showLabels);
+        chart.donut(chart_config.donut);
+        chart.tooltips(chart_config.tooltips);
+        chart.margin(chart_config.margin);
+        chart.pieLabelsOutside(false);
+        if (chart_config.color.length !== 0) {
+            chart.color(chart_config.color);
+        }
+
+        d3.select(chart_id + ' svg')
+                .datum(chart_data)
+                .transition().duration(500).call(chart);
+
+        nv.utils.windowResize(chart.update);
+
+        {# move legend to the left side of chart on initial load #}
+        moveLegend(chart_id);
+
+        {# move legend to the left side of chart on every click in legend circle #}
+        $('.nv-series').on('click', function() {
+           moveLegend(chart_id);
+        });
+        $(chart_id + ' svg .nv-slice').on('mouseenter', function() {
+            var $element = $(this);
+            $(this).parents('.row').find('.desc').each(function(idx, element) {
+                if (chart_id === '#chart_reporting_page_21' || chart_id === '#chart_reporting_page_31' ||
+                    chart_id === '#chart_dashboard_report_21' || chart_id === '#chart_dashboard_report_31') {
+                    var description = chart_data[0].values.filter(function(data) {
+                        return data.color === $element.attr('fill');
+                    })[0].description;
+                    $(element).text(description);
+                    $(element).css('color', $element.attr('fill'));
+                }
+            });
+        });
+
+        return chart;
+    });
+</script>

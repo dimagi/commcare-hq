@@ -15,7 +15,7 @@
             <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
         </tr>
         <tr>
-            <td>{% url "download_ccz" app.domain app.id as url %}<a href="{{ url }}">CommCare.ccz</a></td>
+            <td>{% with "download_ccz" as download_ccz_id %}<a href="#{{download_ccz_id}}" data-toggle="modal">CommCare.ccz</a></td>
         </tr>
     </table>
     <h2>Resource Files</h2>
@@ -56,4 +56,7 @@
         });
     </script>
 </div>
+{% url "download_ccz" app.domain app.id as ccz_url %}
+{% include 'app_manager/partials/download_async_modal.html' with element_id=download_ccz_id download_url=ccz_url%}
+{% endwith %}<!-- endwith download_ccz_id -->
 {% endblock %}

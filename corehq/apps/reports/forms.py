@@ -1,3 +1,5 @@
+import langcodes
+
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
@@ -9,6 +11,11 @@ from .models import (
     ReportConfig,
     ReportNotification,
 )
+
+
+class LanguageSelect(forms.Select):
+    class Media:
+        js = ('reports/javascripts/language_field.js',)
 
 
 class SavedReportConfigForm(forms.Form):
@@ -117,7 +124,14 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
-    def __init__(self, display_privacy_disclaimer, *args, **kwargs):
+    language = forms.ChoiceField(
+        label='Language',
+        required=False,
+        choices=[('', '')] + langcodes.get_all_langs_for_select(),
+        widget=LanguageSelect()
+    )
+
+    def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
@@ -130,9 +144,10 @@ class ScheduledReportForm(forms.Form):
                 'send_to_owner',
                 'attach_excel',
                 'recipient_emails',
+                'language',
                 crispy.HTML(
                     render_to_string('reports/partials/privacy_disclaimer.html')
-                ) if display_privacy_disclaimer else None
+                )
             )
         )
         self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))

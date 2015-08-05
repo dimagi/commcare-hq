@@ -2,10 +2,13 @@ import datetime
 import dateutil.parser
 from django.test import SimpleTestCase
 import pytz
+from corehq.apps.tzmigration import phone_timezones_have_been_processed
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
-    UserTime, get_timezone_data_migration_complete
+    UserTime
 from dimagi.utils.dates import safe_strftime
+from corehq.apps.tzmigration.test_utils import \
+    run_pre_and_post_timezone_migration
 
 
 class UIStringTest(SimpleTestCase):
@@ -51,6 +54,7 @@ class TimezoneConversionTest(SimpleTestCase):
             server_dt = UserTime(user_dt, tz).server_time().done()
             self.assertEqual(server_dt.isoformat(), out)
 
+    @run_pre_and_post_timezone_migration
     def test_server_to_phone(self):
         cases = [
             ('2015-03-20T12:00:00', pytz.FixedOffset(-4 * 60),
@@ -60,12 +64,14 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             server_dt = dateutil.parser.parse(in_)
-            if get_timezone_data_migration_complete():
-                phone_dt = server_dt
+            phone_dt = ServerTime(server_dt).phone_time(tz).done()
+            if phone_timezones_have_been_processed():
+                # no change
+                self.assertEqual(phone_dt.isoformat(), in_)
             else:
-                phone_dt = ServerTime(server_dt).phone_time(tz).done()
-            self.assertEqual(phone_dt.isoformat(), out)
+                self.assertEqual(phone_dt.isoformat(), out)
 
+    @run_pre_and_post_timezone_migration
     def test_phone_to_server(self):
         cases = [
             ('2015-03-20T08:00:00', pytz.FixedOffset(-4 * 60),
@@ -75,11 +81,12 @@ class TimezoneConversionTest(SimpleTestCase):
         ]
         for in_, tz, out in cases:
             phone_dt = dateutil.parser.parse(in_)
-            if get_timezone_data_migration_complete():
-                server_dt = phone_dt
+            server_dt = PhoneTime(phone_dt, tz).server_time().done()
+            if phone_timezones_have_been_processed():
+                # no change
+                self.assertEqual(server_dt.isoformat(), in_)
             else:
-                server_dt = PhoneTime(phone_dt, tz).server_time().done()
-            self.assertEqual(server_dt.isoformat(), out)
+                self.assertEqual(server_dt.isoformat(), out)
 
 
 class CloudCareTimeTest(SimpleTestCase):

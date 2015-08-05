@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
+from corehq.apps.accounting.generator import init_default_currency
 
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sms.util import get_available_backends
@@ -8,27 +9,24 @@ from corehq.apps.smsbillables import generator
 
 
 class TestGatewayFee(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.currency_usd, _ = Currency.objects.get_or_create(
-            code=settings.DEFAULT_CURRENCY,
-            name="Default Currency",
-            symbol="$",
-            rate_to_default=Decimal('1.0')
-        )
-        cls.available_backends = get_available_backends().values()
+    def setUp(self):
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
 
-        cls.backend_ids = generator.arbitrary_backend_ids()
-        cls.message_logs = generator.arbitrary_messages_by_backend_and_direction(cls.backend_ids)
+        self.currency_usd = init_default_currency()
+        self.available_backends = get_available_backends().values()
 
-        cls.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
-        cls.country_code_fees = generator.arbitrary_fees_by_country()
-        cls.instance_fees = generator.arbitrary_fees_by_backend_instance(cls.backend_ids)
-        cls.most_specific_fees = generator.arbitrary_fees_by_all(cls.backend_ids)
-        cls.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes()
-        cls.prefix_fees = generator.arbitrary_fees_by_prefix(cls.backend_ids, cls.country_code_and_prefixes)
+        self.backend_ids = generator.arbitrary_backend_ids()
+        self.message_logs = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
 
-        cls.other_currency = generator.arbitrary_currency()
+        self.least_specific_fees = generator.arbitrary_fees_by_direction_and_backend()
+        self.country_code_fees = generator.arbitrary_fees_by_country()
+        self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
+        self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
+        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes()
+        self.prefix_fees = generator.arbitrary_fees_by_prefix(self.backend_ids, self.country_code_and_prefixes)
+
+        self.other_currency = generator.arbitrary_currency()
 
     def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
@@ -201,20 +199,20 @@ class TestGatewayFee(TestCase):
                 self.assertIsNotNone(billable)
                 self.assertIsNone(billable.gateway_fee)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         SmsBillable.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
-        cls.currency_usd.delete()
-        cls.other_currency.delete()
+
+        self.currency_usd.delete()
+        self.other_currency.delete()
         SMSLog.get_db().delete_docs(
             SMSLog.by_domain_asc(generator.TEST_DOMAIN).all()
         )
 
         SMSBackend.get_db().delete_docs(
             SMSBackend.get_db().all_docs(
-                keys=cls.backend_ids.values(), include_docs=True).all()
+                keys=self.backend_ids.values(), include_docs=True).all()
         )

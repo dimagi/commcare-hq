@@ -72,17 +72,11 @@ class PatientInteractionsReport(PatientDetailsReport):
                 if completed in ret['patient']:
                     received_date = ret['patient'][completed]
 
-            schedulet_date = EMPTY_FIELD
-            if 'scheduled_source' in visit and ret['patient'].get_case_property(visit['scheduled_source']):
-                schedulet_date = ret['patient'].get_case_property(visit['scheduled_source'])
-
             interaction = {
                 'url': '',
                 'name': visit['visit_name'],
                 'target_date': target_date,
                 'received_date': received_date,
-                'completed_by': EMPTY_FIELD,
-                'scheduled_date': schedulet_date
             }
 
             if visit['show_button']:
@@ -94,7 +88,20 @@ class PatientInteractionsReport(PatientDetailsReport):
 
             medication = []
             for med_prop in MEDICATION_DETAILS:
-                medication.append(getattr(ret['patient'], med_prop, EMPTY_FIELD))
+                if med_prop == 'MEDS_diabetes_prescribed':
+                    oral = getattr(ret['patient'], 'MEDS_diabetes-oral_prescribed', None)
+                    insulin = getattr(ret['patient'], 'MEDS_diabetes-insulin_prescribed', None)
+
+                    if oral == 'yes':
+                        to_append = oral
+                    elif insulin == 'yes':
+                        to_append = insulin
+                    else:
+                        to_append = EMPTY_FIELD
+
+                    medication.append(to_append)
+                else:
+                    medication.append(getattr(ret['patient'], med_prop, EMPTY_FIELD))
             ret['medication_table'] = medication
 
         user = self.request.couch_user

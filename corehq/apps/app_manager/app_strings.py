@@ -72,7 +72,10 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.report_name_header(), 'Report Name'
                 yield id_strings.report_description_header(), 'Report Description'
                 for column in config.report.report_columns:
-                    yield id_strings.report_column_header(config.report_id, column.column_id), column.display
+                    yield (
+                        id_strings.report_column_header(config.report_id, column.column_id),
+                        column.get_header(lang)
+                    )
 
         if hasattr(module, 'case_list'):
             if module.case_list.show:
@@ -140,24 +143,34 @@ class AppStringsBase(object):
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
-        from corehq.apps.app_manager.models import AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER
+        from corehq.apps.app_manager.models import (
+            AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
+            AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
+        )
 
         mode_text = {
             AUTO_SELECT_FIXTURE: u'lookup table field',
             AUTO_SELECT_USER: u'user data key',
-            AUTO_SELECT_CASE: u'case index'
+            AUTO_SELECT_CASE: u'case index',
+            AUTO_SELECT_USERCASE: u'user case',
+            AUTO_SELECT_RAW: u'custom xpath expression',
         }
 
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+        for mode, text in mode_text.items():
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
-                                 u'could not be found: ${{0}}').format(mode_text[mode])
-
-        for mode in [AUTO_SELECT_FIXTURE, AUTO_SELECT_CASE, AUTO_SELECT_USER]:
+                                 u'could not be found: ${{0}}').format(text)
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
                 messages[key] = u'Unable to find case referenced by auto-select case ID.'
+
+        key = 'case_autoload.{0}.property_missing'.format(AUTO_SELECT_LOCATION)
+        messages[key] = (u"This form requires access to the user's location, "
+                         "but none was found.")
+        key = 'case_autoload.{0}.case_missing'.format(AUTO_SELECT_LOCATION)
+        messages[key] = (u"This form requires the user's location to be "
+                         "marked as 'Tracks Stock'.")
 
         return commcare_translations.dumps(messages).encode('utf-8')
 

@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq import Domain
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
@@ -13,7 +13,7 @@ from toggle.shortcuts import clear_toggle_cache
 
 class ToggleBaseView(BasePageView):
 
-    @method_decorator(require_superuser)
+    @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
@@ -120,4 +120,4 @@ class ToggleEditView(ToggleBaseView):
         data = {
             'item_list': item_list
         }
-        return HttpResponse(json.dumps(data), mimetype="application/json")
+        return HttpResponse(json.dumps(data), content_type="application/json")

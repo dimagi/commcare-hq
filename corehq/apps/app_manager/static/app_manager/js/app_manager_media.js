@@ -10,6 +10,7 @@ var AppMenuMediaManager = function (o) {
     });
     self.objectMap = ko.observable(o.objectMap);
     self.defaultPath = o.defaultPath;
+    self.inputElement = o.inputElement;
 
     self.uploadController = o.uploadController;
 
@@ -124,11 +125,16 @@ var AppMenuMediaManager = function (o) {
             self.ref(new MenuMediaReference(ref));
             self.objectMap(obj_map);
             self.updateResource();
+            if (self.currentPath() !== data.ref.path){
+                //CurrentPath has a different filetype to the
+                //uploaded file
+                self.customPath(data.ref.path);
+            }
         }
     };
 
     self.updateResource = function () {
-        $('.jr-resource-field').trigger('change');
+        self.inputElement.trigger('change');
     };
 };
 

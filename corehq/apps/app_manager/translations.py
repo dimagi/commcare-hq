@@ -1,14 +1,18 @@
 from collections import OrderedDict
+from django.utils.html import escape
 from lxml import etree
 import copy
+import re
+from lxml.etree import XMLSyntaxError, Element
 from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormException)
+from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
+from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
 
 from django.contrib import messages
@@ -40,7 +44,11 @@ def process_bulk_app_translation_upload(app, f):
         workbook = WorkbookJSONReader(f)
     except (HeaderValueError, InvalidFileException) as e:
         msgs.append(
-            (messages.error, _("App Translation Failed! " + str(e)))
+            (messages.error, _(
+                "App Translation Failed! "
+                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+                "Error details: {}."
+            ).format(e))
         )
         return msgs
 
@@ -245,113 +253,118 @@ def expected_bulk_app_sheet_rows(app):
 
         # Populate module sheet
         rows[module_string] = []
+        if not isinstance(module, ReportModule):
+            for list_or_detail, case_properties in [
+                ("list", module.case_details.short.get_columns()),
+                ("detail", module.case_details.long.get_columns())
+            ]:
+                for detail in case_properties:
 
-        for list_or_detail, case_properties in [
-            ("list", module.case_details.short.get_columns()),
-            ("detail", module.case_details.long.get_columns())
-        ]:
-            for detail in case_properties:
+                    field_name = detail.field
+                    if detail.format == "enum":
+                        field_name += " (ID Mapping Text)"
+                    elif detail.format == "graph":
+                        field_name += " (graph)"
 
-                field_name = detail.field
-                if detail.format == "enum":
-                    field_name += " (ID Mapping Text)"
-                elif detail.format == "graph":
-                    field_name += " (graph)"
+                    # Add a row for this case detail
+                    rows[module_string].append(
+                        (field_name, list_or_detail) +
+                        tuple(detail.header.get(lang, "") for lang in app.langs)
+                    )
 
-                # Add a row for this case detail
-                rows[module_string].append(
-                    (field_name, list_or_detail) +
-                    tuple(detail.header.get(lang, "") for lang in app.langs)
+                    # Add a row for any mapping pairs
+                    if detail.format == "enum":
+                        for mapping in detail.enum:
+                            rows[module_string].append(
+                                (
+                                    mapping.key + " (ID Mapping Value)",
+                                    list_or_detail
+                                ) + tuple(
+                                    mapping.value.get(lang, "")
+                                    for lang in app.langs
+                                )
+                            )
+
+                    # Add rows for graph configuration
+                    if detail.format == "graph":
+                        for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                            rows[module_string].append(
+                                (
+                                    key + " (graph config)",
+                                    list_or_detail
+                                ) + tuple(val.get(lang, "") for lang in app.langs)
+                            )
+                        for i, annotation in enumerate(detail.graph_configuration.annotations):
+                            rows[module_string].append(
+                                (
+                                    "graph annotation {}".format(i + 1),
+                                    list_or_detail
+                                ) + tuple(
+                                    annotation.display_text.get(lang, "")
+                                    for lang in app.langs
+                                )
+                            )
+
+            for form_index, form in enumerate(module.get_forms()):
+                form_string = module_string + "_form" + str(form_index + 1)
+                xform = form.wrapped_xform()
+
+                # Add row for this form to the first sheet
+                # This next line is same logic as above :(
+                first_sheet_row = make_modules_and_forms_row(
+                    row_type="Form",
+                    sheet_name=form_string,
+                    languages=[form.name.get(lang) for lang in app.langs],
+                    # leave all
+                    case_labels=[None] * len(app.langs),
+                    media_image=form.media_image,
+                    media_audio=form.media_audio,
+                    unique_id=form.unique_id
                 )
 
-                # Add a row for any mapping pairs
-                if detail.format == "enum":
-                    for mapping in detail.enum:
-                        rows[module_string].append(
-                            (
-                                mapping.key + " (ID Mapping Value)",
-                                list_or_detail
-                            ) + tuple(
-                                mapping.value.get(lang, "")
-                                for lang in app.langs
-                            )
-                        )
+                # Add form to the first street
+                rows["Modules_and_forms"].append(first_sheet_row)
 
-                # Add rows for graph configuration
-                if detail.format == "graph":
-                    for key, val in detail.graph_configuration.locale_specific_config.iteritems():
-                        rows[module_string].append(
-                            (
-                                key + " (graph config)",
-                                list_or_detail
-                            ) + tuple(val.get(lang, "") for lang in app.langs)
-                        )
-                    for i, annotation in enumerate(detail.graph_configuration.annotations):
-                        rows[module_string].append(
-                            (
-                                "graph annotation {}".format(i + 1),
-                                list_or_detail
-                            ) + tuple(
-                                annotation.display_text.get(lang, "")
-                                for lang in app.langs
-                            )
-                        )
+                # Populate form sheet
+                rows[form_string] = []
 
-        for form_index, form in enumerate(module.get_forms()):
-            form_string = module_string + "_form" + str(form_index + 1)
-            xform = form.wrapped_xform()
+                itext_items = OrderedDict()
+                try:
+                    nodes = xform.itext_node.findall("./{f}translation")
+                except XFormException:
+                    nodes = []
 
-            # Add row for this form to the first sheet
-            # This next line is same logic as above :(
-            first_sheet_row = make_modules_and_forms_row(
-                row_type="Form",
-                sheet_name=form_string,
-                languages=[form.name.get(lang) for lang in app.langs],
-                # leave all
-                case_labels=[None] * len(app.langs),
-                media_image=form.media_image,
-                media_audio=form.media_audio,
-                unique_id=form.unique_id
-            )
+                for translation_node in nodes:
+                    lang = translation_node.attrib['lang']
+                    for text_node in translation_node.findall("./{f}text"):
+                        text_id = text_node.attrib['id']
+                        itext_items[text_id] = itext_items.get(text_id, {})
 
-            # Add form to the first street
-            rows["Modules_and_forms"].append(first_sheet_row)
+                        for value_node in text_node.findall("./{f}value"):
+                            value_form = value_node.attrib.get("form", "default")
+                            value = ''
+                            for part in ItextValue.from_node(value_node).parts:
+                                if isinstance(part, ItextOutput):
+                                    value += "<output value=\"" + part.ref + "\"/>"
+                                else:
+                                    value += escape(part)
+                            itext_items[text_id][(lang, value_form)] = value
 
-            # Populate form sheet
-            rows[form_string] = []
-
-            itext_items = OrderedDict()
-            try:
-                nodes = xform.itext_node.findall("./{f}translation")
-            except XFormException:
-                nodes = []
-
-            for translation_node in nodes:
-                lang = translation_node.attrib['lang']
-                for text_node in translation_node.findall("./{f}text"):
-                    text_id = text_node.attrib['id']
-                    itext_items[text_id] = itext_items.get(text_id, {})
-
-                    for value_node in text_node.findall("./{f}value"):
-                        value_form = value_node.attrib.get("form", "default")
-                        value = value_node.text
-                        itext_items[text_id][(lang, value_form)] = value
-
-            for text_id, values in itext_items.iteritems():
-                row = [text_id]
-                for value_form in ["default", "audio", "image", "video"]:
-                    # Get the fallback value for this form
-                    fallback = ""
-                    for lang in app.langs:
-                        fallback = values.get((lang, value_form), fallback)
-                        if fallback:
-                            break
-                    # Populate the row
-                    for lang in app.langs:
-                        row.append(values.get((lang, value_form), fallback))
-                # Don't add empty rows:
-                if any(row[1:]):
-                    rows[form_string].append(row)
+                for text_id, values in itext_items.iteritems():
+                    row = [text_id]
+                    for value_form in ["default", "audio", "image", "video"]:
+                        # Get the fallback value for this form
+                        fallback = ""
+                        for lang in app.langs:
+                            fallback = values.get((lang, value_form), fallback)
+                            if fallback:
+                                break
+                        # Populate the row
+                        for lang in app.langs:
+                            row.append(values.get((lang, value_form), fallback))
+                    # Don't add empty rows:
+                    if any(row[1:]):
+                        rows[form_string].append(row)
     return rows
 
 
@@ -518,13 +531,20 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         "./{f}value[@form='%s']" % trans_type
                     )
 
-                col_key = get_col_key(trans_type, lang)
-                new_translation = row[col_key]
+                try:
+                    col_key = get_col_key(trans_type, lang)
+                    new_translation = row[col_key]
+                except KeyError:
+                    # error has already been logged as unrecoginzed column
+                    continue
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
-                        fallback = row[get_col_key(trans_type, l)]
+                        key = get_col_key(trans_type, l)
+                        if key in missing_cols:
+                            continue
+                        fallback = row[key]
                         if fallback:
                             new_translation = fallback
                             break
@@ -538,7 +558,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         text_node.xml.append(e)
                         value_node = WrappedNode(e)
                     # Update the translation
-                    value_node.xml.text = new_translation
+                    value_node.xml.tail = ''
+                    for node in value_node.findall("./*"):
+                        node.xml.getparent().remove(node.xml)
+                    escaped_trans = escape_output_value(new_translation)
+                    value_node.xml.text = escaped_trans.text
+                    for n in escaped_trans.getchildren():
+                        value_node.xml.append(n)
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
@@ -546,6 +572,18 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
+
+
+def escape_output_value(value):
+    try:
+        return etree.fromstring(u"<value>{}</value>".format(
+            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
+        ))
+    except XMLSyntaxError:
+        # if something went horribly wrong just don't bother with escaping
+        element = Element('value')
+        element.text = value
+        return element
 
 
 def update_case_list_translations(sheet, rows, app):

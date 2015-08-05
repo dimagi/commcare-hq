@@ -36,6 +36,7 @@
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
+    <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="well well-small">
         <div class="form-inline">
         <!-- ko if:  actionType === 'load' -->
@@ -113,6 +114,7 @@
             </div>
         </div>
     </div>
+    <!-- /ko -->
 </script>
 
 <script type="text/html" id="case-config:case-action">
@@ -188,6 +190,9 @@
     <input type="text" class="input-large" data-bind="value: value_source" />
     {% trans "Table Field:" %}
     <input type="text" class="input-large" data-bind="value: value_key" />
+</script>
+
+<script type="text/html" id="auto-select:usercase">
 </script>
 
 <script type="text/html" id="case-config:case-action-auto-select">

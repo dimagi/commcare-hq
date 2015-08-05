@@ -19,7 +19,7 @@ from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 
 
-@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='background_queue')
 def migration_task():
     from custom.ilsgateway.stock_data import ILSStockDataSynchronization
@@ -27,7 +27,8 @@ def migration_task():
         if config.enabled:
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
-            stock_data_task.delay(ILSStockDataSynchronization(config.domain, endpoint))
+            stock_data_task(ILSStockDataSynchronization(config.domain, endpoint))
+            report_run.delay(config.domain)
 
 
 @task(queue='background_queue')
@@ -66,6 +67,17 @@ def get_locations(api_object, facilities):
         api_object.location_sync(api_object.endpoint.models_map['location'](location))
 
 
+def process_supply_point_status(supply_point_status, domain, location_id=None):
+    location_id = location_id or supply_point_status.location_id
+    try:
+        SupplyPointStatus.objects.get(
+            external_id=int(supply_point_status.external_id),
+            location_id=location_id
+        )
+    except SupplyPointStatus.DoesNotExist:
+        supply_point_status.save()
+
+
 def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
@@ -88,18 +100,20 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset, date, location_id, True)
         for supply_point_status in supply_point_statuses:
-            try:
-                SupplyPointStatus.objects.get(
-                    external_id=int(supply_point_status.external_id),
-                    location_id=location_id
-                )
-            except SupplyPointStatus.DoesNotExist:
-                supply_point_status.save()
+            process_supply_point_status(supply_point_status, domain, location_id)
 
         if not meta.get('next', False):
             has_next = False
         else:
             next_url = meta['next'].split('?')[1]
+
+
+def process_delivery_group_report(dgr, domain, location_id=None):
+    location_id = location_id or dgr.location_id
+    try:
+        DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
+    except DeliveryGroupReport.DoesNotExist:
+        dgr.save()
 
 
 def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
@@ -165,7 +179,10 @@ def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
-    end_date = datetime.utcnow()
+
+    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    # TODO Change this to datetime.utcnow() when project goes live
+    end_date = stock_data_checkpoint.date
 
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
@@ -176,12 +193,14 @@ def report_run(domain, locations=None, strict=True):
         run.complete = False
         run.save()
     else:
+        if start_date == end_date:
+            return
         # start new run
         run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
     has_error = True
     try:
-        populate_report_data(start_date, end_date, domain, run, locations, strict=strict)
+        populate_report_data(run.start, run.end, domain, run, locations, strict=strict)
         has_error = False
     except Exception, e:
         # just in case something funky happened in the DB

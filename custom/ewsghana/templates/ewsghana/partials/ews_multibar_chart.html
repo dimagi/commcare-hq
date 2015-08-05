@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}
 <script type="text/javascript">
+    var codeProductMap = {{ chart.product_code_map|JSON }};
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
         multibar_chart_data = {{ chart.data|JSON }};
@@ -26,7 +27,7 @@
         // Customize tooltip message
         {% if chart.tooltipFormat %}
             multibar_chart.tooltipContent(function(key, y, e, graph) {
-                return '<h3>' + key + '</h3><p>' + e + '{{ chart.tooltipFormat }}' + graph.point.name + ' (' + y + ')';
+                return '<h3>' + graph.point.name + ' (' + y + ')' + '</h3><p>' + e + ' - ' + key;
             });
         {% endif %}
         multibar_chart.stacked(chart_config.stacked);
@@ -50,7 +51,19 @@
                 .transition().duration(500).call(multibar_chart);
 
         nv.utils.windowResize(multibar_chart.update);
-
         return multibar_chart;
+    }, function(chart) {
+        $("text").on("mouseover", function(event) {
+            var offset = $(this).offset();
+            nv.tooltip.show([offset.left + 10, offset.top + 85], '<p>' + codeProductMap[$(this).text()] +'</p>');
+        });
+
+        $("text").on("mouseleave", function(event) {
+            nv.tooltip.cleanup();
+        });
+        var $chart = $(multibar_chart_id + ' svg');
+        $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
+        $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
     });
+
 </script>

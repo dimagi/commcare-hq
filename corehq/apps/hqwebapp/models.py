@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.toggles import OPENLMIS
 
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -8,11 +9,14 @@ from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain
+from corehq import toggles, privileges, Domain, feature_previews
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
-from corehq.apps.accounting.utils import is_accounting_admin
-from corehq.apps.domain.utils import get_adm_enabled_domains
+from corehq.apps.accounting.models import BillingAccount, Invoice
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    is_accounting_admin
+)
+from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
@@ -28,20 +32,16 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
-from corehq.toggles import FM_FACING_SUBSCRIPTIONS
 from corehq.util.markup import mark_up_urls
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
                                             CustomProjectReportDispatcher)
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
-                                        ADMSectionDispatcher)
-from corehq.apps.announcements.dispatcher import (
-    HQAnnouncementAdminInterfaceDispatcher)
 from django.db import models
 
 
@@ -185,9 +185,15 @@ class UITab(object):
             return shortcircuit
 
         request_path = self._request.get_full_path()
+        url_base = get_url_base()
+
+        def url_matches(url, request_path):
+            if url.startswith(url_base):
+                return request_path.startswith(url[len(url_base):])
+            return request_path.startswith(url)
 
         if self.urls:
-            if (any(request_path.startswith(url) for url in self.urls) or
+            if (any(url_matches(url, request_path) for url in self.urls) or
                     self._current_url_name in self.subpage_url_names):
                 return True
         elif self.subtabs and any(st.is_active for st in self.subtabs):
@@ -288,7 +294,7 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = []
-        if (toggle_enabled(self._request, toggles.USER_CONFIGURABLE_REPORTS)
+        if (toggle_enabled(self._request, toggles.REPORT_BUILDER)
                 and has_privilege(self._request, privileges.REPORT_BUILDER)):
             user_reports = [(
                 _("Create Reports"),
@@ -304,24 +310,6 @@ class ProjectReportsTab(UITab):
             context)
 
         return tools + user_reports + project_reports + custom_reports
-
-
-class ADMReportsTab(UITab):
-    title = ugettext_noop("Active Data Management")
-    view = "corehq.apps.adm.views.default_adm_report"
-    dispatcher = ADMSectionDispatcher
-
-    @property
-    def is_viewable(self):
-        if not self.project or self.project.commtrack_enabled:
-            return False
-
-        adm_enabled_projects = get_adm_enabled_domains()
-
-        return (not self.project.is_snapshot and
-                self.domain in adm_enabled_projects and
-                (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports()))
 
 
 class IndicatorAdminTab(UITab):
@@ -366,13 +354,16 @@ class DashboardTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and not self.project.is_snapshot
-                and self.couch_user)
+        return (self.domain and self.project and
+                not self.project.is_snapshot and
+                self.couch_user and
+                # domain hides Dashboard tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, self.couch_user))
 
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
+    subtab_classes = (ProjectReportsTab, IndicatorAdminTab)
 
     @property
     def view(self):
@@ -492,7 +483,7 @@ class SetupTab(UITab):
         from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
-            return [[_('CommCare Supply Setup'), [
+            commcare_supply_setup = [
                 # products
                 {
                     'title': ProductListView.page_title,
@@ -542,17 +533,20 @@ class SetupTab(UITab):
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # external sync
-                {
-                    'title': FacilitySyncView.page_title,
-                    'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                },
                 # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
+            ]
+            if OPENLMIS.enabled(self.domain):
+                commcare_supply_setup.append(
+                    # external sync
+                    {
+                        'title': FacilitySyncView.page_title,
+                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                    })
+            return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
 class ProjectDataTab(UITab):
@@ -569,6 +563,11 @@ class ProjectDataTab(UITab):
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
+
+    @property
+    @memoized
+    def can_use_lookup_tables(self):
+        return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
     def is_viewable(self):
@@ -612,6 +611,14 @@ class ProjectDataTab(UITab):
                     'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
                 })
             items.extend(edit_section)
+
+        if self.can_use_lookup_tables:
+            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
+
+        if toggle_enabled(self._request, toggles.REVAMPED_EXPORTS):
+            from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+            items.extend(DataExportInterfaceDispatcher.navigation_sections(context))
 
         return items
 
@@ -697,7 +704,9 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
+                # domain hides Applications tab if user is non-admin
+                not user_has_custom_top_menu(self.domain, couch_user))
 
 
 class CloudcareTab(UITab):
@@ -1053,7 +1062,6 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views import (
                 EditWebUserView,
-                EditMyAccountDomainView,
                 get_web_user_list_view,
             )
             items.append((_('Project Users'), [
@@ -1069,17 +1077,14 @@ class ProjectUsersTab(UITab):
                         {
                             'title': web_username,
                             'urlname': EditWebUserView.urlname
-                        },
-                        {
-                            'title': _('My Information'),
-                            'urlname': EditMyAccountDomainView.urlname
                         }
                     ],
                     'show_in_dropdown': True,
                 }
             ]))
 
-        if self.project.locations_enabled:
+        if (feature_previews.LOCATIONS.enabled(self.domain) and
+                has_privilege(self._request, privileges.LOCATIONS)):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,
@@ -1241,15 +1246,13 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            user_is_billing_admin, billing_account =\
-                BillingAccountAdmin.get_admin_status_and_account(
-                    self.couch_user, self.domain)
-            if user_is_billing_admin or self.couch_user.is_superuser:
+            if user_is_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
+                billing_account = BillingAccount.get_account_by_domain(self.domain)
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
@@ -1283,7 +1286,7 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
-                if self.couch_user.is_superuser and FM_FACING_SUBSCRIPTIONS.enabled(self.couch_user.username):
+                if self.couch_user.is_superuser:
                     subscription.append({
                         'title': _('Internal Subscription Management (Dimagi Only)'),
                         'url': reverse(
@@ -1378,12 +1381,15 @@ class AdminReportsTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
@@ -1422,16 +1428,6 @@ class AdminReportsTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
-
-
-class GlobalADMConfigTab(UITab):
-    title = ugettext_noop("Global ADM Report Configuration")
-    view = "corehq.apps.adm.views.default_adm_admin"
-    dispatcher = ADMAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
 
 
 class AccountingTab(UITab):
@@ -1514,24 +1510,12 @@ class FeatureFlagsTab(UITab):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class AnnouncementsTab(UITab):
-    title = ugettext_noop("Announcements")
-    view = "corehq.apps.announcements.views.default_announcement"
-    dispatcher = HQAnnouncementAdminInterfaceDispatcher
-
-    @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
     subtab_classes = (
         AdminReportsTab,
-        GlobalADMConfigTab,
         SMSAdminTab,
-        AnnouncementsTab,
         AccountingTab,
         FeatureFlagsTab
     )
@@ -1540,16 +1524,16 @@ class AdminTab(UITab):
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
                 and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [dropdown_dict(_("System Info"),
-                    url=reverse("system_info"))]
+            return [
+                dropdown_dict(_("System Info"), url=reverse("system_info")),
+                dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            ]
 
         submenu_context = [
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Management"), is_header=True),
-            dropdown_dict(mark_for_escaping(_("ADM Reports & Columns")),
-                          url=reverse("default_adm_admin_interface")),
             dropdown_dict(mark_for_escaping(_("Commands")),
                           url=reverse("management_commands")),
             # dropdown_dict(mark_for_escaping("HQ Announcements"),

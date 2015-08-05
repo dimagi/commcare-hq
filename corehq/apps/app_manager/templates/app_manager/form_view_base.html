@@ -159,10 +159,13 @@
             {% if app.application_version == '2.0' %}
                 {% if allow_form_filtering %}
                 var putInRoot = {{ module.put_in_root|BOOL }};
+                var usercaseonlyModule = {{ module.is_usercaseonly|BOOL }}
                 var formFilter = {{ form.form_filter|JSON }};
                 var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
                 var formFilterAllowed = ko.computed(function () {
-                    return allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot;
+                    return (allOtherFormsRequireACase &&
+                            form_requires() === 'case' ||
+                            usercaseonlyModule) && !putInRoot;
                 });
                 ko.applyBindings({
                         formFilter: ko.observable(formFilter),
@@ -204,6 +207,8 @@
                 }, $('#no-vellum').get(0));
                 {% endif %}
 
+                gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
+
             {% endif %}
 
             {% if allow_cloudcare %}
@@ -213,7 +218,7 @@
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {
                     ga_track_event('CloudCare', 'Click "Try in CloudCare"');
-                    analytics.track("Clicked Try in CloudCare");
+                    analytics.workflow("Clicked Try in CloudCare");
                 });
             {% endif %}
         {% endif %}
@@ -239,15 +244,6 @@
             </form>
         </div>
     {% endif %}
-
-    <h3>
-        <i class="icon icon-file-alt"></i>
-    {% if is_user_registration %}
-        <span class="app-manager-title">{% trans "User Registration" %}</span>
-    {% else %}
-        <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    {% endif %}
-    </h3>
 
     <div class="btn-group">
         {% if not form.no_vellum %}
@@ -277,7 +273,8 @@
             {% endif %}
         {% endif %}
     </div>
-    <hr/>
+
+    <br/><br/><br/>
 
     {% if is_user_registration %}
     <h4>{% trans "User Registration Properties" %}</h4>
@@ -294,6 +291,13 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
+            {%  if allow_usercase and form.form_type == 'module_form' %}
+            <li>
+                <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+                    {% trans "User Case Management" %}
+                </a>
+            </li>
+            {%  endif %}
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                  <li>
                      <a href="#visit-scheduler" data-toggle="tab">
@@ -347,6 +351,31 @@
                 {% endif %}
             </div>
 
+            <div class="tab-pane" id="usercase-configuration">
+                {% if form_errors or xform_validation_errored %}
+                    <p class="alert alert-warning">
+                        {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+                    </p>
+                {% elif form.source %}
+                    <header class="clearfix">
+                        <h4 class="pull-left">{% trans "User Case Management" %}</h4>
+                        <span class="hq-help-template"
+                            data-title="{% trans "User Case Management" %}"
+                            data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
+                        ></span>
+                    </header>
+                    <div class="casexml" id="usercasexml_home">
+                        {% block usercase_management_content %}
+                            {% include 'app_manager/partials/usercase_config.html' %}
+                        {% endblock %}
+                    </div>
+                {% else %}
+                    <p class="alert alert-warning">
+                        {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
+                    </p>
+                {% endif %}
+            </div>
+
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                 {% include "app_manager/partials/form_tab_visit_scheduler.html" %}
             {% endif %}
@@ -360,3 +389,18 @@
 {% block modals %}{{ block.super }}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    <li>
+        <span class="divider">&gt;</span>
+        {% if is_user_registration %}
+            <span class="app-manager-title">{% trans "User Registration" %}</span>
+        {% else %}
+        <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
+            <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+        </a>
+        {% endif %}
+    </li>
+{% endblock %}

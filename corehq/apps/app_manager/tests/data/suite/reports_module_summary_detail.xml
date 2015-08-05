@@ -34,17 +34,13 @@
         <text/>
       </header>
       <template form="graph">
-        <graph type="xy">
+        <graph type="bar">
           <series nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/rows/row">
-            <x function="@index" />
+            <configuration/>
+            <x function="column[@id='owner']" />
             <y function="column[@id='tickets']" />
-            <radius function="5" />
           </series>
-          <configuration>
-            <text id="x-labels">
-              <xpath function="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/xlabels[@column='owner']"/>
-            </text>
-          </configuration>
+          <configuration/>
         </graph>
       </template>
     </field>

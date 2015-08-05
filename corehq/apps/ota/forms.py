@@ -1,7 +1,9 @@
 from django import forms
-from bootstrap3_crispy.bootstrap import StrictButton, FormActions
-from bootstrap3_crispy import layout as crispy
-from bootstrap3_crispy.helper import FormHelper
+
+# todo proper B3 Handle
+from crispy_forms.bootstrap import StrictButton, FormActions
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
 
 
 class PrimeRestoreCacheForm(forms.Form):

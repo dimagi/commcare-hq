@@ -1,5 +1,7 @@
 import uuid
 from celery.task import task
+from dimagi.utils.couch.database import iter_docs
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.hqcase.utils import submit_case_blocks, make_creating_casexml
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
@@ -13,7 +15,6 @@ def explode_case_task(user_id, domain, factor):
 
 def explode_cases(user_id, domain, factor, task=None):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    keys = [[domain, owner_id, False] for owner_id in user.get_owner_ids()]
     messages = list()
     if task:
         DownloadBase.set_progress(explode_case_task, 0, 0)
@@ -22,11 +23,13 @@ def explode_cases(user_id, domain, factor, task=None):
     old_to_new = dict()
     child_cases = list()
 
+    case_ids = get_case_ids_in_domain_by_owner(
+        domain, owner_id__in=user.get_owner_ids(), closed=False)
+    cases = (CommCareCase.wrap(doc)
+             for doc in iter_docs(CommCareCase.get_db(), case_ids))
+
     # copy parents
-    for case in CommCareCase.view('hqcase/by_owner',
-                                  keys=keys,
-                                  include_docs=True,
-                                  reduce=False):
+    for case in cases:
         # save children for later
         if case.indices:
             child_cases.append(case)

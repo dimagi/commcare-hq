@@ -7,9 +7,11 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT, DOT_DAYS_INTERVAL, DOT_NONART, DOT_ART
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT, DOT_DAYS_INTERVAL, DOT_NONART, DOT_ART, \
+    PACT_TIMEZONE
 from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
 from pact.utils import submit_xform
@@ -235,9 +237,13 @@ class dotsSubmissionTests(TestCase):
         def check_obs_props(obs, props):
             for k, v in props.items():
                 if k.endswith("_date"):
-                    #datetime check
-                    obs_date = getattr(obs, k).date()
-                    val_date = dateutil.parser.parse(v).date()
+                    # datetime check
+                    obs_datetime = getattr(obs, k)
+                    val_datetime = dateutil.parser.parse(v)
+                    if k in ('completed_date', 'created_date'):
+                        obs_datetime = ServerTime(obs_datetime).user_time(PACT_TIMEZONE).done()
+                    obs_date = obs_datetime.date()
+                    val_date = val_datetime.date()
                     self.assertEquals(obs_date, val_date)
                 else:
                     self.assertEquals(getattr(obs, k), v,

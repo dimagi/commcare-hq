@@ -75,6 +75,16 @@
                 <locale id="m0.case_short.case_time-ago_3.header"/>
             </text>
         </header>
+        <template width="0">
+            <text>
+                <xpath function="time-ago"></xpath>
+            </text>
+        </template>
+    </field>
+    <field>
+        <header width="0">
+            <text/>
+        </header>
         <template>
             <text>
                 <xpath function="if(time-ago = '', '', string(int((today() - date(time-ago)) div 7.0)))"/>

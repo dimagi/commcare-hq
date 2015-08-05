@@ -17,10 +17,10 @@ from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_4,
     CT_LEDGER_APPROVED,
     CT_LEDGER_PREFIX,
-    USERCASE_PREFIX,
+    AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
-    USERCASE_ID
-)
+    USERCASE_ID,
+    USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from dimagi.utils.couch import CriticalSection
 import re
@@ -91,8 +91,11 @@ def is_valid_case_type(case_type):
     False
     >>> is_valid_case_type(None)
     False
+    >>> is_valid_case_type('commcare-user')
+    False
+
     """
-    return bool(_case_type_regex.match(case_type or ''))
+    return bool(_case_type_regex.match(case_type or '')) and case_type != USERCASE_TYPE
 
 
 class ParentCasePropertyBuilder(object):
@@ -138,15 +141,10 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_properties(self, case_type, already_visited=(),
-                       include_shared_properties=True):
+                       include_shared_properties=True,
+                       include_parent_properties=True):
         if case_type in already_visited:
             return ()
-
-        get_properties_recursive = functools.partial(
-            self.get_properties,
-            already_visited=already_visited + (case_type,),
-            include_shared_properties=include_shared_properties
-        )
 
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
@@ -156,36 +154,38 @@ class ParentCasePropertyBuilder(object):
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
         case_properties.update(contributed_properties)
-        for parent_type in parent_types:
-            for property in get_properties_recursive(parent_type[0]):
-                case_properties.add('%s/%s' % (parent_type[1], property))
+        if include_parent_properties:
+            get_properties_recursive = functools.partial(
+                self.get_properties,
+                already_visited=already_visited + (case_type,),
+                include_shared_properties=include_shared_properties
+            )
+            for parent_type in parent_types:
+                for property in get_properties_recursive(parent_type[0]):
+                    case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
             from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
-                        app, [case_type], include_shared_properties=False
+                        app, [case_type],
+                        include_shared_properties=False,
+                        include_parent_properties=include_parent_properties,
                     ).get(case_type, [])
                 )
-
-        # prefix user case properties with "user:".
-        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == USERCASE_TYPE else p
-
-        # .. note:: if the user case type has a parent case type, its
-        #           properties will be returned as `user:parent/property`
-        #
-        # .. note:: if this case type is not the user case type, but it has a
-        #           parent case type which is the user case type, then the
-        #           parent case type's properties will be returned as
-        #           `parent/user:property`.
-        #
-        return {prefix_user(p) for p in case_properties}
+        return case_properties
 
     @memoized
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
     def get_parent_type_map(self, case_types):
+        """
+        :returns: A dict
+        ```
+        {<case_type>: {<relationship>: <parent_type>, ...}, ...}
+        ```
+        """
         parent_map = defaultdict(dict)
         for case_type in case_types:
             parent_types, _ = self.get_parent_types_and_contributed_properties(case_type)
@@ -199,25 +199,33 @@ class ParentCasePropertyBuilder(object):
                         "Case Type '%s' has multiple parents for relationship '%s': %s",
                         case_type, relationship, types
                     )
-                parent_map[case_type][relationship] = types[0] if types else []
+                parent_map[case_type][relationship] = types[0]
 
         return parent_map
 
-    def get_case_property_map(self, case_types, include_shared_properties=True):
+    def get_case_property_map(self, case_types,
+                              include_shared_properties=True,
+                              include_parent_properties=True):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
-                case_type, include_shared_properties=include_shared_properties
+                case_type,
+                include_shared_properties=include_shared_properties,
+                include_parent_properties=include_parent_properties,
             ))
             for case_type in case_types
         }
 
 
-def get_case_properties(app, case_types, defaults=(), include_shared_properties=True):
+def get_case_properties(app, case_types, defaults=(),
+                        include_shared_properties=True,
+                        include_parent_properties=True):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults)
     return builder.get_case_property_map(
-        case_types, include_shared_properties=include_shared_properties
+        case_types,
+        include_shared_properties=include_shared_properties,
+        include_parent_properties=include_parent_properties,
     )
 
 
@@ -225,7 +233,7 @@ def get_per_type_defaults(domain, case_types=None):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if not case_types or USERCASE_TYPE in case_types:
+    if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
         per_type_defaults = {
             USERCASE_TYPE: get_usercase_default_properties(domain)
         }
@@ -237,20 +245,67 @@ def get_per_type_defaults(domain, case_types=None):
     return per_type_defaults
 
 
-def is_usercase_enabled(domain_name):
+def is_usercase_in_use(domain_name):
     domain = Domain.get_by_name(domain_name) if domain_name else None
     return domain and domain.usercase_enabled
 
 
 def get_all_case_properties(app):
-    case_types = set(itertools.chain.from_iterable(m.get_case_types() for m in app.modules))
-    if is_usercase_enabled(app.domain):
-        case_types.add(USERCASE_TYPE)
-    return get_case_properties(
-        app,
-        case_types,
-        defaults=('name',)
-    )
+    return get_case_properties(app, app.get_case_types(), defaults=('name',))
+
+
+def get_casedb_schema(app):
+    """Get case database schema definition
+
+    This lists all case types and their properties for the given app.
+    """
+    case_types = app.get_case_types()
+    per_type_defaults = get_per_type_defaults(app.domain, case_types)
+    builder = ParentCasePropertyBuilder(app, ['name'], per_type_defaults)
+    related = builder.get_parent_type_map(case_types)
+    map = builder.get_case_property_map(case_types, include_parent_properties=False)
+    return {
+        "id": "casedb",
+        "uri": "jr://instance/casedb",
+        "name": "case",
+        "path": "/casedb/case",
+        "structure": {},
+        "subsets": [{
+            "id": ctype,
+            "key": "@case_type",
+            "structure": {p: {} for p in props},
+            "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}
+        } for ctype, props in sorted(map.iteritems())],
+    }
+
+
+def get_session_schema(form):
+    """Get form session schema definition
+    """
+    structure = {}
+    # TODO handle advanced modules with more than one case
+    case_type = form.get_module().case_type
+    if case_type:
+        structure["case_id"] = {
+            "reference": {
+                "source": "casedb",
+                "subset": case_type,
+                "key": "@case_id",
+            },
+        }
+    return {
+        "id": "commcaresession",
+        "uri": "jr://instance/session",
+        "name": "Session",
+        "path": "/session/data",
+        "structure": structure,
+    }
+
+
+def get_usercase_properties(app):
+    if is_usercase_in_use(app.domain):
+        return get_case_properties(app, [USERCASE_TYPE])
+    return {USERCASE_TYPE: []}
 
 
 def get_settings_values(app):
@@ -341,12 +396,11 @@ def all_apps_by_domain(domain):
 def new_careplan_module(app, name, lang, target_module):
     from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(
-        app,
         name,
         lang,
         target_module.unique_id,
-        target_module.case_type)
-    )
+        target_module.case_type
+    ))
 
     forms = [form_class.new_form(lang, name, mode)
                 for form_class in [CareplanGoalForm, CareplanTaskForm]
@@ -413,30 +467,13 @@ def get_commcare_versions(request_user):
     return sorted(versions, key=version_key)
 
 
-def get_usercase_keys(dict_):
-    n = len(USERCASE_PREFIX)
-    return {k[n:]: v for k, v in dict_.items() if k.startswith(USERCASE_PREFIX)}
-
-
-def get_usercase_values(dict_):
-    n = len(USERCASE_PREFIX)
-    return {k: v[n:] for k, v in dict_.items() if v.startswith(USERCASE_PREFIX)}
-
-
-def skip_usercase_values(dict_):
-    return {k: v for k, v in dict_.items() if not v.startswith(USERCASE_PREFIX)}
-
-
-def any_usercase_items(iter_):
-    return any(i.startswith(USERCASE_PREFIX) for i in iter_)
-
-
 def actions_use_usercase(actions):
-    if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-        return any_usercase_items(actions['update_case'].update.iterkeys())
-    if 'case_preload' in actions:
-        return any_usercase_items(actions['case_preload'].preload.itervalues())
-    return False
+    return (('usercase_update' in actions and actions['usercase_update'].update) or
+            ('usercase_preload' in actions and actions['usercase_preload'].preload))
+
+
+def advanced_actions_use_usercase(actions):
+    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
 
 
 def enable_usercase(domain_name):
@@ -457,20 +494,25 @@ def get_usercase_default_properties(domain):
     return [f.slug for f in fields_def.fields]
 
 
-def get_cloudcare_session_data(suite_gen, domain_name, form, couch_user):
-    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+def prefix_usercase_properties(properties):
+    return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
-    datums = suite_gen.get_new_case_id_datums_meta(form)
+
+def get_cloudcare_session_data(domain_name, form, couch_user):
+    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+
+    datums = SuiteGenerator.get_new_case_id_datums_meta(form)
     session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
-            extra_datums = suite_gen.get_extra_case_id_datums(form)
+            extra_datums = SuiteGenerator.get_extra_case_id_datums(form)
         except SuiteError as err:
             _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
-            if suite_gen.any_usercase_datums(extra_datums):
-                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, include_docs=False)
+            if SuiteGenerator.any_usercase_datums(extra_datums):
+                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
-                    session_data[USERCASE_ID] = usercase['id']
+                    session_data[USERCASE_ID] = usercase.get_id
     return session_data

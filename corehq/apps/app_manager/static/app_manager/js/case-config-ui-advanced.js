@@ -77,6 +77,10 @@ var AdvancedCase = (function () {
                 {
                     label: 'Lookup Table',
                     value: 'fixture'
+                },
+                {
+                    label: 'User Case',
+                    value: 'usercase'
                 }
             ];
             if (index > 0) {
@@ -358,6 +362,7 @@ var AdvancedCase = (function () {
                         value_source: '',
                         value_key: ''
                     };
+
                 }
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 if (index > 0) {
@@ -587,11 +592,15 @@ var AdvancedCase = (function () {
             if (self.auto_select) {
                 self.auto_select.mode.subscribe(function (value) {
                     // fix for resizing of accordion when content changes
-                    if (!value) {
-                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                        self.config.applyAccordion('load', index);
-                    }
+                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                    self.config.applyAccordion('load', index);
                 }, null, 'beforeChange');
+                self.auto_select.mode.subscribe(function (value) {
+                    // suggestedProperties need to be those of case type "commcare-user"
+                    if (value === 'usercase') {
+                        self.case_type('commcare-user');
+                    }
+                });
             }
 
             self.show_product_stock_var = ko.computed({
@@ -640,7 +649,7 @@ var AdvancedCase = (function () {
                     var value_key = self.auto_select.value_key();
                     if (!mode) {
                         return "Autoselect mode required";
-                    } else if (!value_key) {
+                    } else if (!value_key && mode !== 'usercase') {
                         return 'Property required';
                     } else if (!value_source) {
                         if (mode === 'case') {

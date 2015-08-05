@@ -8,24 +8,21 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from casexml.apps.phone.tests import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
 from corehq.apps.domain.models import Domain
-from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
-from corehq.apps.hqcase.utils import get_cases_in_domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
-from corehq.apps.commtrack.requisitions import get_notification_message
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
     submission_wrap,
@@ -35,12 +32,9 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_both,
     balance_first,
     transfer_first,
-    create_requisition_xml,
-    create_fulfillment_xml,
-    create_received_xml,
     receipts_enumerated,
     balance_enumerated,
-    products_xml, long_date)
+    products_xml)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -50,10 +44,12 @@ class CommTrackOTATest(CommTrackTest):
         super(CommTrackOTATest, self).setUp()
         self.user = self.users[0]
 
+    @run_with_all_restore_configs
     def test_ota_blank_balances(self):
         user = self.user
-        self.assertFalse(get_ota_balance_xml(user))
+        self.assertFalse(get_ota_balance_xml(self.domain, user))
 
+    @run_with_all_restore_configs
     def test_ota_basic(self):
         user = self.user
         amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
@@ -66,9 +62,10 @@ class CommTrackOTATest(CommTrackTest):
                 amounts,
                 datestring=json_format_datetime(report.date),
             ),
-            get_ota_balance_xml(user)[0],
+            get_ota_balance_xml(self.domain, user)[0],
         )
 
+    @run_with_all_restore_configs
     def test_ota_multiple_stocks(self):
         user = self.user
         date = datetime.utcnow()
@@ -80,7 +77,7 @@ class CommTrackOTATest(CommTrackTest):
         for section_id in section_ids:
             _report_soh(amounts, self.sp._id, section_id, report=report)
 
-        balance_blocks = get_ota_balance_xml(user)
+        balance_blocks = get_ota_balance_xml(self.domain, user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
             check_xml_line_by_line(
@@ -94,6 +91,7 @@ class CommTrackOTATest(CommTrackTest):
                 balance_blocks[i],
             )
 
+    @run_with_all_restore_configs
     def test_ota_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -132,6 +130,7 @@ class CommTrackOTATest(CommTrackTest):
              consumption_block,
         )
 
+    @run_with_all_restore_configs
     def test_force_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -180,16 +179,17 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    def submit_xml_form(self, xml_method, timestamp=None, **submit_extras):
+    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,
             self.products,
             self.user,
-            self.sp,
-            self.sp2,
+            self.sp._id,
+            self.sp2._id,
             xml_method,
             timestamp=timestamp,
+            date_formatter=date_formatter,
         )
         submit_form_locally(
             instance=instance,
@@ -222,6 +222,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    def test_balance_submit_date(self):
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(amounts), date_formatter=json_format_date)
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
+
     def test_balance_enumerated(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_enumerated(amounts))
@@ -243,6 +249,16 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
             self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
             self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
+
+    def test_balance_consumption_with_date(self):
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts), date_formatter=json_format_date)
+
+        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(final_amounts), date_formatter=json_format_date)
+        for product, amt in final_amounts:
+            self.check_product_stock(self.sp, product, amt, 0)
 
     def test_archived_product_submissions(self):
         """
@@ -302,6 +318,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
 
+    def test_transfer_with_date(self):
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(transfer_dest_only(amounts), date_formatter=json_format_date)
+        for product, amt in amounts:
+            self.check_product_stock(self.sp, product, amt, amt)
+
     def test_transfer_enumerated(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -355,12 +377,33 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     def test_blank_product_id(self):
         initial = float(100)
         balances = [('', initial)]
-        with self.assertRaises(MissingProductId):
-            # todo: if we ever want to fail more gracefully we can catch this exception and change this test
-            self.submit_xml_form(balance_submission(balances))
+        instance_id = self.submit_xml_form(balance_submission(balances))
+        instance = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', instance.doc_type)
+        self.assertTrue('MissingProductId' in instance.problem)
 
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
+
+    def test_submit_bad_case_id(self):
+        instance_id = uuid.uuid4().hex
+        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        xml_stub = balance_submission(amounts)
+        instance = submission_wrap(
+            instance_id,
+            self.products,
+            self.user,
+            'missing',
+            'missing-too',
+            xml_stub,
+        )
+        submit_form_locally(
+            instance=instance,
+            domain=self.domain.name,
+        )
+        form = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', form.doc_type)
+        self.assertTrue('IllegalCaseId' in form.problem)
 
     def test_device_report_submissions_ignored(self):
         """
@@ -377,7 +420,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         form = form.format(
             form_id=uuid.uuid4().hex,
             user_id=self.user._id,
-            date=long_date(),
+            date=json_format_datetime(datetime.utcnow()),
             sp_id=self.sp._id,
             product_block=product_block
         )
@@ -387,101 +430,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         )
         self.assertEqual(0, StockTransaction.objects.count())
 
-
-class CommTrackRequisitionTest(CommTrackSubmissionTest):
-
-    def setUp(self):
-        self.requisitions_enabled = True
-        super(CommTrackRequisitionTest, self).setUp()
-
-    def expected_notification_message(self, req, amounts):
-        summary = sorted(
-            ['%s:%d' % (str(Product.get(p).code), amt) for p, amt in amounts]
-        )
-        return const.notification_template(req.get_next_action().action).format(
-            name='Unknown',  # TODO currently not storing requester
-            summary=' '.join(summary),
-            loc=self.sp.location.site_code,
-            keyword=req.get_next_action().keyword
-        )
-
-    def test_create_fulfill_and_receive_requisition(self):
-        amounts = [(p._id, 50.0 + float(i*10)) for i, p in enumerate(self.products)]
-
-        # ----------------
-        # Create a request
-        # ----------------
-
-        self.submit_xml_form(create_requisition_xml(amounts))
-        req_cases = list(get_cases_in_domain(self.domain.name, type=const.REQUISITION_CASE_TYPE))
-        self.assertEqual(1, len(req_cases))
-        req = RequisitionCase.get(req_cases[0]._id)
-        [index] = req.indices
-
-        self.assertEqual(req.requisition_status, 'requested')
-        self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, index.referenced_type)
-        self.assertEqual(self.sp._id, index.referenced_id)
-        self.assertEqual('parent_id', index.identifier)
-        # TODO: these types of tests probably belong elsewhere
-        self.assertEqual(req.get_next_action().keyword, 'fulfill')
-        self.assertEqual(req.get_location()._id, self.sp.location._id)
-        self.assertEqual(len(RequisitionCase.open_for_location(
-            self.domain.name,
-            self.sp.location._id
-        )), 1)
-        self.assertEqual(
-            get_notification_message(
-                req.get_next_action(),
-                [req]
-            ),
-            self.expected_notification_message(req, amounts)
-        )
-
-        for product, amt in amounts:
-            self.check_stock_models(req, product, amt, 0, 'ct-requested')
-
-        # ----------------
-        # Mark it fulfilled
-        # -----------------
-
-        self.submit_xml_form(create_fulfillment_xml(req, amounts))
-
-        req = RequisitionCase.get(req._id)
-
-        self.assertEqual(req.requisition_status, 'fulfilled')
-        self.assertEqual(req.get_next_action().keyword, 'rec')
-        self.assertEqual(
-            get_notification_message(
-                req.get_next_action(),
-                [req]
-            ),
-            self.expected_notification_message(req, amounts)
-        )
-
-        for product, amt in amounts:
-            # we are expecting two separate blocks to have come with the same
-            # values
-            self.check_stock_models(req, product, amt, amt, 'stock')
-            self.check_stock_models(req, product, amt, 0, 'ct-fulfilled')
-
-        # ----------------
-        # Mark it received
-        # ----------------
-
-        self.submit_xml_form(create_received_xml(req, amounts))
-
-        req = RequisitionCase.get(req._id)
-
-        self.assertEqual(req.requisition_status, 'received')
-        self.assertIsNone(req.get_next_action())
-        self.assertEqual(len(RequisitionCase.open_for_location(
-            self.domain.name,
-            self.sp.location._id
-        )), 0)
-
-        for product, amt in amounts:
-            self.check_stock_models(req, product, 0, -amt, 'stock')
-            self.check_stock_models(self.sp, product, amt, amt, 'stock')
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):

@@ -1,0 +1,101 @@
+// Modified Layouts of Twitter Bootstrap
+
+// Fluid layouts (left aligned, with sidebar, min- & max-width content)
+.hq-container-fluid {
+    min-width: @fluidMinimumWidth;
+
+    // sticky footer
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    @clearFooterHeight: @footerHeight + @gridGutterWidth/4;
+    margin-bottom: -@footerHeight;
+    .clearfix();
+    .clear-height(@clearFooterHeight);
+}
+.hq-container-fluid .sidebar {
+    nav {
+        padding: @gridGutterWidth 0;
+        border-top: 1px solid @white;
+        #gradient > .vertical(#F7F7F7, @sideNavigationBackground);
+    }
+    .nav {
+        padding-left: @gridGutterWidth;
+    }
+}
+.hq-double-col {
+    #gradient > .horizontal-two-column-color(@sideNavigationBackground, @white, (@fluidGridColumnWidth*2+@fluidGridGutterWidth));
+}
+
+.old-style {
+    #gradient > .vertical(#ffffff, #ffffff);
+}
+
+.old-style .hq-page-header-container,
+.hq-centered-content .hq-page-header-container {
+    background: 0;
+    border-bottom: 0;
+    h1 {
+        border-bottom: 0;
+        padding: 0;
+    }
+}
+
+.hq-content {
+    padding-top: @gridGutterWidth;
+}
+
+.hq-content:not(.hq-flush-content) > form,
+.hq-content:not(.hq-flush-content) > div,
+.hq-content:not(.hq-flush-content) > p,
+.hq-content:not(.hq-flush-content) > h2,
+.hq-content:not(.hq-flush-content) > .row-fluid > form,
+.hq-content:not(.hq-flush-content) > .row-fluid > div,
+.hq-content:not(.hq-flush-content) > .row-fluid > p,
+.hq-content:not(.hq-flush-content) > .row-fluid > h2,
+.hq-content:not(.hq-flush-content) > hr {
+    margin-right: @gridGutterWidth*2;
+}
+
+.hq-content:not(.hq-flush-content) > section {
+    padding-right: @gridGutterWidth*2;
+}
+
+.hq-content:not(.hq-flush-content) > .well {
+    padding-right: @gridGutterWidth;
+    margin-right: @gridGutterWidth*2;
+}
+
+.hq-content:not(.hq-flush-content) .nav-tabs:first-child {
+    margin-top: 0;
+}
+
+.hq-flush-content {
+    padding-top: 0;
+}
+
+.row-fluid .hq-flush-content {
+    @leftMargin: .15%;
+    margin-left: @leftMargin;
+    width: @fluidGridColumnWidth*10 + @fluidGridGutterWidth*10 - @leftMargin;
+}
+
+.hq-flush-content section > .well {
+    margin: 0 @gridGutterWidth @gridGutterWidth @gridGutterWidth;
+}
+
+#report-content {
+    clear: both;
+}
+
+.top-spacer {
+  // 9px keeps the preload and update wells separated from the "Save" button
+  // by the same distance in the User Case Management tab in the form builder
+  // as they are in the Case Management tab. If a different sized spacer is
+  // considered better, please cater for this discrepancy.
+  padding-top: 9px;
+}
+
+.bottom-spacer {
+  padding-bottom: 9px;
+}

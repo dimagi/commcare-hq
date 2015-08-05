@@ -4,7 +4,7 @@ from __future__ import unicode_literals, absolute_import, print_function
 from optparse import make_option
 from django.core.management import BaseCommand
 
-from corehq.apps.accounting.models import Invoice
+from corehq.apps.accounting.models import Invoice, InvoiceBaseManager
 
 
 class Command(BaseCommand):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
         for invoice_id in args:
             try:
-                invoice = Invoice.objects.get(pk=invoice_id)
+                invoice = super(InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=invoice_id)
             except Invoice.DoesNotExist:
                 print("Invoice {} was not found".format(invoice_id))
                 continue

@@ -21,6 +21,7 @@
     window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
     window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
     window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
+    window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
@@ -31,6 +32,18 @@
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+
+    {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
+        {% for detail in details %}
+            {% if detail.type == 'case' %}
+                {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+            {% else %}
+                {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
@@ -215,6 +228,21 @@
                 </div>
                 {% include "app_manager/partials/module_filter.html" %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                {% if child_module_enabled %}
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Parent Module" %}
+                    </label>
+                    <div class="controls">
+                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
+                        <option value="">{% trans "No Parent" %}</option>
+                        {% for module in valid_parent_modules %}
+                            <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                 {% endblock %}
             </fieldset>
         </form>
@@ -290,3 +318,8 @@
 {% block modals %}{{ block.super }}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+{% endblock %}

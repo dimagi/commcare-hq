@@ -17,13 +17,9 @@ class FeaturePreview(StaticToggle):
 
     e.g.
 
-    if feature_previews.BETA_FEATURE.enabled(domain):
-        try:
-            ensure_request_has_privilege(request, privileges.BETA_FEATURE)
-        except PermissionDenied:
-            pass
-        else:
-            # do cool thing for BETA_FEATURE
+    if feature_previews.BETA_FEATURE.enabled(domain) \
+            and has_privilege(request, privileges.BETA_FEATURE):
+        # do cool thing for BETA_FEATURE
     """
     def __init__(self, slug, label, description, help_link=None, privilege=None,
                  save_fn=None):
@@ -101,13 +97,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-def enable_locations(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.locations_enabled = checked
-    domain.save()
-
-
 LOCATIONS = FeaturePreview(
     slug='locations',
     label=_("Locations"),
@@ -116,7 +105,6 @@ LOCATIONS = FeaturePreview(
         'CommCare Supply to work properly'
     ),
     help_link='https://help.commcarehq.org/display/commtrack/Locations',
-    save_fn=enable_locations,
 )
 
 MODULE_FILTER = FeaturePreview(

@@ -5,6 +5,7 @@ $(function () {
         $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
         $hqwebappBugReportCancel = $('#bug-report-cancel'),
         $ccFormGroup = $("#bug-report-cc-form-group"),
+        $emailFormGroup = $("#bug-report-email-form-group"),
         $issueSubjectFormGroup = $("#bug-report-subject-form-group"),
         isBugReportSubmitting = false;
 
@@ -14,6 +15,8 @@ $(function () {
         $hqwebappBugReportCancel.bootstrapButton('reset');
         $ccFormGroup.removeClass('has-error has-feedback');
         $ccFormGroup.find(".label-danger").addClass('hide');
+        $emailFormGroup.removeClass('has-error has-feedback');
+        $emailFormGroup.find(".label-danger").addClass('hide');
     });
     $hqwebappBugReportModal.on('shown.bs.modal', function() {
         $("input#bug-report-subject").focus();
@@ -23,6 +26,12 @@ $(function () {
         var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
         if (isDescriptionEmpty) {
             highlightInvalidField($issueSubjectFormGroup);
+        }
+
+        var emailAddress = $(this).find("input[name='email']").val();
+        if (emailAddress && !IsValidEmail(emailAddress)){
+            highlightInvalidField($emailFormGroup);
+            return false;
         }
 
         var emailAddresses = $(this).find("input[name='cc']").val();

@@ -1,12 +1,13 @@
-from sqlagg.base import CustomQueryColumn, QueryMeta
+from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.models import CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
 
 TABLE_ID = 'asha_facilitators'
+DOMAIN = 'up-nrhm'
 
 
 class FunctionalityChecklistMeta(QueryMeta):
@@ -46,7 +47,9 @@ class FunctionalityChecklistMeta(QueryMeta):
         self.columns.append(column.sql_column)
 
     def get_asha_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(CustomDataSourceConfiguration.get_doc_id(TABLE_ID))
+        config = CustomDataSourceConfiguration.by_id(
+            CustomDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        )
         return get_indicator_table(config, custom_metadata=metadata)
 
     def execute(self, metadata, connection, filter_values):
@@ -183,11 +186,19 @@ class ASHAFacilitatorsData(SqlData):
                 "female sterilization or male sterilization cases and/or providing OCPs/Condoms",
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
-            DatabaseColumn(
-                "<b>Total number of ASHAs who are functional on at least 6/10 tasks</b>",
-                FunctionalityChecklistColumn(
-                    whens={'hv_percent_functionality >= 60': 1},
-                    alias='percent_functionality'),
+            AggregateColumn(
+                "<b>Total number of ASHAs who are functional on at least %s of the tasks</b>" % "60%",
+                aggregate_fn=lambda x, y: {
+                    'sort_key': ((x or 0) * 100 / (y or 1)),
+                    'html': '{0}/{1} ({2}%)'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
+                },
+                columns=[
+                    FunctionalityChecklistColumn(
+                        whens={'hv_percent_functionality >= 60': 1},
+                        alias='percent_functionality'),
+                    AliasColumn('total_ashas')
+                ],
+                format_fn=lambda x: x
             ),
         ]
 

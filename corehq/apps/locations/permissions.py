@@ -1,17 +1,21 @@
+from django_prbac.decorators import requires_privilege_raise404
+from corehq import privileges
 from functools import wraps
 from django.http import Http404
-from .models import SQLLocation
+from corehq import toggles, Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
-from corehq.util.quickcache import quickcache
+from .models import SQLLocation
+from .util import get_xform_location
 
 
 def locations_access_required(view_fn):
     """
     Decorator controlling domain-level access to locations.
-    Mostly a placeholder, soon this will also check for standard plan
     """
-    return login_and_domain_required(view_fn)
+    return login_and_domain_required(
+        requires_privilege_raise404(privileges.LOCATIONS)(view_fn)
+    )
 
 
 def is_locations_admin(view_fn):
@@ -21,45 +25,30 @@ def is_locations_admin(view_fn):
     return locations_access_required(domain_admin_required(view_fn))
 
 
-@quickcache(['user._id', 'project.name'])
-def editable_locations_ids(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
-        return (SQLLocation.by_domain(project.name)
-                           .values_list('location_id', flat=True))
+def user_can_edit_any_location(user, project):
+    return user.is_domain_admin(project.name) or not project.location_restriction_for_users
 
-    user_loc = user.get_location(project.name)
-    if not user_loc:
-        return []
 
-    return list(user_loc.sql_location.get_descendants(include_self=True)
-                                     .values_list('location_id', flat=True))
+def can_edit_any_location(view_fn):
+    """
+    Decorator determining whether a user has permission to edit all locations in a project
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, *args, **kwargs):
+        if user_can_edit_any_location(request.couch_user, request.project):
+            return view_fn(request, domain, *args, **kwargs)
+        raise Http404()
+    return locations_access_required(_inner)
 
 
 def user_can_edit_location(user, sql_location, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if user_can_edit_any_location(user, project):
         return True
 
     user_loc = user.get_location(sql_location.domain)
     if user_loc:
         user_loc = user_loc.sql_location
     return user_loc is None or user_loc.is_direct_ancestor_of(sql_location)
-
-
-def viewable_locations_ids(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
-        return (SQLLocation.by_domain(project.name)
-                           .values_list('location_id', flat=True))
-
-    user_loc = user.get_location(project.name)
-    if not user_loc:
-        return []
-
-    return (list(user_loc.sql_location.get_ancestors()
-            .values_list('location_id', flat=True)) +
-            editable_locations_ids(user, project))
 
 
 def user_can_view_location(user, sql_location, project):
@@ -114,3 +103,18 @@ def can_edit_location_types(view_fn):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
+
+
+def can_edit_form_location(domain, user, form):
+    # Domain admins can always edit locations.  If the user isn't an admin and
+    # the location restriction is enabled, they can only edit forms that are
+    # explicitly at or below them in the location tree.
+    domain_obj = Domain.get_by_name(domain)
+    if (not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain)
+            or user_can_edit_any_location(user, domain_obj)):
+        return True
+
+    location = get_xform_location(form)
+    if not location:
+        return False
+    return user_can_edit_location(user, location, domain_obj)

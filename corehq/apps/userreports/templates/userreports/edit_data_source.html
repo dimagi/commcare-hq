@@ -1,13 +1,24 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags_b3 %}
+{% load crispy_forms_tags %}
+{% block breadcrumbs %}
+<li>
+    <span class="divider">&gt;</span>
+    {% trans "Edit Data Source" %}
+</li>
+<li>
+    <span class="divider">&gt;</span>
+    {{ data_source.display_name }}
+</li>
+{% endblock %}
 {% block main_column %}
+    <h2>Edit Data Source</h2>
     {% if read_only %}
         <div class="alert alert-info">
           {% trans "This datasource is read only, any changes made can not be saved." %}
         </div>
     {% endif %}
-    {% crispy_b3 form %}
+    {% crispy form %}
 {% if data_source.get_id %}
 {% if not read_only %}
 <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
@@ -17,6 +28,7 @@
 <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
     <input type="submit" value="{% trans 'Rebuild Data Source'%}" class="btn disable-on-submit">
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn">{% trans 'Preview data' %}</a>
+    <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn">{% trans 'Data Source Source (Advanced)' %}</a>
 </form>
 {% endif %}
 {% endblock %}

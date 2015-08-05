@@ -96,6 +96,30 @@ NAMESPACE_DOMAIN = 'domain'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
+def any_toggle_enabled(*toggles):
+    """
+    Return a view decorator for allowing access if any of the given toggles are
+    enabled. Example usage:
+
+    @toggles.any_toggle_enabled(REPORT_BUILDER, USER_CONFIGURABLE_REPORTS)
+    def delete_custom_report():
+        pass
+
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped_view(request, *args, **kwargs):
+            for t in toggles:
+                if (
+                    (hasattr(request, 'user') and t.enabled(request.user.username))
+                    or (hasattr(request, 'domain') and t.enabled(request.domain))
+                ):
+                    return view_func(request, *args, **kwargs)
+            raise Http404()
+        return wrapped_view
+    return decorator
+
+
 def all_toggles():
     """
     Loads all toggles
@@ -160,6 +184,13 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+CASE_LIST_LOOKUP = StaticToggle(
+    'case_list_lookup',
+    'Allow external android callouts to search the caselist',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -180,22 +211,10 @@ OFFLINE_CLOUDCARE = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-CASE_REBUILD = StaticToggle(
-    'case_rebuild',
-    'Show UI-based case and form rebuild options (primarily for support team)',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
     TAG_EXPERIMENTAL
-)
-
-PATHWAYS_PREVIEW = StaticToggle(
-    'pathways_preview',
-    'Is Pathways preview',
-    TAG_ONE_OFF
 )
 
 MM_CASE_PROPERTIES = StaticToggle(
@@ -211,16 +230,17 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-EDIT_SUBMISSIONS = StaticToggle(
-    'edit_submissions',
-    'Submission Editing on HQ',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+REPORT_BUILDER = StaticToggle(
+    'report_builder',
+    'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
@@ -264,7 +284,8 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
 PAGINATE_WEB_USERS = StaticToggle(
     'paginate_web_users',
     'Paginate Web Users',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
@@ -346,17 +367,38 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_HELP_MARKDOWN = StaticToggle(
-    'help_markdown',
-    "Use markdown for the help text in the form builder",
-    TAG_UNKNOWN,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
     TAG_UNKNOWN,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ADVANCED_ITEMSETS = StaticToggle(
+    'advanced_itemsets',
+    "Allows a user to configure itemsets for more than lookup tables",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_EXPERIMENTAL_UI = StaticToggle(
+    'experimental_ui',
+    "Enables some experimental UI enhancements for the form builder",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_PRINTING = StaticToggle(
+    'printing',
+    "Enables the Print Android App Callout",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_RICH_TEXT = StaticToggle(
+    'rich_text',
+    "Enables rich text for the form builder",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -375,14 +417,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FILE_RESTORE = PredictablyRandomToggle(
-    'file_restore',
-    'Use files to do phone restore',
-    TAG_PRODUCT_PATH,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 BULK_SMS_VERIFICATION = StaticToggle(
     'bulk_sms_verification',
     'Allow initiating the SMS phone verification workflow for all users in a group.',
@@ -390,30 +424,12 @@ BULK_SMS_VERIFICATION = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-USE_NEW_TIMEZONE_BEHAVIOR = StaticToggle(
-    'use_new_timezone_behavior',
-    ("Enable properly dealing with timezones in phone timestamps "
-     "during submission and in reports. "
-     "(Please do not set manually, "
-     "because it has to be accompanied by a migration.)"),
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
+BULK_PAYMENTS = StaticToggle(
+    'bulk_payments',
+    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
+    TAG_PRODUCT_CORE
 )
 
-USER_AS_A_CASE = StaticToggle(
-    'user_as_a_case',
-    'Enable "User-As-A-Case" to store user properties in a case and use them in forms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-STREAM_RESTORE_CACHE = PredictablyRandomToggle(
-    'stream_cached_restore',
-    'Stream cached restore from couchdb',
-    TAG_EXPERIMENTAL,
-    randomness=.5,
-    namespaces=[NAMESPACE_DOMAIN]
-)
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
@@ -432,6 +448,14 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
+OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
+    'enable_owner_cleanliness_restore',
+    'Enable restoring with updated owner cleanliness logic.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
+)
+
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -440,10 +464,11 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-FM_FACING_SUBSCRIPTIONS = StaticToggle(
-    'fm_facing_subscriptions',
-    'FM Facing Subscription Management Interface',
+RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
+    'restrict_web_users_by_location',
+    "Allow project to restrict web user permissions by location",
     TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -480,4 +505,95 @@ COMMTRACK = StaticToggle(
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
+)
+
+INSTANCE_VIEWER = StaticToggle(
+    'instance_viewer',
+    'CloudCare Form Debugging Tool',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_USER],
+)
+
+CLOUDCARE_CACHE = StaticToggle(
+    'cloudcare_cache',
+    'Aggresively cache case list, can result in stale data',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+OPENLMIS = StaticToggle(
+    'openlmis',
+    'Offer OpenLMIS settings',
+    TAG_UNKNOWN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_MENU_BAR = StaticToggle(
+    'custom_menu_bar',
+    "Hide Dashboard and Applications from top menu bar "
+    "for non-admin users",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LINK_SUPPLY_POINT = StaticToggle(
+    'link_supply_point',
+    'Add a "Supply Point" tab to location pages.  This is feature flagged '
+    'because this is not a great way to display additional information.',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+REVAMPED_EXPORTS = StaticToggle(
+    'revamped_exports',
+    'Revamped Form and Case exports',
+    TAG_PRODUCT_PATH,
+)
+
+MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
+    'multiple_choice_custom_field',
+    'Allow project to use multiple choice field in custom fields',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
+    'restrict_form_edit_by_location',
+    "Restrict ability to edit/archive forms by the web user's location",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+SUPPORT = StaticToggle(
+    'support',
+    'General toggle for support features',
+    TAG_EXPERIMENTAL,
+)
+
+BASIC_CHILD_MODULE = StaticToggle(
+    'child_module',
+    'Basic modules can be child modules',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
+    'messaging_status',
+    'View the Messaging Status and Error Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+DROPBOX_SYNC = StaticToggle(
+    'dropbox_sync',
+    'Allows users to sync their file downloads to Dropbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+EMAIL_IN_REMINDERS = StaticToggle(
+    'email_in_reminders',
+    'Send emails from reminders',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
 )

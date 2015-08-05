@@ -1,12 +1,13 @@
 from django.contrib.auth.models import User
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import WebUser
-from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
 
 
@@ -17,6 +18,7 @@ class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def endpoint(self):
+        from custom.ewsghana.api import GhanaEndpoint
         return GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(self.domain))
 
 
@@ -189,10 +191,8 @@ class SupplyPointsCompareReport(BaseComparisonReport):
             supply_points.extend(chunk)
 
         for supply_point in supply_points:
-            couch_sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[self.domain, str(supply_point.id)],
-                                            reduce=False,
-                                            include_docs=True).first()
+            couch_sp = get_supply_point_case_in_domain_by_id(
+                self.domain, supply_point.id)
             if not couch_sp:
                 rows.append([supply_point.name, supply_point.type,
                             supply_point.code, supply_point.active, supply_point.last_reported, False])

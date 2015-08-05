@@ -6,11 +6,11 @@ from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
-from custom.logistics.test.test_script import TestScript
+from custom.logistics.tests.test_script import TestScript
 from corehq.apps.commtrack.tests.util import make_loc, TEST_BACKEND
 from corehq.apps.sms.backend import test
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.logistics.test.utils import bootstrap_user
+from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
 
 TEST_DOMAIN = 'ils-test-domain'

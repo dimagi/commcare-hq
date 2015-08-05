@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from corehq.apps.locations.dbaccessors.users_by_location_id import get_users_by_location_id
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils.dates import get_business_day_of_month_before
@@ -25,7 +25,7 @@ class MessageInitiatior(KeywordHandler):
             return None
 
     def send_message(self, sql_location, message, **kwargs):
-        for user in get_users_by_location_id(sql_location.location_id):
+        for user in get_users_by_location_id(self.domain, sql_location.location_id):
             send_sms_to_verified_number(user.get_verified_number(), message % kwargs)
 
     def handle(self):

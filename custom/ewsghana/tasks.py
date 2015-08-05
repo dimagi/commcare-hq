@@ -1,6 +1,7 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.api import EWSApi
 
 from corehq.apps.commtrack.models import StockState, Product
@@ -12,6 +13,7 @@ from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
+from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 import settings
 
@@ -59,3 +61,22 @@ def ews_clear_stock_data_task(domain):
     StockReport.objects.filter(domain=domain).delete()
     products = Product.ids_by_domain(domain)
     StockState.objects.filter(product_id__in=products).delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def delete_last_migrated_stock_data(domain):
+    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    StockReport.objects.filter(domain=domain, date__gte=checkpoint.date).delete()
+    checkpoint.location = None
+    checkpoint.offset = 0
+    checkpoint.api = 'stock_transaction'
+    checkpoint.start_date = None
+    checkpoint.save()
+
+
+@task(queue='background_queue', ignore_result=True)
+def convert_user_data_fields_task(domain):
+    for user in CommCareUser.by_domain(domain):
+        if isinstance(user.user_data.get('role'), basestring):
+            user.user_data['role'] = [user.user_data['role']]
+            user.save()

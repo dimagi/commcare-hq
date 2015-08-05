@@ -29,13 +29,14 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage,
+    LastReadMessage, MessagingEvent
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
@@ -268,16 +269,34 @@ def send_to_recipients(request, domain):
         failed_numbers = []
         no_numbers = []
         sent = []
+
+        if len(phone_numbers) == 1:
+            recipient = phone_numbers[0][0]
+        else:
+            recipient = None
+
+        logged_event = MessagingEvent.create_event_for_adhoc_sms(domain, recipient=recipient)
+
         for user, number in phone_numbers:
             if not number:
                 no_numbers.append(user.raw_username)
-            elif send_sms(domain, user, number, message):
-                sent.append("%s" % (user.raw_username if user else number))
             else:
-                failed_numbers.append("%s (%s)" % (
-                    number,
-                    user.raw_username if user else "<no username>"
-                ))
+                args = [user.doc_type, user.get_id] if user else []
+                logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+                if send_sms(
+                    domain, user, number, message,
+                    metadata=MessageMetadata(messaging_subevent_id=logged_subevent.pk)
+                ):
+                    sent.append("%s" % (user.raw_username if user else number))
+                    logged_subevent.completed()
+                else:
+                    failed_numbers.append("%s (%s)" % (
+                        number,
+                        user.raw_username if user else "<no username>"
+                    ))
+                    logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
+
+        logged_event.completed()
 
         def comma_reminder():
             messages.error(request, _("Please remember to separate recipients"
@@ -359,6 +378,7 @@ def api_send_sms(request, domain):
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         chat = request.POST.get("chat", None)
+        contact = None
 
         if (phone_number is None and contact_id is None) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
@@ -388,8 +408,17 @@ def api_send_sms(request, domain):
         else:
             chat_user_id = None
 
+        logged_event = MessagingEvent.create_event_for_adhoc_sms(
+            domain, recipient=contact,
+            content_type=(MessagingEvent.CONTENT_CHAT_SMS if chat_workflow
+                else MessagingEvent.CONTENT_API_SMS))
+
+        args = [contact.doc_type, contact.get_id] if contact else []
+        logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+
         metadata = MessageMetadata(
-            chat_user_id=chat_user_id
+            chat_user_id=chat_user_id,
+            messaging_subevent_id=logged_subevent.pk,
         )
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
@@ -399,16 +428,20 @@ def api_send_sms(request, domain):
             success = send_sms(domain, None, phone_number, text, metadata)
 
         if success:
+            logged_subevent.completed()
+            logged_event.completed()
             return HttpResponse("OK")
         else:
+            logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
             return HttpResponse("ERROR")
     else:
         return HttpResponseBadRequest("POST Expected.")
 
+
 @login_and_domain_required
 @require_superuser
 def list_forwarding_rules(request, domain):
-    forwarding_rules = ForwardingRule.view("sms/forwarding_rule", key=[domain], include_docs=True).all()
+    forwarding_rules = get_forwarding_rules_for_domain(domain)
 
     context = {
         "domain" : domain,

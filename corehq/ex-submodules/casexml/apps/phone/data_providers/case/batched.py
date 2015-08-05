@@ -1,15 +1,14 @@
 from collections import defaultdict
-from copy import deepcopy
 import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import get_footprint
+from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate, get_case_sync_updates
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from dimagi.utils.couch.database import get_safe_write_kwargs
-from casexml.apps.phone import xml
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import CaseState
+from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json, \
+    get_n_case_ids_in_domain_by_owner
 from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -21,16 +20,8 @@ def get_case_payload_batched(restore_state):
     response = restore_state.restore_class()
 
     sync_operation = BatchedCaseSyncOperation(restore_state)
-    factor = _get_loadtest_factor(restore_state.domain, restore_state.user)
     for update in sync_operation.get_all_case_updates():
-        current_count = 0
-        original_update = update
-        while current_count < factor:
-            element = xml.get_case_element(update.case, update.required_updates, restore_state.version)
-            response.append(element)
-            current_count += 1
-            if current_count < factor:
-                update = _transform_loadtest_update(original_update, current_count)
+        append_update_to_response(response, update, restore_state)
 
     sync_state = sync_operation.global_state
     restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
@@ -43,32 +34,6 @@ def get_case_payload_batched(restore_state):
     response.extend(commtrack_elements)
 
     return response, sync_operation.batch_count
-
-
-def _get_loadtest_factor(domain, user):
-    """
-    Gets the loadtest factor for a domain and user. Is always 1 unless
-    both the toggle is enabled for the domain, and the user has a non-zero,
-    non-null factor set.
-    """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
-        return getattr(user, 'loadtest_factor', 1) or 1
-    return 1
-
-
-def _transform_loadtest_update(update, factor):
-    """
-    Returns a new CaseSyncUpdate object (from an existing one) with all the
-    case IDs and names mapped to have the factor appended.
-    """
-    def _map_id(id, count):
-        return '{}-{}'.format(id, count)
-    case = CommCareCase.wrap(deepcopy(update.case._doc))
-    case._id = _map_id(case._id, factor)
-    for index in case.indices:
-        index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
-    return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
 class GlobalSyncState(object):
@@ -143,7 +108,7 @@ class GlobalSyncState(object):
 
     def update_synced_cases(self, case_updates):
         self.all_synced_cases_dict.update(
-            {update.case.case_id: CaseState.from_case(update.case) for update in case_updates}
+            {update.case.case_id: CaseStub(update.case._id, update.case.type) for update in case_updates}
         )
 
 
@@ -177,25 +142,26 @@ class BatchedCaseSyncOperation(object):
         self.last_synclog = restore_state.last_sync_log
         if chunk_size:
             self.chunk_size = chunk_size
+
         self.domain = self.restore_state.domain
 
         try:
-            self.owner_keys = [[owner_id, False] for owner_id in self.restore_state.owner_ids]
+            self.owner_ids = list(self.restore_state.owner_ids)
         except AttributeError:
-            self.owner_keys = [[self.user.user_id, False]]
+            self.owner_ids = [self.user.user_id]
 
-        self.case_sharing = len(self.owner_keys) > 1
+        self.case_sharing = len(self.owner_ids) > 1
         self.global_state = GlobalSyncState(self.last_synclog, self.case_sharing)
         self.batch_count = 0
 
     def batches(self):
-        for key in self.owner_keys:
+        for owner_id in self.owner_ids:
             batch = CaseSyncCouchBatch(
                 self.global_state,
                 self.domain,
                 self.last_synclog,
                 self.chunk_size,
-                key,
+                owner_id,
                 case_sharing=self.case_sharing
             )
             yield batch
@@ -314,24 +280,15 @@ class CaseSyncCouchBatch(CaseSyncBatch):
     Batch of case updates for cases 'owned' by the user.
     """
     def __init__(self, global_state, domain, last_sync, chunksize,
-                 startkey, case_sharing=False, startkey_docid=None):
+                 owner_id, case_sharing=False, startkey_docid=None):
         super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync, chunksize, case_sharing)
-        self.startkey = startkey
+        self.owner_id = owner_id
         self.startkey_docid = startkey_docid
 
         # We can only use minimal cases if:
         # * there is a SyncLog which we can use that has cases in it
         # * the user is not part of any case sharing groups
         self.use_minimal_cases = self.last_sync and not case_sharing
-
-        self.view_kwargs = {
-            'startkey': startkey,
-            'endkey': startkey,
-            'limit': chunksize
-        }
-        if self.startkey_docid:
-            self.view_kwargs['startkey_docid'] = self.startkey_docid
-            self.view_kwargs['skip'] = 1
 
     def case_updates_to_sync(self):
         actual_owned_cases = self._actual_owned_cases()
@@ -351,26 +308,22 @@ class CaseSyncCouchBatch(CaseSyncBatch):
 
         return case_sync_updates
 
-    def _view_results(self):
-        results = CommCareCase.get_db().view(
-            "case/by_owner" if self.use_minimal_cases else "case/by_owner_lite",
-            reduce=False,
-            **self.view_kwargs
-        )
-        len_results = len(results)
+    def _get_case_ids(self):
+        case_ids = get_n_case_ids_in_domain_by_owner(
+            self.domain, self.owner_id, self.chunksize, self.startkey_docid)
 
-        for result in results:
-            yield result
+        for case_id in case_ids:
+            yield case_id
 
-        if len_results >= self.chunksize:
+        if len(case_ids) >= self.chunksize:
             self.next_batch = CaseSyncCouchBatch(
                 self.global_state,
                 self.domain,
                 self.last_sync,
                 self.chunksize,
-                self.startkey,
+                self.owner_id,
                 self.case_sharing,
-                startkey_docid=result['id']
+                startkey_docid=case_ids[-1]
             )
 
     def _actual_owned_cases(self):
@@ -382,18 +335,18 @@ class CaseSyncCouchBatch(CaseSyncBatch):
         def _case_domain_match(case):
             return not self.domain or self.domain == case.get('domain')
 
-        view_results = self._view_results()
+        case_ids = self._get_case_ids()
         if self.use_minimal_cases:
             # First we check to see if there is a case state available that we can use
             # rather than fetching the whole case.
             minimal_cases = []
             cases_to_fetch = []
-            for result in view_results:
-                minimal_case = self.global_state.minimal_cases.get(result['id'])
+            for case_id in case_ids:
+                minimal_case = self.global_state.minimal_cases.get(case_id)
                 if minimal_case:
                     minimal_cases.append(minimal_case)
                 else:
-                    cases_to_fetch.append(result['id'])
+                    cases_to_fetch.append(case_id)
 
             logger.debug(
                 "%s cases found in previous SyncLog. %s still to fetch",
@@ -408,16 +361,16 @@ class CaseSyncCouchBatch(CaseSyncBatch):
                 )
             return minimal_cases
         else:
-            cases = [result['value'] for result in view_results]
-            logger.debug("No previous SyncLog. Fetched %s cases", len(cases))
-            return cases
+            lite_cases = list(iter_lite_cases_json(case_ids, self.chunksize))
+            logger.debug("No previous SyncLog. Fetched %s cases", len(lite_cases))
+            return lite_cases
 
     def _all_relevant_cases_dict(self, cases):
         return get_footprint(cases, domain=self.domain, strip_history=True)
 
     def __repr__(self):
         return "CaseSyncCouchBatch(startkey={}, startkey_docid={}, chunksize={}, use_minimal_cases={})".format(
-            self.startkey,
+            self.owner_id,
             self.startkey_docid,
             self.chunksize,
             self.use_minimal_cases

@@ -342,19 +342,20 @@
                     return tables;
                 };
 
-                self.output = function () {
+                self.output = function (preview) {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
                         presave: self.presave,
-                        export_stock: self.export_stock
+                        export_stock: self.export_stock,
+                        preview: preview
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
                 };
 
-                self.save = function () {
-                    self.save.state('saving');
-                    $.post(self.urls.save(), self.output()).done(function (data) {
+                self.save = function (preview) {
+                    self.save.state('saving' + (preview ? '-preview': ''));
+                    $.post(self.urls.save(), self.output(preview)).done(function (data) {
 
                         var redirect = function(){
                             window.location.href = data.redirect;
@@ -385,6 +386,14 @@
                     });
                 };
                 self.save.state = ko.observable('save');
+
+                self.save_no_preview = function() {
+                    self.save(false);
+                };
+
+                self.save_preview = function() {
+                    self.save(true);
+                };
 
                 self.row_label_classes = function(row) {
                     return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label";
@@ -462,7 +471,7 @@
             Each item that is selected in the select list will appear as a column in the exported data.
             Any options not selected will be in an "extra" column.
         {% endblocktrans %}
-        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank" class="allow-click">
+        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank">
             {% trans "More info" %}
         </a>
     </div>
@@ -632,7 +641,7 @@
                                                 "/>
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
-                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
+                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
                                                     <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
                                                     <div data-bind="visible: showOptions">
@@ -669,7 +678,7 @@
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
             <div class="control-group">
-                <label for="is_safe" class="control-label"></label>
+                <label for="is_safe" class="control-label">{% trans "Sensitive Data" %}</label>
                 <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
                     <label class="checkbox">
                         <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
@@ -677,21 +686,23 @@
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
                 </div>
-                <button class="btn" data-bind="
-                    visible: !showDeidColumn(),
-                    click: animateShowDeidColumn
-                ">
-                    {% trans "Allow me to mark sensitive data" %}
-                </button>
+                <div class="controls">
+                    <button class="btn"  data-bind="
+                        visible: !showDeidColumn(),
+                        click: animateShowDeidColumn
+                    ">
+                        {% trans "Allow me to mark sensitive data" %}
+                    </button>
+                </div>
             </div>
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save,
-                disable: save.state() === 'saving'
+            <button type="submit" class="btn btn-primary" data-bind="
+                click: save_no_preview,
+                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
             ">
-                <span data-bind="visible: save.state() === 'save'">
+                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>
                     <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create" %}</span>
                 </span>
@@ -702,11 +713,28 @@
                 <span data-bind="visible: save.state() === 'error'">
                     {% trans "Try Again" %}
                 </span>
-
             </button>
-            <a class="btn btn-large" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
+            {% if request|toggle_enabled:"REVAMPED_EXPORTS" %}
+            <button type="submit" class="btn btn-primary" data-bind="
+                click: save_preview,
+                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
+            ">
+                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving')">
+                    <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save & Preview" %}</span>
+                    <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create & Preview" %}</span>
+                </span>
+                <span data-bind="visible: save.state() === 'saving-preview'">
+                    <i class="icon-refresh icon-spin"></i>
+                    {% trans "Saving" %}
+                </span>
+                <span data-bind="visible: save.state() === 'error'">
+                    {% trans "Try Again" %}
+                </span>
+            </button>
+            {% endif %}
+            <a class="btn" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
-            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
+            <a class="btn btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
                 <i class="icon-remove icon-white"></i>
                 {% trans "Delete this Export" %}
             </a>

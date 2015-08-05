@@ -1,8 +1,6 @@
 from django.core.management.base import LabelCommand
 import sys
-from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
-from corehq.apps.domainsync.config import save
-from corehq.apps.reminders.models import SurveySample
+from corehq.apps.casegroups.models import CommCareCaseGroup
 
 
 class Command(LabelCommand):

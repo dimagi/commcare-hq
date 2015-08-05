@@ -17,9 +17,9 @@ From the following web page</b>: {{ referer }}<br/>
 <p>
 {% if billing_account %}
 Account name: {{ billing_account.name }}<br/>
-Contracted vs. Self-service: {{ billing_account.entry_type }}<br/>
+Contracted vs. Self-service: {{ billing_account.entry_point }}<br/>
 Dimagi Contact: {{ billing_account.dimagi_contact }}<br/>
-Billing Admins: {% for admin in billing_account.billing_admins.all %}{{ admin.web_user }}{% if not loop.last %}, {% endif %}{% endfor %}
+Billing Contacts: {{ billing_account.billingcontactinfo.emails }}
 {% else %}
 Not available
 {% endif %}
@@ -27,28 +27,30 @@ Not available
 
 <b>Previous Subscription</b>
 <p>
-{% if old_subscription %}
-Software Plan: {{ old_subscription.plan_version }}<br/>
-Start Date: {{ old_subscription.date_start }}<br/>
-End Date:{{ old_subscription.date_end }}<br/>
-Do not invoice: {{ old_subscription.do_not_invoice }}<br/>
-Auto generate credits: {{ old_subscription.auto_generate_credits }}<br/>
-{% else %}
-No previous subscription
-{% endif %}
+    {% if old_subscription %}
+    Software Plan: {{ old_subscription.plan_version }}<br/>
+    Subscription Type: {{ old_subscription.service_type }}<br/>
+    Start Date: {{ old_subscription.date_start }}<br/>
+    End Date:{{ old_subscription.date_end }}<br/>
+    Do not invoice: {{ old_subscription.do_not_invoice }}<br/>
+    Auto generate credits: {{ old_subscription.auto_generate_credits }}<br/>
+    {% else %}
+    No previous subscription
+    {% endif %}
 </p>
 
-<b>New Subscription</b><p>
+<b>New Subscription</b>
 <p>
-{% if new_subscription %}
-Software Plan: {{ new_subscription.plan_version }}
-Start Date: {{ new_subscription.date_start }}
-End Date: {{ new_subscription.date_end }}
-Do not invoice: {{ new_subscription.do_not_invoice }}
-Auto generate credits: {{ new_subscription.auto_generate_credits }}
-{% else %}
-No new subscription
-{% endif %}
+    {% if new_subscription %}
+    Software Plan: {{ new_subscription.plan_version }}<br/>
+    Subscription Type: {{ new_subscription.service_type }}<br/>
+    Start Date: {{ new_subscription.date_start }}<br/>
+    End Date: {{ new_subscription.date_end }}<br/>
+    Do not invoice: {{ new_subscription.do_not_invoice }}<br/>
+    Auto generate credits: {{ new_subscription.auto_generate_credits }}<br/>
+    {% else %}
+    No new subscription
+    {% endif %}
 </p>
 
 <p>

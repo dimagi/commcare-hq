@@ -1,4 +1,6 @@
+from collections import defaultdict
 from functools import wraps
+from unittest.util import strclass
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 import datetime
@@ -107,11 +109,37 @@ class TimingTestSuite(unittest.TestSuite):
 
         klass.__call__ = new_call
 
+        original_setUpClass = getattr(klass, 'setUpClass', None)
+        if original_setUpClass:
+            @wraps(original_setUpClass)
+            def new_setUpClass(cls, *args, **kwargs):
+                start = datetime.datetime.utcnow()
+                result = original_setUpClass(*args, **kwargs)
+                end = datetime.datetime.utcnow()
+                suite.test_times.append((cls.setUpClass, end - start))
+                return result
+            klass.setUpClass = classmethod(new_setUpClass)
+
         self._patched_test_classes.add(klass)
 
     def addTest(self, test):
         self.patch_test_class(test.__class__)
         super(TimingTestSuite, self).addTest(test)
+
+    @staticmethod
+    def get_test_class(method):
+        """
+        return the TestCase class associated with method
+
+        method can either be a test_* method, or setUpClass
+
+        """
+        try:
+            # setUpClass
+            return method.im_self
+        except AttributeError:
+            # test_* method
+            return method.__class__
 
 
 class TwoStageTestRunner(HqTestSuiteRunner):
@@ -178,9 +206,10 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         old_config = self.setup_databases()
         result = self.run_suite(suite)
 
-        from corehq.db import _engine, Session
+        from corehq.db import Session, connection_manager
         Session.remove()
-        _engine.dispose()
+        connection_manager.dispose_all()
+
 
         self.teardown_databases(old_config)
         return self.suite_result(suite, result)
@@ -208,11 +237,18 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         return failures
 
     def print_test_times(self, suite, percent=.5):
-        total_time = reduce(
+        self.print_test_times_by_test(suite, percent)
+        self.print_test_times_by_class(suite, percent)
+
+    def _get_total_time(self, time_tuples):
+        return reduce(
             lambda x, y: x + y,
-            (test_time for _, test_time in suite.test_times),
+            (test_time for _, test_time in time_tuples),
             datetime.timedelta(seconds=0)
         )
+
+    def _print_test_times(self, sorted_times, percent):
+        total_time = self._get_total_time(sorted_times)
         rounded_total_time = total_time - datetime.timedelta(
             microseconds=total_time.microseconds
         )
@@ -225,11 +261,26 @@ class TwoStageTestRunner(HqTestSuiteRunner):
                 rounded_total_time,
             )
         )
-        for test, test_time in sorted(suite.test_times, key=lambda x: x[1], reverse=True):
+        for test, test_time in sorted_times:
             cumulative_time += test_time
             print ' ', test, test_time
             if cumulative_time > total_time / 2:
                 break
+
+    def print_test_times_by_test(self, suite, percent=.5):
+        self._print_test_times(
+            sorted(suite.test_times, key=lambda x: x[1], reverse=True),
+            percent,
+        )
+
+    def print_test_times_by_class(self, suite, percent=.5):
+        times_by_class = defaultdict(datetime.timedelta)
+        for test, test_time in suite.test_times:
+            times_by_class[strclass(TimingTestSuite.get_test_class(test))] += test_time
+        self._print_test_times(
+            sorted(times_by_class.items(), key=lambda x: x[1], reverse=True),
+            percent,
+        )
 
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):

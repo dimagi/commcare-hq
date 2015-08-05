@@ -279,7 +279,7 @@ var GraphViewModel = function(moduleOptions){
     self.langs = moduleOptions.langs;
 
     self.graphDisplayName = ko.observable(moduleOptions.name || "Graph");
-    self.availableGraphTypes = ko.observableArray(["xy", "bubble", "time"]);
+    self.availableGraphTypes = ko.observableArray(["xy", "bar", "bubble", "time"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);
     self.annotations = ko.observableArray([]);
@@ -306,9 +306,11 @@ var GraphViewModel = function(moduleOptions){
         'y-labels',
         'secondary-y-labels',
         // other:
-        'show-grid',
         'show-axes',
-        'zoom'
+        'show-grid',
+        'show-legend',
+        'zoom',
+        'bar-orientation',
     ];
     // Note: I don't like repeating the list of property options in the hints map.
     // I could use configPropertyHints.keys() to generate the options, but that
@@ -328,9 +330,11 @@ var GraphViewModel = function(moduleOptions){
         'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
-        'show-grid': 'true() or false()',
         'show-axes': 'true() or false()',
-        'zoom': 'true() or false()'
+        'show-grid': 'true() or false()',
+        'show-legend': 'true() or false()',
+        'zoom': 'true() or false()',
+        'bar-orientation': '\'horizontal\' or \'vertical\'',
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];
     self.fixtures = moduleOptions.fixtures || [];
@@ -383,12 +387,15 @@ var GraphViewModel = function(moduleOptions){
      * of the view model.
      */
     self.getSeriesConstructor = function(){
-        if (self.selectedGraphType() == "xy" || self.selectedGraphType() == "time"){
-            return XYGraphSeries;
-        } else if (self.selectedGraphType() == "bubble"){
-            return BubbleGraphSeries;
-        } else {
+        if (!_.contains(self.availableGraphTypes(), self.selectedGraphType())){
             throw "Invalid selectedGraphType";
+        }
+        if (self.selectedGraphType() === "bubble"){
+            return BubbleGraphSeries;
+        } else if (self.selectedGraphType() === "bar") {
+            return BarGraphSeries;
+        } else {
+            return XYGraphSeries;
         }
     };
 
@@ -477,15 +484,19 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.showDataPath = ko.observable(origOrDefault('showDataPath', false));
     self.xFunction = ko.observable(origOrDefault('xFunction',""));
     self.yFunction = ko.observable(origOrDefault('yFunction',""));
+    self.xLabel = "X";
+    self.yLabel = "Y";
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
-        'line-color'
+        'line-color',
+        'name',
     ];
     self.configPropertyHints = {
         'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
-        'line-color': "ex: '#aarrggbb'"
+        'line-color': "ex: '#aarrggbb'",
+        'name': "ex: 'My Series 1'",
     };
 
     self.toggleShowDataPath = function() {
@@ -511,6 +522,18 @@ var XYGraphSeries = function(original, childCaseTypes, fixtures){
 };
 XYGraphSeries.prototype = new GraphSeries();
 XYGraphSeries.constructor = XYGraphSeries;
+
+var BarGraphSeries = function(original, childCaseTypes, fixtures){
+    GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
+    var self = this;
+
+    self.xLabel = "Label";
+    self.yLabel = "Value";
+    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-sort']);
+    self.configPropertyHints['bar-sort'] = "'ascending' or 'descending'";
+};
+BarGraphSeries.prototype = new GraphSeries();
+BarGraphSeries.constructor = BarGraphSeries;
 
 var BubbleGraphSeries = function(original, childCaseTypes, fixtures){
     GraphSeries.apply(this, [original, childCaseTypes, fixtures]);

@@ -1,9 +1,7 @@
-from datetime import datetime
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from dateutil.relativedelta import relativedelta
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
@@ -13,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.generic import TemplateView
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -32,12 +31,13 @@ def send_confirmation_email(invitation):
                                     context)
     text_content = render_to_string('domain/email/invite_confirmation.txt',
                                     context)
-    send_HTML_email(subject, recipient, html_content,
-                    text_content=text_content)
+    send_html_email_async.delay(subject, recipient, html_content,
+                                text_content=text_content)
 
 
 class InvitationView():
     # todo cleanup this view so it properly inherits from BaseSectionPageView
+    inv_id = None
     inv_type = Invitation
     template = ""
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
@@ -77,6 +77,7 @@ class InvitationView():
         logging.warning("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
+        self.inv_id = invitation_id
         for k, v in kwargs.iteritems():
             if k in self.need:
                 setattr(self, k, v)
@@ -103,7 +104,7 @@ class InvitationView():
 
         self.validate_invitation(invitation)
 
-        if invitation.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()  and isinstance(invitation, DomainInvitation):
+        if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
         if request.user.is_authenticated():
@@ -154,7 +155,18 @@ class InvitationView():
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
-                form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                if isinstance(invitation, DomainInvitation):
+                    if CouchUser.get_by_username(invitation.email):
+                        return HttpResponseRedirect(reverse("login") + '?next=' +
+                            reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
+                    domain = Domain.get_by_name(invitation.domain)
+                    form = NewWebUserRegistrationForm(initial={
+                        'email': invitation.email,
+                        'hr_name': domain.hr_name if domain else invitation.domain,
+                        'create_domain': False
+                    })
+                else:
+                    form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})
 

@@ -6,12 +6,14 @@
     $(function () {
         $('.reporting-group-icon').popover({
             placement: 'right',
+            trigger: 'hover',
             title: 'This is a Reporting Group',
             content: "Reporting groups are used in reports to filter and view data. You can remove this group from " +
                     "reports by editing this group's settings."
         });
         $('.case-sharing-group-icon').popover({
             placement: 'right',
+            trigger: 'hover',
             title: 'This is a Case Sharing Group',
             content: "Case sharing groups allow their members to share a case list in a case-sharing app. You can change this " +
                     "by editing this group's settings."

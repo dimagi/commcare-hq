@@ -8,7 +8,37 @@ from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
 import difflib
 
 
-class TestFileMixin(object):
+class TestXmlMixin(object):
+    def assertXmlPartialEqual(self, expected, actual, xpath):
+        """
+        Extracts a section of XML using the xpath and compares it to the expected
+
+        Extracted XML is placed inside a <partial/> element prior to comparison.
+        """
+        expected = parse_normalize(expected)
+        actual = extract_xml_partial(actual, xpath)
+        self.assertXmlEqual(expected, actual, normalize=False)
+
+    def assertXmlEqual(self, expected, actual, normalize=True):
+        if normalize:
+            expected = parse_normalize(expected)
+            actual = parse_normalize(actual)
+        _check_shared(expected, actual, LXMLOutputChecker(), "xml")
+
+    def assertXmlHasXpath(self, element, xpath):
+        message = "Could not find xpath expression '{}' in below XML\n".format(xpath)
+        element = parse_normalize(element, to_string=False)
+        if not bool(element.xpath(xpath)):
+            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True))
+
+    def assertHtmlEqual(self, expected, actual, normalize=True):
+        if normalize:
+            expected = parse_normalize(expected, is_html=True)
+            actual = parse_normalize(actual, is_html=True)
+        _check_shared(expected, actual, LHTMLOutputChecker(), "html")
+
+
+class TestFileMixin(TestXmlMixin):
 
     file_path = ''
     root = os.path.dirname(__file__)
@@ -42,28 +72,6 @@ class TestFileMixin(object):
     @classmethod
     def get_xml(cls, name):
         return cls.get_file(name, 'xml')
-
-    def assertXmlPartialEqual(self, expected, actual, xpath):
-        """
-        Extracts a section of XML using the xpath and compares it to the expected
-
-        Extracted XML is placed inside a <partial/> element prior to comparison.
-        """
-        expected = parse_normalize(expected)
-        actual = extract_xml_partial(actual, xpath)
-        self.assertXmlEqual(expected, actual, normalize=False)
-
-    def assertXmlEqual(self, expected, actual, normalize=True):
-        if normalize:
-            expected = parse_normalize(expected)
-            actual = parse_normalize(actual)
-        _check_shared(expected, actual, LXMLOutputChecker(), "xml")
-
-    def assertHtmlEqual(self, expected, actual, normalize=True):
-        if normalize:
-            expected = parse_normalize(expected, is_html=True)
-            actual = parse_normalize(actual, is_html=True)
-        _check_shared(expected, actual, LHTMLOutputChecker(), "html")
 
 
 def normalize_attributes(xml):
@@ -136,3 +144,14 @@ def _get_default(self, application_version):
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)
+
+
+def commtrack_enabled(is_enabled):
+    """
+    Override the Application.commtrack_enabled lookup.
+    Decorate test methods to explicitly specify a commtrack_enabled status.
+    """
+    return mock.patch(
+        'corehq.apps.app_manager.models.Application.commtrack_enabled',
+        new=is_enabled,
+    )

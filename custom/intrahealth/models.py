@@ -1,16 +1,17 @@
+from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from couchforms.models import XFormInstance
-from fluff.filters import ORFilter, ANDFilter
-from casexml.apps.case.models import CommCareCase
+from fluff.filters import ORFilter, ANDFilter, CustomFilter
+from corehq.apps.users.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
     RAPTURE_XMLNSES, get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month,\
-    get_products_code, get_rupture_products_code, RECOUVREMENT_XMLNSES
-
+    get_products_code, get_rupture_products_code, get_region_id, get_district_id
 from custom.utils.utils import flat_field
 
 IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
+IH_DELETED_CASE_TYPES = ('CommCareCase-Deleted', )
 
 
 def _get_all_forms():
@@ -148,19 +149,22 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
 
 class RecouvrementFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = CommCareCase
 
-    document_filter = ORFilter([
-        FormPropertyFilter(xmlns=RECOUVREMENT_XMLNSES[0]),
-        FormPropertyFilter(xmlns=RECOUVREMENT_XMLNSES[1])])
+    document_filter = ANDFilter([
+        CasePropertyFilter(type='payment'),
+        CustomFilter(lambda c: hasattr(c, 'district_name'))
+    ])
+
     domains = INTRAHEALTH_DOMAINS
-    deleted_types = IH_DELETED_TYPES
+    deleted_types = IH_DELETED_CASE_TYPES
     save_direct_to_sql = True
-    group_by = ('domain', fluff.AttributeGetter('district_name', lambda f: get_district_name(f)))
+    group_by = ('domain', fluff.AttributeGetter('district_name',
+                                                lambda case: case.get_case_property('district_name')))
 
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    district_name = flat_field(lambda f: get_district_name(f))
+    region_id = flat_field(lambda c: get_region_id(c))
+    district_id = flat_field(lambda c: get_district_id(c))
+    district_name = flat_field(lambda c: c['district_name'])
 
     payments = report_calcs.Recouvrement()
 

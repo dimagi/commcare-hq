@@ -1,5 +1,6 @@
 from functools import partial
 from dateutil import rrule
+from corehq.apps.locations.dbaccessors import get_one_user_at_location
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
@@ -21,6 +22,7 @@ class RRStatus(ILSData):
     title = "R&R Status"
     slug = "rr_status"
     show_chart = False
+    searchable = True
 
     @property
     def rows(self):
@@ -91,6 +93,7 @@ class RRReportingHistory(ILSData):
     show_table = True
     slug = "rr_reporting_history"
     show_chart = False
+    searchable = True
 
     def __init__(self, config=None, css_class='row_chart'):
         super(RRReportingHistory, self).__init__(config, css_class)
@@ -115,15 +118,19 @@ class RRReportingHistory(ILSData):
         for child in dg:
             total_responses = 0
             total_possible = 0
-            rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
+            submitted, rr_value = randr_value(child.location_id, self.config['startdate'], self.config['enddate'])
             if child.is_archived and not rr_value:
                 continue
 
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=self.config['startdate'],
                 org_summary__location_id=child.location_id,
-                title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                total=1
             )
+
+            if not group_summaries:
+                continue
 
             for group_summary in group_summaries:
                 if group_summary:
@@ -138,15 +145,9 @@ class RRReportingHistory(ILSData):
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
-            contact = CommCareUser.get_db().view(
-                'locations/users_by_location_id',
-                startkey=[child.location_id],
-                endkey=[child.location_id, {}],
-                include_docs=True
-            ).first()
+            contact = get_one_user_at_location(self.config['domain'], child.location_id)
 
-            if contact and contact['doc']:
-                contact = CommCareUser.wrap(contact['doc'])
+            if contact:
                 role = contact.user_data.get('role') or ""
                 args = (contact.first_name, contact.last_name, role, contact.default_phone_number)
                 contact_string = "%s %s (%s) %s" % args
@@ -157,7 +158,7 @@ class RRReportingHistory(ILSData):
                 [
                     child.site_code,
                     link_format(child.name, url),
-                    get_span(rr_value) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
+                    get_span(submitted) % (rr_value.strftime("%d %b %Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ]

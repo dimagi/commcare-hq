@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_all_sync_logs_docs
+from casexml.apps.phone.models import get_properly_wrapped_sync_log, get_sync_log_class_by_format
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.xml import SYNC_XMLNS
 
@@ -11,10 +12,18 @@ def synclog_id_from_restore_payload(restore_payload):
 
 
 def synclog_from_restore_payload(restore_payload):
-    return SyncLog.get(synclog_id_from_restore_payload(restore_payload))
+    return get_properly_wrapped_sync_log(synclog_id_from_restore_payload(restore_payload))
 
 
-def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
+def get_exactly_one_wrapped_sync_log():
+    """
+    Gets exactly one properly wrapped sync log, or fails hard.
+    """
+    [doc] = list(get_all_sync_logs_docs())
+    return get_sync_log_class_by_format(doc['log_format']).wrap(doc)
+
+
+def generate_restore_payload(project, user, restore_id="", version=V1, state_hash="",
                              items=False, overwrite_cache=False, force_cache=False):
     """
     Gets an XML payload suitable for OTA restore.
@@ -26,6 +35,7 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
         returns: the xml payload of the sync operation
     """
     config = RestoreConfig(
+        project=project,
         user=user,
         params=RestoreParams(
             sync_log_id=restore_id,
@@ -41,9 +51,9 @@ def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
     return config.get_payload().as_string()
 
 
-def generate_restore_response(user, restore_id="", version=V1, state_hash="",
-                              items=False):
+def generate_restore_response(project, user, restore_id="", version=V1, state_hash="", items=False):
     config = RestoreConfig(
+        project=project,
         user=user,
         params=RestoreParams(
             sync_log_id=restore_id,

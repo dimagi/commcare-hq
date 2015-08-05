@@ -1,43 +1,44 @@
-from datetime import datetime, timedelta
+from collections import defaultdict
+from datetime import datetime
 import logging
 from urllib import urlencode
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-import pytz
 from corehq import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
-    CustomProjectReportDispatcher)
-from corehq.apps.adm.dispatcher import ADMSectionDispatcher
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 import json
 import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -166,7 +167,6 @@ DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range',
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
-    _extra_json_properties = ['url', 'report_name', 'date_description']
 
     domain = StringProperty()
 
@@ -203,9 +203,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, **kwargs):
+                            stale=True, skip=None, limit=None):
+        kwargs = {}
         if stale:
-            #kwargs['stale'] = settings.COUCH_STALE_QUERY
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
             pass
 
         if report_slug is not None:
@@ -214,8 +215,21 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             key = ["name", domain, owner_id]
 
         db = cls.get_db()
-        result = cache_core.cached_view(db, "reportconfig/configs_by_domain", reduce=False,
-                                     include_docs=True, startkey=key, endkey=key + [{}], wrapper=cls.wrap, **kwargs)
+        if skip is not None:
+            kwargs['skip'] = skip
+        if limit is not None:
+            kwargs['limit'] = limit
+
+        result = cache_core.cached_view(
+            db,
+            "reportconfig/configs_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=key,
+            endkey=key + [{}],
+            wrapper=cls.wrap,
+            **kwargs
+        )
         return result
 
     @classmethod
@@ -231,12 +245,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         }
 
     def to_complete_json(self):
-        json = super(ReportConfig, self).to_json()
-
-        for key in self._extra_json_properties:
-            json[key] = getattr(self, key)
-
-        return json
+        result = super(ReportConfig, self).to_json()
+        result.update({
+            'url': self.url,
+            'report_name': self.report_name,
+            'date_description': self.date_description,
+            'datespan_filters': self.datespan_filters,
+            'has_ucr_datespan': self.has_ucr_datespan,
+        })
+        return result
 
     @property
     @memoized
@@ -246,7 +263,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            ADMSectionDispatcher,
             ConfigurableReport,
         ]
 
@@ -254,7 +270,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
-        raise Exception("Unknown dispatcher: %s" % self.report_type)
+        notify_exception(
+            None,
+            "This saved-report (id: %s) is unknown (report_type: %s). Might be a legacy report" % (
+                self._id,
+                self.report_type
+            )
+        )
+        raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
@@ -265,35 +288,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if not date_range:
             return {}
 
-        import datetime
-        from dateutil.relativedelta import relativedelta
-        today = datetime.date.today()
-        if date_range == 'since':
-            start_date = self.start_date
-            end_date = today
-        elif date_range == 'range':
-            start_date = self.start_date
-            end_date = self.end_date
-        elif date_range == 'lastmonth':
-            end_date = today
-            start_date = today - relativedelta(months=1) + timedelta(days=1)  # add one day to handle inclusiveness
-        else:
-            end_date = today
-
-            if date_range == 'last7':
-                days = 7
-            elif date_range == 'last30':
-                days = 30
-            elif date_range == 'lastn':
-                days = self.days
-            else:
-                raise Exception("Invalid date range")
-
-            start_date = today - datetime.timedelta(days=days)
-
-        if start_date is None or end_date is None:
+        try:
+            start_date, end_date = get_daterange_start_end_dates(
+                date_range,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                days=self.days,
+            )
+        except InvalidDaterangeException:
             # this is due to bad validation. see: http://manage.dimagi.com/default.asp?110906
-            logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
+            logging.error('saved report %s is in a bad state - date range is misconfigured' % self._id)
             return {}
 
         dates = {
@@ -401,7 +405,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except CouchUser.AccountTypeError:
             return CommCareUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, attach_excel=False):
+    def get_report_content(self, lang, attach_excel=False):
         """
         Get the report's HTML content as rendered by the static view format.
 
@@ -421,6 +425,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.user = self.owner.get_django_user()
         request.domain = self.domain
         request.couch_user.current_domain = self.domain
+        request.couch_user.language = lang
 
         request.GET = QueryDict(
             self.query_string
@@ -498,11 +503,31 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return isinstance(self._dispatcher, ConfigurableReport)
+        return self.report_type == ConfigurableReport.prefix
 
+    @property
+    @memoized
+    def languages(self):
+        if self.is_configurable_report:
+            return self.report.spec.get_languages()
+        return set()
 
-class UnsupportedScheduledReportError(Exception):
-    pass
+    @property
+    @memoized
+    def configurable_report(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
+        return ConfigurableReport.get_report(
+            self.domain, self.report_slug, self.subreport_slug
+        )
+
+    @property
+    def datespan_filters(self):
+        return (self.configurable_report.datespan_filters
+                if self.is_configurable_report else [])
+
+    @property
+    def has_ucr_datespan(self):
+        return self.is_configurable_report and self.datespan_filters
 
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
@@ -513,6 +538,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
+    # language is only used if some of the config_ids refer to UCRs.
+    language = StringProperty()
 
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
@@ -541,24 +568,30 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return result
 
     @property
+    @memoized
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
             return [self.owner.get_email()]
 
         emails = []
-        if self.send_to_owner:
-            if self.owner.is_web_user():
-                emails.append(self.owner.username)
-            else:
-                email = self.owner.get_email()
-                try:
-                    validate_email(email)
-                    emails.append(email)
-                except Exception:
-                    pass
+        if self.send_to_owner and self.owner_email:
+            emails.append(self.owner_email)
         emails.extend(self.recipient_emails)
         return emails
+
+    @property
+    @memoized
+    def owner_email(self):
+        if self.owner.is_web_user():
+            return self.owner.username
+
+        email = self.owner.get_email()
+        try:
+            validate_email(email)
+            return email
+        except Exception:
+            pass
 
     @property
     @memoized
@@ -581,6 +614,13 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
+
+            def _sort_key(config_id):
+                if config_id in self.config_ids:
+                    return self.config_ids.index(config_id)
+                else:
+                    return len(self.config_ids)
+            configs = sorted(configs, key=_sort_key)
         elif self.report_slug == 'admin_domains':
             raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")
@@ -620,25 +660,46 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         """Tuples for hour number and human-readable hour"""
         return tuple([(val, "%s:00" % val) for val in range(24)])
 
-    def send(self):
-        from dimagi.utils.django.email import send_HTML_email
-        from corehq.apps.reports.views import get_scheduled_report_response
+    @property
+    @memoized
+    def recipients_by_language(self):
+        user_languages = {
+            user['username']: user['language']
+            for user in get_user_docs_by_username(self.all_recipient_emails)
+            if 'username' in user and 'language' in user
+        }
+        fallback_language = user_languages.get(self.owner_email, 'en')
 
+        recipients = defaultdict(list)
+        for email in self.all_recipient_emails:
+            language = user_languages.get(email, fallback_language)
+            recipients[language].append(email)
+        return recipients
+
+    def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
         if not self.owner.is_member_of(self.domain):
             self.delete()
             return
 
-        if self.all_recipient_emails:
-            title = "Scheduled report from CommCare HQ"
-            if hasattr(self, "attach_excel"):
-                attach_excel = self.attach_excel
-            else:
-                attach_excel = False
-            body, excel_files = get_scheduled_report_response(self.owner, self.domain, self._id, attach_excel=attach_excel)
-            for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body.content, email_from=settings.DEFAULT_FROM_EMAIL, file_attachments=excel_files)
+        if self.recipients_by_language:
+            for language, emails in self.recipients_by_language.items():
+                self._get_and_send_report(language, emails)
+
+    def _get_and_send_report(self, language, emails):
+        from corehq.apps.reports.views import get_scheduled_report_response
+
+        with localize(language):
+            title = _("Scheduled report from CommCare HQ")
+            attach_excel = getattr(self, 'attach_excel', False)
+            body, excel_files = get_scheduled_report_response(
+                self.owner, self.domain, self._id, attach_excel=attach_excel
+            )
+            for email in emails:
+                send_html_email_async.delay(title, email, body.content,
+                                            email_from=settings.DEFAULT_FROM_EMAIL,
+                                            file_attachments=excel_files)
 
 
 class AppNotFound(Exception):
@@ -928,151 +989,3 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         if updated:
             group.save()
         return group
-
-
-class CaseActivityReportCache(Document):
-    domain = StringProperty()
-    timezone = StringProperty()
-    last_updated = DateTimeProperty()
-    active_cases = DictProperty()
-    closed_cases = DictProperty()
-    inactive_cases = DictProperty()
-    landmark_data = DictProperty()
-
-    _couch_view = "reports/case_activity"
-    _default_case_key = "__DEFAULT__"
-
-    _case_list = None
-    @property
-    def case_list(self):
-        if not self._case_list:
-            key = ["type", self.domain]
-            data = get_db().view(self._couch_view,
-                group=True,
-                group_level=3,
-                startkey=key,
-                endkey=key+[{}]
-            ).all()
-            self._case_list = [None] + [item.get('key',[])[-1] for item in data]
-        return self._case_list
-
-    _now = None
-    @property
-    def now(self):
-        if not self._now:
-            self._now = datetime.now(tz=pytz.timezone(str(self.timezone)))
-            self._now = self._now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return self._now
-
-    _milestone = None
-    @property
-    def milestone(self):
-        if not self._milestone:
-            self._milestone = self._now - timedelta(days=121)
-        return self._milestone
-
-    def _get_user_id_counts(self, data):
-        result = dict()
-        for item in data:
-            count = item.get('value', 0)
-            user_id = item.get('key',[])[-1]
-            if user_id:
-                if not user_id in result:
-                    result[user_id] = count
-                else:
-                    result[user_id] += count
-        return result
-
-    def _generate_landmark(self, landmark, case_type=None):
-        """
-            Generates a dict with counts per owner_id of the # cases modified or closed in
-            the last <landmark> days.
-        """
-        prefix = "" if case_type is None else "type"
-        key = [prefix, self.domain]
-        if case_type is not None:
-            key.append(case_type)
-
-
-        past = self.now - timedelta(days=landmark+1)
-        data = get_db().view(self._couch_view,
-            group=True,
-            startkey=key+[past.isoformat()],
-            endkey=key+[self.now.isoformat(), {}]
-        ).all()
-        return self._get_user_id_counts(data)
-
-    def _generate_status_key(self, case_type, status="open"):
-        prefix = ["status"]
-        key = [self.domain, status]
-        if case_type is not None:
-            prefix.append("type")
-            key.append(case_type)
-        return [" ".join(prefix)] + key
-
-    def _generate_case_status(self, milestone=120, case_type=None, active=True, status="open"):
-        """
-            inactive: Generates a dict with counts per owner_id of the number of cases that are open,
-            but haven't been modified in the last 120 days.
-            active: Generates a dict with counts per owner_id of the number of cases that are open
-            and have been modified in the last 120 days.
-        """
-        key = self._generate_status_key(case_type, status)
-        milestone = self.now - timedelta(days=milestone+1) + (timedelta(microseconds=1) if active else timedelta(seconds=0))
-        data = get_db().view(self._couch_view,
-            group=True,
-            startkey=key+([milestone.isoformat()] if active else []),
-            endkey=key+([self.now.isoformat()] if active else [milestone.isoformat()])
-        ).all()
-        return self._get_user_id_counts(data)
-
-    def case_key(self, case_type):
-        return case_type if case_type is not None else self._default_case_key
-
-    def day_key(self, days):
-        return "%s_days" % days
-
-    def update_landmarks(self, landmarks=None):
-        landmarks = landmarks if landmarks else [30, 60, 90]
-        for case_type in self.case_list:
-            case_key = self.case_key(case_type)
-            if not case_key in self.landmark_data:
-                self.landmark_data[case_key] = dict()
-            for landmark in landmarks:
-                self.landmark_data[case_key][self.day_key(landmark)] = self._generate_landmark(landmark, case_type)
-
-    def update_status(self, milestone=120):
-        for case_type in self.case_list:
-            case_key = self.case_key(case_type)
-            if case_key not in self.active_cases:
-                self.active_cases[case_key] = dict()
-            if case_key not in self.inactive_cases:
-                self.inactive_cases[case_key] = dict()
-            if case_key not in self.closed_cases:
-                self.closed_cases[case_key] = dict()
-
-            self.active_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone, case_type)
-            self.closed_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
-                                                                                                case_type, status="closed")
-            self.inactive_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
-                                                                                                case_type, active=False)
-
-    @classmethod
-    def get_by_domain(cls, domain, include_docs=True):
-        return cls.view('reports/case_activity_cache',
-            reduce=False,
-            include_docs=include_docs,
-            key=domain
-        )
-
-    @classmethod
-    def build_report(cls, domain):
-        report = cls.get_by_domain(domain.name).first()
-        if not report:
-            report = cls(domain=str(domain.name))
-        report.timezone = domain.default_timezone
-        report.update_landmarks()
-        report.update_status()
-        report.last_updated = datetime.utcnow()
-        report.save()
-        return report

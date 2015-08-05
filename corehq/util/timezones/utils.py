@@ -3,6 +3,7 @@ import pytz
 import datetime
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.util.global_request import get_request
 
 
 def coerce_timezone_value(value):
@@ -17,6 +18,19 @@ def validate_timezone_max_length(max_length, zones):
         return x and (len(y) <= max_length)
     if not reduce(reducer, zones, True):
         raise Exception("corehq.apps.timezones.fields.TimeZoneField MAX_TIMEZONE_LENGTH is too small")
+
+
+def get_timezone_for_request(request=None):
+    if request is None:
+        request = get_request()
+
+    user = getattr(request, 'couch_user', None)
+    domain = getattr(request, 'domain', None)
+
+    if user or domain:
+        return get_timezone_for_user(user, domain)
+    else:
+        return None
 
 
 def get_timezone_for_user(couch_user_or_id, domain):

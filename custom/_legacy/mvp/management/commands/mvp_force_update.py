@@ -1,7 +1,9 @@
-from gevent import monkey;
+from gevent import monkey; monkey.patch_all()
+from itertools import islice
+from casexml.apps.case.models import CommCareCase
 import time
-
-monkey.patch_all()
+from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
+    get_case_ids_in_domain
 import sys
 import gevent
 from restkit.session import set_session
@@ -10,10 +12,10 @@ from gevent.pool import Pool
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import LabelCommand
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError
+from corehq.apps.indicators.models import CaseIndicatorDefinition, \
+    FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from mvp.models import MVP
 
 POOL_SIZE = 10
@@ -48,7 +50,6 @@ class Command(LabelCommand):
         else:
             document_type = None
 
-
         if process_forms:
             for domain in self.domains:
                 self.update_indicators_for_xmlns(domain, form_label_filter=document_type)
@@ -60,7 +61,8 @@ class Command(LabelCommand):
 
     def update_indicators_for_xmlns(self, domain, form_label_filter=None):
         key = [MVP.NAMESPACE, domain]
-        all_labels = get_db().view('indicators/form_labels',
+        all_labels = get_db().view(
+            'indicators/form_labels',
             reduce=False,
             startkey=key,
             endkey=key + [{}],
@@ -72,20 +74,21 @@ class Command(LabelCommand):
             xmlns = label['key'][-2]
             print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
 
-            relevant_forms = get_db().view("reports_forms/all_forms",
+            relevant_forms = get_db().view(
+                "reports_forms/all_forms",
                 reduce=True,
                 startkey=['submission xmlns', domain, xmlns],
                 endkey=['submission xmlns', domain, xmlns, {}],
             ).first()
             num_forms = relevant_forms['value'] if relevant_forms else 0
-            get_forms = lambda skip, limit: XFormInstance.view("reports_forms/all_forms",
+
+            form_ids = [r['id'] for r in XFormInstance.view(
+                "reports_forms/all_forms",
                 reduce=False,
-                include_docs=True,
+                include_docs=False,
                 startkey=['submission xmlns', domain, xmlns],
                 endkey=['submission xmlns', domain, xmlns, {}],
-                skip=skip,
-                limit=limit
-            ).all()
+            ).all()]
 
             print "Found %d forms with matching XMLNS %s" % (num_forms, xmlns)
             relevant_indicators = FormIndicatorDefinition.get_all(
@@ -94,13 +97,14 @@ class Command(LabelCommand):
                 xmlns=xmlns
             )
             if relevant_indicators:
-                self._throttle_updates("Forms (TYPE: %s, XMLNS %s, DOMAIN: %s)" % (label_name, xmlns, domain),
-                                       relevant_indicators, num_forms, domain, get_forms)
-
+                self._throttle_updates(
+                    "Forms (TYPE: %s, XMLNS %s, DOMAIN: %s)" % (
+                        label_name, xmlns, domain),
+                    relevant_indicators, num_forms, domain,
+                    form_ids, XFormInstance)
 
     def update_indicators_for_case_type(self, case_type, domain):
         print "\n\n\nFetching %s cases in domain %s...." % (case_type, domain)
-        key = ["all type", domain, case_type]
         relevant_indicators = CaseIndicatorDefinition.get_all(
             namespace=MVP.NAMESPACE,
             domain=domain,
@@ -108,27 +112,18 @@ class Command(LabelCommand):
         )
 
         if relevant_indicators:
-            all_cases = get_db().view("case/all_cases",
-                reduce=True,
-                startkey=key,
-                endkey=key+[{}]
-            ).first()
-            num_cases = all_cases['value'] if all_cases else 0
+            num_cases = get_number_of_cases_in_domain(domain, type=case_type)
 
-            print "\nFound the following Case Indicator Definitions for Case Type %s in Domain %s" % (case_type, domain)
+            print ("\nFound the following Case Indicator Definitions "
+                   "for Case Type %s in Domain %s") % (case_type, domain)
             print "--%s\n" % "\n--".join([i.slug for i in relevant_indicators])
 
             print "Found %d possible cases for update." % num_cases
-            get_cases = lambda skip, limit: CommCareCase.view("case/all_cases",
-                reduce=False,
-                include_docs=True,
-                startkey=key,
-                endkey=key+[{}],
-                skip=skip,
-                limit=limit
-            ).all()
-            self._throttle_updates("Cases of type %s in %s" % (case_type, domain),
-                                   relevant_indicators, num_cases, domain, get_cases)
+            case_ids = get_case_ids_in_domain(domain, type=case_type)
+
+            self._throttle_updates(
+                "Cases of type %s in %s" % (case_type, domain),
+                relevant_indicators, num_cases, domain, case_ids, CommCareCase)
 
     def update_indicators(self, indicators, docs, domain):
 
@@ -152,14 +147,23 @@ class Command(LabelCommand):
             pool = Pool(POOL_SIZE)
             for doc in docs:
                 pool.spawn(_update_doc, doc)
-            pool.join() # blocking
+            pool.join()  # blocking
             print "\n"
 
-    def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=300):
+    def _throttle_updates(self, document_type, indicators, total_docs, domain,
+                          doc_ids, document_class, limit=300):
+        doc_ids = iter(doc_ids)
+        if self.start_at_record:
+            doc_ids = islice(doc_ids, self.start_at_record, None)
 
         for skip in range(self.start_at_record, total_docs, limit):
-            print "\n\nUpdating %s %d to %d of %d\n" % (document_type, skip, min(total_docs, skip+limit), total_docs)
-            matching_docs = get_docs(skip, limit)
+            print "\n\nUpdating %s %d to %d of %d\n" % (
+                document_type, skip, min(total_docs, skip + limit), total_docs)
+
+            matching_docs = map(
+                document_class.wrap,
+                iter_docs(document_class.get_db(), islice(doc_ids, limit))
+            )
             self.update_indicators(indicators, matching_docs, domain)
             print "Pausing..."
             time.sleep(3)

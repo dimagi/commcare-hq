@@ -1,4 +1,3 @@
-
 Dear Accounting Team,
 
 The project space {{ domain }} has changed its subscription.
@@ -12,9 +11,9 @@ Billing Account Information
 
 {% if billing_account %}
 Account name: {{ billing_account.name }}
-Contracted vs. Self-service: {{ billing_account.entry_type }}
+Contracted vs. Self-service: {{ billing_account.entry_point }}
 Dimagi Contact: {{ billing_account.dimagi_contact }}
-Billing Admins: {% for admin in billing_account.billing_admins.all %}{{ admin.web_user }}{% if not loop.last %}, {% endif %}{% endfor %}
+Billing Contacts: {{ billing_account.billingcontactinfo.emails }}
 {% else %}
 Not available
 {% endif %}
@@ -47,4 +46,3 @@ You can view the project space here: {{ domain_url }}
 
 Cheers,
 --The CommCareHQ Team
-

@@ -13,8 +13,8 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
     Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
-    DefaultProductPlan, BillingAccountAdmin, SubscriptionAdjustment,
-    SoftwarePlanEdition, BillingContactInfo,
+    DefaultProductPlan, SubscriptionAdjustment,
+    SoftwarePlanEdition, BillingContactInfo, SubscriptionType,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -36,11 +36,12 @@ def instantiate_accounting_for_tests():
 
 def init_default_currency():
     currency, _ = Currency.objects.get_or_create(
-        code=settings.DEFAULT_CURRENCY,
-        name="Default Currency",
-        rate_to_default=Decimal('1.0'),
-        symbol=settings.DEFAULT_CURRENCY_SYMBOL,
+        code=settings.DEFAULT_CURRENCY
     )
+    currency.name = "Default Currency"
+    currency.rate_to_default = Decimal('1.0')
+    currency.symbol = settings.DEFAULT_CURRENCY_SYMBOL
+    currency.save()
     return currency
 
 
@@ -49,10 +50,11 @@ def unique_name():
 
 
 def arbitrary_web_user(save=True, is_dimagi=False):
-    domain = unique_name()[:25]
+    domain = Domain(name=unique_name()[:25])
+    domain.save()
     username = "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
     try:
-        web_user = WebUser.create(domain, username, 'test123')
+        web_user = WebUser.create(domain.name, username, 'test123')
     except Exception:
         web_user = WebUser.get_by_username(username)
     web_user.is_active = True
@@ -101,13 +103,15 @@ def delete_all_accounts():
 def arbitrary_subscribable_plan():
     return DefaultProductPlan.objects.get(
         edition=random.choice(SUBSCRIBABLE_EDITIONS),
-        product_type=SoftwareProductType.COMMCARE
+        product_type=SoftwareProductType.COMMCARE,
+        is_trial=False
     ).plan.get_version()
 
 
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
                                            min_num_months=None, is_immediately_active=False,
-                                           delay_invoicing_until=None, save=True):
+                                           delay_invoicing_until=None, save=True,
+                                           service_type=SubscriptionType.NOT_SET):
     # make sure the first month is never a full month (for testing)
     date_start = date_start.replace(day=max(2, date_start.day))
 
@@ -128,6 +132,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
         date_end=date_end,
         is_active=is_immediately_active,
         date_delay_invoicing=delay_invoicing_until,
+        service_type=service_type,
     )
     if save:
         subscription.save()

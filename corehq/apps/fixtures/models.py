@@ -1,14 +1,17 @@
 from decimal import Decimal
+from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from django.db import models
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
+from corehq.apps.fixtures.utils import clean_fixture_field_name
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
 
 
 class FixtureTypeField(DocumentSchema):
@@ -49,16 +52,15 @@ class FixtureDataType(Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=domain,
-        ).first()
-        return num_fixtures['value'] if num_fixtures is not None else 0
+        from corehq.apps.fixtures.dbaccessors import \
+            get_number_of_fixture_data_types_in_domain
+        return get_number_of_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True, descending=True)
+        from corehq.apps.fixtures.dbaccessors import \
+            get_fixture_data_types_in_domain
+        return get_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -276,18 +278,51 @@ class FixtureDataItem(Document):
                     % (self.data_type.tag, self.get_id)
                 )
         for field in self.data_type.fields:
+            escaped_field_name = clean_fixture_field_name(field.field_name)
             if not self.fields.has_key(field.field_name):
-                xField = ElementTree.SubElement(xData, field.field_name)
+                xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
-                    xField = ElementTree.SubElement(xData, field.field_name)
+                    xField = ElementTree.SubElement(xData, escaped_field_name)
                     xField.text = _serialize(field_with_attr.field_value)
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]
                         xField.attrib[attribute] = _serialize(val)
 
         return xData
+
+    def _get_reporting_groups(self, group_ids):
+        groups = []
+
+        reporting_group_ids = set([
+            gid for gid in group_ids
+            if gid.startswith(LOCATION_REPORTING_PREFIX)
+        ])
+        reporting_location_ids = [
+            group_id[group_id.index('-') + 1:]
+            for group_id in reporting_group_ids
+        ]
+        reporting_locations = SQLLocation.objects.filter(
+            location_id__in=reporting_location_ids
+        )
+
+        for reporting_location in reporting_locations:
+            groups.append(reporting_location.reporting_group_object())
+
+        return groups
+
+    def _get_case_sharing_groups(self, group_ids):
+        groups = []
+
+        case_sharing_locations = SQLLocation.objects.filter(
+            location_id__in=group_ids
+        ).values_list('location_id', flat=True).distinct()
+
+        for case_sharing_location in case_sharing_locations:
+            groups.append(case_sharing_location.case_sharing_group_object())
+
+        return groups
 
     def get_groups(self, wrap=True):
         group_ids = set(
@@ -303,24 +338,15 @@ class FixtureDataItem(Document):
             # if any fixtures are referencing location group IDs,
             # make sure that those get wrapped properly as group-looking
             # things
-            location_group_ids = set([
-                gid for gid in group_ids
-                if gid.startswith(LOCATION_SHARING_PREFIX) or gid.startswith(LOCATION_REPORTING_PREFIX)
-            ])
+
             groups = []
-            for group_id in location_group_ids:
-                loc = SQLLocation.objects.get(
-                    location_id=group_id[group_id.index('-') + 1:]
-                )
-                if group_id.startswith(LOCATION_SHARING_PREFIX):
-                    groups.append(loc.case_sharing_group_object())
-                elif group_id.startswith(LOCATION_REPORTING_PREFIX):
-                    groups.append(loc.reporting_group_object())
+            groups += self._get_reporting_groups(group_ids)
+            groups += self._get_case_sharing_groups(group_ids)
 
             return set(
                 list(Group.view(
                     '_all_docs',
-                    keys=list(group_ids.difference(location_group_ids)),
+                    keys=list(group_ids),
                     include_docs=True
                 )) +
                 groups
@@ -500,3 +526,22 @@ class FixtureOwnership(Document):
         ).all()
 
         return ownerships
+
+
+class UserFixtureType(object):
+    LOCATION = 1
+    CHOICES = (
+        (LOCATION, "Location"),
+    )
+
+
+class UserFixtureStatus(models.Model):
+    """Keeps track of when a user needs to re-sync a fixture"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
+    last_modified = models.DateTimeField()
+
+    DEFAULT_LAST_MODIFIED = datetime.min
+
+    class Meta(object):
+        unique_together = ("user_id", "fixture_type")

@@ -1,5 +1,5 @@
-@import '../../style/less/includes-3/variables.less';
-@import '../../style/less/includes-3/mixins.less';
+@import '../../style/less/bootstrap3/includes/variables.less';
+@import '../../style/less/bootstrap3/includes/mixins.less';
 
 @panel-dashboard-border: darken(@navbar-default-bg, 5);
 @panel-dashboard-header-bg: @navbar-default-bg;
@@ -106,6 +106,14 @@
     left: 104px;
     z-index: 500;
   }
+}
+
+/*
+This prevents flicker in the time between the initial page load and the first angular render.
+https://docs.angularjs.org/api/ng/directive/ngCloak
+*/
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
 }
 
 

@@ -15,3 +15,23 @@
     _kms('//doug1izaerwt3.cloudfront.net/' + _kmk + '.1.js');
     {% endif %}
 </script>
+
+<script>
+    /**
+     * Push arguments to _kmq, but ensure that passed callbacks are executed
+     * after a short timeout even if the arguments weren't tracked successfully.
+     *
+     * @param args - The args to be pushed to _kmq
+     * @param [timeout] - How long to wait before executing callback.
+     *      Default is 2000 milliseconds.
+     */
+    function kmqPushSafe(args, timeout) {
+        var lastArg = args[args.length - 1];
+        if (typeof  lastArg === "function"){
+            var oneTimeCallback = _.once(lastArg);
+            args[args.length - 1] = oneTimeCallback;
+            setInterval(oneTimeCallback, timeout ? timeout : 2000);
+        }
+        _kmq.push(args);
+    }
+</script>

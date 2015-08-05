@@ -10,7 +10,7 @@
             <strong>{{ plan_name }}</strong> plan.
         {% endblocktrans %}
     </p>
-    {% if not is_billing_admin %}
+    {% if not is_domain_admin %}
         <div class="alert alert-info">
             <i class="icon-info-sign"></i>
             {% blocktrans %}
@@ -23,7 +23,7 @@
            class="btn" target="_blank">{% trans 'Read more about our pricing plans' %}</a>
     </div>
     <div class="pull-right">
-        {% if is_billing_admin %}
+        {% if is_domain_admin %}
         <a href="{{ change_subscription_url }}" class="btn btn-primary">{% trans 'Change My Subscription' %}</a>
         {% endif %}
     </div>

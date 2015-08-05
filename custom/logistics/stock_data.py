@@ -1,3 +1,4 @@
+from celery import chain
 from custom.logistics.api import ApiSyncObject
 
 
@@ -26,6 +27,13 @@ class StockDataSynchronization(object):
 
     def get_last_processed_location(self, checkpoint):
         raise NotImplemented()
+
+    def get_stock_apis_objects(self):
+        raise NotImplemented()
+
+    def process_data(self, task, chunk):
+        res = chain(task.si(self, fac) for fac in chunk)()
+        res.get()
 
 
 class StockDataApiSync(ApiSyncObject):

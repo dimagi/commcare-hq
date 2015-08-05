@@ -1,7 +1,7 @@
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
-    BillingAccountAdmin, BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
+    BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
     SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, AdminAuthentication
@@ -54,14 +54,6 @@ class RoleResource(ModelResource):
         queryset = Role.objects.all()
         fields = ['id', 'slug', 'name', 'description', 'parameters', 'last_modified']
         resource_name = 'role'
-
-
-class BillingAccountAdminResource(ModelResource):
-
-    class Meta(AccountingResourceMeta):
-        queryset = BillingAccountAdmin.objects.all()
-        fields = ['id', 'web_user', 'domain', 'last_modified']
-        resource_name = 'billing_account_admin'
 
 
 class AccountingCurrencyResource(ModelResource):
@@ -136,9 +128,22 @@ class SubscriberResource(ModelResource):
         resource_name = 'subscriber'
 
 
+class BillingContactInfoResource(ModelResource):
+    account = fields.IntegerField('account_id')
+
+    class Meta(AccountingResourceMeta):
+        queryset = BillingContactInfo.objects.all()
+        fields = ['id', 'first_name', 'last_name', 'emails', 'phone_number', 'company_name', 'first_line',
+                  'second_line', 'city', 'state_province_region', 'postal_code', 'country', 'last_modified']
+        resource_name = 'billing_contact_info'
+
+
 class BillingAccountResource(ModelResource):
     currency = fields.IntegerField('currency_id', null=True)
-    billing_admins = AccToManyField(BillingAccountAdminResource, 'billing_admins', full=True, null=True)
+    billing_contact_info = fields.ToOneField(BillingContactInfoResource,
+                                             'billingcontactinfo',
+                                             full=True,
+                                             null=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingAccount.objects.all()
@@ -163,8 +168,8 @@ class SubscriptionResource(ModelResource):
 
 class InvoiceResource(ModelResource):
     subscription = fields.IntegerField('subscription_id')
-    subtotal = fields.IntegerField('subtotal')
-    applied_credit = fields.IntegerField('applied_credit')
+    subtotal = fields.DecimalField('subtotal')
+    applied_credit = fields.DecimalField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = Invoice.objects.all()
@@ -177,8 +182,8 @@ class LineItemResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
     feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
-    subtotal = fields.IntegerField('subtotal')
-    applied_credit = fields.IntegerField('applied_credit')
+    subtotal = fields.DecimalField('subtotal')
+    applied_credit = fields.DecimalField('applied_credit')
 
     class Meta(AccountingResourceMeta):
         queryset = LineItem.objects.all()
@@ -189,22 +194,12 @@ class LineItemResource(ModelResource):
 
 class PaymentMethodResource(ModelResource):
     account = fields.IntegerField('account_id', null=True)
-    billing_admin = fields.IntegerField('billing_admin_id', null=True)
+    web_user = fields.CharField('web_user', null=True)
 
     class Meta(AccountingResourceMeta):
         queryset = PaymentMethod.objects.all()
         fields = ['id', 'method_type', 'customer_id', 'date_created', 'last_modified']
         resource_name = 'accounting_payment_method'
-
-
-class BillingContactInfoResource(ModelResource):
-    account = fields.IntegerField('account_id')
-
-    class Meta(AccountingResourceMeta):
-        queryset = BillingContactInfo.objects.all()
-        fields = ['id', 'first_name', 'last_name', 'emails', 'phone_number', 'company_name', 'first_line',
-                  'second_line', 'city', 'state_province_region', 'postal_code', 'country', 'last_modified']
-        resource_name = 'billing_contact_info'
 
 
 class PaymentRecordResource(ModelResource):

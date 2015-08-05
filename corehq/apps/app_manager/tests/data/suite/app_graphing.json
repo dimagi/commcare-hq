@@ -214,7 +214,6 @@
                                        "doc_type": "GraphSeries",
                                        "y_function": "6",
                                        "data_path": "instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']",
-                                       "radius_function": null,
                                        "x_function": "5",
                                        "config": {
                                        }
@@ -1011,7 +1010,6 @@
        }
    ],
    "attribution_notes": null,
-   "commtrack_enabled": false,
    "commtrack_requisition_mode": null,
    "translation_strategy": "select-known",
    "case_sharing": false,

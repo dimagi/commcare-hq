@@ -4,7 +4,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
-from couchforms.dbaccessors import get_forms_by_type, clear_all_forms
+from couchforms.dbaccessors import get_forms_by_type, clear_forms_in_domain
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
@@ -19,12 +19,12 @@ class SubmissionErrorTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
-        clear_all_forms(self.domain.name)
+        clear_forms_in_domain(self.domain.name)
 
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
-        clear_all_forms(self.domain.name)
+        clear_forms_in_domain(self.domain.name)
 
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)

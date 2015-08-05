@@ -39,6 +39,10 @@ development:
         concurrency: 1
       sms_queue:
         concurrency: 1
+      ucr_queue:
+        concurrency: 1
+      email_queue:
+        concurrency: 1
       flower: {}
 
 india:
@@ -65,6 +69,10 @@ india:
         concurrency: 3
       sms_queue:
         concurrency: 8
+      ucr_queue:
+        concurrency: 4
+      email_queue:
+        concurrency: 2
       flower: {}
 
 preview:
@@ -79,6 +87,10 @@ production:
 
   new_relic_enabled:
     - hqdjango3.internal.commcarehq.org
+    - hqdjango4.internal.commcarehq.org
+    - hqdjango5.internal.commcarehq.org
+    - hqcelery1.internal.commcarehq.org
+    - hqcelery0.internal.commcarehq.org
 
   celery_processes:
     hqcelery0:
@@ -92,6 +104,8 @@ production:
         concurrency: 1
       reminder_case_update_queue:
         concurrency: 4
+      email_queue:
+        concurrency: 2
     hqcelery1:
       reminder_queue:
         concurrency: 8
@@ -101,16 +115,13 @@ production:
         concurrency: 3
       sms_queue:
         concurrency: 8
+      ucr_queue:
+        concurrency: 4
       flower: {}
 
 staging:
   environment: staging
   should_migrate: True
-
-  new_relic_enabled:
-    - hqdjango0-staging.internal.commcarehq.org
-    - hqdjango1-staging.internal.commcarehq.org
-    - hqdb0-staging.internal.commcarehq.org
 
   celery_processes:
     '*':
@@ -122,6 +133,10 @@ staging:
         concurrency: 1
       saved_exports_queue:
         concurrency: 3
+      ucr_queue:
+        concurrency: 1
+      email_queue:
+        concurrency: 1
       flower: {}
 
 zambia:
@@ -133,7 +148,7 @@ zambia:
       main:
         concurrency: 4
       background_queue:
-        concurrency: 4
+        concurrency: 2
       periodic:
         concurrency: 4
       pillow_retry_queue:
@@ -148,4 +163,8 @@ zambia:
         concurrency: 3
       sms_queue:
         concurrency: 4
+      ucr_queue:
+        concurrency: 2
+      email_queue:
+        concurrency: 2
       flower: {}

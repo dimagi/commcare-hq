@@ -461,17 +461,16 @@ class PayloadGeneratorTest(SimpleTestCase):
             payload_generator.get_payload(None, form_mock)
 
     @patch('custom.dhis2.payload_generators.push_case')
-    @patch('casexml.apps.case.models.CommCareCase')
+    @patch('casexml.apps.case.xform.cases_referenced_by_xform')
     @patch('custom.dhis2.payload_generators.Dhis2Settings')
-    def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, CommCareCasePatch, push_case):
+    def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, cases_referenced_by_xform, push_case):
+
         """
         get_payload should raise IgnoreDocument given a registration form
         """
         case_mock = Mock()
         case_mock.type = CASE_TYPE
-        cases_mock = Mock()
-        cases_mock.iterator.return_value = [case_mock]
-        CommCareCasePatch.get_by_xform_id.return_value = cases_mock
+        cases_referenced_by_xform.return_value = [case_mock]
 
         class Settings(object):
             dhis2 = {'host': 'foo', 'username': 'foo', 'password': 'foo', 'top_org_unit_name': 'foo'}

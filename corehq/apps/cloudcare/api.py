@@ -1,14 +1,18 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
+    get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.app_manager.models import (
     ApplicationBase,
     get_app,
 )
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
 from datetime import datetime
@@ -98,7 +102,7 @@ class CaseAPIHelper(object):
     Simple config object for querying the APIs
     """
     def __init__(self, domain, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
-                 footprint=False, strip_history=False, filters=None, include_children=False):
+                 footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
         self.domain = domain
@@ -109,7 +113,6 @@ class CaseAPIHelper(object):
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
-        self.include_children = include_children
 
     def _case_results(self, case_id_list):
         def _filter(res):
@@ -125,7 +128,7 @@ class CaseAPIHelper(object):
                             return False
                 return True
 
-        if not self.ids_only or self.filters or self.footprint or self.include_children:
+        if not self.ids_only or self.filters or self.footprint:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
             base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
@@ -137,7 +140,7 @@ class CaseAPIHelper(object):
         if self.filters and not self.footprint:
             base_results = filter(_filter, base_results)
 
-        if not self.footprint and not self.include_children:
+        if not self.footprint:
             return base_results
 
         case_list = [res.couch_doc for res in base_results]
@@ -148,20 +151,28 @@ class CaseAPIHelper(object):
                             strip_history=self.strip_history,
                         ).values()
 
-        if self.include_children:
-            case_list = get_related_cases(
-                            case_list,
-                            self.domain,
-                            strip_history=self.strip_history,
-                            search_up=False,
-                        ).values()
-
         return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in case_list]
 
     def get_all(self):
-        view_results = CommCareCase.get_all_cases(self.domain, case_type=self.case_type, status=self.status)
-        ids = [res["id"] for res in view_results]
-        return self._case_results(ids)
+        status = self.status or CASE_STATUS_ALL
+        if status == CASE_STATUS_ALL:
+            case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
+        elif status == CASE_STATUS_OPEN:
+            case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
+        elif status == CASE_STATUS_CLOSED:
+            _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+            _assert(False, "I'm surprised CaseAPIHelper "
+                           "ever gets called with status=closed")
+            # this is rare so we don't care if it requires two calls to get
+            # all the ids
+            case_ids = (
+                set(get_case_ids_in_domain(self.domain, type=self.case_type))
+                - set(get_open_case_ids_in_domain(self.domain, type=self.case_type))
+            )
+        else:
+            raise ValueError("Invalid value for 'status': '%s'" % status)
+
+        return self._case_results(case_ids)
 
     def get_owned(self, user_id):
         try:
@@ -173,15 +184,15 @@ class CaseAPIHelper(object):
         except AttributeError:
             owner_ids = [user_id]
 
-        view_results = CommCareCase.view(
-            'hqcase/by_owner',
-            keys=[[self.domain, owner_id, closed_flag]
-                  for owner_id in owner_ids
-                  for closed_flag in status_to_closed_flags(self.status)],
-            include_docs=False,
-            reduce=False,
-        )
-        ids = [res["id"] for res in view_results]
+        closed = {
+            CASE_STATUS_OPEN: False,
+            CASE_STATUS_CLOSED: True,
+            CASE_STATUS_ALL: None,
+        }[self.status]
+
+        ids = get_case_ids_in_domain_by_owner(
+            self.domain, owner_id__in=owner_ids, closed=closed)
+
         return self._case_results(ids)
 
 
@@ -194,13 +205,13 @@ class CaseAPIHelper(object):
 
 def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
-                       strip_history=True, include_children=False):
+                       strip_history=True):
 
     # a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
-                           filters=filters, include_children=include_children)
+                           filters=filters)
     if user_id:
         return helper.get_owned(user_id)
     else:
@@ -332,7 +343,7 @@ def get_filters_from_request(request, limit_top_level=None):
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
     for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only', 'include_children']:
+                            'ids_only', 'use_cache']:
         if system_property in filters:
             del filters[system_property]
     return filters

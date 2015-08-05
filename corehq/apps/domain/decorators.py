@@ -20,6 +20,9 @@ from django_prbac.utils import has_privilege
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
+from tastypie.authentication import ApiKeyAuthentication
+from tastypie.http import HttpUnauthorized
+
 # CCHQ imports
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
@@ -98,6 +101,23 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
+def api_key():
+    api_auth_class = ApiKeyAuthentication()
+
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            auth = api_auth_class.is_authenticated(request)
+            if auth:
+                if isinstance(auth, HttpUnauthorized):
+                    return auth
+                return view(request, *args, **kwargs)
+
+            response = HttpUnauthorized()
+            return response
+        return wrapper
+    return real_decorator
+
+
 def basicauth(realm=''):
     # stolen and modified from: https://djangosnippets.org/snippets/243/
     def real_decorator(view):
@@ -157,6 +177,11 @@ def login_or_basic_ex(allow_cc_users=False):
 
 login_or_basic = login_or_basic_ex()
 
+
+def login_or_api_key_ex(allow_cc_users=False):
+    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+
+login_or_api_key = login_or_api_key_ex()
 
 # For views that are inside a class
 # todo where is this being used? can be replaced with decorator below

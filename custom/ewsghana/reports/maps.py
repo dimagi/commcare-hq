@@ -1,14 +1,14 @@
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
-from corehq import Domain
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
-from custom.ewsghana.utils import get_country_id
+from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
+from dimagi.utils.decorators.memoized import memoized
 
 
 class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
@@ -19,17 +19,20 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                                           **kwargs)
 
     @property
+    @memoized
+    def active_location(self):
+        return SQLLocation.objects.get(domain=self.domain, location_id=self.config.get('location_id'))
+
+    @property
     def locations(self):
-        if not self.active_location:
-            return []
-        if self.active_location.location_type == 'country':
-            return self.facilities()
-        elif self.active_location.location_type == 'region':
-            return self.facilities(parent__parent__location_id=self.active_location._id)
-        elif self.active_location.location_type == 'district':
-            return self.facilities(parent__location_id=self.active_location._id)
-        else:
-            return [self.active_location.sql_location]
+        locations = self.active_location.get_descendants(
+            include_self=True
+        ).filter(location_type__administrative=False).exclude(is_archived=True)
+        if 'loc_type' in self.config and self.config['loc_type']:
+            if isinstance(self.config['loc_type'], basestring):
+                self.config['loc_type'] = [self.config['loc_type']]
+            locations = locations.filter(location_type__pk__in=self.config['loc_type'])
+        return locations
 
     def _get_icon_and_color(self, value):
         return {
@@ -64,15 +67,14 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 quantity = "No data"
                 months_until_stockout = None
             else:
-                if stock_states[0].get_monthly_consumption():
-                    monthly_consumption = round(stock_states[0].get_monthly_consumption())
-                else:
-                    monthly_consumption = None
+                monthly_consumption = None
+                if stock_states[0].daily_consumption:
+                    monthly_consumption = stock_states[0].daily_consumption * 30
                 quantity = stock_states[0].stock_on_hand
                 if not monthly_consumption:
                     months_until_stockout = None
                 else:
-                    months_until_stockout = (float(stock_states[0].stock_on_hand) / monthly_consumption)
+                    months_until_stockout = (float(stock_states[0].stock_on_hand) / float(monthly_consumption))
 
                 if quantity == 0:
                     category = 'stockout'
@@ -109,6 +111,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     title = ugettext_noop("Maps")
     slug = "ews_mapreport"
     template_report = 'ewsghana/map_template.html'
+    report_partial_path = "ewsghana/partials/map.html"
 
     data_source = {
         'adapter': 'report',
@@ -117,9 +120,32 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     }
 
     fields = [
-        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'custom.ewsghana.filters.EWSRestrictionLocationFilter',
         'custom.ewsghana.filters.ProductFilter',
+        'custom.ewsghana.filters.LocationTypeFilter'
     ]
+
+    def _get_data(self):
+        adapter = self.data_source['adapter']
+        geo_col = self.data_source.get('geo_column', 'geo')
+
+        try:
+            loader = getattr(self, '_get_data_%s' % adapter)
+        except AttributeError:
+            raise RuntimeError('unknown adapter [%s]' % adapter)
+        config = dict(self.request.GET.iterlists())
+        for k, v in config.iteritems():
+            if len(v) == 1:
+                config[k] = v[0]
+        data = loader(self.data_source, config)
+
+        return self._to_geojson(data, geo_col)
+
+    @property
+    def report_context(self):
+        context = super(StockStatusMapReport, self).report_context
+        context['context']['slugs'] = filter_slugs_by_role(self.request.couch_user, self.domain)
+        return context
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
@@ -144,13 +170,27 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
 
     @property
     def display_config(self):
+        categories = {
+            'Central Medical Store': 'rgba(80, 0, 0, .8)',
+            'Teaching Hospital': 'rgba(80, 120, 0, .8)',
+            'Regional Medical Store': 'rgba(80, 240, 0, .8)',
+            'Regional Hospital': 'rgba(150, 0, 0, .8)',
+            'Clinic': 'rgba(150, 120, 0, .8)',
+            'District Hospital': 'rgba(190, 240, 255, .8)',
+            'CHPS Facility': 'rgba(220, 120, 150, .8)',
+            'Hospital': 'rgba(220, 120, 0, .8)',
+            'Psychiatric Hospital': 'rgba(220, 180, 50, .8)',
+            'Polyclinic': 'rgba(200, 255, 0, .8)',
+            'Health Centre': 'rgba(255, 0, 255, .8)'
+        }
+
         conf = {
             'name_column': 'name',
             'detail_template': render_to_string('ewsghana/partials/map_report_table.html', {
                 'product': self.product,
                 'columns': [
                     {'id': 'quantity', 'title': 'Quantity'},
-                    {'id': 'months_until_stockout', 'title': 'Months Until Stockout'},
+                    {'id': 'months_until_stockout', 'title': 'Months of Stock'},
                     {'id': 'category', 'name': 'Stock status'}
                 ],
             }),
@@ -158,6 +198,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 {
                     'color': {
                         'column': 'type',
+                        'categories': categories
                     },
                 },
                 {

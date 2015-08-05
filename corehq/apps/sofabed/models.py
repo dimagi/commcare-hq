@@ -53,7 +53,6 @@ class FormData(BaseDataIndex):
     Data about a form submission.
     See XFormInstance class
     """
-    doc_type = models.CharField(max_length=255, db_index=True)
     domain = models.CharField(max_length=255, db_index=True)
     received_on = models.DateTimeField(db_index=True)
 
@@ -111,7 +110,6 @@ class FormData(BaseDataIndex):
                     instance_id)
             )
 
-        self.doc_type = instance.doc_type
         self.domain = instance.domain
         self.received_on = instance.received_on
 
@@ -128,7 +126,6 @@ class FormData(BaseDataIndex):
 
     def matches_exact(self, instance):
         return (
-            self.doc_type == instance.doc_type and
             self.domain == instance.domain and
             self.instance_id == instance.get_id and
             self.time_start == instance.metadata.timeStart and
@@ -148,11 +145,10 @@ class CaseData(BaseDataIndex):
     See CommCareCase class
     """
     case_id = models.CharField(unique=True, primary_key=True, max_length=128)
-    doc_type = models.CharField(max_length=128, db_index=True)
     domain = models.CharField(max_length=128, db_index=True)
-    version = models.CharField(max_length=10, db_index=True, null=True)
+    version = models.CharField(max_length=10, null=True)
     type = models.CharField(max_length=128, db_index=True, null=True)
-    closed = models.BooleanField(db_index=True)
+    closed = models.BooleanField(db_index=True, default=False)
     user_id = models.CharField(max_length=128, db_index=True, null=True)
     owner_id = models.CharField(max_length=128, db_index=True, null=True)
     opened_on = models.DateTimeField(db_index=True, null=True)
@@ -160,10 +156,13 @@ class CaseData(BaseDataIndex):
     closed_on = models.DateTimeField(db_index=True, null=True)
     closed_by = models.CharField(max_length=128, db_index=True, null=True)
     modified_on = models.DateTimeField(db_index=True)
-    modified_by = models.CharField(max_length=128, db_index=True, null=True)
+    modified_by = models.CharField(max_length=128, null=True)
     server_modified_on = models.DateTimeField(db_index=True, null=True)
     name = models.CharField(max_length=CASE_NAME_LEN, null=True)
     external_id = models.CharField(max_length=128, null=True)
+
+    # owner_id || user_id
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
 
     @classmethod
     def get_instance_id(cls, instance):
@@ -188,7 +187,6 @@ class CaseData(BaseDataIndex):
             name = case.name
 
         self.case_id = case_id
-        self.doc_type = case.doc_type
         self.domain = case.domain
         self.version = case.version
         self.type = case.type
@@ -204,12 +202,13 @@ class CaseData(BaseDataIndex):
         self.server_modified_on = case.server_modified_on
         self.name = name
         self.external_id = case.external_id
+        self.case_owner = case.owner_id or case.user_id
 
         if not is_new:
             CaseActionData.objects.filter(case_id=case_id).delete()
             CaseIndexData.objects.filter(case_id=case_id).delete()
 
-        self.actions = [CaseActionData.from_instance(action, i) for i, action in enumerate(case.actions)]
+        self.actions = [CaseActionData.from_instance(case, action, i) for i, action in enumerate(case.actions)]
         self.indices = [CaseIndexData.from_instance(index) for index in case.indices]
 
     def matches_exact(self, case):
@@ -221,7 +220,6 @@ class CaseData(BaseDataIndex):
             self.closed_by == case.closed_by and
             self.server_modified_on == case.server_modified_on and
             self.case_id == case.case_id and
-            self.doc_type == case.doc_type and
             self.domain == case.domain and
             self.version == case.version and
             self.type == case.type and
@@ -262,6 +260,11 @@ class CaseActionData(models.Model):
     xform_xmlns = models.CharField(max_length=128, null=True)
     sync_log_id = models.CharField(max_length=128, null=True)
 
+    # de-normalized fields
+    domain = models.CharField(max_length=128, null=True, db_index=True)
+    case_owner = models.CharField(max_length=128, null=True, db_index=True)
+    case_type = models.CharField(max_length=128, null=True, db_index=True)
+
     def __unicode__(self):
         return "CaseAction: {xform}: {type} - {date} ({server_date})".format(
             xform=self.xform_id, type=self.action_type,
@@ -269,8 +272,13 @@ class CaseActionData(models.Model):
         )
 
     @classmethod
-    def from_instance(cls, action, index):
+    def from_instance(cls, case, action, index):
         ret = cls()
+
+        ret.domain = case.domain
+        ret.case_type = case.type
+        ret.case_owner = case.owner_id or case.user_id
+
         ret.index = index
         ret.action_type = action.action_type
         ret.user_id = action.user_id

@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
@@ -34,9 +35,11 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, Database
+from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchforms.const import DEVICE_LOG_XMLNS
+from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
 
@@ -48,6 +51,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -78,9 +82,10 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .multimech import GlobalConfig
+from .forms import AuthenticateAsForm
 
 
 @require_superuser
@@ -224,6 +229,41 @@ def contact_email(request):
     return response
 
 
+class AuthenticateAs(BasePageView):
+    urlname = 'authenticate_as'
+    page_title = _("Login as other user")
+    template_name = 'hqadmin/authenticate_as.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(AuthenticateAs, self).dispatch(*args, **kwargs)
+
+    def page_url(self):
+        return reverse(self.urlname)
+
+    def get_context_data(self, **kwargs):
+        context = super(AuthenticateAs, self).get_context_data(**kwargs)
+        context.update({
+            'hide_filters': True,
+            'page_url': self.page_url(),
+            'form': AuthenticateAsForm(initial=kwargs)
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = AuthenticateAsForm(self.request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            request.user = User.objects.get(username=username)
+
+            # http://stackoverflow.com/a/2787747/835696
+            # This allows us to bypass the authenticate call
+            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, request.user)
+            return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
+
+
 @require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
@@ -255,7 +295,7 @@ def mass_email(request):
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
 
-                send_HTML_email(subject, recipient.email, html_content, text_content,
+                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')
@@ -370,8 +410,8 @@ def system_ajax(request):
                     traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
-            return HttpResponse(json.dumps(ret), mimetype = 'application/json')
-    return HttpResponse('{}', mimetype='application/json')
+            return HttpResponse(json.dumps(ret), content_type='application/json')
+    return HttpResponse('{}', content_type='application/json')
 
 
 @require_superuser_or_developer
@@ -405,11 +445,6 @@ def db_comparisons(request):
     def _simple_view_couch_query(db, view_name):
         return db.view(view_name, reduce=True).one()['value']
 
-    def _count_real_forms():
-        all_forms = _simple_view_couch_query(XFormInstance.get_db(), 'couchforms/by_xmlns')
-        device_logs = XFormInstance.get_db().view('couchforms/by_xmlns', key=DEVICE_LOG_XMLNS).one()['value']
-        return all_forms - device_logs
-
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
@@ -425,17 +460,17 @@ def db_comparisons(request):
         },
         {
             'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': _count_real_forms(),
+            'couch_docs': get_number_of_forms_all_domains_in_couch(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
-            'sql_rows': FormData.objects.count(),
+            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
+            'couch_docs': get_total_case_count(),
             'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.count(),
+            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
         }
     ]
 
@@ -689,10 +724,15 @@ def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
-    try:
-        couch_doc = get_db().get(doc_id)
-    except ResourceNotFound:
-        couch_doc = {}
+
+    couch_doc = {}
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        try:
+            couch_doc = Database(url).get(doc_id)
+            break
+        except ResourceNotFound:
+            pass
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
@@ -745,9 +785,11 @@ def callcenter_test(request):
     elif doc_id:
         try:
             doc = CommCareUser.get_db().get(doc_id)
+            domain = Domain.get_by_name(doc['domain'])
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], include_docs=True)
+                case_type = domain.call_center_config.case_type
+                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)
@@ -755,9 +797,6 @@ def callcenter_test(request):
                     error = 'Case ID does does not refer to a Call Center Case'
         except ResourceNotFound:
             error = "User Not Found"
-
-    if user_case:
-        domain = Domain.get_by_name(user_case['domain'])
 
     try:
         query_date = dateutil.parser.parse(date_param)

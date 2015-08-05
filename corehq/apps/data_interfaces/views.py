@@ -6,13 +6,15 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
+    get_number_of_case_groups_in_domain
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
-from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
 from corehq.apps.data_interfaces.forms import (
@@ -86,7 +88,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        return CommCareCaseGroup.get_total(self.domain)
+        return get_number_of_case_groups_in_domain(self.domain)
 
     @property
     def column_names(self):
@@ -102,7 +104,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for group in CommCareCaseGroup.get_by_domain(
+        for group in get_case_groups_in_domain(
                 self.domain,
                 limit=self.limit,
                 skip=self.skip
@@ -150,7 +152,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def get_deleted_item_data(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
-        case_group.delete()
+        case_group.soft_delete()
         return {
             'itemData': item_data,
             'template': 'deleted-group-template',

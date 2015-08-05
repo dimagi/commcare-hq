@@ -17,7 +17,10 @@ class UtilitiesTestCase(SimpleTestCase):
         trap1 = get_column_name("its/a_trap")
         trap2 = get_column_name("its_a/trap")
         trap3 = get_column_name("its_a_trap")
+        trap4 = get_column_name("its/a/path/that/also/happens/to/be/a/bunch/longer/than/sixty/three/characters")
+        trap4_expected = 'ppens_to_be_a_bunch_longer_than_sixty_three_characters_6174b354'
 
         self.assertNotEqual(real, trap1)
         self.assertNotEqual(real, trap2)
         self.assertNotEqual(real, trap3)
+        self.assertEqual(trap4, trap4_expected)

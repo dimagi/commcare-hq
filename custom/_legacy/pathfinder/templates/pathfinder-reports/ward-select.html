@@ -1,5 +1,0 @@
-Ward: <select name="ward">
-{% for w in wards %}
-<option value="{{ w.ward }}" {% ifequal w.ward ward %} selected="true"{% endifequal %}>{{ w.district }} - {{ w.ward }}</option>
-{% endfor %}
-</select>

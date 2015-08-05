@@ -67,6 +67,7 @@ class CaseBlock(dict):
             index=None,
             version=V1,
             compatibility_mode=False,
+            strict=True,
         ):
         """
         From https://bitbucket.org/javarosa/javarosa/wiki/casexml
@@ -186,9 +187,10 @@ class CaseBlock(dict):
 
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
-        for key in create_or_update:
-            if create_or_update[key] is not CaseBlock.undefined and self['update'].has_key(key):
-                raise CaseBlockError("Key %r specified twice" % key)
+        if strict:
+            for key in create_or_update:
+                if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
+                    raise CaseBlockError("Key %r specified twice" % key)
 
         if create:
             self['create'].update(create_or_update)
@@ -232,7 +234,7 @@ class CaseBlock(dict):
             elif isinstance(value, (basestring, int)):
                 return unicode(value)
             else:
-                raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
+                raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(type(value), value))
 
         def dict_to_xml(block, dct):
             if dct.has_key('_attrib'):
@@ -346,6 +348,12 @@ class CaseFactory(object):
         """
         kwargs['create'] = True
         return self.create_or_update_case(CaseStructure(case_id=uuid.uuid4().hex, attrs=kwargs))[0]
+
+    def close_case(self, case_id):
+        """
+        Shortcut to close a case (and do nothing else)
+        """
+        return self.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}))[0]
 
     def create_or_update_case(self, case_structure, form_extras=None):
         return self.create_or_update_cases([case_structure], form_extras)

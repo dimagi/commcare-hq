@@ -1,5 +1,5 @@
-{% extends 'style/base_section.html' %}
-{% load crispy_forms_tags_b3 %}
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
@@ -250,7 +250,7 @@
                             ng-model="currentPage"
                             ng-change="pageChanged()"></pagination>
 
-                {% if domain_object.locations_enabled %}
+                {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
                     <div class="checkbox">
                         <label>
                             <input type="checkbox"

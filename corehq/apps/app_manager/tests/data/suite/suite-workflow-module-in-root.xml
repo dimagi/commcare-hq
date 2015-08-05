@@ -187,6 +187,13 @@
       <datum id="case_id_b" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_autoload_patient2" function="case_id"/>
     </session>
+    <assertions>
+      <assert test="count(instance('casedb')/casedb/case[@case_id=case_id]) = 1">
+        <text>
+          <locale id="case_autoload.raw.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
     <stack>
       <create>
         <command value="'m4'"/>

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
+from corehq.apps.accounting.generator import init_default_currency
 
 from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
@@ -7,12 +8,10 @@ from corehq.apps.smsbillables import generator
 
 class TestUsageFee(TestCase):
     def setUp(self):
-        self.currency_usd, _ = Currency.objects.get_or_create(
-            code=settings.DEFAULT_CURRENCY,
-            name="Default Currency",
-            symbol="$",
-            rate_to_default=Decimal('1.0')
-        )
+        SmsUsageFee.objects.all().delete()
+        SmsUsageFeeCriteria.objects.all().delete()
+
+        self.currency_usd = init_default_currency()
 
         self.least_specific_fees = generator.arbitrary_fees_by_direction()
         self.most_specific_fees = generator.arbitrary_fees_by_direction_and_domain()
@@ -77,6 +76,7 @@ class TestUsageFee(TestCase):
         SmsBillable.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
+        SmsGatewayFee.objects.all().delete()
         self.currency_usd.delete()
         for backend_instance in self.backend_ids.values():
             SMSBackend.get(backend_instance).delete()

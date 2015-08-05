@@ -2,24 +2,20 @@ from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import (
-    CommtrackConfig, CommtrackActionConfig, RequisitionActions,
-    CommtrackRequisitionConfig, SupplyPointCase, RequisitionCase
-)
+from corehq.apps.commtrack.const import RequisitionActions
+from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
+    CommtrackRequisitionConfig
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location
 import itertools
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from calendar import monthrange
-import math
-import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
-from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
@@ -190,40 +186,6 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 
-def num_periods_late(product_case, schedule, *schedule_args):
-    last_reported = iso_string_to_date(getattr(product_case, 'last_reported', '2000-01-01')[:10])
-
-    class DueDateStream(object):
-        """mimic an array of due dates to perform a binary search"""
-
-        def __getitem__(self, i):
-            return self.normalize(self.due_date(i + 1))
-
-        def __len__(self):
-            """highest number of periods late before we stop caring"""
-            max_horizon = 30. * 365.2425 / self.period_length() # arbitrary upper limit -- 30 years
-            return math.ceil(max_horizon)
-
-        def due_date(self, n):
-            return {
-                'weekly': due_date_weekly,
-                'monthly': due_date_monthly,
-            }[schedule](*schedule_args, past_period=n)
-
-        def period_length(self, n=100):
-            """get average length of reporting period"""
-            return (self.due_date(0) - self.due_date(n)).days / float(n)
-
-        def normalize(self, dt):
-            """convert dates into a numerical scale (where greater == more in the past)"""
-            return -(dt - date(2000, 1, 1)).days
-
-    stream = DueDateStream()
-    # find the earliest due date that is on or after the most-recent report date,
-    # and return how many reporting periods back it occurs
-    return bisect.bisect_right(stream, stream.normalize(last_reported))
-
-
 def submit_mapping_case_block(user, index):
     mapping = user.get_location_map_case()
 
@@ -273,12 +235,7 @@ def get_commtrack_location_id(user, domain):
 def get_case_wrapper(data):
     return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase,
     }.get(data.get('type'), CommCareCase)
-
-
-def wrap_commtrack_case(case_json):
-    return get_case_wrapper(case_json).wrap(case_json)
 
 
 def unicode_slug(text):
@@ -287,6 +244,11 @@ def unicode_slug(text):
 
 def encode_if_needed(val):
     return val.encode("utf8") if isinstance(val, unicode) else val
+
+
+def _fetch_ending_numbers(s):
+    matcher = re.compile("\d*$")
+    return matcher.search(s).group()
 
 
 def generate_code(object_name, existing_codes):
@@ -298,7 +260,8 @@ def generate_code(object_name, existing_codes):
         '_',
         unicode_slug(object_name.lower())
     ).strip('_')
-    postfix = ''
+
+    postfix = _fetch_ending_numbers(object_name)
 
     while name_slug + postfix in existing_codes:
         if postfix:

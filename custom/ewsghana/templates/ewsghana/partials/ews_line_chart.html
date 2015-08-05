@@ -1,87 +1,24 @@
 {% load hq_shared_tags %}
+<link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
+
 <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
+
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+<script type="text/javascript" src='{% static 'reports/javascripts/daterangepicker.js' %}'></script>
 <script type="text/javascript">
-    $inventory_filter = $('#inventory_filter');
-    $inventory_filter.createDefaultDateRangePicker();
-    $('#inventory_filter_btn').on('click', function(e) {
-        e.preventDefault();
-        $('.hq-loading').fadeIn();
-
-        $(this).prop('disabled', true);
-        var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
-        $.ajax({
-            type: 'GET',
-            datatype: 'json',
-            url: '{% url 'inventory_managment' domain %}',
-            data: {
-                startdate: dates[0],
-                enddate: dates[1],
-                location_id: '{{ location_id }}'
-            },
-            success: function(response) {
-                $(line_chart_id + ' svg').empty();
-                line_chart_data = response;
-                $('#inventory_filter_btn').removeAttr('disabled');
-                $('.hq-loading').fadeOut();
-
-                d3.select(line_chart_id + ' svg')
-                        .datum(response)
-                        .transition().duration(500).call(line_chart);
-                show_hide_line_chart_data();
-            },
-            error: function() {
-            }
-        });
-    });
-
-    $stockout_filter = $('#stockouts_filter');
-    $stockout_filter.createDefaultDateRangePicker();
-    $('#stockouts_filter_btn').on('click', function(e) {
-        e.preventDefault();
-        $('.hq-loading').fadeIn();
-
-        $(this).prop('disabled', true);
-        var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
-        $.ajax({
-            type: 'GET',
-            datatype: 'json',
-            url: '{% url 'stockouts_product' domain %}',
-            data: {
-                startdate: dates[0],
-                enddate: dates[1],
-                location_id: '{{ location_id }}'
-            },
-            success: function(response) {
-
-                $(line_chart_id + ' svg').empty();
-                $.each(response, function( index, value ) {
-                    $.each(value.values, function( id, v ) {
-                        v.x = Date.parse(v.x);
-                    });
-                });
-
-                line_chart_data = response;
-                $('#stockouts_filter_btn').removeAttr('disabled');
-                $('.hq-loading').fadeOut();
-
-                d3.select(line_chart_id + ' svg')
-                        .datum(response)
-                        .transition().duration(500).call(line_chart);
-                show_hide_line_chart_data();
-
-            },
-            error: function() {
-            }
-        });
-    });
-
-    nv.addGraph(function() {
+    var line_chart_data;
+    var line_chart_id;
+    var line_chart;
+    var single_line_chart_data;
+    {% if chart.data_needs_formatting %}
+        line_chart_data = formatDataForLineGraph({{ chart.data|JSON }});
+    {% else %}
+        line_chart_data = {{ chart.data|JSON }};
+    {% endif %}
+    var graphGenerator = function() {
         var chart_config = {{ chart.config_dict|JSON }};
-        {% if chart.data_needs_formatting %}
-            line_chart_data = formatDataForLineGraph({{ chart.data|JSON }});
-        {% else %}
-            line_chart_data = {{ chart.data|JSON }};
-        {% endif %}
+
         line_chart_id = '#{{ chart_id }}';
 
         $(line_chart_id).show();
@@ -89,6 +26,11 @@
         line_chart = nv.models.lineChart();
 
         line_chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+        {% if chart.tooltipFormat %}
+            line_chart.tooltipContent(function(key, y, e, graph) {
+                return '<h3>' + graph.point.name + '</h3><p>' + e + ' at ' + y + '</p>';
+            });
+        {% endif %}
         {% if chart.x_axis.format %}
             line_chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
         {% else %}
@@ -100,17 +42,17 @@
         //Modify x-values to date-objects and set tickFormat
         {% if chart.x_axis.dateFormat %}
             var tickValues = [];
-            for (i=0 ; i<line_chart_data.length; i++){
+            for (var i = 0 ; i < line_chart_data.length; i++) {
                 single_line_chart_data = line_chart_data[i].values;
-                for (j=0; j<single_line_chart_data.length; j++){
-                    date = single_line_chart_data[j].x;
+                for (var j = 0; j < single_line_chart_data.length; j++) {
+                    var date = single_line_chart_data[j].x;
                     single_line_chart_data[j].x = new Date(date).getTime();
-                    if (i ===0) {
+                    if (i === 0) {
                         tickValues.push(new Date(date).getTime());
                     }
                 }
             }
-            line_chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
+            line_chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); });
             line_chart.xAxis.tickValues(tickValues);
         {% endif %}
 
@@ -123,6 +65,7 @@
             line_chart.forceY({{ chart.forceY|JSON }});
         {% endif %}
 
+
         line_chart.margin(chart_config.margin);
         line_chart.tooltips(chart_config.tooltips);
 
@@ -133,7 +76,6 @@
         d3.select(line_chart_id + ' svg')
                 .datum(line_chart_data)
                 .transition().duration(500).call(line_chart);
-
         nv.utils.windowResize(line_chart.update);
 
         var updateLineBreaks = function() {
@@ -152,7 +94,116 @@
             });
         {% endif %}
 
-        show_hide_line_chart_data();
+        {% if not chart.is_rendered_as_email %}
+            show_hide_line_chart_data();
+        {% endif %}
+        $('.nv-legend').find('.nv-series').slice(-2).hide();
         return line_chart;
-    });
+    };
+
+    function addUnderstockOverstockLabels(line_chart_id, data) {
+        var underOverStockSeries = data.slice(-2).map(function (element) {
+            return element.values[0];
+        });
+        underOverStockSeries.forEach(function (element) {
+            var series = element.series;
+            var value = element.y;
+            var yPosition = d3.select('svg .nv-scatter .nv-series-' + series + ' circle').attr('cy');
+            d3.selectAll(line_chart_id + ' svg .nv-scatter .nv-series-' + series)
+                    .append('text')
+                    .attr('x', -3)
+                    .attr('dy', '.32em')
+                    .attr('opacity', '1')
+                    .attr('y', yPosition)
+                    .text(function (d) { return value; })
+                    .style('text-anchor', 'end')
+                    .style('stroke', 'none')
+                    .style('fill-opacity', 1);
+            d3.selectAll('.nv-groups .nv-series-' + series +' path')
+                    .style("stroke-dasharray", ("3, 10"));
+        });
+    }
+
+    function addGraph() {
+        nv.addGraph(graphGenerator, function(chart) {
+            if (line_chart_id.slice(-2) === '51') {
+                addUnderstockOverstockLabels(line_chart_id, line_chart_data);
+            }
+            {% if chart.is_rendered_as_email %}
+                var $chart = $(line_chart_id + ' svg');
+                $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
+                $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
+            {% endif %}
+        });
+    }
+    {% if not chart.is_rendered_as_email %}
+        $inventory_filter = $('#inventory_filter');
+        $inventory_filter.createDefaultDateRangePicker();
+        $('#inventory_filter_btn').on('click', function(e) {
+            e.preventDefault();
+            $('.hq-loading').fadeIn();
+
+            $(this).prop('disabled', true);
+            var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
+            $.ajax({
+                type: 'GET',
+                datatype: 'json',
+                url: '{% url 'inventory_managment' domain %}',
+                data: {
+                    startdate: dates[0],
+                    enddate: dates[1],
+                    location_id: '{{ location_id }}'
+                },
+                success: function(response) {
+                    $(line_chart_id + ' svg').empty();
+                    line_chart_data = response;
+                    $('#inventory_filter_btn').removeAttr('disabled');
+                    $('.hq-loading').fadeOut();
+                    addGraph();
+                },
+                error: function() {
+                }
+            });
+        });
+
+        $stockout_filter = $('#stockouts_filter');
+        $stockout_filter.createDefaultDateRangePicker();
+        $('#stockouts_filter_btn').on('click', function(e) {
+            e.preventDefault();
+            $('.hq-loading').fadeIn();
+
+            $(this).prop('disabled', true);
+            var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
+            $.ajax({
+                type: 'GET',
+                datatype: 'json',
+                url: '{% url 'stockouts_product' domain %}',
+                data: {
+                    startdate: dates[0],
+                    enddate: dates[1],
+                    location_id: '{{ location_id }}'
+                },
+                success: function(response) {
+
+                    $(line_chart_id + ' svg').empty();
+                    $.each(response, function( index, value ) {
+                        $.each(value.values, function( id, v ) {
+                            v.x = Date.parse(v.x);
+                        });
+                    });
+
+                    line_chart_data = response;
+                    $('#stockouts_filter_btn').removeAttr('disabled');
+                    $('.hq-loading').fadeOut();
+
+                    addGraph();
+
+                },
+                error: function() {
+                }
+            });
+        });
+    {% endif %}
+    addGraph();
+
 </script>

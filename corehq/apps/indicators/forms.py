@@ -1,8 +1,11 @@
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _
-from bootstrap3_crispy import bootstrap as twbs
-from bootstrap3_crispy.helper import FormHelper
-from bootstrap3_crispy import layout as crispy
+
+# todo proper B3 Handle
+from crispy_forms import bootstrap as twbs
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+
 from corehq.apps.style.crispy import FormActions
 
 

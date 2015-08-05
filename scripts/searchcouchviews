@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# usage
+#   scripts/searchcouchviews <pattern>
+# example
+#   scripts/searchcouchviews CommCareCase
+
+ag -G 'map.js' $1 | grep -o '[^/]*/_design/views/.*/map.js' | sed 's|\(.*\)/_design/views/\(.*\)/map.js|\1/\2|g' | sort

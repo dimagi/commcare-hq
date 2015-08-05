@@ -1,6 +1,7 @@
 # See https://github.com/markstory/lint-review
 [files]
 ignore = */migrations/*
+         */south_migrations/*
          *.min.js
          localsettings.py
 
@@ -10,4 +11,4 @@ linters = flake8, jshint
 [tool_flake8]
 max-line-length = 115
 # http://pep8.readthedocs.org/en/latest/intro.html#error-codes
-ignore = E128,F403
+ignore = E128,E265,F403

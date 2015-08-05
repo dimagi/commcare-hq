@@ -3,6 +3,8 @@ from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
 from corehq.apps.sms.messages import *
+from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.apps.smsforms.models import SQLXFormsSession
 from datetime import date, time
 
 
@@ -732,3 +734,71 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user2, "This message is for users")
         incoming("999122", "null", "TEST")
         self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
+
+
+class PartialFormSubmissionTestCase(TouchformsTestCase):
+    """
+    Must be run manually (see util.TouchformsTestCase)
+    """
+
+    def setUp(self):
+        super(PartialFormSubmissionTestCase, self).setUp()
+        self.app = self.load_app("app_source.json")
+        self.create_structured_sms_keyword(
+            "REG",
+            self.app.modules[0].forms[0].unique_id,
+            "Thank you for your registration submission.",
+        )
+        self.create_survey_keyword("MOD", self.app.modules[0].forms[3].unique_id)
+        self.user = self.create_mobile_worker("abc", "123", "999123")
+
+    def testPartialSubmission(self):
+        # Register the case
+        incoming("999123", "reg pid123 1", "TEST")
+
+        form = self.get_last_form_submission()
+        self.assertFormQuestionEquals(form, "participant_id", "pid123")
+        self.assertFormQuestionEquals(form, "arm", "arm_a")
+        self.assertFormQuestionEquals(form, "external_id", "pid123")
+        self.assertFalse(form.partial_submission)
+
+        case = self.get_case("pid123")
+        self.assertIsNotNone(case)
+        self.assertCasePropertyEquals(case, "name", "pid123")
+        self.assertCasePropertyEquals(case, "arm", "arm_a")
+
+        # Start a modify form, and submit a partial submission with case side effects
+        incoming("999123", "mod pid123", "TEST")
+        incoming("999123", "2", "TEST")
+        session = self.get_open_session(self.user)
+        submit_unfinished_form(session.session_id, include_case_side_effects=True)
+
+        form = self.get_last_form_submission()
+        self.assertFormQuestionEquals(form, "arm", "arm_b")
+        self.assertFormQuestionEquals(form, "other_question", "")
+        self.assertTrue(form.partial_submission)
+
+        case = self.get_case("pid123")
+        self.assertCasePropertyEquals(case, "arm", "arm_b")
+
+        session = SQLXFormsSession.objects.get(pk=session.pk)
+        self.assertFalse(session.is_open)
+        self.assertEqual(session.submission_id, form._id)
+
+        # Start a modify form, and submit a partial submission without case side effects
+        incoming("999123", "mod pid123", "TEST")
+        incoming("999123", "1", "TEST")
+        session = self.get_open_session(self.user)
+        submit_unfinished_form(session.session_id, include_case_side_effects=False)
+
+        form = self.get_last_form_submission()
+        self.assertFormQuestionEquals(form, "arm", "arm_a")
+        self.assertFormQuestionEquals(form, "other_question", "")
+        self.assertTrue(form.partial_submission)
+
+        case = self.get_case("pid123")
+        self.assertCasePropertyEquals(case, "arm", "arm_b")
+
+        session = SQLXFormsSession.objects.get(pk=session.pk)
+        self.assertFalse(session.is_open)
+        self.assertEqual(session.submission_id, form._id)

@@ -320,15 +320,20 @@
                 {% if exports_has_media %}
                 <td class="cell-vertical-centered">
                     {% if form.size %}
-                        {% if form.app.id %}
-                        <a href="{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
-                            class="btn btn-primary dl-export" ><i
-                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
-                        {% else %}
-                        <a href="{% url "form_multimedia_export" domain %}?xmlns={{form.xmlns}}&amp;{{ get_filter_params.urlencode|safe }}"
-                            class="btn btn-primary dl-export" ><i
-                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
-                        {% endif %}
+                        <a  data-toggle='modal' href="#export-download-status"
+                            {% if form.app.id %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;{{ get_filter_params.urlencode|safe }}'
+                            {% else %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?{{ get_filter_params.urlencode|safe }}'
+                            {% endif %}
+                            data-xmlns="{{form.xmlns}}"
+                            data-modulename="{% if form.has_app and form.module %}{{ form.module.name|trans:form.app.langs }}{% endif %}"
+                            data-formname="{% include 'reports/partials/form_name.html' %}"
+                            data-bind='click: requestMultimediaDownload'
+                            class="btn btn-primary dl-export" >
+                                <i class="icon-download-alt icon-white"></i>
+                                {% trans "Download " %} <br> ({{form.size}})
+                        </a>
                     {% else %}
                         <span class="label">{% trans "No Multimedia" %}</span>
                     {% endif %}

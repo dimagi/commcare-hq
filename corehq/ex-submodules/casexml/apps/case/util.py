@@ -1,11 +1,17 @@
 from __future__ import absolute_import
+from collections import defaultdict
+import uuid
 
 from xml.etree import ElementTree
+import datetime
+
 from django.conf import settings
+
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
+from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -26,7 +32,8 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
 
     domain = domain or form_extras.pop('domain', None)
     if getattr(settings, 'UNIT_TESTING', False):
-        domain = domain or 'test-domain'
+        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+        domain = domain or TEST_DOMAIN_NAME
 
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
@@ -41,7 +48,34 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
         **form_extras
     )
     response, xform, cases = sp.run()
-    return xform
+    return xform, cases
+
+
+def create_real_cases_from_dummy_cases(cases):
+    """
+    Takes as input a list of unsaved CommCareCase objects
+
+    that don't have any case actions, etc.
+    and creates them through the official channel of submitting forms, etc.
+
+    returns a tuple of two lists: forms posted and cases created
+
+    """
+    posted_cases = []
+    posted_forms = []
+    case_blocks_by_domain = defaultdict(list)
+    for case in cases:
+        if not case.modified_on:
+            case.modified_on = datetime.datetime.utcnow()
+        if not case._id:
+            case._id = uuid.uuid4().hex
+        case_blocks_by_domain[case.domain].append(get_case_element(
+            case, (CASE_ACTION_CREATE, CASE_ACTION_UPDATE), version='2.0'))
+    for domain, case_blocks in case_blocks_by_domain.items():
+        form, cases = post_case_blocks(case_blocks, domain=domain)
+        posted_forms.append(form)
+        posted_cases.extend(cases)
+    return posted_forms, posted_cases
 
 
 def reprocess_form_cases(form, config=None, case_db=None):
@@ -91,7 +125,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
             for form_id in form_ids:
                 if form_id != xform._id:
                     form = XFormInstance.get(form_id)
-                    if form.doc_type in ['XFormInstance', 'XFormError']:
+                    if form.doc_type == 'XFormInstance':
                         reprocess_form_cases(
                             form,
                             CaseProcessingConfig(
@@ -106,18 +140,6 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
 
 
-def reverse_indices(db, case, wrap=True):
-    kwargs = {
-        'wrapper': lambda r: CommCareCaseIndex.wrap(r['value']) if wrap else r['value']
-    }
-    return db.view(
-        "case/related",
-        key=[case['domain'], case['_id'], "reverse_index"],
-        reduce=False,
-        **kwargs
-    ).all()
-
-
 def get_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that they reference
@@ -126,21 +148,6 @@ def get_indexed_cases(domain, case_ids):
     from casexml.apps.case.models import CommCareCase
     return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
                                                         get_indexed_case_ids(domain, case_ids))]
-
-
-def get_reverse_indexed_cases(domain, case_ids):
-    """
-    Given a base list of cases, gets all wrapped cases that directly
-    reference them (child cases).
-    """
-    from casexml.apps.case.models import CommCareCase
-    keys = [[domain, id, 'reverse_index'] for id in case_ids]
-    return CommCareCase.view(
-        'case/related',
-        keys=keys,
-        reduce=False,
-        include_docs=True,
-    )
 
 
 def primary_actions(case):

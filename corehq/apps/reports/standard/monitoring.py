@@ -17,6 +17,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
@@ -33,6 +34,17 @@ from django.utils.translation import ugettext_noop
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
+        return self.table_cell(user.raw_username, user_link)
+
+    def get_raw_user_link(self, user):
+        raise NotImplementedError
+
+
+class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
+    exportable = True
+
     def get_raw_user_link(self, user):
         user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
         user_link = user_link_template % {
@@ -47,9 +59,31 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         return CaseListReport.get_url(domain=self.domain)
 
-    def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
+
+class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
+    def get_raw_user_link(self, user):
+        params = {
+            "form_unknown": self.request.GET.get("form_unknown", ''),
+            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
+            "form_status": self.request.GET.get("form_status", ''),
+            "form_app_id": self.request.GET.get("form_app_id", ''),
+            "form_module": self.request.GET.get("form_module", ''),
+            "form_xmlns": self.request.GET.get("form_xmlns", ''),
+            "startdate": self.request.GET.get("startdate", ''),
+            "enddate": self.request.GET.get("enddate", '')
+        }
+
+        params.update(EMWF.for_user(user.user_id))
+
+        from corehq.apps.reports.standard.inspect import SubmitHistory
+
+        user_link_template = '<a href="%(link)s">%(username)s</a>'
+        base_link = SubmitHistory.get_url(domain=self.domain)
+        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
+        return user_link_template % {
+            'link': link,
+            'username': user.username_in_report,
+        }
 
 
 class MultiFormDrilldownMixin(object):
@@ -73,7 +107,7 @@ class CompletionOrSubmissionTimeMixin(object):
         return value == 'submission'
 
 
-class CaseActivityReport(WorkerMonitoringReportTableBase):
+class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
     todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
@@ -293,7 +327,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         )
         return qs.count()
 
-class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
+
+class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
@@ -402,7 +437,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
         return res.facets.user.counts_by_term()
 
 
-class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
@@ -502,7 +537,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     def users_by_range(self, start, end, order):
         results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
             .filter(**self.date_filter(start, end)) \
             .values('user_id') \
             .annotate(Count('user_id'))
@@ -566,9 +600,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         If no user is passed, assemble a totals row.
         """
         values = ['date']
-        results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
-            .filter(**self.date_filter(self.startdate, self.enddate))
+        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
 
         if user:
             results = results.filter(user_id=user.user_id)
@@ -596,7 +628,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
 
-class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
+
+class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
@@ -607,32 +640,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
 
     description = ugettext_noop("Statistics on time spent on a particular form.")
     is_cacheable = True
-
-    def get_user_link(self, user):
-
-        params = {
-            "form_unknown": self.request.GET.get("form_unknown", ''),
-            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
-            "form_status": self.request.GET.get("form_status", ''),
-            "form_app_id": self.request.GET.get("form_app_id", ''),
-            "form_module": self.request.GET.get("form_module", ''),
-            "form_xmlns": self.request.GET.get("form_xmlns", ''),
-            "startdate": self.request.GET.get("startdate", ''),
-            "enddate": self.request.GET.get("enddate", '')
-        }
-
-        params.update(EMWF.for_user(user.user_id))
-
-        from corehq.apps.reports.standard.inspect import SubmitHistory
-
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
-        base_link = SubmitHistory.get_url(domain=self.domain)
-        link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        user_link = user_link_template % {
-            'link': link,
-            'username': user.username_in_report,
-        }
-        return self.table_cell(user.raw_username, user_link)
 
     @property
     @memoized
@@ -688,9 +695,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         def get_data(users, group_by_user=True):
-            query = FormData.objects \
-                .filter(doc_type='XFormInstance') \
-                .filter(xmlns=self.selected_xmlns['xmlns'])
+            query = FormData.objects.filter(xmlns=self.selected_xmlns['xmlns'])
 
             date_field = 'received_on' if self.by_submission_time else 'time_end'
             date_filter = {
@@ -746,7 +751,8 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
         return rows
 
 
-class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
+class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
+                                             MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
@@ -761,8 +767,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
     @property
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_("User")),
-            DataTablesColumn(_("Completion Time")),
-            DataTablesColumn(_("Submission Time")),
+            DataTablesColumn(_("Completion Time"), sort_type=DTSortType.DATE),
+            DataTablesColumn(_("Submission Time"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Form Name")),
             DataTablesColumn(_("View"), sortable=False),
             DataTablesColumn(_("Difference"), sort_type=DTSortType.NUMERIC)
@@ -789,7 +795,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
             where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
             results = FormData.objects \
-                .filter(doc_type='XFormInstance') \
                 .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
                 .filter(user_id__in=user_map.keys()) \
                 .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
@@ -827,8 +832,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         """
 
         return self.table_cell(
-            date,
-            ServerTime(date).user_time(self.timezone).ui_string()
+            ServerTime(date).user_time(self.timezone).ui_string(fmt=SERVER_DATETIME_FORMAT),
+            ServerTime(date).user_time(self.timezone).ui_string(),
         )
 
     def _format_td_status(self, td, use_label=True):
@@ -977,7 +982,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
+class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")

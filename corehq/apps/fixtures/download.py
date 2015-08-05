@@ -15,7 +15,7 @@ from couchexport.models import Format
 from dimagi.utils.web import json_response
 
 from soil import DownloadBase
-from soil.util import expose_download
+from soil.util import expose_cached_download
 
 
 def prepare_fixture_download(table_ids, domain, task, download_id):
@@ -32,7 +32,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
     file = StringIO()
     format = Format.XLS_2007
     export_raw(tuple(header_groups), tuple(value_groups), file, format)
-    return expose_download(
+    return expose_cached_download(
         file.getvalue(),
         60 * 60 * 2,
         mimetype=Format.from_format(format).mimetype,

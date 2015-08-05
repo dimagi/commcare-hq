@@ -34,7 +34,7 @@ def user_has_reporting_location(user):
 
 
 def user_has_role(user, role):
-    return user.user_data.get('role') == role
+    return role in user.user_data.get('role', [])
 
 
 @periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=58),
@@ -43,8 +43,8 @@ def first_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
-            role = user.user_data.get('role')
-            if role and role != IN_CHARGE_ROLE:
+            roles = user.user_data.get('role')
+            if roles and IN_CHARGE_ROLE in roles:
                 first_soh_process_user(user)
 
 
@@ -70,8 +70,8 @@ def second_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
-            role = user.user_data.get('role')
-            if role and role != IN_CHARGE_ROLE:
+            roles = user.user_data.get('role')
+            if roles and IN_CHARGE_ROLE in roles:
                 second_soh_process_user(user)
 
 
@@ -86,7 +86,7 @@ def second_soh_process_user(user, test=False):
         case_id=supply_point._id,
         last_modified_date__gte=date
     )
-    products = user.location.sql_location.products
+    products = user.sql_location.products
     location_products_ids = [product.product_id for product in products]
     reported_products_ids = [stock_state.product_id for stock_state in stock_states]
     missing_products_ids = set(location_products_ids) - set(reported_products_ids)

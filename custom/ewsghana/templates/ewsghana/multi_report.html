@@ -11,6 +11,9 @@
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>
     {% endif %}
+    {% if subtitle %}
+        {{ subtitle }}
+    {% endif %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
@@ -40,11 +43,16 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <style>
+        .nvd3.nv-pie path {
+            stroke-width: 0px !important;
+            stroke-opacity: 0 !important;
+        }
+
         {% if rendered_as == "email" %}
             td {
                 border: 1px solid black;
             }
-        {% else %}
+        {% elif rendered_as != 'print' %}
             .firstreport, .inventory_chart {
                 width: 68%;
                 float: left;
@@ -64,7 +72,7 @@
                 margin-top: -20px;
             }
         {% endif %}
-        {% if report.slug == "reporting_page" %}
+        {% if report.slug == "reporting_page" and rendered_as != 'print' %}
             .report:nth-of-type(2), .report:nth-of-type(3), .report:last-of-type, .report:nth-last-of-type(2) {
                 display: inline-table !important;
                 width: 48% !important;
@@ -83,16 +91,16 @@
                 width: 100%;
                 display: inline-table;
             }
-        {% elif  report.slug == "stock_status"%}
-            .report:first-of-type {
-                float: right;
+        {% elif report.slug == "stock_status" and rendered_as != 'print'%}
+            .product-selection-pane {
+                float: right !important;
                 width: 30%;
             }
             .report:nth-of-type(n+2) {
-                float: left;
+                float: left !important;
                 width: 68%;
             }
-        {% elif  report.slug == "dashboard_report"%}
+        {% elif report.slug == "dashboard_report"%}
             .report:nth-of-type(n+2) {
                 float: left;
                 width: 50%;
@@ -124,7 +132,9 @@
         }
     </style>
     {% for thisreport in reports %}
-        {% if split %}
+        {% if thisreport.rendered_content %}
+            {{ thisreport.rendered_content }}
+        {% elif split %}
             {% if forloop.counter == 1 %}
                 <div class="fpr_tables">
                     <div class="firstreport">
@@ -163,6 +173,13 @@
             {% endif %}
         {% else %}
             <span class="report">
+                {% if thisreport.report_table.slug == 'mos_product' %}
+                    <div style="font-size: 14px; margin-bottom: 10px;">
+                        For any facility which has not reported stock on a product within the set date range,
+                        that product's MOS value will appear blank in the Current MOS by Product
+                        table and will have that product listed under "No stock data" in the Product Availability graph.
+                    </div>
+                {% endif %}
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% if thisreport.report_table.slug == 'stockouts_product' %}
                     <div class="row" style="margin: 0 !important">
@@ -178,31 +195,6 @@
             </span>
         {% endif %}
     {% endfor %}
-
-    {% if split and rendered_as != 'email' %}
-        <div class="modal hide fade" id="configureInCharge">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>
-                    {% trans "Configure In Charge users" %}
-                </h3>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" name="users" value="in_charge" />
-                <div class="control-group">
-                    <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
-                    <div class="controls">
-                        <select id="in_charge_select" class="input span6" multiple="multiple">
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id='in_charge_button' class="btn btn-success" type="submit">{% trans "Save" %}</button>
-                <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
-            </div>
-        </div>
-    {% endif %}
 
 {% endif %}
 {% endblock %}
@@ -253,48 +245,6 @@
 
         show_hide_filters();
         $('tr:has(div.program)').addClass('program').attr('align', 'center');
-
-        {% if split %}
-            function refreshInChargeTable() {
-                var rows = $.makeArray($('#report_table_in_charge tbody tr'));
-                rows.pop();
-                $.each(rows, function() {
-                    $(this).remove();
-                });
-                $.each($("#in_charge_select").select2("data"), function() {
-                    $('<tr><td>' + this.text + '</td></tr>').prependTo('#report_table_in_charge tbody');
-                });
-
-            }
-
-            $.each($('#report_table_facility_sms_users tbody td:first-child div'), function() {
-                if ($(this).attr('sel') === 'true') {
-                    $('#in_charge_select').append($('<option>', { val: $(this).attr('val'), text: $(this).text(),
-                            selected: 'selected'}));
-                } else {
-                    $('#in_charge_select').append($('<option>', { val: $(this).attr('val'), text: $(this).text()}));
-                }
-            });
-            $('#in_charge_select').select2();
-
-            $('#in_charge_button').click(function() {
-                $('#in_charge_button').attr("disabled", true);
-                $.ajax({
-                    type: 'POST',
-                    datatype: 'json',
-                    url: '{% url 'configure_in_charge' domain %}',
-                    data: {
-                        users: $("#in_charge_select").select2("val"),
-                        location_id: '{{ location_id }}'
-                    },
-                    success: function(response) {
-                        refreshInChargeTable();
-                        $('#in_charge_button').attr("disabled", false);
-                    }
-                });
-                $('#configureInCharge').modal('toggle');
-            });
-        {% endif %}
     </script>
     <script>
         var report_slug = "{{ report.slug | safe }}";
@@ -315,23 +265,26 @@
                 button.css('display', 'None');
             }
         }
+
+        function updateEmailButton() {
+            var email_button = $("#email-report");
+            if ({{ emailable|yesno:"true,false" }}){
+                email_button.css('display', 'inline-block');
+            } else {
+                email_button.css('display', 'None');
+            }
+        }
         $("#apply-filters").on('click', function(){
             updateExportButton();
+            updateEmailButton();
         });
         updateExportButton();
+        updateEmailButton();
         $(".dataTables_filter").css('display', 'none');
 
         $('.row div').append(
-                '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
+            '<div class="desc" style="width: 100%; text-align: center; margin-top: -1cm; margin-bottom: 1cm"></div>'
         );
-        setTimeout(function() {
-            $('.nv-slice').on('mouseenter', function() {
-                var descDiv = $(this).parents('.row').find('.desc');
-                $('.nvtooltip').hide();
-                descDiv.text($('.nvtooltip h3').text());
-                descDiv.css('color', $(this).attr('fill'));
-            });
-        }, 1000);
     </script>
     <script>
         var slugs = {{ slugs | JSON }};

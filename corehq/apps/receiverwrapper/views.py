@@ -81,6 +81,13 @@ def post(request, domain, app_id=None):
 
 
 def _noauth_post(request, domain, app_id=None):
+    """
+    This is explictly called for a submission that has secure submissions enabled, but is manually
+    overriding the submit URL to not specify auth context. It appears to be used by demo mode.
+
+    It mainly just checks that we are touching test data only in the right domain and submitting
+    as demo_user.
+    """
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
@@ -97,6 +104,12 @@ def _noauth_post(request, domain, app_id=None):
         return False
 
     def case_block_ok(case_updates):
+        """
+        Check for all cases that we are submitting as demo_user and that the domain we
+        are submitting against for any previously existing cases matches the submission
+        domain.
+        """
+        allowed_ids = ('demo_user', 'demo_user_group_id', None)
         case_ids = set()
         for case_update in case_updates:
             case_ids.add(case_update.id)
@@ -104,21 +117,24 @@ def _noauth_post(request, domain, app_id=None):
             update_action = case_update.get_update_action()
             index_action = case_update.get_index_action()
             if create_action:
-                if create_action.user_id not in ('demo_user', None):
+                if create_action.user_id not in allowed_ids:
                     return False
-                if create_action.owner_id not in ('demo_user', None):
+                if create_action.owner_id not in allowed_ids:
                     return False
             if update_action:
-                if update_action.owner_id not in ('demo_user', None):
+                if update_action.owner_id not in allowed_ids:
                     return False
             if index_action:
                 for index in index_action.indices:
                     case_ids.add(index.referenced_id)
+
+        # todo: consider whether we want to remove this call, and/or pass the result
+        # through to the next function so we don't have to get the cases again later
         cases = CommCareCase.bulk_get_lite(list(case_ids))
         for case in cases:
             if case.domain != domain:
                 return False
-            if case.owner_id or case.user_id != 'demo_user':
+            if case.owner_id or case.user_id not in allowed_ids:
                 return False
         return True
 

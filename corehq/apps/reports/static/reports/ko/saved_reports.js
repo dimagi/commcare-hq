@@ -176,7 +176,8 @@ var ReportConfigsViewModel = function (options) {
         var filters = config.filters;
         update_filters = function() {
             for (var filter_name in filters) {
-                $('[name="' + filter_name + '"]').val(filters[filter_name]);
+                var val = filters[filter_name];
+                $('[name="' + filter_name + '"]').val(val);
             }
         };
 
@@ -231,7 +232,6 @@ var ReportConfigsViewModel = function (options) {
             changeYear: true,
             showButtonPanel: true,
             dateFormat: 'yy-mm-dd',
-            maxDate: '0',
             numberOfMonths: 2
         });
     };

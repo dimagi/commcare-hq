@@ -19,7 +19,9 @@
             plugins: {{ plugins|JSON }},
             features: {{ features|JSON }},
             core: {
+                dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
                 dataSources: [
+                    {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
                     {
                         key: 'fixture',
                         name: 'Fixtures',
@@ -56,6 +58,16 @@
                 {% endif %}
                 sessionid: {{ sessionid|JSON }}
             },
+            intents: {
+                templates: {{ app_callout_templates|JSON }}
+            },
+            itemset: {
+                dataSourcesFilter: function (sources) {
+                    return _.filter(sources, function (source) {
+                        return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
+                    });
+                }
+            },
             javaRosa: {
                 langs: {{ app.langs|JSON }},
                 displayLanguage: {{ lang|JSON }},
@@ -64,7 +76,8 @@
                 uploadUrls: {
                     image: '{% url "hqmedia_uploader_image" domain app.id %}',
                     audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
-                    video: '{% url "hqmedia_uploader_video" domain app.id %}'
+                    video: '{% url "hqmedia_uploader_video" domain app.id %}',
+                    text: '{% url "hqmedia_uploader_text" domain app.id %}',
                 },
                 objectMap: {{ multimedia_object_map|JSON }},
                 sessionid: {{ sessionid|JSON }}
@@ -115,7 +128,7 @@
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
             });
         });
-        analytics.track('Entered the Form Builder');
+        analytics.workflow('Entered the Form Builder');
 
     </script>
 {% endblock %}
@@ -247,5 +260,14 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> {{ form.name|trans:app.langs }}</li>
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% if form.id != None %}
+    <li>
+        <span class="divider">&gt;</span>
+        <a href="{% url "view_form" domain app.id module.id form.id %}">
+            {{ form.name|trans:app.langs }}
+        </a>
+    </li>
+    {% endif %}
+    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> Edit</li>
 {% endblock %}

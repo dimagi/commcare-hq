@@ -8,14 +8,16 @@
             ref: {{ item.menu_refs.image|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/' + '{{ item.default_file_name }}' + '.png'
+            defaultPath: 'jr://file/commcare/image/' + '{{ item.default_file_name }}' + '.png',
+            inputElement: $mediaImage
         });
 
         var menuAudio = new AppMenuMediaManager({
             ref: {{ item.menu_refs.audio|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: audioUploader,
-            defaultPath: 'jr://file/commcare/audio/' + '{{ item.default_file_name }}' + '.mp3'
+            defaultPath: 'jr://file/commcare/audio/' + '{{ item.default_file_name }}' + '.mp3',
+            inputElement: $mediaAudio
         });
 
         if ($mediaImage.length) {

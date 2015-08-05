@@ -21,23 +21,36 @@ class Command(BaseCommand):
         if not domain:
             print "Invalid domain name: %s" % args[0]
             return
+
+        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(domain.name)
+        if plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+            print "Domain %s is already enterprise level" % domain.name
+            return
+
+        if subscription:
+            subscription.change_plan(self.enterprise_plan_version)
+        else:
+            try:
+                self.make_new_enterprise_subscription(domain)
+            except NewSubscriptionError as e:
+                print e.message
+                return
+        print 'Domain %s has been upgraded to enterprise level.' % domain.name
+
+    def make_new_enterprise_subscription(self, domain):
         account, _ = BillingAccount.get_or_create_account_by_domain(
             domain.name,
             account_type=BillingAccountType.CONTRACT,
             created_by="management command",
         )
-        enterprise_plan_version = SoftwarePlanVersion.objects.filter(
+        Subscription.new_domain_subscription(
+            account,
+            domain.name,
+            self.enterprise_plan_version,
+        )
+
+    @property
+    def enterprise_plan_version(self):
+        return SoftwarePlanVersion.objects.filter(
             plan__edition=SoftwarePlanEdition.ENTERPRISE
         )[0]
-        try:
-            subscription = Subscription.new_domain_subscription(
-                account,
-                domain.name,
-                enterprise_plan_version
-            )
-        except NewSubscriptionError as e:
-            print e.message
-            return
-        subscription.is_active = True
-        subscription.save()
-        print 'Domain %s has been upgraded to enterprise level.' % domain.name

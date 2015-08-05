@@ -4,8 +4,9 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.util import is_usercase_enabled, get_cloudcare_session_data
+from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import skippable_quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -14,21 +15,22 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
+from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
-    HttpResponseServerError
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
@@ -40,6 +42,11 @@ import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 from touchforms.formplayer.models import EntrySession
+from xml2json.lib import xml2json
+import requests
+from corehq.apps.reports.formdetails import readable
+from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from django.shortcuts import get_object_or_404
 
 
 @require_cloudcare_access
@@ -199,8 +206,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
-    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
+    session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
@@ -213,34 +219,37 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
-@login_and_domain_required
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
-def view_case(request, domain, case_id=None):
-    context = {}
-    case_json = CommCareCase.get(case_id).get_json() if case_id else None
-    case_type = case_json['properties']['case_type'] if case_json else None
-    case_spec_id = request.GET.get('spec')
-    if case_spec_id:
-        case_spec = CaseSpec.get(case_spec_id)
-    else:
-        case_spec = None
-        context.update(dict(
-            suggested_case_specs=CaseSpec.get_suggested(domain, case_type)
-        ))
-    context.update({
-        'case': case_json,
-        'domain': domain,
-        'case_spec': case_spec
-    })
-    return render(request, 'cloudcare/view_case.html', context)
+
+def get_cases_vary_on(request, domain):
+    return [
+        request.couch_user.get_id
+        if request.couch_user.is_commcare_user() else request.REQUEST.get('user_id', ''),
+        request.REQUEST.get('ids_only', 'false'),
+        request.REQUEST.get('case_id', ''),
+        request.REQUEST.get('footprint', 'false'),
+        request.REQUEST.get('closed', 'false'),
+        json.dumps(get_filters_from_request(request)),
+        domain,
+    ]
+
+
+def get_cases_skip_arg(request, domain):
+    """
+    When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
+    if neither of these params are passed into the function, nothing will be cached. Cache will always be
+    skipped if ids_only is false.
+
+    The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
+    get the list of case_ids associated with a user.
+    """
+    if not toggles.CLOUDCARE_CACHE.enabled(domain):
+        return True
+    return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
+        not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
+
 
 @cloudcare_api
-def get_groups(request, domain, user_id):
-    user = CouchUser.get_by_user_id(user_id, domain)
-    groups = Group.by_user(user)
-    return json_response(sorted([{'label': group.name, 'value': group.get_id} for group in groups], key=lambda x: x['label']))
-
-@cloudcare_api
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -253,8 +262,7 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
-    include_children = string_to_boolean(request.REQUEST.get("include_children", "false"))
-    if case_id and not footprint and not include_children:
+    if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
         # they know its ID, which is slightly different from the previous
@@ -271,27 +279,23 @@ def get_cases(request, domain):
         cases = get_filtered_cases(domain, status=status, case_type=case_type,
                                    user_id=user_id, filters=filters,
                                    footprint=footprint, ids_only=ids_only,
-                                   strip_history=True, include_children=include_children)
+                                   strip_history=True)
     return json_response(cases)
 
 @cloudcare_api
 def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
-    delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    suite_gen = SuiteGenerator(app, is_usercase_enabled(domain))
-    xpath = suite_gen.get_filter_xpath(module, delegation=delegation)
+    suite_gen = SuiteGenerator(app)
+    xpath = SuiteGenerator.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    if delegation:
-        case_type = DELEGATION_STUB_CASE_TYPE
-    else:
-        case_type = module.case_type
+    case_type = module.case_type
 
     if xpath:
         # if we need to do a custom filter, send it to touchforms for processing
@@ -304,8 +308,11 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances)
         if result.get('status', None) == 'error':
-            return HttpResponseServerError(
-                result.get("message", _("Something went wrong filtering your cases.")))
+            code = result.get('code', 500)
+            message = result.get('message', _("Something went wrong filtering your cases."))
+            if code == 500:
+                notify_exception(None, message=message)
+            return json_response(message, status_code=code)
 
         case_ids = result.get("cases", [])
     else:
@@ -329,17 +336,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json(lite=True) for c in cases if c]
-    parents = []
-    if delegation:
-        for case in cases:
-            parent_id = case['indices']['parent']['case_id']
-            parents.append(CommCareCase.get(parent_id))
-        return json_response({
-            'cases': cases,
-            'parents': parents
-        })
-    else:
-        return json_response(cases)
+
+    return json_response(cases)
 
 @cloudcare_api
 def get_apps_api(request, domain):
@@ -374,13 +372,14 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
-            if fixture.attrib.get("id") == fixture_id:
-                assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-                    fixture_id, len(fixture.getchildren())
-                )
-                return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-        raise Http404
+        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        if not fixture:
+            raise Http404
+        assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+            fixture_id, len(fixture.getchildren())
+        )
+        return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+
 
 @cloudcare_api
 def get_sessions(request, domain):
@@ -441,6 +440,42 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+
+@cloudcare_api
+def render_form(request, domain):
+    # get session
+    session_id = request.GET.get('session_id')
+
+    session = get_object_or_404(EntrySession, session_id=session_id)
+
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(
+        base_url=get_url_base(),
+        session_id=session_id)
+    )
+
+    if response.status_code is not 200:
+        err = "Session XML could not be found"
+        return HttpResponse(err, status=500, content_type="text/plain")
+
+    response_json = json.loads(response.text)
+    xmlns = response_json["xmlns"]
+    form_data_xml = response_json["output"]
+
+    _, form_data_json = xml2json(form_data_xml)
+    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
+
+    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
+
+    rendered_readable_form = render_to_string(
+        'reports/form/partials/readable_form.html',
+        {'questions': readable_form}
+    )
+
+    return json_response({
+        'form_data': rendered_readable_form,
+        'instance_xml': render_pretty_xml(form_data_xml)
+    })
 
 
 class HttpResponseConflict(HttpResponse):

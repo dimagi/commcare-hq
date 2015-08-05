@@ -8,7 +8,6 @@ function(doc) {
         if (doc.doc_type === "XFormInstance" && doc.problem) {
             doc_type = "XFormError";
         }
-        emit([doc.domain, "by_type", doc_type, doc.received_on], null);
-        emit([doc.domain, "by_date", doc.received_on, doc_type], null);
+        emit([doc.domain, doc_type, doc.received_on], null);
     }
 }

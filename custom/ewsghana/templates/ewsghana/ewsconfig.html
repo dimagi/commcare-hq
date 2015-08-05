@@ -86,8 +86,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="fix_sms_users">
-                        {% trans "Fix sms users" %}
+                    <button class="btn" id="ews_resync_web_users">
+                        {% trans "Run web users resync" %}
                     </button>
                 </div>
             </div>
@@ -118,6 +118,25 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="delete_last_stock_data">
+                        {% trans "Delete last migrated stock data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="convert_custom_user_data">
+                        {% trans "Convert custom user data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     {% endif %}
 {% endblock %}
 
@@ -155,8 +174,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#fix_sms_users").click(function() {
-            var url = '{% url 'ews_fix_sms_users' domain %}';
+        $("#ews_resync_web_users").click(function() {
+            var url = '{% url 'ews_resync_web_users' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
@@ -174,6 +193,18 @@
         });
         $("#clear_products").click(function() {
             var url = '{% url 'clear_products' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#delete_last_stock_data").click(function() {
+            var url = '{% url 'delete_last_stock_data' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#convert_custom_user_data").click(function() {
+            var url = '{% url 'convert_user_data_fields' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

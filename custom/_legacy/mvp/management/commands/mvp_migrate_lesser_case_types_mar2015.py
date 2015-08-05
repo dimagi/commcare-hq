@@ -2,6 +2,7 @@ import json
 import datetime
 from optparse import make_option
 from couchdbkit import BulkSaveError
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 from django.core.management.base import LabelCommand, BaseCommand
@@ -65,13 +66,8 @@ class Command(LabelCommand):
         old_db = CommCareCase.get_db()
         new_db = IndicatorCase.get_db()
         assert old_db.uri != new_db.uri
-        case_ids = old_db.view(
-            'case/all_cases',
-            startkey=["all type", domain, case_type],
-            endkey=["all type", domain, case_type, {}],
-            reduce=False,
-            wrapper=lambda x: x['id']
-        ).all()
+        # this dbaccessor pulls from old_db
+        case_ids = get_case_ids_in_domain(domain, case_type)
         self.delete_bad_doc_types(case_ids, chunk_size)
         case_dict_chunks = chunked(iter_docs(old_db, case_ids, chunk_size),
                                    chunk_size)

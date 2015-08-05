@@ -19,15 +19,29 @@
         {
             border-top-width: 0px;
         }
+        legend div.subtext
+        {
+            {# These values are sort of arbitrary. Would be good to base off of less variables #}
+            line-height: 18px;
+            margin-bottom: 8px;
+        }
     </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
     {# needed for the sortable and typeahead knockout of binding #}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+        });
+    </script>
     <script type="text/javascript">
         /**
          * Knockout view model representing a row in the filter property list
@@ -35,9 +49,12 @@
          */
         var PropertyListItem = function() {
             var that = this;
+            this.existsInCurrentVersion = ko.observable(true);
             this.property = ko.observable("");
             this.displayText = ko.observable("");
+            this.userModifiedDisplayText = false;
             this.format = ko.observable("");
+            this.dataSourceField = ko.observable("");
 
             /**
              * Return a "plain" javascript object representing this view model
@@ -50,14 +67,28 @@
                     format: this.format()
                 };
             };
+
+            this.isNotBlank = ko.computed(function(){
+               return that.property() !== "";
+            });
+
             this.isValid= ko.computed(function(){
-                return that.property() != "";
+                return that.isNotBlank() && that.existsInCurrentVersion();
+            });
+
+            this.property.subscribe(function(newValue) {
+                if (! that.userModifiedDisplayText){
+                    that.displayText(newValue);
+                }
             });
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
-            i.property(o.property);
+            i.existsInCurrentVersion(o.exists_in_current_version);
+            i.property(o.property !== undefined ? o.property : null);
+            i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
+            i.userModifiedDisplayText = true;
             i.format(o.format);
             return i;
         };
@@ -68,10 +99,38 @@
         var propertyList = function(options) {
             var that = this;
             options = options || {};
+
             this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
+            this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
+            this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
+            var rawOptions = {{ property_options|JSON }};
+            this.optionsContainQuestions = _.any(rawOptions, function (o) {
+                return o.type == 'question';
+            });
+            if (!this.optionsContainQuestions){
+                this.propertyOptions = ko.observableArray(rawOptions);
+            } else {
+                // Munge the property_options into the form expected by the questionsSelect binding.
+                this.propertyOptions = ko.observableArray(
+                    _.compact(_.map(that.propertyOptions(), function (o) {
+                        if (o.type === 'question') {
+                            return o.source;
+                        } else if (o.type == 'meta') {
+                            return {
+                                value: o.source[0],
+                                label: ''
+                            }
+                        }
+                    }))
+                )
+            }
+
+
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
@@ -93,10 +152,14 @@
             var initialColumns = _.map({{ initial_columns|JSON }}, function(i){
                 return PropertyListItem.wrap(i);
             });
+            // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
                 hasFormatCol: true,
                 initialCols: initialFilters,
-                buttonText: 'Add Filter'
+                buttonText: 'Add Filter',
+                propertyHelpText: '{{ filter_property_help_text|escapejs}}',
+                displayHelpText: '{{ filter_display_help_text|escapejs }}',
+                formatHelpText: '{{ filter_format_help_text|escapejs }}'
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
@@ -115,5 +178,6 @@
         };
         var formViewModel = new configForm();
         ko.applyBindings(formViewModel, $("#report-config-form").get(0));
+
     </script>
 {% endblock %}

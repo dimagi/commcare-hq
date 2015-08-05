@@ -7,25 +7,33 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.domain.exceptions import DomainDeleteException
+from corehq.apps.tzmigration import set_migration_complete
+from corehq.util.soft_assert import soft_assert
+from corehq.util.timezones.conversions import \
+    USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.dates import iso_string_to_datetime
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
@@ -33,7 +41,7 @@ from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq import toggles
 
-from .exceptions import InactiveTransferDomainException
+from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 lang_lookup = defaultdict(str)
 
@@ -41,6 +49,15 @@ DATA_DICT = settings.INTERNAL_DATA
 AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
 SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+BUSINESS_UNITS = [
+    "DSA",
+    "DSI",
+    "DLAC",
+    "DMOZ",
+    "DWA",
+    "INC",
+]
 
 
 for lang in all_langs:
@@ -109,10 +126,15 @@ class Deployment(DocumentSchema, UpdatableSchema):
     description = StringProperty()
     public = BooleanProperty(default=False)
 
+
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
+
+    def is_active_and_valid(self):
+        return self.enabled and self.case_owner_id and self.case_type
+
 
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
@@ -152,6 +174,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -217,11 +240,10 @@ class Domain(Document, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
-    locations_enabled = BooleanProperty(default=False)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
-    location_restriction_for_users = BooleanProperty(default=True)
+    location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
@@ -377,7 +399,20 @@ class Domain(Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
-    def active_for_user(user, is_active=True):
+    @skippable_quickcache(['couch_user._id', 'is_active'],
+                          skip_arg='strict', timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True, strict=False):
+        domain_names = couch_user.get_domains()
+        return Domain.view(
+            "domain/by_status",
+            keys=[[is_active, d] for d in domain_names],
+            reduce=False,
+            include_docs=True,
+            stale=settings.COUCH_STALE_QUERY if not strict else None,
+        ).all()
+
+    @staticmethod
+    def active_for_user(user, is_active=True, strict=False):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -386,13 +421,8 @@ class Domain(Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            domain_names = couch_user.get_domains()
-            return cache_core.cached_view(Domain.get_db(), "domain/by_status",
-                                          keys=[[is_active, d] for d in domain_names],
-                                          reduce=False,
-                                          include_docs=True,
-                                          wrapper=Domain.wrap
-            )
+            return Domain.active_for_couch_user(
+                couch_user, is_active=is_active, strict=strict)
         else:
             return []
 
@@ -413,22 +443,6 @@ class Domain(Document, SnapshotMixin):
 
     def apply_migrations(self):
         self.migrations.apply(self)
-
-    @staticmethod
-    def all_for_user(user):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
-            return []
-        from corehq.apps.users.models import CouchUser
-        couch_user = CouchUser.from_django_user(user)
-        if couch_user:
-            domain_names = couch_user.get_domains()
-            return Domain.view("domain/domains",
-                keys=domain_names,
-                reduce=False,
-                include_docs=True).all()
-        else:
-            return []
 
     def add(self, model_instance, is_active=True):
         """
@@ -542,7 +556,8 @@ class Domain(Document, SnapshotMixin):
                 if settings.DEBUG:
                     raise
                 else:
-                    notify_exception(None, '%r is not a valid domain name' % name)
+                    _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+                    _assert(False, '%r is not a valid domain name' % name)
                     return None
 
         def _get_by_name(stale=False):
@@ -604,6 +619,32 @@ class Domain(Document, SnapshotMixin):
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
+    @classmethod
+    def generate_name(cls, hr_name, max_length=25):
+        '''
+        Generate a URL-friendly name based on a given human-readable name.
+        Normalizes given name, then looks for conflicting domains, addressing
+        conflicts by adding "-1", "-2", etc. May return None if it fails to
+        generate a new, unique name. Throws exception if it can't figure out
+        a name, which shouldn't happen unless max_length is absurdly short.
+        '''
+
+        name = name_to_url(hr_name)
+        if Domain.get_by_name(name):
+            prefix = name
+            while len(prefix):
+                name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
+                if Domain.get_by_name(name):
+                    # should never happen
+                    raise NameUnavailableException
+                if len(name) <= max_length:
+                    return name
+                prefix = prefix[:-1]
+            raise NameUnavailableException
+
+        return name
+
+
     def password_format(self):
         """
         This was a performance hit, so for now we'll just return 'a' no matter what
@@ -623,11 +664,23 @@ class Domain(Document, SnapshotMixin):
     def get_all_names(cls):
         return [d['key'] for d in Domain.get_all(include_docs=False)]
 
+    @classmethod
+    def get_names_by_prefix(cls, prefix):
+        return [d['key'] for d in Domain.view(
+            "domain/domains",
+            startkey=prefix,
+            endkey=prefix + u"zzz",
+            reduce=False,
+            include_docs=False
+        ).all()]
+
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
+        if not self._rev and USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS:
+            set_migration_complete(self.name)
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
@@ -642,73 +695,77 @@ class Domain(Document, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    def save_copy(self, new_domain_name=None, user=None, ignore=None,
-                  copy_by_id=None):
+    def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
+                  ignore=None, copy_by_id=None):
         from corehq.apps.app_manager.models import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
 
         ignore = ignore if ignore is not None else []
-        if new_domain_name is not None and Domain.get_by_name(new_domain_name):
-            return None
 
         db = Domain.get_db()
-
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
-        new_domain = Domain.get(new_id)
-        new_domain.name = new_domain_name
-        new_domain.copy_history = self.get_updated_history()
-        new_domain.is_snapshot = False
-        new_domain.snapshot_time = None
-        new_domain.organization = None  # TODO: use current user's organization (?)
 
-        # reset stuff
-        new_domain.cda.signed = False
-        new_domain.cda.date = None
-        new_domain.cda.type = None
-        new_domain.cda.user_id = None
-        new_domain.cda.user_ip = None
-        new_domain.is_test = "none"
-        new_domain.internal = InternalProperties()
-        new_domain.creating_user = user.username if user else None
+        with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
+            new_domain_name = Domain.generate_name(new_domain_name)
+            new_domain = Domain.get(new_id)
+            new_domain.name = new_domain_name
+            new_domain.hr_name = new_hr_name
+            new_domain.copy_history = self.get_updated_history()
+            new_domain.is_snapshot = False
+            new_domain.snapshot_time = None
+            new_domain.organization = None  # TODO: use current user's organization (?)
 
-        for field in self._dirty_fields:
-            if hasattr(new_domain, field):
-                delattr(new_domain, field)
+            # reset stuff
+            new_domain.cda.signed = False
+            new_domain.cda.date = None
+            new_domain.cda.type = None
+            new_domain.cda.user_id = None
+            new_domain.cda.user_ip = None
+            new_domain.is_test = "none"
+            new_domain.internal = InternalProperties()
+            new_domain.creating_user = user.username if user else None
 
-        new_comps = {}  # a mapping of component's id to it's copy
+            for field in self._dirty_fields:
+                if hasattr(new_domain, field):
+                    delattr(new_domain, field)
 
-        def copy_data_items(old_type_id, new_type_id):
-            for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-                comp = self.copy_component(item.doc_type, item._id,
-                                           new_domain_name, user=user)
-                comp.data_type_id = new_type_id
-                comp.save()
+            new_comps = {}  # a mapping of component's id to it's copy
 
-        for res in db.view('domain/related_to_domain', key=[self.name, True]):
-            if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                             'FixtureDataType')):
-                continue
-            if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-                app = get_app(self.name, res['value']['_id']).get_latest_saved()
-                if app:
-                    comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
-                else:
+            def copy_data_items(old_type_id, new_type_id):
+                for item in FixtureDataItem.by_data_type(self.name, old_type_id):
+                    comp = self.copy_component(item.doc_type, item._id,
+                                               new_domain_name, user=user)
+                    comp.data_type_id = new_type_id
+                    comp.save()
+
+            for res in db.view('domain/related_to_domain', key=[self.name, True]):
+                if (copy_by_id and res['value']['_id'] not in copy_by_id and
+                    res['value']['doc_type'] in ('Application', 'RemoteApp',
+                                                 'FixtureDataType')):
+                    continue
+                if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
+                    app = get_app(self.name, res['value']['_id']).get_latest_saved()
+                    if app:
+                        comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                    else:
+                        comp = self.copy_component(res['value']['doc_type'],
+                                                   res['value']['_id'],
+                                                   new_domain_name,
+                                                   user=user)
+                elif res['value']['doc_type'] not in ignore:
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-            elif res['value']['doc_type'] not in ignore:
-                comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                if res['value']['doc_type'] == 'FixtureDataType':
-                    copy_data_items(res['value']['_id'], comp._id)
-            else:
-                comp = None
+                    if res['value']['doc_type'] == 'FixtureDataType':
+                        copy_data_items(res['value']['_id'], comp._id)
+                else:
+                    comp = None
 
-            if comp:
-                new_comps[res['value']['_id']] = comp
+                if comp:
+                    new_comps[res['value']['_id']] = comp
 
-        new_domain.save()
+            new_domain.save()
 
         if user:
             def add_dom_to_user(user):
@@ -801,8 +858,9 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
-            if copy is None:
+            try:
+                copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
+            except NameUnavailableException:
                 return None
             copy.is_snapshot = True
             copy.snapshot_time = datetime.utcnow()
@@ -886,13 +944,13 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return format_html(
                 "Snapshot of {0} &gt; {1}",
-                self.get_organization().title,
+                self.organization_title(),
                 self.copied_from.display_name()
             )
         if self.organization:
             return format_html(
                 '{0} &gt; {1}',
-                self.get_organization().title,
+                self.organization_title(),
                 self.hr_name or self.name
             )
         else:
@@ -913,6 +971,14 @@ class Domain(Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
     def delete(self):
+        from corehq.apps.domain.signals import commcare_domain_pre_delete
+
+        results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
+        for result in results:
+            if result[1]:
+                raise DomainDeleteException(
+                    u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
+                )
         # delete all associated objects
         db = self.get_db()
         related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
@@ -921,8 +987,47 @@ class Domain(Document, SnapshotMixin):
             include_docs=False,
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        self._delete_web_users_from_domain()
+        self._delete_sql_objects()
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+
+    def _delete_web_users_from_domain(self):
+        from corehq.apps.users.models import WebUser
+        web_users = WebUser.by_domain(self.name)
+        for web_user in web_users:
+            web_user.delete_domain_membership(self.name)
+
+    def _delete_sql_objects(self):
+        from casexml.apps.stock.models import DocDomainMapping
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        from corehq.apps.products.models import SQLProduct
+
+        cursor = connection.cursor()
+
+        """
+            We use raw queries instead of ORM because Django queryset delete needs to
+            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+            if we have a millions of rows in stock data tables.
+        """
+        cursor.execute(
+            "DELETE FROM stock_stocktransaction "
+            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+        )
+
+        cursor.execute(
+            "DELETE FROM commtrack_stockstate"
+            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+        )
+
+        SQLProduct.objects.filter(domain=self.name).delete()
+        SQLLocation.objects.filter(domain=self.name).delete()
+        LocationType.objects.filter(domain=self.name).delete()
+        DocDomainMapping.objects.filter(domain_name=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -1049,13 +1154,19 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
 
+    @memoized
+    def has_privilege(self, privilege):
+        from corehq.apps.accounting.utils import domain_has_privilege
+        return domain_has_privilege(self, privilege)
+
     @property
     @memoized
     def uses_locations(self):
-        if self.commtrack_enabled:
-            return True
+        from corehq import privileges
         from corehq.apps.locations.models import LocationType
-        return LocationType.objects.filter(domain=self.name).exists()
+        return (self.has_privilege(privileges.LOCATIONS)
+                and (self.commtrack_enabled
+                     or LocationType.objects.filter(domain=self.name).exists()))
 
     @property
     def supports_multiple_locations_per_user(self):
@@ -1213,7 +1324,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
@@ -1228,7 +1339,7 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
-        send_HTML_email(
+        send_html_email_async.delay(
             _(u'Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
@@ -1254,10 +1365,11 @@ class TransferDomainRequest(models.Model):
             "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
-                        self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content,
-                        text_content=text_content)
+        send_html_email_async.delay(
+            _(u'There has been a transfer of ownership of {domain}').format(
+                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
+            html_content, text_content=text_content
+        )
 
     def as_dict(self):
         return {

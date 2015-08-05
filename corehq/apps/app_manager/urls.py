@@ -2,6 +2,7 @@ from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
+from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^languages/$', 'view_app', name='app_languages'),
@@ -13,7 +14,6 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^multimedia_ajax/$', 'multimedia_ajax', name='app_multimedia_ajax'),
     url(r'^copy/$', 'view_app', name='app_copy'),
     url(r'^delete/$', 'view_app', name='app_delete'),
-    url(r'^migrate_filters/$', 'migrate_app_filters', name="migrate_app_filters"),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'release_manager', name='release_manager'),
     url(r'^current_version/$', 'current_app_version', name='current_app_version'),
@@ -48,6 +48,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^import_app/$', 'import_app', name='import_app'),
     url(r'^copy_app/$', 'copy_app', name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
+    url(r'^schema/(?P<app_id>[\w-]+)/$', 'get_data_schema', name='get_data_schema'),
+    url(r'^schema/form/(?P<form_unique_id>[\w-]+)/$',
+        'get_data_schema', name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', 'new_module'),
     url(r'^new_app/$', 'new_app', name='new_app'),
     url(r'^default_new_app/$', 'default_new_app', name='default_new_app'),
@@ -126,8 +129,10 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
+    # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
+    url(r'^download/(?P<app_id>[\w-]+)/multimedia/', include(media_download_urls)),
     url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file',
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',

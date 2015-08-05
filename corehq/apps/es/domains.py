@@ -65,4 +65,3 @@ def is_active(is_active=True):
 
 def is_snapshot(is_snapshot=True):
     return filters.term('is_snapshot', is_snapshot)
-

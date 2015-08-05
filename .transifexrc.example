@@ -1,5 +1,5 @@
 [https://www.transifex.com]
-username = TRANSIFEX_USERNAME
+username = dimagi_dev
 token =
-password = TRANSIFEX_PASSWORD
+password = TRANSIFEX_PASSWORD_FROM_HQ_KEEPASS
 hostname = https://www.transifex.com

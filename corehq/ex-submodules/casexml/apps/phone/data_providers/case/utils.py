@@ -1,4 +1,9 @@
+from collections import namedtuple
 from casexml.apps.case import const
+
+
+# stub class used by commtrack config to check case types for consumption payload
+CaseStub = namedtuple('CaseStub', ['case_id', 'type'])
 
 
 class CaseSyncUpdate(object):

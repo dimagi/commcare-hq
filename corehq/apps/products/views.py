@@ -1,5 +1,6 @@
 import json
 from django.http.response import HttpResponseServerError
+from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
 from couchdbkit import ResourceNotFound
@@ -11,7 +12,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
-from soil.util import expose_download, get_download_context
+from soil.util import expose_cached_download, get_download_context
 from StringIO import StringIO
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
@@ -56,14 +57,25 @@ def unarchive_product(request, domain, prod_id, archive=True):
     Unarchive product
     """
     product = Product.get(prod_id)
-    product.unarchive()
-    return json_response({
-        'success': True,
-        'message': _("Product '{product_name}' has successfully been {action}.").format(
+    try:
+        product.unarchive()
+    except DuplicateProductCodeException:
+        success = False
+        message = _("Another product is already using the Product ID '{product_id}'").format(
+            product_id=product.code
+        )
+    else:
+        success = True
+        message = _("Product '{product_name}' has successfully been {action}.").format(
             product_name=product.name,
             action="unarchived",
         )
+    return json_response({
+        'success': success,
+        'message': message,
+        'product_id': prod_id
     })
+
 
 
 class ProductListView(BaseCommTrackManageView):
@@ -278,7 +290,7 @@ class UploadProductView(BaseCommTrackManageView):
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_download(upload.read(),
+        file_ref = expose_cached_download(upload.read(),
                                    expiry=1*60*60)
         task = import_products_async.delay(
             domain,
@@ -306,7 +318,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -405,7 +417,7 @@ def download_products(request, domain):
 
     writer.close()
 
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
     response.write(file.getvalue())
     return response

@@ -108,7 +108,7 @@ An optional `"datatype"` attribute may be specified, which will attempt to cast 
 This expression returns `doc["child"]["age"]`:
 ```
 {
-    "type": "property_name",
+    "type": "property_path",
     "property_path": ["child", "age"]
 }
 ```
@@ -281,34 +281,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 
@@ -500,7 +474,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report filters
+## Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -535,6 +509,10 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
   "required": false
 }
 ```
+Date filters have an optional `compare_as_string` option that allows the date
+filter to be compared against an indicator of data type `string`. You shouldn't
+ever need to use this option (make your column a `date` or `datetime` type
+instead), but it exists because the report builder needs it. 
 
 ### Dynamic choice lists
 
@@ -562,6 +540,18 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
     {"value": "doctor", display:"Doctor"},
     {"value": "nurse"}
   ]
+}
+```
+
+### Internationalization
+
+Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+```json
+{
+    "type": "choice_list",
+    "slug": "state",
+    "display": {"en": "State", "fr": "État"},
+    ...
 }
 ```
 
@@ -617,11 +607,14 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 
 The following percentage formats are supported.
 
-Format    | Description                                    | example
---------- | -----------------------------------------------| --------
-percent   | A whole number percentage (the default format) | 33%
-fraction  | A fraction                                     | 1/3
-both      | Percentage and fraction                        | 33% (1/3)
+Format          | Description                                    | example
+--------------- | -----------------------------------------------| --------
+percent         | A whole number percentage (the default format) | 33%
+fraction        | A fraction                                     | 1/3
+both            | Percentage and fraction                        | 33% (1/3)
+numeric_percent | Percentage as a number                         | 33
+decimal         | Fraction as a decimal number                   | .333
+
 
 #### Column IDs
 
@@ -674,15 +667,45 @@ Then you will get a report like this:
 +----------+----------------------+----------------------+
 ```
 
-### Aggregation
+### Internationalization
+Report columns can be translated into multiple languages. To specify translations
+for a column header, use an object as the `display` value in the configuration
+instead of a string. For example:
+```
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": {
+        "en": "Owner Name",
+        "he": "שם"
+    },
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+The value displayed to the user is determined as follows:
+- If a display value is specified for the users language, that value will appear in the report.
+- If the users language is not present, display the `"en"` value.
+- If `"en"` is not present, show an arbitrary translation from the `display` object.
+- If `display` is a string, and not an object, the report shows the string.
+
+Valid `display` languages are any of the two or three letter language codes available on the user settings page.
+
+
+## Aggregation
 
 TODO: finish aggregation docs
 
-### Transforms
+## Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
+Transforms can be used to transform the value returned by a column just before it reaches the user. The currently supported transform types are shown below:
 
-#### Displaying username instead of user ID
+### Displaying username instead of user ID
 
 ```
 {
@@ -691,7 +714,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying username minus @domain.commcarehq.org instead of user ID
+### Displaying username minus @domain.commcarehq.org instead of user ID
 
 ```
 {
@@ -700,7 +723,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying owner name instead of owner ID
+### Displaying owner name instead of owner ID
 
 ```
 {
@@ -709,7 +732,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying month name instead of month index
+### Displaying month name instead of month index
 
 ```
 {
@@ -718,11 +741,31 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-# Charts
+### Rounding decimals
+Rounds decimal and floating point numbers to two decimal places.
+
+```
+{
+    "type": "custom",
+    "custom_type": "short_decimal_display"
+}
+```
+
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
+}
+```
+
+## Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
 
-## Pie charts
+### Pie charts
 
 A pie chart takes two inputs and makes a pie chart. Here are the inputs:
 
@@ -743,7 +786,7 @@ Here's a sample spec:
 }
 ```
 
-## Aggregate multibar charts
+### Aggregate multibar charts
 
 An aggregate multibar chart is used to aggregate across two columns (typically both of which are select questions). It takes three inputs:
 
@@ -765,9 +808,9 @@ Here's a sample spec:
 }
 ```
 
-## Multibar charts
+### Multibar charts
 
-A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
 Field          | Description
 ---------------| -----------------------------------------------
@@ -788,11 +831,35 @@ Here's a sample spec:
 }
 ```
 
+## Sort Expression
+
+A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
+
+Field should refer to report column IDs, not database fields.
+
+```
+[
+  {
+    "field": "district", 
+    "order": "DESC"
+  }, 
+  {
+    "field": "date_of_data_collection", 
+    "order": "ASC"
+  }
+]
+```
+
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
-This export can be filtered to restrict the results returned.  The filtering
-options are all based on the field names:
+The URL for exporting data takes the form https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/
+The export supports a "$format" parameter which can be any of the following options: html, csv, xlsx, xls.
+The default format is csv.
+
+This export can also be filtered to restrict the results returned.
+The filtering options are all based on the field names:
+
 
 URL parameter          | Value          | Description
 -----------------------|----------------|-----------------------------
@@ -806,10 +873,10 @@ should be pretty straightforward to add support for additional filter types.
 ### Export example
 
 Let's say you want to restrict the results to only cases owned by a particular
-user, opened in the last 90 days, and with a child between 12 and 24 months old.
+user, opened in the last 90 days, and with a child between 12 and 24 months old as an xlsx file.
 The querystring might look like this:
 ```
-?owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
+?$format=xlsx&owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
 ```
 
 # Practical Notes
@@ -870,6 +937,24 @@ and rebuild it.
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
 can use the UI to rebuild the data source (requires Celery to be running).
 
+
+## Extending User Configurable Reports
+
+When building a custom report for a client, you may find that you want to extend
+UCR with custom functionality. The UCR framework allows developers to write
+custom expressions, and register them with the framework. To do so, simply add
+a tuple to the `CUSTOM_UCR_EXPRESSIONS` setting list. The first item in the tuple
+is the name of the expression type, the second item is the path to a function
+with a signature like conditional_expression(spec, context) that returns an
+expression object. e.g.:
+
+```
+# settings.py
+
+CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
+]
+```
 
 ## Inspecting database tables
 

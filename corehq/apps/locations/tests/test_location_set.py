@@ -1,19 +1,34 @@
 from django.test import SimpleTestCase
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.fixtures import LocationSet
 
 
 class LocationSetTest(SimpleTestCase):
     def test_duplicate_locations(self):
-        location1 = Location(
-            _id="1",
-            name="Some Parent Location",
-            location_type="parent"
+        parent = LocationType(
+            domain="test-domain",
+            name="parent",
+            code="parent",
         )
-        location2 = Location(
-            _id="2",
+
+        child = LocationType(
+            domain="test-domain",
+            name="child",
+            code="child",
+            parent_type=parent
+        )
+
+        location1 = SQLLocation(
+            id="58302461",
+            location_id="1",
+            name="Some Parent Location",
+            location_type=parent
+        )
+        location2 = SQLLocation(
+            id="39825",
+            location_id="2",
             name="Some Child Location",
-            location_type="child",
+            location_type=child,
             parent=location1
         )
         set_locations = LocationSet([location1, location2])

@@ -30,6 +30,17 @@ ATTACHMENT_PREFIX = 'attachment:'
 CASE_ID = 'case_id'
 USERCASE_TYPE = 'commcare-user'
 USERCASE_ID = 'usercase_id'
-USERCASE_PREFIX = 'user:'
+USERCASE_PREFIX = 'user/'
+
+AUTO_SELECT_USER = 'user'
+AUTO_SELECT_FIXTURE = 'fixture'
+AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_LOCATION = 'location'
+AUTO_SELECT_RAW = 'raw'
+AUTO_SELECT_USERCASE = 'usercase'
 
 RETURN_TO = 'return_to'
+
+AMPLIFIES_YES = 'yes'
+AMPLIFIES_NO = 'no'
+AMPLIFIES_NOT_SET = 'not_set'

@@ -5,7 +5,7 @@ from corehq.pillows.base import HQPillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
-from django_countries.countries import OFFICIAL_COUNTRIES
+from django_countries.data import COUNTRIES
 
 
 class DomainPillow(HQPillow):
@@ -53,11 +53,11 @@ class DomainPillow(HQPillow):
         sub =  Subscription.objects.filter(
                 subscriber__domain=doc_dict['name'],
                 is_active=True)
-        doc_dict['deployment'] = doc_dict.get('deployment', None) or {}
+        doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
         countries = doc_dict['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []
         if sub:
             doc_ret['subscription'] = sub[0].plan_version.plan.edition
         for country in countries:
-            doc_ret['deployment']['countries'].append(OFFICIAL_COUNTRIES[country])
+            doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
         return doc_ret

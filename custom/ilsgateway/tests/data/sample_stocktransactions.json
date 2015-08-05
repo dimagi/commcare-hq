@@ -1,47 +1,146 @@
 [
     {
-        "beginning_balance": 0,
-        "date": "2010-12-03T07:45:59.139272",
-        "ending_balance": 63,
-        "product": "pp",
-        "quantity": 63,
-        "report_type": "stock on hand",
-        "supply_point": 39
+        "beginning_balance": 230,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 330,
+        "product": "bp",
+        "quantity": 100,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
     },
     {
-        "beginning_balance": 0,
-        "date": "2010-12-03T07:45:59.139272",
-        "ending_balance": 36,
+        "beginning_balance": 100,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 112,
+        "product": "cp",
+        "quantity": 12,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 22,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 32,
         "product": "cc",
-        "quantity": 36,
-        "report_type": "stock on hand",
-        "supply_point": 39
+        "quantity": 10,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
     },
     {
-        "beginning_balance": 0,
-        "date": "2010-12-03T07:45:59.139272",
-        "ending_balance": 13,
-        "product": "ip",
-        "quantity": 13,
-        "report_type": "stock on hand",
-        "supply_point": 39
+        "beginning_balance": 7000,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 15000,
+        "product": "cc",
+        "quantity": 8000,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
     },
     {
-        "beginning_balance": 0,
-        "date": "2010-12-03T07:45:59.139272",
-        "ending_balance": 2800,
-        "product": "cond",
-        "quantity": 2800,
-        "report_type": "stock on hand",
-        "supply_point": 39
+        "beginning_balance": 500,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 1000,
+        "product": "bp",
+        "quantity": 500,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
     },
     {
-        "beginning_balance": 0,
-        "date": "2010-12-03T07:45:59.139272",
-        "ending_balance": 50,
-        "product": "id",
-        "quantity": 50,
+        "beginning_balance": 100,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 200,
+        "product": "cp",
+        "quantity": 100,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 7000,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 15000,
+        "product": "bp",
+        "quantity": 8000,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 550,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 750,
+        "product": "bp",
+        "quantity": 200,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 30,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 54,
+        "product": "cc",
+        "quantity": 24,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 25,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 3025,
+        "product": "bp",
+        "quantity": 3000,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 2000,
+        "date": "2015-07-14T04:51:47.858549",
+        "ending_balance": 5000,
+        "product": "cp",
+        "quantity": 3000,
+        "report_type": "loss or adjustment",
+        "supply_point": 3445
+    },
+    {
+        "beginning_balance": 100,
+        "date": "2015-07-14T05:24:18.457216",
+        "ending_balance": 100,
+        "product": "bp",
+        "quantity": 0,
         "report_type": "stock on hand",
-        "supply_point": 39
+        "supply_point": 4407
+    },
+    {
+        "beginning_balance": 4000,
+        "date": "2015-07-14T05:24:18.457216",
+        "ending_balance": 3000,
+        "product": "cc",
+        "quantity": -1000,
+        "report_type": "stock on hand",
+        "supply_point": 4407
+    },
+    {
+        "beginning_balance": 2000,
+        "date": "2015-07-14T05:24:18.457216",
+        "ending_balance": 3000,
+        "product": "bp",
+        "quantity": 1000,
+        "report_type": "stock on hand",
+        "supply_point": 4407
+    },
+    {
+        "beginning_balance": 4000,
+        "date": "2015-07-14T05:24:18.457216",
+        "ending_balance": 4500,
+        "product": "cp",
+        "quantity": 500,
+        "report_type": "stock on hand",
+        "supply_point": 4407
+    },
+    {
+        "beginning_balance": 4000,
+        "date": "2015-07-14T05:24:18.457216",
+        "ending_balance": 4500,
+        "product": "cp",
+        "quantity": 500,
+        "report_type": "stock on hand",
+        "supply_point": 600
     }
 ]

@@ -13,6 +13,5 @@ class DuplicateError(CouchFormException):
     pass
 
 
-class ViewTooLarge(Exception):
-    def __init__(self, forms):
-        self.forms = forms
+class UnexpectedDeletedXForm(Exception):
+    pass

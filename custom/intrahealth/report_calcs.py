@@ -1,9 +1,10 @@
+from datetime import datetime
 from corehq.apps.products.models import SQLProduct
+from dimagi.utils.dates import force_to_date
 import fluff
 import re
 import logging
-from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, get_district_name
+from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, get_loc_from_case
 
 
 def form_date(form):
@@ -27,17 +28,22 @@ def get_product_code(product_name, domain):
     try:
         return SQLProduct.objects.get(name=product_name, domain=domain).code
     except SQLProduct.DoesNotExist:
-        for k, v in PRODUCT_NAMES.iteritems():
-            if product_name.lower() in v:
-                return SQLProduct.objects.get(name__iexact=k,
-                                              domain=domain).code
+        k = PRODUCT_NAMES.get(product_name.lower())
+        if k:
+            return SQLProduct.objects.get(name__iexact=k,
+                                          domain=domain).code
+
+
+def _locations_per_type(domain, loc_type, location):
+    return (location.sql_location.get_descendants(include_self=True)
+            .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
 
 
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_region(self, form):
         loc = get_location_by_type(form=form, type=u'r\xe9gion')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -46,7 +52,7 @@ class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
     def total_for_district(self, form):
         loc = get_location_by_type(form=form, type=u'district')
-        count = Location.filter_by_type_count(form.domain, 'PPS', loc)
+        count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
             'value': count
@@ -375,64 +381,79 @@ class DureeMoyenneLivraison(fluff.Calculator):
         }
 
 
+def check_prop(prop, case):
+    return case.get_case_property(prop) and case.get_case_property('date_du')
+
+
+def get_district_name(case):
+    return get_loc_from_case(case).name
+
+
+def get_date_du(case):
+    date = case.get_case_property('date_du')
+    if type(date) is not datetime:
+        return force_to_date(date)
+    return date
+
+
 class Recouvrement(fluff.Calculator):
 
     @fluff.date_emitter
-    def amount_to_pay(self, form):
-        if 'quantite_reale_a_payer' in form.form and 'date_du' in form.form and form.form['date_du']:
-            value = form.form['quantite_reale_a_payer']
+    def amount_to_pay(self, case):
+        if check_prop('quantite_reale_a_payer', case):
+            value = case.get_case_property('quantite_reale_a_payer')
 
             yield {
-                'date': form.form['date_du'],
+                'date': get_date_du(case),
                 'value': int(value),
-                'group_by': [get_district_name(form),
-                             get_domain(form)]
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def amount_paid(self, form):
-        if 'montant_paye' in form.form and 'date_du' in form.form and form.form['date_du']:
-            value = form.form['montant_paye']
+    def amount_paid(self, case):
+        if check_prop('montant_paye', case):
+            value = case.get_case_property('montant_paye')
 
             yield {
-                'date': form.form['date_du'],
+                'date': get_date_du(case),
                 'value': int(value),
-                'group_by': [get_district_name(form),
-                             get_domain(form)]
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_30_days(self, form):
-        if 'payee_trent_jour' in form.form and 'date_du' in form.form and form.form['date_du']:
-            value = form.form['payee_dans_le_trent_jour_apres_date_du']
+    def in_30_days(self, case):
+        if check_prop('payee_trent_jour', case):
+            value = case.get_case_property('payee_trent_jour')
 
             yield {
-                'date': form.form['date_du'],
+                'date': get_date_du(case),
                 'value': int(value),
-                'group_by': [get_district_name(form),
-                             get_domain(form)]
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_3_months(self, form):
-        if 'payee_trois_mois' in form.form and 'date_du' in form.form and form.form['date_du']:
-            value = form.form['payee_dans_trois_mois_apres_date_du']
+    def in_3_months(self, case):
+        if check_prop('payee_trois_mois', case):
+            value = case.get_case_property('payee_trois_mois')
 
             yield {
-                'date': form.form['date_du'],
+                'date': get_date_du(case),
                 'value': int(value),
-                'group_by': [get_district_name(form),
-                             get_domain(form)]
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }
 
     @fluff.date_emitter
-    def in_year(self, form):
-        if 'payee_un_an' in form.form and 'date_du' in form.form and form.form['date_du']:
-            value = form.form['payee_dans_un_an_apres_date_du']
+    def in_year(self, case):
+        if check_prop('payee_un_an', case):
+            value = case.get_case_property('payee_un_an')
 
             yield {
-                'date': form.form['date_du'],
+                'date': get_date_du(case),
                 'value': int(value),
-                'group_by': [get_district_name(form),
-                             get_domain(form)]
+                'group_by': [get_district_name(case),
+                             case.get_case_property('domain')]
             }

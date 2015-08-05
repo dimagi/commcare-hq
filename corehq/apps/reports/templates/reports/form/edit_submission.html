@@ -30,4 +30,8 @@
 
 {% block main_column %}
     <div class="inline-touchforms" id="edit-container"></div>
+    <div id="loading" class="hq-loading" style="display: none;">
+        <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
+        {% trans "Loading" %}...
+    </div>
 {% endblock %}

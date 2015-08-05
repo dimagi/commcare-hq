@@ -147,8 +147,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="ils_sms_users_fix">
-                        {% trans "Fix sms users" %}
+                    <button class="btn" id="ils_resync_web_users">
+                        {% trans "Run web users resync" %}
                     </button>
                 </div>
             </div>
@@ -167,6 +167,15 @@
                 <div class="btn-toolbar">
                     <button class="btn" id="delete_runs">
                         {% trans "Delete reports runs" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="change_runner_date_to_last_migration">
+                        {% trans "Change runner date" %}
                     </button>
                 </div>
             </div>
@@ -214,8 +223,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#ils_sms_users_fix").click(function() {
-            var url = '{% url 'ils_sms_users_fix' domain %}';
+        $("#ils_resync_web_users").click(function() {
+            var url = '{% url 'ils_resync_web_users' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
@@ -231,5 +240,12 @@
             var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });
+
+        $("#change_runner_date_to_last_migration").click(function() {
+            var url = '{% url 'change_runner_date_to_last_migration' domain %}';
+            var successMessage = "{% trans "Started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
     </script>
 {% endblock %}

@@ -4,7 +4,7 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
-    CASE_ID, USERCASE_ID, USERCASE_PREFIX
+    CASE_ID, USERCASE_ID
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -35,16 +35,20 @@ namespaces = dict(
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
     v="{http://commcarehq.org/xforms/vellum}",
+    odk="{http://opendatakit.org/xforms}",
 )
 
 
 def _make_elem(tag, attr=None):
     attr = attr or {}
-    return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
+    return ET.Element(
+        tag.format(**namespaces),
+        {key.format(**namespaces): val for key, val in attr.items()}
+    )
 
 
 def make_case_elem(tag, attr=None):
-        return _make_elem(case_elem_tag(tag), attr)
+    return _make_elem(case_elem_tag(tag), attr)
 
 
 def case_elem_tag(tag):
@@ -52,24 +56,24 @@ def case_elem_tag(tag):
 
 
 def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
-        xpath = case_id_xpath or SESSION_CASE_ID
-        if parent_path:
-            for parent_name in parent_path.split('/'):
-                xpath = xpath.case().index_id(parent_name)
-        return xpath
+    xpath = case_id_xpath or SESSION_CASE_ID
+    if parent_path:
+        for parent_name in parent_path.split('/'):
+            xpath = xpath.case().index_id(parent_name)
+    return xpath
 
 
 def relative_path(from_path, to_path):
-            from_nodes = from_path.split('/')
-            to_nodes = to_path.split('/')
-            while True:
-                if to_nodes[0] == from_nodes[0]:
-                    from_nodes.pop(0)
-                    to_nodes.pop(0)
-                else:
-                    break
+    from_nodes = from_path.split('/')
+    to_nodes = to_path.split('/')
+    while True:
+        if to_nodes[0] == from_nodes[0]:
+            from_nodes.pop(0)
+            to_nodes.pop(0)
+        else:
+            break
 
-            return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
+    return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
 def requires_itext(on_fail_return=None):
@@ -407,10 +411,6 @@ class CaseBlock(object):
         for key, value in updates.items():
             if key == 'name':
                 key = 'case_name'
-            elif key.startswith(USERCASE_PREFIX):
-                # Skip usercase keys. They are handled by the usercase block.
-                # cf. add_usercase
-                continue
             if self.is_attachment(value):
                 attachments[key] = value
             else:
@@ -552,6 +552,11 @@ class XForm(WrappedNode):
     def media_references(self, form):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
+
+    @property
+    def text_references(self):
+        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
+        return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     @property
     def image_references(self):
@@ -986,7 +991,7 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def _add_usercase_bind(self, usercase_path):
+    def add_usercase_bind(self, usercase_path):
         self.add_bind(
             nodeset=usercase_path + 'case/@case_id',
             calculate=SESSION_USERCASE_ID,
@@ -1010,24 +1015,20 @@ class XForm(WrappedNode):
             )
 
     def add_usercase(self, form):
-        from corehq.apps.app_manager.util import get_usercase_keys, get_usercase_values
-
         usercase_path = 'commcare_usercase/'
         actions = form.active_actions()
 
-        if 'update_case' in actions:
-            usercase_updates = get_usercase_keys(actions['update_case'].update)
-            if usercase_updates:
-                self._add_usercase_bind(usercase_path)
-                usercase_block = _make_elem('{x}commcare_usercase')
-                case_block = CaseBlock(self, usercase_path)
-                case_block.add_update_block(usercase_updates)
-                usercase_block.append(case_block.elem)
-                self.data_node.append(usercase_block)
+        if 'usercase_update' in actions and actions['usercase_update'].update:
+            self.add_usercase_bind(usercase_path)
+            usercase_block = _make_elem('{x}commcare_usercase')
+            case_block = CaseBlock(self, usercase_path)
+            case_block.add_update_block(actions['usercase_update'].update)
+            usercase_block.append(case_block.elem)
+            self.data_node.append(usercase_block)
 
-        if 'case_preload' in actions:
+        if 'usercase_preload' in actions and actions['usercase_preload'].preload:
             self.add_case_preloads(
-                get_usercase_values(actions['case_preload'].preload),
+                actions['usercase_preload'].preload,
                 case_id_xpath=SESSION_USERCASE_ID
             )
 
@@ -1095,7 +1096,7 @@ class XForm(WrappedNode):
         # never add pollsensor to a pre-2.14 app
         if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
-                self.add_pollsensor(ref="/data/meta/location")
+                self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 
@@ -1232,8 +1233,6 @@ class XForm(WrappedNode):
             return 'false()'
 
     def create_casexml_2(self, form):
-        from corehq.apps.app_manager.util import skip_usercase_values
-
         actions = form.active_actions()
 
         if form.requires == 'none' and 'open_case' not in actions and 'update_case' in actions:
@@ -1286,6 +1285,15 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
+            elif module.root_module_id and module.parent_select.active:
+                # This is a submodule. case_id will have changed to avoid a clash with the parent case.
+                # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
+                case_id = '_'.join((CASE_ID, form.get_case_type()))
+                session_case_id = CaseIDXPath(session_var(case_id))
+                self.add_bind(
+                    nodeset="case/@case_id",
+                    calculate=session_case_id,
+                )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
@@ -1302,7 +1310,7 @@ class XForm(WrappedNode):
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
-                self.add_case_preloads(skip_usercase_values(actions['case_preload'].preload))
+                self.add_case_preloads(actions['case_preload'].preload)
 
         if 'subcases' in actions:
             subcases = actions['subcases']
@@ -1325,7 +1333,7 @@ class XForm(WrappedNode):
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
-                    case_id = session_var(form.session_var_for_action('subcase', i))
+                    case_id = session_var(form.session_var_for_action('subcases', i))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -2076,7 +2084,7 @@ VELLUM_TYPES = {
     },
     "DateTime": {
         'tag': 'input',
-        'type': 'xsd:datetime',
+        'type': 'xsd:dateTime',
         'icon': 'icon-vellum-datetime',
         'icon_bs3': 'fcc fcc-fd-datetime',
     },

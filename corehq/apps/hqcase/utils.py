@@ -1,21 +1,21 @@
 import datetime
 import uuid
 from xml.etree import ElementTree
+import xml.etree.ElementTree as ET
+import re
+
 from couchdbkit import ResourceNotFound
 from django.core.files.uploadedfile import UploadedFile
+from django.template.loader import render_to_string
+
 from casexml.apps.phone.xml import get_case_xml
-from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
-from django.template.loader import render_to_string
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
-
 from corehq.apps.receiverwrapper import submit_form_locally
-import xml.etree.ElementTree as ET
-import re
 from casexml.apps.case import const
 
 
@@ -71,14 +71,20 @@ def get_case_wrapper(data):
     return wrapper
 
 
-def get_case_by_domain_hq_user_id(domain, user_id, include_docs=False):
+def get_case_by_domain_hq_user_id(domain, user_id, case_type):
     """
     Get the 'user case' for user_id. User cases are part of the call center feature.
     """
-    return CommCareCase.view('hqcase/by_domain_hq_user_id',
-                         key=[domain, user_id],
-                         reduce=False,
-                         include_docs=include_docs).one()
+    cases = CommCareCase.view(
+        'hqcase/by_domain_hq_user_id',
+        key=[domain, user_id],
+        reduce=False,
+        include_docs=True
+    ).all()
+
+    for case in cases:
+        if case.type == case_type:
+            return case
 
 
 def get_callcenter_case_mapping(domain, user_ids):
@@ -129,21 +135,6 @@ def get_case_by_identifier(domain, identifier):
         pass
 
     return None
-
-
-def get_case_ids_in_domain(domain, type=None):
-    type_key = [type] if type else []
-    return [res['id'] for res in CommCareCase.get_db().view('hqcase/types_by_domain',
-        startkey=[domain] + type_key,
-        endkey=[domain] + type_key + [{}],
-        reduce=False,
-        include_docs=False,
-    )]
-
-
-def get_cases_in_domain(domain, type=None):
-    return (CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
-                                                        get_case_ids_in_domain(domain, type=type)))
 
 
 def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=True,

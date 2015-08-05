@@ -85,9 +85,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', "export_report", name="export_report"),
 
     # once off email
-    url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
+    url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report', kwargs=dict(once=True)),
     url(r"^custom/email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report',
-        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix)),
+        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix, once=True)),
 
     # Saved reports
     url(r"^configs$", AddSavedReportConfigView.as_view(), name=AddSavedReportConfigView.name),

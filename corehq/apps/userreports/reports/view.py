@@ -5,16 +5,21 @@ from StringIO import StringIO
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.reports.models import ReportConfig
-from corehq.apps.userreports.exceptions import UserReportsError
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.reports_core.exceptions import FilterException
+from corehq.apps.userreports.exceptions import (
+    UserReportsError, TableNotFoundWarning,
+    UserReportsFilterError)
+from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.util.couch import get_document_or_404
+from corehq.apps.userreports.util import default_language, localize
+from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
+    DocumentNotFound
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -33,9 +38,30 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     emailable = True
 
     @property
+    def is_custom(self):
+        return self.report_config_id.startswith(CUSTOM_PREFIX)
+
+    @property
     @memoized
     def spec(self):
-        return get_document_or_404(ReportConfiguration, self.domain, self.report_config_id)
+        if self.is_custom:
+            return CustomReportConfiguration.by_id(self.report_config_id)
+        else:
+            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+
+    def get_spec_or_404(self):
+        try:
+            return self.spec
+        except DocumentNotFound:
+            raise Http404()
+
+    def has_viable_configuration(self):
+        try:
+            self.spec
+        except DocumentNotFound:
+            return False
+        else:
+            return True
 
     @property
     def title(self):
@@ -44,7 +70,9 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def data_source(self):
-        return ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec)
+        report.lang = self.lang
+        return report
 
     @property
     @memoized
@@ -56,16 +84,19 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def filter_values(self):
-        return {
-            filter.css_id: filter.get_value(self.request_dict)
-            for filter in self.filters
-        }
+        try:
+            return {
+                filter.css_id: filter.get_value(self.request_dict)
+                for filter in self.filters
+            }
+        except FilterException, e:
+            raise UserReportsFilterError(unicode(e))
 
     @property
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id])
+            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
             for filter in self.filters
         }
 
@@ -79,8 +110,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         self.request = request
         self.domain = request.domain
         self.report_config_id = report_config_id
+        self.lang = self.request.couch_user.language or default_language()
         user = request.couch_user
         if self.has_permissions(self.domain, user):
+            self.get_spec_or_404()
             if kwargs.get('render_as') == 'email':
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
@@ -113,37 +146,48 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def saved_report_context_data(self):
-        def _update_daterange_filters(report_config):
-            report_config_data = report_config.to_json()
-            report_config_data['filters'].update(report_config.get_date_range())
-            return report_config_data
+        def _get_context_for_saved_report(report_config):
+            if report_config:
+                report_config_data = report_config.to_json()
+                report_config_data['filters'].update(report_config.get_date_range())
+                return report_config_data
+            else:
+                return ReportConfig.default()
 
-        current_config_id = self.request.GET.get('config_id')
+        saved_report_config_id = self.request.GET.get('config_id')
+        saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
+            if saved_report_config_id else None
+
+        datespan_filters = []
+        for f in self.datespan_filters:
+            copy = dict(f)
+            copy['display'] = localize(copy['display'], self.lang)
+            datespan_filters.append(copy)
+
         return {
             'report_configs': [
-                _update_daterange_filters(config)
-                for config in ReportConfig.by_domain_and_owner(
+                _get_context_for_saved_report(saved_report)
+                for saved_report in ReportConfig.by_domain_and_owner(
                     self.domain, self.request.couch_user._id, report_slug=self.slug
                 )
             ],
-            'default_config': (
-                _update_daterange_filters(ReportConfig.get(current_config_id))
-                if current_config_id
-                else ReportConfig.default()
-            ),
+            'default_config': _get_context_for_saved_report(saved_report_config),
             'datespan_filters': [{
                 'display': _('Choose a date filter...'),
                 'slug': None,
-            }] + self.spec.filters,
+            }] + datespan_filters,
         }
 
     @property
     def has_datespan(self):
-        filters = self.spec.filters
-        return any(
-            f['type'] == 'date'
-            for f in filters
-        )
+        return bool(self.datespan_filters)
+
+    @property
+    def datespan_filters(self):
+        return [
+            f for f in self.spec.filters
+            if f['type'] == 'date'
+        ]
 
     @property
     def headers(self):
@@ -153,12 +197,27 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
             total_records = data.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
             return self.render_json_response({
                 'error': e.message,
+            })
+        except TableNotFoundWarning:
+            if self.spec.report_meta.created_by_builder:
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "Please wait while the report is populated."
+                )
+            else:
+                msg = _(
+                    "The database table backing your report does not exist yet. "
+                    "You must rebuild the data source before viewing the report."
+                )
+            return self.render_json_response({
+                'warning': msg
             })
 
         # todo: this is ghetto pagination - still doing a lot of work in the database
@@ -200,6 +259,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         report = cls()
         report.domain = domain
         report.report_config_id = report_config_id
+        if not report.has_viable_configuration():
+            return None
         report.name = report.title
         return report
 
@@ -213,6 +274,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
         except UserReportsError as e:
             return self.render_json_response({
                 'error': e.message,
@@ -220,8 +282,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         report_config = ReportConfiguration.get(self.report_config_id)
         raw_rows = list(data.get_data())
-        headers = [column['display'] for column in report_config.columns]
-        columns = [column['field'] for column in report_config.columns]
+        headers = [column.header for column in self.data_source.columns]
+        columns = [column.column_id for column in report_config.report_columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
         return [
             [

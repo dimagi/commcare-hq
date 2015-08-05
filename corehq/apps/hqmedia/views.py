@@ -4,9 +4,10 @@ import uuid
 import zipfile
 import logging
 import os
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import json
+import itertools
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import View, TemplateView
@@ -18,6 +19,8 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+
+from soil import DownloadBase
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -31,13 +34,12 @@ from corehq.apps.hqmedia.controller import (
 )
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
-from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
+from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.zip_utils import DownloadZip
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
-from soil.util import expose_download
+from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
 
@@ -277,13 +279,13 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     def process_upload(self):
         if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
             processing_id = uuid.uuid4().hex
-            path = '{}.{}'.format(os.path.join(settings.SHARED_DRIVE_CONF.temp_dir, processing_id), 'upload')
+            path = settings.SHARED_DRIVE_CONF.get_temp_file(suffix='.upload')
             shutil.move(self.uploaded_file.temporary_file_path(), path)
             status = BulkMultimediaStatusCacheNfs(processing_id, path)
             status.save()
         else:
             self.uploaded_file.file.seek(0)
-            saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+            saved_file = expose_cached_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
             processing_id = saved_file.download_id
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
@@ -345,9 +347,9 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
-        data = self.uploaded_file.file.read()
-        multimedia = self.media_class.get_by_data(data)
-        multimedia.attach_data(data,
+        self.data = self.uploaded_file.file.read()
+        multimedia = self.media_class.get_by_data(self.data)
+        multimedia.attach_data(self.data,
                                original_filename=self.uploaded_file.name,
                                username=self.username)
         multimedia.add_domain(self.domain, owner=True)
@@ -420,6 +422,15 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
         return ['video']
 
 
+class ProcessTextFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareMultimedia
+    name = "hqmedia_uploader_text"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['text']
+
+
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
 
@@ -443,7 +454,7 @@ class CheckOnProcessingFile(BaseMultimediaView):
         return HttpResponse("workin on it")
 
 
-def _iter_media_files(media_objects):
+def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
     and return an iterator of (path, data) tuples for the media files
@@ -471,7 +482,23 @@ def _iter_media_files(media_objects):
     return _media_files(), errors
 
 
-class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
+def iter_app_files(app, include_multimedia_files, include_index_files):
+    file_iterator = []
+    errors = []
+    if include_multimedia_files:
+        app.remove_unused_mappings()
+        file_iterator, errors = iter_media_files(app.get_media_objects())
+    if include_index_files:
+        from corehq.apps.app_manager.views import iter_index_files
+        index_files, index_file_errors = iter_index_files(app)
+        if index_file_errors:
+            errors.extend(index_file_errors)
+        file_iterator = itertools.chain(file_iterator, index_files)
+
+    return file_iterator, errors
+
+
+class DownloadMultimediaZip(View, ApplicationViewMixin):
     """
     This is where the Multimedia for an application gets generated.
     Expects domain and app_id to be in its args
@@ -481,13 +508,11 @@ class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
     name = "download_multimedia_zip"
     compress_zip = False
     zip_name = 'commcare.zip'
-
-    def iter_files(self):
-        self.app.remove_unused_mappings()
-        return _iter_media_files(self.app.get_media_objects())
+    include_multimedia_files = True
+    include_index_files = False
 
     def check_before_zipping(self):
-        if not self.app.multimedia_map:
+        if not self.app.multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
 
     def log_errors(self, errors):
@@ -501,6 +526,23 @@ class DownloadMultimediaZip(DownloadZip, ApplicationViewMixin):
             "retrieving media for this application.<br /> %s" % (
                 "<br />".join(errors))
         )
+
+    def get(self, request, *args, **kwargs):
+        assert self.include_multimedia_files or self.include_index_files
+        error_response = self.check_before_zipping()
+        if error_response:
+            return error_response
+
+        download = DownloadBase()
+        download.set_task(build_application_zip.delay(
+            include_multimedia_files=self.include_multimedia_files,
+            include_index_files=self.include_index_files,
+            app=self.app,
+            download_id=download.download_id,
+            compress_zip=self.compress_zip,
+            filename=self.zip_name)
+        )
+        return download.get_start_response()
 
     @method_decorator(safe_download)
     def dispatch(self, request, *args, **kwargs):
@@ -589,4 +631,4 @@ class ViewMultimediaFile(View):
             metadata, buffer = obj.get()
             data = buffer.getvalue()
             content_type = metadata['content_type']
-        return HttpResponse(data, mimetype=content_type)
+        return HttpResponse(data, content_type=content_type)

@@ -1,0 +1,378 @@
+{
+    "doc_type":"ReportConfiguration",
+    "domain":"airs",
+    "config_id":"b9aa4b9a7e9cc23c6e7fed3778048d1c",
+    "description":"",
+    "title":"SMS Indicator Report",
+    "sort_expression":[
+        {
+            "field":"level_2",
+            "order":"DESC"
+        },
+        {
+            "field":"date_of_data_collection",
+            "order":"ASC"
+        }
+    ],
+    "filters":[
+        {
+            "compare_as_string":false,
+            "datatype":"date",
+            "required":false,
+            "display":{
+                "fra":"Date soumis",
+                "en":"Date submitted"
+            },
+            "field":"timeEnd",
+            "type":"date",
+            "slug":"timeEnd"
+        },
+        {
+            "compare_as_string":false,
+            "required":false,
+            "datatype":"string",
+            "show_all":true,
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
+            "field":"country",
+            "type":"dynamic_choice_list",
+            "slug":"country"
+        },
+        {
+            "compare_as_string":false,
+            "required":false,
+            "datatype":"string",
+            "show_all":true,
+            "display":{
+                "fra":"Niveau 1",
+                "en":"Level 1"
+            },
+            "field":"level_1",
+            "type":"dynamic_choice_list",
+            "slug":"level_1"
+        },
+        {
+            "compare_as_string":false,
+            "required":false,
+            "datatype":"string",
+            "show_all":true,
+            "display":{
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
+            "field":"level_2",
+            "type":"dynamic_choice_list",
+            "slug":"level_2"
+        },
+        {
+            "compare_as_string":false,
+            "required":false,
+            "datatype":"string",
+            "show_all":true,
+            "display":{
+                "fra":"Niveau 3",
+                "en":"Level 3"
+            },
+            "field":"level_3",
+            "type":"dynamic_choice_list",
+            "slug":"level_3"
+        },
+        {
+            "compare_as_string":false,
+            "required":false,
+            "datatype":"string",
+            "show_all":true,
+            "display":{
+                "fra":"Niveau 4",
+                "en":"Level 4"
+            },
+            "field":"level_4",
+            "type":"dynamic_choice_list",
+            "slug":"level_4"
+        }
+    ],
+    "visible":true,
+    "aggregation_columns":[
+        "doc_id"
+    ],
+    "configured_charts":[
+
+    ],
+    "_id":"24adc057d11abfa5249522f8ae011062",
+    "report_meta":{
+        "doc_type":"ReportMeta",
+        "builder_report_type":null,
+        "created_by_builder":false
+    },
+    "columns":[
+        {
+            "description":null,
+            "field":"date_of_data_collection",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"date_of_data_collection",
+            "alias":null,
+            "type":"field",
+            "display": {
+                "fra": "Date entr\u00e9e",
+                "en": "Entered date"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"timeEnd",
+            "format":"default",
+            "transform":{
+                "type": "date_format",
+                "format": "%Y-%m-%d %H:%M"
+            },
+            "column_id":"timeEnd",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra": "Date et heure soumis",
+                "en": "Date and time submitted"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"country",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"country",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"level_1",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"level_1",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Niveau 1",
+                "en":"Level 1"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"level_2",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"level_2",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"level_3",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"level_3",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Niveau 3",
+                "en":"Level 3"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"level_4",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"level_4",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Niveau 4",
+                "en":"Level 4"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"worker_code",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"worker_code",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Code d'Equipe",
+                "en":"Team Code"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"total_sprayers",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"total_sprayers",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"# Applicateurs",
+                "en":"SOPs Worked"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"structures_found",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"structures_found",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"# Pieces Trouv\u00e9es",
+                "en":"# Structures found"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"structures_sprayed",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"structures_sprayed",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"# Pieces Trait\u00e9es",
+                "en":"# Structures Sprayed"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"insecticide_used",
+            "format":"default",
+            "transform":{
+
+            },
+            "column_id":"insecticide_used",
+            "alias":null,
+            "type":"field",
+            "display": {
+                "fra":"# Bouteilles Utilis\u00e9es",
+                "en":"# Insecticide Used"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"structures_per_sprayer",
+            "format":"default",
+            "transform":{
+                "type":"custom",
+                "custom_type":"short_decimal_display"
+            },
+            "column_id":"structures_per_sprayer",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Moyenne de pi\u00e8ces par applicateur",
+                "en":"# Structures per SOP"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "field":"structures_per_IU",
+            "format":"default",
+            "transform":{
+                "type":"custom",
+                "custom_type":"short_decimal_display"
+            },
+            "column_id":"structures_per_IU",
+            "alias":null,
+            "type":"field",
+            "display":{
+                "fra":"Moyenne de pi\u00e8ces par bouteille",
+                "en":"# Structures per IU"
+            },
+            "aggregation":"simple"
+        },
+        {
+            "description":null,
+            "format":"both",
+            "denominator":{
+                "description":null,
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"spray_coverage_denominator",
+                "field":"structures_found",
+                "type":"field",
+                "display":null,
+                "aggregation":"simple"
+            },
+            "numerator":{
+                "description":null,
+                "format":"default",
+                "transform":{
+
+                },
+                "column_id":"spray_coverage_numerator",
+                "field":"structures_sprayed",
+                "type":"field",
+                "display":null,
+                "aggregation":"simple"
+            },
+            "transform":{
+
+            },
+            "column_id":"spray_coverage",
+            "field":"spray_coverage",
+            "alias":null,
+            "type":"percent",
+            "display":{
+                "fra":"Taux de couverture",
+                "en":"Spray coverage"
+            },
+            "aggregation":"simple"
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 from django.conf.urls import *
+from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from .views import FlagBrokenBuilds
+from .views import FlagBrokenBuilds, AuthenticateAs
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -16,6 +17,10 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^message_logs/$', 'message_log_report', name='message_log_report'),
     url(r'^contact_email/$', 'contact_email', name="contact_email"),
     url(r'^mass_email/$', 'mass_email', name="mass_email"),
+    url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
+    url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
+    url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
+        AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
     url(r'^commcare_settings/$', 'all_commcare_settings', name="all_commcare_settings"),
     url(r'^management_commands/$', 'management_commands', name="management_commands"),

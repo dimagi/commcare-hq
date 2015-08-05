@@ -6,7 +6,6 @@
     # Application
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
-    - hq.commtrack_enabled
     - hq.commtrack_requisition_mode
     - hq.use_custom_suite
     - hq.custom_suite
