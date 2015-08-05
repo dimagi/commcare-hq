@@ -15,23 +15,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='MessageLogOld',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('couch_recipient', models.TextField()),
-                ('phone_number', models.TextField()),
-                ('direction', models.CharField(max_length=1, choices=[(b'I', b'Incoming'), (b'O', b'Outgoing')])),
-                ('date', models.DateTimeField()),
-                ('text', models.TextField()),
-                ('domain', models.TextField()),
-            ],
-            options={
-                'db_table': 'sms_messagelog',
-                'managed': False,
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
             name='MessagingEvent',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
