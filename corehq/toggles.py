@@ -572,10 +572,3 @@ EMAIL_IN_REMINDERS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
-
-OPM_LONGITUDINAL_CMR = StaticToggle(
-    'opm_longitudinal_cmr',
-    'OPM longitudinal CMR report preview',
-    TAG_UNKNOWN,
-    [NAMESPACE_USER]
-)
