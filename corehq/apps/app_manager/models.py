@@ -334,7 +334,7 @@ class FormActions(DocumentSchema):
         return names
 
 
-class ParentIndex(DocumentSchema):
+class CaseIndex(DocumentSchema):
     tag = StringProperty()
     reference_id = StringProperty(default='parent')
     relationship = StringProperty(choices=['child', 'extension'], default='child')
@@ -344,7 +344,7 @@ class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
-    parents = SchemaListProperty(ParentIndex)
+    parents = SchemaListProperty(CaseIndex)
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -477,8 +477,8 @@ class AdvancedFormActions(DocumentSchema):
             if not parent_case_type:
                 yield action
             else:
-                for parent_index in action.parents:
-                    parent = self.actions_meta_by_tag[parent_index.tag]['action']
+                for case_index in action.parents:
+                    parent = self.actions_meta_by_tag[case_index.tag]['action']
                     if parent.case_type == parent_case_type:
                         yield action
 
@@ -501,8 +501,8 @@ class AdvancedFormActions(DocumentSchema):
         current = action
         hierarchy = [current]
         while current and current.parents:
-            for parent_index in current.parents:
-                parent = self.get_action_from_tag(parent_index.tag)
+            for case_index in current.parents:
+                parent = self.get_action_from_tag(case_index.tag)
                 current = parent
                 if parent:
                     if parent in hierarchy:
@@ -2169,10 +2169,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_properties.update(
                     subcase.case_properties.keys()
                 )
-                for parent_index in subcase.parents:
-                    parent = self.actions.get_action_from_tag(parent_index.tag)
+                for case_index in subcase.parents:
+                    parent = self.actions.get_action_from_tag(case_index.tag)
                     if parent:
-                        parent_types.add((parent.case_type, parent_index.reference_id or 'parent'))
+                        parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -2335,11 +2335,11 @@ class AdvancedModule(ModuleBase):
                             case_tag='_'.join(['parent'] * (i + 1)),
                             details_module=module.unique_id,
                             parents=[
-                                ParentIndex(tag='_'.join(['parent'] * (i + 2)) if n > 0 else '')
+                                CaseIndex(tag='_'.join(['parent'] * (i + 2)) if n > 0 else '')
                             ]
                         ))
 
-                    base_action.parents = [ParentIndex(tag='parent')]
+                    base_action.parents = [CaseIndex(tag='parent')]
 
                 if close:
                     base_action.close_condition = close.condition
@@ -2354,7 +2354,7 @@ class AdvancedModule(ModuleBase):
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
-                        parents=[ParentIndex(
+                        parents=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',
                             reference_id=subcase.reference_id,
                         )]

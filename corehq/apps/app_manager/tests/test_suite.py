@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig, ParentSelect, ParentIndex
+    ReportModule, ReportAppConfig, ParentSelect, CaseIndex
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
@@ -1043,7 +1043,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     def _load_case(self, child_module_form, case_type, parent_module=None):
         action = LoadUpdateAction(case_tag=case_type, case_type=case_type)
         if parent_module:
-            action.parents = [ParentIndex(tag=parent_module.case_type)]
+            action.parents = [CaseIndex(tag=parent_module.case_type)]
 
         child_module_form.actions.load_update_cases.append(action)
 
@@ -1310,7 +1310,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                             form.actions.load_update_cases.append(LoadUpdateAction(
                                 case_type=case_type,
                                 case_tag='update_{}'.format(case_type),
-                                parents=[ParentIndex(tag=parent)] if parent else [],
+                                parents=[CaseIndex(tag=parent)] if parent else [],
                             ))
                     elif 'open_subacse':
                         if m_type == "basic":
@@ -1324,7 +1324,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                                 case_type=case_type,
                                 case_tag='subcase_{}'.format(case_type),
                                 name_path='/data/name',
-                                parents=[ParentIndex(tag=parent)] if parent else []
+                                parents=[CaseIndex(tag=parent)] if parent else []
                             ))
 
         return app

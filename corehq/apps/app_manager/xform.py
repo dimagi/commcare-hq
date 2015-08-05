@@ -474,10 +474,10 @@ class CaseBlock(object):
         if relationship not in ('child', 'extension'):
             raise CaseError('Valid values for an index relationship are "child" and "extension"')
         if relationship == 'child':
-            parent_index = make_case_elem(reference_id, {'case_type': case_type})
+            case_index = make_case_elem(reference_id, {'case_type': case_type})
         else:
-            parent_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
-        index_node.append(parent_index)
+            case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
+        index_node.append(case_index)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=self.path, ref=reference_id),
@@ -1567,9 +1567,9 @@ class XForm(WrappedNode):
             if action.case_properties:
                 open_case_block.add_update_block(action.case_properties)
 
-            for parent_index in action.parents:
-                parent_meta = form.actions.actions_meta_by_tag.get(parent_index.tag)
-                reference_id = parent_index.reference_id or 'parent'
+            for case_index in action.parents:
+                parent_meta = form.actions.actions_meta_by_tag.get(case_index.tag)
+                reference_id = case_index.reference_id or 'parent'
                 if parent_meta['type'] == 'load':
                     ref = CaseIDXPath(session_var(parent_meta['action'].case_session_var))
                 else:

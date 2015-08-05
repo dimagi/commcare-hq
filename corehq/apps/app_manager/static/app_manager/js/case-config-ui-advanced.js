@@ -304,9 +304,9 @@ var AdvancedCase = (function () {
                     action.case_tag(newTag);
                 }
                 for (var j = 0; j < action.parents.length; j++) {
-                    var parentIndex = action.parents[j];
-                    if (parentIndex.tag() === oldTag) {
-                        parentIndex.tag(newTag);
+                    var caseIndex = action.parents[j];
+                    if (caseIndex.tag() === oldTag) {
+                        caseIndex.tag(newTag);
                     }
                 }
             }
@@ -406,9 +406,9 @@ var AdvancedCase = (function () {
                 for (var i = index; i < loadUpdateCases.length; i++) {
                     potential_child = loadUpdateCases[i];
                     for (var j = 0; j < potential_child.parents.length; j++) {
-                        var parentIndex = potential_child.parents[i];
-                        if (parentIndex.tag() === action.case_tag()) {
-                            parentIndex.tag('');
+                        var caseIndex = potential_child.parents[i];
+                        if (caseIndex.tag() === action.case_tag()) {
+                            caseIndex.tag('');
                         }
 
                     }
@@ -424,7 +424,7 @@ var AdvancedCase = (function () {
         };
     };
 
-    var ParentIndex = function () {
+    var CaseIndex = function () {
         var self = this;
 
         self.tag = ko.observable();
@@ -466,19 +466,19 @@ var AdvancedCase = (function () {
                 return null;
             }
             for (var i = 0; i < self.parents.length; i++) {
-                var parentIndex = self.parents[i];
-                var parent = self.config.caseConfigViewModel.getActionFromTag(parentIndex.tag());
+                var caseIndex = self.parents[i];
+                var parent = self.config.caseConfigViewModel.getActionFromTag(caseIndex.tag());
                 if (!parent) {
                     return "Subcase parent reference is missing";
-                } else if (!parentIndex.reference_id()) {
-                    return 'Parent "' + parentIndex.tag() + '" reference ID required for subcases';
+                } else if (!caseIndex.reference_id()) {
+                    return 'Parent "' + caseIndex.tag() + '" reference ID required for subcases';
                 } else if (parent.actionType === 'open') {
                     if (!parent.repeat_context()) {
                         return null;
                     } else if (!self.repeat_context() ||
                         // manual string startsWith
                         self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                        return 'Subcase must be in same repeat context as parent "' + parentIndex.tag() + '".';
+                        return 'Subcase must be in same repeat context as parent "' + caseIndex.tag() + '".';
                     }
                 }
             }
@@ -560,26 +560,26 @@ var AdvancedCase = (function () {
             }
             return tags.join(', ');
         },
-        addParentIndex: function (self) {
+        addCaseIndex: function (self) {
             /**
-             * Copy newParent form values, and push them to parents array.
+             * Copy newCaseIndex form values, and push them to parents array.
              *
-             * Reference in 'data-bind="with: newParent"' does not change, so
+             * Reference in 'data-bind="with: newCaseIndex"' does not change, so
              * we need to copy values to another instance, and then reset the
              * values in the form.
              */
-            var newParent = new ParentIndex();
-            newParent.tag(self.newParent.tag());
-            newParent.reference_id(self.newParent.reference_id());
-            newParent.relationship(self.newParent.relationship());
-            self.parents.push(newParent);
+            var newCaseIndex = new CaseIndex();
+            newCaseIndex.tag(self.newParent.tag());
+            newCaseIndex.reference_id(self.newParent.reference_id());
+            newCaseIndex.relationship(self.newParent.relationship());
+            self.parents.push(newCaseIndex);
 
-            var blankParent = new ParentIndex();
-            self.newParent.tag(blankParent.tag());
-            self.newParent.reference_id(blankParent.reference_id());
-            self.newParent.relationship(blankParent.relationship());
+            var blankCaseIndex = new CaseIndex();
+            self.newParent.tag(blankCaseIndex.tag());
+            self.newParent.reference_id(blankCaseIndex.reference_id());
+            self.newParent.relationship(blankCaseIndex.relationship());
         },
-        removeParentIndex: function (self, viewModel) {
+        removeCaseIndex: function (self, viewModel) {
             self.parents.remove(viewModel);
         }
     };
@@ -691,10 +691,10 @@ var AdvancedCase = (function () {
                     if (value) {
                         var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
-                            var parentIndex = new ParentIndex();
+                            var caseIndex = new CaseIndex();
                             var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
-                            parentIndex.tag = parent.case_tag();
-                            self.parents.append(parentIndex);
+                            caseIndex.tag = parent.case_tag();
+                            self.parents.append(caseIndex);
                         }
                     } else {
                         self.parents = ko.observableArray([]);
@@ -702,14 +702,14 @@ var AdvancedCase = (function () {
                 }
             });
 
-            self.newParent = new ParentIndex();
+            self.newParent = new CaseIndex();
 
-            self.addParentIndex = function () {
-                return ActionBase.addParentIndex(self);
+            self.addCaseIndex = function () {
+                return ActionBase.addCaseIndex(self);
             };
 
-            self.removeParentIndex = function (viewModel) {
-                return ActionBase.removeParentIndex(self, viewModel);
+            self.removeCaseIndex = function (viewModel) {
+                return ActionBase.removeCaseIndex(self, viewModel);
             };
 
             self.case_tag.extend({ withPrevious: 1 });
@@ -909,23 +909,23 @@ var AdvancedCase = (function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var parentIndex = new ParentIndex();
-                        parentIndex.tag = 'Select parent';
-                        self.parents = ko.observableArray([parentIndex]);
+                        var caseIndex = new CaseIndex();
+                        caseIndex.tag = 'Select parent';
+                        self.parents = ko.observableArray([caseIndex]);
                     } else {
                         self.parents = ko.observableArray([]);
                     }
                 }
             });
 
-            self.newParent = new ParentIndex();
+            self.newParent = new CaseIndex();
 
-            self.addParentIndex = function () {
-                return ActionBase.addParentIndex(self);
+            self.addCaseIndex = function () {
+                return ActionBase.addCaseIndex(self);
             };
 
-            self.removeParentIndex = function (viewModel) {
-                return ActionBase.removeParentIndex(self, viewModel);
+            self.removeCaseIndex = function (viewModel) {
+                return ActionBase.removeCaseIndex(self, viewModel);
             };
 
             self.case_tag.extend({ withPrevious: 1 });

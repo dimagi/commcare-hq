@@ -3,7 +3,7 @@ from corehq.apps.app_manager.models import Application
 
 
 class Command(AppMigrationCommandBase):
-    help = "Migrate single parent index to ParentIndex list in advanced form actions."
+    help = "Migrate single parent index to CaseIndex list in advanced form actions."
 
     include_builds = False  # AdvancedAction lazy-migrates reverted builds
 
