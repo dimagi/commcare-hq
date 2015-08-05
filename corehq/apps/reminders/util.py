@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser
 from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
@@ -97,7 +98,7 @@ def get_form_name(form_unique_id):
 
 
 def get_recipient_name(recipient, include_desc=True):
-    if recipient == None:
+    if recipient is None:
         return "(no recipient)"
     elif isinstance(recipient, list):
         if len(recipient) > 0:
@@ -116,6 +117,9 @@ def get_recipient_name(recipient, include_desc=True):
     elif isinstance(recipient, CommCareCaseGroup):
         name = recipient.name
         desc = "Survey Sample"
+    elif isinstance(recipient, SQLLocation):
+        name = recipient.name
+        desc = "Location"
     else:
         name = "(unknown)"
         desc = ""

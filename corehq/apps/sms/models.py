@@ -779,6 +779,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     RECIPIENT_USER_GROUP = 'UGP'
     RECIPIENT_CASE_GROUP = 'CGP'
     RECIPIENT_VARIOUS = 'MUL'
+    RECIPIENT_LOCATION = 'LOC'
+    RECIPIENT_LOCATION_PLUS_DESCENDANTS = 'LC+'
+    RECIPIENT_VARIOUS_LOCATIONS = 'VLC'
+    RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS = 'VL+'
     RECIPIENT_UNKNOWN = 'UNK'
 
     RECIPIENT_CHOICES = (
@@ -788,6 +792,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
         (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
         (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
+        (RECIPIENT_LOCATION, ugettext_noop('Location')),
+        (RECIPIENT_LOCATION_PLUS_DESCENDANTS,
+            ugettext_noop('Location (including child locations)')),
+        (RECIPIENT_VARIOUS_LOCATIONS, ugettext_noop('Multiple Locations')),
+        (RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
+            ugettext_noop('Multiple Locations (including child locations)')),
         (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
     )
 
@@ -1058,7 +1068,24 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
             reminder_definition, reminder)
 
-        if isinstance(recipient, list):
+        from corehq.apps.reminders.models import RECIPIENT_LOCATION
+        if recipient and reminder_definition.recipient == RECIPIENT_LOCATION:
+            if len(recipient) == 1:
+                recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+                                  if reminder_definition.include_child_locations
+                                  else RECIPIENT_LOCATION)
+                recipient_id = recipient[0].pk
+            elif len(recipient) > 1:
+                recipient_type = (cls.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS
+                                  if reminder_definition.include_child_locations
+                                  else RECIPIENT_VARIOUS_LOCATIONS)
+                recipient_id = None
+            else:
+                # len(recipient) should never be 0 when we invoke this method,
+                # but catching this situation here just in case
+                recipient_type = cls.RECIPIENT_UNKNOWN
+                recipient_id = None
+        elif isinstance(recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
             recipient_id = None
         elif recipient is None:
