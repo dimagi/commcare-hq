@@ -160,12 +160,13 @@ var ReportModule = (function () {
         };
 
         this.addSubscribersToSaveButton = function() {
+            var addSubscriberToSaveButton = function(observable) {
+                observable.subscribe(changeSaveButton);
+            };
             _.each(this.reportFilters, function(filtersInReport) {
                 for (var i = 0; i < filtersInReport.length; i++) {
                     var filter = filtersInReport[i];
-                    _.each(filter.selectedValue, function(observable) {
-                        observable.subscribe(changeSaveButton);
-                    });
+                    _.each(filter.selectedValue, addSubscriberToSaveButton);
                 }
             });
         };
