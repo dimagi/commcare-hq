@@ -15,17 +15,15 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
-{#        $(function () {#}
-            var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
-            var reportModule = new ReportModule({
-                moduleName: {{ module.name|JSON }},
-                availableReports: {{ all_reports|JSON }}, // structure for all reports
-                currentReports: {{ current_reports|JSON }}, // config data for app reports
-                saveURL: saveURL,
-                lang: {{ lang|JSON }}
-            });
-            ko.applyBindings(reportModule, $("#report-module-edit")[0]);
-
+        var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
+        var reportModule = new ReportModule({
+            moduleName: {{ module.name|JSON }},
+            availableReports: {{ all_reports|JSON }}, // structure for all reports
+            currentReports: {{ current_reports|JSON }}, // config data for app reports
+            saveURL: saveURL,
+            lang: {{ lang|JSON }}
+        });
+        ko.applyBindings(reportModule, $("#report-module-edit")[0]);
 
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
@@ -70,7 +68,6 @@
                 return {id: v, text: v};
             }));
         }
-{#        });#}
     </script>
 {% endblock %}
 {% block form-view %}
