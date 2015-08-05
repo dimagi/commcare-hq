@@ -141,6 +141,8 @@ class Command(BaseCommand):
         Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
         Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
+        Role(slug=privileges.DATA_CLEANUP, name='Data Cleanup Tools',
+             description='Tools for cleaning up data, including editing submissions and archiving forms.'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -176,6 +178,7 @@ class Command(BaseCommand):
         privileges.HIPAA_COMPLIANCE_ASSURANCE,
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
+        privileges.DATA_CLEANUP,
     ]
 
     advanced_plan_features = pro_plan_features + [

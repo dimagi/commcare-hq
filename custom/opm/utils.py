@@ -4,6 +4,9 @@ from custom.common import ALL_OPTION
 from dimagi.utils.decorators.memoized import memoized
 
 
+EMPTY_FIELD = "---"
+
+
 class BaseMixin(object):
 
     @property
@@ -120,3 +123,12 @@ def numeric_fn(val):
     except TypeError:
         sort_val = -1
     return {'sort_key': sort_val, 'html': val}
+
+
+def format_bool(bool_or_none):
+    if bool_or_none is None:
+        return EMPTY_FIELD
+    elif bool_or_none:
+        return 'Yes'
+    elif not bool_or_none:
+        return 'No'
