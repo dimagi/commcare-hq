@@ -92,6 +92,15 @@ var ReportModule = (function () {
         this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
+    /**
+     * View-model for the filters of a mobile UCR.
+     *
+     * @param report_id - the id of the report, currently saved
+     * @param reportId - KO observable for the id of the currently selected report
+     * @param filterValues - { slug : saved filter data } for each saved filter
+     * @param reportFilters - { report id --> [ { slug: filter slug } for each filter in report ] for each report }
+     * @param changeSaveButton - function that enables the "Save" button
+     */
     function FilterConfig(report_id, reportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
