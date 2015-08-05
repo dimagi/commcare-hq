@@ -336,6 +336,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
+    'custom.guinea_backup',
 )
 
 TEST_APPS = ()
