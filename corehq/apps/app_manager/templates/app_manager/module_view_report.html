@@ -125,29 +125,29 @@
                                             </select>
                                         </th>
                                         <th>
-                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'AutoFilter'">
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
                                                 <select data-bind="
                                                     options: report.filterConfig.autoFilterTypes,
                                                     value: filter.selectedValue.filter_type
                                                 "></select>
                                             </div>
-                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticDatespanFilter'">
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticDatespanFilter'">
                                                 <select data-bind="
                                                     options: report.filterConfig.date_range_options,
                                                     value: filter.selectedValue.date_range
                                                 "></select>
                                             </div>
-                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'CustomDataAutoFilter'">
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDataAutoFilter'">
                                                 <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
                                             </div>
-                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticChoiceListFilter'">
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceListFilter'">
                                                 <input type="text"
                                                        class="choice_filter"
                                                        style="width:300px"
                                                        data-bind="value: filter.selectedValue.value"/>
                                                 <input type="hidden" data-bind="value: dynamicFilterName">
                                             </div>
-                                            <div data-bind="visible: filter.selectedValue.doc_type() == 'StaticChoiceFilter'">
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceFilter'">
                                                 <select data-bind="
                                                     options: filter.choices,
                                                     optionsText: 'display',

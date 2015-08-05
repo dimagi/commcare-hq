@@ -34,16 +34,16 @@ var ReportModule = (function () {
                     var series = currentChart.y_axis_columns[k];
                     chart_series.push(series);
                     series_configs[series] = new Config(
-                        currentReportId == report_id ? (graph_config.series_configs || {})[series] || {} : {}
+                        currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
                     );
                 }
 
                 self.graphConfigs[currentReportId][currentChart.chart_id] = {
-                    graph_type: ko.observable(currentReportId == report_id ? graph_config.graph_type || 'bar' : 'bar'),
+                    graph_type: ko.observable(currentReportId === report_id ? graph_config.graph_type || 'bar' : 'bar'),
                     series_configs: series_configs,
                     chart_series: chart_series,
                     config: new Config(
-                        currentReportId == report_id ? graph_config.config || {} : {}
+                        currentReportId === report_id ? graph_config.config || {} : {}
                     )
                 };
             }
@@ -96,7 +96,7 @@ var ReportModule = (function () {
         _.each(this.reportFilters, function(filtersInReport, id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
-                if (id == report_id && filterValues.hasOwnProperty(filter.slug)) {
+                if (id === report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
@@ -147,11 +147,11 @@ var ReportModule = (function () {
                         StaticDatespanFilter: 'date_range'
                     };
                     _.each(docTypeToField, function(field, docType) {
-                        if(filter.selectedValue.doc_type() == docType) {
+                        if(filter.selectedValue.doc_type() === docType) {
                             selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
                         }
                     });
-                    if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
+                    if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug].value = filter.selectedValue.value().split("\u001F");
                     }
                 }
