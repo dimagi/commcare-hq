@@ -431,9 +431,9 @@ var AdvancedCase = (function () {
         self.reference_id = ko.observable('parent');
         self.relationship = ko.observable('child');
         self.relationship.subscribe(function (rel) {
-            if (rel == 'extension' && self.reference_id() == 'parent') {
+            if (rel === 'extension' && self.reference_id() === 'parent') {
                 self.reference_id('host');
-            } else if (rel == 'child' && self.reference_id() == 'host') {
+            } else if (rel === 'child' && self.reference_id() === 'host') {
                 self.reference_id('parent');
             }
         });
