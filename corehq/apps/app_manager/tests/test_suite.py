@@ -535,6 +535,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def _prep_case_list_form_app(self):
         app = Application.wrap(self.get_json('app'))
+        app.build_spec.version = '2.9'
         case_module = app.get_module(0)
         case_module.get_form(0)
 
@@ -611,6 +612,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_list_registration_form_advanced(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
 
         register_module = app.add_module(AdvancedModule.new_module('create', None))
         register_module.unique_id = 'register_module'
@@ -642,6 +644,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_list_registration_form_advanced_autoload(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
 
         register_module = app.add_module(AdvancedModule.new_module('create', None))
         register_module.unique_id = 'register_module'
