@@ -44,7 +44,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, get_matching_users, UserSqlData)
+from .utils import (BaseMixin, get_matching_users)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
 from .health_status import AWCHealthStatus
 from .incentive import Worker
