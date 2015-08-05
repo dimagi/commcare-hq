@@ -2453,8 +2453,8 @@ class DomainRequest(models.Model):
         text_content = render_to_string("users/email/new_domain_request.txt", params)
         html_content = render_to_string("users/email/new_domain_request.html", params)
         subject = _('Request to join %s approved') % domain_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     def send_request_email(self):
         domain_name = Domain.get_by_name(self.domain).display_name()
@@ -2469,8 +2469,8 @@ class DomainRequest(models.Model):
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)
-        send_HTML_email(subject, recipients, html_content, text_content=text_content,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class Invitation(Document):
