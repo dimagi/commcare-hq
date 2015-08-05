@@ -2,18 +2,58 @@
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from collections import namedtuple
+from dimagi.utils.chunked import chunked
+
+
+BackfillResult = namedtuple(
+    'BackfillResult',
+    ['problem_form_ids', 'blank_count_before', 'blank_count_after'])
+
+
+def backfill_stockreport_server_date_from_formdata(StockReport, FormData):
+    problem_form_ids = set()
+    blank_count_before = StockReport.objects.filter(server_date=None).count()
+    form_ids = (StockReport.objects
+                .distinct('form_id')
+                .values_list('form_id', flat=True))
+    for form_id_chunk in chunked(form_ids, 100):
+        form_id_chunk = set(form_id_chunk)
+        server_date_by_form_id = dict(
+            FormData.objects.filter(instance_id__in=form_id_chunk)
+            .values_list('instance_id', 'received_on')
+        )
+        problem_form_ids.update(
+            form_id_chunk - set(server_date_by_form_id.keys()))
+        for form_id, server_date in server_date_by_form_id.items():
+            (StockReport.objects
+             .filter(form_id=form_id)
+             .update(server_date=server_date))
+    blank_count_after = StockReport.objects.filter(server_date=None).count()
+    return BackfillResult(
+        problem_form_ids=problem_form_ids,
+        blank_count_before=blank_count_before,
+        blank_count_after=blank_count_after,
+    )
+
+
+class FooEx(Exception):
+    pass
+
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        "Write your forwards methods here."
-        # Note: Don't use "from appname.models import ModelName". 
-        # Use orm.ModelName to refer to models in this application,
-        # and orm['appname.ModelName'] for models in other applications.
+        StockReport = orm.StockReport
+        FormData = orm['sofabed.FormData']
+        result = backfill_stockreport_server_date_from_formdata(
+            StockReport, FormData)
+        print 'Problem Form IDs:', ','.join(result.problem_form_ids)
+        print '# StockReports with no server_date before:', result.blank_count_before
+        print '# StockReports with no server_date after:', result.blank_count_after
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        pass
 
     models = {
         u'products.sqlproduct': {
@@ -60,6 +100,22 @@ class Migration(DataMigration):
             'stock_on_hand': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '5'}),
             'subtype': ('casexml.apps.stock.models.TruncatingCharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'type': ('django.db.models.fields.CharField', [], {'max_length': '20'})
+        },
+        # copied from:
+        # sofabed/south_migrations/0013_auto__del_field_formdata_doc_type.py
+        u'sofabed.formdata': {
+            'Meta': {'object_name': 'FormData'},
+            'app_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'}),
+            'device_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'duration': ('django.db.models.fields.BigIntegerField', [], {}),
+            'instance_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255', 'primary_key': 'True'}),
+            'received_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
+            'time_end': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
+            'time_start': ('django.db.models.fields.DateTimeField', [], {}),
+            'user_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'}),
+            'username': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'xmlns': ('django.db.models.fields.CharField', [], {'max_length': '1000', 'null': 'True', 'db_index': 'True'})
         }
     }
 
