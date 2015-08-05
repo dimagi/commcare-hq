@@ -1922,19 +1922,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'action': action
                 })
             else:
-                if action.parents:
-                    for parent in action.parents:
-                        parent_action = form.actions.actions_meta_by_tag[parent.tag]['action']
-                        parent_filter = SuiteGenerator.get_parent_filter(
-                            parent.reference_id,
-                            parent_action.case_session_var
-                        )
-                        datums.append({
-                            'datum': get_manual_datum(action, parent_filter),
-                            'case_type': action.case_type,
-                            'requires_selection': True,
-                            'action': action
-                        })
+                if action.case_index.tag:
+                    parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
+                    parent_filter = SuiteGenerator.get_parent_filter(
+                        action.case_index.reference_id,
+                        parent_action.case_session_var
+                    )
+                    datums.append({
+                        'datum': get_manual_datum(action, parent_filter),
+                        'case_type': action.case_type,
+                        'requires_selection': True,
+                        'action': action
+                    })
                 else:
                     datums.append({
                         'datum': get_manual_datum(action),
@@ -1998,12 +1997,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             datum = datum_meta['datum']
             action = datum_meta['action']
             if action:
-                if hasattr(action, 'parents'):
+                if hasattr(action, 'case_indices'):
                     # This is an advanced module
-                    for parent in action.parents:
-                        if parent.tag in changed_ids_:
+                    for case_index in action.case_indices:
+                        if case_index.tag in changed_ids_:
                             # update any reference to previously changed datums
-                            for change in changed_ids_[parent.tag]:
+                            for change in changed_ids_[case_index.tag]:
                                 _apply_change_to_datum_attr(datum, 'nodeset', change)
                                 _apply_change_to_datum_attr(datum, 'function', change)
                 else:

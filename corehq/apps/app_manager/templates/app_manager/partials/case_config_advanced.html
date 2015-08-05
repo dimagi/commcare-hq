@@ -68,7 +68,7 @@
                     {% if show_custom_ref %}
                     <div>
                         <label>{% trans "Parent reference id: " %}</label>
-                        <input type="text" data-bind="value: parent_reference_id"/>
+                        <input type="text" data-bind="value: case_index.reference_id"/>
                     </div>
                     {% endif %}
 
@@ -76,7 +76,7 @@
                         <label>{% trans "Relationship:" %}</label>
                         <select data-bind="options: relationshipTypes,
                                        optionsCaption: 'Child case or extension case?',
-                                       value: relationship"></select>
+                                       value: case_index.relationship"></select>
                     </div>
 
                 </span>

@@ -296,15 +296,24 @@ var AdvancedCase = (function () {
         ]);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
-            var actions = self.open_cases();
-            actions = actions.concat(self.load_update_cases());
+            var actions = self.load_update_cases();
             for (var i = 0; i < actions.length; i++) {
                 var action = actions[i];
                 if (!parentOnly && action.case_tag() === oldTag) {
                     action.case_tag(newTag);
                 }
-                for (var j = 0; j < action.parents.length; j++) {
-                    var caseIndex = action.parents[j];
+                if (action.case_index.tag() === oldTag) {
+                    action.case_index.tag(newTag);
+                }
+            }
+            actions = self.open_cases();
+            for (i = 0; i < actions.length; i++) {
+                action = actions[i];
+                if (!parentOnly && action.case_tag() === oldTag) {
+                    action.case_tag(newTag);
+                }
+                for (var j = 0; j < action.case_indices.length; j++) {
+                    var caseIndex = action.case_indices[j];
                     if (caseIndex.tag() === oldTag) {
                         caseIndex.tag(newTag);
                     }
@@ -383,7 +392,7 @@ var AdvancedCase = (function () {
                             required: true
                         }],
                     repeat_context: '',
-                    parents: ko.observableArray([]),
+                    case_indices: ko.observableArray([]),
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
@@ -458,32 +467,6 @@ var AdvancedCase = (function () {
             }
             return null;
         },
-        validate_subcase: function (self) {
-            if (!self.config.caseConfigViewModel) {
-                return;
-            }
-            if (!self.parents) {
-                return null;
-            }
-            for (var i = 0; i < self.parents.length; i++) {
-                var caseIndex = self.parents[i];
-                var parent = self.config.caseConfigViewModel.getActionFromTag(caseIndex.tag());
-                if (!parent) {
-                    return "Subcase parent reference is missing";
-                } else if (!caseIndex.reference_id()) {
-                    return 'Parent "' + caseIndex.tag() + '" reference ID required for subcases';
-                } else if (parent.actionType === 'open') {
-                    if (!parent.repeat_context()) {
-                        return null;
-                    } else if (!self.repeat_context() ||
-                        // manual string startsWith
-                        self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                        return 'Subcase must be in same repeat context as parent "' + caseIndex.tag() + '".';
-                    }
-                }
-            }
-            return null;
-        },
         close_case: function (self) {
             return {
                 read: function () {
@@ -553,35 +536,6 @@ var AdvancedCase = (function () {
             }
             return properties;
         },
-        getParentTags: function (parents) {
-            var tags = [];
-            for (var i = 0; i < parents.length; i++) {
-                tags.push(parents[i].tag());
-            }
-            return tags.join(', ');
-        },
-        addCaseIndex: function (self) {
-            /**
-             * Copy newCaseIndex form values, and push them to parents array.
-             *
-             * Reference in 'data-bind="with: newCaseIndex"' does not change, so
-             * we need to copy values to another instance, and then reset the
-             * values in the form.
-             */
-            var newCaseIndex = new CaseIndex();
-            newCaseIndex.tag(self.newParent.tag());
-            newCaseIndex.reference_id(self.newParent.reference_id());
-            newCaseIndex.relationship(self.newParent.relationship());
-            self.parents.push(newCaseIndex);
-
-            var blankCaseIndex = new CaseIndex();
-            self.newParent.tag(blankCaseIndex.tag());
-            self.newParent.reference_id(blankCaseIndex.reference_id());
-            self.newParent.relationship(blankCaseIndex.relationship());
-        },
-        removeCaseIndex: function (self, viewModel) {
-            self.parents.remove(viewModel);
-        }
     };
 
     var LoadUpdateAction = {
@@ -591,7 +545,7 @@ var AdvancedCase = (function () {
                     'case_type',
                     'details_module',
                     'case_tag',
-                    'parents',
+                    'case_index',
                     'close_condition',
                     'show_product_stock',
                     'product_program'],
@@ -672,45 +626,23 @@ var AdvancedCase = (function () {
                 }
             });
 
-            self.parent_tags = function () {
-                return ActionBase.getParentTags(self.parents());
-            };
-
             self.subcase = ko.computed({
                 read: function () {
-                    return self.parent_tags();
+                    return self.case_index.tag();
                 },
                 write: function (value) {
-                    /***
-                     * We are addressing a vector (parents) as if it's scalar
-                     * (subcase). We are forced to do this because a subcase
-                     * used to have a single parent, but now it can have more
-                     * than one. Assigning a value appends a parent. Assigning
-                     * no value empties the parents list.
-                     */
                     if (value) {
                         var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
-                            var caseIndex = new CaseIndex();
+                            self.case_index = new CaseIndex();
                             var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
-                            caseIndex.tag = parent.case_tag();
-                            self.parents.append(caseIndex);
+                            self.case_index.tag = parent.case_tag();
                         }
                     } else {
-                        self.parents = ko.observableArray([]);
+                        self.case_index = new CaseIndex();
                     }
                 }
             });
-
-            self.newParent = new CaseIndex();
-
-            self.addCaseIndex = function () {
-                return ActionBase.addCaseIndex(self);
-            };
-
-            self.removeCaseIndex = function (viewModel) {
-                return ActionBase.removeCaseIndex(self, viewModel);
-            };
 
             self.case_tag.extend({ withPrevious: 1 });
             self.case_tag.subscribe(function (tag) {
@@ -816,7 +748,28 @@ var AdvancedCase = (function () {
                     return config.getAutoSelectModes(self);
                 });
                 self.validate_subcase = ko.computed(function () {
-                    return ActionBase.validate_subcase(self);
+                    if (!self.config.caseConfigViewModel) {
+                        return;
+                    }
+                    if (!self.case_index) {
+                        return null;
+                    }
+                    var parent = self.config.caseConfigViewModel.getActionFromTag(self.case_index.tag());
+                    if (!parent) {
+                        return "Subcase parent reference is missing";
+                    } else if (!self.case_index.reference_id()) {
+                        return 'Parent "' + self.case_index.tag() + '" reference ID required for subcases';
+                    } else if (parent.actionType === 'open') {
+                        if (!parent.repeat_context()) {
+                            return null;
+                        } else if (!self.repeat_context() ||
+                            // manual string startsWith
+                            self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
+                            return 'Subcase must be in same repeat context as parent "' + self.case_index.tag() + '".';
+                        }
+                    }
+                    return null;
+
                 });
             };
 
@@ -851,7 +804,7 @@ var AdvancedCase = (function () {
                     'case_type',
                     'name_path',
                     'case_tag',
-                    'parents',
+                    'case_indices',
                     'open_condition',
                     'close_condition'
                 ],
@@ -900,7 +853,11 @@ var AdvancedCase = (function () {
             });
 
             self.parent_tags = function () {
-                return ActionBase.getParentTags(self.parents());
+                var tags = [];
+                for (var i = 0; i < self.case_indices().length; i++) {
+                    tags.push(self.case_indices()[i].tag());
+                }
+                return tags.join(', ');
             };
 
             self.subcase = ko.computed({
@@ -911,9 +868,9 @@ var AdvancedCase = (function () {
                     if (value) {
                         var caseIndex = new CaseIndex();
                         caseIndex.tag = 'Select parent';
-                        self.parents = ko.observableArray([caseIndex]);
+                        self.case_indices = ko.observableArray([caseIndex]);
                     } else {
-                        self.parents = ko.observableArray([]);
+                        self.case_indices = ko.observableArray([]);
                     }
                 }
             });
@@ -921,11 +878,27 @@ var AdvancedCase = (function () {
             self.newParent = new CaseIndex();
 
             self.addCaseIndex = function () {
-                return ActionBase.addCaseIndex(self);
+                /**
+                 * Copy newCaseIndex form values, and push them to parents array.
+                 *
+                 * Reference in 'data-bind="with: newCaseIndex"' does not change, so
+                 * we need to copy values to another instance, and then reset the
+                 * values in the form.
+                 */
+                var newCaseIndex = new CaseIndex();
+                newCaseIndex.tag(self.newParent.tag());
+                newCaseIndex.reference_id(self.newParent.reference_id());
+                newCaseIndex.relationship(self.newParent.relationship());
+                self.case_indices.push(newCaseIndex);
+
+                var blankCaseIndex = new CaseIndex();
+                self.newParent.tag(blankCaseIndex.tag());
+                self.newParent.reference_id(blankCaseIndex.reference_id());
+                self.newParent.relationship(blankCaseIndex.relationship());
             };
 
             self.removeCaseIndex = function (viewModel) {
-                return ActionBase.removeCaseIndex(self, viewModel);
+                self.case_indices.remove(viewModel);
             };
 
             self.case_tag.extend({ withPrevious: 1 });
@@ -971,10 +944,33 @@ var AdvancedCase = (function () {
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
-                    return self.parents || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
+                    return self.case_indices || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
                 self.validate_subcase = ko.computed(function () {
-                    return ActionBase.validate_subcase(self);
+                    if (!self.config.caseConfigViewModel) {
+                        return;
+                    }
+                    if (!self.case_indices) {
+                        return null;
+                    }
+                    for (var i = 0; i < self.case_indices.length; i++) {
+                        var caseIndex = self.case_indices[i];
+                        var parent = self.config.caseConfigViewModel.getActionFromTag(caseIndex.tag());
+                        if (!parent) {
+                            return "Subcase parent reference is missing";
+                        } else if (!caseIndex.reference_id()) {
+                            return 'Parent "' + caseIndex.tag() + '" reference ID required for subcases';
+                        } else if (parent.actionType === 'open') {
+                            if (!parent.repeat_context()) {
+                                return null;
+                            } else if (!self.repeat_context() ||
+                                // manual string startsWith
+                                self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
+                                return 'Subcase must be in same repeat context as parent "' + caseIndex.tag() + '".';
+                            }
+                        }
+                    }
+                    return null;
                 });
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined
@@ -990,8 +986,8 @@ var AdvancedCase = (function () {
             self.case_properties.remove(function (prop) {
                 return prop.isBlank();
             });
-            if (self.parents && !self.allow_subcase()) {
-                self.parents = ko.observableArray([]);
+            if (self.case_indices && !self.allow_subcase()) {
+                self.case_indices = ko.observableArray([]);
             }
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);

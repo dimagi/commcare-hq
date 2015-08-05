@@ -344,7 +344,7 @@ class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
-    parents = SchemaListProperty(CaseIndex)
+    # case_indices = NotImplemented
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -362,28 +362,7 @@ class AdvancedAction(IndexedSchema):
 
     @property
     def is_subcase(self):
-        return bool(self.parents)
-
-    @classmethod
-    def wrap(cls, data):
-        _assert = soft_assert(to=['nhooper@dimagi.com'])
-        if not _assert('parent_tag' not in data,
-                       'AdvancedAction not migrated. Old application build may have been reverted.'):
-            if data['parent_tag']:
-                # Lazy-migrate single parent index to list of parent/host indices
-                parent = {
-                    'tag': data['parent_tag'],
-                    'reference_id': data.get('parent_reference_id', 'parent'),
-                    'relationship': data.get('relationship', 'child')
-                }
-                if hasattr(data.get('parents'), 'append'):
-                    data['parents'].append(parent)
-                else:
-                    data['parents'] = [parent]
-                del data['parent_tag']
-                data.pop('parent_reference_id', None)
-                data.pop('relationship', None)
-        return super(AdvancedAction, cls).wrap(data)
+        return bool(self.case_indices)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -421,6 +400,25 @@ class LoadUpdateAction(AdvancedAction):
     auto_select = SchemaProperty(AutoSelectCase, default=None)
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
+    case_index = SchemaProperty(CaseIndex)
+
+    @property
+    def case_indices(self):
+        # Allows us to ducktype AdvancedOpenCaseAction
+        return [self.case_index] if self.case_index.tag else []
+
+    @case_indices.setter
+    def case_indices(self, value):
+        if len(value) > 1:
+            raise ValueError('A LoadUpdateAction cannot have more than one case index')
+        if value:
+            self.case_index = value[0]
+        else:
+            self.case_index = CaseIndex()
+
+    @case_indices.deleter
+    def case_indices(self):
+        self.case_index = CaseIndex()
 
     def get_paths(self):
         for path in super(LoadUpdateAction, self).get_paths():
@@ -438,10 +436,25 @@ class LoadUpdateAction(AdvancedAction):
     def case_session_var(self):
         return 'case_id_{0}'.format(self.case_tag)
 
+    @classmethod
+    def wrap(cls, data):
+        if 'parent_tag' in data:
+            if data['parent_tag']:
+                data['case_index'] = {
+                    'tag': data['parent_tag'],
+                    'reference_id': data.get('parent_reference_id', 'parent'),
+                    'relationship': data.get('relationship', 'child')
+                }
+            del data['parent_tag']
+            data.pop('parent_reference_id', None)
+            data.pop('relationship', None)
+        return super(LoadUpdateAction, cls).wrap(data)
+
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
     repeat_context = StringProperty()
+    case_indices = SchemaListProperty(CaseIndex)
 
     open_condition = SchemaProperty(FormActionCondition)
 
@@ -458,6 +471,24 @@ class AdvancedOpenCaseAction(AdvancedAction):
     def case_session_var(self):
         return 'case_id_new_{}_{}'.format(self.case_type, self.id)
 
+    @classmethod
+    def wrap(cls, data):
+        if 'parent_tag' in data:
+            if data['parent_tag']:
+                index = {
+                    'tag': data['parent_tag'],
+                    'reference_id': data.get('parent_reference_id', 'parent'),
+                    'relationship': data.get('relationship', 'child')
+                }
+                if hasattr(data.get('case_indices'), 'append'):
+                    data['case_indices'].append(index)
+                else:
+                    data['case_indices'] = [index]
+            del data['parent_tag']
+            data.pop('parent_reference_id', None)
+            data.pop('relationship', None)
+        return super(AdvancedOpenCaseAction, cls).wrap(data)
+
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
@@ -470,14 +501,14 @@ class AdvancedFormActions(DocumentSchema):
         return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
 
     def get_subcase_actions(self):
-        return (a for a in self.get_all_actions() if a.parents)
+        return (a for a in self.get_all_actions() if a.case_indices)
 
     def get_open_subcase_actions(self, parent_case_type=None):
-        for action in [a for a in self.open_cases if a.parents]:
+        for action in [a for a in self.open_cases if a.case_indices]:
             if not parent_case_type:
                 yield action
             else:
-                for case_index in action.parents:
+                for case_index in action.case_indices:
                     parent = self.actions_meta_by_tag[case_index.tag]['action']
                     if parent.case_type == parent_case_type:
                         yield action
@@ -500,8 +531,8 @@ class AdvancedFormActions(DocumentSchema):
     def get_action_hierarchy(self, action):
         current = action
         hierarchy = [current]
-        while current and current.parents:
-            for case_index in current.parents:
+        while current and current.case_indices:
+            for case_index in current.case_indices:
                 parent = self.get_action_from_tag(case_index.tag)
                 current = parent
                 if parent:
@@ -536,12 +567,11 @@ class AdvancedFormActions(DocumentSchema):
                     'type': type,
                     'action': action
                 }
-                if action.parents:
-                    for parent in action.parents:
-                        meta['by_parent_tag'][parent.tag] = {
-                            'type': type,
-                            'action': action
-                        }
+                for parent in action.case_indices:
+                    meta['by_parent_tag'][parent.tag] = {
+                        'type': type,
+                        'action': action
+                    }
                 if type == 'load' and action.auto_select and action.auto_select.mode:
                     meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
@@ -2051,16 +2081,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         for action in self.actions.get_subcase_actions():
             case_tags = self.actions.get_case_tags()
-            for parent in action.parents:
-                if parent.tag not in case_tags:
-                    errors.append({'type': 'missing parent tag', 'case_tag': parent.tag})
+            for case_index in action.case_indices:
+                if case_index.tag not in case_tags:
+                    errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
                     errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
-                for parent in action.parents:
-                    meta = self.actions.actions_meta_by_tag.get(parent.tag)
+                for case_index in action.case_indices:
+                    meta = self.actions.actions_meta_by_tag.get(case_index.tag)
                     if meta and meta['type'] == 'open' and meta['action'].repeat_context:
                         if (
                             not action.repeat_context or
@@ -2068,7 +2098,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                         ):
                             errors.append({'type': 'subcase repeat context',
                                            'case_tag': action.case_tag,
-                                           'parent_tag': parent.tag})
+                                           'parent_tag': case_index.tag})
 
             try:
                 self.actions.get_action_hierarchy(action)
@@ -2169,7 +2199,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_properties.update(
                     subcase.case_properties.keys()
                 )
-                for case_index in subcase.parents:
+                for case_index in subcase.case_indices:
                     parent = self.actions.get_action_from_tag(case_index.tag)
                     if parent:
                         parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
@@ -2334,12 +2364,10 @@ class AdvancedModule(ModuleBase):
                             case_type=module.case_type,
                             case_tag='_'.join(['parent'] * (i + 1)),
                             details_module=module.unique_id,
-                            parents=[
-                                CaseIndex(tag='_'.join(['parent'] * (i + 2)) if n > 0 else '')
-                            ]
+                            case_index=CaseIndex(tag='_'.join(['parent'] * (i + 2)) if n > 0 else '')
                         ))
 
-                    base_action.parents = [CaseIndex(tag='parent')]
+                    base_action.case_indices = [CaseIndex(tag='parent')]
 
                 if close:
                     base_action.close_condition = close.condition
@@ -2354,7 +2382,7 @@ class AdvancedModule(ModuleBase):
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
-                        parents=[CaseIndex(
+                        case_indices=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',
                             reference_id=subcase.reference_id,
                         )]

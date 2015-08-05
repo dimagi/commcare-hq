@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import (
     Module,
     UpdateCaseAction,
     OpenSubCaseAction,
-    AdvancedAction,
+    AdvancedOpenCaseAction,
     FormActionCondition,
     CaseIndex,
     AdvancedModule,
@@ -386,54 +386,107 @@ class CaseIndexTests(SimpleTestCase):
             CaseIndex(tag='mother', relationship='cousin')
 
 
-class AdvancedActionMigrationTests(SimpleTestCase):
+class AdvancedOpenCaseActionMigrationTests(SimpleTestCase):
 
-    def test_advanced_action_parent_tag(self):
+    def test_parent_tag(self):
         """
-        AdvancedAction migration should create a CaseIndex if a parent tag is given
+        AdvancedOpenCaseAction migration should create a CaseIndex if a parent tag is given
         """
-        action = AdvancedAction.wrap({
+        action = AdvancedOpenCaseAction.wrap({
             'case_type': 'spam',
             'case_tag': 'ham',
             'parent_tag': 'eggs',
         })
-        self.assertEqual(action.parents[0].tag, 'eggs')
+        self.assertEqual(action.case_indices[0].tag, 'eggs')
 
-    def test_advanced_action_parent_defaults(self):
+    def test_defaults(self):
         """
-        AdvancedAction migration should create a CaseIndex with property defaults
+        AdvancedOpenCaseAction migration should create a CaseIndex with property defaults
         """
-        action = AdvancedAction.wrap({
+        action = AdvancedOpenCaseAction.wrap({
             'case_type': 'spam',
             'case_tag': 'ham',
             'parent_tag': 'eggs',
         })
-        self.assertEqual(action.parents[0].reference_id, 'parent')
-        self.assertEqual(action.parents[0].relationship, 'child')
+        self.assertEqual(action.case_indices[0].reference_id, 'parent')
+        self.assertEqual(action.case_indices[0].relationship, 'child')
 
-    def test_advanced_action_parent_properties(self):
+    def test_properties(self):
         """
-        AdvancedAction migration should create a CaseIndex with given properties
+        AdvancedOpenCaseAction migration should create a CaseIndex with given properties
         """
-        action = AdvancedAction.wrap({
+        action = AdvancedOpenCaseAction.wrap({
             'case_type': 'spam',
             'case_tag': 'ham',
             'parent_tag': 'eggs',
             'parent_reference_id': 'spam',
             'relationship': 'extension',
         })
-        self.assertEqual(action.parents[0].tag, 'eggs')
-        self.assertEqual(action.parents[0].reference_id, 'spam')
-        self.assertEqual(action.parents[0].relationship, 'extension')
+        self.assertEqual(action.case_indices[0].tag, 'eggs')
+        self.assertEqual(action.case_indices[0].reference_id, 'spam')
+        self.assertEqual(action.case_indices[0].relationship, 'extension')
 
     def test_advanced_action_no_parent_tag(self):
         """
-        AdvancedAction migration should not create a CaseIndex without parent_tag
+        AdvancedOpenCaseAction migration should not create a CaseIndex without parent_tag
         """
-        action = AdvancedAction.wrap({
+        action = AdvancedOpenCaseAction.wrap({
             'case_type': 'spam',
             'case_tag': 'ham',
             'parent_reference_id': 'spam',
             'relationship': 'extension',
         })
-        self.assertEqual(len(action.parents), 0)
+        self.assertEqual(len(action.case_indices), 0)
+
+
+class LoadUpdateActionMigrationTests(SimpleTestCase):
+
+    def test_parent_tag(self):
+        """
+        LoadUpdateAction migration should create a CaseIndex if a parent tag is given
+        """
+        action = LoadUpdateAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+        })
+        self.assertEqual(action.case_index.tag, 'eggs')
+
+    def test_defaults(self):
+        """
+        LoadUpdateAction migration should create a CaseIndex with property defaults
+        """
+        action = LoadUpdateAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+        })
+        self.assertEqual(action.case_index.reference_id, 'parent')
+        self.assertEqual(action.case_index.relationship, 'child')
+
+    def test_properties(self):
+        """
+        LoadUpdateAction migration should create a CaseIndex with given properties
+        """
+        action = LoadUpdateAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_tag': 'eggs',
+            'parent_reference_id': 'spam',
+            'relationship': 'extension',
+        })
+        self.assertEqual(action.case_index.tag, 'eggs')
+        self.assertEqual(action.case_index.reference_id, 'spam')
+        self.assertEqual(action.case_index.relationship, 'extension')
+
+    def test_advanced_action_no_parent_tag(self):
+        """
+        LoadUpdateAction migration should not create a CaseIndex without parent_tag
+        """
+        action = LoadUpdateAction.wrap({
+            'case_type': 'spam',
+            'case_tag': 'ham',
+            'parent_reference_id': 'spam',
+            'relationship': 'extension',
+        })
+        self.assertFalse(bool(action.case_index.tag))

@@ -13,19 +13,32 @@ class Command(AppMigrationCommandBase):
         for module in modules:
             for form in module['forms']:
                 for action_name in form.get('actions', {}):
-                    if action_name in ('load_update_cases', 'open_cases'):
+                    if action_name == 'load_update_cases':
                         for action in form['actions'][action_name]:
                             if 'parent_tag' in action:
                                 if action['parent_tag']:
-                                    parent = {
+                                    action['case_index'] = {
                                         'tag': action['parent_tag'],
                                         'reference_id': action.get('parent_reference_id', 'parent'),
                                         'relationship': action.get('relationship', 'child'),
                                     }
-                                    if hasattr(action.get('parents'), 'append'):
-                                        action['parents'].append(parent)
+                                del action['parent_tag']
+                                action.pop('parent_reference_id', None)
+                                action.pop('relationship', None)
+                                should_save = True
+                    elif action_name == 'open_cases':
+                        for action in form['actions'][action_name]:
+                            if 'parent_tag' in action:
+                                if action['parent_tag']:
+                                    case_index = {
+                                        'tag': action['parent_tag'],
+                                        'reference_id': action.get('parent_reference_id', 'parent'),
+                                        'relationship': action.get('relationship', 'child'),
+                                    }
+                                    if hasattr(action.get('case_indices'), 'append'):
+                                        action['case_indices'].append(case_index)
                                     else:
-                                        action['parents'] = [parent]
+                                        action['case_indices'] = [case_index]
                                 del action['parent_tag']
                                 action.pop('parent_reference_id', None)
                                 action.pop('relationship', None)

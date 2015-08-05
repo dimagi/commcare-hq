@@ -1567,7 +1567,7 @@ class XForm(WrappedNode):
             if action.case_properties:
                 open_case_block.add_update_block(action.case_properties)
 
-            for case_index in action.parents:
+            for case_index in action.case_indices:
                 parent_meta = form.actions.actions_meta_by_tag.get(case_index.tag)
                 reference_id = case_index.reference_id or 'parent'
                 if parent_meta['type'] == 'load':

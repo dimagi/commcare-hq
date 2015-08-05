@@ -127,7 +127,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_parent_child_custom_ref(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         form = app.get_module(1).get_form(2)
-        form.actions.load_update_cases[1].parents[0].reference_id = 'custom-parent-ref'
+        form.actions.load_update_cases[1].case_index.reference_id = 'custom-parent-ref'
         self.assertXmlPartialEqual(self.get_xml('custom-parent-ref'), app.create_suite(), "./entry[4]")
 
     def test_advanced_suite_case_list_filter(self):
@@ -1043,7 +1043,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     def _load_case(self, child_module_form, case_type, parent_module=None):
         action = LoadUpdateAction(case_tag=case_type, case_type=case_type)
         if parent_module:
-            action.parents = [CaseIndex(tag=parent_module.case_type)]
+            action.case_index = CaseIndex(tag=parent_module.case_type)
 
         child_module_form.actions.load_update_cases.append(action)
 
@@ -1310,7 +1310,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                             form.actions.load_update_cases.append(LoadUpdateAction(
                                 case_type=case_type,
                                 case_tag='update_{}'.format(case_type),
-                                parents=[CaseIndex(tag=parent)] if parent else [],
+                                case_index=CaseIndex(tag=parent) if parent else CaseIndex()
                             ))
                     elif 'open_subacse':
                         if m_type == "basic":
@@ -1324,7 +1324,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                                 case_type=case_type,
                                 case_tag='subcase_{}'.format(case_type),
                                 name_path='/data/name',
-                                parents=[CaseIndex(tag=parent)] if parent else []
+                                case_indices=[CaseIndex(tag=parent)] if parent else []
                             ))
 
         return app

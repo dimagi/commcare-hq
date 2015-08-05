@@ -50,7 +50,7 @@ class CaseMetaTest(SimpleTestCase):
         m3f0.actions.open_cases.append(AdvancedOpenCaseAction(
             name_path='/data/question1',
             case_type='other grand child',
-            parents=[CaseIndex(tag='child')]
+            case_indices=[CaseIndex(tag='child')]
         ))
         m3f0.actions.open_cases[0].open_condition.type = 'always'
 
