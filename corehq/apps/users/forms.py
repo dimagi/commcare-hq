@@ -469,7 +469,7 @@ class CommtrackUserForm(forms.Form):
 
 
 class DomainRequestForm(forms.Form):
-    full_name = forms.CharField(label=ugettext_noop('Full Name'), required=True)
+    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True)
     email = forms.CharField(
         label=ugettext_noop('Email Address'),
         required=True,
