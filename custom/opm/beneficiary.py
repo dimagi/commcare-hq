@@ -11,7 +11,7 @@ from django.template.defaultfilters import yesno
 from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
     MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT, PREG_REG_XMLNS, CLOSE_FORM
-from custom.opm.utils import numeric_fn, format_bool, EMPTY_FIELD
+from custom.opm.utils import numeric_fn, format_bool, EMPTY_FIELD, user_sql_data
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -824,12 +824,12 @@ class ConditionsMet(OPMCaseRow):
         ('issue', ugettext_lazy('Issues'), True, None)
     ]
 
-    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
+    def __init__(self, case, report, child_index=1, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % (self.last_month_row.cash_amt if self.last_month_row else 0)
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        awc_data = awc_codes.get(self.owner_id, None)
+        awc_data = user_sql_data().data_by_doc_id.get(self.owner_id, None)
         self.awc_code = numeric_fn(awc_data[0] if awc_data else EMPTY_FIELD)
         self.issue = ''
         if self.status == 'mother':
@@ -983,11 +983,11 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('month', ugettext_lazy("Calendar month"), True, None)
     ]
 
-    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
+    def __init__(self, case, report, child_index=1, **kwargs):
         super(LongitudinalConditionsMet, self).__init__(case, report,
                                                         child_index=child_index,
-                                                        awc_codes=awc_codes, **kwargs)
-        awc_data = awc_codes.get(self.owner_id, None)
+                                                        **kwargs)
+        awc_data = user_sql_data().data_by_doc_id.get(self.owner_id, None)
         self.gp = awc_data[1] if awc_data else EMPTY_FIELD
         self.bank_branch_code = self.case_property('bank_branch_code', EMPTY_FIELD)
         self.caste_tribe_status = self.get_value_from_form(PREG_REG_XMLNS, 'form/caste_tribe_status')
