@@ -33,6 +33,7 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 LOCATIONS = 'locations'
 
 USER_CASE = 'user_case'
+DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, etc.
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -56,6 +57,7 @@ MAX_PRIVILEGES = [
     LOCATIONS,
     REPORT_BUILDER,
     USER_CASE,
+    DATA_CLEANUP,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
