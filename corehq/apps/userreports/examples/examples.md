@@ -75,6 +75,23 @@ The following filters apply to data sources built on top of cases.
 }
 ```
 
+## Filter by only open cases
+
+NOTE: this should be changed to use boolean datatypes once those exist.
+
+```
+{
+    "type": "boolean_expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "closed",
+        "datatype": "string"
+
+    },
+    "operator": "eq",
+    "property_value": "False"
+}
+```
 # Data source indicators
 
 ## Count every contributing row (form or case)
