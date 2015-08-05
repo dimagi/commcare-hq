@@ -521,13 +521,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-EXTENSION_CASES = StaticToggle(
-    'extension_cases',
-    'Extend a host case with additional properties using extension cases',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
 MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     'messaging_status',
     'View the Messaging Status and Error Reports',

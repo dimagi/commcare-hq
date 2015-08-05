@@ -526,14 +526,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         all_programs = [{'value': '', 'label': _('All Programs')}]
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
-            'show_ext_cases': toggles.EXTENSION_CASES.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
-            'show_ext_cases': toggles.EXTENSION_CASES.enabled(request.user.username),
         })
         return "app_manager/form_view.html", context
 

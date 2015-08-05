@@ -72,14 +72,12 @@
                     </div>
                     {% endif %}
 
-                    {% if show_ext_cases %}
                     <div>
                         <label>{% trans "Relationship:" %}</label>
                         <select data-bind="options: relationshipTypes,
                                        optionsCaption: 'Child case or extension case?',
                                        value: relationship"></select>
                     </div>
-                    {% endif %}
 
                 </span>
                 <span class="help-inline" data-bind="text: validate_subcase"></span>
