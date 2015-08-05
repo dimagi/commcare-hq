@@ -32,7 +32,9 @@ def copy_data_to_backup():
                  **{'since': last_update})
 
     # A dumb soft assert to make sure I see this working
-    _assert = soft_assert(to='{}@{}'.format('tsheffels', 'dimagi.com'), notify_admins=False, exponential_backoff=False)
+    _assert = soft_assert(to='{}@{}'.format('tsheffels', 'dimagi.com'),
+                          notify_admins=False,
+                          exponential_backoff=False)
     _assert(False)
 
     successful_insert = BackupRecord(last_update=date.now())
