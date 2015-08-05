@@ -7,9 +7,9 @@ var ReportModule = (function () {
         dict = dict || {};
 
         self.keyValuePairs = ko.observableArray();
-        for (var key in dict) {
-            self.keyValuePairs.push([ko.observable(key), ko.observable(dict[key])]);
-        }
+        _.each(dict, function(value, key) {
+            self.keyValuePairs.push([ko.observable(key), ko.observable(value)]);
+        });
 
         self.addConfig = function() {
             self.keyValuePairs.push([ko.observable(), ko.observable()]);
@@ -77,9 +77,9 @@ var ReportModule = (function () {
                 chartsToConfigs[chart_id] = {
                     series_configs: {}
                 };
-                for (var series in graph_config.series_configs) {
-                    chartsToConfigs[chart_id].series_configs[series] = configToDict(graph_config.series_configs[series]);
-                }
+                _.each(graph_config.series_configs, function(series_config, series) {
+                    chartsToConfigs[chart_id].series_configs[series] = configToDict(series_config);
+                });
                 chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
                 chartsToConfigs[chart_id].config = configToDict(graph_config.config);
             });
@@ -93,9 +93,9 @@ var ReportModule = (function () {
         var self = this;
 
         this.reportFilters = JSON.parse(JSON.stringify(reportFilters)) || {};
-        for (var _id in this.reportFilters) {
-            for (var i = 0; i < this.reportFilters[_id].length; i++) {
-                var filter = this.reportFilters[_id][i];
+        _.each(this.reportFilters, function(filtersInReport, _id) {
+            for (var i = 0; i < filtersInReport.length; i++) {
+                var filter = filtersInReport[i];
                 if (_id == report_id && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
@@ -110,7 +110,7 @@ var ReportModule = (function () {
                     'filter_type',
                     'select_value'
                 ];
-                for(var filterFieldsIndex in filterFields) {
+                for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
                 }
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join("\u001F") : '');
@@ -123,7 +123,7 @@ var ReportModule = (function () {
                     filter.choices.unshift({value: "_all", display: "Show All"}); // TODO: translate
                 }
             }
-        }
+        });
 
         this.selectedFilterStructure = ko.computed(function () { // for the chosen report
             return self.reportFilters[reportId()];
@@ -144,12 +144,11 @@ var ReportModule = (function () {
                         StaticChoiceFilter: 'select_value',
                         StaticDatespanFilter: 'date_range'
                     };
-                    for(var docType in docTypeToField) {
+                    _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() == docType) {
-                            var field = docTypeToField[docType];
                             selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
                         }
-                    }
+                    });
                     if(filter.selectedValue.doc_type() == 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug].value = filter.selectedValue.value().split("\u001F");
                     }
@@ -159,14 +158,14 @@ var ReportModule = (function () {
         };
 
         this.addSubscribersToSaveButton = function() {
-            for(var _id in this.reportFilters) {
-                for (var i = 0; i < this.reportFilters[_id].length; i++) {
-                    var filter = this.reportFilters[_id][i];
-                    for (var key in filter.selectedValue) {
-                        filter.selectedValue[key].subscribe(changeSaveButton);
-                    }
+            _.each(this.reportFilters, function(filtersInReport) {
+                for (var i = 0; i < filtersInReport.length; i++) {
+                    var filter = filtersInReport[i];
+                    _.each(filter.selectedValue, function(observable) {
+                        observable.subscribe(changeSaveButton);
+                    });
                 }
-            }
+            });
         };
 
         // TODO - add user-friendly text
