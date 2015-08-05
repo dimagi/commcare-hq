@@ -27,6 +27,9 @@ class StockReport(models.Model):
     date = models.DateTimeField(db_index=True)
     type = models.CharField(max_length=20)  # currently "balance" or "transfer"
     domain = models.CharField(max_length=255, null=True)
+    # should always equal
+    # FormData.objects.get(instance_id=self.form_id).received_on
+    server_date = models.DateTimeField(db_index=True, null=True)
 
     # todo: there are properties like these that could be really useful for queries
     # and reports - should decide which ones we want to add if any.
