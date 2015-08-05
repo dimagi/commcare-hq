@@ -59,6 +59,9 @@ class ToggleEditView(ToggleBaseView):
 
     @property
     def static_toggle(self):
+        """
+        Returns the corresponding toggle definition from corehq/toggles.py
+        """
         for toggle in all_toggles():
             if toggle.slug == self.toggle_slug:
                 return toggle
@@ -97,7 +100,8 @@ class ToggleEditView(ToggleBaseView):
         if self.static_toggle.save_fn is None:
             return
         existing = set(toggle.enabled_users)
-        for entry in existing.symmetric_difference(current):
+        changed_entries = existing.symmetric_difference(current)
+        for entry in changed_entries:
             if entry.startswith(NAMESPACE_DOMAIN):
                 domain = entry[len(NAMESPACE_DOMAIN):]
                 is_enabled = entry in current  # otherwise it's been disabled
@@ -110,8 +114,8 @@ class ToggleEditView(ToggleBaseView):
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
 
-        affected_users = set(toggle.enabled_users) | set(item_list)
         self.call_save_fn(toggle, item_list)
+        affected_users = set(toggle.enabled_users) | set(item_list)
         toggle.enabled_users = item_list
         toggle.save()
         for item in affected_users:

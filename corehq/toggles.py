@@ -23,7 +23,10 @@ class StaticToggle(object):
         self.tag = tag
         self.help_link = help_link
         self.description = description
-        self.save_fn = save_fn  # Only accepts domain namespaces
+        # Optionally provide a callable to be called whenever the toggle is
+        # updated.  This is only applicable to domain toggles.  It must accept
+        # two parameters, `domain_name` and `toggle_is_enabled`
+        self.save_fn = save_fn
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -479,11 +482,11 @@ API_THROTTLE_WHITELIST = StaticToggle(
 )
 
 
-def _commtrackify(domain_name, toggle_enabled):
+def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
-    if domain and domain.commtrack_enabled != toggle_enabled:
-        if toggle_enabled:
+    if domain and domain.commtrack_enabled != toggle_is_enabled:
+        if toggle_is_enabled:
             domain.convert_to_commtrack()
         else:
             domain.commtrack_enabled = False
