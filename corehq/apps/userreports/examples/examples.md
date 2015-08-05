@@ -79,7 +79,7 @@ The following filters apply to data sources built on top of cases.
 
 NOTE: this should be changed to use boolean datatypes once those exist.
 
-```
+```json
 {
     "type": "boolean_expression",
     "expression": {
