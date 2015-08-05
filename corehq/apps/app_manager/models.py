@@ -49,6 +49,7 @@ from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
@@ -84,6 +85,7 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
+    NoMatchingFilterException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -91,13 +93,14 @@ from .exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager import id_strings
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
-WORKFLOW_DEFAULT = 'default'
-WORKFLOW_ROOT = 'root'
-WORKFLOW_MODULE = 'module'
-WORKFLOW_PREVIOUS = 'previous_screen'
-WORKFLOW_FORM = 'form'
+WORKFLOW_DEFAULT = 'default'  # go to the app main screen
+WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_MODULE = 'module'  # go to the current module's screen
+WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
+WORKFLOW_FORM = 'form'  # go straight to another form
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -746,14 +749,6 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        try:
-            self.case_list_module
-        except AssertionError:
-            msg = _("Form referenced as the registration form for multiple modules.")
-            error = {'type': 'validation error', 'validation_message': msg}
-            error.update(meta)
-            errors.append(error)
-
         if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
             errors.append(dict(type="no form links", **meta))
 
@@ -885,16 +880,15 @@ class FormBase(DocumentSchema):
 
     @property
     @memoized
-    def case_list_module(self):
+    def case_list_modules(self):
         case_list_modules = [
             mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
         ]
-        assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
-        return case_list_modules[0] if case_list_modules else None
+        return case_list_modules
 
     @property
     def is_case_list_form(self):
-        return self.case_list_module is not None
+        return bool(self.case_list_modules)
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -1693,6 +1687,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         """
         return True
 
+    def uses_usercase(self):
+        return False
+
+    def is_usercaseonly(self):
+        return False
+
 
 class Module(ModuleBase):
     """
@@ -1932,6 +1932,11 @@ class Module(ModuleBase):
                 'module': module_info,
             }
 
+    def uses_usercase(self):
+        """Return True if this module has any forms that use the usercase.
+        """
+        return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
+
     def is_usercaseonly(self):
         """
         Return False if the usercase is unused, or if any forms update a
@@ -1945,13 +1950,10 @@ class Module(ModuleBase):
             return ((update_case.update and update_case.condition.type != 'never') or
                     (case_preload.preload and case_preload.condition.type != 'never'))
 
-        uses_usercase = False
-        for form in self.forms:
-            if actions_use_another_case(form.active_actions()):
-                return False
-            if actions_use_usercase(form.active_actions()):
-                uses_usercase = True
-        return uses_usercase
+        return self.uses_usercase() and not any(
+            form for form in self.forms
+            if actions_use_another_case(form.active_actions())
+        )
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -1977,7 +1979,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
-        return bool(self.actions.load_update_cases)
+        """Form requires a case that must be selected by the user (excludes autoloaded cases)
+        """
+        return any(not action.auto_select for action in self.actions.load_update_cases)
 
     @property
     def requires(self):
@@ -2274,8 +2278,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    gen = suite_xml.SuiteGenerator(app, is_usercase_in_use(app.domain))
-                    select_chain = gen.get_select_chain(from_module, include_self=False)
+                    select_chain = suite_xml.SuiteGenerator.get_select_chain(app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -2423,21 +2426,29 @@ class AdvancedModule(ModuleBase):
 
         return errors
 
+    def _uses_case_type(self, case_type, invert_match=False):
+        def match(ct):
+            matches = ct == case_type
+            return not matches if invert_match else matches
+
+        return any(
+            action for form in self.forms
+            for action in form.actions.load_update_cases
+            if match(action.case_type)
+        )
+
+    def uses_usercase(self):
+        """Return True if this module has any forms that use the usercase.
+        """
+        return self._uses_case_type(USERCASE_TYPE)
+
     def is_usercaseonly(self):
         """
         Return False is the usercase is unused, or if any forms update a
         different case type. If the only case type updated in the module is
         the usercase, return True.
         """
-        uses_usercase = False
-        for form in self.forms:
-            if form.actions.load_update_cases:
-                for action in form.actions.load_update_cases:
-                    if action.case_type == USERCASE_TYPE:
-                        uses_usercase = True
-                    else:
-                        return False
-        return uses_usercase
+        return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2754,12 +2765,110 @@ class CareplanModule(ModuleBase):
         return errors
 
 
+class ReportGraphConfig(DocumentSchema):
+    graph_type = StringProperty(
+        choices=[
+            'bar',
+            'time',
+            'xy',
+        ],
+        default='bar',
+        required=True,
+    )
+    series_configs = DictProperty(DictProperty)
+    config = DictProperty()
+
+
+class ReportAppFilter(DocumentSchema):
+    def get_filter_value(self):
+        raise NotImplementedError
+
+
+def _filter_by_case_sharing_group_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return [
+        Choice(value=group._id, display=None)
+        for group in user.get_case_sharing_groups()
+    ]
+
+
+def _filter_by_location_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.location_id, display=None)
+
+
+def _filter_by_username(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.username, display=None)
+
+
+def _filter_by_user_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user._id, display=None)
+
+
+_filter_type_to_func = {
+    'case_sharing_group': _filter_by_case_sharing_group_id,
+    'location_id': _filter_by_location_id,
+    'username': _filter_by_username,
+    'user_id': _filter_by_user_id,
+}
+
+
+class AutoFilter(ReportAppFilter):
+    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+
+    def get_filter_value(self, user):
+        return _filter_type_to_func[self.filter_type](user)
+
+
+class CustomDataAutoFilter(ReportAppFilter):
+    custom_data_property = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return Choice(value=user.user_data[self.custom_data_property], display=None)
+
+
+class StaticChoiceFilter(ReportAppFilter):
+    select_value = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=self.select_value, display=None)]
+
+
+class StaticChoiceListFilter(ReportAppFilter):
+    value = StringListProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=string_value, display=None) for string_value in self.value]
+
+
+class StaticDatespanFilter(ReportAppFilter):
+    date_range = StringProperty(
+        choices=[
+            'last7',
+            'last30',
+            'lastmonth',
+        ],
+        required=True,
+    )
+
+    def get_filter_value(self, user):
+        start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    graph_configs = DictProperty(ReportGraphConfig)
+    filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
 
@@ -2814,20 +2923,30 @@ class ReportAppConfig(DocumentSchema):
             # todo: make this less hard-coded
             for chart_config in self.report.charts:
                 if isinstance(chart_config, MultibarChartSpec):
+                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+
                     def _column_to_series(column):
                         return suite_xml.Series(
                             nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
                             x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
+                            configuration=suite_xml.ConfigurationGroup(configs=[
+                                suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                for key, value in graph_config.series_configs.get(column, {}).items()
+                            ])
                         )
                     yield suite_xml.Field(
                         header=suite_xml.Header(text=suite_xml.Text()),
                         template=suite_xml.GraphTemplate(
                             form='graph',
                             graph=suite_xml.Graph(
-                                type='bar',
+                                type=graph_config.graph_type,
                                 series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                            )
+                                configuration=suite_xml.ConfigurationGroup(configs=[
+                                    suite_xml.ConfigurationItem(id=key, xpath_function=value)
+                                    for key, value in graph_config.config.items()
+                                ]),
+                            ),
                         )
                     )
 
@@ -3990,7 +4109,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.SuiteGenerator(self, is_usercase_in_use(self.domain)).generate_suite()
+            return suite_xml.SuiteGenerator(self).generate_suite()
 
     def create_media_suite(self):
         return suite_xml.MediaSuiteGenerator(self).generate_suite()
@@ -4721,6 +4840,11 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     for name, attachment in attachments.items():
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)
+
+    if any(module.uses_usercase() for module in app.get_modules()):
+        from corehq.apps.app_manager.util import enable_usercase
+        enable_usercase(domain)
+
     return app
 
 

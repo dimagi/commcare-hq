@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -30,7 +30,6 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re
-import settings
 
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
@@ -168,7 +167,7 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     email_opt_out = forms.BooleanField(
         required=False,
-        label=ugettext_noop("Opt out of emails about CommCare updates."),
+        label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
     def __init__(self, *args, **kwargs):

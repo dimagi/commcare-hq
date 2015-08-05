@@ -134,6 +134,7 @@ class SyncBaseTest(TestCase):
             # this is a lazy way of running tests on a variety of edge cases
             # without having to write explicit tests for the migration
             migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
+            self.assertEqual(sync_log.get_state_hash(), migrated_sync_log.get_state_hash())
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
     

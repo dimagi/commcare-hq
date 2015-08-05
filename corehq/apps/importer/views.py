@@ -1,7 +1,6 @@
 import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.datastructures import MultiValueDictKeyError
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_properties, \
     get_case_types_for_domain
 from corehq.apps.importer import base

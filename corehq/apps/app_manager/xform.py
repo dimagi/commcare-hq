@@ -35,6 +35,7 @@ namespaces = dict(
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
     v="{http://commcarehq.org/xforms/vellum}",
+    odk="{http://opendatakit.org/xforms}",
 )
 
 
@@ -551,6 +552,11 @@ class XForm(WrappedNode):
     def media_references(self, form):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
+
+    @property
+    def text_references(self):
+        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
+        return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     @property
     def image_references(self):

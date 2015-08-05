@@ -18,3 +18,7 @@ class UnsupportedScheduledReportError(Exception):
     For unknown (discontinued/legacy) scheduled-reports
     """
     pass
+
+
+class InvalidDaterangeException(Exception):
+    pass

@@ -4,7 +4,7 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
+from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from couchforms.const import ATTACHMENT_NAME
@@ -206,8 +206,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
+    session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
@@ -289,8 +288,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
 
-    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    xpath = suite_gen.get_filter_xpath(module)
+    suite_gen = SuiteGenerator(app)
+    xpath = SuiteGenerator.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 

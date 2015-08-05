@@ -282,6 +282,12 @@ class RestoreState(object):
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
                 if computed_hash != parsed_hash:
+                    # log state error on the sync log
+                    self.last_sync_log.had_state_error = True
+                    self.last_sync_log.error_date = datetime.utcnow()
+                    self.last_sync_log.error_hash = str(parsed_hash)
+                    self.last_sync_log.save()
+
                     exception = BadStateException(
                         expected=computed_hash,
                         actual=parsed_hash,
