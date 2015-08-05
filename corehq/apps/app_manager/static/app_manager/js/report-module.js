@@ -95,20 +95,20 @@ var ReportModule = (function () {
     /**
      * View-model for the filters of a mobile UCR.
      *
-     * @param report_id - the id of the report, currently saved
+     * @param savedReportId - the id of the report, currently saved. Can be undefined for unsaved report.
      * @param selectedReportId - KO observable for the id of the currently selected report
      * @param filterValues - { slug : saved filter data } for each saved filter
      * @param reportFilters - { report id --> [ { slug: filter slug } for each filter in report ] for each report }
      * @param changeSaveButton - function that enables the "Save" button
      */
-    function FilterConfig(report_id, selectedReportId, filterValues, reportFilters, changeSaveButton) {
+    function FilterConfig(savedReportId, selectedReportId, filterValues, reportFilters, changeSaveButton) {
         var self = this;
 
         this.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
         _.each(this.reportFilters, function(filtersInReport, id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
-                if (id === report_id && filterValues.hasOwnProperty(filter.slug)) {
+                if (id === savedReportId && filterValues.hasOwnProperty(filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
