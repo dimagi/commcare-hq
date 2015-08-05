@@ -1,6 +1,7 @@
 from datetime import timedelta, date
 from celery.task import periodic_task
-from corehq.apps.domainsync.management.commands.copy_domain import Command
+from django.core.management import call_command
+from corehq.util.soft_assert import soft_assert
 from .models import BackupRecord
 
 import settings
@@ -24,15 +25,15 @@ def copy_data_to_backup():
     )
     last_update = BackupRecord.objects.order_by('last_update')[0]
 
-    args = [
-        prod_couchdb_connection,
-        GUINEA_CONTACT_TRACING_DOMAIN,
-        guinea_couchdb_connection
-    ]
-    kwargs = {
-        'since': last_update,
-    }
-    Command.handle(args=args, kwargs=kwargs)
+    call_command('copy_domain',
+                 prod_couchdb_connection,
+                 GUINEA_CONTACT_TRACING_DOMAIN,
+                 guinea_couchdb_connection,
+                 **{'since': last_update})
+
+    # A dumb soft assert to make sure I see this working
+    _assert = soft_assert(to='{}@{}'.format('tsheffels', 'dimagi.com'), notify_admins=False, exponential_backoff=False)
+    _assert(False)
 
     successful_insert = BackupRecord(last_update=date.now())
     successful_insert.save()
