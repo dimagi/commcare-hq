@@ -587,6 +587,28 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./detail[@id='m0_case_short']/action"
         )
 
+    def test_case_list_form_multiple_modules(self):
+        app = self._prep_case_list_form_app()
+        case_module1 = app.get_module(0)
+
+        case_module2 = app.add_module(Module.new_module('update2', None))
+        case_module2.unique_id = 'update case 2'
+        case_module2.case_type = case_module1.case_type
+        update2 = app.new_form(2, 'Update Case Form2', lang='en')
+        update2.unique_id = 'update_case_form2'
+        update2.requires = 'case'
+        update2.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update2.actions.update_case.condition.type = 'always'
+
+        case_module2.case_list_form.form_id = 'register_case_form'
+        case_module2.case_list_form.label = {
+            'en': 'New Case'
+        }
+        self.assertXmlEqual(
+            self.get_xml('case-list-form-suite-multiple-references'),
+            app.create_suite(),
+        )
+
     def test_case_list_registration_form_advanced(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
