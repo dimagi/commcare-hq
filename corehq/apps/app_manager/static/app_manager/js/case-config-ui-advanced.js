@@ -535,7 +535,7 @@ var AdvancedCase = (function () {
                 });
             }
             return properties;
-        },
+        }
     };
 
     var LoadUpdateAction = {
