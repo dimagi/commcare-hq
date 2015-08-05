@@ -1300,7 +1300,7 @@ def download_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_GET
 def edit_form_instance(request, domain, instance_id):
-    if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
+    if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
