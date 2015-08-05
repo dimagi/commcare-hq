@@ -42,7 +42,8 @@ from corehq.apps.users.util import (
     user_data_from_registration_form,
     user_display_string,
 )
-from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
+from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
+    tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -1661,7 +1662,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
