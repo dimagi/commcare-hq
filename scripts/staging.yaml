@@ -56,7 +56,7 @@ branches:
   # - icds/scheduler # Farid 7/22
   - ckeditor # J$ 7/24
   - notify-exception-code-context  # Ben 7/30
-  - due-list # TS 7/30
+#  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
 submodules:
