@@ -26,7 +26,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         # this is a temporary spam-catcher, to be removed after fb#178059 is resolved
         if 'commcarehq-support+project@dimagi.com' in recipient:
             notify_error("Found an email causing spammy emails to "
-                         "commcarehq-support+project@dimagi.com. Here's the HTML content of email"
+                         "commcare-support+project@dimagi.com. Here's the HTML content of email"
                          "\n {}".format(html_content)
             )
 
