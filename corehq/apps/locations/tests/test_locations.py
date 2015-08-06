@@ -78,7 +78,6 @@ class LocationProducts(TestCase):
 class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         self.domain.convert_to_commtrack()
         bootstrap_location_types(self.domain.name)
 
