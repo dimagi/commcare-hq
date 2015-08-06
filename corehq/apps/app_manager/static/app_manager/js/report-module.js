@@ -98,7 +98,7 @@ var ReportModule = (function () {
                 _.each(config.keyValuePairs(), function(keyValuePair) {
                     addSubscriberToSaveButton(keyValuePair[0]);
                     addSubscriberToSaveButton(keyValuePair[1]);
-                })
+                });
             };
             _.each(self.graphConfigs, function(reportGraphConfigs) {
                 _.each(reportGraphConfigs, function(graphConfig) {
