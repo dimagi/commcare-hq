@@ -201,7 +201,7 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
           [{'description': u'Grant other CommCare HQ users access
                             to your project and manage user roles.',
             'show_in_dropdown': True,
-            'subpages': [{'title': u'Invite Web User',
+            'subpages': [{'title': u'Add Web User',
                           'urlname': 'invite_web_user'},
                          {'title': <function web_username at 0x10982a9b0>,
                           'urlname': 'user_account'},
