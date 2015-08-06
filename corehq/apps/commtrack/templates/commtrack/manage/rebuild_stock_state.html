@@ -25,11 +25,11 @@
 
     <table class="table table-bordered table-striped">
     {% for key, actions, case_doc_info in actions_by_stock_state_key %}
-    {% for action_type, action in actions %}
+    {% for action_type, action, server_date in actions %}
         {% with action.stock_transaction as stock_transaction %}
         {% if forloop.first %}
         <tr>
-            <td colspan="6" style="text-align: center">
+            <td colspan="8" style="text-align: center">
                 {% blocktrans with case_display=case_doc_info|pretty_doc_info section_display=stock_transaction.section_id product_name=stock_transaction.sql_product.name %}
                 <strong>{{ case_display }}</strong>
                 {{ section_display }}
@@ -46,12 +46,14 @@
             </td>
         </tr>
         <tr>
-            <th colspan="2"></th>
+            <th colspan="4"></th>
             <th colspan="2">{% trans "Current Values" %}</th>
             <th colspan="2">{% trans "Rebuilt Values" %}</th>
         </tr>
         <tr>
-            <th>{% trans "Date" %}</th>
+            <th>{% trans "Server Date" %}</th>
+            <th>{% trans "Self-reported Date" %}</th>
+            <th>{% trans "Form" %}</th>
             <th>{% trans "Type" %}</th>
             <th>{% trans "Quantity" %}</th>
             <th>{% trans "Stock on Hand" %}</th>
@@ -60,7 +62,12 @@
         </tr>
         {% endif %}
         <tr>
-            <td>{{ stock_transaction.report.date }}</td>
+            <td>{{ server_date }}</td>
+            <td>{{ stock_transaction.report.date|date:'Y-m-d H:i:s' }}</td>
+            <td>
+                <a href="{% url 'render_form_data' domain stock_transaction.report.form_id%}"
+                        >{{ stock_transaction.report.form_id }}</a>
+            </td>
             <td>{{ stock_transaction.report.type }}</td>
             <td>{{ stock_transaction.quantity }}</td>
             <td>{{ stock_transaction.stock_on_hand }}</td>

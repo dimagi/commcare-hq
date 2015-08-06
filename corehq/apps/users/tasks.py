@@ -5,12 +5,17 @@ from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import ResourceConflict
+from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
 
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -37,11 +42,12 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
     }
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
-def tag_docs_as_deleted(cls, docs, deletion_id):
+def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
-    cls.get_db().bulk_save(docs)
+    CommCareCase.get_db().bulk_save(docs)
+    _remove_indices_from_deleted_cases_task.delay(domain, [doc['_id'] for doc in docs])
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
@@ -70,6 +76,31 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
     XFormInstance.get_db().bulk_save(forms_to_save)
     for case in cases_to_rebuild - deleted_cases:
         _rebuild_case_with_retries.delay(case)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def _remove_indices_from_deleted_cases_task(domain, case_ids):
+    # todo: we may need to add retry logic here but will wait to see
+    # what errors we should be catching
+    remove_indices_from_deleted_cases(domain, case_ids)
+
+
+def remove_indices_from_deleted_cases(domain, case_ids):
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    deleted_ids = set(case_ids)
+    indexes_referencing_deleted_cases = get_all_reverse_indices_info(domain, case_ids)
+    case_updates = [
+        CaseBlock(
+            case_id=index_info.case_id,
+            version=V2,
+            index={
+                index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
+            }
+        ).as_string(format_datetime=json_format_datetime)
+        for index_info in indexes_referencing_deleted_cases
+        if index_info.case_id not in deleted_ids
+    ]
+    submit_case_blocks(case_updates, domain)
 
 
 @task(bind=True, queue='background_queue', ignore_result=True,

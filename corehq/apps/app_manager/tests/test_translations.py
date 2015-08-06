@@ -1,4 +1,4 @@
-# coding=utf8
+# coding=utf-8
 from lxml import etree
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.translations import escape_output_value

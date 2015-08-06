@@ -7,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
-from .utils import UserSqlData
+from .utils import user_sql_data
 
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
@@ -51,7 +51,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(UserSqlData().data_as_hierarchy())
+        return make_drilldown(user_sql_data().data_as_hierarchy())
 
     @classmethod
     def get_labels(cls):

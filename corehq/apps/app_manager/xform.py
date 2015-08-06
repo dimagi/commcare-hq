@@ -567,7 +567,7 @@ class XForm(WrappedNode):
     @property
     def text_references(self):
         nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
-        return list(set(n.text for n in nodes))
+        return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     @property
     def image_references(self):
