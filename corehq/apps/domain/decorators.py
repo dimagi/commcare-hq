@@ -154,7 +154,11 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
                 @challenge_fn
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
-                    if couch_user and (allow_cc_users or couch_user.is_web_user()) and couch_user.is_member_of(domain):
+                    if (
+                        couch_user
+                        and (allow_cc_users or couch_user.is_web_user())
+                        and couch_user.is_member_of(domain)
+                    ):
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
