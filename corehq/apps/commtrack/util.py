@@ -74,9 +74,12 @@ def get_or_create_default_program(domain):
         )
 
 
-def bootstrap_commtrack_config(domain, requisitions_enabled):
-    config = CommtrackConfig(
-        domain=domain.name,
+def _create_commtrack_config_if_needed(domain):
+    if CommtrackConfig.for_domain(domain):
+        return
+
+    CommtrackConfig(
+        domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -107,22 +110,25 @@ def bootstrap_commtrack_config(domain, requisitions_enabled):
                 caption='Stock-out',
             ),
         ],
-    )
-
-    if requisitions_enabled:
-        config.requisition_config = get_default_requisition_config()
-
-    config.save()
-    return config
+    ).save()
 
 
-def enable_commtrack_previews(domain):
+def _enable_commtrack_previews(domain):
     for toggle_class in (
         toggles.COMMTRACK,
         feature_previews.LOCATIONS,
         toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
     ):
         toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
+
+
+def make_domain_commtrack(domain_object):
+    domain_object.commtrack_enabled = True
+    domain_object.locations_enabled = True
+    domain_object.save()
+    _create_commtrack_config_if_needed(domain_object.name)
+    get_or_create_default_program(domain_object.name)
+    _enable_commtrack_previews(domain_object.name)
 
 
 def get_default_requisition_config():

@@ -1179,22 +1179,12 @@ class Domain(Document, SnapshotMixin):
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
 
-    def convert_to_commtrack(self, requisitions_enabled=False):
+    def convert_to_commtrack(self):
         """
         One-stop-shop to make a domain CommTrack
         """
-        from corehq.apps.commtrack.util import (
-            bootstrap_commtrack_config,
-            get_or_create_default_program,
-            enable_commtrack_previews,
-        )
-
-        self.commtrack_enabled = True
-        self.locations_enabled = True
-        self.save()
-        bootstrap_commtrack_config(self, requisitions_enabled)
-        get_or_create_default_program(self.name)
-        enable_commtrack_previews(self.name)
+        from corehq.apps.commtrack.util import make_domain_commtrack
+        make_domain_commtrack(self)
 
 
 class DomainCounter(Document):
