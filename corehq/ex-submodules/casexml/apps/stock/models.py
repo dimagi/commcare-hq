@@ -1,7 +1,6 @@
 import re
 
 from django.db import models
-from south.modelsinspector import add_introspection_rules
 
 from corehq.apps.products.models import SQLProduct
 
@@ -15,11 +14,6 @@ class TruncatingCharField(models.CharField):
         if value:
             return value[:self.max_length]
         return value
-
-
-# http://south.aeracode.org/wiki/MyFieldsDontWork
-path = TruncatingCharField.__module__ + '.' + TruncatingCharField.__name__
-add_introspection_rules([], ["^{}".format(re.escape(path))])
 
 
 class StockReport(models.Model):
