@@ -628,15 +628,18 @@ var AdvancedCase = (function () {
 
             self.subcase = ko.computed({
                 read: function () {
-                    return (self.case_index) ? self.case_index.tag() : null;
+                    if (!self.case_index) {
+                        self.case_index = new CaseIndex();
+                    }
+                    return self.case_index.tag();
                 },
                 write: function (value) {
                     if (value) {
                         var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
-                            self.case_index = new CaseIndex();
                             var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
-                            self.case_index.tag = parent.case_tag();
+                            self.case_index = new CaseIndex();
+                            self.case_index.tag(parent.case_tag());
                         }
                     } else {
                         self.case_index = new CaseIndex();
