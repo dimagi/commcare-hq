@@ -8,7 +8,7 @@ from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
-from .xpath import CaseIDXPath, session_var, CaseTypeXpath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath, ScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
@@ -1391,33 +1391,37 @@ class XForm(WrappedNode):
     def create_casexml_2_advanced(self, form):
         from corehq.apps.app_manager.util import split_path
 
-        def configure_visit_schedule_updates(update_block):
+        if not form.actions.get_all_actions():
+            return
+
+        case_tag = lambda a: "case_{0}".format(a.case_tag)
+
+        def configure_visit_schedule_updates(update_block, action):
+            schedule_form_xpath = ScheduleFormXPath(form, form.get_phase(), form.get_module())
             update_block.append(make_case_elem(SCHEDULE_PHASE))
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             update_block.append(make_case_elem(last_visit_num))
 
-            self.add_setvalue(
-                ref='case/update/{}'.format(SCHEDULE_PHASE),
-                value=str(form.id + 1)
+            self.add_bind(
+                nodeset='{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
+                type="xs:integer",
+                calculate=schedule_form_xpath.current_schedule_phase_calculation(
+                    self.action_relevance(form.schedule.termination_condition),
+                    self.action_relevance(form.schedule.transition_condition),
+                )
             )
-
-            last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
-            self.add_setvalue(
-                ref='case/update/{}'.format(last_visit_num),
-                value="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+            last_visit_prop_xpath = CaseIDXPath(session_var(action.case_session_var)).case().slash(last_visit_num)
+            self.add_bind(
+                nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_num),
+                calculate="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
             )
 
             self.add_bind(
-                nodeset='case/update/{}'.format(last_visit_date),
+                nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd")
             )
-
-        if not form.actions.get_all_actions():
-            return
-
-        case_tag = lambda a: "case_{0}".format(a.case_tag)
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = case_tag(action)
@@ -1448,8 +1452,7 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
-
+        has_schedule = module.has_schedule and form.schedule and getattr(form.get_phase(), 'anchor', False)
         adjusted_datums = {}
         if module.root_module and module.root_module.module_type == 'basic':
             # for child modules the session variable for a case may have been
@@ -1495,7 +1498,8 @@ class XForm(WrappedNode):
                     update_case_block.add_close_block(self.action_relevance(action.close_condition))
 
                 if has_schedule:
-                    configure_visit_schedule_updates(update_case_block.update_block)
+                    self.add_casedb()
+                    configure_visit_schedule_updates(update_case_block.update_block, action)
 
         repeat_contexts = defaultdict(int)
         for action in form.actions.open_cases:
