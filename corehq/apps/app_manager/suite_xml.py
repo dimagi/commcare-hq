@@ -895,7 +895,6 @@ class WorkflowHelper(object):
 
                 source_form_dm = self.get_form_datums(form)
                 target_form_dm = self.get_form_datums(target_module.get_form(0))
-
                 def get_target_dm(case_type):
                     try:
                         [target_dm] = [
@@ -908,18 +907,22 @@ class WorkflowHelper(object):
                     return target_dm
 
                 for source_meta in source_form_dm:
-                    if source_meta.nodeset:
+                    if source_meta.case_type:
                         # This should only ever be true for advanced forms that are configured
                         # to create a new subcase.
-                        target_dm = get_target_dm(source_meta.case_type)
-                        meta = DatumMeta.from_session_datum(source_meta)
-                        meta.id = target_dm.id
-                        frame_case_created.add_child(meta)
-                        frame_case_not_created.add_child(meta)
+                        try:
+                            target_dm = get_target_dm(source_meta.case_type)
+                        except SuiteError:
+                            if source_meta.require_selection:
+                                raise
+                        else:
+                            meta = DatumMeta.from_session_datum(source_meta)
+                            meta.id = target_dm.id
+                            frame_case_created.add_child(meta)
+                            frame_case_not_created.add_child(meta)
                     else:
                         source_case_type = get_case_type_created_by_form(form)
                         target_dm = get_target_dm(source_case_type)
-
                         datum_meta = DatumMeta(target_dm.id, target_dm.nodeset, None)
                         datum_meta.source_id = source_meta.id
                         frame_case_created.add_child(datum_meta)
