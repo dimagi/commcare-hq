@@ -870,7 +870,8 @@ class WorkflowHelper(object):
                     )
 
                 if form.form_type == 'module_form':
-                    source_session_var = form.session_var_for_action('open_case')
+                    [reg_action] = form.get_registration_actions(target_module.case_type)
+                    source_session_var = form.session_var_for_action(reg_action)
                 if form.form_type == 'advanced_form':
                     # match case session variable
                     reg_action = form.get_registration_actions(target_module.case_type)[0]
@@ -889,7 +890,11 @@ class WorkflowHelper(object):
 
                 def get_case_type_created_by_form(form):
                     if form.form_type == 'module_form':
-                        return form.get_module().case_type
+                        [reg_action] = form.get_registration_actions(target_module.case_type)
+                        if reg_action == 'open_case':
+                            return form.get_module().case_type
+                        else:
+                            return reg_action.case_type
                     elif form.form_type == 'advanced_form':
                         return form.get_registration_actions(target_module.case_type)[0].case_type
 
@@ -1284,7 +1289,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         else:
                             frame.add_datum(StackDatum(
                                 id=target_meta['datum'].id,
-                                value=session_var(source_dm[0]['datum'].id))
+                                value=session_var(source_dm['datum'].id))
                             )
                     else:
                         s_datum = target_meta['datum']
