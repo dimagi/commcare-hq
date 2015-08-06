@@ -296,8 +296,9 @@ var AdvancedCase = (function () {
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.load_update_cases();
+            var action;
             for (var i = 0; i < actions.length; i++) {
-                var action = actions[i];
+                action = actions[i];
                 if (!parentOnly && action.case_tag() === oldTag) {
                     action.case_tag(newTag);
                 }

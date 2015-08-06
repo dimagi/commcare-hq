@@ -2,7 +2,6 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
-from corehq.util.soft_assert import soft_assert
 from mock import Mock
 import os
 import logging

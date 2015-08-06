@@ -264,4 +264,3 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
                 },
                 version=V2,
             )
-
