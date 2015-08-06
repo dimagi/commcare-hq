@@ -58,7 +58,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
                                                   case_id=case_id) + '/enter/')
 
     def name_link(self, name, doc_id, is_closed):
-        if is_closed:
+        if is_closed == 0:
             details_url = reverse('case_details', args=[self.domain, doc_id])
             url = details_url + '#!history'
         else:
@@ -145,7 +145,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             DatabaseColumn(_('Responsible Party'), SimpleColumn('task_responsible'),
                            format_fn=lambda x: x.upper(), sortable=False),
             DatabaseColumn(_('Status'), SimpleColumn('closed', alias='is_closed'),
-                           format_fn=lambda x: 'Closed' if x == '0' else 'Open', sortable=False),
+                           format_fn=lambda x: 'Closed' if x == 0 else 'Open', sortable=False),
             DatabaseColumn(_('Action Due'), SimpleColumn('task_due'),
                            format_fn=self.task_due),
             DatabaseColumn(_('Last Updated'), SimpleColumn('last_updated'),
