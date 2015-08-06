@@ -2349,8 +2349,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = '../../{}'.format(path)
-            local_path = './{}/{}'.format(path, name)
+            install_path = u'../../{}'.format(path)
+            local_path = u'./{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
