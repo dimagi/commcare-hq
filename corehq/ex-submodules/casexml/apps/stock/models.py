@@ -29,7 +29,7 @@ class StockReport(models.Model):
     domain = models.CharField(max_length=255, null=True)
     # should always equal
     # FormData.objects.get(instance_id=self.form_id).received_on
-    server_date = models.DateTimeField(db_index=True, null=True)
+    server_date = models.DateTimeField(null=True)
 
     # todo: there are properties like these that could be really useful for queries
     # and reports - should decide which ones we want to add if any.

@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'StockReport.server_date'
         db.add_column(u'stock_stockreport', 'server_date',
-                      self.gf('django.db.models.fields.DateTimeField')(null=True, db_index=True),
+                      self.gf('django.db.models.fields.DateTimeField')(null=True),
                       keep_default=False)
 
 
@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'form_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'server_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
+            'server_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'type': ('django.db.models.fields.CharField', [], {'max_length': '20'})
         },
         u'stock.stocktransaction': {
