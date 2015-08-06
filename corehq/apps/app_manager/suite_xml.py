@@ -1615,7 +1615,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 )
                 if isinstance(module, Module):
-                    use_filter = False if module.has_no_forms() else bool(module.case_details.short.filter)
+                    use_filter = False if module.has_forms() else bool(module.case_details.short.filter)
                     for datum_meta in self.get_datum_meta_module(module, use_filter=use_filter):
                         e.datums.append(datum_meta['datum'])
                 elif isinstance(module, AdvancedModule):
