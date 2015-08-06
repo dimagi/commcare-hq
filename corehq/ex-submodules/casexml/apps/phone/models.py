@@ -399,11 +399,6 @@ class SyncLog(AbstractSyncLog):
                 ))
                 raise
 
-    @property
-    def case_ids_on_phone(self):
-        # this just exists to allow us to easily compare this property with the new format
-        return set(self.get_footprint_of_cases_on_phone())
-
     def get_footprint_of_cases_on_phone(self):
         def children(case_state):
             return [self._get_case_state_from_anywhere(index.referenced_id)
