@@ -16,7 +16,9 @@
 {% endblock uncompressed-js %}
 
 {% block dashboard-content %}
-<br>
+<div class="page-header">
+    <h1>{% trans 'What type of app would you like to build?' %}</h1>
+</div>
 <div class="row">
     {% for template in templates %}
         <div class="col-md-4">
