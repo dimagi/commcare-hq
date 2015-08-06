@@ -118,6 +118,7 @@ def _enable_commtrack_previews(domain):
         toggles.COMMTRACK,
         feature_previews.LOCATIONS,
         toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
+        toggles.VELLUM_ADVANCED_ITEMSETS,
     ):
         toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
