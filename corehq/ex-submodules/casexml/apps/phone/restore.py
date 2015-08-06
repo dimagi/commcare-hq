@@ -289,8 +289,8 @@ class RestoreState(object):
                     self.last_sync_log.save()
 
                     exception = BadStateException(
-                        expected=computed_hash,
-                        actual=parsed_hash,
+                        server_hash=computed_hash,
+                        phone_hash=parsed_hash,
                         case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
