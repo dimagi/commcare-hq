@@ -62,7 +62,7 @@ class MALTTableGenerator(object):
                 'user_id': user._id,
                 'username': user.username,
                 'email': user.email,
-                'is_web_user': user.doc_type == 'WebUser',
+                'user_type': user.doc_type,
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
                 'app_id': app_id,
