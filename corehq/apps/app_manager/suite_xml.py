@@ -1,7 +1,7 @@
 from collections import namedtuple, defaultdict
 import copy
 from functools import total_ordering
-from itertools import izip_longest
+from itertools import izip_longest, chain
 import os
 from os.path import commonprefix
 import re
@@ -11,6 +11,7 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from lxml import etree
 from xml.sax.saxutils import escape, unescape
 
+from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
 
 from .exceptions import (
@@ -21,7 +22,7 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE,\
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,\
     RETURN_TO, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -30,7 +31,8 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
+    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    ScheduleFormXPath, QualifiedScheduleFormXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -1254,7 +1256,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             # Add variables
             variables = list(
-                SuiteGenerator.detail_variables(module, detail, detail_column_infos[start:end])
+                self.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
@@ -1361,86 +1363,43 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
         return r
 
-    @staticmethod
-    def detail_variables(module, detail, detail_column_infos):
+    def _schedule_detail_variables(self, module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
-        if hasattr(module, 'has_schedule') and \
-                module.has_schedule and \
-                module.all_forms_require_a_case and \
-                has_schedule_columns:
+        has_schedule = getattr(module, 'has_schedule', False)
+        if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
             forms_due = []
-            for form in module.get_forms():
-                if not (form.schedule and form.schedule.anchor):
-                    raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
+            for phase in module.get_schedule_phases():
+                if not phase.anchor:
+                    raise ScheduleError(_("Schedule Phase in module '{module_name}' is missing an anchor")
+                                        .format(module_name=module.default_name()))
 
-                fixture_id = id_strings.schedule_fixture(form)
-                anchor = form.schedule.anchor
+                for form in phase.get_forms():
+                    """
+                    Adds the following variables for each form:
+                    <anchor_{form_id} function="{anchor}"/>
+                    <last_visit_number_{form_id} function="{last_visit_number}"/>
+                    <next_{form_id} function={phase_set}/>
+                    """
+                    form_xpath = ScheduleFormXPath(form, phase, module)
+                    name = "next_{}".format(form.schedule_form_id)
+                    forms_due.append("${}".format(name))
 
-                # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
-                within_window = XPath.or_(
-                    XPath('@late_window').eq(XPath.string('')),
-                    XPath('today() <= ({} + {} + {})'.format(
-                        XPath.date(anchor),
-                        XPath.int('@due'),
-                        XPath.int('@late_window'))
-                    )
-                )
+                    # Add an anchor and last_visit variables so we can reference it in the calculation
+                    yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
+                    yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
+                    if phase.id == 1:
+                        # If this is the first phase, `current_schedule_phase` and
+                        # last_visit_num might not be set yet
+                        yield DetailVariable(name=name, function=form_xpath.first_visit_phase_set)
+                    else:
+                        yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-                due_first = ScheduleFixtureInstance(fixture_id).visit().\
-                    select_raw(within_window).\
-                    select_raw("1").slash('@due')
+            yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
+            yield DetailVariable(name='is_late', function='$next_due < today()')
 
-                # current_schedule_phase = 1 and anchor != '' and (
-                #   instance(...)/schedule/@expires = ''
-                #   or
-                #   today() < (date(anchor) + instance(...)/schedule/@expires)
-                # )
-                expires = ScheduleFixtureInstance(fixture_id).expires()
-                valid_not_expired = XPath.and_(
-                    XPath(SCHEDULE_PHASE).eq(form.id + 1),
-                    XPath(anchor).neq(XPath.string('')),
-                    XPath.or_(
-                        XPath(expires).eq(XPath.string('')),
-                        "today() < ({} + {})".format(XPath.date(anchor), expires)
-                    ))
-
-                visit_num_valid = XPath('@id > {}'.format(
-                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-                ))
-
-                due_not_first = ScheduleFixtureInstance(fixture_id).visit().\
-                    select_raw(visit_num_valid).\
-                    select_raw(within_window).\
-                    select_raw("1").slash('@due')
-
-                name = 'next_{}'.format(form.schedule_form_id)
-                forms_due.append(name)
-
-                def due_date(due_days):
-                    return '{} + {}'.format(XPath.date(anchor), XPath.int(due_days))
-
-                xpath_phase_set = XPath.if_(valid_not_expired, due_date(due_not_first), 0)
-                if form.id == 0:  # first form must cater for empty phase
-                    yield DetailVariable(
-                        name=name,
-                        function=XPath.if_(
-                            XPath(SCHEDULE_PHASE).eq(XPath.string('')),
-                            due_date(due_first),
-                            xpath_phase_set
-                        )
-                    )
-                else:
-                    yield DetailVariable(name=name, function=xpath_phase_set)
-
-            yield DetailVariable(
-                name='next_due',
-                function='min({})'.format(','.join(forms_due))
-            )
-
-            yield DetailVariable(
-                name='is_late',
-                function='next_due < today()'
-            )
+    def detail_variables(self, module, detail, detail_column_infos):
+        return chain(self._schedule_detail_variables(module, detail, detail_column_infos),)
 
     def build_case_tile_detail(self, module, detail, detail_type):
         """
@@ -2322,6 +2281,15 @@ class SuiteGenerator(SuiteGeneratorBase):
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
+    def _schedule_filter_conditions(self, form, module, case):
+        phase = form.get_phase()
+        try:
+            form_xpath = QualifiedScheduleFormXPath(form, phase, module, case_xpath=case)
+            relevant = form_xpath.filter_condition(phase.id)
+        except ScheduleError:
+            relevant = None
+        return relevant
+
     @property
     @memoized
     def menus(self):
@@ -2393,20 +2361,30 @@ class SuiteGenerator(SuiteGeneratorBase):
                 def get_commands():
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
+                        if isinstance(form, AdvancedForm):
+                            try:
+                                action = next(a for a in form.actions.load_update_cases if not a.auto_select)
+                                case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
+                            except IndexError:
+                                case = None
+                        else:
+                            case = SESSION_CASE_ID.case()
+
                         if module.all_forms_require_a_case() and \
                                 not module.put_in_root and \
                                 getattr(form, 'form_filter', None):
-                            if isinstance(form, AdvancedForm):
-                                try:
-                                    action = next(a for a in form.actions.load_update_cases if not a.auto_select)
-                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
-                                except IndexError:
-                                    case = None
-                            else:
-                                case = SESSION_CASE_ID.case()
 
                             if case:
                                 command.relevant = interpolate_xpath(form.form_filter, case)
+
+                        if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
+                            # If there is a schedule and another filter condition, disregard it...
+                            # Other forms of filtering are disabled in the UI
+                            # TODO: disable filtering in the UI
+                            schedule_filter_condition = self._schedule_filter_conditions(form, module, case)
+                            if schedule_filter_condition is not None:
+                                command.relevant = schedule_filter_condition
+
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:
@@ -2420,6 +2398,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @property
     def fixtures(self):
+        return chain(self._case_sharing_fixtures, self._schedule_fixtures)
+
+    @property
+    def _case_sharing_fixtures(self):
         if self.app.case_sharing:
             f = Fixture(id='user-groups')
             f.user_id = 'demo_user'
@@ -2433,25 +2415,32 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
-        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
-                            module.all_forms_require_a_case)
-        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+    @property
+    def _schedule_fixtures(self):
+        schedule_modules = (module for module in self.modules
+                            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
+        schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())
+        schedule_forms = (form for phase in schedule_phases for form in phase.get_forms())
+
         for form in schedule_forms:
             schedule = form.schedule
-            fx = ScheduleFixture(
-                id=id_strings.schedule_fixture(form),
-                schedule=Schedule(
-                    expires=schedule.expires,
-                    post_schedule_increment=schedule.post_schedule_increment
-                ))
-            for i, visit in enumerate(schedule.visits):
-                fx.schedule.visits.append(ScheduleVisit(
-                    id=i + 1,
-                    due=visit.due,
-                    late_window=visit.late_window
-                ))
 
-            yield fx
+            if schedule is None:
+                raise (ScheduleError(_("There is no schedule for form {form_id}")
+                                     .format(form_id=form.unique_id)))
+
+            visits = [ScheduleVisit(id=visit.id, due=visit.due, late_window=visit.late_window)
+                      for visit in schedule.get_visits()]
+
+            schedule_fixture = ScheduleFixture(
+                id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
+                schedule=Schedule(
+                    expires=schedule.expires if schedule.expires else '',
+                    post_schedule_increment=schedule.post_schedule_increment,
+                    visits=visits,
+                )
+            )
+            yield schedule_fixture
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):
