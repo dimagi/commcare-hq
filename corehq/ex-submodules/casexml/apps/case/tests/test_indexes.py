@@ -1,4 +1,5 @@
 from collections import namedtuple
+import re
 from xml.etree import ElementTree
 import datetime
 from couchdbkit import ResourceNotFound
@@ -187,14 +188,16 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
         self.assertEqual(
             ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>at_risk</case_type>'
-                '</update>'
-                '<index>'
-                    '<host case_type="newborn" relationship="extension">123456</host>'
-                '</index>'
-            '</case>'
+            re.sub(r'(\n| {2,})', '', """
+            <case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
+                <update>
+                    <case_type>at_risk</case_type>
+                </update>
+                <index>
+                    <host case_type="newborn" relationship="extension">123456</host>
+                </index>
+            </case>
+            """)
         )
 
     def test_case_block_index_omit_child(self):
@@ -213,14 +216,16 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
         self.assertEqual(
             ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>newborn</case_type>'
-                '</update>'
-                '<index>'
-                    '<parent case_type="mother">789abc</parent>'
-                '</index>'
-            '</case>'
+            re.sub(r'(\n| {2,})', '', """
+            <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
+                <update>
+                    <case_type>newborn</case_type>
+                </update>
+                <index>
+                    <parent case_type="mother">789abc</parent>
+                </index>
+            </case>
+            """)
         )
 
     def test_case_block_index_default_relationship(self):
@@ -239,14 +244,16 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
         self.assertEqual(
             ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>newborn</case_type>'
-                '</update>'
-                '<index>'
-                    '<parent case_type="mother">789abc</parent>'
-                '</index>'
-            '</case>'
+            re.sub(r'(\n| {2,})', '', """
+            <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
+                <update>
+                    <case_type>newborn</case_type>
+                </update>
+                <index>
+                    <parent case_type="mother">789abc</parent>
+                </index>
+            </case>
+            """)
         )
 
     def test_case_block_index_valid_relationship(self):
