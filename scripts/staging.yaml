@@ -53,7 +53,7 @@ branches:
   - template-apps # Jenny, July 20
   - FormArchive # Sravan 7/22
   # - due-list+icds/scheduler # TS 7/30
-  # - icds/scheduler # Farid 7/22
+  - icds/scheduler # Farid 7/22
   - ckeditor # J$ 7/24
 #  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
