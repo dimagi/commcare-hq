@@ -244,13 +244,11 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def _make_group_object(self, user_id, case_sharing):
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
+    def get_path_display(self):
+        return '/'.join(self.get_ancestors(include_self=True)
+                            .values_list('name', flat=True))
 
+    def _make_group_object(self, user_id, case_sharing):
         from corehq.apps.groups.models import UnsavableGroup
 
         g = UnsavableGroup()
@@ -259,13 +257,13 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.utcnow()
 
         if case_sharing:
-            g.name = group_name() + '-Cases'
+            g.name = self.get_path_display() + '-Cases'
             g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
             # reporting groups
-            g.name = group_name()
+            g.name = self.get_path_display()
             g._id = LOCATION_REPORTING_PREFIX + self.location_id
             g.case_sharing = False
             g.reporting = True
