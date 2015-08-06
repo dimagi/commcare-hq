@@ -502,8 +502,6 @@ COMMTRACK = StaticToggle(
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommCare Supply on any CommCare Supply "
-        "application's settings page."
     ),
     help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
     namespaces=[NAMESPACE_DOMAIN],
