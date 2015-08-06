@@ -27,7 +27,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import skippable_quickcache, quickcache
+from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -231,11 +231,6 @@ class UserRole(Document):
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
     is_archived = BooleanProperty(default=False)
-
-    @classmethod
-    @quickcache(['doc_id'], timeout=0)
-    def get(cls, doc_id):
-        return super(UserRole, cls).get(doc_id)
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
