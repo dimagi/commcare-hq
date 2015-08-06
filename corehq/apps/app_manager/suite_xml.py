@@ -659,7 +659,7 @@ class DatumMeta(object):
     @property
     @memoized
     def case_type(self):
-        """Get the case type from the nodeset of the function if possible
+        """Get the case type from the nodeset or the function if possible
         """
         def _extract_type(xpath):
             match = self.type_regex.search(xpath)
@@ -894,7 +894,9 @@ class WorkflowHelper(object):
                         return form.get_registration_actions(target_module.case_type)[0].case_type
 
                 source_form_dm = self.get_form_datums(form)
+                # assume all forms in the module have the same datums
                 target_form_dm = self.get_form_datums(target_module.get_form(0))
+
                 def get_target_dm(case_type):
                     try:
                         [target_dm] = [
