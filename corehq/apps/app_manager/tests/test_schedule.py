@@ -231,8 +231,10 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
                 "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
                 "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
-                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"   # where id > last_visit_number
-                "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "  # not late
+                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
+                # where id > last_visit_number
+                "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "
+                # not late
                 "&gt; 0"
             ).format(current_schedule_phase=current_schedule_phase,
                      form_num=form_num, form_id=form_id, anchor=anchor, case=case[form_num])
@@ -263,11 +265,12 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Current Schedule Phase is set depending on transition and termination conditions """
         self._fetch_sources()
 
-        current_schedule_phase_partial = """
-        <partial>
-        <bind type="xs:integer" nodeset="/data/case/update/current_schedule_phase" calculate="{value}" {xmlns}/>
-        </partial>
-        """
+        current_schedule_phase_partial = (
+            "<partial>"
+            '<bind type="xs:integer" nodeset="/data/case_case_clinic/case/update/current_schedule_phase"'
+            ' calculate="{value}" {xmlns}/>'
+            "</partial>"
+        )
 
         transition_question = '/data/successful_birth'
         transition_answer = 'yes'
@@ -295,7 +298,8 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         )
         self.assertXmlPartialEqual(
             current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
-            xform_1.model_node.find('./bind[@nodeset="/data/case/update/current_schedule_phase"]').render(),
+            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/current_schedule_phase"]')
+             .render()),
             '.'
         )
 
@@ -304,17 +308,19 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self._fetch_sources()
         self._apply_schedule_phases()
 
-        current_schedule_phase_partial = """
-        <partial>
-        <bind type="xs:integer" nodeset="/data/case/update/current_schedule_phase" calculate="{value}" {xmlns}/>
-        </partial>
-        """
+        current_schedule_phase_partial = (
+            "<partial> "
+            '<bind type="xs:integer" nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"'
+            ' calculate="{value}" ''{xmlns}/> '
+            "</partial> "
+        )
         value = "if(false(), -1, if(false(), 2, {}))".format(self.form_2.get_phase().id)
         xform_2 = self.form_2.wrapped_xform()
         self.form_2.add_stuff_to_xform(xform_2)
         self.assertXmlPartialEqual(
             current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
-            xform_2.model_node.find('./bind[@nodeset="/data/case/update/current_schedule_phase"]').render(),
+            (xform_2.model_node.find('./bind[@nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"]')
+             .render()),
             '.'
         )
 
@@ -322,10 +328,12 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
         last_visit_number_partial = (
             "<partial>"
-            '<bind nodeset="/data/case/update/last_visit_number_{form_id}" calculate="'
-            "if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
+            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" calculate="'
+            "if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
+            "session/data/case_id_case_clinic]/"
             "last_visit_number_a1e369 = '', 1, "
-            "int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
+            "int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
+            "session/data/case_id_case_clinic]/"
             'last_visit_number_a1e369) + 1)" {xmlns}/>'
             '</partial>'
         )
@@ -336,8 +344,8 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_number_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find('./bind[@nodeset="/data/case/update/last_visit_number_{}"]'.format(form_id))
-             .render()),
+            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_number_{}"]'
+                                     .format(form_id)).render()),
             '.'
         )
 
@@ -346,7 +354,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         # TODO: this should probably be "today"
         last_visit_date_partial = """
         <partial>
-        <bind nodeset="/data/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
+        <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
          calculate="/data/meta/timeEnd" {xmlns}/>
         </partial>
         """
@@ -357,7 +365,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_date_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find('./bind[@nodeset="/data/case/update/last_visit_date_{}"]'.format(form_id))
-             .render()),
+            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_date_{}"]'
+                                     .format(form_id)).render()),
             '.'
         )
