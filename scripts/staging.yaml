@@ -59,7 +59,7 @@ branches:
 #  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
-  # - django17 # J$ 8/5
+  - django17 # J$ 8/5
   - ota-basic # Nick P 8/6
   - one-true-commtrack  # Ethan 8/6
 submodules:
@@ -80,6 +80,6 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
-      # - django18
+    branches:
+      - django18
 
