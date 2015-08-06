@@ -1,5 +1,4 @@
 /*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
-
 var AdvancedCase = (function () {
     'use strict';
 
@@ -359,7 +358,11 @@ var AdvancedCase = (function () {
                     case_type: config.caseType,
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    parents: ko.observableArray([]),
+                    case_index: {
+                        tag: '',
+                        reference_id: 'parent',
+                        relationship: 'child'
+                    },
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -392,7 +395,7 @@ var AdvancedCase = (function () {
                             required: true
                         }],
                     repeat_context: '',
-                    case_indices: ko.observableArray([]),
+                    case_indices: [],
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
@@ -433,19 +436,21 @@ var AdvancedCase = (function () {
         };
     };
 
-    var CaseIndex = function () {
-        var self = this;
-
-        self.tag = ko.observable();
-        self.reference_id = ko.observable('parent');
-        self.relationship = ko.observable('child');
-        self.relationship.subscribe(function (rel) {
-            if (rel === 'extension' && self.reference_id() === 'parent') {
-                self.reference_id('host');
-            } else if (rel === 'child' && self.reference_id() === 'host') {
-                self.reference_id('parent');
-            }
-        });
+    var CaseIndex = {
+        mapping: {
+            include: ['tag', 'reference_id', 'relationship']
+        },
+        wrap: function (data) {
+            var self = ko.mapping.fromJS(data, CaseIndex.mapping);
+            self.relationship.subscribe(function (value) {
+                if (value === 'extension' && self.reference_id() === 'parent') {
+                    self.reference_id('host');
+                } else if (value === 'child' && self.reference_id() === 'host') {
+                    self.reference_id('parent');
+                }
+            });
+            return self;
+        }
     };
 
     var  ActionBase = {
@@ -510,7 +515,7 @@ var AdvancedCase = (function () {
             if (action.actionType === 'open') {
                 return _.template(
                     nameSnip + spanSnip +
-                    '<% if (action.subcase()) { %> : ' +
+                    '<% if (action.parent_tags()) { %> : ' +
                     'subcase of <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>",
                     action, {variable: 'action'});
@@ -535,7 +540,8 @@ var AdvancedCase = (function () {
                 });
             }
             return properties;
-        }
+        },
+        relationshipTypes: ['child', 'extension']
     };
 
     var LoadUpdateAction = {
@@ -545,10 +551,10 @@ var AdvancedCase = (function () {
                     'case_type',
                     'details_module',
                     'case_tag',
-                    'case_index',
                     'close_condition',
                     'show_product_stock',
-                    'product_program'],
+                    'product_program'
+                ],
                 preload: {
                     create: function (options) {
                         return CasePreloadProperty.wrap(options.data,  self);
@@ -566,6 +572,11 @@ var AdvancedCase = (function () {
                         } else {
                             return null;
                         }
+                    }
+                },
+                case_index: {
+                    create: function (options) {
+                        return CaseIndex.wrap(options.data);
                     }
                 }
             };
@@ -628,9 +639,6 @@ var AdvancedCase = (function () {
 
             self.subcase = ko.computed({
                 read: function () {
-                    if (!self.case_index) {
-                        self.case_index = new CaseIndex();
-                    }
                     return self.case_index.tag();
                 },
                 write: function (value) {
@@ -638,11 +646,10 @@ var AdvancedCase = (function () {
                         var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
                             var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
-                            self.case_index = new CaseIndex();
                             self.case_index.tag(parent.case_tag());
                         }
                     } else {
-                        self.case_index = new CaseIndex();
+                        self.case_index.tag('');
                     }
                 }
             });
@@ -735,6 +742,8 @@ var AdvancedCase = (function () {
                 return ActionBase.header(self);
             });
 
+            self.relationshipTypes = ActionBase.relationshipTypes;
+
             var add_circular = function() {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
                 self.allow_product_stock = ko.computed(function () {
@@ -754,7 +763,7 @@ var AdvancedCase = (function () {
                     if (!self.config.caseConfigViewModel) {
                         return;
                     }
-                    if (!self.case_index) {
+                    if (!self.case_index.tag()) {
                         return null;
                     }
                     var parent = self.config.caseConfigViewModel.getActionFromTag(self.case_index.tag());
@@ -807,13 +816,17 @@ var AdvancedCase = (function () {
                     'case_type',
                     'name_path',
                     'case_tag',
-                    'case_indices',
                     'open_condition',
                     'close_condition'
                 ],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data,  self);
+                    }
+                },
+                case_indices: {
+                    create: function (options) {
+                        return CaseIndex.wrap(options.data, self);
                     }
                 }
             };
@@ -863,22 +876,25 @@ var AdvancedCase = (function () {
                 return tags.join(', ');
             };
 
+            self.newCaseIndex = CaseIndex.wrap({
+                tag: '',
+                reference_id: 'parent',
+                relationship: 'child'
+            });
+
             self.subcase = ko.computed({
                 read: function () {
-                    return self.parent_tags();
+                    return (self.newCaseIndex.tag() || self.case_indices().length > 0);
                 },
                 write: function (value) {
                     if (value) {
-                        var caseIndex = new CaseIndex();
-                        caseIndex.tag('Select parent');
-                        self.case_indices = ko.observableArray([caseIndex]);
+                        self.newCaseIndex.tag('Select parent');
                     } else {
-                        self.case_indices = ko.observableArray([]);
+                        self.case_indices.removeAll();
+                        self.newCaseIndex.tag('');
                     }
                 }
             });
-
-            self.newParent = new CaseIndex();
 
             self.addCaseIndex = function () {
                 /**
@@ -888,16 +904,14 @@ var AdvancedCase = (function () {
                  * we need to copy values to another instance, and then reset the
                  * values in the form.
                  */
-                var newCaseIndex = new CaseIndex();
-                newCaseIndex.tag(self.newParent.tag());
-                newCaseIndex.reference_id(self.newParent.reference_id());
-                newCaseIndex.relationship(self.newParent.relationship());
-                self.case_indices.push(newCaseIndex);
-
-                var blankCaseIndex = new CaseIndex();
-                self.newParent.tag(blankCaseIndex.tag());
-                self.newParent.reference_id(blankCaseIndex.reference_id());
-                self.newParent.relationship(blankCaseIndex.relationship());
+                self.case_indices.push(CaseIndex.wrap({
+                    tag: self.newCaseIndex.tag(),
+                    reference_id: self.newCaseIndex.reference_id(),
+                    relationship: self.newCaseIndex.relationship()
+                }));
+                self.newCaseIndex.tag('');
+                self.newCaseIndex.reference_id('parent');
+                self.newCaseIndex.relationship('child');
             };
 
             self.removeCaseIndex = function (viewModel) {
@@ -943,7 +957,7 @@ var AdvancedCase = (function () {
                 self.case_properties.remove(property);
             };
 
-            self.relationshipTypes = ko.observableArray(['child', 'extension']);
+            self.relationshipTypes = ActionBase.relationshipTypes;
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
@@ -989,8 +1003,8 @@ var AdvancedCase = (function () {
             self.case_properties.remove(function (prop) {
                 return prop.isBlank();
             });
-            if (self.case_indices && !self.allow_subcase()) {
-                self.case_indices = ko.observableArray([]);
+            if (self.case_indices().length > 0 && !self.allow_subcase()) {
+                self.case_indices.removeAll();
             }
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
