@@ -60,6 +60,7 @@ branches:
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
   - django17 # J$ 8/5
+  - ota-basic # Nick P 8/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
