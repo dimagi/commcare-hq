@@ -99,15 +99,8 @@
                     </li>
                 </ul>
 
-                <label class="checkbox">
-                    <input type="checkbox" data-bind="checked: subcase"/>
-                    {% trans "Make this case a subcase" %}
-                    <span data-bind="if: subcase">
-                        {% trans " of " %}
-                    </span>
-                </label>
-                <span data-bind="if: subcase">
-                <span data-bind="with: newParent">
+                {% trans "Make this case a subcase of " %}
+                <span data-bind="with: newCaseIndex">
                     <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
                         value: tag">
                     </select>
@@ -126,7 +119,6 @@
                     <br />
 
                     <button data-bind="click: $parent.addCaseIndex">Add</button>
-                </span>
                 </span>
                 <span class="help-inline" data-bind="text: validate_subcase"></span>
             </div>
