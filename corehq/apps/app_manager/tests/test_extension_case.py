@@ -1,7 +1,3 @@
-from collections import namedtuple
-from datetime import datetime
-from casexml.apps.case.mock import CaseBlock as MockCaseBlock, CaseBlockError
-from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
@@ -14,13 +10,13 @@ from corehq.apps.app_manager.models import (
     CaseIndex,
     AdvancedModule,
     LoadUpdateAction,
-    PreloadAction)
+    PreloadAction,
+)
 from corehq.apps.app_manager.tests import TestFileMixin
-from corehq.apps.app_manager.xform import CaseBlock as XFormCaseBlock, XForm, _make_elem
+from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
 from django.test import SimpleTestCase
-from xml.etree import ElementTree
 from mock import patch
 
 
@@ -137,107 +133,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
         self.skipTest('TODO: Write this test')
 
 
-class MockCaseBlockIndexTests(SimpleTestCase):
-
-    IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
-    now = datetime(year=2015, month=7, day=24)
-
-    def test_mock_case_block_index_supports_relationship(self):
-        """
-        mock.CaseBlock index should allow the relationship to be set
-        """
-        case_block = MockCaseBlock(
-            case_id='abcdef',
-            case_type='at_risk',
-            date_modified=self.now,
-            index={
-                'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
-            },
-            version=V2,
-        )
-
-        self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>at_risk</case_type>'
-                '</update>'
-                '<index>'
-                    '<host case_type="newborn" relationship="extension">123456</host>'
-                '</index>'
-            '</case>'
-        )
-
-    def test_mock_case_block_index_omit_child(self):
-        """
-        mock.CaseBlock index relationship omit relationship attribute if set to "child"
-        """
-        case_block = MockCaseBlock(
-            case_id='123456',
-            case_type='newborn',
-            date_modified=self.now,
-            index={
-                'parent': ('mother', '789abc', 'child')
-            },
-            version=V2,
-        )
-
-        self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>newborn</case_type>'
-                '</update>'
-                '<index>'
-                    '<parent case_type="mother">789abc</parent>'
-                '</index>'
-            '</case>'
-        )
-
-    def test_mock_case_block_index_default_relationship(self):
-        """
-        mock.CaseBlock index relationship should default to "child"
-        """
-        case_block = MockCaseBlock(
-            case_id='123456',
-            case_type='newborn',
-            date_modified=self.now,
-            index={
-                'parent': ('mother', '789abc')
-            },
-            version=V2,
-        )
-
-        self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()),
-            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
-                '<update>'
-                    '<case_type>newborn</case_type>'
-                '</update>'
-                '<index>'
-                    '<parent case_type="mother">789abc</parent>'
-                '</index>'
-            '</case>'
-        )
-
-    def test_mock_case_block_index_valid_relationship(self):
-        """
-        mock.CaseBlock index relationship should only allow valid values
-        """
-        with self.assertRaisesRegexp(CaseBlockError,
-                                     'Valid values for an index relationship are "child" and "extension"'):
-            MockCaseBlock(
-                case_id='abcdef',
-                case_type='at_risk',
-                date_modified=self.now,
-                index={
-                    'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
-                },
-                version=V2,
-            )
-
-
-class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
+class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -268,7 +164,7 @@ class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
         subcase_node = _make_elem('{x}subcase_0')
         parent_node.append(subcase_node)
         path = 'subcase_0/'
-        self.subcase_block = XFormCaseBlock(self.xform, path)
+        self.subcase_block = CaseBlock(self.xform, path)
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
             relevance=self.xform.action_relevance(self.subcase.condition),
@@ -283,7 +179,7 @@ class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
 
     def test_xform_case_block_index_supports_relationship(self):
         """
-        XForm CaseBlock index should allow the relationship to be set
+        CaseBlock index should allow the relationship to be set
         """
         self.subcase_block.add_index_ref(
             'host',
@@ -295,7 +191,7 @@ class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
 
     def test_xform_case_block_index_default_relationship(self):
         """
-        XForm CaseBlock index relationship should default to "child"
+        CaseBlock index relationship should default to "child"
         """
         self.subcase_block.add_index_ref(
             'host',
@@ -306,7 +202,7 @@ class XFormCaseBlockIndexTest(SimpleTestCase, TestFileMixin):
 
     def test_xform_case_block_index_valid_relationship(self):
         """
-        XForm CaseBlock index relationship should only allow valid values
+        CaseBlock index relationship should only allow valid values
         """
         with self.assertRaisesRegexp(CaseError,
                                      'Valid values for an index relationship are "child" and "extension"'):

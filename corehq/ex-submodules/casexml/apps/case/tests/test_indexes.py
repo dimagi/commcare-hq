@@ -1,9 +1,9 @@
+from collections import namedtuple
 from xml.etree import ElementTree
 import datetime
 from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
-from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import check_user_has_case
@@ -164,3 +164,104 @@ class IndexTest(TestCase):
         self.assertEqual(xform.doc_type, 'XFormError')
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
+
+
+class CaseBlockIndexRelationshipTests(SimpleTestCase):
+
+    IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
+    now = datetime.datetime(year=2015, month=7, day=24)
+
+    def test_case_block_index_supports_relationship(self):
+        """
+        CaseBlock index should allow the relationship to be set
+        """
+        case_block = CaseBlock(
+            case_id='abcdef',
+            case_type='at_risk',
+            date_modified=self.now,
+            index={
+                'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
+            },
+            version=V2,
+        )
+
+        self.assertEqual(
+            ElementTree.tostring(case_block.as_xml()),
+            '<case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
+                '<update>'
+                    '<case_type>at_risk</case_type>'
+                '</update>'
+                '<index>'
+                    '<host case_type="newborn" relationship="extension">123456</host>'
+                '</index>'
+            '</case>'
+        )
+
+    def test_case_block_index_omit_child(self):
+        """
+        CaseBlock index relationship omit relationship attribute if set to "child"
+        """
+        case_block = CaseBlock(
+            case_id='123456',
+            case_type='newborn',
+            date_modified=self.now,
+            index={
+                'parent': ('mother', '789abc', 'child')
+            },
+            version=V2,
+        )
+
+        self.assertEqual(
+            ElementTree.tostring(case_block.as_xml()),
+            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
+                '<update>'
+                    '<case_type>newborn</case_type>'
+                '</update>'
+                '<index>'
+                    '<parent case_type="mother">789abc</parent>'
+                '</index>'
+            '</case>'
+        )
+
+    def test_case_block_index_default_relationship(self):
+        """
+        CaseBlock index relationship should default to "child"
+        """
+        case_block = CaseBlock(
+            case_id='123456',
+            case_type='newborn',
+            date_modified=self.now,
+            index={
+                'parent': ('mother', '789abc')
+            },
+            version=V2,
+        )
+
+        self.assertEqual(
+            ElementTree.tostring(case_block.as_xml()),
+            '<case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">'
+                '<update>'
+                    '<case_type>newborn</case_type>'
+                '</update>'
+                '<index>'
+                    '<parent case_type="mother">789abc</parent>'
+                '</index>'
+            '</case>'
+        )
+
+    def test_case_block_index_valid_relationship(self):
+        """
+        CaseBlock index relationship should only allow valid values
+        """
+        with self.assertRaisesRegexp(CaseBlockError,
+                                     'Valid values for an index relationship are "child" and "extension"'):
+            CaseBlock(
+                case_id='abcdef',
+                case_type='at_risk',
+                date_modified=self.now,
+                index={
+                    'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
+                },
+                version=V2,
+            )
+
