@@ -24,11 +24,10 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError, DocTypeError
+from couchdbkit.exceptions import BadValueError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import Http404
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -63,12 +62,12 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
-from corehq.apps.app_manager import current_builds, app_strings, remote_app
-from corehq.apps.app_manager import suite_xml, commcare_settings
+from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
+    id_strings, suite_xml, commcare_settings
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
-    get_correct_app_class,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
     actions_use_usercase
@@ -91,8 +90,8 @@ from .exceptions import (
     XFormException,
     XFormIdNotUnique,
     XFormValidationError,
+    ScheduleError,
 )
-from corehq.apps.app_manager import id_strings
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
@@ -148,6 +147,13 @@ def _rename_key(dct, old, new):
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
+
+
+@memoized
+def load_app_template(slug):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
+    with open(os.path.join(path, slug + '.json')) as f:
+        return json.load(f)
 
 
 @memoized
@@ -574,7 +580,7 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
-class ScheduleVisit(DocumentSchema):
+class ScheduleVisit(IndexedSchema):
     """
     due:         Days after the anchor date that this visit is due
     late_window: Days after the due day that this visit is valid until
@@ -582,6 +588,11 @@ class ScheduleVisit(DocumentSchema):
     due = IntegerProperty()
     late_window = IntegerProperty()
 
+    @property
+    def id(self):
+        """Visits are 1-based indexed"""
+        _id = super(ScheduleVisit, self).id
+        return _id + 1
 
 class FormLink(DocumentSchema):
     """
@@ -594,20 +605,19 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
-    anchor:                     Case property containing a date after which this schedule becomes active
-    expiry:                     Days after the anchor date that this schedule expires (optional)
-    visit_list:                 List of visits in this schedule
+    expires:                    Days after the anchor date that this schedule expires (optional)
+    visits:		        List of visits in this schedule
     post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
-    transition_condition:       Condition under which the schedule transitions to the next phase
-    termination_condition:      Condition under which the schedule terminates
+    transition_condition:       Condition under which we transition to the next phase
+    termination_condition:      Condition under which we terminate the whole schedule
     """
-    anchor = StringProperty()
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
     post_schedule_increment = IntegerProperty()
+    get_visits = IndexedSchema.Getter('visits')
+
     transition_condition = SchemaProperty(FormActionCondition)
     termination_condition = SchemaProperty(FormActionCondition)
-
 
 class FormBase(DocumentSchema):
     """
@@ -2116,6 +2126,23 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
+    def get_module(self):
+        if isinstance(self._parent, ModuleBase):
+            return self._parent
+        else: # Forms can be nested within SchedulePhases
+            return self._parent._parent
+
+    def get_phase(self):
+        module = self.get_module()
+
+        if not module.has_schedule:
+            raise TypeError("The module this form is in has no schedule")
+
+        return next((phase for phase in module.get_schedule_phases()
+                     for form in phase.get_forms()
+                     if form.unique_id == self.unique_id),
+                    None)
+
     def check_actions(self):
         errors = []
 
@@ -2196,7 +2223,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and not (self.schedule and self.schedule.anchor):
+        if module.has_schedule and not self.schedule and getattr(self.schedule, 'anchor', False):
             error = {
                 'type': 'validation error',
                 'validation_message': _("All forms in this module require a visit schedule.")
@@ -2288,6 +2315,88 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class SchedulePhaseForm(IndexedSchema):
+    """
+    A reference to a form in a schedule phase.
+    """
+    form_id = FormIdProperty("modules[*].schedule_phases[*].form_id")
+
+
+class SchedulePhase(IndexedSchema):
+    """
+    SchedulePhases are attached to a module.
+    A Schedule Phase is a grouping of forms that occur within a period and share an anchor
+    A module should not have more than one SchedulePhase with the same anchor
+
+    anchor:                     Case property containing a date after which this phase becomes active
+    forms: 			The forms that are to be filled out within this phase
+    """
+    anchor = StringProperty()
+    forms = SchemaListProperty(SchedulePhaseForm)
+
+    @property
+    def id(self):
+        """ A Schedule Phase is 1-indexed """
+        _id = super(SchedulePhase, self).id
+        return _id + 1
+
+    @property
+    def phase_id(self):
+        return "{}_{}".format(self.anchor, self.id)
+
+    def get_module(self):
+        return self._parent
+
+    _get_forms = IndexedSchema.Getter('forms')
+    def get_forms(self):
+        """Returns the actual form objects related to this phase"""
+        module = self.get_module()
+        return (module.get_form_by_unique_id(form.form_id) for form in self._get_forms())
+
+    def get_form(self, desired_form):
+        return next((form for form in self.get_forms() if form.unique_id == desired_form.unique_id), None)
+
+    def get_phase_form_index(self, form):
+        """
+        Returns the index of the form with respect to the phase
+
+        schedule_phase.forms = [a,b,c]
+        schedule_phase.get_phase_form_index(b)
+        => 1
+        schedule_phase.get_phase_form_index(c)
+        => 2
+        """
+        return next((phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id),
+                    None)
+
+    def remove_form(self, form):
+        """
+        Remove a form from the phase
+
+        If this results in an empty phase, delete the phase
+        """
+        idx = self.get_phase_form_index(form)
+        if idx is None:
+            raise ScheduleError("That form doesn't exist in the phase")
+
+        self.forms.remove(self.forms[idx])
+
+        if len(self.forms) == 0:
+            # I'm useless now
+            self.get_module().schedule_phases.remove(self)
+
+    def add_form(self, form):
+        """
+        Adds a form to this phase, removing it from other phases
+        """
+        old_phase = form.get_phase()
+        if old_phase is not None and old_phase.anchor != self.anchor:
+            old_phase.remove_form(form)
+
+        if self.get_form(form) is None:
+            self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
+
+
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
@@ -2297,6 +2406,8 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
+    schedule_phases = SchemaListProperty(SchedulePhase)
+    get_schedule_phases = IndexedSchema.Getter('schedule_phases')
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2339,6 +2450,7 @@ class AdvancedModule(ModuleBase):
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
         if self.has_schedule:
+            # TODO: verify that this is what we want to have happen here
             form.schedule = FormSchedule()
 
         self.forms.append(form)
@@ -2559,6 +2671,22 @@ class AdvancedModule(ModuleBase):
         the usercase, return True.
         """
         return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
+
+    def get_or_create_schedule_phase(self, anchor):
+        """Returns a tuple of (phase, new?)"""
+        if anchor is None or anchor.strip() == '':
+            raise ScheduleError(_("You can't create a phase without an anchor property"))
+
+        phase = next((phase for phase in self.get_schedule_phases() if phase.anchor == anchor), None)
+        is_new_phase = False
+
+        if phase is None:
+            self.schedule_phases.append(SchedulePhase(anchor=anchor))
+            # TODO: is there a better way of doing this?
+            phase = list(self.get_schedule_phases())[-1] # get the phase from the module so we know the _parent
+            is_new_phase = True
+
+        return (phase, is_new_phase)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3960,6 +4088,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    created_from_template = StringProperty()
 
     @property
     @memoized
@@ -4817,96 +4946,6 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-def get_apps_in_domain(domain, full=False, include_remote=True):
-    """
-    Returns all apps(not builds) in a domain
-
-    full use applications when true, otherwise applications_brief
-    """
-    if full:
-        view_name = 'app_manager/applications'
-        startkey = [domain, None]
-        endkey = [domain, None, {}]
-    else:
-        view_name = 'app_manager/applications_brief'
-        startkey = [domain]
-        endkey = [domain, {}]
-
-    view_results = Application.get_db().view(view_name,
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True,
-    )
-
-    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
-    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
-    return filter(remote_app_filter, wrapped_apps)
-
-
-def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
-    """
-    Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
-    (Application or RemoteApp).
-
-    """
-
-    if latest:
-        try:
-            original_app = get_db().get(app_id)
-        except ResourceNotFound:
-            raise Http404()
-        if not domain:
-            try:
-                domain = original_app['domain']
-            except Exception:
-                raise Http404()
-
-        if original_app.get('copy_of'):
-            parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version'] if original_app.get('is_released') else -1
-        else:
-            parent_app_id = original_app['_id']
-            min_version = -1
-
-        if target == 'build':
-            # get latest-build regardless of star
-            couch_view = 'app_manager/saved_app'
-            startkey = [domain, parent_app_id, {}]
-            endkey = [domain, parent_app_id]
-        else:
-            # get latest starred-build
-            couch_view = 'app_manager/applications'
-            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
-            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
-
-        latest_app = get_db().view(
-            couch_view,
-            startkey=startkey,
-            endkey=endkey,
-            limit=1,
-            descending=True,
-            include_docs=True
-        ).one()
-
-        try:
-            app = latest_app['doc']
-        except TypeError:
-            # If no builds/starred-builds, return act as if latest=False
-            app = original_app
-    else:
-        try:
-            app = get_db().get(app_id)
-        except Exception:
-            raise Http404()
-    if domain and app['domain'] != domain:
-        raise Http404()
-    try:
-        cls = wrap_cls or get_correct_app_class(app)
-    except DocTypeError:
-        raise Http404()
-    app = cls.wrap(app)
-    return app
-
 str_to_cls = {
     "Application": Application,
     "Application-Deleted": Application,
@@ -4915,7 +4954,7 @@ str_to_cls = {
 }
 
 
-def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
         source = get_app(None, app_id)
@@ -4932,8 +4971,9 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
         attachments = {}
     finally:
         source['_attachments'] = {}
-    if name:
-        source['name'] = name
+    if source_properties is not None:
+        for key, value in source_properties.iteritems():
+            source[key] = value
     cls = str_to_cls[source['doc_type']]
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
