@@ -9,6 +9,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser
+from corehq.util.quickcache import quickcache
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ProductAvailabilityData, SupplyPointStatus
 
@@ -233,6 +234,10 @@ class SupplyPointStatusReport(GenericTabularReport, DatespanMixin,
             DataTablesColumn('Date'),
         )
 
+    @quickcache(['location_id'], timeout=30 * 60)
+    def _get_location_name(self, location_id):
+        return SQLLocation.objects.get(location_id=location_id).name
+
     @property
     def rows(self):
         locations = get_object_or_404(
@@ -244,7 +249,7 @@ class SupplyPointStatusReport(GenericTabularReport, DatespanMixin,
         ).order_by('-status_date')
         for element in data:
             yield [
-                SQLLocation.objects.get(location_id=element.location_id).name,
+                self._get_location_name(element.location_id),
                 element.status_type,
                 element.status_value,
                 element.status_date
