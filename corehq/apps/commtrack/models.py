@@ -771,7 +771,3 @@ def reprocess_form(sender, xform, *args, **kwargs):
     result = process_stock(xform)
     result.commit()
     CommCareCase.get_db().bulk_save(result.relevant_cases)
-
-
-# import signals
-from . import signals
