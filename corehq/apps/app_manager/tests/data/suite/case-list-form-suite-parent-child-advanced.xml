@@ -13,15 +13,9 @@
     </resource>
   </xform>
   <xform>
-    <resource id="update_house_form" descriptor="Form: (Module Manage house) - Update house">
+    <resource id="update_person_form" descriptor="Form: (Module Manage person) - Update person">
       <location authority="local">./modules-2/forms-0.xml</location>
       <location authority="remote">./modules-2/forms-0.xml</location>
-    </resource>
-  </xform>
-  <xform>
-    <resource id="update_person_form" descriptor="Form: (Module Manage person) - Update person">
-      <location authority="local">./modules-3/forms-0.xml</location>
-      <location authority="remote">./modules-3/forms-0.xml</location>
     </resource>
   </xform>
   <locale language="default">
@@ -136,8 +130,9 @@
         </display>
         <stack>
             <push>
-                <command value="'m0-f0'"/>
-                <datum id="case_id_new_house_0" value="uuid()"/>
+                <command value="'m1-f0'"/>
+                <datum id="case_id_load_house" value="instance('commcaresession')/session/data/parent_id"/>
+                <datum id="case_id_new_person_0" value="uuid()"/>
                 <datum id="return_to" value="'m2'"/>
             </push>
         </stack>
@@ -162,77 +157,15 @@
       </template>
     </field>
   </detail>
-  <detail id="m3_case_short">
-    <title>
-      <text>
-        <locale id="m3.case_short.title"/>
-      </text>
-    </title>
-    <field>
-      <header>
-        <text>
-          <locale id="m3.case_short.case_name_1.header"/>
-        </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="case_name"/>
-        </text>
-      </template>
-    </field>
-    <action>
-        <display>
-            <text><locale id="case_list_form.m3"/></text>
-        </display>
-        <stack>
-            <push>
-                <command value="'m1-f0'"/>
-                <datum id="case_id_load_house" value="instance('commcaresession')/session/data/parent_id"/>
-                <datum id="case_id_new_person_0" value="uuid()"/>
-                <datum id="return_to" value="'m3'"/>
-            </push>
-        </stack>
-    </action>
-  </detail>
-  <detail id="m3_case_long">
-    <title>
-      <text>
-        <locale id="m3.case_long.title"/>
-      </text>
-    </title>
-    <field>
-      <header>
-        <text>
-          <locale id="m3.case_long.case_name_1.header"/>
-        </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="case_name"/>
-        </text>
-      </template>
-    </field>
-  </detail>
   <entry>
     <command id="m0-f0">
       <text>
         <locale id="forms.m0f0"/>
       </text>
     </command>
-    <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
         <datum id="case_id_new_house_0" function="uuid()"/>
     </session>
-    <stack>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_house_0]) &gt; 0">
-            <command value="'m2'"/>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_house_0"/>
-        </create>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_house_0]) = 0">
-            <command value="'m2'"/>
-        </create>
-    </stack>
   </entry>
   <entry>
     <command id="m1-f0">
@@ -247,13 +180,13 @@
         <datum id="case_id_new_person_0" function="uuid()"/>
     </session>
     <stack>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm3' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) &gt; 0">
-            <command value="'m3'"/>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) &gt; 0">
+            <command value="'m2'"/>
             <datum id="parent_id" value="instance('commcaresession')/session/data/case_id_load_house"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_person_0"/>
         </create>
-        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm3' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) = 0">
-            <command value="'m3'"/>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) = 0">
+            <command value="'m2'"/>
             <datum id="parent_id" value="instance('commcaresession')/session/data/case_id_load_house"/>
         </create>
     </stack>
@@ -265,21 +198,10 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <session>
-        <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='house'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
-    </session>
-  </entry>
-  <entry>
-    <command id="m3-f0">
-      <text>
-        <locale id="forms.m3f0"/>
-      </text>
-    </command>
-    <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-        <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='house'][@status='open']" value="./@case_id" detail-select="m2_case_short"/>
-        <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m3_case_short" detail-confirm="m3_case_long"/>
+        <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='house'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
+        <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
   </entry>
   <menu id="m0">
@@ -299,11 +221,5 @@
       <locale id="modules.m2"/>
     </text>
     <command id="m2-f0"/>
-  </menu>
-  <menu id="m3">
-    <text>
-      <locale id="modules.m3"/>
-    </text>
-    <command id="m3-f0"/>
   </menu>
 </suite>
