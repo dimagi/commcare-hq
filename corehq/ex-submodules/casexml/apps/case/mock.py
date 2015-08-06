@@ -213,7 +213,7 @@ class CaseBlock(dict):
                     '_text': case_id
                 }
 
-    def as_xml(self, format_datetime=date_to_xml_string):
+    def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
