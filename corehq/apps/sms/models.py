@@ -908,6 +908,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             MessagingEvent.RECIPIENT_CASE: 'CommCareCase',
             MessagingEvent.RECIPIENT_USER_GROUP: 'Group',
             MessagingEvent.RECIPIENT_CASE_GROUP: 'CommCareCaseGroup',
+            MessagingEvent.RECIPIENT_LOCATION: 'SQLLocation',
+            MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS: 'SQLLocation',
         }.get(recipient_type, None)
 
     def get_recipient_doc_type(self):
