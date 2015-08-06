@@ -96,16 +96,13 @@ class ToggleEditView(ToggleBaseView):
             )
         return context
 
-    def call_save_fn(self, toggle, current):
+    def call_save_fn(self, changed_entries, new_entries):
         if self.static_toggle.save_fn is None:
             return
-        existing = set(toggle.enabled_users)
-        changed_entries = existing.symmetric_difference(current)
         for entry in changed_entries:
             if entry.startswith(NAMESPACE_DOMAIN):
-                domain = entry[len(NAMESPACE_DOMAIN):]
-                is_enabled = entry in current  # otherwise it's been disabled
-                self.static_toggle.save_fn(domain, is_enabled)
+                domain = entry.split(":")[-1]
+                self.static_toggle.save_fn(domain, entry in new_entries)
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
@@ -114,11 +111,14 @@ class ToggleEditView(ToggleBaseView):
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
 
-        self.call_save_fn(toggle, item_list)
-        affected_users = set(toggle.enabled_users) | set(item_list)
+        old_entries = set(toggle.enabled_users)
+        new_entries = set(item_list)
         toggle.enabled_users = item_list
         toggle.save()
-        for item in affected_users:
+
+        changed_entries = old_entries ^ new_entries  # ^ is XOR in python
+        self.call_save_fn(changed_entries, new_entries)
+        for item in changed_entries:
             clear_toggle_cache(toggle.slug, item)
 
         data = {

@@ -484,7 +484,7 @@ API_THROTTLE_WHITELIST = StaticToggle(
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
+    domain = Domain.get_by_name(domain_name, strict=True)
     if domain and domain.commtrack_enabled != toggle_is_enabled:
         if toggle_is_enabled:
             domain.convert_to_commtrack()
