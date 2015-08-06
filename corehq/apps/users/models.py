@@ -11,6 +11,7 @@ from restkit.errors import NoMoreData
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
@@ -540,6 +541,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
                                             **kwargs)
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
+
+    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+        project = Domain.get_by_name(domain)
+        self.add_domain_membership(domain=domain)
+        self.set_role(domain, role)
+        if project.commtrack_enabled:
+            self.get_domain_membership(domain).program_id = program_id
+        if project.locations_enabled:
+            self.get_domain_membership(domain).location_id = location_id
+        self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
         for i, dm in enumerate(self.domain_memberships):
@@ -2311,6 +2322,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
                 yield web_user
 
     @classmethod
+    def get_users_by_permission(cls, domain, permission):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            web_user = cls.wrap(user_doc)
+            if web_user.has_permission(domain, permission):
+                yield web_user
+
+    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
@@ -2401,9 +2420,59 @@ class InvalidUser(FakeUser):
     def is_member_of(self, domain_qs):
         return False
 
+
 #
 # Django  models go here
 #
+class DomainRequest(models.Model):
+    '''
+    Request to join domain. Requester might or might not already have an account.
+    '''
+    email = models.CharField(max_length=100, db_index=True)
+    full_name = models.CharField(max_length=100, db_index=True)
+    is_approved = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    class Meta:
+        unique_together = [('domain', 'email')]
+
+    @classmethod
+    def by_domain(cls, domain):
+        return DomainRequest.objects.filter(domain=domain, is_approved=False)
+
+    @classmethod
+    def by_email(cls, domain, email):
+        return DomainRequest.by_domain(domain).filter(email=email).first()
+
+    def send_approval_email(self):
+        domain_name = Domain.get_by_name(self.domain).display_name()
+        params = {
+            'domain_name': domain_name,
+            'url': absolute_reverse("domain_homepage", args=[self.domain]),
+        }
+        text_content = render_to_string("users/email/new_domain_request.txt", params)
+        html_content = render_to_string("users/email/new_domain_request.html", params)
+        subject = _('Request to join %s approved') % domain_name
+        send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+    def send_request_email(self):
+        domain_name = Domain.get_by_name(self.domain).display_name()
+        params = {
+            'full_name': self.full_name,
+            'email': self.email,
+            'domain_name': domain_name,
+            'url': absolute_reverse("web_users", args=[self.domain]),
+        }
+        recipients = {u.get_email() for u in
+            WebUser.get_users_by_permission(self.domain, 'edit_web_users')}
+        text_content = render_to_string("users/email/request_domain_access.txt", params)
+        html_content = render_to_string("users/email/request_domain_access.html", params)
+        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+
 class Invitation(Document):
     email = StringProperty()
     invited_by = StringProperty()
