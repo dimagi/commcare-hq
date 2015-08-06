@@ -202,7 +202,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         expected_fixture = """
              <partial>
              <fixture id="schedule:m2:p1:f0">
-                 <schedule>
+                 <schedule expires="">
                      <visit id="1" due="9" late_window="1" />
                      <visit id="2" due="11" />
                  </schedule>
