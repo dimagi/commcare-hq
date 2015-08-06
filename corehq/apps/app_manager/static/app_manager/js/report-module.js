@@ -19,7 +19,7 @@ var ReportModule = (function () {
         };
     }
 
-    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs) {
+    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
         var self = this;
 
         graph_configs = graph_configs || {};
@@ -87,6 +87,26 @@ var ReportModule = (function () {
                 chartsToConfigs[chart_id].config = configToDict(graph_config.config);
             });
             return chartsToConfigs;
+        };
+
+        this.addSubscribersToSaveButton = function() {
+            var addSubscriberToSaveButton = function(observable) {
+                observable.subscribe(changeSaveButton);
+            };
+            var addConfigToSaveButton = function(config) {
+                addSubscriberToSaveButton(config.keyValuePairs);
+                _.each(config.keyValuePairs(), function(keyValuePair) {
+                    addSubscriberToSaveButton(keyValuePair[0]);
+                    addSubscriberToSaveButton(keyValuePair[1]);
+                })
+            };
+            _.each(self.graphConfigs, function(reportGraphConfigs) {
+                _.each(reportGraphConfigs, function(graphConfig) {
+                    addSubscriberToSaveButton(graphConfig.graph_type);
+                    addConfigToSaveButton(graphConfig.config);
+                    _.each(graphConfig.series_configs, addConfigToSaveButton);
+                });
+            });
         };
 
         this.allGraphTypes = ['bar', 'time', 'xy'];
@@ -197,7 +217,7 @@ var ReportModule = (function () {
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.reportId = ko.observable(report_id);
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
+        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
