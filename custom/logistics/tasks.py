@@ -33,6 +33,9 @@ def stock_data_task(api_object):
         'start_date': start_date
     })
 
+    if not checkpoint.api:
+        checkpoint.api = default_api
+
     if not checkpoint.start_date:
         checkpoint.start_date = start_date
         checkpoint.save()
