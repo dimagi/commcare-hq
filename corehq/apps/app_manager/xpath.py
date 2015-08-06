@@ -393,7 +393,7 @@ class ScheduleFormXPath(object):
 
     def next_valid_schedules(self, phase_id=None):
         """
-         current_schedule_phase = phase.id and (
+         [current_schedule_phase = '' or ]current_schedule_phase = phase.id and (
            instance(...)/schedule/fixture/@expires = ''
            or
            today() < (date(anchor) + instance(...)/schedule/@expires)
