@@ -36,7 +36,8 @@ class Command(BaseCommand):
         for i in range(len(log_names)):
             for j in range(len(log_names)):
                 if i != j:
-                    case_diff = logs[i].case_ids_on_phone - logs[j].case_ids_on_phone
+                    case_diff = set(logs[i].get_footprint_of_cases_on_phone()) - \
+                        set(logs[j].get_footprint_of_cases_on_phone())
                     if case_diff:
                         print 'cases on {} and not {}: {}'.format(
                             log_names[i],
