@@ -189,4 +189,4 @@ def guess_phone_type_from_user_agent(user_agent):
     A really dumb utility that guesses the phone type based on the user-agent header.
     """
     j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return 'j2me' if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
+    return J2ME if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
