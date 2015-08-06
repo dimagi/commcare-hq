@@ -128,3 +128,13 @@ class NRHMDatespanFilter(DatespanFilter):
 
 class NRHMDatespanMixin(DatespanMixin):
     datespan_field = NRHMDatespanFilter
+
+
+class LanguageFilter(BaseSingleOptionFilter):
+    slug = 'lang'
+    label = ugettext_lazy('Language')
+    default_text = "English"
+
+    @property
+    def options(self):
+        return [('hin', ugettext_lazy('Hindi'))]
