@@ -49,6 +49,7 @@ from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
@@ -84,6 +85,7 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
+    NoMatchingFilterException,
     RearrangeError,
     VersioningError,
     XFormException,
@@ -91,6 +93,7 @@ from .exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager import id_strings
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -2776,6 +2779,88 @@ class ReportGraphConfig(DocumentSchema):
     config = DictProperty()
 
 
+class ReportAppFilter(DocumentSchema):
+    def get_filter_value(self):
+        raise NotImplementedError
+
+
+def _filter_by_case_sharing_group_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return [
+        Choice(value=group._id, display=None)
+        for group in user.get_case_sharing_groups()
+    ]
+
+
+def _filter_by_location_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.location_id, display=None)
+
+
+def _filter_by_username(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user.username, display=None)
+
+
+def _filter_by_user_id(user):
+    from corehq.apps.reports_core.filters import Choice
+    return Choice(value=user._id, display=None)
+
+
+_filter_type_to_func = {
+    'case_sharing_group': _filter_by_case_sharing_group_id,
+    'location_id': _filter_by_location_id,
+    'username': _filter_by_username,
+    'user_id': _filter_by_user_id,
+}
+
+
+class AutoFilter(ReportAppFilter):
+    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+
+    def get_filter_value(self, user):
+        return _filter_type_to_func[self.filter_type](user)
+
+
+class CustomDataAutoFilter(ReportAppFilter):
+    custom_data_property = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return Choice(value=user.user_data[self.custom_data_property], display=None)
+
+
+class StaticChoiceFilter(ReportAppFilter):
+    select_value = StringProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=self.select_value, display=None)]
+
+
+class StaticChoiceListFilter(ReportAppFilter):
+    value = StringListProperty()
+
+    def get_filter_value(self, user):
+        from corehq.apps.reports_core.filters import Choice
+        return [Choice(value=string_value, display=None) for string_value in self.value]
+
+
+class StaticDatespanFilter(ReportAppFilter):
+    date_range = StringProperty(
+        choices=[
+            'last7',
+            'last30',
+            'lastmonth',
+        ],
+        required=True,
+    )
+
+    def get_filter_value(self, user):
+        start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
 class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
@@ -2783,6 +2868,7 @@ class ReportAppConfig(DocumentSchema):
     report_id = StringProperty(required=True)
     header = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
+    filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
 

@@ -55,10 +55,10 @@ branches:
   # - due-list+icds/scheduler # TS 7/30
   # - icds/scheduler # Farid 7/22
   - ckeditor # J$ 7/24
-  - notify-exception-code-context  # Ben 7/30
 #  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
+  - django17 # J$ 8/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,5 +77,6 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
+    branches:
+      - django18
 
