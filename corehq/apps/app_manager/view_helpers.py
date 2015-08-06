@@ -2,6 +2,7 @@ from django.http import Http404
 from django.views.generic.base import TemplateView
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.domain.views import DomainViewMixin
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -27,8 +28,8 @@ class ApplicationViewMixin(DomainViewMixin):
             return get_app(self.domain, self.app_id)
         except Http404 as e:
             raise e
-        except Exception:
-            pass
+        except Exception as e:
+            soft_assert(notify_admins=True)
         return None
 
 
