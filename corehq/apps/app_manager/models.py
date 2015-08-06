@@ -1114,9 +1114,21 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return any([name.startswith('parent/')
             for name in self.actions.all_property_names()])
 
+    def get_registration_actions(self, case_type):
+        reg_actions = []
+        if 'open_case' in self.active_actions() and (not case_type or self.get_module().case_type == case_type):
+            reg_actions.append('open_case')
+
+        subcase_actions = [action for action in self.actions.subcases if not action.repeat_context]
+        if case_type:
+            subcase_actions = [a for a in subcase_actions if a.case_type == case_type]
+
+        reg_actions.extend(subcase_actions)
+        return reg_actions
+
     def is_registration_form(self, case_type=None):
-        return not self.requires_case() and 'open_case' in self.active_actions() and \
-            (not case_type or self.get_module().case_type == case_type)
+        reg_actions = self.get_registration_actions(case_type)
+        return len(reg_actions) == 1
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
@@ -1996,7 +2008,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         the form is only allowed to load parent cases (and any auto-select cases).
         """
         reg_actions = self.get_registration_actions(case_type)
-        if not reg_actions or len(reg_actions) != 1:
+        if len(reg_actions) != 1:
             return False
 
         load_actions = [action for action in self.actions.load_update_cases if not action.auto_select]
