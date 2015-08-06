@@ -568,10 +568,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
     def _prep_case_list_form_app(self):
-        app = Application.wrap(self.get_json('app'))
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         app.build_spec.version = '2.9'
-        case_module = app.get_module(0)
-        case_module.get_form(0)
+
+        case_module = app.add_module(Module.new_module('Case module', None))
+        case_module.unique_id = 'case_module'
+        case_module.case_type = 'suite_test'
+        update_case_form = app.new_form(0, 'Update case', lang='en')
+        update_case_form.unique_id = 'update_case'
+        update_case_form.requires = 'case'
+        update_case_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update_case_form.actions.update_case.condition.type = 'always'
 
         register_module = app.add_module(Module.new_module('register', None))
         register_module.unique_id = 'register_case_module'
@@ -611,11 +618,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-form-nav-entry'),
             app.create_suite(),
-            "./entry[3]"
+            "./entry[2]"
         )
 
     def test_case_list_registration_form_no_media(self):
         app = self._prep_case_list_form_app()
+
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
             app.create_suite(),
@@ -639,6 +647,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module2.case_list_form.label = {
             'en': 'New Case'
         }
+
         self.assertXmlEqual(
             self.get_xml('case-list-form-suite-multiple-references'),
             app.create_suite(),
