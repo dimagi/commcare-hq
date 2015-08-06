@@ -659,11 +659,16 @@ class DatumMeta(object):
     @property
     @memoized
     def case_type(self):
-        if not self.nodeset:
-            return None
+        """Get the case type from the nodeset of the function if possible
+        """
+        def _extract_type(xpath):
+            match = self.type_regex.search(xpath)
+            return match.group(1) if match else None
 
-        match = self.type_regex.search(self.nodeset)
-        return match.group(1)
+        if self.nodeset:
+            return _extract_type(self.nodeset)
+        elif self.function:
+            return _extract_type(self.function)
 
     def __lt__(self, other):
         return self.id < other.id
