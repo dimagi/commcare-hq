@@ -653,6 +653,10 @@ class DatumMeta(object):
         return cls(session_datum.id, session_datum.nodeset, session_datum.function)
 
     @property
+    def require_selection(self):
+        return bool(self.nodeset)
+
+    @property
     @memoized
     def case_type(self):
         if not self.nodeset:
@@ -934,7 +938,7 @@ class WorkflowHelper(object):
             # since we want to go the 'previous' screen we need to drop the last
             # datum
             last = frame_children.pop()
-            while isinstance(last, DatumMeta) and last.function:
+            while isinstance(last, DatumMeta) and not last.require_selection:
                 # keep removing last element until we hit a command
                 # or a non-autoselect datum
                 last = frame_children.pop()
@@ -972,7 +976,7 @@ class WorkflowHelper(object):
         """
         datum_index = -1
         for child in target_frame_elements:
-            if not isinstance(child, DatumMeta) or child.function:
+            if not isinstance(child, DatumMeta) or not child.require_selection:
                 yield child
             else:
                 datum_index += 1
