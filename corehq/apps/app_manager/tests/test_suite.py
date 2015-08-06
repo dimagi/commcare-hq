@@ -772,7 +772,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_house_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
         update_house_form.actions.update_case.condition.type = 'always'
 
-
         person_module = app.add_module(Module.new_module('Manage person', None))
         person_module.unique_id = 'manage_person'
         person_module.case_type = 'person'

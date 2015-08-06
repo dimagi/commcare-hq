@@ -882,7 +882,7 @@ class WorkflowHelper(object):
                 frame_case_created = StackFrameMeta(None, get_if_clause(case_count.gt(0)))
                 frame_case_created.add_child(target_command)
                 stack_frames.append(frame_case_created)
-                
+
                 frame_case_not_created = StackFrameMeta(None, get_if_clause(case_count.eq(0)))
                 frame_case_not_created.add_child(target_command)
                 stack_frames.append(frame_case_not_created)
@@ -904,7 +904,9 @@ class WorkflowHelper(object):
                             if target_meta.case_type == case_type
                         ]
                     except ValueError:
-                        raise SuiteError("Return module for case list form has mismatching datums: {}".format(form.unique_id))
+                        raise SuiteError(
+                            "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                        )
 
                     return target_dm
 
@@ -2004,9 +2006,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if case_type == module.case_type:
                     return module
 
-                target_modules = [mod for mod in module.get_app().modules
-                                      if mod.case_type == case_type and
-                                         (not with_product_details or hasattr(mod, 'product_details'))]
+                target_modules = [
+                    mod for mod in module.get_app().modules
+                    if mod.case_type == case_type and (not with_product_details or hasattr(mod, 'product_details'))
+                ]
                 try:
                     return target_modules[0]
                 except IndexError:
