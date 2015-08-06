@@ -1,44 +1,54 @@
 import logging
 from couchdbkit import ResourceNotFound
 from corehq.apps.cachehq.invalidate import invalidate_document
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.cache.cache_core import cached_open_doc
 
 
-class CachedCouchDocumentMixin(object):
-    """
-    A mixin for Documents that's meant to be used to enable generationally cached
-    access in front of couch.
-    """
+class _InvalidateCacheMixin(object):
+    def clear_caches(self):
+        invalidate_document(self)
 
     def save(self, **params):
-        super(CachedCouchDocumentMixin, self).save(**params)
-        invalidate_document(self)
+        super(_InvalidateCacheMixin, self).save(**params)
+        self.clear_caches()
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
-        super(CachedCouchDocumentMixin, cls).save_docs(docs, use_uuids, all_or_nothing)
+        super(_InvalidateCacheMixin, cls).save_docs(docs, use_uuids, all_or_nothing)
         for doc in docs:
-            invalidate_document(doc)
+            doc.clear_caches()
 
     def delete(self):
         id = self._id
         try:
-            super(CachedCouchDocumentMixin, self).delete()
+            super(_InvalidateCacheMixin, self).delete()
         except ResourceNotFound:
             # it was already deleted. this isn't a problem, but might be a caching bug
             logging.exception('Tried to delete cached doc %s but it was already deleted' % id)
 
         self._doc['_id'] = id
+        self.clear_caches()
         invalidate_document(self, deleted=True)
 
+
+class QuickCachedDocumentMixin(_InvalidateCacheMixin):
+    def clear_caches(self):
+        super(QuickCachedDocumentMixin, self).clear_caches()
+        if getattr(self, '_id', False):
+            self.get.clear(self.__class__, self._id)
+
     @classmethod
-    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
-        if rev is None and db is None and dynamic_properties:
-            doc_json = cached_open_doc(cls.get_db(), docid)
-            return cls.wrap(doc_json)
-        else:
-            return super(CachedCouchDocumentMixin, cls).get(docid, rev, db, dynamic_properties)
+    @quickcache(['cls.__name__', 'doc_id'])
+    def get(cls, doc_id, *args, **kwargs):
+        return super(QuickCachedDocumentMixin, cls).get(doc_id, *args, **kwargs)
+
+
+class CachedCouchDocumentMixin(QuickCachedDocumentMixin):
+    """
+    A mixin for Documents that's meant to be used to enable generationally cached
+    access in front of couch.
+    """
 
     @classmethod
     def view(cls, view_name, wrapper=None, dynamic_properties=None, wrap_doc=True, classes=None, **params):
