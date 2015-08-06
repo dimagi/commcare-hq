@@ -222,6 +222,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',

@@ -756,7 +756,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            return HttpResponseBadRequest(e)
+            messages.error(request, _(e.message))
+            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
@@ -787,6 +788,8 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'title': _("Mobile Worker Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Return to manage mobile workers"),
         })
         return render(request, 'style/bootstrap2/soil_status_full.html', context)
 

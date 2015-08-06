@@ -1615,7 +1615,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 )
                 if isinstance(module, Module):
-                    for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                    use_filter = False if module.has_forms() else bool(module.case_details.short.filter)
+                    for datum_meta in self.get_datum_meta_module(module, use_filter=use_filter):
                         e.datums.append(datum_meta['datum'])
                 elif isinstance(module, AdvancedModule):
                     e.datums.append(SessionDatum(
@@ -2349,8 +2350,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = '../../{}'.format(path)
-            local_path = './{}/{}'.format(path, name)
+            install_path = u'../../{}'.format(path)
+            local_path = u'./{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
