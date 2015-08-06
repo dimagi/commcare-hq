@@ -1057,19 +1057,26 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         specific_media = {
             'menu': {
                 'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id
+                    module, module_id, form=form, form_index=form_id, to_language=context['lang']
                 ),
-                'default_file_name': default_file_name,
+                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=context['lang']),
             }
         }
         if module and module.uses_media():
+            def _make_name(suffix):
+                return "{default_name}_{suffix}_{lang}".format(
+                    default_name=default_file_name,
+                    suffix=suffix,
+                    lang=context['lang'],
+                )
+
             specific_media['case_list_form'] = {
-                'menu_refs': app.get_case_list_form_media(module, module_id),
-                'default_file_name': '{}_case_list_form'.format(default_file_name),
+                'menu_refs': app.get_case_list_form_media(module, module_id, to_language=context['lang']),
+                'default_file_name': _make_name('case_list_form'),
             }
             specific_media['case_list_menu_item'] = {
-                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
-                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=context['lang']),
+                'default_file_name': _make_name('case_list_menu_item'),
             }
             specific_media['case_list_lookup'] = {
                 'menu_refs': app.get_case_list_lookup_image(module, module_id),
@@ -1705,19 +1712,20 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_form_media_image'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_image',
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        module.case_list_form.media_image = val
+        module.case_list_form.set_icon(lang, new_path)
+
     if should_edit('case_list_form_media_audio'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_audio',
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.media_audio = val
+        module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
         val = _process_media_attribute(
@@ -1725,14 +1733,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
-        module.case_list.media_image = val
+        module.case_list.set_icon(lang, val)
     if should_edit('case_list-menu_item_media_audio'):
         val = _process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
         )
-        module.case_list.media_audio = val
+        module.case_list.set_audio(lang, val)
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
@@ -1767,7 +1775,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             except ModuleNotFoundException:
                 messages.error(_("Unknown Module"))
 
-    _handle_media_edits(request, module, should_edit, resp)
+    _handle_media_edits(request, module, should_edit, resp, lang)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -1915,13 +1923,13 @@ def _process_media_attribute(attribute, resp, val):
     return val
 
 
-def _handle_media_edits(request, item, should_edit, resp):
+def _handle_media_edits(request, item, should_edit, resp, lang):
     if 'corrections' not in resp:
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            val = _process_media_attribute(attribute, resp, request.POST.get(attribute))
-            setattr(item, attribute, val)
+            media_path = _process_media_attribute(attribute, resp, request.POST.get(attribute))
+            item._set_media(attribute, lang, media_path)
 
 
 @no_conflict_require_POST
@@ -2043,7 +2051,7 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         )
         form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
-    _handle_media_edits(request, form, should_edit, resp)
+    _handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
     if ajax:
