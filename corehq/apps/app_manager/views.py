@@ -404,6 +404,7 @@ def default(request, domain):
     """
     return view_app(request, domain)
 
+
 def get_schedule_context(form):
         from corehq.apps.app_manager.models import SchedulePhase
         schedule_context = {}
@@ -415,6 +416,7 @@ def get_schedule_context(form):
             else:
                 schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
         return schedule_context
+
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []

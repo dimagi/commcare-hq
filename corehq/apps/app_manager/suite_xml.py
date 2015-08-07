@@ -1171,7 +1171,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             # Add variables
             variables = list(
-                self.detail_variables(module, detail, detail_column_infos[start:end])
+                SuiteGenerator.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
@@ -1267,7 +1267,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
         return r
 
-    def _schedule_detail_variables(self, module, detail, detail_column_infos):
+    @staticmethod
+    def _schedule_detail_variables(module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
         has_schedule = getattr(module, 'has_schedule', False)
         if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
@@ -1302,8 +1303,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='$next_due < today()')
 
-    def detail_variables(self, module, detail, detail_column_infos):
-        return chain(self._schedule_detail_variables(module, detail, detail_column_infos),)
+    @staticmethod
+    def detail_variables(module, detail, detail_column_infos):
+        return chain(SuiteGenerator._schedule_detail_variables(module, detail, detail_column_infos),)
 
     def build_case_tile_detail(self, module, detail, detail_type):
         """
