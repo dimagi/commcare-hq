@@ -243,7 +243,7 @@ class DataSourceBuilder(object):
                     'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
-                }) for cp in sorted(self.case_properties)
+                }) for cp in self.case_properties
             )
             ret['computed/owner_name'] = {
                 'type': 'case_property',
