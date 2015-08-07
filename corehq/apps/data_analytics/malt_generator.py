@@ -32,6 +32,7 @@ class MALTTableGenerator(object):
             malt_rows_to_save = []
             logger.info("Building MALT for {}".format(domain.name))
             all_users_by_id = {user._id: user for user in domain.all_users()}
+
             for monthspan in self.monthspan_list:
                 try:
                     malt_rows_to_save.extend(self._get_malt_row_dicts(domain.name, monthspan, all_users_by_id))
@@ -50,14 +51,14 @@ class MALTTableGenerator(object):
         for app_row_dict in apps_submitted_for:
             app_id = app_row_dict['app_id']
             num_of_forms = app_row_dict['num_of_forms']
-            user_id, username, user_type, email = self._user_data(
-                app_row_dict['user_id'],
-                app_row_dict['username'],
-                all_users_by_id
-            )
 
             try:
                 wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
+                user_id, username, user_type, email = self._user_data(
+                    app_row_dict['user_id'],
+                    app_row_dict['username'],
+                    all_users_by_id
+                )
             except Exception as ex:
                 logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
                              (id=user_id, app_id=app_id, ex=str(ex)), exc_info=True)
