@@ -10,6 +10,7 @@ from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
 from django.db.models import Count
+from django.http.response import Http404
 
 
 logger = logging.getLogger('build_malt_table')
@@ -50,12 +51,9 @@ class MALTTableGenerator(object):
             try:
                 wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
             except Exception as ex:
-                if app_id == MISSING_APP_ID:
-                    wam, pam, is_app_deleted = AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False
-                else:
-                    logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
-                                 (id=user._id, app_id=app_id, ex=str(ex)), exc_info=True)
-                    continue
+                logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
+                             (id=user._id, app_id=app_id, ex=str(ex)), exc_info=True)
+                continue
 
             malt_dict = {
                 'month': monthspan.startdate,
@@ -128,7 +126,10 @@ class MALTTableGenerator(object):
     @classmethod
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
-        app = get_app(domain, app_id)
+        try:
+            app = get_app(domain, app_id)
+        except Http404:
+            return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False)
         return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
                 getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
                 app.is_deleted())
