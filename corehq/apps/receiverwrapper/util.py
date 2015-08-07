@@ -176,6 +176,10 @@ def determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
+    return determine_authtype_from_user_agent(request)
+
+
+def determine_authtype_from_user_agent(request):
     user_agent = request.META.get('HTTP_USER_AGENT')
     type_to_auth_map = {
         J2ME: 'digest',
