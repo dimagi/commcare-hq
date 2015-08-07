@@ -72,9 +72,10 @@ class CaseRebuildTest(TestCase):
 
     def testBasicRebuild(self):
         user_id = 'test-basic-rebuild-user'
-        case_id = post_util(create=True, user_id=user_id)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id)
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id)
+        now = datetime.utcnow()
+        case_id = post_util(create=True, user_id=user_id, date_modified=now)
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id, date_modified=now)
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id, date_modified=now)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -94,7 +95,7 @@ class CaseRebuildTest(TestCase):
         case.xform_ids = [case.xform_ids[0], case.xform_ids[2], case.xform_ids[1]]
         case.rebuild()
         self.assertEqual(case.p1, 'p1-1') # original
-        self.assertEqual(case.p2, 'p2-2') # updated (back!)
+        self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testActionComparison(self):
