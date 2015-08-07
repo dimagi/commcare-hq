@@ -774,7 +774,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_person_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
         update_person_form.actions.update_case.condition.type = 'always'
 
-        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child'), app.create_suite())
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-advanced'), app.create_suite())
 
     def test_case_list_form_parent_child_basic(self):
         """
