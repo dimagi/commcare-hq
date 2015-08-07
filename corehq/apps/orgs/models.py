@@ -1,10 +1,12 @@
 from couchdbkit import MultipleResultsFound
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
+from django.db import models
 from django.template.loader import render_to_string
-from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation
+from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation, SQLInvitation
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -103,9 +105,41 @@ class DeleteTeamRecord(DeleteDocRecord):
         return Team.get(self.doc_id)
 
 
+class SQLOrgInvitation(SQLInvitation):
+    organization = models.CharField(max_length=255)
+    couch_id = models.CharField(max_length=32, db_index=True, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return OrgInvitation._migration_get_fields()
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return OrgInvitation
+
+    def send_activation_email(self):
+        url = absolute_reverse("orgs_accept_invitation",
+                               args=[self.organization, self.id])
+        params = {"organization": self.organization, "url": url,
+                  "inviter": self.get_inviter().formatted_name}
+        text_content = render_to_string("orgs/email/org_invite.txt", params)
+        html_content = render_to_string("orgs/email/org_invite.html", params)
+        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
+        send_HTML_email(subject, self.email, html_content, text_content=text_content,
+                        email_from=settings.DEFAULT_FROM_EMAIL)
+
+
 class OrgInvitation(Invitation):
     doc_type = "OrgInvitation"
     organization = StringProperty()
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return Invitation._migration_get_fields() + ['organization']
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLOrgInvitation
 
     def send_activation_email(self):
         url = absolute_reverse("orgs_accept_invitation",
