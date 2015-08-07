@@ -40,6 +40,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_data_source_filter,
     make_form_meta_block_indicator,
     make_form_question_indicator,
+    make_owner_name_indicator,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
@@ -177,6 +178,8 @@ class DataSourceBuilder(object):
                 ret.append(make_form_question_indicator(
                     prop['source'], prop['column_id']
                 ))
+            elif prop['type'] == 'case_property' and prop['source'] == 'owner_name':
+                ret.append(make_owner_name_indicator(prop['column_id']))
             elif prop['type'] == 'case_property':
                 ret.append(make_case_property_indicator(
                     prop['source'], prop['column_id']
@@ -240,8 +243,11 @@ class DataSourceBuilder(object):
                     'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
-                }) for cp in self.case_properties
+                }) for cp in sorted(self.case_properties + ['owner_name'])
             )
+            # Note that owner_name is a special pseudo-case property.
+            # The report builder will create a related_doc indicator based
+            # on the owner_id of the case.
 
         if self.source_type == 'form':
             ret = OrderedDict()
