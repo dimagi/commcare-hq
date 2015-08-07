@@ -170,7 +170,6 @@ class IndexTest(TestCase):
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
     IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
-    now = datetime.datetime(year=2015, month=7, day=24)
 
     def test_case_block_index_supports_relationship(self):
         """
@@ -179,7 +178,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         case_block = CaseBlock(
             case_id='abcdef',
             case_type='at_risk',
-            date_modified=self.now,
+            date_modified='2015-07-24',
             index={
                 'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
@@ -207,7 +206,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         case_block = CaseBlock(
             case_id='123456',
             case_type='newborn',
-            date_modified=self.now,
+            date_modified='2015-07-24',
             index={
                 'parent': ('mother', '789abc', 'child')
             },
@@ -235,7 +234,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         case_block = CaseBlock(
             case_id='123456',
             case_type='newborn',
-            date_modified=self.now,
+            date_modified='2015-07-24',
             index={
                 'parent': ('mother', '789abc')
             },
@@ -265,7 +264,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             CaseBlock(
                 case_id='abcdef',
                 case_type='at_risk',
-                date_modified=self.now,
+                date_modified='2015-07-24',
                 index={
                     'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
                 },
