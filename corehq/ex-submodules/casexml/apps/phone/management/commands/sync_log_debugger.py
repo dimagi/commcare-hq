@@ -2,7 +2,6 @@ import json
 import os
 from django.core.management import BaseCommand
 import sys
-from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
 
 
 class Command(BaseCommand):
@@ -12,6 +11,8 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
+        from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
+
         if len(args) < 1:
             print 'Usage: ./manage.py sync_log_debugger <filename1> [<filename2>] [<filename3>]...'
             sys.exit(0)
