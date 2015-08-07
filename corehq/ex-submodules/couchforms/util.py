@@ -19,6 +19,7 @@ from redis import ConnectionError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -553,6 +554,10 @@ class SubmissionPost(object):
                             logging.error('BulkSaveError saving forms', exc_info=1,
                                           extra={'details': {'errors': e.errors}})
                             raise
+                        except Exception as e:
+                            instance = _handle_unexpected_error(e, instance)
+                            instance.save()
+                            raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
                         case_result.commit_dirtiness_flags()
@@ -677,7 +682,7 @@ def _handle_unexpected_error(e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
     new_id = XFormError.get_db().server.next_uuid()
-    logging.exception((
+    notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}.\n"
         u"Error saved as {}"
