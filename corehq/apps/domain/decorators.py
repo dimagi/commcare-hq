@@ -182,10 +182,13 @@ login_or_basic = login_or_basic_ex()
 def login_or_digest_or_basic(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
-        return {
+        function_wrapper = {
             'basic': login_or_basic_ex(allow_cc_users=True),
             'digest': login_or_digest_ex(allow_cc_users=True),
-        }[determine_authtype_from_user_agent(request)](fn)(request, *args, **kwargs)
+        }[determine_authtype_from_user_agent(request)]
+        if not function_wrapper:
+            return HttpResponseForbidden()
+        return function_wrapper(fn)(request, *args, **kwargs)
     return _inner
 
 
