@@ -25,7 +25,7 @@ class CaseBlock(dict):
     ...     date_opened=NOW,
     ...     date_modified=NOW,
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     # Doesn't let you specify a keyword twice (here 'case_name')
     >>> try:
@@ -47,7 +47,7 @@ class CaseBlock(dict):
     ...         'date_opened': FIVE_DAYS_FROM_NOW,
     ...     },
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     """
     undefined = object()
@@ -213,7 +213,7 @@ class CaseBlock(dict):
                     '_text': case_id
                 }
 
-    def as_xml(self, format_datetime=date_to_xml_string):
+    def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',

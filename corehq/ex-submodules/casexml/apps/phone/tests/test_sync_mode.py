@@ -842,7 +842,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # create a case from one user
         case_id = "multi_user_edits"
-        self._createCaseStubs([case_id], owner_id=SHARED_ID)
+        self._createCaseStubs([case_id], owner_id=SHARED_ID, date_modified=time)
 
         # both users syncs
         main_sync_log = synclog_from_restore_payload(
