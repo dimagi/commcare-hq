@@ -226,9 +226,70 @@ class DisplayNode(XmlObject):
             self.text = text
 
 
-class Command(DisplayNode, IdNode):
+class LocaleId(XmlObject):
+    ROOT_NAME = 'locale'
+    locale_id = StringField('@id')
+
+
+class MediaText(XmlObject):
+    ROOT_NAME = 'text'
+    form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
+    locale = NodeField('locale', LocaleId)
+
+
+class LocalizedMediaDisplay(XmlObject):
+    ROOT_NAME = 'display'
+
+    media_text = NodeListField('text', MediaText)
+
+
+class TextOrDisplay(XmlObject):
+    text = NodeField('text', Text)
+    display = NodeField('display', LocalizedMediaDisplay)
+
+    def __init__(self, node=None, context=None,
+                 menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
+                 media_image=None, media_audio=None, **kwargs):
+        super(TextOrDisplay, self).__init__(node, context, **kwargs)
+        text = Text(locale_id=menu_locale_id) if menu_locale_id else None
+
+        media_text = []
+        if media_image:
+            media_text.append(MediaText(
+                locale=LocaleId(locale_id=image_locale_id),
+                form_name='image',
+            ))
+        if media_audio:
+            media_text.append(MediaText(
+                locale=LocaleId(locale_id=audio_locale_id),
+                form_name='audio'
+            ))
+
+        if media_text:
+            self.display = LocalizedMediaDisplay(
+                media_text=[text] + media_text if text else media_text
+            )
+        elif text:
+            self.text = text
+
+
+class CommandMixin(XmlObject):
     ROOT_NAME = 'command'
     relevant = StringField('@relevant')
+
+
+class LocalizedCommand(CommandMixin, TextOrDisplay, IdNode):
+    """
+        For CC >= 2.21
+    """
+    pass
+
+
+class Command(CommandMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
 
 
 class Instance(IdNode, OrderedXmlObject):
@@ -359,12 +420,26 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
-class Menu(DisplayNode, IdNode):
+class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
     relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
+
+
+class Menu(MenuMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
+
+
+class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
+    """
+        For CC >= 2.21
+    """
+    pass
 
 
 class AbstractTemplate(XmlObject):
@@ -443,12 +518,22 @@ class Field(OrderedXmlObject):
     background = NodeField('background/text', Text)
 
 
-class Action(OrderedXmlObject):
+class ActionMixin(OrderedXmlObject):
     ROOT_NAME = 'action'
     ORDER = ('display', 'stack')
 
     stack = NodeField('stack', Stack)
+
+
+class Action(ActionMixin):
+    """ For CC < 2.21 """
+
     display = NodeField('display', Display)
+
+
+class LocalizedAction(ActionMixin, TextOrDisplay):
+    """ For CC >= 2.21 """
+    pass
 
 
 class DetailVariable(XmlObject):
@@ -1188,14 +1273,25 @@ class SuiteGenerator(SuiteGeneratorBase):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
 
-                d.action = Action(
-                    display=Display(
-                        text=Text(locale_id=id_strings.case_list_form_locale(module)),
-                        media_image=module.case_list_form.media_image,
-                        media_audio=module.case_list_form.media_audio,
-                    ),
-                    stack=Stack()
-                )
+                if self.app.enable_localized_menu_media:
+                    case_list_form = module.case_list_form
+                    d.action = LocalizedAction(
+                        menu_locale_id=id_strings.case_list_form_locale(module),
+                        media_image=bool(len(case_list_form.all_image_paths())),
+                        media_audio=bool(len(case_list_form.all_audio_paths())),
+                        image_locale_id=id_strings.case_list_form_icon_locale(module),
+                        audio_locale_id=id_strings.case_list_form_audio_locale(module),
+                        stack=Stack()
+                    )
+                else:
+                    d.action = Action(
+                        display=Display(
+                            text=Text(locale_id=id_strings.case_list_form_locale(module)),
+                            media_image=module.case_list_form.default_media_image,
+                            media_audio=module.case_list_form.default_media_audio,
+                        ),
+                        stack=Stack()
+                    )
                 frame = PushFrame()
                 frame.add_command(XPath.string(id_strings.form_command(form)))
 
@@ -1577,12 +1673,23 @@ class SuiteGenerator(SuiteGeneratorBase):
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command = Command(
-                    id=id_strings.form_command(form),
-                    locale_id=id_strings.form_locale(form),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
-                )
+                # Ideally all of this version check should happen in Command/Display class
+                if self.app.enable_localized_menu_media:
+                    e.command = LocalizedCommand(
+                        id=id_strings.form_command(form),
+                        menu_locale_id=id_strings.form_locale(form),
+                        media_image=bool(len(form.all_image_paths())),
+                        media_audio=bool(len(form.all_audio_paths())),
+                        image_locale_id=id_strings.form_icon_locale(form),
+                        audio_locale_id=id_strings.form_audio_locale(form),
+                    )
+                else:
+                    e.command = Command(
+                        id=id_strings.form_command(form),
+                        locale_id=id_strings.form_locale(form),
+                        media_image=form.default_media_image,
+                        media_audio=form.default_media_audio,
+                    )
                 config_entry = {
                     'module_form': self.configure_entry_module_form,
                     'advanced_form': self.configure_entry_advanced_form,
@@ -1606,14 +1713,23 @@ class SuiteGenerator(SuiteGeneratorBase):
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
-                e = Entry(
-                    command=Command(
+                e = Entry()
+                if self.app.enable_localized_menu_media:
+                    e.command = LocalizedCommand(
+                        id=id_strings.case_list_command(module),
+                        menu_locale_id=id_strings.case_list_locale(module),
+                        media_image=bool(len(module.case_list.all_image_paths())),
+                        media_audio=bool(len(module.case_list.all_audio_paths())),
+                        image_locale_id=id_strings.case_list_icon_locale(module),
+                        audio_locale_id=id_strings.case_list_audio_locale(module),
+                    )
+                else:
+                    e.command = Command(
                         id=id_strings.case_list_command(module),
                         locale_id=id_strings.case_list_locale(module),
-                        media_image=module.case_list.media_image,
-                        media_audio=module.case_list.media_audio,
+                        media_image=module.case_list.default_media_image,
+                        media_audio=module.case_list.default_media_audio,
                     )
-                )
                 if isinstance(module, Module):
                     use_filter = False if module.has_forms() else bool(module.case_details.short.filter)
                     for datum_meta in self.get_datum_meta_module(module, use_filter=use_filter):
@@ -2249,9 +2365,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 menu_kwargs = {
                     'id': id_strings.menu_id(module),
-                    'locale_id': id_strings.module_locale(module),
-                    'media_image': module.media_image,
-                    'media_audio': module.media_audio,
                 }
                 if id_strings.menu_root(module):
                     menu_kwargs['root'] = id_strings.menu_root(module)
@@ -2261,7 +2374,22 @@ class SuiteGenerator(SuiteGeneratorBase):
                         getattr(module, 'module_filter', None)):
                     menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
-                menu = Menu(**menu_kwargs)
+                if self.app.enable_localized_menu_media:
+                    menu_kwargs.update({
+                        'menu_locale_id': id_strings.module_locale(module),
+                        'media_image': bool(len(module.all_image_paths())),
+                        'media_audio': bool(len(module.all_audio_paths())),
+                        'image_locale_id': id_strings.module_icon_locale(module),
+                        'audio_locale_id': id_strings.module_audio_locale(module),
+                    })
+                    menu = LocalizedMenu(**menu_kwargs)
+                else:
+                    menu_kwargs.update({
+                        'locale_id': id_strings.module_locale(module),
+                        'media_image': module.default_media_image,
+                        'media_audio': module.default_media_audio,
+                    })
+                    menu = Menu(**menu_kwargs)
 
                 def get_commands():
                     for form in module.get_forms():
