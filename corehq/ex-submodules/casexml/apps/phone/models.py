@@ -655,8 +655,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if made_changes:
                     logger.debug('made changes, saving.')
                     self.save()
-                if case_list:
-                    self.invalidate_cached_payloads()
+                    if case_list:
+                        try:
+                            self.invalidate_cached_payloads()
+                        except ResourceConflict:
+                            # this operation is harmless so just blindly retry and don't
+                            # reraise if it goes through the second time
+                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
