@@ -1971,19 +1971,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                         action.case_index.reference_id,
                         parent_action.case_session_var
                     )
-                    datums.append({
-                        'datum': get_manual_datum(action, parent_filter),
-                        'case_type': action.case_type,
-                        'requires_selection': True,
-                        'action': action
-                    })
                 else:
-                    datums.append({
-                        'datum': get_manual_datum(action),
-                        'case_type': action.case_type,
-                        'requires_selection': True,
-                        'action': action
-                    })
+                    parent_filter = ''
+                datums.append({
+                    'datum': get_manual_datum(action, parent_filter),
+                    'case_type': action.case_type,
+                    'requires_selection': True,
+                    'action': action
+                })
 
         if module.get_app().commtrack_enabled:
             try:
