@@ -14,6 +14,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
@@ -409,4 +410,20 @@ class DeviceReportResource(HqBaseResource, ModelResource):
             "type": ('exact',),
             "xform_id": ('exact',),
             "device_id": ('exact',),
+        }
+
+
+class StockTransactionResource(HqBaseResource, ModelResource):
+    class Meta:
+        queryset = StockTransaction.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'stock_transaction'
+        authentication = RequirePermissionAuthentication(Permissions.view_reports)
+        paginator_class = NoCountingPaginator
+        authorization = ReadOnlyAuthorization()
+
+        filtering = {
+            "case_id": ('exact',),
+            "product_id": ('exact'),
         }

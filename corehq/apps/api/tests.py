@@ -1291,3 +1291,67 @@ class TestApiKey(APIResourceTest):
 
         other_api_key.delete()
         other_user.delete()
+
+
+from casexml.apps.case.tests.util import delete_all_xforms
+from corehq.apps.commtrack.models import StockReportHelper, SQLProduct, StockTransactionHelper as STrans
+
+from casexml.apps.stock.const import REPORT_TYPE_BALANCE
+from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack.processing import create_models_for_stock_report
+
+
+class TestStockTransaction(APIResourceTest):
+    resource = v0_5.StockTransactionResource
+    api_name = 'v0.5'
+
+    def create_report(self, transactions=None, tag=None, date=None):
+        form = XFormInstance(domain=self.domain.name)
+        form.save()
+        report = StockReportHelper(
+            form,
+            date or datetime.utcnow(),
+            tag or REPORT_TYPE_BALANCE,
+            transactions or [],
+        )
+        return report, form
+
+    def setUp(self):
+        self.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
+        self.section_ids = {'s1': 2, 's2': 9}
+        self.product_ids = {'p1': 1, 'p2': 3, 'p3': 5}
+
+        SQLProduct.objects.bulk_create([
+            SQLProduct(product_id=id) for id in self.product_ids
+        ])
+
+        transactions_flat = []
+        self.transactions = {}
+        for case, c_bal in self.case_ids.items():
+            for section, s_bal in self.section_ids.items():
+                for product, p_bal in self.product_ids.items():
+                    bal = c_bal + s_bal + p_bal
+                    transactions_flat.append(
+                        STrans(
+                            case_id=case,
+                            section_id=section,
+                            product_id=product,
+                            action='soh',
+                            quantity=bal
+                        )
+                    )
+                    self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
+
+        self.new_stock_report, self.form = self.create_report(transactions_flat)
+        create_models_for_stock_report(self.domain.name, self.new_stock_report)
+
+    def tearDown(self):
+        delete_all_xforms()
+        StockReport.objects.all().delete()
+        StockTransaction.objects.all().delete()
+
+    def test_list(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.list_endpoint)
+        print response.status_code
+        self.assertEqual(response.status_code, 200)
