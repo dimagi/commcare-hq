@@ -96,7 +96,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         context = self.get_context(record)
 
         message = "\n\n".join(filter(None, [
-            context['message'],
+            self._clean_subject(context['message']),
             self.format_details(context['details']),
             context['stack_trace'],
             context['request_repr'],
@@ -130,6 +130,18 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 linenostart=(lineno - offset + 1),
         )
         )
+
+    @classmethod
+    def _clean_subject(cls, subject):
+        # Django raises BadHeaderError if subject contains following bad_strings
+        # to guard against Header Inejction.
+        # see https://docs.djangoproject.com/en/1.8/topics/email/#preventing-header-injection
+        # bad-strings list from http://nyphp.org/phundamentals/8_Preventing-Email-Header-Injection
+        bad_strings = ["\r", "\n", "%0a", "%0d", "Content-Type:", "bcc:", "to:", "cc:"]
+        replacement = "-"
+        for i in bad_strings:
+            subject.replace(i, replacement)
+        retun subject
 
 
 class NotifyExceptionEmailer(HqAdminEmailHandler):
