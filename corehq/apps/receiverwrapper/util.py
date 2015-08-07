@@ -3,6 +3,7 @@ import re
 from couchdbkit import ResourceNotFound
 from django.core.cache import cache
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.domain.decorators import determine_authtype_from_user_agent
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from couchforms.models import DefaultAuthContext
 import couchforms
@@ -168,29 +169,8 @@ def _get_app_and_build_ids(domain, build_or_app_id):
     return build_or_app_id, None
 
 
-J2ME = 'j2me'
-ANDROID = 'android'
-
-
 def determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
     return determine_authtype_from_user_agent(request)
-
-
-def determine_authtype_from_user_agent(request):
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    type_to_auth_map = {
-        J2ME: 'digest',
-        ANDROID: 'basic',
-    }
-    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]
-
-
-def guess_phone_type_from_user_agent(user_agent):
-    """
-    A really dumb utility that guesses the phone type based on the user-agent header.
-    """
-    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return J2ME if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
