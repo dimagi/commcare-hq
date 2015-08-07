@@ -141,7 +141,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         replacement = "-"
         for i in bad_strings:
             subject.replace(i, replacement)
-        retun subject
+        return subject
 
 
 class NotifyExceptionEmailer(HqAdminEmailHandler):
