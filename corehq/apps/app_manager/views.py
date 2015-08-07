@@ -32,6 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
+    ScheduleError,
 )
 
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -136,6 +137,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     AdvancedForm,
@@ -162,10 +164,13 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ReportModule,
     SavedAppBuild,
-    get_app,
+    SortElement,
+    load_app_template,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    SchedulePhaseForm,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -321,7 +326,7 @@ def app_source(request, domain, app_id):
 
 @require_can_edit_apps
 def copy_app_check_domain(request, domain, name, app_id):
-    app_copy = import_app_util(app_id, domain, name=name)
+    app_copy = import_app_util(app_id, domain, {'name': name})
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -333,6 +338,22 @@ def copy_app(request, domain):
         return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+
+
+@require_can_edit_apps
+def app_from_template(request, domain, slug):
+    _clear_app_cache(request, domain)
+    template = load_app_template(slug)
+    app = import_app_util(template, domain, {
+        'created_from_template': '%s' % slug,
+    })
+    module_id = 0
+    form_id = 0
+    try:
+        app.get_module(module_id).get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException):
+        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -356,7 +377,7 @@ def import_app(request, domain, template="app_manager/import_app.html"):
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, name=name)
+        app = import_app_util(source, domain, {'name': name})
 
         return back_to_main(request, domain, app_id=app._id)
     else:
@@ -401,6 +422,17 @@ def default(request, domain):
     """
     return view_app(request, domain)
 
+def get_schedule_context(form):
+        from corehq.apps.app_manager.models import SchedulePhase
+        schedule_context = {}
+        module = form.get_module()
+        if module.has_schedule:
+            phase = form.get_phase()
+            if phase is not None:
+                schedule_context.update({'schedule_phase': phase})
+            else:
+                schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+        return schedule_context
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
@@ -529,6 +561,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
+        context.update(get_schedule_context(form))
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
@@ -980,16 +1013,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         return bail(request, domain, app_id)
 
     context = get_apps_base_context(request, domain, app)
-    if not app:
-        all_applications = ApplicationBase.view('app_manager/applications_brief',
-            startkey=[domain],
-            endkey=[domain, {}],
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-        if all_applications:
-            app_id = all_applications[0].id
-            return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                                form_id=form_id)
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
@@ -1044,7 +1067,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         template = "app_manager/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
-        template = "dashboard/dashboard_new_user.html"
+        from corehq.apps.dashboard.views import NewUserDashboardView
+        template = NewUserDashboardView.template_name
+        context.update({'templates': NewUserDashboardView.templates(domain)})
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -2064,9 +2089,20 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 @require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+
     json_loads = json.loads(request.POST.get('schedule'))
+    anchor = json_loads.pop('anchor')
+
+    try:
+        phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
+
     form.schedule = FormSchedule.wrap(json_loads)
+    phase.add_form(form)
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
