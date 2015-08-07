@@ -1,24 +1,71 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load reports_core_tags %}
 {% load i18n %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
-        $(function () {
-            var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
-            ko.applyBindings(new ReportModule({
-                moduleName: {{ module.name|JSON }},
-                availableReports: {{ all_reports|JSON }},
-                currentReports: {{ current_reports|JSON }},
-                saveURL: saveURL,
-                lang: {{ lang|JSON }}
-            }), $("#report-module-edit")[0]);
+        var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
+        var reportModule = new ReportModule({
+            moduleName: {{ module.name|JSON }},
+            availableReports: {{ all_reports|JSON }}, // structure for all reports
+            currentReports: {{ current_reports|JSON }}, // config data for app reports
+            saveURL: saveURL,
+            lang: {{ lang|JSON }}
         });
+        ko.applyBindings(reportModule, $("#report-module-edit")[0]);
+
+        var select2s = $('.choice_filter');
+        for(var i = 0; i < select2s.length; i++) {
+            var element = select2s.eq(i);
+            var pageSize = 20;
+            var separator = select2Separator;
+            var initialValues = element.val() !== "" ? element.val().split(separator) : [];
+            element.select2({
+                minimumInputLength: 0,
+                multiple: true,
+                separator: separator,
+                allowClear: true,
+                // allowClear only respected if there is a non empty placeholder
+                placeholder: " ",
+                ajax: {
+                    // TODO - this is pretty hackish
+                    url: ("{% url 'choice_list_api' domain 'report_id' 'filter_id' %}".split('report_id')[0]
+                          + element.parent()[0].lastElementChild.value + "/"),
+                    dataType: 'json',
+                    quietMillis: 250,
+                    data: function (term, page) {
+                        return {
+                            q: term, // search term
+                            page: page,
+                            limit: pageSize
+                        };
+                    },
+                    results: function (data, page) {
+                        // parse the results into the format expected by Select2.
+                        var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
+                        return {
+                            results: formattedData,
+                            more: data.length === pageSize
+                        };
+                    },
+                    cache: true
+                }
+            });
+            element.select2('data', _.map(initialValues, function(v){
+                return {id: v, text: v};
+            }));
+        }
     </script>
 {% endblock %}
 {% block form-view %}
@@ -49,7 +96,7 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody data-bind="sortable: reports">
+                <tbody data-bind="sortable: { data: reports, as: 'report' }">
                     <tr class="row control-group"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
@@ -57,6 +104,104 @@
                         </td>
                         <td>
                             <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans 'Filter Name' %}</th>
+                                        <th>{% trans 'Type' %}</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: { data: filterConfig.selectedFilterStructure, as: 'filter' }">
+                                    <tr>
+                                        <th data-bind="text: filter.display"></th>
+                                        <th>
+                                            <select data-bind="
+                                                options: report.filterConfig.filterDocTypes,
+                                                value: selectedValue.doc_type
+                                            ">
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
+                                                <select data-bind="
+                                                    options: report.filterConfig.autoFilterTypes,
+                                                    value: filter.selectedValue.filter_type
+                                                "></select>
+                                            </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticDatespanFilter'">
+                                                <select data-bind="
+                                                    options: report.filterConfig.date_range_options,
+                                                    value: filter.selectedValue.date_range
+                                                "></select>
+                                            </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDataAutoFilter'">
+                                                <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
+                                            </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceListFilter'">
+                                                <input type="text"
+                                                       class="choice_filter"
+                                                       style="width:300px"
+                                                       data-bind="value: filter.selectedValue.value"/>
+                                                <input type="hidden" data-bind="value: dynamicFilterName">
+                                            </div>
+                                            <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceFilter'">
+                                                <select data-bind="
+                                                    options: filter.choices,
+                                                    optionsText: 'display',
+                                                    optionsValue: 'value',
+                                                    value: filter.selectedValue.select_value
+                                                "></select>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div data-bind="subscribeFilters: filterConfig.addSubscribersToSaveButton()"></div>
+                            <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
+                                <br/>
+                                <p>
+                                    {% trans 'Chart Title' %}: <span data-bind="text: chart.title"></span>
+                                </p>
+                                <p>
+                                    <span>{% trans 'Graph type' %}:</span>
+                                    <select type="text" data-bind="
+                                        options: $parent.graphConfig.allGraphTypes,
+                                        value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+                                    "></select>
+                                </p>
+                                <p>
+                                    {% trans 'Configuration' %}:
+                                    <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
+                                        <p>
+                                            <input type="text" data-bind="value: keyValuePair[0]">
+                                            -->
+                                            <input type="text" data-bind="value: keyValuePair[1]">
+                                        </p>
+                                    </div>
+                                    <button class="btn" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
+                                        <i class="icon-plus"></i>
+                                        {% trans "Add Configuration Item" %}
+                                    </button>
+                                </p>
+                                <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
+                                    <p>
+                                        {% trans 'Series Configuration' %}:
+                                        <span data-bind="text: series"></span>
+                                        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
+                                            <p>
+                                                <input type="text" data-bind="value: keyValuePair[0]">
+                                                -->
+                                                <input type="text" data-bind="value: keyValuePair[1]">
+                                            </p>
+                                        </div>
+                                        <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
+                                            <i class="icon-plus"></i>
+                                            {% trans "Add Series Configuration Item" %}
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
                         </td>
                         <td>
                             <input type="text" data-bind="value: display">

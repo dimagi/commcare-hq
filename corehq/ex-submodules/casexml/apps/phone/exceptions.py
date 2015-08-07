@@ -14,15 +14,15 @@ class BadStateException(RestoreException):
     """
     message = "Phone case list is inconsistant with server's records."
 
-    def __init__(self, expected, actual, case_ids, **kwargs):
+    def __init__(self, server_hash, phone_hash, case_ids, **kwargs):
         super(BadStateException, self).__init__(**kwargs)
-        self.expected = expected
-        self.actual = actual
+        self.server_hash = server_hash
+        self.phone_hash = phone_hash
         self.case_ids = case_ids
 
     def __str__(self):
-        return "Phone state hash mismatch. Expected %s but was %s. Cases: [%s]" % \
-            (self.expected, self.actual, ", ".join(self.case_ids))
+        return "Phone state hash mismatch. Server hash: %s, Phone hash: %s. Server cases: [%s]" % \
+            (self.server_hash, self.phone_hash, ", ".join(self.case_ids))
 
 
 class BadVersionException(RestoreException):

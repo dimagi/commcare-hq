@@ -321,6 +321,7 @@ class StockReportHelper(object):
         self.timestamp = timestamp
         self.tag = tag
         self.transactions = transactions
+        self.server_date = form.received_on
 
 
 class StockTransactionHelper(object):

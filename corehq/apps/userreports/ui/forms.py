@@ -7,8 +7,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
-from dimagi.utils.decorators.memoized import memoized
 
 
 class DocumentFormBase(forms.Form):
@@ -84,21 +84,31 @@ DOC_TYPE_CHOICES = (
 
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
-    table_id = forms.CharField()
-    referenced_doc_type = forms.ChoiceField(choices=DOC_TYPE_CHOICES)
-    display_name = forms.CharField()
-    description = forms.CharField(required=False)
-    base_item_expression = JsonField(expected_type=dict)
-    configured_filter = JsonField(expected_type=dict)
-    configured_indicators = JsonField(expected_type=list)
+    table_id = forms.CharField(label=_("Table ID"),
+                               help_text=help_text.TABLE_ID)
+    referenced_doc_type = forms.ChoiceField(
+        choices=DOC_TYPE_CHOICES,
+        label=_("Source Type"))
+    display_name = forms.CharField(label=_("Report Title"),
+                                   help_text=help_text.DISPLAY_NAME)
+    description = forms.CharField(required=False,
+                                  help_text=help_text.DESCRIPTION)
+    base_item_expression = JsonField(expected_type=dict,
+                                     help_text=help_text.BASE_ITEM_EXPRESSION)
+    configured_filter = JsonField(expected_type=dict,
+                                  help_text=help_text.CONFIGURED_FILTER)
+    configured_indicators = JsonField(
+        expected_type=list, help_text=help_text.CONFIGURED_INDICATORS)
     named_filters = JsonField(required=False, expected_type=dict,
-                              label=_("Named filters (optional)"))
+                              label=_("Named filters (optional)"),
+                              help_text=help_text.NAMED_FILTER)
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
 
     def clean_table_id(self):
+        # todo: validate table_id as [a-z][a-z0-9_]*
         table_id = self.cleaned_data['table_id']
         table_name = get_table_name(self.domain, table_id)
         if len(table_name) > 63:  # max table name length for postgres

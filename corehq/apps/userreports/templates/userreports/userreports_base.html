@@ -38,15 +38,26 @@
     });
 </script>
 {% endblock %}
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <strong>{% trans "Configurable Reports" %}</strong>
+        </li>
+        {% block breadcrumbs %}
+        {% endblock %}
+    </ul>
+{% endblock %}
 {% block sidebar %}
 <nav class="user-reports">
     <ul class="nav nav-list">
         <li class="nav-header">{% trans "Edit Reports" %}</li>
+{% with report as selected_report %}
 {% for report in reports %}
-        <li>
+        <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
         </li>
 {% endfor %}
+{% endwith %}
         <li>
             <a href="{% url 'create_configurable_report' domain %}">
                 <i class="icon-plus icon-blue"></i>
@@ -58,11 +69,13 @@
             </a>
         </li>
         <li class="nav-header">{% trans "Edit Data Sources" %}</li>
+{% with data_source as selected_data_source %}
 {% for data_source in data_sources %}
-        <li>
+        <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
         </li>
 {% endfor %}
+{% endwith %}
         <li>
             <a href="{% url 'create_configurable_data_source' domain %}">
                 <i class="icon-plus icon-blue"></i>

@@ -1,14 +1,17 @@
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse_lazy
+from django.shortcuts import get_object_or_404
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser
+from corehq.util.quickcache import quickcache
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ProductAvailabilityData
+from custom.ilsgateway.models import ILSGatewayConfig, ProductAvailabilityData, SupplyPointStatus
 
 
 class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -203,4 +206,51 @@ class ProductAvailabilityReport(GenericTabularReport, CustomProjectReport, Proje
                 '<a href="%s">Delete</a>' % (
                     reverse_lazy('product_availability_delete', kwargs={'domain': self.domain, 'pk': element.pk})
                 )
+            ]
+
+
+class SupplyPointStatusReport(GenericTabularReport, DatespanMixin,
+                              CustomProjectReport, ProjectReportParametersMixin):
+    name = 'Supply Point Status Report'
+    slug = 'supply_point_status'
+    fields = [AsyncLocationFilter, DatespanFilter]
+    emailable = False
+    exportable = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
+
+    @property
+    def location_id(self):
+        return self.request.GET.get('location_id', '')
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Location'),
+            DataTablesColumn('Type'),
+            DataTablesColumn('Value'),
+            DataTablesColumn('Date'),
+        )
+
+    @quickcache(['location_id'], timeout=30 * 60)
+    def _get_location_name(self, location_id):
+        return SQLLocation.objects.get(location_id=location_id).name
+
+    @property
+    def rows(self):
+        locations = get_object_or_404(
+            SQLLocation, location_id=self.location_id
+        ).get_descendants(include_self=True)
+        data = SupplyPointStatus.objects.filter(
+            location_id__in=list(locations.values_list('location_id', flat=True)),
+            status_date__range=[self.datespan.startdate, self.datespan.enddate]
+        ).order_by('-status_date')
+        for element in data:
+            yield [
+                self._get_location_name(element.location_id),
+                element.status_type,
+                element.status_value,
+                element.status_date
             ]
