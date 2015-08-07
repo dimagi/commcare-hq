@@ -1,7 +1,8 @@
 import logging
+from django.conf import settings
 from couchdbkit import ResourceNotFound
 from corehq.apps.cachehq.invalidate import invalidate_document
-from corehq.util.quickcache import quickcache
+from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.cache import cache_core
 
 
@@ -25,11 +26,17 @@ class _InvalidateCacheMixin(object):
             super(_InvalidateCacheMixin, self).delete()
         except ResourceNotFound:
             # it was already deleted. this isn't a problem, but might be a caching bug
-            logging.exception('Tried to delete cached doc %s but it was already deleted' % id)
+            logging.exception('Tried to delete cached doc %s but it was already deleted', id)
 
         self._doc['_id'] = id
         self.clear_caches()
         invalidate_document(self, deleted=True)
+
+
+def dont_cache_docs(*args, **kwargs):
+    if settings.UNIT_TESTING:
+        return False
+    return not getattr(settings, 'COUCH_CACHE_DOCS', True)
 
 
 class QuickCachedDocumentMixin(_InvalidateCacheMixin):
@@ -39,7 +46,7 @@ class QuickCachedDocumentMixin(_InvalidateCacheMixin):
             self.get.clear(self.__class__, self._id)
 
     @classmethod
-    @quickcache(['cls.__name__', 'doc_id'])
+    @skippable_quickcache(['cls.__name__', 'doc_id'], skip_arg=dont_cache_docs)
     def get(cls, doc_id, *args, **kwargs):
         return super(QuickCachedDocumentMixin, cls).get(doc_id, *args, **kwargs)
 
