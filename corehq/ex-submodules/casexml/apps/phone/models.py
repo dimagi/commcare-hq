@@ -118,6 +118,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # for debugging / logging
+    last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
+    last_cached = DateTimeProperty()  # last time this generated a cached response
+
     # save state errors and hashes here
     had_state_error = BooleanProperty(default=False)
     error_date = DateTimeProperty()
@@ -654,6 +658,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             try:
                 if made_changes:
                     logger.debug('made changes, saving.')
+                    self.last_submitted = datetime.utcnow()
                     self.save()
                     if case_list:
                         try:
