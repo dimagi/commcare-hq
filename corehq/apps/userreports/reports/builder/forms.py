@@ -178,7 +178,7 @@ class DataSourceBuilder(object):
                 ret.append(make_form_question_indicator(
                     prop['source'], prop['column_id']
                 ))
-            elif prop['type'] == 'case_property' and prop['source'] == 'owner_name':
+            elif prop['type'] == 'case_property' and prop['source'] == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop['column_id']))
             elif prop['type'] == 'case_property':
                 ret.append(make_case_property_indicator(
@@ -236,15 +236,24 @@ class DataSourceBuilder(object):
         """
 
         if self.source_type == 'case':
-            return OrderedDict(
+            ret = OrderedDict(
                 (cp, {
                     'type': 'case_property',
                     'id': cp,
                     'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
-                }) for cp in sorted(self.case_properties + ['owner_name'])
+                }) for cp in sorted(self.case_properties)
             )
+            ret['computed/owner_name'] = {
+                'type': 'case_property',
+                'id': 'computed/owner_name',
+                'column_id': get_column_name('computed/owner_name'),
+                'text': 'owner_name (computed)',
+                'source': 'computed/owner_name'
+            }
+            return ret
+
             # Note that owner_name is a special pseudo-case property.
             # The report builder will create a related_doc indicator based
             # on the owner_id of the case.
