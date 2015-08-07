@@ -6,6 +6,7 @@
             <instance>
                 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
                     <question1/>
+                    <question2/>
                     <parents>
                         <host>
                             <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
@@ -34,10 +35,14 @@
             <instance src="jr://instance/session" id="commcaresession"/>
             <instance id="casedb" src="jr://instance/casedb"/>
             <bind nodeset="/data/question1" type="xsd:string"/>
+            <bind nodeset="/data/question2" type="xsd:string"/>
             <itext>
                 <translation lang="en" default="">
                     <text id="question1-label">
                         <value>question1</value>
+                    </text>
+                    <text id="question2-label">
+                        <value>question2</value>
                     </text>
                 </translation>
             </itext>
@@ -64,6 +69,9 @@
     <h:body>
         <input ref="/data/question1">
             <label ref="jr:itext('question1-label')"/>
+        </input>
+        <input ref="/data/question2">
+            <label ref="jr:itext('question2-label')"/>
         </input>
     </h:body>
 </h:html>
