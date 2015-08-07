@@ -129,6 +129,8 @@ class MALTTableGenerator(object):
         try:
             app = get_app(domain, app_id)
         except Http404:
+            if app_id is not MISSING_APP_ID:
+                logger.debug("App not found %s" % app_id)
             return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False)
         return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
                 getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
