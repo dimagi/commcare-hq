@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.receiverwrapper.util import J2ME, guess_phone_type_from_user_agent, ANDROID
+from corehq.apps.domain.decorators import J2ME, guess_phone_type_from_user_agent, ANDROID
 
 
 class TestPhoneType(SimpleTestCase):
