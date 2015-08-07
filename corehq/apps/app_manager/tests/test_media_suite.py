@@ -118,8 +118,6 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     audio_path = 'jr://file/commcare/case_list_audo.mp3'
     hindi_image = 'jr://file/commcare/case_list_image_hin.jpg'
     hindi_audio = 'jr://file/commcare/case_list_audo_hin.mp3'
-    HACKY_image = 'jr://file/commcare_wrong/invalid/have_a_nice_day.png'
-    HACKY_audio = 'jr://file/commcare_wrong/invalid/have_a_nice_day.mp3'
 
     def setUp(self):
         self.app = Application.new_app('domain', "my app", application_version=APP_V2)
@@ -242,8 +240,8 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     def _test_correct_icon_translations(self, app, menu, menu_locale_id):
         #  english should have right translation
         self._assert_valid_media_translation(app, 'en', menu_locale_id, self.image_path)
-        #  default should have wrong-translation
-        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.HACKY_image)
+        #  default should have any random translation
+        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.image_path)
         #  hindi shouldn't have translation strings
         with self.assertRaises(KeyError):
             self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.image_path)
@@ -255,8 +253,8 @@ class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
     def _test_correct_audio_translations(self, app, menu, menu_locale_id):
         #  english should have right translation
         self._assert_valid_media_translation(app, 'en', menu_locale_id, self.audio_path)
-        #  default should have wrong-translation
-        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.HACKY_audio)
+        #  default should have any random translation
+        self._assert_valid_media_translation(app, 'default', menu_locale_id, self.audio_path)
         #  hindi shouldn't have translation strings
         with self.assertRaises(KeyError):
             self._assert_valid_media_translation(app, 'hin', menu_locale_id, self.audio_path)

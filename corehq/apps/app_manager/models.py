@@ -1086,11 +1086,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
         """
 
         if not for_default and self.icon_by_language(lang, strict=True):
-            return self.icon_by_language(lang)
+            return self.icon_by_language(lang, strict=True)
 
-        DELIBERATELY_INVALID_PATH = "jr://file/commcare_wrong/invalid/have_a_nice_day.png"
         if for_default and any(self.all_image_paths()):
-            return DELIBERATELY_INVALID_PATH
+            return self.icon_by_language(lang, strict=False)
 
     def audio_app_string(self, lang, for_default=False):
         """
@@ -1098,11 +1097,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
         """
 
         if not for_default and self.audio_by_language(lang, strict=True):
-            return self.audio_by_language(lang)
+            return self.audio_by_language(lang, strict=True)
 
-        DELIBERATELY_INVALID_PATH = "jr://file/commcare_wrong/invalid/have_a_nice_day.mp3"
         if for_default and any(self.all_audio_paths()):
-            return DELIBERATELY_INVALID_PATH
+            return self.audio_by_language(lang, strict=False)
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
