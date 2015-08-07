@@ -16,7 +16,9 @@
 {% endblock uncompressed-js %}
 
 {% block dashboard-content %}
-<br>
+<div class="page-header">
+    <h1>{% trans 'What type of app would you like to build?' %}</h1>
+</div>
 <div class="row">
     {% for template in templates %}
         <div class="col-md-4">
@@ -40,9 +42,11 @@
     {% endfor %}
 </div>
 
-<form class="pull-right form" action="{% url "new_app" domain %}" method="post">
-    <input type="hidden" name="type" value="RemoteApp" />
-    <button class="btn btn-default" href="#" type="submit">{% trans "Create a new RemoteApp (Advanced Users Only)" %}</button>
-</form>
+{% if request|toggle_enabled:'REMOTE_APPS' %}
+    <form class="pull-right form" action="{% url "new_app" domain %}" method="post">
+        <input type="hidden" name="type" value="RemoteApp" />
+        <button class="btn btn-default" href="#" type="submit">{% trans "Create a new RemoteApp (Advanced Users Only)" %}</button>
+    </form>
+{% endif %}
 
 {% endblock dashboard-content %}
