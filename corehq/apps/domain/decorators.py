@@ -26,6 +26,7 @@ from tastypie.http import HttpUnauthorized
 # CCHQ imports
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.receiverwrapper.util import determine_authtype
 from corehq.apps.users.models import CouchUser
 from corehq import privileges
 
@@ -183,6 +184,16 @@ def login_or_basic_ex(allow_cc_users=False):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users)
 
 login_or_basic = login_or_basic_ex()
+
+
+def login_or_digest_or_basic(fn):
+    @wraps(fn)
+    def _inner(request, *args, **kwargs):
+        return {
+            'basic': login_or_basic_ex(allow_cc_users=True),
+            'digest': login_or_digest_ex(allow_cc_users=True),
+        }[determine_authtype(request)](fn)(request, *args, **kwargs)
+    return _inner
 
 
 def login_or_api_key_ex(allow_cc_users=False):
