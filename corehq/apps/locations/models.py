@@ -149,6 +149,16 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
 
+    def get_from_user_input(self, domain, user_input):
+        """
+        First check by site-code, if that fails, fall back to name.
+        Note that name lookup may raise MultipleObjectsReturned.
+        """
+        try:
+            return self.get(domain=domain, site_code=user_input)
+        except self.model.DoesNotExist:
+            return self.get(domain=domain, name__iexact=user_input)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -175,6 +185,10 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+
+    @property
+    def get_id(self):
+        return self.location_id
 
     @property
     def products(self):
