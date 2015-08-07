@@ -38,8 +38,8 @@ class ResponsibleParty(ReportSelectField):
     @property
     def options(self):
         return [
-            dict(val=CONFIG['cm_role'], text=ugettext_noop("Care Manager")),
-            dict(val=CONFIG['chw_role'], text=ugettext_noop("Community Health Worker")),
+            dict(val='CM', text=CONFIG['cm_role']),
+            dict(val='CHW', text=CONFIG['chw_role']),
         ]
 
 

@@ -42,11 +42,17 @@
     function content_type_changed() {
         var value = $("#id_content_type").val();
         if(value == "sms") {
-            $(".for_sms").show();
             $(".for_sms_form").hide();
+            $(".for_email").hide();
+            $(".for_sms").show();
+        } else if(value == "survey") {
+            $(".for_sms").hide();
+            $(".for_email").hide();
+            $(".for_sms_form").show();
         } else {
             $(".for_sms").hide();
-            $(".for_sms_form").show();
+            $(".for_sms_form").hide();
+            $(".for_email").show();
         }
     }
     
@@ -126,7 +132,12 @@
                     <td>{{ form.content_type }}</td>
                     <td></td>
                 </tr>
-                <tr class="for_sms">
+                <tr class="for_email">
+                    <td>{% trans 'Subject' %}: </td>
+                    <td><textarea id="id_subject" name="subject">{{ form.subject.value|default:'' }}</textarea></td>
+                    <td>{{ form.subject.errors }}</td>
+                </tr>
+                <tr class="for_sms for_email">
                     <td>{% trans 'Message' %}: </td>
                     <td><textarea id="id_message" name="message">{{ form.message.value|default:'' }}</textarea></td>
                     <td>{{ form.message.errors }}</td>

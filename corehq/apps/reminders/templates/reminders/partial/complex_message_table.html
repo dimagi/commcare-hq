@@ -36,6 +36,7 @@
             ></span>
         </th>
         <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
+        <th class="span5" data-bind="visible: isSubjectVisible">{% trans 'Subject' %}</th>
         <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
         <th class="span5" data-bind="visible: $parent.areTimeoutsVisible()">{% trans 'Timeout Intervals' %}</th>
         <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
@@ -60,13 +61,24 @@
                    data-bind="value: form_unique_id, visible: isSurveyVisible"
                    class="input-xxlarge" />
         </td>
+        <td data-bind="visible: isSubjectVisible">
+            <div data-bind="foreach: messageTranslations">
+                <label><strong data-bind="text: languageLabel"></strong></label>
+                <textarea rows="2"
+                          class="input-xxlarge"
+                          data-bind="value: subject, valueUpdate: 'keyup'"></textarea>
+                <hr data-bind="visible: $parent.messageTranslations().length > 1
+                               && $index() + 1 !== $parent.messageTranslations().length" />
+            </div>
+        </td>
         <td data-bind="visible: isMessageVisible">
             <div data-bind="foreach: messageTranslations">
                 <label><strong data-bind="text: languageLabel"></strong></label>
                 <textarea rows="2"
                           class="input-xxlarge"
                           data-bind="value: message, valueUpdate: 'keyup'"></textarea>
-                <div data-bind="template: { name: 'event-message-length-template' }" style="margin-top: 5px;"></div>
+                <div data-bind="template: { name: 'event-message-length-template' },
+                                visible: !$parent.isEmailSelected()" style="margin-top: 5px;"></div>
                 <hr data-bind="visible: $parent.messageTranslations().length > 1
                                && $index() + 1 !== $parent.messageTranslations().length" />
             </div>

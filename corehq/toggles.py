@@ -94,6 +94,30 @@ NAMESPACE_DOMAIN = 'domain'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
+def any_toggle_enabled(*toggles):
+    """
+    Return a view decorator for allowing access if any of the given toggles are
+    enabled. Example usage:
+
+    @toggles.any_toggle_enabled(REPORT_BUILDER, USER_CONFIGURABLE_REPORTS)
+    def delete_custom_report():
+        pass
+
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped_view(request, *args, **kwargs):
+            for t in toggles:
+                if (
+                    (hasattr(request, 'user') and t.enabled(request.user.username))
+                    or (hasattr(request, 'domain') and t.enabled(request.domain))
+                ):
+                    return view_func(request, *args, **kwargs)
+            raise Http404()
+        return wrapped_view
+    return decorator
+
+
 def all_toggles():
     """
     Loads all toggles
@@ -165,6 +189,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DEMO_REPORTS = StaticToggle(
+    'demo-reports',
+    'Access to map-based demo reports',
+    TAG_PREVIEW,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -204,16 +235,17 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-EDIT_SUBMISSIONS = StaticToggle(
-    'edit_submissions',
-    'Submission Editing on HQ',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+REPORT_BUILDER = StaticToggle(
+    'report_builder',
+    'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
@@ -524,6 +556,20 @@ BASIC_CHILD_MODULE = StaticToggle(
 MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     'messaging_status',
     'View the Messaging Status and Error Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+DROPBOX_SYNC = StaticToggle(
+    'dropbox_sync',
+    'Allows users to sync their file downloads to Dropbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+EMAIL_IN_REMINDERS = StaticToggle(
+    'email_in_reminders',
+    'Send emails from reminders',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

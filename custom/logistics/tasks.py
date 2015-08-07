@@ -33,6 +33,9 @@ def stock_data_task(api_object):
         'start_date': start_date
     })
 
+    if not checkpoint.api:
+        checkpoint.api = default_api
+
     if not checkpoint.start_date:
         checkpoint.start_date = start_date
         checkpoint.save()
@@ -54,7 +57,9 @@ def stock_data_task(api_object):
         for chunk in facilities_chunked_list:
             api_object.process_data(process_facility_task, chunk)
     else:
-        for stock_api in api_object.get_stock_apis_objects():
+        for stock_api in itertools.dropwhile(
+            lambda x: x.name != checkpoint.api, api_object.get_stock_apis_objects()
+        ):
             stock_api.add_date_filter(checkpoint.date, checkpoint.start_date)
             synchronization(
                 stock_api,
@@ -67,7 +72,7 @@ def stock_data_task(api_object):
             )
 
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
-    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
+    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, checkpoint.start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
 

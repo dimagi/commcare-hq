@@ -263,6 +263,9 @@ class CaseReminderEvent(DocumentSchema):
     time_window_length          Used in FIRE_TIME_RANDOM to define a time interval that starts at fire_time and lasts
                                 for this many minutes
 
+    subject                     The subject of the email if the reminder sends an email.
+                                This is a dictionary like message is to support translations.
+
     message                     The text to send along with language to send it, represented 
                                 as a dictionary: {"en": "Hello, {user.full_name}, you're having issues."}
 
@@ -279,6 +282,7 @@ class CaseReminderEvent(DocumentSchema):
     fire_time_aux = StringProperty()
     fire_time_type = StringProperty(choices=FIRE_TIME_CHOICES, default=FIRE_TIME_DEFAULT)
     time_window_length = IntegerProperty()
+    subject = DictProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()

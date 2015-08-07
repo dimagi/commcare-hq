@@ -65,6 +65,7 @@ def _create_model_for_stock_report(domain, stock_report_helper):
         date=stock_report_helper.timestamp,
         type=stock_report_helper.tag,
         domain=domain,
+        server_date=stock_report_helper.server_date,
     )
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
@@ -88,6 +89,7 @@ def compute_ledger_values(lazy_original_balance, report_type, quantity):
     """
     if report_type == stockconst.REPORT_TYPE_BALANCE:
         new_balance = quantity
+        # this is currently always 0 because of inferred transactions
         new_delta = 0
     elif report_type == stockconst.REPORT_TYPE_TRANSFER:
         original_balance = lazy_original_balance()
@@ -190,7 +192,7 @@ def process_stock(xform, case_db=None):
     )
 
 
-def _adjust_ledger_values(original_balance, stock_transaction):
+def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         quantity = stock_transaction.stock_on_hand
     elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
@@ -201,26 +203,37 @@ def _adjust_ledger_values(original_balance, stock_transaction):
     ledger_values = compute_ledger_values(
         lambda: original_balance, stock_transaction.report.type, quantity)
 
+    # check that the reported value (either transfer quantity or balance)
+    # is not being changed; don't know why it would be, but that would be
+    # a red flag
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         assert stock_transaction.stock_on_hand == ledger_values.balance
-        # this is currently always 0 because of inferred transactions
-        stock_transaction.quantity = ledger_values.delta
     elif stock_transaction.report.type == stockconst.REPORT_TYPE_TRANSFER:
-        stock_transaction.stock_on_hand = ledger_values.balance
-        assert stock_transaction.quantity == ledger_values.delta, (stock_transaction.quantity, ledger_values.delta)
+        assert stock_transaction.quantity == ledger_values.delta, \
+            (stock_transaction.quantity, ledger_values.delta)
     else:
         raise ValueError()
 
-    return ledger_values.balance
+    return ledger_values
+
+_DeleteStockTransaction = namedtuple(
+    '_DeleteStockTransaction', ['stock_transaction'])
+_SaveStockTransaction = namedtuple(
+    '_SaveStockTransaction',
+    ['stock_transaction', 'previous_ledger_values', 'ledger_values'])
 
 
-@transaction.atomic
-def rebuild_stock_state(case_id, section_id, product_id):
+def plan_rebuild_stock_state(case_id, section_id, product_id):
     """
-    rebuilds the StockState object
-    and the quantity and stock_on_hand fields of StockTransaction
-    when they are calculated from previous state
-    (as opposed to part of the explict transaction)
+    planner for rebuild_stock_state
+
+    yields actions for rebuild_stock_state to take,
+    facilitating doing a dry run
+
+    Warning: since some important things are still done through signals
+    rather than here explicitly, there may be some effects that aren't
+    represented in the plan. For example, inferred transaction creation
+    will not be represented, nor will updates to the StockState object.
 
     """
 
@@ -235,7 +248,32 @@ def rebuild_stock_state(case_id, section_id, product_id):
     balance = None
     for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
-            stock_transaction.delete()
+            yield _DeleteStockTransaction(stock_transaction)
         else:
-            balance = _adjust_ledger_values(balance, stock_transaction)
-            stock_transaction.save()
+            before = LedgerValues(balance=stock_transaction.stock_on_hand,
+                                  delta=stock_transaction.quantity)
+            after = _compute_ledger_values(balance, stock_transaction)
+            # update balance for the next iteration
+            balance = after.balance
+            yield _SaveStockTransaction(stock_transaction, before, after)
+
+
+@transaction.atomic
+def rebuild_stock_state(case_id, section_id, product_id):
+    """
+    rebuilds the StockState object
+    and the quantity and stock_on_hand fields of StockTransaction
+    when they are calculated from previous state
+    (as opposed to part of the explict transaction)
+
+    """
+
+    for action in plan_rebuild_stock_state(case_id, section_id, product_id):
+        if isinstance(action, _DeleteStockTransaction):
+            action.stock_transaction.delete()
+        elif isinstance(action, _SaveStockTransaction):
+            action.stock_transaction.stock_on_hand = action.ledger_values.balance
+            action.stock_transaction.quantity = action.ledger_values.delta
+            action.stock_transaction.save()
+        else:
+            raise ValueError()

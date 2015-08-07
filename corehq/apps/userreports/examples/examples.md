@@ -75,6 +75,23 @@ The following filters apply to data sources built on top of cases.
 }
 ```
 
+## Filter by only open cases
+
+NOTE: this should be changed to use boolean datatypes once those exist.
+
+```json
+{
+    "type": "boolean_expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "closed",
+        "datatype": "string"
+
+    },
+    "operator": "eq",
+    "property_value": "False"
+}
+```
 # Data source indicators
 
 ## Count every contributing row (form or case)
@@ -131,6 +148,94 @@ In the example below, the indicator is inside a form group question called "impa
     "column_id": "impact1",
     "display_name": "Impact 1",
     "datatype": "string"
+}
+```
+
+## Related doc lookups
+
+### Get an owner name - whether it's a user, group or location
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "column_id":"owner_name",
+    "expression":{
+        "test":{
+            "operator":"eq",
+            "expression":{
+                "value_expression":{
+                    "type":"property_name",
+                    "property_name":"doc_type"
+                },
+                "type":"related_doc",
+                "related_doc_type":"Group",
+                "doc_id_expression":{
+                    "type":"property_name",
+                    "property_name":"owner_id"
+                }
+            },
+            "type":"boolean_expression",
+            "property_value":"Group"
+        },
+        "expression_if_true":{
+            "value_expression":{
+                "type":"property_name",
+                "property_name":"name"
+            },
+            "type":"related_doc",
+            "related_doc_type":"Group",
+            "doc_id_expression":{
+                "type":"property_name",
+                "property_name":"owner_id"
+            }
+        },
+        "type":"conditional",
+        "expression_if_false":{
+            "type":"conditional",
+            "test":{
+                "operator":"eq",
+                "expression":{
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"doc_type"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"CommCareUser",
+                    "doc_id_expression":{
+                        "type":"property_name",
+                        "property_name":"owner_id"
+                    }
+                },
+                "type":"boolean_expression",
+                "property_value":"CommCareUser"
+            },
+            "expression_if_true":{
+                "value_expression":{
+                    "type":"property_name",
+                    "property_name":"username"
+                },
+                "type":"related_doc",
+                "related_doc_type":"CommCareUser",
+                "doc_id_expression":{
+                    "type":"property_name",
+                    "property_name":"owner_id"
+                }
+            },
+            "expression_if_false":{
+                "value_expression":{
+                    "type":"property_name",
+                    "property_name":"name"
+                },
+                "type":"related_doc",
+                "related_doc_type":"Location",
+                "doc_id_expression":{
+                    "type":"property_name",
+                    "property_name":"owner_id"
+                }
+            }
+        }
+    }
 }
 ```
 

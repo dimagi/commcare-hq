@@ -104,5 +104,3 @@ def _fire_reminder(reminder_id):
             if handler.fire(reminder):
                 handler.set_next_fire(reminder, utcnow)
                 reminder.save()
-
-

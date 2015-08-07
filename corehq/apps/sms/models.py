@@ -585,7 +585,10 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
     def get_language_code(self):
         return self.get_case_property("language_code")
-    
+
+    def get_email(self):
+        return self.get_case_property('commcare_email_address')
+
     @property
     def raw_username(self):
         return self.get_case_property("name")
@@ -755,6 +758,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_ADHOC_SMS = 'ADH'
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
+    CONTENT_EMAIL = 'EML'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, ugettext_noop('None')),
@@ -766,6 +770,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
         (CONTENT_API_SMS, ugettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
+        (CONTENT_EMAIL, ugettext_noop('Email')),
     )
 
     RECIPIENT_CASE = 'CAS'
@@ -805,6 +810,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
     ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
+    ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -847,6 +853,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
+        ERROR_NO_EMAIL_ADDRESS:
+            ugettext_noop('Recipient has no email address.'),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1003,12 +1011,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_content_info_from_reminder(cls, reminder_definition, reminder, parent=None):
         from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
-            METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)
+            METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL)
         content_type = {
             METHOD_SMS: cls.CONTENT_SMS,
             METHOD_SMS_CALLBACK: cls.CONTENT_SMS_CALLBACK,
             METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
             METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
+            METHOD_EMAIL: cls.CONTENT_EMAIL,
         }.get(reminder_definition.method, cls.CONTENT_SMS)
 
         form_unique_id = reminder.current_event.form_unique_id

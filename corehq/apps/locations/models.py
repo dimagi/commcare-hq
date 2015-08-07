@@ -17,6 +17,8 @@ from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
+from .dbaccessors import get_all_users_by_location
+
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
@@ -483,11 +485,13 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and not sp.closed:
             close_case(sp._id, self.domain, COMMTRACK_USERNAME)
 
+        _unassign_users_from_location(self.domain, self._id)
+
     def archive(self):
         """
         Mark a location and its dependants as archived.
-        This will cause it (and its data) to not show up in default
-        Couch and SQL views.
+        This will cause it (and its data) to not show up in default Couch and
+        SQL views.  This also unassigns users assigned to the location.
         """
         for loc in [self] + self.descendants:
             loc._archive_single_location()
@@ -665,3 +669,14 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_object(self):
         return self._sql_location_type or self.sql_location.location_type
+
+
+def _unassign_users_from_location(domain, location_id):
+    """
+    Unset location for all users assigned to that location.
+    """
+    for user in get_all_users_by_location(domain, location_id):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()

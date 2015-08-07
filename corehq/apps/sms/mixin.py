@@ -567,6 +567,14 @@ class CommCareMobileContactMixin(object):
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
 
+    def get_email(self):
+        """
+        This method should be implemented by all subclasses of
+        CommCareMobileContactMixin and should return the contact's
+        email address or None if it doesn't have one.
+        """
+        raise NotImplementedError('Please implement this method')
+
     def get_verified_numbers(self, include_pending=False):
         v = VerifiedNumber.view("sms/verified_number_by_owner_id",
             key=self._id,

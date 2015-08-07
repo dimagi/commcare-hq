@@ -23,6 +23,7 @@
         },
         "visible":true,
         "aggregation_columns":[
+            "doc_id"
         ],
         "columns":[
             {

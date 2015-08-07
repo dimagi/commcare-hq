@@ -11,3 +11,7 @@ class XMLSyntaxError(CouchFormException):
 
 class DuplicateError(CouchFormException):
     pass
+
+
+class UnexpectedDeletedXForm(Exception):
+    pass

@@ -52,7 +52,7 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
         )),
-        (ugettext_lazy("Demos for Previewers"), (
+        (ugettext_lazy("Demos"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])

@@ -49,6 +49,7 @@ class SupervisionData(ILSData):
     slug = 'supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -112,6 +113,7 @@ class DistrictSupervisionData(ILSData):
     slug = 'district_supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -131,11 +133,17 @@ class DistrictSupervisionData(ILSData):
             for loc in locations:
                 total_responses = 0
                 total_possible = 0
-                for group_summary in GroupSummary.objects.filter(
+                group_summaries = GroupSummary.objects.filter(
                     org_summary__date__lte=self.config['startdate'],
                     org_summary__location_id=loc.location_id,
-                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY
-                ):
+                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                    total=1
+                )
+
+                if not group_summaries.exists():
+                    continue
+
+                for group_summary in group_summaries:
                     if group_summary:
                         total_responses += group_summary.responded
                         total_possible += group_summary.total

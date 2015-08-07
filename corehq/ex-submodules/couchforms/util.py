@@ -18,6 +18,7 @@ import iso8601
 from redis import ConnectionError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -26,7 +27,7 @@ import xml2json
 
 import couchforms
 from . import const
-from .exceptions import DuplicateError
+from .exceptions import DuplicateError, UnexpectedDeletedXForm
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
@@ -700,6 +701,8 @@ def fetch_and_wrap_form(doc_id):
     doc = db.get(doc_id)
     if doc['doc_type'] in doc_types():
         return doc_types()[doc['doc_type']].wrap(doc)
+    if doc['doc_type'] == "%s%s" % (XFormInstance.__name__, DELETED_SUFFIX):
+        raise UnexpectedDeletedXForm(doc_id)
     raise ResourceNotFound(doc_id)
 
 

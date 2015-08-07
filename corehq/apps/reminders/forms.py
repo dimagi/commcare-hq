@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -45,6 +46,7 @@ from .models import (
     METHOD_SMS_CALLBACK,
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
+    METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
     SurveyKeyword,
@@ -118,6 +120,12 @@ EVENT_CHOICES = (
     (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
     (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
+
+
+def add_field_choices(form, field_name, choice_tuples):
+    choices = copy.copy(form.fields[field_name].choices)
+    choices.extend(choice_tuples)
+    form.fields[field_name].choices = choices
 
 
 def validate_integer(value, error_msg, nonnegative=False):
@@ -456,6 +464,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.initial_event = {
             'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
+            'subject': dict([(l, '') for l in available_languages]),
             'message': dict([(l, '') for l in available_languages]),
         }
 
@@ -486,17 +495,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
-            self.fields['method'].choices = method_choices
+            add_field_choices(self, 'method', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
 
         if is_previewer and can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.extend([
-                (METHOD_IVR_SURVEY, _("IVR Survey")),
-                (METHOD_SMS_CALLBACK, _("SMS Expecting Callback")),
+            add_field_choices(self, 'method', [
+                (METHOD_IVR_SURVEY, _('IVR Survey')),
+                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
-            self.fields['method'].choices = method_choices
+
+        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
+            add_field_choices(self, 'method', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -880,6 +892,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
             'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'METHOD_EMAIL': METHOD_EMAIL,
             'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
             'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
             'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
@@ -1058,6 +1071,23 @@ class BaseScheduleCaseReminderForm(forms.Form):
         else:
             return []
 
+    def clean_translated_field(self, translations, default_lang):
+        for lang, msg in translations.items():
+            if msg:
+                msg = msg.strip()
+            if not msg:
+                del translations[lang]
+            else:
+                translations[lang] = msg
+        if default_lang not in translations:
+            default_lang_name = (get_language_name(default_lang) or
+                default_lang)
+            raise ValidationError(_("Please provide messages for the "
+                "default language (%(language)s) or change the default "
+                "language at the bottom of the page.") %
+                {"language": default_lang_name})
+        return translations
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1083,28 +1113,22 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # the reason why we clean the following fields here instead of eventForm is so that
             # we can utilize the ValidationErrors for this field.
 
+            # clean subject:
+            if method == METHOD_EMAIL:
+                event['subject'] = self.clean_translated_field(
+                    event.get('subject', {}), default_lang)
+            else:
+                event['subject'] = {}
+
             # clean message:
-            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-                translations = event.get('message', {})
-                for lang, msg in translations.items():
-                    if msg:
-                        msg = msg.strip()
-                    if not msg:
-                        del translations[lang]
-                    else:
-                        translations[lang] = msg
-                if default_lang not in translations:
-                    default_lang_name = (get_language_name(default_lang) or
-                        default_lang)
-                    raise ValidationError(_("Please provide messages for the "
-                        "default language (%(language)s) or change the default "
-                        "language at the bottom of the page.") %
-                        {"language": default_lang_name})
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+                event['message'] = self.clean_translated_field(
+                    event.get('message', {}), default_lang)
             else:
                 event['message'] = {}
 
             # clean form_unique_id:
-            if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
                 event['form_unique_id'] = None
             else:
                 form_unique_id = event.get('form_unique_id')
@@ -1167,6 +1191,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
+            del event['subject_data']
             del event['is_immediate']
 
         event_interpretation = self.cleaned_data["event_interpretation"]
@@ -1344,9 +1369,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
                         if not event_json.get("message", None):
                             event_json["message"] = {}
+
+                        if not event_json.get("subject", None):
+                            event_json["subject"] = {}
+
                         for langcode in available_languages:
                             if langcode not in event_json["message"]:
                                 event_json["message"][langcode] = ""
+                            if langcode not in event_json["subject"]:
+                                event_json["subject"][langcode] = ""
 
                         timeouts = [str(i) for i in
                             event_json["callback_timeout_intervals"]]
@@ -1566,7 +1597,14 @@ class CaseReminderEventForm(forms.Form):
         required=False
     )
 
-    # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
+    # subject is visible when the method of the reminder is METHOD_EMAIL
+    # value will be a dict of {langcode: message}
+    subject_data = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    # message is visible when the method of the reminder is (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL)
     # value will be a dict of {langcode: message}
     message_data = forms.CharField(
         required=False,
@@ -1610,6 +1648,7 @@ class CaseReminderEventForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
+            crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
             crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
@@ -1643,6 +1682,10 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.HiddenInput
     )
+    subject = forms.CharField(
+        required=False,
+        widget=forms.Textarea
+    )
     message = forms.CharField(
         required=False,
         widget=forms.Textarea
@@ -1660,14 +1703,22 @@ class CaseReminderEventMessageForm(forms.Form):
                 '(<span data-bind="text:languageLabel"></span>)</span>' %
                 _("Message"),
                 InlineField(
+                    'subject',
+                    data_bind="value: subject, valueUpdate: 'keyup',"
+                              "visible: $parent.isEmailSelected()",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
+                InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
                     css_class="input-xlarge",
                     rows="2",
                 ),
                 crispy.Div(
-                    style="padding-top: 10px",
-                    data_bind="template: { name: 'event-message-length-template' }"
+                    style="padding-top: 10px; padding-left: 5px;",
+                    data_bind="template: { name: 'event-message-length-template' },"
+                              "visible: !$parent.isEmailSelected()"
                 )
             ),
         )
@@ -1692,14 +1743,22 @@ class OneTimeReminderForm(Form):
     content_type = ChoiceField(choices=(
         (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
+    subject = TrimmedCharField(required=False)
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
+        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
-            self.fields['content_type'].choices = CONTENT_CHOICES
+            add_field_choices(self, 'content_type', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
+        if can_use_email:
+            add_field_choices(self, 'content_type', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -1734,9 +1793,19 @@ class OneTimeReminderForm(Form):
             validate_time(value)
             return parse(value).time()
 
+    def clean_subject(self):
+        value = self.cleaned_data.get("subject")
+        if self.cleaned_data.get("content_type") == METHOD_EMAIL:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
+
     def clean_message(self):
         value = self.cleaned_data.get("message")
-        if self.cleaned_data.get("content_type") == METHOD_SMS:
+        if self.cleaned_data.get("content_type") in (METHOD_SMS, METHOD_EMAIL):
             if value:
                 return value
             else:
