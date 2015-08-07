@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
@@ -15,7 +16,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
-from corehq.feature_previews import enable_commtrack_previews
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
@@ -74,24 +74,12 @@ def get_or_create_default_program(domain):
         )
 
 
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    """
-    Create a new CommtrackConfig object for a domain
-    if it does not already exist.
-
-    This adds some collection of default products, programs,
-    SMS keywords, etc.
-    """
-    def _needs_commtrack_config(domain):
-        return (domain and
-                domain.commtrack_enabled and
-                not CommtrackConfig.for_domain(domain.name))
-
-    if not _needs_commtrack_config(domain):
+def _create_commtrack_config_if_needed(domain):
+    if CommtrackConfig.for_domain(domain):
         return
 
-    config = CommtrackConfig(
-        domain=domain.name,
+    CommtrackConfig(
+        domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -122,20 +110,26 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
                 caption='Stock-out',
             ),
         ],
-    )
+    ).save()
 
-    if requisitions_enabled:
-        config.requisition_config = get_default_requisition_config()
 
-    config.save()
+def _enable_commtrack_previews(domain):
+    for toggle_class in (
+        toggles.COMMTRACK,
+        feature_previews.LOCATIONS,
+        toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
+        toggles.VELLUM_ADVANCED_ITEMSETS,
+    ):
+        toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
-    program = get_or_create_default_program(domain.name)
 
-    # Enable feature flags if necessary - this is required by exchange
-    # and should have no effect on changing the project settings directly
-    enable_commtrack_previews(domain)
-
-    return config
+def make_domain_commtrack(domain_object):
+    domain_object.commtrack_enabled = True
+    domain_object.locations_enabled = True
+    domain_object.save()
+    _create_commtrack_config_if_needed(domain_object.name)
+    get_or_create_default_program(domain_object.name)
+    _enable_commtrack_previews(domain_object.name)
 
 
 def get_default_requisition_config():
