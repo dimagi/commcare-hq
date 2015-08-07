@@ -877,22 +877,19 @@ var AdvancedCase = (function () {
                 return tags.join(', ');
             };
 
-            self.newCaseIndex = CaseIndex.wrap({
-                tag: '',
-                reference_id: 'parent',
-                relationship: 'child'
-            });
-
             self.subcase = ko.computed({
                 read: function () {
-                    return (self.newCaseIndex.tag() || self.case_indices().length > 0);
+                    return (self.case_indices().length > 0);
                 },
                 write: function (value) {
                     if (value) {
-                        self.newCaseIndex.tag('Select parent');
+                        self.case_indices.push(CaseIndex.wrap({
+                            tag: 'Select parent',
+                            reference_id: 'parent',
+                            relationship: 'child'
+                        }));
                     } else {
                         self.case_indices.removeAll();
-                        self.newCaseIndex.tag('');
                     }
                 }
             });
@@ -906,13 +903,10 @@ var AdvancedCase = (function () {
                  * values in the form.
                  */
                 self.case_indices.push(CaseIndex.wrap({
-                    tag: self.newCaseIndex.tag(),
-                    reference_id: self.newCaseIndex.reference_id(),
-                    relationship: self.newCaseIndex.relationship()
+                    tag: '',
+                    reference_id: 'parent',
+                    relationship: 'child'
                 }));
-                self.newCaseIndex.tag('');
-                self.newCaseIndex.reference_id('parent');
-                self.newCaseIndex.relationship('child');
             };
 
             self.removeCaseIndex = function (viewModel) {

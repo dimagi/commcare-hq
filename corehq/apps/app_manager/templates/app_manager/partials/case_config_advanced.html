@@ -91,35 +91,25 @@
                 <span style="font-weight: bold;">Parent Indices</span>
                 <ul data-bind="foreach: case_indices">
                     <li>
-                        Parent Tag: <span data-bind="text: tag"></span><br />
-                        Reference ID: <span data-bind="text: reference_id"></span><br />
-                        Relationship: <span data-bind="text: relationship"></span><br />
+                        <label>{% trans "Parent Tag:" %}</label>
+                        <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
+                            value: tag">
+                        </select><br />
+
+                        <label>{% trans "Reference ID:" %}</label>
+                        <input type="text" data-bind="value: reference_id"/><br />
+
+                        <label>{% trans "Relationship:" %}</label>
+                        <select data-bind="options: $parent.relationshipTypes,
+                                           optionsCaption: 'Child case or extension case?',
+                                           value: relationship"></select><br />
+
                         <i class="icon-trash"></i>
                         <a href="#" data-bind="click: $parent.removeCaseIndex">Remove index</a>
                     </li>
                 </ul>
 
-                {% trans "Make this case a subcase of " %}
-                <span data-bind="with: newCaseIndex">
-                    <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
-                        value: tag">
-                    </select>
-                    <br />
-
-                    {% if show_custom_ref %}
-                    <label>{% trans "Parent reference ID:" %}</label>
-                    <input type="text" data-bind="value: reference_id"/>
-                    <br />
-                    {% endif %}
-
-                    <label>{% trans "Relationship:" %}</label>
-                    <select data-bind="options: $parent.relationshipTypes,
-                                       optionsCaption: 'Child case or extension case?',
-                                       value: relationship"></select>
-                    <br />
-
-                    <button data-bind="click: $parent.addCaseIndex">Add</button>
-                </span>
+                <button data-bind="click: addCaseIndex">{% trans "Add parent index" %}</button>
                 <span class="help-inline" data-bind="text: validate_subcase"></span>
             </div>
             <!-- /ko -->
