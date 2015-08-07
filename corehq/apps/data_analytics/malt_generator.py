@@ -6,6 +6,7 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
+from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
@@ -149,9 +150,9 @@ class MALTTableGenerator(object):
         if user_id in all_users_by_id:
             user = all_users_by_id[user_id]
             return (user._id, user.username, user.doc_type, user.email)
-        elif user_id == 'demo_user':
+        elif user_id == DEMO_USER_ID:
             return (user_id, username, 'DemoUser', '')
-        elif username == 'admin':
+        elif username == JAVA_ADMIN_USERNAME:
             return (user_id, username, 'AdminUser', '')
         else:
             return (user_id, username, 'UnknownUser', '')
