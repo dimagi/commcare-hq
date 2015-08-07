@@ -506,6 +506,8 @@ class RestoreConfig(object):
             # if there is a sync token, always cache
             try:
                 data = cache_payload['data']
+                self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
                     data.close()

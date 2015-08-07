@@ -118,6 +118,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # for debugging / logging
+    last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
+    last_cached = DateTimeProperty()  # last time this generated a cached response
+
     # save state errors and hashes here
     had_state_error = BooleanProperty(default=False)
     error_date = DateTimeProperty()
@@ -654,9 +658,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
             try:
                 if made_changes:
                     logger.debug('made changes, saving.')
+                    self.last_submitted = datetime.utcnow()
                     self.save()
-                if case_list:
-                    self.invalidate_cached_payloads()
+                    if case_list:
+                        try:
+                            self.invalidate_cached_payloads()
+                        except ResourceConflict:
+                            # this operation is harmless so just blindly retry and don't
+                            # reraise if it goes through the second time
+                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,

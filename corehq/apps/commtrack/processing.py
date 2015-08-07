@@ -65,6 +65,7 @@ def _create_model_for_stock_report(domain, stock_report_helper):
         date=stock_report_helper.timestamp,
         type=stock_report_helper.tag,
         domain=domain,
+        server_date=stock_report_helper.server_date,
     )
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
