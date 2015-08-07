@@ -96,13 +96,13 @@ class HqAdminEmailHandler(AdminEmailHandler):
         context = self.get_context(record)
 
         message = "\n\n".join(filter(None, [
-            self._clean_subject(context['message']),
+            context['message'],
             self.format_details(context['details']),
             context['stack_trace'],
             context['request_repr'],
         ]))
         html_message = render_to_string('hqadmin/email/error_email.html', context)
-        mail.mail_admins(context['subject'], message, fail_silently=True,
+        mail.mail_admins(self._clean_subject(context['subject']), message, fail_silently=True,
                          html_message=html_message)
 
     def format_details(self, details):
