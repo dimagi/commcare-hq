@@ -149,8 +149,8 @@ class MALTTableGenerator(object):
             user = all_users_by_id[user_id]
             return (user._id, user.username, user.doc_type, user.email)
         elif user_id == 'demo_user':
-            return (user_id, username, 'DemoUser', None)
+            return (user_id, username, 'DemoUser', '')
         elif username == 'admin':
-            return (user_id, username, 'AdminUser', None)
+            return (user_id, username, 'AdminUser', '')
         else:
-            return (user_id, username, 'UnknownUser', None)
+            return (user_id, username, 'UnknownUser', '')
