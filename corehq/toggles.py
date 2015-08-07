@@ -189,6 +189,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DEMO_REPORTS = StaticToggle(
+    'demo-reports',
+    'Access to map-based demo reports',
+    TAG_PREVIEW,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
