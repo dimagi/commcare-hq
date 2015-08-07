@@ -2444,21 +2444,23 @@ class AdvancedModule(ModuleBase):
             for form in forms:
                 info = self.get_module_info()
                 form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
-
-                if not form.requires_case():
+                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                if not non_auto_select_actions:
                     errors.append({
                         'type': 'case list module form must require case',
                         'module': info,
                         'form': form_info,
                     })
-                elif len(form.actions.load_update_cases) != 1:
-                    errors.append({
-                        'type': 'case list module form must require only one case',
-                        'module': info,
-                        'form': form_info,
-                    })
+                elif len(non_auto_select_actions) != 1:
+                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        if index > 0 and not non_auto_select_actions[index - 1].case_tag == action.parent_tag:
+                            errors.append({
+                                'type': 'case list module form can only load parent cases',
+                                'module': info,
+                                'form': form_info,
+                            })
 
-                case_action = form.actions.load_update_cases[0] if form.requires_case() else None
+                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
                 if case_action and case_action.case_type != self.case_type:
                     errors.append({
                         'type': 'case list module form must match module case type',
