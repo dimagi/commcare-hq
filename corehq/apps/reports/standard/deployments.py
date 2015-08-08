@@ -186,6 +186,7 @@ class SyncHistoryReport(DeploymentsReport):
             headers.add_column(DataTablesColumn(_("Sync Log Type")))
             headers.add_column(DataTablesColumn(_("Previous Sync Log")))
             headers.add_column(DataTablesColumn(_("Error Info")))
+            headers.add_column(DataTablesColumn(_("State Hash")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -239,8 +240,10 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return u'<span class="label label-important">X</span> State error {}'.format(
+                    return (u'<span class="label label-important">X</span>'
+                            u'State error {}<br>Expected hash: {:.10}...').format(
                         naturaltime(sync_log.error_date),
+                        sync_log.error_hash,
                     )
 
             num_cases = sync_log.case_count()
@@ -254,6 +257,7 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
+                columns.append('{:.10}...'.format(sync_log.get_state_hash()))
 
             return columns
 
