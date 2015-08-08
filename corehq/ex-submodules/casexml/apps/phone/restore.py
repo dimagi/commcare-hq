@@ -294,8 +294,13 @@ class RestoreState(object):
                         case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
-                        _assert(False, str(exception))
+                        sync_history_url = '{}?individual={}'.format(
+                            SyncHistoryReport.get_url(self.domain),
+                            self.user.user_id
+                        )
+                        _assert(False, '{}, sync history report: {}'.format(exception, sync_history_url))
                     raise exception
 
     @property
