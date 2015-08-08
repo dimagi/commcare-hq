@@ -20,7 +20,7 @@ class Command(BaseCommand):
         log_names = []
         for filename in args:
             if os.path.isdir(filename):
-                filenames = [os.path.join(filename, item) for item in os.listdir(filename)]
+                filenames = [os.path.join(filename, item) for item in sorted(os.listdir(filename))]
             else:
                 filenames = [filename]
 
