@@ -244,7 +244,7 @@ class SyncHistoryReport(DeploymentsReport):
                 else:
                     return (u'<span class="label label-important">X</span>'
                             u'State error {}<br>Expected hash: {:.10}...').format(
-                        naturaltime(sync_log.error_date),
+                        _naturaltime_with_hover(sync_log.error_date),
                         sync_log.error_hash,
                     )
 
@@ -260,8 +260,8 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
                 columns.append('{:.10}...'.format(sync_log.get_state_hash()))
-                columns.append(sync_log.last_submitted)
-                columns.append(sync_log.last_cached)
+                columns.append(_naturaltime_with_hover(sync_log.last_submitted))
+                columns.append(_naturaltime_with_hover(sync_log.last_cached))
 
             return columns
 
@@ -292,10 +292,14 @@ def _fmt_date(date):
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
-                text=_(naturaltime(date)),
+                text=_(_naturaltime_with_hover(date)),
             ),
             date.toordinal(),
         )
+
+
+def _naturaltime_with_hover(date):
+    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):
