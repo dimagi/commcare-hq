@@ -187,6 +187,8 @@ class SyncHistoryReport(DeploymentsReport):
             headers.add_column(DataTablesColumn(_("Previous Sync Log")))
             headers.add_column(DataTablesColumn(_("Error Info")))
             headers.add_column(DataTablesColumn(_("State Hash")))
+            headers.add_column(DataTablesColumn(_("Last Submitted")))
+            headers.add_column(DataTablesColumn(_("Last Cached")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -258,6 +260,8 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
                 columns.append('{:.10}...'.format(sync_log.get_state_hash()))
+                columns.append(sync_log.last_submitted)
+                columns.append(sync_log.last_cached)
 
             return columns
 
