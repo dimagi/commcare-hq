@@ -514,7 +514,8 @@ class SubmissionPost(object):
                             # note that in the case of edit submissions this won't flag the previous
                             # submission as having been edited. this is intentional, since we should treat
                             # this use case as if the edit "failed"
-                            instance = _handle_unexpected_error(e, instance)
+                            error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
+                            instance = _handle_unexpected_error(instance, error_message)
                             instance.save()
                             raise
                         now = datetime.datetime.utcnow()
@@ -555,7 +556,13 @@ class SubmissionPost(object):
                                           extra={'details': {'errors': e.errors}})
                             raise
                         except Exception as e:
-                            instance = _handle_unexpected_error(e, instance)
+                            docs_being_saved = [doc['_id'] for doc in docs]
+                            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                                type(e).__name__,
+                                unicode(e),
+                                ', '.join(docs_being_saved)
+                            )
+                            instance = _handle_unexpected_error(instance, error_message)
                             instance.save()
                             raise
                         unfinished_submission_stub.saved = True
@@ -671,19 +678,17 @@ def _handle_known_error(e, instance):
     return instance
 
 
-def _handle_unexpected_error(e, instance):
+def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    error_message = '{}: {}'.format(
-        type(e).__name__, unicode(e))
     new_id = XFormError.get_db().server.next_uuid()
     notify_exception(None, (
         u"Error in case or stock processing "
-        u"for form {}: {}.\n"
+        u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance._id, error_message, new_id))
     instance.__class__ = XFormError
