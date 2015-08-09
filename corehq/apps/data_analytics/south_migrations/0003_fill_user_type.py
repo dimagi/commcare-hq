@@ -7,9 +7,8 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        for malt_row in orm.MALTRow.objects.all():
-            malt_row.user_type = "WebUser" if malt_row.is_web_user else "CommCareUser"
-            malt_row.save()
+        orm.MALTRow.objects.filter(is_web_user=True).update(user_type="WebUser")
+        orm.MALTRow.objects.filter(is_web_user=False).update(user_type="CommCareUser")
 
     def backwards(self, orm):
         for malt_row in orm.MALTRow.objects.all():
