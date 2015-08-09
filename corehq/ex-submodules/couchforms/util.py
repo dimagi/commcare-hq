@@ -672,7 +672,6 @@ def _handle_known_error(e, instance):
 
 
 def _handle_unexpected_error(e, instance):
-    # Some things to consider here
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
