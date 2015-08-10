@@ -81,7 +81,7 @@ submodules:
   submodules/pillowtop-src:
     branches:
       - upgrade-redis # Ben 8/10
-  submodules/dimagi-utils:
+  submodules/dimagi-utils-src:
     branches:
       - upgrade-redis # Ben 8/10
   submodules/django-soil-src:
