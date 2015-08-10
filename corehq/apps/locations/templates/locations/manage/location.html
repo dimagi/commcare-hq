@@ -30,9 +30,14 @@
 
     <script>
         {# TODO Move this to a separate file #}
-        $("#new_user").on('show', function() {
+        var insert_new_user = function(user) {
+            $('#id_users-selected_ids').multiselect('addSelected', user.user_id, user.text);
+        };
 
-            var url = "{% url "new_mobile_worker_modal" domain %}";
+        $('#new_user').on('show', function() {
+
+            var url = ("{% url "new_mobile_worker_modal" domain %}" +
+                       "?location_id=" + {{ location.get_id|JSON }});
             var form_node = $("#new_user form");
 
             $.get(url, function(data) {
@@ -42,11 +47,10 @@
             var handle_submission = function(event) {
                 event.preventDefault();
                 $.post(url, form_node.serialize(), function(data) {
-                    console.log(data);
                     if (data['status'] === 'success') {
-                        console.log("submission succeeded!");
+                        insert_new_user(data['user']);
+                        $('#new_user').modal('hide');
                     } else {
-                        console.log("submission failed, re-rendering form");
                         form_node.html(data['form_html']);
                     }
                 });
@@ -185,7 +189,6 @@
             {% crispy users_per_location_form %}
             <input type="hidden" name="form_type" value="location-users" />
           </form>
-          {# TODO javascript callback function? #}
           <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
             {% trans "Create new user at this location" %}
           </a>

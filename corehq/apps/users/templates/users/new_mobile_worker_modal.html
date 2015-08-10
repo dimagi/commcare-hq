@@ -1,0 +1,25 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load crispy_forms_tags %}
+
+<script src="{% static 'users/js/key_filters.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+        {% if only_numeric %}
+            $('#add_commcare_account_form input[type=password]').keydown(allowNumeric);
+        {% else %}
+            $("#add_commcare_account_form .help-block").hide();
+        {% endif %}
+    });
+</script>
+
+{% crispy form %}
+{% if data_fields_form.fields %}
+    {% crispy data_fields_form %}
+{% endif %}
+<div class="form-actions">
+    <div class="buttonHolder">
+        <input id="submit_mobile_worker" class="btn btn-primary" type="submit" value="{% trans 'Create Mobile Worker' %}" name="create"></input>
+    </div>
+</div>

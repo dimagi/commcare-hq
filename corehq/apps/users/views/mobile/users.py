@@ -638,9 +638,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            form = CommCareAccountForm(self.request.POST)
-            form.password_format = self.password_format
-            return form
+            return CommCareAccountForm(self.request.POST, self.password_format)
         return CommCareAccountForm()
 
     @property
@@ -682,6 +680,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return self.get(request, *args, **kwargs)
 
 
+# This is almost entirely a duplicate of CreateCommCareUserView. That view will
+# be going away soon, so I didn't bother to abstract out the commonalities.
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     template_name = "users/new_mobile_worker_modal.html"
     urlname = 'new_mobile_worker_modal'
@@ -696,6 +696,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         context = {
             'form': self.new_commcare_user_form,
             'data_fields_form': self.custom_data.form,
+            'only_numeric': self.request.project.password_format() == 'n',
         }
         return self.render_json_response({
             "status": status,
@@ -720,7 +721,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         if self.request.method == "POST":
             data = self.request.POST.dict()
             data['domain'] = self.domain
-            return CommCareAccountForm(data)
+            password_format = self.request.project.password_format()
+            return CommCareAccountForm(data, password_format=password_format)
         return CommCareAccountForm()
 
     def post(self, request, *args, **kwargs):
@@ -733,7 +735,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 loc = get_document_or_404(Location, self.domain,
                                           request.GET.get('location_id'))
 
-            couch_user = CommCareUser.create(
+            user = CommCareUser.create(
                 self.domain,
                 username,
                 password,
@@ -743,9 +745,9 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             )
 
             if 'location_id' in request.GET:
-                couch_user.set_location(loc)
+                user.set_location(loc)
 
-            user_json = {"TODO": "user.to_json()"}
+            user_json = {'user_id': user._id, 'text': user.username_in_report}
             return self.render_json_response({"status": "success",
                                               "user": user_json})
         return self.render_form("failure")
