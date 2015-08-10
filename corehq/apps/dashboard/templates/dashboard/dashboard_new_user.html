@@ -1,126 +1,52 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}{% load hq_shared_tags %}
 
-{% block js-inline %}{{ block.super }}
+{% block uncompressed-js %}{{ block.super }}
 <script>
-    $(function () {
-        $appstoreLink = $('#appstore-link');
-        $helpLink = $('#help-link');
-        $newAppLink = $('#new-app-link');
-
-        gaTrackLink($appstoreLink, 'Dashboard', 'Welcome Tile', 'exchange');
-        gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
-        gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
-
+    $(function() {
         analytics.workflow('Visited new user dashboard');
-        analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
-        analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
-        analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
-
+        var $links = [];
+        {% for template in templates %}
+            $links.push($('.dashboard-link[data-index="{{ forloop.counter0 }}"]'));
+            gaTrackLink($links[{{ forloop.counter0 }}], 'Dashboard', 'Welcome Tile', '{{ template.action }}')
+            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], '{{ template.description }}')
+        {% endfor %}
     });
 </script>
-{% endblock js-inline %}
-
-{% block uncompressed-js %} {{ block.super }}
-    <script type="text/javascript">
-        (function (angular, undefined) {
-            'use strict';
-            // NOTE: It's not a best practice to define the app in a script tag,
-            //       better to have it in a separate file. Leaving this here
-            //       though because this is just for an A/B test (temporary code)
-            var dashboardApp = angular.module('dashboardApp', []);
-            dashboardApp.controller("DashBoardController", ["$scope", "$timeout", function ($scope, $timeout) {
-                $scope.tilesReady = false;
-                $scope.variant = "wide applications tile";
-
-                var abFallback = $timeout(function () {
-                    // Show the default variant if something goes wrong with KISSmetrics
-                    $scope.tilesReady = true;
-                }, 1500);
-
-                _kmq.push(function () {
-                    // When KISSmetrics is loaded, get the variant for this user.
-                    $scope.$apply(function () {
-                        $scope.variant = KM.ab('New user dashboard tiles', ["equal size", "wide applications tile"]);
-                        $scope.tilesReady = true;
-                    });
-                    // Cancel the fallback because we were able to reach KISSmetrics.
-                    $timeout.cancel(abFallback);
-                });
-
-
-            }]);
-        }(window.angular));
-    </script>
-{% endblock %}
-
+{% endblock uncompressed-js %}
 
 {% block dashboard-content %}
 <div class="page-header">
-    <h1>
-        {% if project.commtrack_enabled %}
-            {% trans 'Welcome to CommCare Supply' %}
-        {% else %}
-            {% trans 'Welcome to CommCare HQ' %}
-        {% endif %}
-         <small>{% trans 'What would you like to do?' %}</small></h1>
+    <h1>{% trans 'What type of app would you like to build?' %}</h1>
 </div>
-<div class="row" ng-app="dashboardApp" ng-controller="DashBoardController as dashboard">
-<div ng-show="tilesReady" ng-cloak>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
-        <div class="panel panel-dashboard">
-            <div class="panel-heading">
-                {% trans 'Exchange' %}
-            </div>
-            <div class="panel-body">
-                <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link" id="appstore-link">
-                    <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
-                    <span class="lead">{% blocktrans %}
-                        Start with an<br>existing application
-                    {% endblocktrans %}</span>
-                </a></p>
-            </div>
-        </div>
-    </div>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-6' : 'col-md-4'">
-        <div class="panel panel-dashboard">
-            <div class="panel-heading">
-                {% if project.commtrack_enabled %}
-                    {% trans 'CommCare Supply Setup' %}
-                {% else %}
-                    {% trans 'Applications' %}
-                {% endif %}
-            </div>
-            <div class="panel-body">
-                <p class="text-center">
-                    <a href="{% url 'default_new_app' domain %}"
-                       class="dashboard-link"
-                       id="new-app-link">
-                        <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
+<div class="row">
+    {% for template in templates %}
+        <div class="col-md-4">
+            <div class="panel panel-dashboard">
+                <div class="panel-heading">
+                    {{ template.heading }}
+                </div>
+                <div class="panel-body">
+                    <p class="text-center">
+                        <a class="dashboard-link"
+                            data-index="{{ forloop.counter0 }}"
+                            href="{{ template.url }}">
+                        <i class="fcc {{ template.icon }} dashboard-icon dashboard-icon-large"></i>
                         <span class="lead">
-                            Build a new application<br><br>
+                            {{ template.lead }}
                         </span>
-                   </a>
-                </p>
+                    </a></p>
+                </div>
             </div>
         </div>
-    </div>
-    <div ng-class="(variant == 'wide applications tile') ? 'col-md-3' : 'col-md-4'">
-        <div class="panel panel-dashboard">
-            <div class="panel-heading">{% trans 'Help Site' %}</div>
-            <div class="panel-body">
-                <p class="text-center"><a href="http://help.commcarehq.org/"
-                      class="dashboard-link"
-                      id="help-link"
-                      target="_blank">
-                    <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
-                    <span class="lead">{% blocktrans %}
-                        Learn how to build<br>an application
-                    {% endblocktrans %}</span>
-                </a></p>
-            </div>
-        </div>
-    </div>
+    {% endfor %}
 </div>
-</div>
+
+{% if request|toggle_enabled:'REMOTE_APPS' %}
+    <form class="pull-right form" action="{% url "new_app" domain %}" method="post">
+        <input type="hidden" name="type" value="RemoteApp" />
+        <button class="btn btn-default" href="#" type="submit">{% trans "Create a new RemoteApp (Advanced Users Only)" %}</button>
+    </form>
+{% endif %}
+
 {% endblock dashboard-content %}
