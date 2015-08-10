@@ -698,7 +698,7 @@ class Domain(Document, SnapshotMixin):
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   ignore=None, copy_by_id=None):
-        from corehq.apps.app_manager.models import get_app
+        from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
 
