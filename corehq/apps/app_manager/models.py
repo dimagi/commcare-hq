@@ -578,9 +578,18 @@ class CachedStringProperty(object):
 class ScheduleVisit(IndexedSchema):
     """
     due:         Days after the anchor date that this visit is due
-    late_window: Days after the due day that this visit is valid until
+    starts:      Days before the due date that this visit is valid from
+    expires:     Days after the due date that this visit is valid until (optional)
+
+    repeats:     Whether this is a repeat visit (one per form allowed)
+    increment:   Days after the last visit that the repeat visit occurs
     """
     due = IntegerProperty()
+    starts = IntegerProperty()
+    expires = IntegerProperty()
+    repeats = BooleanProperty(default=False)
+    increment = IntegerProperty
+    # TODO: remove
     late_window = IntegerProperty()
 
     @property
@@ -601,16 +610,18 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
-    starts:                     Days before the anchor date that this schedule starts
+    starts:                     Days after the anchor date that this schedule starts
     expires:                    Days after the anchor date that this schedule expires (optional)
     visits:		        List of visits in this schedule
-    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    allow_unscheduled:          Allow unscheduled visits in this schedule
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
     starts = IntegerProperty()
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
+    allow_unscheduled = BooleanProperty(default=False)
+    # TODO: remove
     post_schedule_increment = IntegerProperty()
     get_visits = IndexedSchema.Getter('visits')
 

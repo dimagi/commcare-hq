@@ -78,47 +78,55 @@
 
         <fieldset>
             <legend>{% trans "Visit Schedule" %}</legend>
+            <div class="control-group">
+                <label class="checkbox">
+                    <input type="checkbox"  data-bind="checked: allow_unscheduled">
+                    {% trans "Allow unscheduled visits" %}
+                </label>
+            </div>
             <div data-bind="foreach: visits">
-                <div class="control-group">
-                    <label class="control-label">
-                        <a href="#" data-bind="
-                            click: $parent.removeVisit">
+                <fieldset class="nested-fieldset">
+                    <legend>
+                        <a href="#" data-bind="click: $parent.removeVisit">
                             <i class="icon-remove"></i>
                         </a>
-                        {% trans "Visit" %} <span data-bind="text: $index() + 1"/>:
-                    </label>
-                    <div class="controls">
-                        <input type="text" class="input-mini" data-bind="numericValue: due"/>
-                        {% trans "days" %}
-                        <select data-bind="value: type">
-                            <option value="before">{% trans "Before the anchor date" %}</option>
-                            <option value="after">{% trans "After the anchor date" %}</option>
-                        </select>
-                        {% trans "and up to" %}
-                        <input type="text" class="input-mini" data-bind="numericValue: late_window"/>
-                        {% trans "days late" %}
+                        <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
+                        {% trans "Visit" %}
+                        <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
+                    </legend>
+                    <div class="control-group">
+                        <div class="controls">
+                            {% trans "Due" %}
+                            <input type="text" class="input-mini" data-bind="numericValue: due"/>
+                            {% trans "days" %}
+                            <select data-bind="value: type">
+                                <option value="before">{% trans "before the anchor date" %}</option>
+                                <option value="after">{% trans "after the anchor date" %}</option>
+                                <option value="repeats"
+                                        data-bind="disable: $index() !== ($parent.visits().length - 1)">
+                                    {% trans "after the last visit" %}
+                                </option>
+                            </select>
+                        </div>
                     </div>
-                </div>
+                    <div class="control-group">
+                        <div class="controls">
+                            {% trans "Visit can be made up to" %}
+                            <input type="text" class="input-mini" data-bind="numericValue: starts"/>
+                            {% trans "days early and" %}
+                            <input type="text" class="input-mini" data-bind="numericValue: expires"/>
+                            {% trans "days late" %}
+                        </div>
+                    </div>
+                </fieldset>
             </div>
             <div class="control-group">
-                <div class="controls">
-                    <button class="btn" data-bind="click: addVisit">
-                        <i class="icon-plus"></i>
-                        {% trans "Add Fixed Visit" %}
-                    </button>
-                </div>
-            </div>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox"  data-bind="checked: hasPostSchedule">
-                        {% trans "Schedule recurring visit after the last fixed visit" %}
-                    </label>
-                    <div data-bind="visible: hasPostSchedule">
-                        <input type="text" class="input-mini" data-bind="numericValue: post_schedule_increment"/>
-                        {% trans "days after previous visit" %}
-                    </div>
-                </div>
+                <button class="btn"
+                        data-bind="click: addVisit,
+                                   disable: hasRepeatVisit()">
+                    <i class="icon-plus"></i>
+                    {% trans "Add Fixed Visit" %}
+                </button>
             </div>
         </fieldset>
         <!--/ko-->

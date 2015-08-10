@@ -87,7 +87,10 @@ var VisitScheduler = (function () {
                 include: [
                     'due',
                     'type',
-                    'late_window'
+                    'starts',
+                    'expires',
+                    'repeats',
+                    'increment',
                 ]
             };
         },
@@ -96,6 +99,10 @@ var VisitScheduler = (function () {
                 config: config
             };
             ko.mapping.fromJS(data, ScheduleVisit.mapping(self), self);
+            if (self.repeats()){
+                self.due(self.increment());
+                self.type('repeats');
+            }
             return self;
         },
 
@@ -124,7 +131,7 @@ var VisitScheduler = (function () {
             return {
                 include: [
                     'expires',
-                    'post_schedule_increment',
+                    'allow_unscheduled',
                     'transition_condition',
                     'termination_condition'
                 ],
@@ -160,17 +167,8 @@ var VisitScheduler = (function () {
 
             self.hasExpiry = ko.observable();
 
-            self.hasPostSchedule = ko.observable(!!self.post_schedule_increment());
-
-            self.editValue = ko.dependentObservable({
-                read: function() {
-                    return self.post_schedule_increment();
-                },
-                write: function(newValue) {
-                    var parsedValue = parseInt(newValue, 10);
-                    this.post_schedule_increment(isNaN(parsedValue) ? newValue : parsedValue);
-                },
-                owner: self
+            self.hasRepeatVisit = ko.computed(function(){
+                return self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
             self.phase = phase;
@@ -181,7 +179,9 @@ var VisitScheduler = (function () {
                 self.visits.push(ScheduleVisit.wrap({
                     due: null,
                     type: 'after',
-                    late_window: null
+                    starts: null,
+                    expires: null,
+                    increment: null
                 }));
             };
 
@@ -228,16 +228,17 @@ var VisitScheduler = (function () {
             else{
                 schedule.expires = null;
             }
-            if (!self.hasPostSchedule()) {
-                schedule.post_schedule_increment = null;
-            }
 
             schedule.anchor = self.phase.anchor();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? 1 : -1);
+                var repeats = visit.type === 'repeats';
                 return {
-                    due: due,
-                    late_window: visit.late_window
+                    due: repeats ? null : due,
+                    starts: visit.starts,
+                    expires: visit.expires,
+                    repeats: repeats,
+                    increment: repeats ? visit.due : null
                 };
             });
             return schedule;
