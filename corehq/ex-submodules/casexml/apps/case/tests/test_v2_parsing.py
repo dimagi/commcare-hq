@@ -6,10 +6,8 @@ from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from casexml.apps.case.xform import process_cases
 from datetime import datetime
-from django.http import HttpRequest
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case import const
 from casexml.apps.phone import xml
 
@@ -121,7 +119,7 @@ class Version2CaseParsingTest(TestCase):
                 CaseBlock(
                     create=True, case_id=prereq,
                     user_id=user_id, version=V2
-                ).as_xml(format_datetime=json_format_datetime)
+                ).as_xml()
             ])
 
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "index_update.xml")

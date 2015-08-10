@@ -152,7 +152,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     elif has_doc_type(doc_type, 'Location'):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
-            type_display=doc['location_type'],
+            type_display=_('Location'),
             display=doc['name'],
             link=reverse(
                 EditLocationView.urlname,

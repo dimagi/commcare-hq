@@ -185,7 +185,6 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -224,6 +223,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -258,6 +258,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.dropbox',
     'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
@@ -454,7 +455,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'zapier+billing-support@dimagi.com'
+PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -829,6 +830,11 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
+        'notify_exception': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -853,7 +859,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['mail_admins'],
+            'handlers': ['notify_exception'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -930,6 +936,10 @@ DEFAULT_PROTOCOL = 'http'
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = False
 
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -945,8 +955,14 @@ try:
             # is a syntax error in any module imported by corehq/__init__.py
             # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
             # localsettings.py will reveal the real error.
+            # Note that changing this means you will not be able to use/test anything
+            # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
     pass
@@ -1250,8 +1266,6 @@ PILLOWTOPS = {
         'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',

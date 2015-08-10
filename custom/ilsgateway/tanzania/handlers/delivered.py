@@ -13,7 +13,7 @@ class DeliveredHandler(KeywordHandler):
         locs = [c.get_id for c in location.children]
         users = []
         for location_id in locs:
-            users.extend(get_users_by_location_id(location_id))
+            users.extend(get_users_by_location_id(self.domain, location_id))
 
         for user in users:
             if user.get_verified_number():

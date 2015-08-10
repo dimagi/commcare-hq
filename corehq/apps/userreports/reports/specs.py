@@ -1,4 +1,6 @@
+import json
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
@@ -24,8 +26,6 @@ SQLAGG_COLUMN_MAP = {
     'simple': SimpleColumn,
     'year': YearColumn,
 }
-ASCENDING = "ASC"
-DESCENDING = "DESC"
 
 
 class ReportFilter(JsonObject):
@@ -325,6 +325,13 @@ class NumericFilterSpec(FilterSpec):
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)
     title = StringProperty()
+    chart_id = StringProperty()
+
+    @classmethod
+    def wrap(cls, obj):
+        if obj.get('chart_id') is None:
+            obj['chart_id'] = (obj.get('title') or '') + str(hash(json.dumps(sorted(obj.items()))))
+        return super(ChartSpec, cls).wrap(obj)
 
 
 class PieChartSpec(ChartSpec):

@@ -4,10 +4,11 @@ from corehq.apps.reports.standard import CustomProjectReport
 from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _, ugettext_noop
+
 
 class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
-    name = _("Format-1 for ASHA Sanginis")
+    name = ugettext_noop("Format-1 for ASHA Sanginis")
     slug = "asha_functionality_checklist_report"
 
     @property
@@ -55,9 +56,9 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             [8, _('Acting as DOTS provider')],
             [9, _('Holding or attending village/VHSNC meeting')],
             [10, _('Successful referral of the IUD, female sterilization or male '
-                 'sterilization cases and/or providing OCPs/Condoms')],
+                   'sterilization cases and/or providing OCPs/Condoms')],
             ['', _('Total of number of tasks on which ASHA reported being functional')],
-            ['', _('Total number of ASHAs who are functional on at least 60% of the tasks')],
+            ['', _('Total number of ASHAs who are functional on at least %s of the tasks' % '60%')],
             ['', _('Remark')]
         ]
 

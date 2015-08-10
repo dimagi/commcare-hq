@@ -7,10 +7,11 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _, ugettext_noop
+
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = _("Format-3 Block Consolidation of the functionality status")
+    name = ugettext_noop("Format-3 Block Consolidation of the functionality status")
     slug = "block_level_month_wise"
     no_value = '--'
 

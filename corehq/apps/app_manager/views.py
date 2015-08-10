@@ -9,6 +9,7 @@ from lxml import etree
 import os
 import re
 import json
+import yaml
 from collections import defaultdict, OrderedDict
 from xml.dom.minidom import parseString
 
@@ -505,6 +506,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
     }
 
     if isinstance(form, CareplanForm):
@@ -902,14 +904,16 @@ def get_module_view_context_and_template(app, module):
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
-            ]
-
+            ],
+            'child_module_enabled': True
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
             return {
                 'report_id': report._id,
-                'title': report.title
+                'title': report.title,
+                'charts': [chart for chart in report.charts if chart.type == 'multibar'],
+                'filter_structure': report.filters,
             }
         all_reports = ReportConfiguration.by_domain(app.domain)
         all_report_ids = set([r._id for r in all_reports])
@@ -1273,8 +1277,30 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'sessionid': request.COOKIES.get('sessionid'),
         'features': vellum_features,
         'plugins': vellum_plugins,
+        'app_callout_templates': next(_app_callout_templates),
     })
     return render(request, 'app_manager/form_designer.html', context)
+
+
+def _app_callout_templates():
+    """Load app callout templates from config file on disk
+
+    Generator function defers file access until needed, acts like a
+    constant thereafter.
+    """
+    path = os.path.join(
+        os.path.dirname(__file__),
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+    )
+    if os.path.exists(path):
+        with open(path) as f:
+            data = yaml.load(f)
+    else:
+        logger.info("not found: %s", path)
+        data = []
+    while True:
+        yield data
+_app_callout_templates = _app_callout_templates()
 
 
 @require_GET

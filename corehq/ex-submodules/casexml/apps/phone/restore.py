@@ -282,14 +282,25 @@ class RestoreState(object):
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
                 if computed_hash != parsed_hash:
+                    # log state error on the sync log
+                    self.last_sync_log.had_state_error = True
+                    self.last_sync_log.error_date = datetime.utcnow()
+                    self.last_sync_log.error_hash = str(parsed_hash)
+                    self.last_sync_log.save()
+
                     exception = BadStateException(
-                        expected=computed_hash,
-                        actual=parsed_hash,
+                        server_hash=computed_hash,
+                        phone_hash=parsed_hash,
                         case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
-                        _assert(False, str(exception))
+                        sync_history_url = '{}?individual={}'.format(
+                            SyncHistoryReport.get_url(self.domain),
+                            self.user.user_id
+                        )
+                        _assert(False, '{}, sync history report: {}'.format(exception, sync_history_url))
                     raise exception
 
     @property
@@ -500,6 +511,8 @@ class RestoreConfig(object):
             # if there is a sync token, always cache
             try:
                 data = cache_payload['data']
+                self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
                     data.close()

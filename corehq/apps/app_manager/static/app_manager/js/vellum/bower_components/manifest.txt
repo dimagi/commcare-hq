@@ -3,10 +3,10 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
 ├── Caret.js#0.2.2
-├── MediaUploader#0b9546e43b
+├── MediaUploader#dacf28f419
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
-├── chai#3.0.0 (3.2.0 available)
+├── chai#3.2.0
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
 ├── jsdiff#1.4.0
@@ -16,7 +16,7 @@
 ├── markdown-it#4.2.2 (latest is 4.4.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.19
+├── requirejs#2.1.20
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f

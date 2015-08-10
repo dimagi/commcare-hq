@@ -430,10 +430,6 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
     def valid_base_types(cls):
         return ['text']
 
-    def process_upload(self):
-        ret = super(ProcessTextFileUploadView, self).process_upload()
-        ret['text'] = self.data
-        return ret
 
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"

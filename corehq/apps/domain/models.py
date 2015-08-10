@@ -444,22 +444,6 @@ class Domain(Document, SnapshotMixin):
     def apply_migrations(self):
         self.migrations.apply(self)
 
-    @staticmethod
-    def all_for_user(user):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
-            return []
-        from corehq.apps.users.models import CouchUser
-        couch_user = CouchUser.from_django_user(user)
-        if couch_user:
-            domain_names = couch_user.get_domains()
-            return Domain.view("domain/domains",
-                keys=domain_names,
-                reduce=False,
-                include_docs=True).all()
-        else:
-            return []
-
     def add(self, model_instance, is_active=True):
         """
         Add something to this domain, through the generic relation.
@@ -960,13 +944,13 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return format_html(
                 "Snapshot of {0} &gt; {1}",
-                self.get_organization().title,
+                self.organization_title(),
                 self.copied_from.display_name()
             )
         if self.organization:
             return format_html(
                 '{0} &gt; {1}',
-                self.get_organization().title,
+                self.organization_title(),
                 self.hr_name or self.name
             )
         else:

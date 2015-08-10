@@ -834,6 +834,9 @@ Here's a sample spec:
 ## Sort Expression
 
 A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
+
+Field should refer to report column IDs, not database fields.
+
 ```
 [
   {

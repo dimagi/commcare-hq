@@ -185,12 +185,14 @@
 </section>
 {% endblock %}
 {% block reporttable %}
-<table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-    <thead>
-    {{ headers.render_html|safe }}
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+<div>
+    <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+        <thead>
+        {{ headers.render_html|safe }}
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
 {% endblock reporttable %}
 {% endblock %}

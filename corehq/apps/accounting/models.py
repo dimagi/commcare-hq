@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from corehq.util.global_request import get_request
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1963,6 +1963,7 @@ class BillingRecord(BillingRecordBase):
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
+    is_wire = BooleanProperty(default=False)
 
     def generate_pdf(self, invoice):
         self.save()
@@ -2023,6 +2024,7 @@ class InvoicePdf(SafeSaveDocument):
 
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.utcnow()
+        self.is_wire = invoice.is_wire
         self.save()
 
     def get_filename(self, invoice):

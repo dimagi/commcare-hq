@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig)
+    ReportModule, ReportAppConfig, ParentSelect, Detail, DetailPair, CaseList)
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
                                            interpolate_xpath, session_var)
@@ -383,6 +383,40 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
+    def test_no_form_case_list_filter(self):
+        """
+        If a module has no forms but has case-list-filterint...
+        case-list filtering should be added to the case-list session datum
+        """
+        # setup a module with no forms
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        module_0 = app.add_module(Module.new_module('module with no forms', None))
+        # setup case list menu and filtering
+        module_0.case_type = "doc"
+        module_0.case_list = CaseList(show=True, label={'en': "doctors"})
+        columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+        short = Detail(filter="name = 'sravan'", display='short', columns=columns)
+        long = Detail(display='long', columns=columns)
+        module_0.case_details = DetailPair(short=short, long=long)
+        # test that case-list session datum has right xml
+        session_xml = """
+        <partial>
+          <datum
+            id="case_id"
+            nodeset="instance('casedb')/casedb/case[@case_type='doc'][@status='open'][name = 'sravan']"
+            value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(session_xml, app.create_suite(), './entry[1]/session/')
+
     def test_form_filter(self):
         """
         Ensure form filter gets added correctly and appropriate instances get added to the entry.
@@ -535,6 +569,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def _prep_case_list_form_app(self):
         app = Application.wrap(self.get_json('app'))
+        app.build_spec.version = '2.9'
         case_module = app.get_module(0)
         case_module.get_form(0)
 
@@ -559,6 +594,14 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
+    def test_case_list_registration_form_usercase(self):
+        app = self._prep_case_list_form_app()
+        register_module = app.get_module(1)
+        register_form = register_module.get_form(0)
+        register_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
+        register_form.actions.usercase_preload.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
+
     def test_case_list_registration_form_end_for_form_nav(self):
         app = self._prep_case_list_form_app()
         app.build_spec.version = '2.9'
@@ -579,8 +622,31 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./detail[@id='m0_case_short']/action"
         )
 
+    def test_case_list_form_multiple_modules(self):
+        app = self._prep_case_list_form_app()
+        case_module1 = app.get_module(0)
+
+        case_module2 = app.add_module(Module.new_module('update2', None))
+        case_module2.unique_id = 'update case 2'
+        case_module2.case_type = case_module1.case_type
+        update2 = app.new_form(2, 'Update Case Form2', lang='en')
+        update2.unique_id = 'update_case_form2'
+        update2.requires = 'case'
+        update2.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update2.actions.update_case.condition.type = 'always'
+
+        case_module2.case_list_form.form_id = 'register_case_form'
+        case_module2.case_list_form.label = {
+            'en': 'New Case'
+        }
+        self.assertXmlEqual(
+            self.get_xml('case-list-form-suite-multiple-references'),
+            app.create_suite(),
+        )
+
     def test_case_list_registration_form_advanced(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
 
         register_module = app.add_module(AdvancedModule.new_module('create', None))
         register_module.unique_id = 'register_module'
@@ -609,6 +675,44 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             'en': 'Register another Dugong'
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced'), app.create_suite())
+
+    def test_case_list_registration_form_advanced_autoload(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
+
+        register_module = app.add_module(AdvancedModule.new_module('create', None))
+        register_module.unique_id = 'register_module'
+        register_module.case_type = 'dugong'
+        register_form = app.new_form(0, 'Register Case', lang='en')
+        register_form.unique_id = 'register_case_form'
+        register_form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='dugong',
+            case_tag='open_dugong',
+            name_path='/data/name'
+        ))
+        register_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='usercase',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_USERCASE,
+            )
+        ))
+
+        case_module = app.add_module(AdvancedModule.new_module('update', None))
+        case_module.unique_id = 'case_module'
+        case_module.case_type = 'dugong'
+        update_form = app.new_form(1, 'Update Case', lang='en')
+        update_form.unique_id = 'update_case_form'
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='dugong',
+            case_tag='load_dugong',
+            details_module=case_module.unique_id
+        ))
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'Register another Dugong'
+        }
+        self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), app.create_suite())
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
@@ -1068,7 +1172,46 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.module_2.root_module_id = self.module_1.unique_id
 
-        self.assertXmlPartialEqual(self.get_xml('child-module-grandchild-case'), self.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-grandchild-case'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
+    def test_child_module_with_parent_select_entry_datums(self):
+        """
+            m0 - opens 'gold-fish' case.
+            m1 - has m0 as root-module, has parent-select, updates 'guppy' case, creates
+                 'pregnancy' subcases to guppy
+        """
+        self.module_1.root_module_id = self.module_0.unique_id
+
+        # m0f0 registers gold-fish case
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question2': '/data/question2'})
+        m0f0.actions.update_case.condition.type = 'always'
+
+        # m1f0 has parent-select, updates `guppy` case, and opens sub-subcase 'pregnancy'
+        self.module_1.case_type = 'guppy'
+        self.module_1.parent_select = ParentSelect(
+            active=True, module_id=self.module_0.unique_id
+        )
+        m1f0 = self.module_1.get_form(0)
+        m1f0.requires = 'case'
+        m1f0.actions.update_case = UpdateCaseAction(update={'question2': '/data/question2'})
+        m1f0.actions.update_case.condition.type = 'always'
+        m1f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='pregnancy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-with-parent-select-entry-datums-added'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
 
 class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):

@@ -22,6 +22,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueEr
 from PIL import Image
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.util.soft_assert.api import soft_assert
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -761,9 +762,13 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         xforms = xforms or {}
         reset_state(self)
+
+        _assert = soft_assert('@'.join(['skelly', 'dimagi.com']))
         # try to re-sort actions if necessary
         try:
-            self.actions = sorted(self.actions, key=_action_sort_key_function(self))
+            sorted_actions = sorted(self.actions, key=_action_sort_key_function(self))
+            _assert(sorted_actions == self.actions, "Case actions were not sorted", self.case_id)
+            self.actions = sorted_actions
         except MissingServerDate:
             # only worry date reconciliation if in strict mode
             if strict:
