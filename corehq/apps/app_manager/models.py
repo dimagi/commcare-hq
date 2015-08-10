@@ -594,6 +594,7 @@ class ScheduleVisit(IndexedSchema):
         _id = super(ScheduleVisit, self).id
         return _id + 1
 
+
 class FormLink(DocumentSchema):
     """
     xpath:      xpath condition that must be true in order to open next form
@@ -618,6 +619,7 @@ class FormSchedule(DocumentSchema):
 
     transition_condition = SchemaProperty(FormActionCondition)
     termination_condition = SchemaProperty(FormActionCondition)
+
 
 class FormBase(DocumentSchema):
     """
@@ -2125,10 +2127,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
     def get_module(self):
-        if isinstance(self._parent, ModuleBase):
-            return self._parent
-        else: # Forms can be nested within SchedulePhases
-            return self._parent._parent
+        return self._parent
 
     def get_phase(self):
         module = self.get_module()
@@ -2221,7 +2220,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and not self.schedule and getattr(self.schedule, 'anchor', False):
+        if module.has_schedule and (not self.schedule or not self.get_phase()):
             error = {
                 'type': 'validation error',
                 'validation_message': _("All forms in this module require a visit schedule.")
@@ -2317,7 +2316,7 @@ class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
     """
-    form_id = FormIdProperty("modules[*].schedule_phases[*].form_id")
+    form_id = FormIdProperty("modules[*].schedule_phases[*].forms[*].form_id")
 
 
 class SchedulePhase(IndexedSchema):
@@ -2346,6 +2345,7 @@ class SchedulePhase(IndexedSchema):
         return self._parent
 
     _get_forms = IndexedSchema.Getter('forms')
+
     def get_forms(self):
         """Returns the actual form objects related to this phase"""
         module = self.get_module()
@@ -2681,7 +2681,7 @@ class AdvancedModule(ModuleBase):
         if phase is None:
             self.schedule_phases.append(SchedulePhase(anchor=anchor))
             # TODO: is there a better way of doing this?
-            phase = list(self.get_schedule_phases())[-1] # get the phase from the module so we know the _parent
+            phase = list(self.get_schedule_phases())[-1]  # get the phase from the module so we know the _parent
             is_new_phase = True
 
         return (phase, is_new_phase)

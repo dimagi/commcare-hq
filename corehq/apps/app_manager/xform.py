@@ -1398,11 +1398,6 @@ class XForm(WrappedNode):
 
         def configure_visit_schedule_updates(update_block, action):
             schedule_form_xpath = ScheduleFormXPath(form, form.get_phase(), form.get_module())
-            update_block.append(make_case_elem(SCHEDULE_PHASE))
-            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-            last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
-            update_block.append(make_case_elem(last_visit_num))
-
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
                 type="xs:integer",
@@ -1411,17 +1406,23 @@ class XForm(WrappedNode):
                     self.action_relevance(form.schedule.transition_condition),
                 )
             )
+            update_block.append(make_case_elem(SCHEDULE_PHASE))
+
+            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             last_visit_prop_xpath = CaseIDXPath(session_var(action.case_session_var)).case().slash(last_visit_num)
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_num),
                 calculate="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
             )
+            update_block.append(make_case_elem(last_visit_num))
 
+            last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd")
             )
+            update_block.append(make_case_elem(last_visit_date))
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = case_tag(action)

@@ -85,8 +85,6 @@ var VisitScheduler = (function () {
             return {
                 include: [
                     'anchor',
-                    'transition_condition',
-                    'termination_condition'
                 ]
             };
         },
