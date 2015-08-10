@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig, ParentSelect)
+    ReportModule, ReportAppConfig, ParentSelect, Detail, DetailPair, CaseList)
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
                                            interpolate_xpath, session_var)
@@ -383,6 +383,40 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
+    def test_no_form_case_list_filter(self):
+        """
+        If a module has no forms but has case-list-filterint...
+        case-list filtering should be added to the case-list session datum
+        """
+        # setup a module with no forms
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        module_0 = app.add_module(Module.new_module('module with no forms', None))
+        # setup case list menu and filtering
+        module_0.case_type = "doc"
+        module_0.case_list = CaseList(show=True, label={'en': "doctors"})
+        columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+        short = Detail(filter="name = 'sravan'", display='short', columns=columns)
+        long = Detail(display='long', columns=columns)
+        module_0.case_details = DetailPair(short=short, long=long)
+        # test that case-list session datum has right xml
+        session_xml = """
+        <partial>
+          <datum
+            id="case_id"
+            nodeset="instance('casedb')/casedb/case[@case_type='doc'][@status='open'][name = 'sravan']"
+            value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(session_xml, app.create_suite(), './entry[1]/session/')
+
     def test_form_filter(self):
         """
         Ensure form filter gets added correctly and appropriate instances get added to the entry.
@@ -535,6 +569,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def _prep_case_list_form_app(self):
         app = Application.wrap(self.get_json('app'))
+        app.build_spec.version = '2.9'
         case_module = app.get_module(0)
         case_module.get_form(0)
 
@@ -587,8 +622,31 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./detail[@id='m0_case_short']/action"
         )
 
+    def test_case_list_form_multiple_modules(self):
+        app = self._prep_case_list_form_app()
+        case_module1 = app.get_module(0)
+
+        case_module2 = app.add_module(Module.new_module('update2', None))
+        case_module2.unique_id = 'update case 2'
+        case_module2.case_type = case_module1.case_type
+        update2 = app.new_form(2, 'Update Case Form2', lang='en')
+        update2.unique_id = 'update_case_form2'
+        update2.requires = 'case'
+        update2.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update2.actions.update_case.condition.type = 'always'
+
+        case_module2.case_list_form.form_id = 'register_case_form'
+        case_module2.case_list_form.label = {
+            'en': 'New Case'
+        }
+        self.assertXmlEqual(
+            self.get_xml('case-list-form-suite-multiple-references'),
+            app.create_suite(),
+        )
+
     def test_case_list_registration_form_advanced(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
 
         register_module = app.add_module(AdvancedModule.new_module('create', None))
         register_module.unique_id = 'register_module'
@@ -620,6 +678,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_list_registration_form_advanced_autoload(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
 
         register_module = app.add_module(AdvancedModule.new_module('create', None))
         register_module.unique_id = 'register_module'

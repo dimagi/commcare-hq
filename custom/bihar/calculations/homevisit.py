@@ -25,7 +25,7 @@ class DateRangeFilter(object):
 
     def __call__(self, case, date):
         lower, upper = self.days
-        return lower <= (case.edd - date).days < upper
+        return getattr(case, 'edd', None) and lower <= (case.edd - date).days < upper
 
 
 class VisitCalculator(DoneDueCalculator):

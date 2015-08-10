@@ -42,7 +42,8 @@ from corehq.apps.users.util import (
     user_data_from_registration_form,
     user_display_string,
 )
-from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
+from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
+    tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -56,7 +57,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-from dimagi.utils.parsing import json_format_datetime
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound
@@ -1661,7 +1661,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
@@ -1923,7 +1923,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
+                caseblock.as_xml()
             ),
             self.domain,
             self.username,

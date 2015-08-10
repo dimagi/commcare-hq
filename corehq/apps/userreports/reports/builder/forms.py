@@ -41,6 +41,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
+from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
@@ -491,7 +492,14 @@ class ConfigureNewReportBase(forms.Form):
             "XFormInstance": "form"
         }[existing_report.config.referenced_doc_type]
         self.report_source_id = existing_report.config.meta.build.source_id
-        self.app = Application.get(existing_report.config.meta.build.app_id)
+        app_id = existing_report.config.meta.build.app_id
+        if app_id:
+            self.app = Application.get(app_id)
+        else:
+            raise BadBuilderConfigError(_(
+                "Report builder data source doesn't reference an application. "
+                "It is likely this report has been customized and it is no longer editable. "
+            ))
 
     @property
     def column_config_template(self):

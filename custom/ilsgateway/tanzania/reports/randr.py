@@ -141,7 +141,7 @@ class RRReportingHistory(ILSData):
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s&'
                            'datespan_type=%s&datespan_first=%s&datespan_second=%s',
-                           (self.config['location_id'],
+                           (child.location_id,
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 

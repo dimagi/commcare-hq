@@ -175,8 +175,7 @@ def render_form(form, domain, options):
     )
     show_edit_submission = (
         user_can_edit
-        and has_privilege(request, privileges.CLOUDCARE)
-        and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)
+        and has_privilege(request, privileges.DATA_CLEANUP)
         and form.doc_type != 'XFormDeprecated'
     )
 
