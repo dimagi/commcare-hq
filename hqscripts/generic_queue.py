@@ -3,7 +3,7 @@ from time import sleep
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
-from redis_cache.cache import RedisCache
+from django_redis.cache import RedisCache
 
 class RedisClientError(Exception):
     pass
