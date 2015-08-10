@@ -37,10 +37,6 @@ def backfill_stockreport_server_date_from_formdata(StockReport, FormData):
     )
 
 
-class FooEx(Exception):
-    pass
-
-
 class Migration(DataMigration):
 
     def forwards(self, orm):
