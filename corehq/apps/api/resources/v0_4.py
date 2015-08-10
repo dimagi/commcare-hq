@@ -16,7 +16,8 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import get_apps_in_domain, Application, RemoteApp, Form, get_app
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
