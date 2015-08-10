@@ -8,6 +8,7 @@ from couchdbkit import ResourceNotFound
 from django.contrib.auth.forms import SetPasswordForm
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
@@ -688,10 +689,10 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        context = {
+        context = RequestContext(self.request, {
             'form': self.new_commcare_user_form,
             'data_fields_form': self.custom_data.form,
-        }
+        })
         return self.render_json_response({
             "status": status,
             "form_html": render_to_string(self.template_name, context)
