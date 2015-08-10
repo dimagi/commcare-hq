@@ -591,6 +591,9 @@ def update_code(preindex=False):
         root_to_use = env.code_root
 
     with cd(root_to_use):
+        if files.exists(env.code_current):
+            sudo('git clone {}.git'.format(env.code_current))
+            sudo('git remote set-url origin {}'.format(env.code_repo))
         sudo('git remote prune origin')
         sudo('git fetch')
         sudo("git submodule foreach 'git fetch'")
@@ -602,6 +605,9 @@ def update_code(preindex=False):
         sudo("git clean -ffd")
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
+
+    if not preindex:
+        sudo('ln -nfs {} {}'.format(env.code_root, env.current))
 
 
 @roles(ROLES_DB_ONLY)
@@ -733,10 +739,9 @@ def _deploy_without_asking():
 
 
 @task
-def update_current():
-    # Symlink most recent deploy to the current
-    pass
-
+@roles(ROLES_ALL_SERVICES)
+def rollback():
+    releases = sudo('ls {}'.format(env.releases))
 
 @task
 def force_update_static():
