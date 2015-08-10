@@ -5,7 +5,6 @@ from casexml.apps.case.xml import V2
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.shortcuts import create_domain
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.util import post_case_blocks
 import os
 from custom.uth import utils
@@ -32,7 +31,7 @@ class UTHTests(TestCase):
                 'scan_status': scan_status,
                 'scan_time': scan_time
             }
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': UTH_DOMAIN})
 
         return case_id

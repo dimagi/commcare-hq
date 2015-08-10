@@ -16,7 +16,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
-from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
 
@@ -217,7 +216,7 @@ def submit_mapping_case_block(user, index):
 
     submit_case_blocks(
         ElementTree.tostring(
-            caseblock.as_xml(format_datetime=json_format_datetime)
+            caseblock.as_xml()
         ),
         user.domain,
     )

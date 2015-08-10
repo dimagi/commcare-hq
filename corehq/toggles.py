@@ -194,6 +194,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DEMO_REPORTS = StaticToggle(
+    'demo-reports',
+    'Access to map-based demo reports',
+    TAG_PREVIEW,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -446,7 +453,7 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'enable_owner_cleanliness_flags',
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
-    randomness=.05,
+    randomness=.20,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
