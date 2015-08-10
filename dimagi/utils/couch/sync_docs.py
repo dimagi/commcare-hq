@@ -1,10 +1,14 @@
-from collections import namedtuple
+import logging
 import os
+import sys
+from collections import namedtuple
+
 from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.loading import couchdbkit_handler
-import sys
 from django.conf import settings
+
+log = logging.getLogger(__name__)
 
 
 def sync_design_docs(db, design_dir, design_name, temp=None):
@@ -20,12 +24,12 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     design_name_ = '%s-%s' % (design_name, temp) if temp else design_name
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
-    print "synced '%s' in couchdb" % design_name
+    log.info("synced '%s' in couchdb", design_name)
     if temp:
         # found in the innards of couchdbkit
         view_names = db[docid].get('views', {}).keys()
         if len(view_names) > 0:
-            print 'Triggering view rebuild'
+            log.info('Triggering view rebuild')
             view = '%s/%s' % (design_name_, view_names[0])
             while True:
                 try:
@@ -38,7 +42,7 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
 
 
 def copy_designs(db, design_name, temp='tmp', delete=True):
-    print "Copy prepared design docs for '%s' in couchdb" % design_name
+    log.info("Copy prepared design docs for '%s' in couchdb", design_name)
     tmp_name = '%s-%s' % (design_name, temp)
     from_id = '_design/%s' % tmp_name
     to_id = '_design/%s' % design_name
@@ -48,7 +52,7 @@ def copy_designs(db, design_name, temp='tmp', delete=True):
             del db[from_id]
 
     except ResourceNotFound:
-        print '%s not found.' % (from_id, )
+        log.warning('%s not found.', from_id)
 
 
 def sync(app, verbosity=2, temp=None):
@@ -61,10 +65,10 @@ def sync(app, verbosity=2, temp=None):
 
     for design_info in app_sync_info.designs:
         if verbosity >=1:
-            print "sync `%s` in CouchDB" % app_sync_info.name
+            log.info("sync `%s` in CouchDB", app_sync_info.name)
 
         if design_info.design_path is None and settings.DEBUG:
-            print >>sys.stderr, "%s doesn't exist, no ddoc synchronized" % design_info.design_path
+            log.warning("%s doesn't exist, no ddoc synchronized", design_info.design_path)
             continue
 
         # these lines differ from the original
