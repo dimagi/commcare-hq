@@ -282,13 +282,12 @@ class CommCareAccountForm(forms.Form):
     max_len_username = 80
 
     username = forms.CharField(max_length=max_len_username, required=True)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
 
     def __init__(self, *args, **kwargs):
-        self.password_format = kwargs.pop('password_format', 'a')
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -297,14 +296,6 @@ class CommCareAccountForm(forms.Form):
                 'Create new Mobile Worker account',
                 'username',
                 'password',
-                HTML("{% if only_numeric %}"
-                     "<div class=\"control-group\"><div class=\"controls\">"
-                     "To enable alphanumeric passwords, go to the "
-                     "applications this user will use, go to CommCare "
-                     "Settings, and change Password Format to Alphanumeric."
-                     "</div></div>"
-                     "{% endif %}"
-                ),
                 'password_2',
                 'phone_number',
                 Div(
@@ -339,8 +330,6 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
-            if self.password_format == 'n' and not password.isnumeric():
-                raise forms.ValidationError("Password is not numeric")
 
         try:
             username = self.cleaned_data['username']

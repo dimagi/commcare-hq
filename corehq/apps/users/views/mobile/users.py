@@ -622,10 +622,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     page_title = ugettext_noop("New Mobile Worker")
 
     @property
-    def password_format(self):
-        return self.request.project.password_format()
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -638,14 +634,13 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            return CommCareAccountForm(self.request.POST, self.password_format)
+            return CommCareAccountForm(self.request.POST)
         return CommCareAccountForm()
 
     @property
     def page_context(self):
         return {
             'form': self.new_commcare_user_form,
-            'only_numeric': self.password_format == 'n',
             'data_fields_form': self.custom_data.form,
         }
 
@@ -696,7 +691,6 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         context = {
             'form': self.new_commcare_user_form,
             'data_fields_form': self.custom_data.form,
-            'only_numeric': self.request.project.password_format() == 'n',
         }
         return self.render_json_response({
             "status": status,
@@ -721,8 +715,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         if self.request.method == "POST":
             data = self.request.POST.dict()
             data['domain'] = self.domain
-            password_format = self.request.project.password_format()
-            return CommCareAccountForm(data, password_format=password_format)
+            return CommCareAccountForm(data)
         return CommCareAccountForm()
 
     def post(self, request, *args, **kwargs):
