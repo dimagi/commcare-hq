@@ -191,7 +191,7 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
                 owner_id=owner_id,
                 version=V2,
                 update=update,
-            ).as_xml(format_datetime=json_format_datetime)) for c in filtered_cases
+            ).as_xml()) for c in filtered_cases
         ]
         # todo: this should check whether the submit_case_blocks call actually succeeds
         submit_case_blocks(caseblocks, domain, username=username,

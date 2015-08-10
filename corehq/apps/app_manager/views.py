@@ -929,7 +929,7 @@ def get_module_view_context_and_template(app, module):
             return {
                 'report_id': report._id,
                 'title': report.title,
-                'charts': [chart for chart in report.configured_charts if chart['type'] == 'multibar'],
+                'charts': [chart for chart in report.charts if chart.type == 'multibar'],
                 'filter_structure': report.filters,
             }
         all_reports = ReportConfiguration.by_domain(app.domain)

@@ -46,4 +46,7 @@
             {{ progress_text }}
         </legend>
     </div>
+    {% if next_url and next_url_text %}
+        <a href='{{ next_url }}'>{{ next_url_text }}</a>
+    {% endif %}
 {% endblock %}

@@ -1,7 +1,6 @@
 from celery.task import task
 from xml.etree import ElementTree
 from dimagi.utils.couch.database import is_bigcouch
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -52,7 +51,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     def _submit_caseblocks(caseblocks):
         if caseblocks:
             submit_case_blocks(
-                [ElementTree.tostring(cb.as_xml(format_datetime=json_format_datetime)) for cb in caseblocks],
+                [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
                 domain,
                 username,
                 user_id,

@@ -26,7 +26,9 @@ class MessageInitiatior(KeywordHandler):
 
     def send_message(self, sql_location, message, **kwargs):
         for user in get_users_by_location_id(self.domain, sql_location.location_id):
-            send_sms_to_verified_number(user.get_verified_number(), message % kwargs)
+            verified_number = user.get_verified_number()
+            if verified_number:
+                send_sms_to_verified_number(verified_number, message % kwargs)
 
     def handle(self):
         if len(self.args) < 2:

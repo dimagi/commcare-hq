@@ -25,6 +25,7 @@ from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadBuilderConfigError, BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
@@ -611,8 +612,15 @@ def data_source_status(request, domain, config_id):
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
+    if filter is None:
+        raise Http404(_(u'Filter {} not found!').format(filter_id))
 
     def get_choices(data_source, filter, search_term=None, limit=20, page=0):
+        # todo: we may want to log this as soon as mobile UCR stops hitting this
+        # for misconfigured filters
+        if not isinstance(filter, DynamicChoiceListFilter):
+            return []
+
         table = get_indicator_table(data_source)
         sql_column = table.c[filter.field]
         query = Session.query(sql_column)
