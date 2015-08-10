@@ -14,17 +14,17 @@ $('#new_user').on('show', function() {
     var form_node = $("#new_user form");
 
     $.get(url, function(data) {
-        form_node.html(data['form_html']);
+        form_node.html(data.form_html);
     });
 
     var handle_submission = function(event) {
         event.preventDefault();
         $.post(url, form_node.serialize(), function(data) {
-            if (data['status'] === 'success') {
-                insert_new_user(data['user']);
+            if (data.status === 'success') {
+                insert_new_user(data.user);
                 $('#new_user').modal('hide');
             } else {
-                form_node.html(data['form_html']);
+                form_node.html(data.form_html);
             }
         });
     };
