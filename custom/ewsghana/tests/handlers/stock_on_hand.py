@@ -155,7 +155,7 @@ class StockOnHandTest(EWSScriptTest):
     def test_invalid_report_when_toggle_is_off(self):
         a = """
             5551234 > soh mg 25.0 jd 25.25
-            5551234 < Dear {}, thank you for reporting the commodities you have in stock. You received jd 25.
+            5551234 < Dear {}, thank you for reporting the commodities you have. You received jd 25.
         """.format(self.user1.full_name)
         self.run_script(a)
 
@@ -170,4 +170,4 @@ class StockOnHandTest(EWSScriptTest):
             5551234 < {}
         """.format(self.user1.full_name, msg)
         self.run_script(a)
-        EWS_INVALID_REPORT_RESPONSE.set(TEST_DOMAIN, False)
+        EWS_INVALID_REPORT_RESPONSE.set(TEST_DOMAIN, False, NAMESPACE_DOMAIN)
