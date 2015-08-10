@@ -578,8 +578,10 @@ class ScheduleFixtureVisit(IdNode):
 class Schedule(XmlObject):
     ROOT_NAME = 'schedule'
 
-    expires = StringField('@expires')
-    post_schedule_increment = StringField('@post_schedule_increment')
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+    allow_unscheduled = StringField('@allow_unscheduled')
+
     visits = NodeListField('visit', ScheduleFixtureVisit)
 
 
@@ -2318,8 +2320,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             schedule_fixture = ScheduleFixture(
                 id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
                 schedule=Schedule(
+                    starts=schedule.starts if schedule.starts else '',
                     expires=schedule.expires if schedule.expires else '',
-                    post_schedule_increment=schedule.post_schedule_increment,
+                    allow_unscheduled=schedule.allow_unscheduled,
                     visits=visits,
                 )
             )

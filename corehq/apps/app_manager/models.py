@@ -617,10 +617,8 @@ class FormSchedule(DocumentSchema):
     """
     starts = IntegerProperty()
     expires = IntegerProperty()
-    visits = SchemaListProperty(ScheduleVisit)
     allow_unscheduled = BooleanProperty(default=False)
-    # TODO: remove
-    post_schedule_increment = IntegerProperty()
+    visits = SchemaListProperty(ScheduleVisit)
     get_visits = IndexedSchema.Getter('visits')
 
     transition_condition = SchemaProperty(FormActionCondition)

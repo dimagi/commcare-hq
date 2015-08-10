@@ -32,7 +32,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
         self.form_1.schedule = FormSchedule(
             expires=120,
-            post_schedule_increment=15,
+            starts=-5,
             visits=[
                 ScheduleVisit(due=5, expires=4, starts=-5),
                 ScheduleVisit(due=10, expires=9),
@@ -41,6 +41,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         )
 
         self.form_2.schedule = FormSchedule(
+            allow_unscheduled=True,
             visits=[
                 ScheduleVisit(due=7, expires=4),
                 ScheduleVisit(due=15)
@@ -202,7 +203,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         expected_fixture = """
              <partial>
              <fixture id="schedule:m2:p1:f0">
-                 <schedule expires="">
+                 <schedule expires="" allow_unscheduled="False" starts="">
                      <visit id="1" due="9" repeats="False"/>
                      <visit id="2" due="11" repeats="False"/>
                  </schedule>

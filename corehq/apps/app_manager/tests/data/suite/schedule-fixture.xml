@@ -1,19 +1,19 @@
 <partial>
     <fixture id="schedule:m1:p1:f0">
-    <schedule expires="120" post_schedule_increment="15">
+    <schedule expires="120" starts="-5" allow_unscheduled="False">
         <visit id="1" due="5" expires="4" repeats="False" starts="-5"/>
         <visit id="2" due="10" expires="9" repeats="False"/>
         <visit id="3" increment="15" starts="5" expires="100" repeats="True"/>
     </schedule>
     </fixture>
     <fixture id="schedule:m1:p1:f1">
-        <schedule expires="">
+        <schedule expires="" starts="" allow_unscheduled="True">
             <visit id="1" due="7" expires="4" repeats="False"/>
             <visit id="2" due="15" repeats="False"/>
         </schedule>
     </fixture>
     <fixture id="schedule:m1:p2:f0">
-        <schedule expires="">
+        <schedule expires="" starts="" allow_unscheduled="False">
             <visit id="1" due="9" expires="1" repeats="False"/>
             <visit id="2" due="11" repeats="False"/>
         </schedule>
