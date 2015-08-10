@@ -11,6 +11,7 @@
 
 {% block js %}{{ block.super }}
     <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script type="text/javascript" src="{% static 'locations/ko/location.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
@@ -19,45 +20,10 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var LOAD_LOCS_URL = '{{ api_root }}';
-
-        // for product and user per location selection
-        $(function () {
-            $("#id_users-selected_ids").width(800).height(400).multiselect();
-            $("#id_products-selected_ids").width(800).height(400).multiselect();
-        });
+            NEW_MOBILE_WORKER_URL = '{% url "new_mobile_worker_modal" domain %}';
+            LOCATION_ID = {{ location.get_id|JSON }};
     </script>
 
-    <script>
-        {# TODO Move this to a separate file #}
-        var insert_new_user = function(user) {
-            $('#id_users-selected_ids').multiselect('addSelected', user.user_id, user.text);
-        };
-
-        $('#new_user').on('show', function() {
-
-            var url = ("{% url "new_mobile_worker_modal" domain %}" +
-                       "?location_id=" + {{ location.get_id|JSON }});
-            var form_node = $("#new_user form");
-
-            $.get(url, function(data) {
-                form_node.html(data['form_html']);
-            });
-
-            var handle_submission = function(event) {
-                event.preventDefault();
-                $.post(url, form_node.serialize(), function(data) {
-                    if (data['status'] === 'success') {
-                        insert_new_user(data['user']);
-                        $('#new_user').modal('hide');
-                    } else {
-                        form_node.html(data['form_html']);
-                    }
-                });
-            };
-
-            form_node.submit(handle_submission);
-        });
-    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -67,10 +33,9 @@
   <script>
     $(function() {
 
-      var loc_id = {{ location.get_id|JSON }};
       var hierarchy = {{ hierarchy|JSON }};
       model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
-          return loc.uuid() != loc_id && loc.can_have_children();
+          return loc.uuid() != LOCATION_ID && loc.can_have_children();
         });
 
       model.editing = ko.observable(false);
@@ -94,7 +59,7 @@
       model.orig_parent_id = model.selected_locid();
 
       $("#loc_form :button[type='submit']").click(function(e) {
-          if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
+          if (LOCATION_ID != null && model.selected_locid() != model.orig_parent_id) {
               e.preventDefault();
               $('#reparenting').modal();
           }
