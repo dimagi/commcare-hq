@@ -685,6 +685,8 @@ def _handle_unexpected_error(instance, error_message):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
+    if error_message:
+        error_message = error_message.replace('\n', ' ')
     new_id = XFormError.get_db().server.next_uuid()
     notify_exception(None, (
         u"Error in case or stock processing "
