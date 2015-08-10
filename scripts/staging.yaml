@@ -64,7 +64,7 @@ branches:
   - one-true-commtrack  # Ethan 8/6
   - parent-child-case-list-form  # SK 8/7
 #  - extension_cases  # Norman 8/8
-  - upgrade-redis # Ben 8/10
+#  - upgrade-redis # Ben 8/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
