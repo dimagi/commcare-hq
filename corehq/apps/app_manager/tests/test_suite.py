@@ -568,10 +568,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
     def _prep_case_list_form_app(self):
-        app = Application.wrap(self.get_json('app'))
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         app.build_spec.version = '2.9'
-        case_module = app.get_module(0)
-        case_module.get_form(0)
+
+        case_module = app.add_module(Module.new_module('Case module', None))
+        case_module.unique_id = 'case_module'
+        case_module.case_type = 'suite_test'
+        update_case_form = app.new_form(0, 'Update case', lang='en')
+        update_case_form.unique_id = 'update_case'
+        update_case_form.requires = 'case'
+        update_case_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update_case_form.actions.update_case.condition.type = 'always'
 
         register_module = app.add_module(Module.new_module('register', None))
         register_module.unique_id = 'register_case_module'
@@ -611,11 +618,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-form-nav-entry'),
             app.create_suite(),
-            "./entry[3]"
+            "./entry[2]"
         )
 
     def test_case_list_registration_form_no_media(self):
         app = self._prep_case_list_form_app()
+
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
             app.create_suite(),
@@ -639,6 +647,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module2.case_list_form.label = {
             'en': 'New Case'
         }
+
         self.assertXmlEqual(
             self.get_xml('case-list-form-suite-multiple-references'),
             app.create_suite(),
@@ -713,6 +722,109 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             'en': 'Register another Dugong'
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), app.create_suite())
+
+    def test_case_list_form_parent_child_advanced(self):
+        """
+        * Register house (case type = house, basic)
+          * Register house form
+        * Register person (case type = person, parent select = 'Register house', advanced)
+          * Register person form
+        * Manager person (case type = person, case list form = 'Register person form', basic)
+          * Manage person form
+        """
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
+
+        register_house_module = app.add_module(Module.new_module('create house', None))
+        register_house_module.unique_id = 'register_house_module'
+        register_house_module.case_type = 'house'
+        register_house_form = app.new_form(0, 'Register House', lang='en')
+        register_house_form.unique_id = 'register_house_form'
+        register_house_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        register_house_form.actions.open_case.condition.type = 'always'
+
+        register_person_module = app.add_module(AdvancedModule.new_module('create person', None))
+        register_person_module.unique_id = 'register_person_module'
+        register_person_module.case_type = 'person'
+        register_person_form = app.new_form(1, 'Register Person', lang='en')
+        register_person_form.unique_id = 'register_person_form'
+        register_person_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='house',
+            case_tag='load_house',
+            details_module=register_house_module.unique_id
+        ))
+        register_person_form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='person',
+            case_tag='open_person',
+            parent_tag='load_house',
+            name_path='/data/name'
+        ))
+
+        person_module = app.add_module(Module.new_module('Manage person', None))
+        person_module.unique_id = 'manage_person'
+        person_module.case_type = 'person'
+
+        person_module.case_list_form.form_id = register_person_form.unique_id
+
+        person_module.parent_select.active = True
+        person_module.parent_select.module_id = register_house_module.unique_id
+        update_person_form = app.new_form(2, 'Update person', lang='en')
+        update_person_form.unique_id = 'update_person_form'
+        update_person_form.requires = 'case'
+        update_person_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update_person_form.actions.update_case.condition.type = 'always'
+
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-advanced'), app.create_suite())
+
+    def test_case_list_form_parent_child_basic(self):
+        """
+        * Register house (case type = house, basic)
+          * Register house form
+        * Register person (case type = person, parent select = 'Register house', basic)
+          * Register person form
+        * Manager person (case type = person, case list form = 'Register person form', basic)
+          * Manage person form
+        """
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
+
+        register_house_module = app.add_module(Module.new_module('create house', None))
+        register_house_module.unique_id = 'register_house_module'
+        register_house_module.case_type = 'house'
+        register_house_form = app.new_form(0, 'Register House', lang='en')
+        register_house_form.unique_id = 'register_house_form'
+        register_house_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        register_house_form.actions.open_case.condition.type = 'always'
+
+        register_person_module = app.add_module(Module.new_module('create person', None))
+        register_person_module.unique_id = 'register_person_module'
+        register_person_module.case_type = 'house'
+        register_person_form = app.new_form(1, 'Register Person', lang='en')
+        register_person_form.unique_id = 'register_person_form'
+        register_person_form.requires = 'case'
+        register_person_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        register_person_form.actions.update_case.condition.type = 'always'
+        register_person_form.actions.subcases.append(OpenSubCaseAction(
+            case_type='person',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        person_module = app.add_module(Module.new_module('Manage person', None))
+        person_module.unique_id = 'manage_person'
+        person_module.case_type = 'person'
+
+        person_module.case_list_form.form_id = register_person_form.unique_id
+
+        person_module.parent_select.active = True
+        person_module.parent_select.module_id = register_house_module.unique_id
+        update_person_form = app.new_form(2, 'Update person', lang='en')
+        update_person_form.unique_id = 'update_person_form'
+        update_person_form.requires = 'case'
+        update_person_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        update_person_form.actions.update_case.condition.type = 'always'
+
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), app.create_suite())
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
