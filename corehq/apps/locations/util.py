@@ -261,3 +261,14 @@ def get_xform_location(xform):
     elif hasattr(user, 'sql_location'):
         return user.sql_location
     return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )
