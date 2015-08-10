@@ -65,8 +65,8 @@ class GenericEnqueuingOperation(BaseCommand):
             raise RedisClientError("Could not get redis connection.")
         try:
             client = rcache.raw_client
-        except:
-            raise RedisClientError("Could not get redis connection.")
+        except Exception, e:
+            raise RedisClientError("Could not get redis connection: {}".format(e))
         return client
 
     def get_enqueuing_lock(self, client, key):
