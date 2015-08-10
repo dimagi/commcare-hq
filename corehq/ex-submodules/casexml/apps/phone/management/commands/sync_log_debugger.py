@@ -20,18 +20,24 @@ class Command(BaseCommand):
         logs = []
         log_names = []
         for filename in args:
-            log_name = os.path.basename(filename)
-            log_names.append(log_name)
-            with open(filename) as f:
-                wrapped_log = properly_wrap_sync_log(json.loads(f.read()))
-                logs.append(wrapped_log)
-                if isinstance(wrapped_log, SyncLog):
-                    log_names.append('migrated-{}'.format(log_name))
-                    logs.append(SimplifiedSyncLog.from_other_format(wrapped_log))
+            if os.path.isdir(filename):
+                filenames = [os.path.join(filename, item) for item in sorted(os.listdir(filename))]
+            else:
+                filenames = [filename]
+
+            for filename in filenames:
+                log_name = os.path.basename(filename)
+                log_names.append(log_name)
+                with open(filename) as f:
+                    wrapped_log = properly_wrap_sync_log(json.loads(f.read()))
+                    logs.append(wrapped_log)
+                    if isinstance(wrapped_log, SyncLog):
+                        log_names.append('migrated-{}'.format(log_name))
+                        logs.append(SimplifiedSyncLog.from_other_format(wrapped_log))
 
         print 'state hashes'
         for i in range(len(log_names)):
-            print '{}: {}'.format(log_names[i], logs[i].get_state_hash())
+            print '{} ({}): {}'.format(log_names[i], logs[i]._id, logs[i].get_state_hash())
 
         print '\ncase diffs'
         for i in range(len(log_names)):

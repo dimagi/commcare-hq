@@ -13,9 +13,11 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
 
+DEMO_USER_ID = 'demo_user'
+JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
-    'demo_user',           # demo mode
+    DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
 ]
 
@@ -60,8 +62,8 @@ def user_id_to_username(user_id):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return user_id
-    elif user_id == "demo_user":
-        return "demo_user"
+    elif user_id == DEMO_USER_ID:
+        return DEMO_USER_ID
     try:
         login = CouchUser.get_db().get(user_id)
     except ResourceNotFound:

@@ -118,21 +118,25 @@ class CMSRMSReportData(EmailReportData):
         row_data = {product.name: defaultdict(lambda: 0) for product in products}
 
         for location in locations:
-            stock_states = StockState.objects.filter(
+            stock_transactions = StockTransaction.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
-                sql_product__in=products
-            )
+                sql_product__in=products,
+                report__date__range=[
+                    self.config['startdate'],
+                    self.config['enddate']
+                ]
+            ).distinct('product_id').order_by('product_id', '-report__date')
 
-            for state in stock_states:
-                p_name = state.sql_product.name
-                if location.products.filter(code=state.sql_product.code):
-                    row_data[p_name]['total_fac'] += 1
+            for stock_transaction in stock_transactions:
+                p_name = stock_transaction.sql_product.name
                 row_data[p_name]['reported_fac'] += 1
-                if not state.stock_on_hand:
+                if not stock_transaction.stock_on_hand:
                     row_data[p_name]['fac_with_stockout'] += 1
-                row_data[p_name][location.pk] = int(state.stock_on_hand)
-                row_data[p_name]['total'] += int(state.stock_on_hand)
+                row_data[p_name][location.pk] = int(stock_transaction.stock_on_hand)
+                row_data[p_name]['total'] += int(stock_transaction.stock_on_hand)
+            for product in location.products:
+                row_data[product.name]['total_fac'] += 1
 
         rows = []
         for k, v in row_data.iteritems():
