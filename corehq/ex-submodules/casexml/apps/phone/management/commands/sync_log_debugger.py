@@ -1,7 +1,9 @@
 import json
+from optparse import make_option
 import os
 from django.core.management import BaseCommand
 import sys
+from casexml.apps.phone.checksum import Checksum
 
 
 class Command(BaseCommand):
@@ -9,6 +11,13 @@ class Command(BaseCommand):
     lets you download sync logs as json and then compare them.
     useful for checking state issues.
     """
+    option_list = BaseCommand.option_list + (
+        make_option('--debugger',
+                    action='store_true',
+                    dest='debugger',
+                    default=False,
+                    help="Drop into a debugger at the end of running the command for manual queries"),
+    )
 
     def handle(self, *args, **options):
         from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
@@ -51,3 +60,13 @@ class Command(BaseCommand):
                             log_names[j],
                             ', '.join(case_diff)
                         )
+
+        if options['debugger']:
+            union_of_ids = set().union(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
+            intersection_of_ids = set().intersection(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
+            import pdb
+            pdb.set_trace()
+
+
+def _get_hash(ids):
+    return Checksum(list(ids)).hexdigest()
