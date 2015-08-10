@@ -564,11 +564,15 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
-class ScheduleVisit(IdNode):
+class ScheduleFixtureVisit(IdNode):
     ROOT_NAME = 'visit'
 
-    due = StringField('@due')
-    late_window = StringField('@late_window')
+    due = IntegerField('@due')
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+
+    repeats = StringField('@repeats')
+    increment = IntegerField('@increment')
 
 
 class Schedule(XmlObject):
@@ -576,7 +580,7 @@ class Schedule(XmlObject):
 
     expires = StringField('@expires')
     post_schedule_increment = StringField('@post_schedule_increment')
-    visits = NodeListField('visit', ScheduleVisit)
+    visits = NodeListField('visit', ScheduleFixtureVisit)
 
 
 class ScheduleFixture(Fixture):
@@ -2303,7 +2307,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                 raise (ScheduleError(_("There is no schedule for form {form_id}")
                                      .format(form_id=form.unique_id)))
 
-            visits = [ScheduleVisit(id=visit.id, due=visit.due, late_window=visit.late_window)
+            visits = [ScheduleFixtureVisit(id=visit.id,
+                                           due=visit.due,
+                                           starts=visit.starts,
+                                           expires=visit.expires,
+                                           repeats=visit.repeats,
+                                           increment=visit.increment)
                       for visit in schedule.get_visits()]
 
             schedule_fixture = ScheduleFixture(

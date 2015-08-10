@@ -1,21 +1,21 @@
 <partial>
     <fixture id="schedule:m1:p1:f0">
     <schedule expires="120" post_schedule_increment="15">
-        <visit id="1" due="5" late_window="4"/>
-        <visit id="2" due="10" late_window="9"/>
-        <visit id="3" due="20" late_window="5"/>
+        <visit id="1" due="5" expires="4" repeats="False" starts="-5"/>
+        <visit id="2" due="10" expires="9" repeats="False"/>
+        <visit id="3" increment="15" starts="5" expires="100" repeats="True"/>
     </schedule>
     </fixture>
     <fixture id="schedule:m1:p1:f1">
         <schedule expires="">
-            <visit id="1" due="7" late_window="4"/>
-            <visit id="2" due="15"/>
+            <visit id="1" due="7" expires="4" repeats="False"/>
+            <visit id="2" due="15" repeats="False"/>
         </schedule>
     </fixture>
     <fixture id="schedule:m1:p2:f0">
         <schedule expires="">
-            <visit id="1" due="9" late_window="1"/>
-            <visit id="2" due="11"/>
+            <visit id="1" due="9" expires="1" repeats="False"/>
+            <visit id="2" due="11" repeats="False"/>
         </schedule>
     </fixture>
 </partial>

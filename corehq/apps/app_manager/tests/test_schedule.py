@@ -34,22 +34,22 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             expires=120,
             post_schedule_increment=15,
             visits=[
-                ScheduleVisit(due=5, late_window=4),
-                ScheduleVisit(due=10, late_window=9),
-                ScheduleVisit(due=20, late_window=5)
+                ScheduleVisit(due=5, expires=4, starts=-5),
+                ScheduleVisit(due=10, expires=9),
+                ScheduleVisit(starts=5, expires=100, repeats=True, increment=15)
             ]
         )
 
         self.form_2.schedule = FormSchedule(
             visits=[
-                ScheduleVisit(due=7, late_window=4),
+                ScheduleVisit(due=7, expires=4),
                 ScheduleVisit(due=15)
             ]
         )
 
         self.form_3.schedule = FormSchedule(
             visits=[
-                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=9, expires=1),
                 ScheduleVisit(due=11)
             ]
         )
@@ -186,7 +186,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         scheduled_form = other_module.get_form(0)
         scheduled_form.schedule = FormSchedule(
             visits=[
-                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=9),
                 ScheduleVisit(due=11)
             ]
         )
@@ -203,8 +203,8 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
              <partial>
              <fixture id="schedule:m2:p1:f0">
                  <schedule expires="">
-                     <visit id="1" due="9" late_window="1" />
-                     <visit id="2" due="11" />
+                     <visit id="1" due="9" repeats="False"/>
+                     <visit id="2" due="11" repeats="False"/>
                  </schedule>
              </fixture>
              </partial>

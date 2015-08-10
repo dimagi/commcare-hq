@@ -588,9 +588,7 @@ class ScheduleVisit(IndexedSchema):
     starts = IntegerProperty()
     expires = IntegerProperty()
     repeats = BooleanProperty(default=False)
-    increment = IntegerProperty
-    # TODO: remove
-    late_window = IntegerProperty()
+    increment = IntegerProperty()
 
     @property
     def id(self):
