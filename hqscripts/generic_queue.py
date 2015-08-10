@@ -63,11 +63,7 @@ class GenericEnqueuingOperation(BaseCommand):
         rcache = cache_core.get_redis_default_cache()
         if not isinstance(rcache, RedisCache):
             raise RedisClientError("Could not get redis connection.")
-        try:
-            client = rcache.raw_client
-        except Exception, e:
-            raise RedisClientError("Could not get redis connection: {}".format(e))
-        return client
+        return rcache
 
     def get_enqueuing_lock(self, client, key):
         lock_timeout = self.get_enqueuing_timeout() * 60
