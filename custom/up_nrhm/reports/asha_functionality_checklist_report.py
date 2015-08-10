@@ -4,7 +4,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
-from django.utils.translation import ugettext_lazy as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):

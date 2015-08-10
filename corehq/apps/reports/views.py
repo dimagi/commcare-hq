@@ -754,6 +754,14 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             language=None,
         )
 
+    def _sort_key(config_choice):
+        config_choice_id = config_choice[0]
+        if config_choice_id in instance.config_ids:
+            return instance.config_ids.index(config_choice_id)
+        else:
+            return len(instance.config_ids)
+    config_choices = sorted(config_choices, key=_sort_key)
+
     is_new = instance.new_document
     initial = instance.to_json()
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
@@ -1292,7 +1300,7 @@ def download_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_GET
 def edit_form_instance(request, domain, instance_id):
-    if not (has_privilege(request, privileges.CLOUDCARE) and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)):
+    if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)

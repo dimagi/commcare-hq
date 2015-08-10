@@ -6,3 +6,14 @@ from .test_apis import *
 from .test_migration_task import *
 from .test_delete_domain import *
 from .test_stock_transaction_sync import *
+from .handlers.translation import *
+from .handlers.arrived import *
+from .handlers.delivered import *
+from .handlers.language import *
+from .handlers.loss_adjust import *
+from .handlers.not_recognized import *
+from .handlers.randr import *
+from .handlers.stockonhand import *
+from .handlers.stop import *
+from .handlers.supervision import *
+from .handlers.yes import *

@@ -11,7 +11,6 @@ from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
 from casexml.apps.case.util import primary_actions, post_case_blocks
 from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime
 
 
 def post_util(**kwargs):
@@ -72,9 +71,10 @@ class CaseRebuildTest(TestCase):
 
     def testBasicRebuild(self):
         user_id = 'test-basic-rebuild-user'
-        case_id = post_util(create=True, user_id=user_id)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id)
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id)
+        now = datetime.utcnow()
+        case_id = post_util(create=True, user_id=user_id, date_modified=now)
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id, date_modified=now)
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id, date_modified=now)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -362,9 +362,9 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        post_case_blocks([create_block.as_xml(json_format_datetime)], form_extras={'received_on': way_earlier})
+        post_case_blocks([create_block.as_xml()], form_extras={'received_on': way_earlier})
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        post_case_blocks([update_block.as_xml(json_format_datetime)], form_extras={'received_on': earlier})
+        post_case_blocks([update_block.as_xml()], form_extras={'received_on': earlier})
 
         case = CommCareCase.get(case_id)
         self.assertEqual(earlier, case.modified_on)
