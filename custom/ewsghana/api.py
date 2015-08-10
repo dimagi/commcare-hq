@@ -12,8 +12,9 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
-from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
-from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException
+from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, \
+    IntegerProperty, ObjectProperty
+from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
 
@@ -147,6 +148,54 @@ class EWSApi(APISynchronization):
         }
     ]
     PRODUCT_CUSTOM_FIELDS = []
+
+    @property
+    def apis(self):
+        return [
+            ApiSyncObject('product', self.endpoint.get_products, self.product_sync),
+            ApiSyncObject(
+                'location_country',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated',
+                filters={
+                    'type': 'country',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_region',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated',
+                filters={
+                    'type': 'region',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_district',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated',
+                filters={
+                    'type': 'district',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject(
+                'location_facility',
+                self.endpoint.get_locations,
+                self.location_sync,
+                'date_updated',
+                filters={
+                    'type': 'facility',
+                    'is_active': True
+                }
+            ),
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
+        ]
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
