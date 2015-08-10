@@ -688,6 +688,9 @@ class FormBase(DocumentSchema):
         else:
             return form
 
+    def _pre_delete_hook(self):
+        raise NotImplementedError()
+
     @property
     def schedule_form_id(self):
         return self.unique_id[:6]
@@ -1980,6 +1983,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 action['preload'] = {v: k for k, v in preload.items()}
 
         return super(AdvancedForm, cls).wrap(data)
+
+    def _pre_delete_hook(self):
+        try:
+            self.get_phase().remove_form(self)
+        except (ScheduleError, TypeError):
+            pass
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -4364,6 +4373,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             datetime=datetime.utcnow(),
         )
         record.save()
+
+        try:
+            form._pre_delete_hook()
+        except NotImplementedError:
+            pass
+
         del module['forms'][form.id]
         return record
 
