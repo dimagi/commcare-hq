@@ -673,7 +673,7 @@ class ApplicationsTab(UITab):
         if self.couch_user.can_edit_apps():
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
-                _('New Application...'),
+                _('New Application'),
                 url=reverse('default_app', args=[self.domain]),
             ))
         return submenu_context
