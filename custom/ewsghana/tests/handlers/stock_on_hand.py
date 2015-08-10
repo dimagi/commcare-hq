@@ -1,5 +1,7 @@
+from casexml.apps.stock.models import StockTransaction
+from corehq.toggles import EWS_INVALID_REPORT_RESPONSE, NAMESPACE_DOMAIN
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, restore_location_products, \
-    assign_products_to_location
+    assign_products_to_location, TEST_DOMAIN
 
 
 class StockOnHandTest(EWSScriptTest):
@@ -149,3 +151,23 @@ class StockOnHandTest(EWSScriptTest):
         """.format(self.user1.full_name)
         self.run_script(a)
         restore_location_products()
+
+    def test_invalid_report_when_toggle_is_off(self):
+        a = """
+            5551234 > soh mg 25.0 jd 25.25
+            5551234 < Dear {}, thank you for reporting the commodities you have in stock. You received jd 25.
+        """.format(self.user1.full_name)
+        self.run_script(a)
+
+    def test_invalid_report_when_toggle_is_on(self):
+        EWS_INVALID_REPORT_RESPONSE.set(TEST_DOMAIN, True, NAMESPACE_DOMAIN)
+        msg = 'Error! You submitted increases in stock levels of mg without corresponding receipts. ' \
+              'Please contact your DHIO or RHIO for assistance.'
+        StockTransaction.objects.all().delete()
+        a = """
+            5551234 > soh mg 25.0 jd 25.25
+            5551234 < Dear {}, still missing mg.
+            5551234 < {}
+        """.format(self.user1.full_name, msg)
+        self.run_script(a)
+        EWS_INVALID_REPORT_RESPONSE.set(TEST_DOMAIN, False)
