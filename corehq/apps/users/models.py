@@ -2433,9 +2433,6 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
-    class Meta:
-        unique_together = [('domain', 'email')]
-
     @classmethod
     def by_domain(cls, domain):
         return DomainRequest.objects.filter(domain=domain, is_approved=False)
