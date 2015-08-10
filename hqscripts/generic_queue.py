@@ -3,7 +3,7 @@ from time import sleep
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
-from redis_cache.cache import RedisCache
+from django_redis.cache import RedisCache
 
 class RedisClientError(Exception):
     pass
@@ -65,8 +65,8 @@ class GenericEnqueuingOperation(BaseCommand):
             raise RedisClientError("Could not get redis connection.")
         try:
             client = rcache.raw_client
-        except:
-            raise RedisClientError("Could not get redis connection.")
+        except Exception, e:
+            raise RedisClientError("Could not get redis connection: {}".format(e))
         return client
 
     def get_enqueuing_lock(self, client, key):
