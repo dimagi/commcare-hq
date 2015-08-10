@@ -57,6 +57,30 @@ var VisitScheduler = (function () {
         };
     };
 
+    var ScheduleRelevancy = {
+        mapping: function(self){
+            return {
+                include: [
+                    'starts',
+                    'expires',
+                ]
+            };
+        },
+        wrap: function(data){
+            var self = {};
+            ko.mapping.fromJS(data, ScheduleRelevancy.mapping(self), self);
+            self.starts_type = ko.observable(self.starts() < 0 ? 'before' : 'after');
+            self.expires_type = ko.observable(self.expires() < 0 ? 'before' : 'after');
+            self.enableFormExpiry = ko.observable(self.expires() !== null);
+            self.starts = ko.observable(Math.abs(self.starts()));
+            self.expires = ko.observable(Math.abs(self.expires()));
+            return self;
+        },
+        unwrap: function(self){
+            return ko.mapping.toJS(self, ScheduleRelevancy.mapping(self));
+        }
+    };
+
     var ScheduleVisit = {
         mapping: function (self) {
             return {
@@ -151,6 +175,8 @@ var VisitScheduler = (function () {
 
             self.phase = phase;
 
+            self.relevancy = ScheduleRelevancy.wrap(data);
+
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
                     due: null,
@@ -195,7 +221,11 @@ var VisitScheduler = (function () {
             FormSchedule.cleanCondition(self.transition_condition);
             FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
-            if (!self.allowExpiry()) {
+            schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
+            if (self.relevancy.enableFormExpiry() && self.allowExpiry()){
+                schedule.expires = self.relevancy.expires() * (self.relevancy.expires_type() === 'before' ? -1 : 1);
+            }
+            else{
                 schedule.expires = null;
             }
             if (!self.hasPostSchedule()) {

@@ -7,6 +7,48 @@
         <div data-bind="saveButton: saveButton"></div>
         <!--ko with: formSchedule -->
         <fieldset>
+            <legend>{% trans "Schedule Anchor Date" %}</legend>
+            <div class="controls">
+                <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Form Relevancy Window" %}</legend>
+            <div class="control-group">
+                <div class="controls">
+                    {% trans "Show this form " %}
+                    <input type="text" class="input-mini" data-bind="numericValue: relevancy.starts"/>
+                    {% trans "days" %}
+                    <select data-bind="value: relevancy.starts_type">
+                        <option value="before">{% trans "before the anchor date" %}</option>
+                        <option value="after">{% trans "after the anchor date" %}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox inline">
+                        <input type="checkbox"
+                               data-bind="checked: relevancy.enableFormExpiry,
+                                          enable: allowExpiry">
+                        {% trans "Hide this form " %}
+                    </label>
+                    <input type="text" class="input-mini"
+                           data-bind="numericValue: relevancy.expires,
+                                      enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
+                    {% trans "days" %}
+                    <select data-bind="value: relevancy.expires_type,
+                                       enable: (relevancy.enableFormExpiry() && allowExpiry())">
+                        <option value="before">{% trans "before the anchor date" %}</option>
+                        <option value="after">{% trans "after the anchor date" %}</option>
+                    </select>
+                    <span class="label label-info" data-bind="visible: !allowExpiry()">
+                        {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset>
             <legend>{% trans "Transitions" %}</legend>
             <div class="control-group">
                 <div class="controls">
@@ -36,17 +78,6 @@
 
         <fieldset>
             <legend>{% trans "Visit Schedule" %}</legend>
-            <div class="control-group">
-                <label class="control-label" for="anchor">{% trans "Anchor Date" %}</label>
-                <div class="controls">
-                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
-                    <span data-bind="visible: allowExpiry">
-                    <label class="checkbox inline" for="expires">{% trans "Expires" %}</label>
-                    <input type="checkbox" data-bind="checked: hasExpiry"/>
-                    <input type="text" class="input-mini" data-bind="numericValue: expires, enable: hasExpiry()"/>
-                    </span>
-                </div>
-            </div>
             <div data-bind="foreach: visits">
                 <div class="control-group">
                     <label class="control-label">

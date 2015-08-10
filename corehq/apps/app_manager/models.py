@@ -601,12 +601,14 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
+    starts:                     Days before the anchor date that this schedule starts
     expires:                    Days after the anchor date that this schedule expires (optional)
     visits:		        List of visits in this schedule
     post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
+    starts = IntegerProperty()
     expires = IntegerProperty()
     visits = SchemaListProperty(ScheduleVisit)
     post_schedule_increment = IntegerProperty()
