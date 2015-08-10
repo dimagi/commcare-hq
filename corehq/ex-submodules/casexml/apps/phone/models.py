@@ -350,7 +350,7 @@ class SyncLog(AbstractSyncLog):
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
-                        self.phone_has_case(case._id),
+                        self.phone_is_holding_case(case._id),
                         "phone doesn't have case being updated: %s" % case._id,
                         case._id,
                     )
