@@ -16,6 +16,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
+from soil import FileDownload
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
@@ -74,7 +75,7 @@ from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.django.cached_object import CachedObject, FileObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -2679,6 +2680,10 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
+def get_cache_class(domain):
+    return FileObject if toggles.FILE_OBJECT.enabled(domain) else CachedObject
+
+
 @safe_download
 def download_file(request, domain, app_id, path):
     content_type_map = {
@@ -2706,7 +2711,7 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        obj = CachedObject('{id}::{path}'.format(
+        obj = get_cache_class(domain)('{id}::{path}'.format(
             id=request.app._id,
             path=full_path,
         ))
@@ -2718,8 +2723,18 @@ def download_file(request, domain, app_id, path):
             metadata = {'content_type': content_type}
             obj.cache_put(buffer, metadata, timeout=0)
         else:
-            _, buffer = obj.get()
-            payload = buffer.getvalue()
+            if toggles.FILE_OBJECT.enabled(domain):
+                filepath = obj.get_stream_filepath()
+                response = FileDownload(
+                    filepath,
+                    use_transfer=settings.SHARED_DRIVE_CONF.transfer_enabled,
+                    content_disposition='attachment; filename="{}"'.format(full_path),
+                    content_type=content_type,
+                ).toHttpResponse()
+                return response
+            else:
+                _, buffer = obj.get()
+                payload = buffer.getvalue()
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response

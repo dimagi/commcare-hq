@@ -573,3 +573,10 @@ EMAIL_IN_REMINDERS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+FILE_OBJECT = StaticToggle(
+    'file_object',
+    'Use FileObject when caching',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
