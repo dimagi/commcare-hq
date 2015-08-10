@@ -53,10 +53,10 @@ branches:
   - template-apps+icds/scheduler # Farid 8/6
   - template-apps # Jenny, July 20
   - FormArchive # Sravan 7/22
-  # - due-list+icds/scheduler # TS 7/30
+  - due-list+icds/scheduler # TS 7/30
   - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
-#  - due-list # TS 7/30
+  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
   - django17 # J$ 8/5
