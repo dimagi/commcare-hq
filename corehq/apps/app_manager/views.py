@@ -505,7 +505,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
-        'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE) or app.has_usercase,
     }
 
     if isinstance(form, CareplanForm):
