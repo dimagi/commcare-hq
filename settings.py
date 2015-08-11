@@ -933,6 +933,7 @@ DEFAULT_PROTOCOL = 'http'
 # Dropbox
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
 
 try:
