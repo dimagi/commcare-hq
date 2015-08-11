@@ -1,7 +1,7 @@
 import logging
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
