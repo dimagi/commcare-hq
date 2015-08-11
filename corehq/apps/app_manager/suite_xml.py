@@ -653,7 +653,7 @@ class DatumMeta(object):
         return cls(session_datum.id, session_datum.nodeset, session_datum.function)
 
     @property
-    def require_selection(self):
+    def requires_selection(self):
         return bool(self.nodeset)
 
     @property
@@ -922,7 +922,7 @@ class WorkflowHelper(object):
                         try:
                             target_dm = get_target_dm(source_meta.case_type)
                         except SuiteError:
-                            if source_meta.require_selection:
+                            if source_meta.requires_selection:
                                 raise
                         else:
                             meta = DatumMeta.from_session_datum(source_meta)
@@ -955,7 +955,7 @@ class WorkflowHelper(object):
             # since we want to go the 'previous' screen we need to drop the last
             # datum
             last = frame_children.pop()
-            while isinstance(last, DatumMeta) and not last.require_selection:
+            while isinstance(last, DatumMeta) and not last.requires_selection:
                 # keep removing last element until we hit a command
                 # or a non-autoselect datum
                 last = frame_children.pop()
@@ -993,7 +993,7 @@ class WorkflowHelper(object):
         """
         datum_index = -1
         for child in target_frame_elements:
-            if not isinstance(child, DatumMeta) or not child.require_selection:
+            if not isinstance(child, DatumMeta) or not child.requires_selection:
                 yield child
             else:
                 datum_index += 1
