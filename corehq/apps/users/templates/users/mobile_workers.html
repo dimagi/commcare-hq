@@ -1,0 +1,60 @@
+{% extends "users/base_template.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+<script>
+$(function() {
+    var form_node = $('#add_commcare_account_form');
+    var url = form_node.prop('action');
+
+    var reset_form = function () {
+        $.get(url, function(data) {
+            form_node.html(data.form_html);
+        }
+    )};
+    reset_form();
+
+    form_node.submit(function(event) {
+        event.preventDefault();
+        var start = new Date().getTime();
+        $.post(url, form_node.serialize(), function(data) {
+            if (data.status === 'success') {
+                var end = new Date().getTime();
+                $('#new-user-request-time').text((end - start) / 1000);
+                reset_form();
+            } else {
+                form_node.html(data.form_html);
+            }
+        });
+    });
+
+    $('#test-username-form').submit(function(event) {
+        event.preventDefault();
+        var start = new Date().getTime();
+        $.post("#", $("#test-username").val(), function(response) {
+            var end = new Date().getTime();
+            $('#username-request-time').text((end - start) / 1000);
+            $('#username-availability').text(response);
+        });
+    });
+});
+</script>
+
+<div>
+<form class="form form-horizontal" method="post" id="add_commcare_account_form"
+      action="{% url "new_mobile_worker_modal" domain %}">
+</form>
+</div>
+<h3>That request took <span id="new-user-request-time">xx</span> seconds.</h3>
+
+<hr />
+<hr />
+
+<form id="test-username-form">
+    <input id="test-username"/>
+    <input class="btn btn-primary" type="submit" value="Check username availability"></input>
+    <h4 id="username-availability"></h4>
+</form>
+<h3>That request took <span id="username-request-time">xx</span> seconds.</h3>
+{% endblock %}

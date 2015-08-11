@@ -669,6 +669,28 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return self.get(request, *args, **kwargs)
 
 
+class MobileWorkerView(BaseUserSettingsView):
+    template_name = 'users/mobile_workers.html'
+    urlname = 'mobile_workers'
+    page_title = ugettext_noop("Mobile Workers")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, *args, **kwargs):
+        return super(MobileWorkerView, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.users.util import format_username
+        # Temporary thing to check timing of an ajax request
+        if not can_add_extra_mobile_workers(request):
+            raise PermissionDenied()
+        username = format_username(request.body, self.domain)
+        if CommCareUser.get_by_username(username, strict=True):
+            response = 'not available'
+        else:
+            response = 'available'
+        return HttpResponse(response)
+
+
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
 # be going away soon, so I didn't bother to abstract out the commonalities.
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
