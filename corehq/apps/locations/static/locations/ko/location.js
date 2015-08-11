@@ -10,8 +10,8 @@ var insert_new_user = function(user) {
 
 $('#new_user').on('show', function() {
 
-    var url = NEW_MOBILE_WORKER_URL + "?location_id=" + LOCATION_ID;
-    var form_node = $("#new_user form");
+    var form_node = $('#add_commcare_account_form');
+    var url = form_node.prop('action');
 
     $.get(url, function(data) {
         form_node.html(data.form_html);
