@@ -1791,13 +1791,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
             if 'subcases' in actions:
-                for i, subcase in enumerate(actions['subcases']):
+                for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
                         datums.append({
                             'datum': SessionDatum(
-                                id=form.session_var_for_action('subcases', i), function='uuid()'
+                                id=form.session_var_for_action(subcase), function='uuid()'
                             ),
                             'case_type': subcase.case_type,
                             'requires_selection': False,

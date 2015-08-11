@@ -1008,23 +1008,17 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
-    def session_var_for_action(self, action_type, subcase_index=None):
-        def _for_subcase(case_type, index):
+    def session_var_for_action(self, action):
+        module_case_type = self.get_module().case_type
+        if action == 'open_case':
+            return 'case_id_new_{}_0'.format(module_case_type)
+        if isinstance(action, OpenSubCaseAction):
+            subcase_type = action.case_type
+            subcase_index = self.actions.subcases.index(action)
             opens_case = 'open_case' in self.active_actions()
             if opens_case:
-                index += 1
-            return 'case_id_new_{}_{}'.format(case_type, index)
-
-        module_case_type = self.get_module().case_type
-        if action_type == 'open_case':
-            return 'case_id_new_{}_0'.format(module_case_type)
-        if action_type == 'subcases':
-            subcase_type = self.actions.subcases[subcase_index].case_type
-            return _for_subcase(subcase_type, subcase_index)
-        if isinstance(action_type, OpenSubCaseAction):
-            subcase_type = action_type.case_type
-            subcase_index = self.actions.subcases.index(action_type)
-            return _for_subcase(subcase_type, subcase_index)
+                subcase_index += 1
+            return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
 
     def _get_active_actions(self, types):
         actions = {}
