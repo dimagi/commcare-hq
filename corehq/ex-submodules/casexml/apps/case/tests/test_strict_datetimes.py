@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.util import make_form_from_case_blocks
@@ -29,7 +28,6 @@ class StrictDatetimesTest(TestCase):
     def setUpClass(cls):
         cls.domain = 'strict-datetimes-test-domain'
 
-    @expectedFailure
     def test(self):
         form = make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
         lock_manager = process_xform(form, domain=self.domain)
