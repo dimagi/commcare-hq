@@ -14,7 +14,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
-from casexml.apps.stock.models import StockTransaction
+from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
@@ -413,7 +413,13 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         }
 
 
+class StockDomainAuthorization(ReadOnlyAuthorization):
+    def read_list(self, object_list, bundle):
+        return object_list.filter(domain=bundle.request.domain)
+
+
 class StockTransactionResource(HqBaseResource, ModelResource):
+
     class Meta:
         queryset = StockTransaction.objects.all()
         list_allowed_methods = ['get']
@@ -425,5 +431,13 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
         filtering = {
             "case_id": ('exact',),
-            "product_id": ('exact'),
+            "section_id": ('exact'),
         }
+
+        fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
+        include_resource_uri = False
+
+    def dehydrate(self, bundle):
+        bundle.data['product_name'] = bundle.obj.sql_product.name
+        bundle.data['transaction_date'] = bundle.obj.report.date
+        return bundle

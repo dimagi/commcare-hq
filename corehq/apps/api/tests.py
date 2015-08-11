@@ -1305,8 +1305,9 @@ class TestStockTransaction(APIResourceTest):
     resource = v0_5.StockTransactionResource
     api_name = 'v0.5'
 
-    def create_report(self, transactions=None, tag=None, date=None):
-        form = XFormInstance(domain=self.domain.name)
+    @classmethod
+    def create_report(cls, domain_name=None, transactions=None, tag=None, date=None):
+        form = XFormInstance(domain=domain_name)
         form.save()
         report = StockReportHelper(
             form,
@@ -1317,19 +1318,38 @@ class TestStockTransaction(APIResourceTest):
         return report, form
 
     def setUp(self):
-        self.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
-        self.section_ids = {'s1': 2, 's2': 9}
-        self.product_ids = {'p1': 1, 'p2': 3, 'p3': 5}
+        case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
+        section_ids = {'s1': 2, 's2': 9}
+        product_ids = {'p1': 1, 'p2': 3, 'p3': 5}
+        self._setup_stock_data(self.domain.name, case_ids, section_ids, product_ids)
 
+        # create data on two domains to test domain filtering works
+        self.dummy_domain = Domain.get_or_create_with_name("dummy_domain", is_active=True)
+        self.user.add_domain_membership(self.dummy_domain.name)
+
+        case_ids = {'c21': 10, 'c22': 30, 'c23': 50}
+        section_ids = {'s21': 2, 's22': 9}
+        product_ids = {'p21': 1, 'p22': 3, 'p23': 5}
+        self._setup_stock_data(self.dummy_domain.name, case_ids, section_ids, product_ids)
+        
+
+    def tearDown(self):
+        delete_all_xforms()
+        StockReport.objects.all().delete()
+        StockTransaction.objects.all().delete()
+        self.dummy_domain.delete()
+
+    @classmethod
+    def _setup_stock_data(cls, domain_name, case_ids, section_ids, product_ids):
         SQLProduct.objects.bulk_create([
-            SQLProduct(product_id=id) for id in self.product_ids
+            SQLProduct(product_id=id) for id in product_ids
         ])
 
         transactions_flat = []
-        self.transactions = {}
-        for case, c_bal in self.case_ids.items():
-            for section, s_bal in self.section_ids.items():
-                for product, p_bal in self.product_ids.items():
+        transactions = {}
+        for case, c_bal in case_ids.items():
+            for section, s_bal in section_ids.items():
+                for product, p_bal in product_ids.items():
                     bal = c_bal + s_bal + p_bal
                     transactions_flat.append(
                         STrans(
@@ -1340,18 +1360,14 @@ class TestStockTransaction(APIResourceTest):
                             quantity=bal
                         )
                     )
-                    self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
+                    transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
 
-        self.new_stock_report, self.form = self.create_report(transactions_flat)
-        create_models_for_stock_report(self.domain.name, self.new_stock_report)
-
-    def tearDown(self):
-        delete_all_xforms()
-        StockReport.objects.all().delete()
-        StockTransaction.objects.all().delete()
+        new_stock_report, form = cls.create_report(transactions=transactions_flat, domain_name=domain_name)
+        create_models_for_stock_report(domain_name, new_stock_report)
 
     def test_list(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.list_endpoint)
         print response.status_code
+        import pdb; pdb.set_trace()
         self.assertEqual(response.status_code, 200)
