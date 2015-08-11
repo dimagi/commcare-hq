@@ -562,7 +562,7 @@ def preindex_views():
 def update_code():
     with cd(env.code_root):
         if files.exists(env.code_current):
-            sudo('git clone {}.git'.format(env.code_current))
+            sudo('git clone --depth 1 {}.git'.format(env.code_current))
             sudo('git remote set-url origin {}'.format(env.code_repo))
         sudo('git remote prune origin')
         sudo('git fetch')
