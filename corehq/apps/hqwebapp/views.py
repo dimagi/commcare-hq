@@ -587,7 +587,7 @@ def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html", {'tmpl': template})
+    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
 
 
 def eula(request):
