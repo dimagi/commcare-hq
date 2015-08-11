@@ -395,7 +395,7 @@ def logout(req):
         return HttpResponseRedirect(reverse('login'))
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
+def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
 
 
