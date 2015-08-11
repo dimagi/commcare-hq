@@ -2,7 +2,7 @@ from django.utils.datastructures import SortedDict
 import collections
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.models import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
