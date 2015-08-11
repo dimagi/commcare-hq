@@ -1557,9 +1557,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         except IndexError:
             raise FormNotFoundException()
 
-    def has_forms(self):
-        return bool(len(self.forms))
-
     def get_child_modules(self):
         return [
             module for module in self.get_app().get_modules()
