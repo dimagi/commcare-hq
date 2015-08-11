@@ -59,6 +59,7 @@ RSYNC_EXCLUDE = (
     '*.example',
     '*.db',
     )
+RELEASE_RECORD = 'RELEASES.txt'
 env.linewise = True
 env.colorize_errors = True
 
@@ -150,11 +151,9 @@ def _setup_path():
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
     env.code_root = posixpath.join(env.releases, int(time.time()))
-    env.code_root_preindex = posixpath.join(env.root, 'code_root_preindex')
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
-    env.virtualenv_root_preindex = posixpath.join(env.root, 'python_env_preindex')
     env.services = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
@@ -482,32 +481,25 @@ def bootstrap():
     with cd(env.code_root):
         sudo('cp -n localsettings.example.py localsettings.py',
              user=env.sudo_user)
-    with cd(env.code_root_preindex):
-        sudo('cp -n localsettings.example.py localsettings.py',
-             user=env.sudo_user)
 
 
 @task
 def unbootstrap():
     """Delete cloned repos and virtualenvs"""
 
-    require('code_root', 'code_root_preindex', 'virtualenv_root',
-            'virtualenv_root_preindex')
+    require('code_root', 'virtualenv_root')
 
     with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_root)s %(virtualenv_root_preindex)s'
-              '%(code_root)s %(code_root_preindex)s') % env)
+        sudo(('rm -rf %(virtualenv_root)s %(code_root)s') % env)
 
 
 @roles(ROLES_ALL_SRC)
 def create_virtualenvs():
     """set up virtualenv on remote host"""
-    require('virtualenv_root', 'virtualenv_root_preindex',
-            provided_by=('staging', 'production', 'india'))
+    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
 
     args = '--distribute --no-site-packages'
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
-    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), shell=True)
 
 
 @roles(ROLES_ALL_SRC)
@@ -518,9 +510,6 @@ def clone_repo():
             exists_results = sudo('ls -d %(code_root)s' % env)
             if exists_results.strip() != env['code_root']:
                 sudo('git clone %(code_repo)s %(code_root)s' % env)
-
-            if not files.exists(env.code_root_preindex):
-                sudo('git clone %(code_repo)s %(code_root_preindex)s' % env)
 
 
 @task
@@ -541,20 +530,12 @@ def remove_submodule_source(path):
     _require_target()
 
     execute(_remove_submodule_source_main, path)
-    execute(_remove_submodule_source_preindex, path)
 
 
 @roles(ROLES_ALL_SRC)
 @parallel
 def _remove_submodule_source_main(path):
     with cd(env.code_root):
-        sudo('rm -rf submodules/%s' % path)
-
-
-@roles(ROLES_DB_ONLY)
-@parallel
-def _remove_submodule_source_preindex(path):
-    with cd(env.code_root_preindex):
         sudo('rm -rf submodules/%s' % path)
 
 
@@ -566,31 +547,20 @@ def preindex_views():
             'Skipping preindex_views for "%s" because should_migrate = False'
         ) % env.environment)
 
-    with cd(env.code_root_preindex):
-        # update the codebase of the preindex dir
-        update_code(preindex=True)
-        # no update to env - the actual deploy will do
-        # this may break if a new dependency is introduced in preindex
-        update_virtualenv(preindex=True)
-
+    with cd(env.code_root):
         sudo((
-            'echo "%(virtualenv_root_preindex)s/bin/python '
-            '%(code_root_preindex)s/manage.py preindex_everything '
+            'echo "%(virtualenv_root)s/bin/python '
+            '%(code_root)s/manage.py preindex_everything '
             '8 %(user)s" --mail | at -t `date -d "5 seconds" '
             '+%%m%%d%%H%%M.%%S`'
         ) % env)
-        version_static(preindex=True)
+        version_static()
 
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def update_code(preindex=False):
-    if preindex:
-        root_to_use = env.code_root_preindex
-    else:
-        root_to_use = env.code_root
-
-    with cd(root_to_use):
+def update_code():
+    with cd(env.code_root):
         if files.exists(env.code_current):
             sudo('git clone {}.git'.format(env.code_current))
             sudo('git remote set-url origin {}'.format(env.code_repo))
@@ -605,9 +575,6 @@ def update_code(preindex=False):
         sudo("git clean -ffd")
         # remove all .pyc files in the project
         sudo("find . -name '*.pyc' -delete")
-
-    if not preindex:
-        sudo('ln -nfs {} {}'.format(env.code_root, env.current))
 
 
 @roles(ROLES_DB_ONLY)
@@ -636,6 +603,9 @@ def record_successful_deploy(url):
             'environment': env.environment,
             'url': url,
         })
+
+    with cd(env.root):
+        files.append(RELEASE_RECORD, str(env.code_root))
 
 
 @task
@@ -696,8 +666,37 @@ def deploy():
 
 def _deploy_without_asking():
     try:
+        _execute_with_timing(create_code_dir)
         _execute_with_timing(update_code)
         _execute_with_timing(update_virtualenv)
+
+        max_wait = datetime.timedelta(minutes=5)
+        pause_length = datetime.timedelta(seconds=5)
+
+        _execute_with_timing(preindex_views)
+
+        start = datetime.datetime.utcnow()
+
+        @roles(ROLES_DB_ONLY)
+        def preindex_complete():
+            with settings(warn_only=True):
+                return sudo(
+                    '%(virtualenv_root)s/bin/python '
+                    '%(code_root)s/manage.py preindex_everything '
+                    '--check' % env,
+                    user=env.sudo_user,
+                ).succeeded
+
+        done = False
+        while not done and datetime.datetime.utcnow() - start < max_wait:
+            time.sleep(pause_length.seconds)
+            if preindex_complete():
+                done = True
+            pause_length *= 2
+
+        if not done:
+            raise PreindexNotFinished()
+
         _execute_with_timing(install_npm_packages)
         _execute_with_timing(update_touchforms)
 
@@ -726,6 +725,14 @@ def _deploy_without_asking():
         # hard update of manifest.json since we're about to force restart
         # all services
         _execute_with_timing(update_manifest)
+        _execute_with_timing(clean_releases)
+    except PreindexNotFinished:
+        mail_admins(
+            " You can't deploy yet",
+            ("Preindexing is taking a while, so hold tight "
+             "and wait for an email saying it's done. "
+             "Thank you for using AWESOME DEPLOY.")
+        )
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -739,9 +746,61 @@ def _deploy_without_asking():
 
 
 @task
-@roles(ROLES_ALL_SERVICES)
-def rollback():
+@roles(ROLES_ALL_SRC)
+def update_current(release=None):
+    sudo('ln -nfs {} {}'.format(release or env.code_root, env.current))
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def create_code_dir():
+    sudo('mkdir -p {}'.format(env.code_root))
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def clean_releases(keep=3):
     releases = sudo('ls {}'.format(env.releases))
+    to_remove = []
+    valid_releases = 0
+    for index, release in enumerate(releases):
+        if files.contains(RELEASE_RECORD, release):
+            valid_releases += 1
+            if valid_releases > keep:
+                to_remove.append(release)
+        else:
+            # cleans all releases that were not successful deploys
+            to_remove.append(release)
+
+    if len(to_remove) == len(release):
+        print 'Aborting, about to remove every release'
+        exit()
+
+    if os.path.basename(env.code_root) in to_remove:
+        print 'Aborting, about to remove current release'
+        exit()
+
+    for release in to_remove:
+        sudo('rm -rf {}{}'.format(env.releases, release))
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def rollback():
+    releases = iter(sudo('ls {}'.format(env.releases)))
+    current_release = sudo('readlink {}'.format(env.code_current))
+
+    for release in releases:
+        if release == current_release:
+            break
+    try:
+        rollback_release = next(releases)
+    except StopIteration:
+        print 'No release to rollback to'
+        exit()
+
+    update_current(rollback_release)
+
 
 @task
 def force_update_static():
@@ -797,39 +856,7 @@ def awesome_deploy(confirm="yes"):
         print('┃┃┃┃┃┃')
         print('┻┻┻┻┻┻')
 
-    max_wait = datetime.timedelta(minutes=5)
-    pause_length = datetime.timedelta(seconds=5)
-
-    _execute_with_timing(preindex_views)
-
-    start = datetime.datetime.utcnow()
-
-    @roles(ROLES_DB_ONLY)
-    def preindex_complete():
-        with settings(warn_only=True):
-            return sudo(
-                '%(virtualenv_root_preindex)s/bin/python '
-                '%(code_root_preindex)s/manage.py preindex_everything '
-                '--check' % env,
-                user=env.sudo_user,
-            ).succeeded
-
-    done = False
-    while not done and datetime.datetime.utcnow() - start < max_wait:
-        time.sleep(pause_length.seconds)
-        if preindex_complete():
-            done = True
-        pause_length *= 2
-
-    if done:
-        _deploy_without_asking()
-    else:
-        mail_admins(
-            " You can't deploy yet",
-            ("Preindexing is taking a while, so hold tight "
-             "and wait for an email saying it's done. "
-             "Thank you for using AWESOME DEPLOY.")
-        )
+    _deploy_without_asking()
 
 
 @task
@@ -843,7 +870,7 @@ def update_touchforms():
 @task
 @roles(ROLES_ALL_SRC)
 @parallel
-def update_virtualenv(preindex=False):
+def update_virtualenv():
     """
     update external dependencies on remote host
 
@@ -851,16 +878,10 @@ def update_virtualenv(preindex=False):
 
     """
     _require_target()
-    if preindex:
-        root_to_use = env.code_root_preindex
-        env_to_use = env.virtualenv_root_preindex
-    else:
-        root_to_use = env.code_root
-        env_to_use = env.virtualenv_root
-    requirements = posixpath.join(root_to_use, 'requirements')
-    with cd(root_to_use):
+    requirements = posixpath.join(env.code_root, 'requirements')
+    with cd(env.code_root):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
-            env.sudo_user, env_to_use)
+            env.sudo_user, env.virtualenv_root)
         # uninstall requirements in uninstall-requirements.txt
         # but only the ones that are actually installed (checks pip freeze)
         sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
@@ -1048,7 +1069,7 @@ def update_manifest(save=False, soft=False):
 
 @roles(ROLES_DJANGO)
 @parallel
-def version_static(preindex=False):
+def version_static():
     """
     Put refs on all static references to prevent stale browser cache hits when things change.
     This needs to be run on the WEB WORKER since the web worker governs the actual static
@@ -1056,16 +1077,11 @@ def version_static(preindex=False):
 
     """
 
-    if preindex:
-        withpath = env.code_root_preindex
-        venv = env.virtualenv_root_preindex
-    else:
-        withpath = env.code_root
-        venv = env.virtualenv_root
-
     cmd = 'resource_static' if not preindex else 'resource_static clear'
-    with cd(withpath):
-        sudo('rm -f tmp.sh resource_versions.py; {venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
+    with cd(env.code_root):
+        sudo('rm -f tmp.sh resource_versions.py; {venv}/bin/python manage.py {cmd}'.format(
+            venv=env.virtualenv_root, cmd=cmd
+        ),
             user=env.sudo_user
         )
 
@@ -1333,3 +1349,7 @@ def selenium_test():
         'pass': env.jenkins_password,
         'url': url,
     })
+
+
+class PreindexNotFinished(Exception):
+    pass
