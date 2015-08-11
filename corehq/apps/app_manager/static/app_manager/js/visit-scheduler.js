@@ -181,7 +181,8 @@ var VisitScheduler = (function () {
                     type: 'after',
                     starts: null,
                     expires: null,
-                    increment: null
+                    increment: null,
+                    repeats: false
                 }));
             };
 
