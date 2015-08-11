@@ -1116,6 +1116,11 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             for name in self.actions.all_property_names()])
 
     def get_registration_actions(self, case_type):
+        """
+        :return: List of actions that create a case. Subcase actions are included
+                 as long as they are not inside a repeat. If case_type is not None
+                 only return actions that create a case of the specified type.
+        """
         reg_actions = []
         if 'open_case' in self.active_actions() and (not case_type or self.get_module().case_type == case_type):
             reg_actions.append('open_case')
