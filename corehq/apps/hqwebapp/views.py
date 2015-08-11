@@ -912,7 +912,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'style/bootstrap2/partials/update_item_form.html', {
                 'form': update_form
             }
         )
