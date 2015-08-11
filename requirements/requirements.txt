@@ -60,8 +60,8 @@ markdown==2.2.1
 amqp==1.4.6
 amqplib==1.0.2
 sqlagg==0.2.3
-django-redis==3.3
-redis==2.8.0
+django-redis==4.2
+redis==2.10.0
 unittest2
 fakecouch==0.0.8
 # WeasyPrint==0.20.2
