@@ -1,6 +1,3 @@
-import logging
-import json
-
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -10,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.locations.dbaccessors import get_user_ids_by_location
+from corehq.apps.locations.util import get_locations_and_children
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
@@ -125,6 +122,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
         selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
 
+        # Show cases owned by any selected locations or their children
+        location_owner_ids = get_locations_and_children(
+            EMWF.selected_location_ids(self.request)
+        ).location_ids()
+
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\
                                            .doc_type("Group")\
@@ -148,38 +150,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             selected_user_ids,
             selected_sharing_group_ids,
             selected_reporting_group_users,
-            sharing_group_ids
+            sharing_group_ids,
+            location_owner_ids,
         ))
-        owner_ids += self.location_sharing_owner_ids()
-        owner_ids += self.location_reporting_owner_ids()
         return owner_ids
-
-    def location_sharing_owner_ids(self):
-        """
-        For now (and hopefully for always) the only owner
-        id that is important for case sharing group selection
-        is that actual group id.
-        """
-        return EMWF.selected_sharing_location_ids(self.request)
-
-    def location_reporting_owner_ids(self):
-        """
-        Include all users that are assigned to the selected
-        locations or those locations descendants.
-        """
-        from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
-        results = []
-        selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
-
-        for group_id in selected_location_group_ids:
-            loc = SQLLocation.objects.get(
-                location_id=group_id.replace(LOCATION_REPORTING_PREFIX, '')
-            )
-
-            for l in loc.get_descendants(include_self=True):
-                results += get_user_ids_by_location(self.domain, l.location_id)
-
-        return results
 
     def get_case(self, row):
         if '_source' in row:
