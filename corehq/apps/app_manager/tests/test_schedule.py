@@ -226,19 +226,23 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         for form_num, form_id in enumerate(form_ids):
             anchor = "{case}/edd".format(case=case[form_num])
             current_schedule_phase = "{case}/current_schedule_phase".format(case=case[form_num])
+            visit = "instance('schedule:m1:p1:f{form_num}')/schedule/visit".format(form_num=form_num)
+            schedule = "instance('schedule:m1:p1:f{form_num}')/schedule".format(form_num=form_num)
+
             filter_condition = (
                 "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
-                "and {anchor} != '' "                # anchor not empty
-                "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
-                "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
-                "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
-                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
-                # where id > last_visit_number
-                "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "
-                # not late
-                "&gt; 0"
+                "and {anchor} != '' and "                # anchor not empty
+                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and ({schedule}/@expires = '' or today() &lt; (date({anchor}) + int({schedule}/@expires))))) and "
+                "({schedule}/@unscheduled_visits = 'True' or "
+                "count({visit}[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]["
+                "if(@repeats = 'True', "
+                "today() &gt; (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
+                "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
+                "today() &gt; (date({anchor}) + int(@starts)) and (@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
+                "]) &gt; 0)"     # End count
             ).format(current_schedule_phase=current_schedule_phase,
-                     form_num=form_num, form_id=form_id, anchor=anchor, case=case[form_num])
+                     form_num=form_num, form_id=form_id, anchor=anchor, schedule=schedule, visit=visit,
+                     case=case[form_num])
 
             partial = """
             <partial>
