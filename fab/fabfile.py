@@ -763,14 +763,15 @@ def clean_releases(keep=3):
     releases = sudo('ls {}'.format(env.releases))
     to_remove = []
     valid_releases = 0
-    for index, release in enumerate(releases):
-        if files.contains(RELEASE_RECORD, release):
-            valid_releases += 1
-            if valid_releases > keep:
+    with cd(env.root):
+        for index, release in enumerate(releases):
+            if files.contains(RELEASE_RECORD, release):
+                valid_releases += 1
+                if valid_releases > keep:
+                    to_remove.append(release)
+            else:
+                # cleans all releases that were not successful deploys
                 to_remove.append(release)
-        else:
-            # cleans all releases that were not successful deploys
-            to_remove.append(release)
 
     if len(to_remove) == len(release):
         print 'Aborting, about to remove every release'
