@@ -1,7 +1,8 @@
 import datetime
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
-from corehq.apps.domain.decorators import login_or_digest_ex
+from corehq.apps.domain.decorators import login_or_digest_ex, \
+    login_or_digest_or_basic
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from dimagi.utils.parsing import string_to_datetime
@@ -54,7 +55,7 @@ class FetchKeyRecords(object):
         )
 
 
-@login_or_digest_ex(allow_cc_users=True)
+@login_or_digest_or_basic
 @require_GET
 def fetch_key_records(request, domain):
     last_issued = request.GET.get('last_issued')
