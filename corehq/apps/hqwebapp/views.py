@@ -902,7 +902,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'hqwebapp/partials/create_item_form.html', {
+            'style/includes/create_item_form.html', {
                 'form': create_form
             }
         )
