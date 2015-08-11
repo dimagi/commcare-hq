@@ -379,7 +379,8 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, 
+                                        args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
