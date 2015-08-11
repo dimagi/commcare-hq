@@ -547,7 +547,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.set_role(domain, role)
         if project.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.locations_enabled:
+        if project.uses_locations:
             self.get_domain_membership(domain).location_id = location_id
         self.save()
 
@@ -2449,7 +2449,7 @@ class DomainRequest(models.Model):
         text_content = render_to_string("users/email/new_domain_request.txt", params)
         html_content = render_to_string("users/email/new_domain_request.html", params)
         subject = _('Request to join %s approved') % domain_name
-        send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
+        send_html_email_async(subject, self.email, html_content, text_content=text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
     def send_request_email(self):
@@ -2465,7 +2465,7 @@ class DomainRequest(models.Model):
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)
-        send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
+        send_html_email_async(subject, recipients, html_content, text_content=text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 

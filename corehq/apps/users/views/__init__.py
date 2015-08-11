@@ -527,6 +527,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'requests': DomainRequest.by_domain(self.domain),
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
         }
 
 
