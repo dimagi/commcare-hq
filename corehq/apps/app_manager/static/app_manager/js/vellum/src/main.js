@@ -13,6 +13,8 @@ require.config({
             "jquery.jstree", 
             "jquery.bootstrap-popout", 
             "save-button", 
+            "ckeditor", 
+            "ckeditor-jquery", 
             "css/css!../lib/codemirror/codemirror", 
             "css/css!../bower_components/jstree/dist/themes/default/style", 
             "css/css!yui-combo", 
