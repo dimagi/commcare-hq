@@ -58,7 +58,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-from dimagi.utils.parsing import json_format_datetime
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound
@@ -1935,7 +1934,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
+                caseblock.as_xml()
             ),
             self.domain,
             self.username,

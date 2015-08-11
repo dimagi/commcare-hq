@@ -1,4 +1,6 @@
 import re
+from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.util.translation import localize
 
 from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
@@ -14,6 +16,7 @@ from custom.ilsgateway.tanzania.handlers.supervision import SupervisionHandler
 from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
 from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
 
 
 def handle(verified_contact, text, msg=None):
@@ -74,3 +77,7 @@ def handle(verified_contact, text, msg=None):
             return handler.handle()
         else:
             return handler.help()
+    elif keyword != 'l':
+        with localize(verified_contact.owner.get_language_code()):
+            send_sms_to_verified_number(verified_contact, unicode(CONTACT_SUPERVISOR))
+        return True

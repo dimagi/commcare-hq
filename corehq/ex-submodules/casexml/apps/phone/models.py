@@ -121,6 +121,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # for debugging / logging
     last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
     last_cached = DateTimeProperty()  # last time this generated a cached response
+    hash_at_last_cached = StringProperty()  # the state hash of this when it was last cached
 
     # save state errors and hashes here
     had_state_error = BooleanProperty(default=False)
@@ -350,7 +351,7 @@ class SyncLog(AbstractSyncLog):
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
-                        self.phone_has_case(case._id),
+                        self.phone_is_holding_case(case._id),
                         "phone doesn't have case being updated: %s" % case._id,
                         case._id,
                     )

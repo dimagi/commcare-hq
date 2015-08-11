@@ -127,41 +127,7 @@ class APISynchronization(object):
 
     @property
     def apis(self):
-        return [
-            ApiSyncObject('product', self.endpoint.get_products, self.product_sync),
-            ApiSyncObject(
-                'location_region',
-                self.endpoint.get_locations,
-                self.location_sync,
-                'date_updated',
-                filters={
-                    'type': 'region',
-                    'is_active': True
-                }
-            ),
-            ApiSyncObject(
-                'location_district',
-                self.endpoint.get_locations,
-                self.location_sync,
-                'date_updated',
-                filters={
-                    'type': 'district',
-                    'is_active': True
-                }
-            ),
-            ApiSyncObject(
-                'location_facility',
-                self.endpoint.get_locations,
-                self.location_sync,
-                'date_updated',
-                filters={
-                    'type': 'facility',
-                    'is_active': True
-                }
-            ),
-            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
-            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
-        ]
+        return []
 
     def prepare_commtrack_config(self):
         """

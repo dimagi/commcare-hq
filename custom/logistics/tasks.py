@@ -57,6 +57,7 @@ def stock_data_task(api_object):
         for chunk in facilities_chunked_list:
             api_object.process_data(process_facility_task, chunk)
     else:
+        offset = checkpoint.offset
         for stock_api in itertools.dropwhile(
             lambda x: x.name != checkpoint.api, api_object.get_stock_apis_objects()
         ):
@@ -66,10 +67,11 @@ def stock_data_task(api_object):
                 checkpoint,
                 checkpoint.date,
                 1000,
-                checkpoint.offset,
+                offset,
                 params={'domain': api_object.domain},
                 domain=api_object.domain
             )
+            offset = 0
 
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
     save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, checkpoint.start_date, None, False)

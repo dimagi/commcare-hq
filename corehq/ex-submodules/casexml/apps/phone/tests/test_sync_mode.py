@@ -18,7 +18,6 @@ from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
-from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
@@ -796,7 +795,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         self._postFakeWithSyncToken(
             parent_case,
@@ -814,7 +813,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 owner_id=USER_ID,
                 version=V2,
                 index={'mother': ('mother', mother_id)}
-            ).as_xml(format_datetime=json_format_datetime),
+            ).as_xml(),
             latest_sync.get_id
         )
 
@@ -828,7 +827,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_type=PARENT_TYPE,
             owner_id=OTHER_USER_ID,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2,
@@ -860,7 +859,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             my_change,
             main_sync_log.get_id
@@ -874,7 +873,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting_2': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             their_change,
             self.other_sync_log.get_id
@@ -895,7 +894,7 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=SHARED_ID,
             case_name='',
             case_type='mother',
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
