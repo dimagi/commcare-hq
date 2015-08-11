@@ -1,6 +1,5 @@
 from django.test import TestCase
 import uuid
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
@@ -79,7 +78,7 @@ class CaseReconciliationTestCase(TestCase):
             owner_id=owner_id,
             version=V2,
             **kwargs
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 

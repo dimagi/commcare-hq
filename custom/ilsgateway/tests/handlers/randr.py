@@ -1,7 +1,7 @@
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_REMINDER_DISTRICT, SUBMITTED_NOTIFICATION_MSD, \
     SUBMITTED_CONFIRM, NOT_SUBMITTED_CONFIRM
-from custom.ilsgateway.tanzania.test.utils import ILSTestScript
+from custom.ilsgateway.tests import ILSTestScript
 
 
 class ILSRandRTest(ILSTestScript):
@@ -14,11 +14,11 @@ class ILSRandRTest(ILSTestScript):
           555 > nimetuma
           555 < {0}
           111 < {1}
-        """.format(SUBMITTED_REMINDER_DISTRICT,
-                   SUBMITTED_NOTIFICATION_MSD % {"district_name": self.dis.name,
-                                                 "group_a": 0,
-                                                 "group_b": 0,
-                                                 "group_c": 0})
+        """.format(unicode(SUBMITTED_REMINDER_DISTRICT),
+                   unicode(SUBMITTED_NOTIFICATION_MSD) % {"district_name": self.dis.name,
+                                                          "group_a": 0,
+                                                          "group_b": 0,
+                                                          "group_c": 0})
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
@@ -32,11 +32,11 @@ class ILSRandRTest(ILSTestScript):
           555 > nimetuma a 10 b 11 c 12
           555 < {0}
           111 < {1}
-        """.format(SUBMITTED_CONFIRM % {"contact_name": self.user_dis.name, "sp_name": self.dis.name},
-                   SUBMITTED_NOTIFICATION_MSD % {"district_name": self.dis.name,
-                                                 "group_a": 10,
-                                                 "group_b": 11,
-                                                 "group_c": 12})
+        """.format(unicode(SUBMITTED_CONFIRM) % {"contact_name": self.user_dis.name, "sp_name": self.dis.name},
+                   unicode(SUBMITTED_NOTIFICATION_MSD) % {"district_name": self.dis.name,
+                                                          "group_a": 10,
+                                                          "group_b": 11,
+                                                          "group_c": 12})
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
@@ -50,8 +50,8 @@ class ILSRandRTest(ILSTestScript):
         script = """
           5551234 > nimetuma
           5551234 < {0}
-        """.format(SUBMITTED_CONFIRM % {"contact_name": self.user_fac1.name,
-                                        "sp_name": self.loc1.name})
+        """.format(unicode(SUBMITTED_CONFIRM) % {"contact_name": self.user_fac1.name,
+                                                 "sp_name": self.loc1.name})
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
@@ -65,7 +65,7 @@ class ILSRandRTest(ILSTestScript):
         script = """
           5551234 > sijatuma
           5551234 < {0}
-        """.format(NOT_SUBMITTED_CONFIRM)
+        """.format(unicode(NOT_SUBMITTED_CONFIRM))
         self.run_script(script)
 
         sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,

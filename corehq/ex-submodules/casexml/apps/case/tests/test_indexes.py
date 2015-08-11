@@ -13,7 +13,6 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
 from couchforms.models import XFormError
-from dimagi.utils.parsing import json_format_datetime
 
 USER_ID = 'test-index-user'
 
@@ -89,7 +88,7 @@ class IndexTest(TestCase):
             owner_id=USER_ID,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             version=V2
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([create_index])
         check_user_has_case(self, user, create_index, version=V2)
@@ -103,7 +102,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
@@ -113,7 +112,7 @@ class IndexTest(TestCase):
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([update_index])
 
@@ -128,7 +127,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
@@ -139,7 +138,7 @@ class IndexTest(TestCase):
                    'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([update_index])
 

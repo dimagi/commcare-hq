@@ -1,5 +1,5 @@
 from custom.ilsgateway.tanzania.reminders import YES_HELP
-from custom.ilsgateway.tanzania.test.utils import ILSTestScript
+from custom.ilsgateway.tests import ILSTestScript
 
 
 class TestYes(ILSTestScript):
@@ -8,5 +8,5 @@ class TestYes(ILSTestScript):
         script = """
           5551234 > ndio
           5551234 < {0}
-        """.format(YES_HELP)
+        """.format(unicode(YES_HELP))
         self.run_script(script)

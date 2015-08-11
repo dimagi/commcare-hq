@@ -196,6 +196,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
             }),
             'metrics': [
                 {
+                    'size': 5,
                     'color': {
                         'column': 'type',
                         'categories': categories
@@ -203,6 +204,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 },
                 {
                     'default': True,
+                    'size': 5,
                     'color': {
                         'column': 'category',
                         'categories': {

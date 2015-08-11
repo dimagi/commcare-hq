@@ -1,5 +1,5 @@
 from custom.ilsgateway.comparison_reports import ProductsCompareReport, LocationsCompareReport, \
-    WebUsersCompareReport, SMSUsersCompareReport, ProductAvailabilityReport
+    WebUsersCompareReport, SMSUsersCompareReport, ProductAvailabilityReport, SupplyPointStatusReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -24,7 +24,8 @@ CUSTOM_REPORTS = (
         LocationsCompareReport,
         WebUsersCompareReport,
         SMSUsersCompareReport,
-        ProductAvailabilityReport
+        ProductAvailabilityReport,
+        SupplyPointStatusReport
     )),
 )
 
