@@ -917,8 +917,7 @@ class WorkflowHelper(object):
 
                 for source_meta in source_form_dm:
                     if source_meta.case_type:
-                        # This should only ever be true for advanced forms that are configured
-                        # to create a new subcase.
+                        # This is true for registration forms where the case being created is a subcase
                         try:
                             target_dm = get_target_dm(source_meta.case_type)
                         except SuiteError:
@@ -1276,8 +1275,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 source_form_dm = get_datums_meta_for_form(module.get_form(0))
                 for target_meta in target_form_dm:
                     if target_meta['requires_selection']:
-                        # This should only ever be true for advanced forms that are configured
-                        # to create a new subcase.
+                        # This is true for registration forms where the case being created is a subcase
                         try:
                             [source_dm] = [
                                 source_meta for source_meta in source_form_dm
