@@ -892,7 +892,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
-        if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
+        if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
             form = SetPasswordForm(user=django_user)

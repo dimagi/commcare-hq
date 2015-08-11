@@ -645,14 +645,6 @@ class Domain(Document, SnapshotMixin):
 
         return name
 
-
-    def password_format(self):
-        """
-        This was a performance hit, so for now we'll just return 'a' no matter what
-        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
-        """
-        return 'a'
-
     @classmethod
     def get_all(cls, include_docs=True):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
