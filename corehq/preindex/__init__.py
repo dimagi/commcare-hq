@@ -1,7 +1,6 @@
 from couchdbkit.ext.django import syncdb
 from django.db.models import signals, get_app
 import os
-from south.signals import post_migrate
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.sync_docs import DesignInfo
@@ -99,21 +98,13 @@ def get_preindex_plugins():
     return PREINDEX_PLUGINS.values()
 
 
-def catch_signal(app, **kwargs):
+def catch_signal(sender, **kwargs):
     """Function used by syncdb signal"""
-    app_name = app.__name__.rsplit('.', 1)[0]
+    app_name = sender.label.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
     if app_label in PREINDEX_PLUGINS:
         PREINDEX_PLUGINS[app_label].sync_design_docs()
+    syncdb(get_app(sender.label), None, **kwargs)
 
 
-signals.post_syncdb.connect(catch_signal)
-
-# and totally unrelatedly...
-
-
-def sync_south_app(app, **kwargs):
-    syncdb(get_app(app), None, **kwargs)
-
-
-post_migrate.connect(sync_south_app)
+signals.post_migrate.connect(catch_signal)
