@@ -217,6 +217,8 @@
                         {% case "filtering without case" %}
                             The form has filtering enabled but no cases are being loaded (excluding auto-loaded cases)
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}.
+                        {% case "has forbidden usercase" %}
+                            The application uses the usercase, but this is not permitted under the current pricing plan.
                         {% else %}
                             Unknown error: {{ error.type }}
                             <p>Details: {{ error }}</p>

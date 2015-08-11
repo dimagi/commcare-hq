@@ -71,7 +71,8 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
-    actions_use_usercase
+    actions_use_usercase,
+    get_usercase_properties,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -4427,6 +4428,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return []
         return form.get_questions(self.langs)
 
+    @property
+    def has_usercase(self):
+        return get_usercase_properties(self)[USERCASE_TYPE]
+
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
@@ -4461,6 +4466,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.append({'type': 'parent cycle'})
 
         errors.extend(self._child_module_errors(modules_dict))
+
+        if self.has_usercase and not domain_has_privilege(self.domain, privileges.USER_CASE):
+            errors.extend({'type': 'has forbidden usercase'})
+            print errors
+        else:
+            print 'usercase was not a problem'
+            print self.has_usercase
+            print domain_has_privilege(self.domain, privileges.USER_CASE)
 
         if not errors:
             errors = super(Application, self).validate_app()
