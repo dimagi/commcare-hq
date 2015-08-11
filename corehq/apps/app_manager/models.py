@@ -2011,7 +2011,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def is_registration_form(self, case_type=None):
         """
         Defined as form that opens a single case. If the case is a sub-case then
-        the form is only allowed to load parent cases (and any auto-select cases).
+        the form is only allowed to load parent cases (and any auto-selected cases).
         """
         reg_actions = self.get_registration_actions(case_type)
         if len(reg_actions) != 1:
@@ -2029,8 +2029,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         actions_by_tag = deepcopy(self.actions.actions_meta_by_tag)
         actions_by_tag.pop(reg_action.case_tag)
         def check_parents(tag):
-            """Recursively check parent actions to ensure that all action for this form are
-            either parents or the registration action or else auto-select actions.
+            """Recursively check parent actions to ensure that all actions for this form are
+            either parents of the registration action or else auto-select actions.
             """
             if not tag:
                 return not actions_by_tag or all(a['action'].auto_select for a in actions_by_tag.values())
