@@ -583,10 +583,17 @@ class CachedStringProperty(object):
 class ScheduleVisit(IndexedSchema):
     """
     due:         Days after the anchor date that this visit is due
-    late_window: Days after the due day that this visit is valid until
+    starts:      Days before the due date that this visit is valid from
+    expires:     Days after the due date that this visit is valid until (optional)
+
+    repeats:     Whether this is a repeat visit (one per form allowed)
+    increment:   Days after the last visit that the repeat visit occurs
     """
     due = IntegerProperty()
-    late_window = IntegerProperty()
+    starts = IntegerProperty()
+    expires = IntegerProperty()
+    repeats = BooleanProperty(default=False)
+    increment = IntegerProperty()
 
     @property
     def id(self):
@@ -606,15 +613,17 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
+    starts:                     Days after the anchor date that this schedule starts
     expires:                    Days after the anchor date that this schedule expires (optional)
     visits:		        List of visits in this schedule
-    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    allow_unscheduled:          Allow unscheduled visits in this schedule
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
+    starts = IntegerProperty()
     expires = IntegerProperty()
+    allow_unscheduled = BooleanProperty(default=False)
     visits = SchemaListProperty(ScheduleVisit)
-    post_schedule_increment = IntegerProperty()
     get_visits = IndexedSchema.Getter('visits')
 
     transition_condition = SchemaProperty(FormActionCondition)
@@ -692,6 +701,9 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
+    def _pre_delete_hook(self):
+        raise NotImplementedError()
 
     @property
     def schedule_form_id(self):
@@ -2098,6 +2110,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 action['preload'] = {v: k for k, v in preload.items()}
 
         return super(AdvancedForm, cls).wrap(data)
+
+    def _pre_delete_hook(self):
+        try:
+            self.get_phase().remove_form(self)
+        except (ScheduleError, TypeError):
+            pass
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -4483,6 +4501,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             datetime=datetime.utcnow(),
         )
         record.save()
+
+        try:
+            form._pre_delete_hook()
+        except NotImplementedError:
+            pass
+
         del module['forms'][form.id]
         return record
 

@@ -57,13 +57,40 @@ var VisitScheduler = (function () {
         };
     };
 
+    var ScheduleRelevancy = {
+        mapping: function(self){
+            return {
+                include: [
+                    'starts',
+                    'expires',
+                ]
+            };
+        },
+        wrap: function(data){
+            var self = {};
+            ko.mapping.fromJS(data, ScheduleRelevancy.mapping(self), self);
+            self.starts_type = ko.observable(self.starts() < 0 ? 'before' : 'after');
+            self.expires_type = ko.observable(self.expires() < 0 ? 'before' : 'after');
+            self.enableFormExpiry = ko.observable(self.expires() !== null);
+            self.starts = ko.observable(Math.abs(self.starts()));
+            self.expires = ko.observable(Math.abs(self.expires()));
+            return self;
+        },
+        unwrap: function(self){
+            return ko.mapping.toJS(self, ScheduleRelevancy.mapping(self));
+        }
+    };
+
     var ScheduleVisit = {
         mapping: function (self) {
             return {
                 include: [
                     'due',
                     'type',
-                    'late_window'
+                    'starts',
+                    'expires',
+                    'repeats',
+                    'increment',
                 ]
             };
         },
@@ -72,6 +99,10 @@ var VisitScheduler = (function () {
                 config: config
             };
             ko.mapping.fromJS(data, ScheduleVisit.mapping(self), self);
+            if (self.repeats()){
+                self.due(self.increment());
+                self.type('repeats');
+            }
             return self;
         },
 
@@ -100,7 +131,7 @@ var VisitScheduler = (function () {
             return {
                 include: [
                     'expires',
-                    'post_schedule_increment',
+                    'allow_unscheduled',
                     'transition_condition',
                     'termination_condition'
                 ],
@@ -136,26 +167,21 @@ var VisitScheduler = (function () {
 
             self.hasExpiry = ko.observable();
 
-            self.hasPostSchedule = ko.observable(!!self.post_schedule_increment());
-
-            self.editValue = ko.dependentObservable({
-                read: function() {
-                    return self.post_schedule_increment();
-                },
-                write: function(newValue) {
-                    var parsedValue = parseInt(newValue, 10);
-                    this.post_schedule_increment(isNaN(parsedValue) ? newValue : parsedValue);
-                },
-                owner: self
+            self.hasRepeatVisit = ko.computed(function(){
+                return self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
             self.phase = phase;
+
+            self.relevancy = ScheduleRelevancy.wrap(data);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
                     due: null,
                     type: 'after',
-                    late_window: null
+                    starts: null,
+                    expires: null,
+                    increment: null
                 }));
             };
 
@@ -195,19 +221,24 @@ var VisitScheduler = (function () {
             FormSchedule.cleanCondition(self.transition_condition);
             FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
-            if (!self.allowExpiry()) {
-                schedule.expires = null;
+            schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
+            if (self.relevancy.enableFormExpiry() && self.allowExpiry()){
+                schedule.expires = self.relevancy.expires() * (self.relevancy.expires_type() === 'before' ? -1 : 1);
             }
-            if (!self.hasPostSchedule()) {
-                schedule.post_schedule_increment = null;
+            else{
+                schedule.expires = null;
             }
 
             schedule.anchor = self.phase.anchor();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? 1 : -1);
+                var repeats = visit.type === 'repeats';
                 return {
-                    due: due,
-                    late_window: visit.late_window
+                    due: repeats ? null : due,
+                    starts: visit.starts,
+                    expires: visit.expires,
+                    repeats: repeats,
+                    increment: repeats ? visit.due : null
                 };
             });
             return schedule;
