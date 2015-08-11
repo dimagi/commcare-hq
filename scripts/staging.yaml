@@ -65,7 +65,7 @@ branches:
   - parent-child-case-list-form  # SK 8/7
   - extension_cases  # Norman 8/8
   - upgrade-redis # Ben 8/10
-  #- bootstrap3-final-reorg # Biyeun 8/11
+  - bootstrap3-final-reorg # Biyeun 8/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
