@@ -1,6 +1,7 @@
 from datetime import datetime, time
 from corehq import privileges
-from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
