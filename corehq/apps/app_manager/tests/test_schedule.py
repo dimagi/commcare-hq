@@ -232,13 +232,17 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             filter_condition = (
                 "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
                 "and {anchor} != '' and "                # anchor not empty
-                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and ({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires))))) and "
+                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
+                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires))))) and "
                 "({schedule}/@allow_unscheduled = 'True' or "
-                "count({visit}[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]["
+                "count({visit}[{case}/last_visit_number_{form_id} = '' or "
+                "@id &gt; {case}/last_visit_number_{form_id}]["
                 "if(@repeats = 'True', "
                 "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
-                "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
-                "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and (@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
+                "(@expires = '' or "
+                "today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
+                "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and "
+                "(@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
                 "]) &gt; 0)"     # End count
             ).format(current_schedule_phase=current_schedule_phase,
                      form_num=form_num, form_id=form_id, anchor=anchor, schedule=schedule, visit=visit,
@@ -333,13 +337,10 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
         last_visit_number_partial = (
             "<partial>"
-            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" calculate="'
-            "if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
-            "session/data/case_id_case_clinic]/"
-            "last_visit_number_a1e369 = '', 1, "
-            "int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
-            "session/data/case_id_case_clinic]/"
-            'last_visit_number_a1e369) + 1)" {xmlns}/>'
+            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" '
+            'calculate="/data/next_visit_number" '
+            'relevant="not(/data/unscheduled_visit)" '
+            '{xmlns}/>'
             '</partial>'
         )
         self._fetch_sources()
@@ -356,7 +357,6 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
     def test_last_visit_date(self):
         """ Set the date of the last visit when a form gets submitted """
-        # TODO: this should probably be "today"
         last_visit_date_partial = """
         <partial>
         <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}" type="xsd:dateTime"

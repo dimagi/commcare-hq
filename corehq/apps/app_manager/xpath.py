@@ -5,6 +5,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_LAST_VISIT,
     SCHEDULE_LAST_VISIT_DATE,
     SCHEDULE_TERMINATED,
+    SCHEDULE_MAX_DATE,
 )
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError
 from django.utils.translation import ugettext as _
@@ -354,10 +355,13 @@ class ScheduleFormXPath(object):
         self.current_schedule_phase = SCHEDULE_PHASE
 
     @property
-    def fixture(self):
+    def fixture_id(self):
         from corehq.apps.app_manager import id_strings
-        fixture_id = id_strings.schedule_fixture(self.module, self.phase, self.form)
-        return ScheduleFixtureInstance(fixture_id)
+        return id_strings.schedule_fixture(self.module, self.phase, self.form)
+
+    @property
+    def fixture(self):
+        return ScheduleFixtureInstance(self.fixture_id)
 
     @property
     def xpath_phase_set(self):
@@ -365,8 +369,7 @@ class ScheduleFormXPath(object):
         returns the due date if there are valid upcoming schedules
         otherwise, returns a Really Big Number
         """
-        largest_date = (2**31) - 1
-        return XPath.if_(self.next_valid_schedules(), self.due_date(), largest_date)
+        return XPath.if_(self.next_valid_schedules(), self.due_date(), SCHEDULE_MAX_DATE)
 
     @property
     def first_visit_phase_set(self):
@@ -381,6 +384,17 @@ class ScheduleFormXPath(object):
         )
 
         return XPath.if_(within_zeroth_phase, self.first_due_date(), self.xpath_phase_set)
+
+    @property
+    def next_visit_due_num(self):
+        return XPath.if_(self.next_valid_schedules(), self.next_visit_id(), 0)
+
+    @property
+    def is_unscheduled_visit(self):
+        """count(visit[within_window]) = 0"""
+        return XPath("{} = 0".format(
+            XPath.count(self.fixture.visit().select_raw(self.within_window()))
+        ))
 
     def filter_condition(self, phase_id):
         """returns the `relevant` condition on whether to show this form in the list"""
@@ -448,8 +462,10 @@ class ScheduleFormXPath(object):
     def within_window(self):
         """
         if(@repeats = 'True',
-            today() >= date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
-            today() >= date({anchor}) + int(@due) + int(@starts) and (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+            today() >= date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and
+                 (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+            today() >= date({anchor}) + int(@due) + int(@starts) and
+                 (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
         )
         """
         within_repeat = XPath.and_(
@@ -490,7 +506,8 @@ class ScheduleFormXPath(object):
 
     def due_first(self):
         """instance(...)/schedule/visit[within_window][1]/@due"""
-        return self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
+        due = self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
+        return "coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
 
     def next_visits(self):
         """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
@@ -518,10 +535,18 @@ class ScheduleFormXPath(object):
         )
 
     def due_later(self):
-        """instance(...)/schedule/visit/[next_visits][within_window][1]/@due"""
+        """coalesce(instance(...)/schedule/visit/[next_visits][within_window][1]/@due, [max_date]"""
+        due = (self.upcoming_scheduled_visits().
+               select_raw("1").
+               slash("@due"))
+
+        return ("coalesce({}, {})".format(due, SCHEDULE_MAX_DATE))
+
+    def next_visit_id(self):
+        """{visit}/[next_visits][within_window][1]/@id"""
         return (self.upcoming_scheduled_visits().
                 select_raw("1").
-                slash("@due"))
+                slash("@id"))
 
     def first_due_date(self):
         return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
