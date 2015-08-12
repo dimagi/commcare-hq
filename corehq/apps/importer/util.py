@@ -210,26 +210,31 @@ class InvalidDateException(Exception):
 class ImportErrorDetail(object):
 
     ERROR_MSG = {
-        ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
-                                       "when uploading because of these values. Make sure "
-                                       "the values in this column are ID's for users or "
-                                       "case sharing groups or locations."),
-
-        ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
-                                         "when uploading because of these values."),
-
-        ImportErrors.InvalidDate: _("Date fields were specified that caused an error during"
-                                    "conversion. This is likely caused by a value from "
-                                    "excel having the wrong type or not being formatted "
-                                    "properly."),
-
-        ImportErrors.BlankExternalId: _("Blank external ids were found in these rows causing as "
-                                        "error when importing cases."),
-
-        ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
-
-        ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
-                                        "uploaded case."),
+        ImportErrors.InvalidOwnerId: _(
+            "Owner ID was used in the mapping but there were errors when "
+            "uploading because of these values. Make sure the values in this "
+            "column are ID's for users or case sharing groups or locations."
+        ),
+        ImportErrors.InvalidOwnerName: _(
+            "Owner name was used in the mapping but there were errors when "
+            "uploading because of these values."
+        ),
+        ImportErrors.InvalidDate: _(
+            "Date fields were specified that caused an error during"
+            "conversion. This is likely caused by a value from excel having "
+            "the wrong type or not being formatted properly."
+        ),
+        ImportErrors.BlankExternalId: _(
+            "Blank external ids were found in these rows causing as error "
+            "when importing cases."
+        ),
+        ImportErrors.CaseGeneration: _(
+            "These rows failed to generate cases for unknown reasons"
+        ),
+        ImportErrors.InvalidParentId: _(
+            "An invalid or unknown parent case was specified for the "
+            "uploaded case."
+        ),
         ImportErrors.DuplicateLocationName: _(
             "Owner ID was used in the mapping, but there were errors when "
             "uploading because of these values. There are multiple locations "
