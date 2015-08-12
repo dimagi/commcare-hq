@@ -327,7 +327,7 @@ class ScheduleFixtureInstance(XPath):
         return XPath(u"instance('{0}')/schedule/@starts".format(self))
 
     def unscheduled_visits(self):
-        return XPath(u"instance('{0}')/schedule/@unscheduled_visits".format(self))
+        return XPath(u"instance('{0}')/schedule/@allow_unscheduled".format(self))
 
 
 class ScheduleFormXPath(object):
@@ -493,7 +493,7 @@ class ScheduleFormXPath(object):
 
     def visit_allowed(self):
         """
-        {schedule}/@unscheduled_visits = 'True' or
+        {schedule}/@allow_unscheduled = 'True' or
         count({upcoming_scheduled_visits} > 0)
         """
         num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())

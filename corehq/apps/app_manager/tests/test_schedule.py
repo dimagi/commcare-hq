@@ -233,7 +233,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
                 "and {anchor} != '' and "                # anchor not empty
                 "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and ({schedule}/@expires = '' or today() &lt; (date({anchor}) + int({schedule}/@expires))))) and "
-                "({schedule}/@unscheduled_visits = 'True' or "
+                "({schedule}/@allow_unscheduled = 'True' or "
                 "count({visit}[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]["
                 "if(@repeats = 'True', "
                 "today() &gt; (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
