@@ -102,7 +102,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}

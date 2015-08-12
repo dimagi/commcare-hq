@@ -97,7 +97,7 @@
                         {% format_main_menu %}
                     {% endblock %}
                     {% if request.user.is_authenticated %}
-                        {% include 'hqwebapp/partials/global_navigation_bar.html' %}
+                        {% include 'style/includes/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
