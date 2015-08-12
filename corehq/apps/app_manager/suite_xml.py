@@ -1306,7 +1306,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     else:
                         yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-            yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
+            yield DetailVariable(name='next_due', function='date(min({}))'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='$next_due < today()')
 
     @staticmethod

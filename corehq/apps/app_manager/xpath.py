@@ -361,8 +361,12 @@ class ScheduleFormXPath(object):
 
     @property
     def xpath_phase_set(self):
-        """returns the due date if there are valid upcoming schedules"""
-        return XPath.if_(self.next_valid_schedules(), self.due_date(), 0)
+        """
+        returns the due date if there are valid upcoming schedules
+        otherwise, returns a Really Big Number
+        """
+        largest_date = (2**31) - 1
+        return XPath.if_(self.next_valid_schedules(), self.due_date(), largest_date)
 
     @property
     def first_visit_phase_set(self):
