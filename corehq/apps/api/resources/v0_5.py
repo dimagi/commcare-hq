@@ -357,8 +357,11 @@ class GroupResource(v0_4.GroupResource):
 
 
 class DomainAuthorization(ReadOnlyAuthorization):
+    def __init__(self, domain_key='domain', *args, **kwargs):
+        self.domain_key = domain_key
+
     def read_list(self, object_list, bundle):
-        return object_list.filter(domain=bundle.request.domain)
+        return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
 class NoCountingPaginator(Paginator):
@@ -413,11 +416,6 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         }
 
 
-class StockDomainAuthorization(ReadOnlyAuthorization):
-    def read_list(self, object_list, bundle):
-        return object_list.filter(domain=bundle.request.domain)
-
-
 class StockTransactionResource(HqBaseResource, ModelResource):
 
     class Meta:
@@ -427,7 +425,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         resource_name = 'stock_transaction'
         authentication = RequirePermissionAuthentication(Permissions.view_reports)
         paginator_class = NoCountingPaginator
-        authorization = ReadOnlyAuthorization()
+        authorization = DomainAuthorization(domain_key='report__domain')
 
         filtering = {
             "case_id": ('exact',),
