@@ -271,6 +271,13 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+REMOTE_APPS = StaticToggle(
+    'remote-apps',
+    'Allow creation of remote applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -563,6 +570,13 @@ DROPBOX_SYNC = StaticToggle(
 EMAIL_IN_REMINDERS = StaticToggle(
     'email_in_reminders',
     'Send emails from reminders',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+FIXTURE_CASE_SELECTION = StaticToggle(
+    'fixture_case',
+    'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
