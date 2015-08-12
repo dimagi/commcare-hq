@@ -1035,7 +1035,7 @@ var DetailScreenConfig = (function () {
             if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
                 this.fixtureSelect = new FixtureSelect({
                     active: spec.fixtureSelect.active,
-                    fixtureType: spec.fixtureSelect.fixture_select,
+                    fixtureType: spec.fixtureSelect.fixture_type,
                     displayColumn: spec.fixtureSelect.display_column,
                     variableColumn: spec.fixtureSelect.variable_column,
                     xpath: spec.fixtureSelect.xpath
