@@ -430,6 +430,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         filtering = {
             "case_id": ('exact',),
             "section_id": ('exact'),
+            "report__date": ('gte', 'lte'),
         }
 
         fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
