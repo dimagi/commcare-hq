@@ -194,6 +194,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+ADD_USERS_FROM_LOCATION = StaticToggle(
+    'add_users_from_location',
+    "Allow users to add new mobile workers from the locations page",
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
 DEMO_REPORTS = StaticToggle(
     'demo-reports',
     'Access to map-based demo reports',
