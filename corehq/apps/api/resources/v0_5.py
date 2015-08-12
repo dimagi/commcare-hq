@@ -14,7 +14,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
-from casexml.apps.stock.models import StockTransaction, StockReport
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
