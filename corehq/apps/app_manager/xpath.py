@@ -370,8 +370,13 @@ class ScheduleFormXPath(object):
         returns the first due date if the case hasn't been visited yet
         otherwise, returns the next due date of valid upcoming schedules
         """
-        zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))  # No visits yet
-        return XPath.if_(zeroth_phase, self.first_due_date(), self.xpath_phase_set)
+        within_zeroth_phase = XPath.and_(
+            XPath(self.current_schedule_phase).eq(XPath.string('')),  # No visits yet
+            XPath(self.anchor).neq(XPath.string('')),
+            self.within_form_relevancy(),
+        )
+
+        return XPath.if_(within_zeroth_phase, self.first_due_date(), self.xpath_phase_set)
 
     def filter_condition(self, phase_id):
         """returns the `relevant` condition on whether to show this form in the list"""
@@ -399,12 +404,27 @@ class ScheduleFormXPath(object):
             ),
         )
 
+    def within_form_relevancy(self):
+        """
+        (today() >= date({anchor}) + int({schedule}/@starts)
+        and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
+        """
+        expires = self.fixture.expires()
+        starts = self.fixture.starts()
+
+        return XPath.and_(
+            XPath("today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
+            XPath.or_(
+                XPath(expires).eq(XPath.string('')),
+                "today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+            )
+        )
+
     def next_valid_schedules(self, phase_id=None):
         """
         [current_schedule_phase = '' or ]current_schedule_phase = phase.id and
         {anchor} != '' and
-        (today() >= date({anchor}) + int({schedule}/@starts)
-        and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
+        {within_form_relevancy_window}
         """
 
         current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
@@ -413,21 +433,10 @@ class ScheduleFormXPath(object):
             zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))
             current_phase_query = XPath.or_(zeroth_phase, current_phase_query)
 
-        expires = self.fixture.expires()
-        starts = self.fixture.starts()
-
-        between_start_and_end = XPath.and_(
-            XPath("today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
-            XPath.or_(
-                XPath(expires).eq(XPath.string('')),
-                "today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
-            )
-        )
-
         valid_within_window = XPath.and_(
             current_phase_query,
             XPath(self.anchor).neq(XPath.string('')),
-            between_start_and_end,
+            self.within_form_relevancy(),
         )
 
         return valid_within_window
