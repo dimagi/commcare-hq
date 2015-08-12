@@ -397,14 +397,11 @@ def get_spreadsheet(download_ref, column_headers=True):
     return ExcelFile(download_ref.get_filename(), column_headers)
 
 
-def is_location_group(owner_id, domain):
-    """
-    Return yes if the specified owner_id is one of the
-    faked location groups.
-    """
+def is_valid_location_owner(owner_id, domain):
     results = SQLLocation.objects.filter(
         domain=domain,
-        location_id=owner_id
+        location_id=owner_id,
+        location_type__shares_cases=True,
     )
     return results.exists()
 
@@ -424,7 +421,7 @@ def is_valid_id(uploaded_id, domain, cache):
             is_user_or_case_sharing_group(owner) and
             owner.is_member_of(domain)
         ) or
-        is_location_group(uploaded_id, domain)
+        is_valid_location_owner(uploaded_id, domain)
     )
 
 
