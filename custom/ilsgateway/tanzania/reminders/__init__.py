@@ -131,6 +131,12 @@ TEST_HANDLER_HELP = _(
 TEST_HANDLER_BAD_CODE = _("Invalid msd code %(code)s")
 TEST_HANDLER_CONFIRM = _("Sent")
 
+LOSS_ADJUST_HELP = _("Please send in your adjustments in the format "
+                     "'la <product> +-<amount> +-<product> +-<amount>...'")
+LOSS_ADJUST_BAD_FORMAT = _("Sorry, invalid format.  The message should be in the format"
+                           " 'la <product> +-<amount> +-<product> +-<amount>...")
+LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
+                        "Please reply 'supervision yes' or 'supervision no'")
 
 # reminder reports
 REMINDER_MONTHLY_RANDR_SUMMARY = _(

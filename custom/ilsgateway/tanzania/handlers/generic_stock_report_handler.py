@@ -25,27 +25,6 @@ class GenericStockReportHandler(KeywordHandler):
     def get_success_message(self, data):
         raise NotImplemented()
 
-    @property
-    @memoized
-    def sql_location(self):
-        location = self.user.location
-
-        if location:
-            return location.sql_location
-
-        try:
-            return SQLLocation.objects.get(domain=self.domain, site_code=self.args[0])
-        except SQLLocation.DoesNotExist:
-            return
-
-    @property
-    def location_id(self):
-        return self.sql_location.location_id if self.sql_location else None
-
-    @property
-    def location_products(self):
-        return self.sql_location._products.all() if self.sql_location else []
-
     def on_success(self):
         raise NotImplemented()
 
