@@ -435,6 +435,14 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
         include_resource_uri = False
 
+    def build_filters(self, filters=None):
+        orm_filters = super(StockTransactionResource, self).build_filters(filters)
+        if 'start_date' in filters:
+            orm_filters['report__date__gte'] = filters['start_date']
+        if 'end_date' in filters:
+            orm_filters['report__date__lte'] = filters['end_date']
+        return orm_filters
+
     def dehydrate(self, bundle):
         bundle.data['product_name'] = bundle.obj.sql_product.name
         bundle.data['transaction_date'] = bundle.obj.report.date
