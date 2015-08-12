@@ -1,0 +1,56 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>New Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="1" name="New Form">
+          <question1/>
+          <question2/>
+          <subcase_0>
+            <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+              <create>
+                <case_name/>
+                <owner_id/>
+                <case_type>freshwater</case_type>
+              </create>
+              <update>
+                <case_name/>
+              </update>
+              <index>
+                <host case_type="fish" relationship="extension"/>
+              </index>
+            </case>
+          </subcase_0>
+        </data>
+      </instance>
+      <bind nodeset="/data/question1" type="xsd:string"/>
+      <bind nodeset="/data/question2" type="xsd:string"/>
+      <itext>
+        <translation lang="en" default="">
+          <text id="question1-label">
+            <value>question1</value>
+          </text>
+          <text id="question2-label">
+            <value>question2</value>
+          </text>
+        </translation>
+      </itext>
+      <bind calculate="/data/meta/timeEnd" nodeset="/data/subcase_0/case/@date_modified" type="xsd:dateTime"/>
+      <bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/@user_id"/>
+      <setvalue event="xforms-ready" ref="/data/subcase_0/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_freshwater_0"/>
+      <bind calculate="/data/Wanda" nodeset="/data/subcase_0/case/create/case_name"/>
+      <bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/create/owner_id"/>
+      <bind nodeset="/data/Wanda" required="true()"/>
+      <bind calculate="/data/question1" nodeset="/data/subcase_0/case/update/case_name" relevant="count(/data/question1) &gt; 0"/>
+      <bind calculate="/data/case/@case_id" nodeset="/data/subcase_0/case/index/host"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/question1">
+      <label ref="jr:itext('question1-label')"/>
+    </input>
+    <input ref="/data/question2">
+      <label ref="jr:itext('question2-label')"/>
+    </input>
+  </h:body>
+</h:html>
