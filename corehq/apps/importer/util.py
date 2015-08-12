@@ -213,7 +213,7 @@ class ImportErrorDetail(object):
         ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
                                        "when uploading because of these values. Make sure "
                                        "the values in this column are ID's for users or "
-                                       "case sharing groups."),
+                                       "case sharing groups or locations."),
 
         ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
                                          "when uploading because of these values."),
