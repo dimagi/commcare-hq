@@ -440,6 +440,8 @@ function FixtureSelect(init) {
     var self = this;
     self.active = ko.observable(init.active);
     self.fixtureType = ko.observable(init.fixtureType);
+    self.displayColumn = ko.observable(init.displayColumn);
+    self.variableColumn = ko.observable(init.variableColumn);
     self.xpath = ko.observable(init.xpath);
 }
 
@@ -951,7 +953,9 @@ var DetailScreenConfig = (function () {
                     if (this.config.hasOwnProperty('fixtureSelect')) {
                         fixtureSelect = {
                             active: this.config.fixtureSelect.active(),
-                            fixtureType: this.config.fixtureSelect.fixtureType(),
+                            fixture_type: this.config.fixtureSelect.fixtureType(),
+                            display_column: this.config.fixtureSelect.displayColumn(),
+                            variable_column: this.config.fixtureSelect.variableColumn(),
                             xpath: this.config.fixtureSelect.xpath()
                         };
                     }
@@ -1031,7 +1035,9 @@ var DetailScreenConfig = (function () {
             if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
                 this.fixtureSelect = new FixtureSelect({
                     active: spec.fixtureSelect.active,
-                    fixtureType: spec.fixtureSelect.fixtureType,
+                    fixtureType: spec.fixtureSelect.fixture_type,
+                    displayColumn: spec.fixtureSelect.display_column,
+                    variableColumn: spec.fixtureSelect.variable_column,
                     xpath: spec.fixtureSelect.xpath
                 })
             }

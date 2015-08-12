@@ -21,7 +21,25 @@
                 <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
             </label>
             <div class="controls">
-                <input type="text"name="case_type" data-bind="value: fixtureType" />
+                <input type="text" name="fixture_type" data-bind="value: fixtureType" />
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Display Column" %}
+                <span class="hq-help-template" data-title="{% trans "Display Column" %}"data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}"></span>
+            </label>
+            <div class="controls">
+                <input type="text" name="display_column" data-bind="value: displayColumn" />
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Variable Column" %}
+                <span class="hq-help-template" data-title="{% trans "Variable Column" %}"data-content="{% trans "This Column will be used as the variable which is input into the xpath expression below" %}"></span>
+            </label>
+            <div class="controls">
+                <input type="text" name="variable_column" data-bind="value: variableColumn" />
             </div>
         </div>
         <div class="control-group">
