@@ -2,6 +2,7 @@
 import base64
 from functools import wraps
 import logging
+import re
 
 # Django imports
 from django.conf import settings
@@ -180,6 +181,40 @@ def login_or_basic_ex(allow_cc_users=False):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users)
 
 login_or_basic = login_or_basic_ex()
+
+
+J2ME = 'j2me'
+ANDROID = 'android'
+
+
+def guess_phone_type_from_user_agent(user_agent):
+    """
+    A really dumb utility that guesses the phone type based on the user-agent header.
+    """
+    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
+    return J2ME if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
+
+
+def determine_authtype_from_user_agent(request):
+    user_agent = request.META.get('HTTP_USER_AGENT')
+    type_to_auth_map = {
+        J2ME: 'digest',
+        ANDROID: 'basic',
+    }
+    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]
+
+
+def login_or_digest_or_basic(fn):
+    @wraps(fn)
+    def _inner(request, *args, **kwargs):
+        function_wrapper = {
+            'basic': login_or_basic_ex(allow_cc_users=True),
+            'digest': login_or_digest_ex(allow_cc_users=True),
+        }[determine_authtype_from_user_agent(request)]
+        if not function_wrapper:
+            return HttpResponseForbidden()
+        return function_wrapper(fn)(request, *args, **kwargs)
+    return _inner
 
 
 def login_or_api_key_ex(allow_cc_users=False):
