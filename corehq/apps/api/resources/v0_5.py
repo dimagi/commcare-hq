@@ -14,6 +14,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
+from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
@@ -356,8 +357,11 @@ class GroupResource(v0_4.GroupResource):
 
 
 class DomainAuthorization(ReadOnlyAuthorization):
+    def __init__(self, domain_key='domain', *args, **kwargs):
+        self.domain_key = domain_key
+
     def read_list(self, object_list, bundle):
-        return object_list.filter(domain=bundle.request.domain)
+        return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
 class NoCountingPaginator(Paginator):
@@ -410,3 +414,28 @@ class DeviceReportResource(HqBaseResource, ModelResource):
             "xform_id": ('exact',),
             "device_id": ('exact',),
         }
+
+
+class StockTransactionResource(HqBaseResource, ModelResource):
+
+    class Meta:
+        queryset = StockTransaction.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'stock_transaction'
+        authentication = RequirePermissionAuthentication(Permissions.view_reports)
+        paginator_class = NoCountingPaginator
+        authorization = DomainAuthorization(domain_key='report__domain')
+
+        filtering = {
+            "case_id": ('exact',),
+            "section_id": ('exact'),
+        }
+
+        fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
+        include_resource_uri = False
+
+    def dehydrate(self, bundle):
+        bundle.data['product_name'] = bundle.obj.sql_product.name
+        bundle.data['transaction_date'] = bundle.obj.report.date
+        return bundle
