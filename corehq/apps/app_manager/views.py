@@ -11,11 +11,13 @@ import re
 import json
 import yaml
 from collections import defaultdict, OrderedDict
+from soil import DownloadBase
 from xml.dom.minidom import parseString
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
@@ -52,6 +54,7 @@ from corehq.apps.hqmedia.models import (
     ApplicationMediaReference,
     CommCareImage,
 )
+from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     ProcessImageFileUploadView,
@@ -73,7 +76,7 @@ from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
-from corehq.util.view_utils import set_file_download
+from corehq.util.view_utils import set_file_download, absolute_reverse
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -3270,15 +3273,41 @@ def update_build_comment(request, domain, app_id):
     return json_response({'status': 'success'})
 
 
-@require_deploy_apps
+# Used by CommCare CLI
+@login_and_domain_required
 def list_apps(request, domain):
+    def app_to_json(app):
+        return {
+            'name': app.name,
+            'version': app.version,
+            'app_id': app.get_id,
+            'download_url': absolute_reverse('direct_ccz', args=[domain],
+                                             params={'app_id': app.get_id})
+        }
+    applications = Domain.get_by_name(domain).applications()
     return json_response({
         'status': 'success',
-        'applications': [
-            {'name': app.name, 'version': app.version, 'app_id': app.get_id}
-            for app in Domain.get_by_name(domain).applications()
-        ],
+        'applications': map(app_to_json, applications),
     })
+
+
+# Used by CommCare CLI
+@login_and_domain_required
+def direct_ccz(request, domain):
+    if 'app_id' in request.GET:
+        app = get_app(domain, request.GET['app_id'])
+        download = DownloadBase()
+        build_application_zip(
+            include_multimedia_files=False,
+            include_index_files=True,
+            app=app,
+            download_id=download.download_id,
+            compress_zip=True,
+            filename='{}.ccz'.format(slugify(app.name)),
+        )
+        return DownloadBase.get(download.download_id).toHttpResponse()
+    msg = "You must specify `app_id` in your GET parameters"
+    return json_response({'status': 'error', 'message': msg}, status_code=400)
 
 
 common_module_validations = [

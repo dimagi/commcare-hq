@@ -129,6 +129,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
     url(r'^api/list_apps/$', 'list_apps', name='list_apps'),
+    url(r'^api/download_ccz/$', 'direct_ccz', name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
