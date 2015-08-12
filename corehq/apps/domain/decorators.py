@@ -137,8 +137,7 @@ def basicauth(realm=''):
             # Either they did not provide an authorization header or
             # something in the authorization attempt failed. Send a 401
             # back to them to ask them to authenticate.
-            response = HttpResponse()
-            response.status_code = 401
+            response = HttpResponse(status=401)
             response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
             return response
         return wrapper
