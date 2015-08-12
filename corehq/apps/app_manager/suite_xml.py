@@ -1126,7 +1126,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         self.detail_ids = {
             id_strings.detail(module, detail_type)
             for module in self.modules for detail_type, detail, enabled in module.get_details()
-            if enabled and detail.get_columns()
+            if enabled and detail.columns
         }
 
     def post_process(self, suite):
