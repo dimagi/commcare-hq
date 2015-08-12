@@ -1,60 +1,139 @@
-{% extends "users/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load djangular_tags %}
 
-{% block main_column %}
-<script>
-$(function() {
-    var form_node = $('#add_commcare_account_form');
-    var url = form_node.prop('action');
+{% block js %}
+<script type="text/javascript"
+        src="{% new_static 'style/js/pagination.ng.js' %}"></script>
+{% endblock %}
 
-    var reset_form = function () {
-        $.get(url, function(data) {
-            form_node.html(data.form_html);
-        }
-    )};
-    reset_form();
-
-    form_node.submit(function(event) {
-        event.preventDefault();
-        var start = new Date().getTime();
-        $.post(url, form_node.serialize(), function(data) {
-            if (data.status === 'success') {
-                var end = new Date().getTime();
-                $('#new-user-request-time').text((end - start) / 1000);
-                reset_form();
-            } else {
-                form_node.html(data.form_html);
-            }
-        });
-    });
-
-    $('#test-username-form').submit(function(event) {
-        event.preventDefault();
-        var start = new Date().getTime();
-        $.post("#", $("#test-username").val(), function(response) {
-            var end = new Date().getTime();
-            $('#username-request-time').text((end - start) / 1000);
-            $('#username-availability').text(response);
-        });
-    });
-});
+{% block uncompressed-js %}{{ block.super }}
+<script type="text/javascript">
+(function (angular, undefined) {
+    'use strict';
+    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination']);
+    mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+}(window.angular));
 </script>
+{% endblock %}
 
-<div>
-<form class="form form-horizontal" method="post" id="add_commcare_account_form"
-      action="{% url "new_mobile_worker_modal" domain %}">
-</form>
-</div>
-<h3>That request took <span id="new-user-request-time">xx</span> seconds.</h3>
-
-<hr />
-<hr />
-
-<form id="test-username-form">
-    <input id="test-username"/>
-    <input class="btn btn-primary" type="submit" value="Check username availability"></input>
-    <h4 id="username-availability"></h4>
-</form>
-<h3>That request took <span id="username-request-time">xx</span> seconds.</h3>
+{% block page_content %}
+    <div ng-app="mobileWorkerApp">
+        <div class="panel panel-default" ng-controller="paginatedListController">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <input type="text"
+                                   class="form-control"
+                                   ng-model="query"
+                                   placeholder="{% trans "Filter Workers..." %}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default"
+                                        ng-click="filterData()"
+                                        type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-responsive"
+                       style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Username" %}</th>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Phone Numbers" %}</th>
+                            <th>{% trans "Date Registered" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-show="notLoaded">
+                            <td colspan="5">{% trans "Loading Workers..." %}</td>
+                        </tr>
+                        <tr ng-repeat="user in paginatedItems">
+                            {% angularjs %}
+                            <td><a href="{{ user.editUrl }}">{{ user.username }}</a></td>
+                            <td>{{ user.name }}</td>
+                            <td>
+                                <ul>
+                                    <li ng-repeat="number in user.phoneNumbers">{{ number }}</li>
+                                </ul>
+                            </td>
+                            <td>{{ user.dateRegistered }}</td>
+                            <td>
+                                <div ng-show="user.deactivateUrl">
+                                    <button type="button"
+                                            class="btn btn-inverse"
+                                            data-toggle="modal"
+                                            data-target="#deactivate_{{ user.id }}">
+                                        <i class="fa fa-deactivate"></i> {% trans "Deactivate" %}
+                                    </button>
+                                    <div id="deactivate_{{ user.id }}"
+                                         class="modal fade">
+                                        <div class="modal-dialog">
+                                            <form class="modal-content"
+                                                  action="{{ user.deactivateUrl }}"
+                                                  method="post">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        <span class="sr-only">{% trans "Close" %}</span>
+                                                    </button>
+                                                    <h4 class="modal-title">{% trans "Deactivate Worker" %}: {{ user.name }}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="lead">{% trans "Are you sure you want to deactivate this worker?" %}</p>
+                                                    <ul class="dl-horizontal">
+                                                        <dt>{% trans "E-mail" %}</dt>
+                                                        <dd>{{ user.email }}</dd>
+                                                        <dt>{% trans "Name" %}</dt>
+                                                        <dd>{{ user.name }}</dd>
+                                                    </ul>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button"
+                                                            class="btn btn-default"
+                                                            data-dismiss="modal">
+                                                        {% trans "Cancel" %}
+                                                    </button>
+                                                    <button type="submit"
+                                                            class="btn btn-inverse">
+                                                        {% trans "Deactivate" %}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endangularjs %}
+                        </tr>
+                    </tbody>
+                </table>
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"></pagination>
+            </div>
+        </div>
+    </div>
 {% endblock %}
