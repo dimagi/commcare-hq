@@ -3257,6 +3257,7 @@ def upload_bulk_app_translations(request, domain, app_id):
         reverse('app_languages', args=[domain, app_id])
     )
 
+
 @require_deploy_apps
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
@@ -3267,6 +3268,17 @@ def update_build_comment(request, domain, app_id):
     build.build_comment = request.POST.get('comment')
     build.save()
     return json_response({'status': 'success'})
+
+
+@require_deploy_apps
+def list_apps(request, domain):
+    return json_response({
+        'status': 'success',
+        'applications': [
+            {'name': app.name, 'version': app.version, 'app_id': app.get_id}
+            for app in Domain.get_by_name(domain).applications()
+        ],
+    })
 
 
 common_module_validations = [
