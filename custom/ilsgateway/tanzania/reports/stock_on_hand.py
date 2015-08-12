@@ -121,7 +121,8 @@ class SohPercentageTableData(ILSData):
         return month, year
 
     def get_stockouts(self, facs):
-        if not facs:
+        facs_count = facs.count()
+        if facs_count == 0:
             return 0
 
         fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
@@ -136,7 +137,7 @@ class SohPercentageTableData(ILSData):
                 datetime(enddate.year, enddate.month, 1)
             ]
         ).order_by('case_id').distinct('case_id').count()
-        percent_stockouts = (stockouts or 0) * 100 / float(facs.count())
+        percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
 
         return percent_stockouts
 
