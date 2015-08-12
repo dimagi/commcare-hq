@@ -232,13 +232,13 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             filter_condition = (
                 "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
                 "and {anchor} != '' and "                # anchor not empty
-                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and ({schedule}/@expires = '' or today() &lt; (date({anchor}) + int({schedule}/@expires))))) and "
+                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and ({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires))))) and "
                 "({schedule}/@allow_unscheduled = 'True' or "
                 "count({visit}[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]["
                 "if(@repeats = 'True', "
-                "today() &gt; (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
+                "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
                 "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
-                "today() &gt; (date({anchor}) + int(@starts)) and (@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
+                "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and (@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
                 "]) &gt; 0)"     # End count
             ).format(current_schedule_phase=current_schedule_phase,
                      form_num=form_num, form_id=form_id, anchor=anchor, schedule=schedule, visit=visit,

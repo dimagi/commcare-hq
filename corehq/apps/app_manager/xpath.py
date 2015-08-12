@@ -404,7 +404,7 @@ class ScheduleFormXPath(object):
         [current_schedule_phase = '' or ]current_schedule_phase = phase.id and
         {anchor} != '' and
         (today() >= date({anchor}) + int({schedule}/@starts)
-        and (today < date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
+        and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
         """
 
         current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
@@ -420,7 +420,7 @@ class ScheduleFormXPath(object):
             XPath("today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
-                "today() < ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+                "today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
             )
         )
 
@@ -435,12 +435,12 @@ class ScheduleFormXPath(object):
     def within_window(self):
         """
         if(@repeats = 'True',
-            today() > date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
-            today() > date({anchor}) + int(@starts) and (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+            today() >= date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+            today() >= date({anchor}) + int(@due) + int(@starts) and (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
         )
         """
         within_repeat = XPath.and_(
-            XPath('today() > ({} + {} + {})'.format(
+            XPath('today() >= ({} + {} + {})'.format(
                 XPath.date(self.last_visit_date),
                 XPath.int('@increment'),
                 XPath.int('@starts'),
@@ -455,9 +455,10 @@ class ScheduleFormXPath(object):
             )
         )
         within_standard = XPath.and_(
-            XPath('today() > ({} + {})'.format(
+            XPath('today() >= ({} + {} + {})'.format(
                 XPath.date(self.anchor),
-                XPath.int('@starts')
+                XPath.int('@due'),
+                XPath.int('@starts'),
             )),
             XPath.or_(
                 XPath('@expires').eq(XPath.string('')),
