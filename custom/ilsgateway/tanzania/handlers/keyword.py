@@ -1,5 +1,7 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
+from dimagi.utils.decorators.memoized import memoized
 
 
 class KeywordHandler(object):
@@ -10,6 +12,11 @@ class KeywordHandler(object):
         self.args = args
         self.verified_contact = verified_contact
         self.msg = msg
+
+    @property
+    @memoized
+    def domain_object(self):
+        return Domain.get_by_name(self.domain)
 
     def handle(self):
         raise NotImplementedError("Not implemented yet")

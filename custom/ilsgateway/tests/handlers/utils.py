@@ -16,6 +16,13 @@ from casexml.apps.stock.models import DocDomainMapping
 TEST_DOMAIN = 'ils-test-domain'
 
 
+def create_products(cls, domain_name, codes):
+    for code in codes:
+        product = Product(domain=domain_name, name=code, code=code, unit='each')
+        product.save()
+        setattr(cls, code, product)
+
+
 class ILSTestScript(TestScript):
 
     @classmethod
@@ -36,8 +43,10 @@ class ILSTestScript(TestScript):
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                              domain=domain.name, parent=district)
         test.bootstrap(TEST_BACKEND, to_console=True)
-        bootstrap_user(facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
-                       first_name='stella', last_name='Test')
+        cls.user1 = bootstrap_user(
+            facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
+            first_name='stella', last_name='Test'
+        )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
                        first_name='bella', last_name='Test')
         bootstrap_user(district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
@@ -45,10 +54,7 @@ class ILSTestScript(TestScript):
         bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
                        first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
 
-        p = Product(domain=domain.name, name='Jadelle', code='jd', unit='each')
-        p.save()
-        p2 = Product(domain=domain.name, name='Mc', code='mc', unit='each')
-        p2.save()
+        create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
     def setUp(self):
         self.domain = Domain.get_by_name(TEST_DOMAIN)
@@ -125,3 +131,11 @@ def prepare_domain(domain_name):
     ils_config = ILSGatewayConfig(enabled=True, domain=domain.name)
     ils_config.save()
     return domain
+
+
+def add_products(sql_location, products_codes_list):
+    sql_location.products = [
+        SQLProduct.objects.get(domain=sql_location.domain, code=code)
+        for code in products_codes_list
+    ]
+    sql_location.save()
