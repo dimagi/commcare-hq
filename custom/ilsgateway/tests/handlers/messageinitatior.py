@@ -29,7 +29,7 @@ class TestMessageInitiatior(ILSTestScript):
             """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
                    "test_message": "this is a test message"}
         self.run_script(script)
-        
+
     def test_message_initiator_bad_code(self):
         script = """
             5551234 > test la d5000000

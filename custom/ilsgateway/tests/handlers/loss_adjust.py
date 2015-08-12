@@ -1,6 +1,5 @@
-from django.utils.translation import ugettext as _
 from corehq.apps.commtrack.models import StockState
-from custom.ilsgateway.tanzania.reminders import SOH_THANK_YOU, LOSS_ADJUST_CONFIRM, SOH_CONFIRM
+from custom.ilsgateway.tanzania.reminders import LOSS_ADJUST_CONFIRM, SOH_CONFIRM
 from custom.ilsgateway.tests import ILSTestScript
 
 
