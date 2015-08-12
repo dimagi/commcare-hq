@@ -2080,8 +2080,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
-        response.status_code = 409
+        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}), status=409)
         return response
 
 @require_GET
