@@ -22,6 +22,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.contrib import messages
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -50,6 +51,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -669,26 +671,67 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return self.get(request, *args, **kwargs)
 
 
-class MobileWorkerView(BaseUserSettingsView):
+class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
+    @method_decorator(use_bootstrap3())
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerView, self).dispatch(*args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        from corehq.apps.users.util import format_username
-        # Temporary thing to check timing of an ajax request
-        if not can_add_extra_mobile_workers(request):
-            raise PermissionDenied()
-        username = format_username(request.body, self.domain)
-        if CommCareUser.get_by_username(username, strict=True):
-            response = 'not available'
-        else:
-            response = 'available'
-        return HttpResponse(response)
+    @property
+    @memoized
+    def query(self):
+        return self.request.GET.get('query')
+
+    @allow_remote_invocation
+    def get_pagination_data(self, in_data):
+        if not isinstance(in_data, dict):
+            return {
+                'success': False,
+                'error': _("Please provide pagination info."),
+            }
+        try:
+            limit = in_data.get('limit', 10)
+            page = in_data.get('page', 1)
+            skip = limit * (page - 1)
+            query = in_data.get('query')
+
+            # TODO
+            total = 1
+            mobile_workers = [
+                CommCareUser.get_by_username('ethan@esoergel.commcarehq.org')
+            ]
+
+            def _fmt_result(u):
+                return {
+                    'username': u.username,
+                    'domain': self.domain,
+                    'name': u.full_name,
+                    'phoneNumbers': u.phone_numbers,
+                    'id': u.get_id,
+                    'dateRegistered': u.created_on.strftime('%B %d, %Y'),
+                    'editUrl': "#",
+                    'deactivateUrl': "#",
+                }
+
+            return {
+                'response': {
+                    'itemList': map(_fmt_result, mobile_workers),
+                    'total': total,
+                    'page': page,
+                    'query': query,
+                },
+                'success': True,
+            }
+        except Exception as e:
+            return {
+                'error': e.message,
+                'success': False,
+            }
+
 
 
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
