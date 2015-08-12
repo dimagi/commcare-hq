@@ -1507,6 +1507,9 @@ class ParentSelect(DocumentSchema):
 
 class FixtureSelect(DocumentSchema):
     active = BooleanProperty(default=False)
+    fixture_type = StringProperty()
+    display_column = StringProperty()
+    variable_column = StringProperty()
     xpath = StringProperty(default='')
 
 
