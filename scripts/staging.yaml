@@ -66,6 +66,7 @@ branches:
   - upgrade-redis # Ben 8/10
   - bootstrap3-final-reorg # Biyeun 8/11
   - new-mobile-workers  # Ethan 8/11
+  - stock_api # Nick P 8/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
