@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - backfill_stockreport_server_date  # danny 8/11 (migration)
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
