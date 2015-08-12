@@ -1441,7 +1441,8 @@ class XForm(WrappedNode):
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_date),
                 type="xsd:dateTime",
-                calculate=self.resolve_path("meta/timeEnd")
+                calculate=self.resolve_path("meta/timeEnd"),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
 
