@@ -12,6 +12,7 @@ from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
+from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
 from custom.ilsgateway.tanzania.handlers.supervision import SupervisionHandler
 from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
@@ -60,6 +61,7 @@ def handle(verified_contact, text, msg=None):
         ('stop', 'acha', 'hapo'): StopHandler,
         ('yes', 'ndio', 'ndyo'): YesHandler,
         ('la', 'um'): LossAndAdjustment,
+        ('stockout', 'hakuna'): StockoutHandler,
         ('register', 'reg', 'join', 'sajili'): RegisterHandler,
         ('test',): MessageInitiatior,
         ('not',): not_function(args[0]) if args else None

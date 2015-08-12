@@ -138,6 +138,10 @@ LOSS_ADJUST_BAD_FORMAT = _("Sorry, invalid format.  The message should be in the
 LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
                         "Please reply 'supervision yes' or 'supervision no'")
 
+STOCKOUT_CONFIRM = _('Thank you %(contact_name)s '
+                     'for reporting stockouts of %(product_names)s for %(facility_name)s.')
+
+
 # reminder reports
 REMINDER_MONTHLY_RANDR_SUMMARY = _(
     "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s "

@@ -38,10 +38,15 @@ class ILSTestScript(TestScript):
 
         district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                             domain=domain.name, parent=region)
+        district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
+                             domain=domain.name, parent=region)
         facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                             domain=domain.name, parent=district)
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                              domain=domain.name, parent=district)
+        facility3 = make_loc(
+            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district
+        )
         test.bootstrap(TEST_BACKEND, to_console=True)
         cls.user1 = bootstrap_user(
             facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
@@ -53,6 +58,18 @@ class ILSTestScript(TestScript):
                        first_name='trella', last_name='Test')
         bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
                        first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
+
+        for x in xrange(1, 4):
+            bootstrap_user(
+                facility3,
+                username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),
+                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049'
+            )
+            bootstrap_user(
+                district2,
+                username='dperson{}'.format(x), domain=domain.name, phone_number=str(32349 + x),
+                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101'
+            )
 
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
