@@ -152,6 +152,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
     if uses_custom_content_handler and not content_handler:
         return
 
+    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
@@ -173,7 +174,6 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
         verified_number, unverified_number = get_recipient_phone_number(
             reminder, recipient, verified_numbers)
 
-        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
         if message:
             metadata = MessageMetadata(
                 workflow=workflow or get_workflow(handler),

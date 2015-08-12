@@ -939,6 +939,7 @@ SOUTH_TESTS_MIGRATE = False
 # Dropbox
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
 
 try:
