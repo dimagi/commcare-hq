@@ -103,6 +103,7 @@ var VisitScheduler = (function () {
                 self.due(self.increment());
                 self.type('repeats');
             }
+            self.starts(self.starts() * -1);
             return self;
         },
 
@@ -232,11 +233,11 @@ var VisitScheduler = (function () {
 
             schedule.anchor = self.phase.anchor();
             schedule.visits = _.map(schedule.visits, function(visit) {
-                var due = visit.due * (visit.type === 'before' ? 1 : -1);
+                var due = visit.due * (visit.type === 'before' ? -1 : 1);
                 var repeats = visit.type === 'repeats';
                 return {
                     due: repeats ? null : due,
-                    starts: visit.starts,
+                    starts: visit.starts * -1,
                     expires: visit.expires,
                     repeats: repeats,
                     increment: repeats ? visit.due : null
