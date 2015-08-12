@@ -10,11 +10,13 @@ from corehq.apps.reminders.views import (
     EditStructuredKeywordView,
     AddNormalKeywordView,
     EditNormalKeywordView,
+    BroadcastListView,
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
     url(r'^delete/(?P<handler_id>[\w-]+)/$', 'delete_reminder', name='delete_reminder'),
+    url(r'^broadcasts/$', BroadcastListView.as_view(), name=BroadcastListView.urlname),
     url(r'^scheduled/', 'scheduled_reminders', name='scheduled_reminders'),
     url(r'^schedule/complex/$',
         CreateComplexScheduledReminderView.as_view(), name=CreateComplexScheduledReminderView.urlname),

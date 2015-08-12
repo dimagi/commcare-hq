@@ -1046,3 +1046,28 @@ def deactivate_alert(request):
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
+
+class DataTablesAJAXPaginationMixin(object):
+    @property
+    def echo(self):
+        return self.request.GET.get('sEcho')
+
+    @property
+    def display_start(self):
+        return int(self.request.GET.get('iDisplayStart'))
+
+    @property
+    def display_length(self):
+        return int(self.request.GET.get('iDisplayLength'))
+
+    @property
+    def search_phrase(self):
+        return self.request.GET.get('sSearch', '').strip()
+
+    def datatables_ajax_response(self, data, total_records, filtered_records=None):
+        return HttpResponse(json.dumps({
+            'sEcho': self.echo,
+            'aaData': data,
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': filtered_records or total_records,
+        }))

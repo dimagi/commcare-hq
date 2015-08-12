@@ -14,13 +14,14 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
+    DataTablesAJAXPaginationMixin)
 from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
@@ -1429,6 +1430,84 @@ class RemindersListView(BaseMessagingSectionView):
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
             return HttpResponse(json.dumps(self.get_action_response(action)))
         return HttpResponse(status=400)
+
+
+class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+    template_name = 'reminders/broadcasts_list.html'
+    urlname = 'list_broadcasts'
+    page_title = ugettext_lazy('Broadcasts')
+
+    LIST_UPCOMING = 'list_upcoming'
+    LIST_PAST = 'list_past'
+    DELETE_BROADCAST = 'delete_broadcast'
+
+    def format_recipients(self, broadcast):
+        reminders = broadcast.get_reminders()
+        return get_recipient_name(reminders[0].recipient, include_desc=False)
+
+    def format_content(self, broadcast):
+        if broadcast.method == METHOD_SMS_SURVEY:
+            content = get_form_name(broadcast.events[0].form_unique_id)
+        else:
+            message = broadcast.events[0].message[broadcast.default_lang]
+            if len(message) > 50:
+                content = '"%s..."' % message[:47]
+            else:
+                content = '"%s"' % message
+        return content
+
+    def format_broadcast_data(self, ids):
+        timezone = get_timezone_for_user(None, self.domain)
+        broadcasts = CaseReminderHandler.get_handlers_from_ids(ids)
+        return [[
+                    ServerTime(broadcast.start_datetime).user_time(timezone).ui_string(SERVER_DATETIME_FORMAT),
+                    self.format_recipients(broadcast),
+                    self.format_content(broadcast),
+                    broadcast._id,
+                ]
+                for broadcast in broadcasts]
+
+    def get_broadcast_ajax_response(self, upcoming=True):
+        """
+        upcoming - True to include only upcoming broadcasts, False to include
+                   only past broadcasts.
+        """
+        if upcoming:
+            ids = CaseReminderHandler.get_upcoming_broadcast_ids(self.domain)
+        else:
+            ids = CaseReminderHandler.get_past_broadcast_ids(self.domain)
+
+        total_records = len(ids)
+        ids = ids[self.display_start:self.display_start + self.display_length]
+        data = self.format_broadcast_data(ids)
+        return self.datatables_ajax_response(data, total_records)
+
+    def delete_broadcast(self, broadcast_id):
+        try:
+            broadcast = CaseReminderHandler.get(broadcast_id)
+        except:
+            raise Http404()
+
+        if broadcast.doc_type != 'CaseReminderHandler' or broadcast.domain != self.domain:
+            raise Http404()
+
+        broadcast.retire()
+        return HttpResponse()
+
+    def get(self, *args, **kwargs):
+        action = self.request.GET.get('action')
+        if action in (self.LIST_UPCOMING, self.LIST_PAST):
+            upcoming = (action == self.LIST_UPCOMING)
+            return self.get_broadcast_ajax_response(upcoming)
+        else:
+            return super(BroadcastListView, self).get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action == self.DELETE_BROADCAST:
+            return self.delete_broadcast(self.request.POST.get('broadcast_id', None))
+        else:
+            return HttpResponse(status=400)
 
 
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):

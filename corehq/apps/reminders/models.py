@@ -1275,6 +1275,29 @@ class CaseReminderHandler(Document):
         ]
 
     @classmethod
+    def get_upcoming_broadcast_ids(cls, domain):
+        utcnow_json = json_format_datetime(datetime.utcnow())
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain, REMINDER_TYPE_ONE_TIME, utcnow_json],
+            endkey=[domain, REMINDER_TYPE_ONE_TIME, {}],
+            include_docs=False,
+            reduce=False,
+        )
+        return [row['id'] for row in result]
+
+    @classmethod
+    def get_past_broadcast_ids(cls, domain):
+        utcnow_json = json_format_datetime(datetime.utcnow())
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain, REMINDER_TYPE_ONE_TIME, utcnow_json],
+            endkey=[domain, REMINDER_TYPE_ONE_TIME],
+            include_docs=False,
+            reduce=False,
+            descending=True,
+        )
+        return [row['id'] for row in result]
+
+    @classmethod
     def get_handler_ids(cls, domain, reminder_type_filter=None):
         result = cls.view('reminders/handlers_by_reminder_type',
             startkey=[domain],

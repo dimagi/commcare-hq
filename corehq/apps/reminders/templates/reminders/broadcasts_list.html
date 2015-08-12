@@ -1,0 +1,121 @@
+{% extends 'reminders/base_template.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    {% include "imports/datatables.html" %}
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script>
+        var upcoming_table = null;
+        var past_table = null;
+
+        function delete_broadcast(broadcast_id)  {
+            if(confirm("{% trans 'Are you sure you want to delete this broadcast?' %}")) {
+                $.ajax({
+                    url: "{% url 'list_broadcasts' domain %}",
+                    type: "POST",
+                    data: {
+                        action: "delete_broadcast",
+                        broadcast_id: broadcast_id
+                    }
+                }).done(function(response, textStatus, jqXHR) {
+                    upcoming_table.fnDraw();
+                });
+            }
+        }
+
+        $(function() {
+            upcoming_table = $("#upcoming-broadcasts-table").dataTable({
+                "sPaginationType": "bootstrap",
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": false,
+                "iDisplayLength": 5,
+                "bProcessing": true,
+                "bServerSide": true,
+                "sAjaxSource": "{% url 'list_broadcasts' domain %}",
+                "fnServerParams": function(aoData) {
+                    aoData.push({"name": "action", "value": "list_upcoming"});
+                },
+                "sDom": "rtp",
+                "oLanguage": {
+                    "sEmptyTable": "{% trans 'There are no broadcasts to display.' %}",
+                    "sInfoEmpty": "{% trans 'There are no broadcasts to display.' %}",
+                    "sLengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
+                    "sProcessing": '<img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
+                    "sInfo": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
+                    "sInfoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                },
+                "aoColumnDefs": [
+                    {
+                        "aTargets": [3],
+                        "fnRender": function(obj) {
+                            return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + obj.aData[3] + '\');"> \
+                                        {% trans 'Delete' %} \
+                                    </button>';
+                        }
+                    }
+                ]
+            });
+            past_table = $("#past-broadcasts-table").dataTable({
+                "sPaginationType": "bootstrap",
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": false,
+                "iDisplayLength": 5,
+                "bProcessing": true,
+                "bServerSide": true,
+                "sAjaxSource": "{% url 'list_broadcasts' domain %}",
+                "fnServerParams": function(aoData) {
+                    aoData.push({"name": "action", "value": "list_past"});
+                },
+                "sDom": "rtp",
+                "oLanguage": {
+                    "sEmptyTable": "{% trans 'There are no broadcasts to display.' %}",
+                    "sInfoEmpty": "{% trans 'There are no broadcasts to display.' %}",
+                    "sLengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
+                    "sProcessing": '<img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
+                    "sInfo": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
+                    "sInfoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <div class="btn-group">
+        <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
+            <i class="icon-plus"></i>
+            {% trans 'Add Broadcast' %}
+        </a>
+    </div>
+    <h4>{% trans 'Scheduled Broadcasts' %}</h4>
+    <div>
+        <table id="upcoming-broadcasts-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="span4">{% trans 'When' %}</th>
+                    <th class="span4">{% trans 'Recipient(s)' %}</th>
+                    <th class="span4">{% trans 'Content' %}</th>
+                    <th class="span4">{% trans 'Action' %}</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <h4>{% trans 'Previously Sent' %}</h4>
+    <div>
+        <table id="past-broadcasts-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="span4">{% trans 'When' %}</th>
+                    <th class="span4">{% trans 'Recipient(s)' %}</th>
+                    <th class="span4">{% trans 'Content' %}</th>
+                    <th class="span4">{% trans 'Action' %}</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+{% endblock %}
