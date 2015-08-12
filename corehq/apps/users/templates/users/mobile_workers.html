@@ -28,9 +28,20 @@
     <div ng-app="mobileWorkerApp">
         <div class="panel panel-default" ng-controller="paginatedListController">
             <div class="panel-heading">
+                <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+            </div>
+            <div class="panel-body">
                 <div class="row">
                     <div class="col-sm-6">
-                        <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+                        <select class="form-control"
+                                ng-change="pageChanged()"
+                                ng-model="limit"
+                                convert-to-number>
+                            <option value="10">Show 10 Workers</option>
+                            <option value="25">Show 25 Workers</option>
+                            <option selected="selected" value="50">Show 50 Workers</option>
+                            <option value="100">Show 100 Workers</option>
+                        </select>
                     </div>
                     <div class="col-sm-6">
                         <div class="input-group">
@@ -48,8 +59,6 @@
                         </div><!-- /input-group -->
                     </div>
                 </div>
-            </div>
-            <div class="panel-body">
                 <table class="table table-striped table-responsive"
                        style="margin-bottom: 0;">
                     <thead>
@@ -78,7 +87,7 @@
                             <td>
                                 <div ng-show="user.deactivateUrl">
                                     <button type="button"
-                                            class="btn btn-inverse"
+                                            class="btn"
                                             data-toggle="modal"
                                             data-target="#deactivate_{{ user.id }}">
                                         <i class="fa fa-deactivate"></i> {% trans "Deactivate" %}

@@ -33,6 +33,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.es import UserES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -694,44 +695,43 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Please provide pagination info."),
             }
         try:
-            limit = in_data.get('limit', 10)
-            page = in_data.get('page', 1)
-            skip = limit * (page - 1)
-            query = in_data.get('query')
+            limit = int(in_data.get('limit', 10))
+        except ValueError:
+            limit = 10
+        page = in_data.get('page', 1)
+        query = in_data.get('query')
 
-            # TODO
-            total = 1
-            mobile_workers = [
-                CommCareUser.get_by_username('ethan@esoergel.commcarehq.org')
-            ]
+        res = (UserES()
+               .domain(self.domain)
+               .mobile_users()
+               .start(limit * (page - 1))
+               .size(limit)
+               .run())
+        total = res.total
+        mobile_workers = res.hits
 
-            def _fmt_result(u):
-                return {
-                    'username': u.username,
-                    'domain': self.domain,
-                    'name': u.full_name,
-                    'phoneNumbers': u.phone_numbers,
-                    'id': u.get_id,
-                    'dateRegistered': u.created_on.strftime('%B %d, %Y'),
-                    'editUrl': "#",
-                    'deactivateUrl': "#",
-                }
-
+        def _fmt_result(user_json):
+            user = CommCareUser(user_json)
             return {
-                'response': {
-                    'itemList': map(_fmt_result, mobile_workers),
-                    'total': total,
-                    'page': page,
-                    'query': query,
-                },
-                'success': True,
-            }
-        except Exception as e:
-            return {
-                'error': e.message,
-                'success': False,
+                'username': user.username,
+                'domain': self.domain,
+                'name': user.full_name,
+                'phoneNumbers': user.phone_numbers,
+                'id': user.get_id,
+                'dateRegistered': user.created_on.strftime('%B %d, %Y'),
+                'editUrl': "#",
+                'deactivateUrl': "#",
             }
 
+        return {
+            'response': {
+                'itemList': map(_fmt_result, mobile_workers),
+                'total': total,
+                'page': page,
+                'query': query,
+            },
+            'success': True,
+        }
 
 
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
