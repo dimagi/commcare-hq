@@ -19,6 +19,7 @@ from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -242,6 +243,7 @@ def get_cases_skip_arg(request, domain):
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
+    return True
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
     return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
@@ -262,6 +264,13 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+
+    hsph_case_id = request.REQUEST.get('hsph_hack', None)
+    if hsph_case_id:
+        case = CommCareCase.get(hsph_case_id)
+        cases = [case, case.parent, ]
+    import ipdb; ipdb.set_trace()
+
     if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
