@@ -22,8 +22,10 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,\
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import (
+    CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE,
+)
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -1289,6 +1291,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Adds the following variables for each form:
                     <anchor_{form_id} function="{anchor}"/>
                     <last_visit_number_{form_id} function="{last_visit_number}"/>
+                    <last_visit_date_{form_id} function="{last_visit_date}"/>
                     <next_{form_id} function={phase_set}/>
                     """
                     form_xpath = ScheduleFormXPath(form, phase, module)
@@ -1299,6 +1302,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
                     yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
                                          function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
+                    yield DetailVariable(name=form_xpath.last_visit_date_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id))
                     if phase.id == 1:
                         # If this is the first phase, `current_schedule_phase` and
                         # last_visit_num might not be set yet

@@ -360,7 +360,9 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         last_visit_date_partial = """
         <partial>
         <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
-         calculate="/data/meta/timeEnd" {xmlns}/>
+         calculate="/data/meta/timeEnd"
+        relevant="not(/data/unscheduled_visit)"
+        {xmlns}/>
         </partial>
         """
         self._fetch_sources()
