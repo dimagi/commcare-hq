@@ -37,10 +37,10 @@ class PerformanceConfiguration(Document):
         return group
 
     def fire_messages(self):
-        recipient_phone_numbers = self.get_phone_numbers()
-        message_text = self.get_message_text()
-        for number in recipient_phone_numbers:
-            send_sms_to_verified_number(number, message_text)
+        for user in self.group.users:
+            recipient_number = user.get_verified_number()
+            message_text = self.get_message_text(user)
+            send_sms_to_verified_number(recipient_number, message_text)
 
     def get_phone_numbers(self):
         for user in self.group.users:
