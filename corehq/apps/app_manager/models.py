@@ -3334,10 +3334,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
-    # Documentation comments for app builders and maintainers
-    # Form names and comments, module names and comments support multiple languages, but application names and
-    # comments don't.
-    comment = StringProperty(default='')
+    # Documentation comment for app builders and maintainers
+    comment = DictProperty(unicode)
 
     @classmethod
     def wrap(cls, data):
@@ -3491,7 +3489,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def short_comment(self):
-        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+        return {lang: cmnt if len(cmnt) <= 72 else cmnt[:69] + '...' for lang, cmnt in self.comment.items()}
 
     @property
     def has_careplan_module(self):

@@ -2350,6 +2350,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
+        'comment',
         # Application only
         'cloudcare_enabled',
         'application_version',
@@ -2403,6 +2404,9 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
         app.success_message[lang] = success_message
+
+    if should_edit('comment'):
+        app.comment[lang] = hq_settings['comment']
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release

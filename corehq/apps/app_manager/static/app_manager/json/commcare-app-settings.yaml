@@ -166,3 +166,10 @@
    - 'Not Set'
   default: 'not_set'
   preview: true
+
+- id: comment
+  name: 'Comment'
+  description: >
+    A comment to document or explain this application for other app builders or maintainers.
+  default: ''
+  widget: text

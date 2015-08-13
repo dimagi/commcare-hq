@@ -76,6 +76,12 @@
     - hq.amplifies_workers
     - hq.amplifies_project
 
+- title: 'Documentation'
+  id: app-settings-documentation
+  collapse: true
+  settings:
+    - hq.comment
+
 - title: 'Disabled'
   id: app-settings-disabled
   collapse: true
