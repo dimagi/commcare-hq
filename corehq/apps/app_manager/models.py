@@ -2030,7 +2030,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             either parents of the registration action or else auto-select actions.
             """
             if not tag:
-                return not actions_by_tag or all(a['action'].auto_select for a in actions_by_tag.values())
+                return not actions_by_tag or all(
+                    getattr(a['action'], 'auto_select', False) for a in actions_by_tag.values()
+                )
 
             try:
                 parent = actions_by_tag.pop(tag)
