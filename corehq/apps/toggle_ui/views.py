@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from corehq import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER
+from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
 
@@ -57,8 +57,17 @@ class ToggleEditView(ToggleBaseView):
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
+    @property
+    def static_toggle(self):
+        """
+        Returns the corresponding toggle definition from corehq/toggles.py
+        """
+        for toggle in all_toggles():
+            if toggle.slug == self.toggle_slug:
+                return toggle
+
     def get_toggle(self):
-        if not self.toggle_slug in [t.slug for t in all_toggles()]:
+        if not self.static_toggle:
             raise Http404()
         try:
             return Toggle.get(self.toggle_slug)
@@ -87,6 +96,14 @@ class ToggleEditView(ToggleBaseView):
             )
         return context
 
+    def call_save_fn(self, changed_entries, currently_enabled):
+        if self.static_toggle.save_fn is None:
+            return
+        for entry in changed_entries:
+            if entry.startswith(NAMESPACE_DOMAIN):
+                domain = entry.split(":")[-1]
+                self.static_toggle.save_fn(domain, entry in currently_enabled)
+
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
         item_list = request.POST.get('item_list', [])
@@ -94,10 +111,14 @@ class ToggleEditView(ToggleBaseView):
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
 
-        affected_users = set(toggle.enabled_users) | set(item_list)
+        previously_enabled = set(toggle.enabled_users)
+        currently_enabled = set(item_list)
         toggle.enabled_users = item_list
         toggle.save()
-        for item in affected_users:
+
+        changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
+        self.call_save_fn(changed_entries, currently_enabled)
+        for item in changed_entries:
             clear_toggle_cache(toggle.slug, item)
 
         data = {
