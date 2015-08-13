@@ -76,8 +76,15 @@
             self.getData();
         };
 
+        $scope.updateQuery = function (keyEvent) {
+            if (keyEvent.keyCode === 13) {
+                self.getData();
+            }
+        };
+
         self.getData();
     };
 
     pagination.controller(paginationControllers);
+
 }(window.angular));
