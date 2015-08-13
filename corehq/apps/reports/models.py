@@ -14,7 +14,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
-from corehq.apps.reports.daterange import get_daterange_start_end_dates, DATE_RANGE_CHOICES
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -180,7 +180,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     filters = DictProperty()
 
-    date_range = StringProperty(choices=DATE_RANGE_CHOICES)
+    date_range = StringProperty(choices=get_all_daterange_slugs())
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
