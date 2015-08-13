@@ -3,12 +3,14 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
-    CASE_ID, USERCASE_ID
+from corehq.apps.app_manager.const import (
+    APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
+    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_NEXT_VISIT_NUMBER
+)
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
-from .xpath import CaseIDXPath, session_var, CaseTypeXpath, ScheduleFormXPath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
@@ -375,7 +377,7 @@ class CaseBlock(object):
         if not autoset_owner_id:
             owner_id_node.text = '-'
         elif has_case_sharing:
-            self.xform.add_instance('groups', src='jr://fixture/user-groups')
+            self.xform.Add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
                 ref="%scase/create/owner_id" % self.path,
                 value="instance('groups')/groups/group/@id"
@@ -1397,7 +1399,14 @@ class XForm(WrappedNode):
         case_tag = lambda a: "case_{0}".format(a.case_tag)
 
         def configure_visit_schedule_updates(update_block, action):
-            schedule_form_xpath = ScheduleFormXPath(form, form.get_phase(), form.get_module())
+            case = CaseIDXPath(session_var(action.case_session_var)).case()
+            schedule_form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
+
+            self.add_instance(
+                schedule_form_xpath.fixture_id,
+                'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
+            )
+
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
                 type="xs:integer",
@@ -1408,11 +1417,23 @@ class XForm(WrappedNode):
             )
             update_block.append(make_case_elem(SCHEDULE_PHASE))
 
+            self.add_bind(
+                nodeset='/data/{}'.format(SCHEDULE_NEXT_VISIT_NUMBER),
+                calculate=schedule_form_xpath.next_visit_due_num
+            )
+            self.data_node.append(_make_elem(SCHEDULE_NEXT_VISIT_NUMBER))
+
+            self.add_bind(
+                nodeset='/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate=schedule_form_xpath.is_unscheduled_visit,
+            )
+            self.data_node.append(_make_elem(SCHEDULE_UNSCHEDULED_VISIT))
+
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-            last_visit_prop_xpath = CaseIDXPath(session_var(action.case_session_var)).case().slash(last_visit_num)
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_num),
-                calculate="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate="/data/{}".format(SCHEDULE_NEXT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
 
@@ -1420,7 +1441,8 @@ class XForm(WrappedNode):
             self.add_bind(
                 nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_date),
                 type="xsd:dateTime",
-                calculate=self.resolve_path("meta/timeEnd")
+                calculate=self.resolve_path("meta/timeEnd"),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
 
