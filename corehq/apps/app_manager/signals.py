@@ -9,7 +9,8 @@ from couchforms.xml import ResponseNature
 from couchforms import xml
 
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
-from corehq.apps.app_manager.models import Application, get_app, CareplanModule, CareplanConfig, CareplanAppProperties
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application, CareplanModule, CareplanConfig, CareplanAppProperties
 from corehq.apps.app_manager.success_message import SuccessMessage
 
 
