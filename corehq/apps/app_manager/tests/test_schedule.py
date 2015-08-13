@@ -64,6 +64,9 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             )
         )
 
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
     def _apply_schedule_phases(self):
         self.module.schedule_phases = [
             SchedulePhase(  # phase 1
