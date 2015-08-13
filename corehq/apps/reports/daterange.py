@@ -33,6 +33,13 @@ def get_simple_dateranges():
     return filter(lambda choice: choice.simple, get_all_daterange_choices())
 
 
+def get_complex_dateranges():
+    """
+    Get all dateranges that are complex (require additional config)
+    """
+    return filter(lambda choice: not choice.simple, get_all_daterange_choices())
+
+
 def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None):
     today = datetime.date.today()
     if date_range == 'since':
