@@ -4,8 +4,13 @@ from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
 
+DAILY = "daily"
+WEEKLY = "weekly"
+MONTHLY = "monthly"
+
+
 class ScheduleConfiguration(DocumentSchema):
-    interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    interval = StringProperty(choices=[DAILY, WEEKLY, MONTHLY])
     hour = IntegerProperty(default=8)
     day_of_week = IntegerProperty(default=1)  # same as cron, 1 = Monday (0 and 7 = Sunday)
     day_of_month = IntegerProperty(default=1)
