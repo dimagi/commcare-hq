@@ -9,6 +9,7 @@ from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
 from corehq.util import get_document_or_404
+from dimagi.utils.logging import notify_exception
 
 
 @reminders_framework_permission
@@ -48,3 +49,20 @@ def _edit_performance_message_shared(request, domain, config):
         'form': form,
         'sources_map': form.app_source_helper.all_sources
     })
+
+
+@reminders_framework_permission
+@toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
+def send_performance_messages(request, domain, config_id):
+
+    performance_config = PerformanceConfiguration.get(config_id)
+    assert performance_config.domain == domain
+
+    try:
+        performance_config.fire_messages()
+        messages.success(request, _(u"Success! Performance messages have been sent."))
+        return HttpResponseRedirect(reverse('message_log_report', args=[domain]))
+    except:
+        notify_exception(request, "Failed to send performance messages")
+        messages.error(request, _(u"Sorry, soemthing went wrong while sending your messages."))
+        return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))

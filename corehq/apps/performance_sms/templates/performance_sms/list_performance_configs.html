@@ -14,6 +14,7 @@
                 <th>{% trans 'Frequency' %}</th>
                 <th>{% trans 'Message' %}</th>
                 <th>{% trans 'Edit' %}</th>
+                <th>{% trans 'Send' %}</th>
             </tr>
         </thead>
         <tbody>
@@ -25,6 +26,11 @@
                 <td>
                     <a class="btn btn-success" href="{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}">
                         <i class="icon icon-white icon-edit"></i> {% trans 'Edit' %}
+                    </a>
+                </td>
+                <td class="btn-group">
+                    <a class="btn btn-info" href="{% url "performance_sms.send_performance_messages" domain performance_config.get_id %}">
+                        <i class="icon icon-white icon-envelope"></i> {% trans "Send Now" %}
                     </a>
                 </td>
             </tr>
