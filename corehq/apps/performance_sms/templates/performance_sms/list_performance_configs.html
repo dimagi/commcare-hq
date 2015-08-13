@@ -1,8 +1,13 @@
-{% extends "reminders/reminders_base.html" %}
+{% extends "performance_sms/performance_sms_base.html" %}
 {% load i18n %}
 {% block main_column %}
-    <h4>{% trans 'Performance Configurations' %}</h4>
-    <table class="table table-striped datatable table-bordered">
+    <h2>{% trans 'Performance Messages' %}</h2>
+    <p>{% trans 'Performance messages allow you to setup scheduled performance-based messages to your workforce in a few simple steps.' %}</p>
+    <a class="btn btn-success" href="{% url "performance_sms.add_performance_config" domain %}">
+        <i class="icon icon-white icon-plus"></i> {% trans 'New Performance Message' %}
+    </a>
+    <hr>
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>{% trans 'Recipient Group' %}</th>
