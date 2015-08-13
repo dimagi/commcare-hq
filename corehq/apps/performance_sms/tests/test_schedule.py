@@ -11,33 +11,35 @@ class TestSchedule(TestCase):
     domain = uuid.uuid4().hex
 
     def test_daily_schedule(self):
-        config = _make_daily_performance_config(self.domain, hour=4)
+        config = _make_performance_config(self.domain, DAILY, hour=4)
 
         configs_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=4))
         self.assertTrue(config._id in [c._id for c in configs_at_4_hours])
 
+        # any hour that's not 4am
         not_4 = random.choice(range(0, 4) + range(5, 24))
         configs_not_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
         self.assertFalse(config._id in [c._id for c in configs_not_at_4_hours])
 
     def test_weekly_schedule(self):
-        config = _make_weekly_performance_config(self.domain, day_of_week=4)
+        config = _make_performance_config(self.domain, WEEKLY, day_of_week=4)
 
         configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_week=4))
         self.assertTrue(config._id in [c._id for c in configs_on_4th_day])
 
-        not_4 = random.choice(range(0, 4) + range(5, 8))
+        # any weekday that's not 4th
+        not_4 = random.choice(range(1, 4) + range(5, 8))
         configs_not_on_4thday = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
         self.assertFalse(config._id in [c._id for c in configs_not_on_4thday])
 
     def test_monthly_schedule(self):
         # Todo, doesn't handle last-day-of-month
-        config = _make_monthly_performance_config(self.domain, day_of_month=4)
+        config = _make_performance_config(self.domain, MONTHLY, day_of_month=4)
 
         configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_month=4))
         self.assertTrue(config._id in [c._id for c in configs_on_4th_day])
-
-        not_4 = random.choice(range(0, 4) + range(5, 29))
+        # any day of month that's not 4th
+        not_4 = random.choice(range(1, 4) + range(5, 29))
         configs_not_on_4thday = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
         self.assertFalse(config._id in [c._id for c in configs_not_on_4thday])
 
@@ -56,42 +58,14 @@ def _make_time(hours=None, day_of_week=None, day_of_month=None):
         return datetime(2013, random.choice(range(1, 13)), day_of_month)
 
 
-def _make_daily_performance_config(domain, hour="0"):
+def _make_performance_config(domain, interval, hour=DEFAULT_HOUR, day_of_week=DEFAULT_WEEK_DAY, day_of_month=DEFAULT_MONTH_DAY):
     config = PerformanceConfiguration(
         domain=domain,
         recipient_id=uuid.uuid4().hex,
         template='test',
-        interval=DAILY,
+        interval=interval,
         hour=hour,
-        day_of_week=DEFAULT_WEEK_DAY,
-        day_of_month=DEFAULT_MONTH_DAY,
-    )
-    config.save()
-    return config
-
-
-def _make_weekly_performance_config(domain, day_of_week="1"):
-    config = PerformanceConfiguration(
-        domain=domain,
-        recipient_id=uuid.uuid4().hex,
-        template='test',
-        interval=WEEKLY,
-        hour=DEFAULT_HOUR,
         day_of_week=day_of_week,
-        day_of_month=DEFAULT_MONTH_DAY,
-    )
-    config.save()
-    return config
-
-
-def _make_monthly_performance_config(domain, day_of_month="1"):
-    config = PerformanceConfiguration(
-        domain=domain,
-        recipient_id=uuid.uuid4().hex,
-        template='test',
-        interval=MONTHLY,
-        hour=DEFAULT_HOUR,
-        day_of_week=DEFAULT_WEEK_DAY,
         day_of_month=day_of_month,
     )
     config.save()
