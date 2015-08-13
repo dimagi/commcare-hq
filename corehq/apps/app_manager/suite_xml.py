@@ -771,24 +771,6 @@ class SuiteGeneratorBase(object):
         pass
 
 
-GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
-REPORT_INSTANCE = Instance(id='reports', src='jr://fixture/commcare:reports')
-LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
-CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
-SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
-
-INSTANCE_BY_ID = {
-    instance.id: instance
-    for instance in (
-        GROUP_INSTANCE,
-        REPORT_INSTANCE,
-        LEDGER_INSTANCE,
-        CASE_INSTANCE,
-        SESSION_INSTANCE,
-    )
-}
-
-
 def get_instance_factory(scheme):
     return get_instance_factory._factory_map.get(scheme, preset_instances)
 get_instance_factory._factory_map = {}
@@ -803,6 +785,14 @@ class register_factory(object):
             get_instance_factory._factory_map[scheme] = fn
         return fn
 
+
+INSTANCE_BY_ID = {
+    'groups': Instance(id='groups', src='jr://fixture/user-groups'),
+    'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
+    'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
+    'casedb': Instance(id='casedb', src='jr://instance/casedb'),
+    'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
+}
 
 @register_factory(*INSTANCE_BY_ID.keys())
 def preset_instances(instance_name):
@@ -1345,6 +1335,25 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     )
                                     if d:
                                         r.append(d)
+            if module.fixture_select.active:
+                from corehq.apps.app_manager.detail_screen import get_column_generator
+                # fields = get_column_generator(
+                #     self.app, module, detail,
+                #     detail_type=detail_type, *column_info
+                # ).fields
+                # field = Field(header='', template=, sort_node='')
+                d = Detail(
+                    id='fixture_select',
+                    title=Text(locale_id=id_strings.detail_title_locale(module, 'fixture_select')),
+                )
+                fields = [Field(header=Header(text=Text(xpath_function=module.fixture_select.display_column)),
+                                template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                sort_node='')]
+                # col_info = get_detail_column_infos(d, False)
+                # fields = get_column_generator(self.app, module, d, detail_type='fixture_select', *col_info).fields
+
+                d.fields = fields
+                r.append(d)
         return r
 
     @staticmethod
@@ -1885,11 +1894,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
+            fixture_select_filter = ''
+            if datum['module'].fixture_select.active:
+                datums.append({
+                    'datum': SessionDatum(
+                        id='fixture_select_{}'.format(datum['session_var']),
+                        nodeset="instance('item-list:{ft}')/{ft}_list/{ft}/".format(ft=datum['module'].fixture_select.fixture_type),
+                        value=datum['module'].fixture_select.variable_column,
+                        detail_select='fixture_select'  # I think I need an identifier here
+                    )
+                })
+                fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
+                                                      .replace('$fixture_value', "instance('commcaresession')/session/fixture_value"))
+
             datums.append({
                 'datum': SessionDatum(
                     id=datum['session_var'],
                     nodeset=(SuiteGenerator.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                             + parent_filter),
+                             + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                     detail_confirm=(
