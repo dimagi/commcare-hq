@@ -3,6 +3,8 @@ from corehq.apps.groups.fields import GroupField
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
+from corehq.apps.performance_sms import parser
+from corehq.apps.performance_sms.exceptions import InvalidParameterException
 from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES
 from corehq.apps.reports.daterange import get_simple_dateranges
 from crispy_forms.helper import FormHelper
@@ -45,6 +47,14 @@ class PerformanceMessageEditForm(forms.Form):
         self.helper.form_id = "performance-form"
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', _('Save Changes')))
+
+    def clean_template(self):
+        template = self.cleaned_data['template']
+        try:
+            parser.validate(template)
+        except InvalidParameterException as e:
+            raise forms.ValidationError(unicode(e))
+        return template
 
     def clean_schedule(self):
         # todo: support other scheduling options
