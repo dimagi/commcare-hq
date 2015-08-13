@@ -1,7 +1,7 @@
 from django.test.testcases import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
-    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction
+    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex
 from mock import patch
 
 
@@ -50,7 +50,7 @@ class CaseMetaTest(SimpleTestCase):
         m3f0.actions.open_cases.append(AdvancedOpenCaseAction(
             name_path='/data/question1',
             case_type='other grand child',
-            parent_tag='child'
+            case_indices=[CaseIndex(tag='child')]
         ))
         m3f0.actions.open_cases[0].open_condition.type = 'always'
 
