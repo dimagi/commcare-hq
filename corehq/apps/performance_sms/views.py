@@ -1,0 +1,14 @@
+from django.shortcuts import render
+from corehq import toggles
+from corehq.apps.reminders.views import reminders_framework_permission
+
+
+@reminders_framework_permission
+@toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
+def list_performance_configs(request, domain):
+    return render(request, "performance_sms/list_performance_configs.html", {
+        'domain': domain,
+    })
+
+
+

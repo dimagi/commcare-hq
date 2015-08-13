@@ -804,6 +804,7 @@ class MessagingTab(UITab):
             })
 
         if self.can_access_reminders:
+
             reminders_urls.append({
                 'title': _("Reminders in Error"),
                 'url': reverse('reminders_in_error', args=[self.domain]),
@@ -852,6 +853,15 @@ class MessagingTab(UITab):
             items.append((_("Messages"), messages_urls))
         if reminders_urls:
             items.append((_("Data Collection and Reminders"), reminders_urls))
+        if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
+            # add performance URLs
+            items.append((_("Performance Messaging"), [
+                {
+                    'title': _('Configure Performance Messages'),
+                    'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
+                    'show_in_dropdown': True,
+                },
+            ]))
 
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
