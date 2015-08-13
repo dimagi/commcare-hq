@@ -236,8 +236,8 @@
                     <div class="controls">
                         <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
                         <option value="">{% trans "No Parent" %}</option>
-                        {% for module in valid_parent_modules %}
-                            <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
+                        {% for mod in valid_parent_modules %}
+                            <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
                         {% endfor %}
                         </select>
                     </div>
