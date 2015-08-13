@@ -17,6 +17,15 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
+def make_form_from_case_blocks(case_blocks):
+    form = ElementTree.Element("data")
+    form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
+    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
+    for block in case_blocks:
+        form.append(block)
+    return ElementTree.tostring(form)
+
+
 def post_case_blocks(case_blocks, form_extras=None, domain=None):
     """
     Post case blocks.
@@ -35,15 +44,12 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
         from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
         domain = domain or TEST_DOMAIN_NAME
 
-    form = ElementTree.Element("data")
-    form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
-    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
-    for block in case_blocks:
-        form.append(block)
+    form = make_form_from_case_blocks(case_blocks)
+
     form_extras['auth_context'] = (
         form_extras.get('auth_context') or DefaultAuthContext())
     sp = couchforms.SubmissionPost(
-        instance=ElementTree.tostring(form),
+        instance=form,
         domain=domain,
         **form_extras
     )
