@@ -50,6 +50,12 @@
                 },
                 "aoColumnDefs": [
                     {
+                        "aTargets": [0],
+                        "fnRender": function(obj) {
+                            return '<a href="' + obj.aData[4] + '">' + obj.aData[0] + '</a>';
+                        }
+                    },
+                    {
                         "aTargets": [3],
                         "fnRender": function(obj) {
                             return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + obj.aData[3] + '\');"> \
@@ -87,9 +93,9 @@
 
 {% block main_column %}
     <div class="btn-group">
-        <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
+        <a href="{% url 'add_broadcast' domain %}" class="btn btn-success">
             <i class="icon-plus"></i>
-            {% trans 'Add Broadcast' %}
+            {% trans 'New Broadcast' %}
         </a>
     </div>
     <h4>{% trans 'Scheduled Broadcasts' %}</h4>

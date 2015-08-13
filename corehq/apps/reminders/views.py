@@ -31,6 +31,7 @@ from corehq.apps.reminders.forms import (
     EditContactForm,
     RemindersInErrorForm,
     OneTimeReminderForm,
+    BroadcastForm,
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
@@ -911,6 +912,138 @@ class EditNormalKeywordView(EditStructuredKeywordView):
         return sk
 
 
+class CreateBroadcastView(BaseMessagingSectionView):
+    urlname = 'add_broadcast'
+    page_title = ugettext_lazy('New Broadcast')
+    template_name = 'reminders/broadcast.html'
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': BroadcastListView.page_title,
+                'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+            },
+        ]
+
+    @property
+    @memoized
+    def broadcast(self):
+        return CaseReminderHandler(
+            domain=self.domain,
+            nickname='One-time Reminder',
+            reminder_type=REMINDER_TYPE_ONE_TIME,
+        )
+
+    @property
+    def form_kwargs(self):
+        return {
+            'domain': self.domain,
+            'can_use_survey': can_use_survey_reminders(self.request),
+        }
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return BroadcastForm(self.request.POST, **self.form_kwargs)
+        else:
+            return BroadcastForm(**self.form_kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.broadcast_form,
+        }
+
+    def save_model(self, broadcast, form):
+        broadcast.default_lang = 'xx'
+        broadcast.method = form.cleaned_data.get('content_type')
+        broadcast.recipient = form.cleaned_data.get('recipient_type')
+        broadcast.start_condition_type = ON_DATETIME
+        broadcast.start_datetime = form.cleaned_data.get('datetime')
+        broadcast.start_offset = 0
+        broadcast.events = [CaseReminderEvent(
+            day_num=0,
+            fire_time=time(0, 0),
+            form_unique_id=form.cleaned_data.get('form_unique_id'),
+            message=({broadcast.default_lang: form.cleaned_data.get('message')}
+                     if form.cleaned_data.get('message') else {}),
+            subject=({broadcast.default_lang: form.cleaned_data.get('subject')}
+                     if form.cleaned_data.get('subject') else {}),
+            callback_timeout_intervals=[],
+        )]
+        broadcast.schedule_length = 1
+        broadcast.event_interpretation = EVENT_AS_OFFSET
+        broadcast.max_iteration_count = 1
+        broadcast.sample_id = form.cleaned_data.get('case_group_id')
+        broadcast.user_group_id = form.cleaned_data.get('user_group_id')
+        broadcast.save()
+
+    def post(self, request, *args, **kwargs):
+        if self.broadcast_form.is_valid():
+            self.save_model(self.broadcast, self.broadcast_form)
+            return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditBroadcastView(CreateBroadcastView):
+    urlname = 'edit_broadcast'
+    page_title = ugettext_lazy('Edit Broadcast')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.broadcast_id])
+
+    @property
+    def broadcast_id(self):
+        return self.kwargs.get('broadcast_id')
+
+    @property
+    @memoized
+    def broadcast(self):
+        try:
+            broadcast = CaseReminderHandler.get(self.broadcast_id)
+        except:
+            raise Http404()
+
+        if (
+            broadcast.doc_type != 'CaseReminderHandler' or
+            broadcast.domain != self.domain or
+            broadcast.reminder_type != REMINDER_TYPE_ONE_TIME
+        ):
+            raise Http404()
+
+        return broadcast
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return BroadcastForm(self.request.POST, **self.form_kwargs)
+
+        broadcast = self.broadcast
+        start_user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        initial = {
+            'timing': SEND_LATER,
+            'date': start_user_time.ui_string('%Y-%m-%d'),
+            'time': start_user_time.ui_string('%H:%M'),
+            'recipient_type': broadcast.recipient,
+            'case_group_id': broadcast.sample_id,
+            'user_group_id': broadcast.user_group_id,
+            'content_type': broadcast.method,
+            'message': broadcast.events[0].message.get(broadcast.default_lang, None),
+            'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
+            'form_unique_id': broadcast.events[0].form_unique_id,
+        }
+        return BroadcastForm(initial=initial, **self.form_kwargs)
+
+
 @survey_reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
@@ -1441,6 +1574,11 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     LIST_PAST = 'list_past'
     DELETE_BROADCAST = 'delete_broadcast'
 
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
     def format_recipients(self, broadcast):
         reminders = broadcast.get_reminders()
         return get_recipient_name(reminders[0].recipient, include_desc=False)
@@ -1456,16 +1594,23 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
                 content = '"%s"' % message
         return content
 
+    def format_broadcast_name(self, broadcast):
+        user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        return user_time.ui_string(SERVER_DATETIME_FORMAT)
+
     def format_broadcast_data(self, ids):
-        timezone = get_timezone_for_user(None, self.domain)
         broadcasts = CaseReminderHandler.get_handlers_from_ids(ids)
-        return [[
-                    ServerTime(broadcast.start_datetime).user_time(timezone).ui_string(SERVER_DATETIME_FORMAT),
-                    self.format_recipients(broadcast),
-                    self.format_content(broadcast),
-                    broadcast._id,
-                ]
-                for broadcast in broadcasts]
+        result = []
+        for broadcast in broadcasts:
+            display = self.format_broadcast_name(broadcast)
+            result.append([
+                display,
+                self.format_recipients(broadcast),
+                self.format_content(broadcast),
+                broadcast._id,
+                reverse(EditBroadcastView.urlname, args=[self.domain, broadcast._id]),
+            ])
+        return result
 
     def get_broadcast_ajax_response(self, upcoming=True):
         """
