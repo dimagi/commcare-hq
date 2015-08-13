@@ -18,6 +18,11 @@
     </script>
 {% endblock %}
 {% block main_column %}
-    <h2>{% trans 'New Performance Message' %}</h2>
+    <h2>{% if editing %}{% trans 'Edit Performance Message' %}{% else %}{% trans 'New Performance Message' %}{% endif %}</h2>
     {% crispy form %}
+    {% if editing %}
+        <form method='post' action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
+            <input type="submit" value="{% trans 'Delete'%}" class="btn btn-danger disable-on-submit">
+        </form>
+    {% endif %}
 {% endblock %}
