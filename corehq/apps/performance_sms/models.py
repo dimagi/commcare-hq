@@ -1,4 +1,3 @@
-from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.ext.couchdbkit import *
@@ -49,29 +48,3 @@ class PerformanceConfiguration(Document):
 
     def get_message_text(self):
         raise NotImplementedError("Todo")
-
-    @classmethod
-    def get_message_configs_at_this_hour(cls, as_of=None):
-        from . import dbaccessors
-
-        as_of = as_of or datetime.utcnow()
-
-        def _keys(period, as_of):
-            if period == 'daily':
-                yield {
-                    'key': [period, as_of.hour],
-                }
-            elif period == 'weekly':
-                yield {
-                    'key': [period, 1, as_of.weekday()],
-                }
-            else:
-                # monthly
-                yield {
-                    'key': [period, 1, 1, as_of.day]
-                }
-
-        for period in ('daily', 'weekly', 'monthly'):
-            for keys in _keys(period, as_of):
-                for config in dbaccessors.by_interval(keys).all():
-                    yield config
