@@ -25,6 +25,9 @@ SCHEDULE_PHASE = 'current_schedule_phase'
 SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
 SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
 SCHEDULE_TERMINATED = '-1'
+SCHEDULE_NEXT_VISIT_NUMBER = 'next_visit_number'
+SCHEDULE_UNSCHEDULED_VISIT = 'unscheduled_visit'
+SCHEDULE_MAX_DATE = (2**31) - 1
 
 ATTACHMENT_PREFIX = 'attachment:'
 
