@@ -1,4 +1,6 @@
+from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.ext.couchdbkit import *
+from . import dbaccessors
 
 
 class ScheduleConfiguration(DocumentSchema):
@@ -26,3 +28,42 @@ class PerformanceConfiguration(Document):
     schedule = SchemaProperty(ScheduleConfiguration)
     template_variables = SchemaListProperty(TemplateVariable)
     template = StringProperty(required=True)
+
+    def fire_messages(self):
+        recipient_phone_numbers = self.get_phone_numbers()
+        message_text = self.get_message_text()
+        for number in recipient_phone_numbers:
+            send_sms_to_verified_number(number, message_text)
+
+    def get_phone_numbers(self):
+        recipient_group = Group.get(recipient_id)
+        assert recipient_group.domain == self.domain
+        for user in recipient_group.users:
+            yield user.get_verified_number()
+
+    def get_message_text(self):
+        raise NotImplementedError("Todo")
+
+    @classmethod
+    def get_message_configs_at_this_hour(cls):
+        as_of = as_of or datetime.utcnow()
+
+        def _keys(period, as_of):
+            if period == 'daily':
+                yield {
+                    'key': [period, as_of.hour],
+                }
+            elif period == 'weekly':
+                yield {
+                    'key': [period, 1, as_of.weekday()],
+                }
+            else:
+                # monthly
+                yield {
+                    'key': [period, 1, 1, as_of.day]
+                }
+
+        for period in ('daily', 'weekly', 'monthly'):
+            for keys in _keys(period, as_of):
+                for config in dbaccessors.by_interval(keys).all():
+                    yield config
