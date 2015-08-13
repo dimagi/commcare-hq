@@ -32,24 +32,25 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
         self.form_1.schedule = FormSchedule(
             expires=120,
-            post_schedule_increment=15,
+            starts=-5,
             visits=[
-                ScheduleVisit(due=5, late_window=4),
-                ScheduleVisit(due=10, late_window=9),
-                ScheduleVisit(due=20, late_window=5)
+                ScheduleVisit(due=5, expires=4, starts=-5),
+                ScheduleVisit(due=10, expires=9),
+                ScheduleVisit(starts=5, expires=100, repeats=True, increment=15)
             ]
         )
 
         self.form_2.schedule = FormSchedule(
+            allow_unscheduled=True,
             visits=[
-                ScheduleVisit(due=7, late_window=4),
+                ScheduleVisit(due=7, expires=4),
                 ScheduleVisit(due=15)
             ]
         )
 
         self.form_3.schedule = FormSchedule(
             visits=[
-                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=9, expires=1),
                 ScheduleVisit(due=11)
             ]
         )
@@ -186,7 +187,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         scheduled_form = other_module.get_form(0)
         scheduled_form.schedule = FormSchedule(
             visits=[
-                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=9),
                 ScheduleVisit(due=11)
             ]
         )
@@ -202,9 +203,9 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         expected_fixture = """
              <partial>
              <fixture id="schedule:m2:p1:f0">
-                 <schedule expires="">
-                     <visit id="1" due="9" late_window="1" />
-                     <visit id="2" due="11" />
+                 <schedule expires="" allow_unscheduled="False" starts="">
+                     <visit id="1" due="9" repeats="False"/>
+                     <visit id="2" due="11" repeats="False"/>
                  </schedule>
              </fixture>
              </partial>
@@ -225,19 +226,27 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         for form_num, form_id in enumerate(form_ids):
             anchor = "{case}/edd".format(case=case[form_num])
             current_schedule_phase = "{case}/current_schedule_phase".format(case=case[form_num])
+            visit = "instance('schedule:m1:p1:f{form_num}')/schedule/visit".format(form_num=form_num)
+            schedule = "instance('schedule:m1:p1:f{form_num}')/schedule".format(form_num=form_num)
+
             filter_condition = (
                 "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
-                "and {anchor} != '' "                # anchor not empty
-                "and (instance('schedule:m1:p1:f{form_num}')/schedule/@expires = '' "  # schedule not expired
-                "or today() &lt; (date({anchor}) + instance('schedule:m1:p1:f{form_num}')/schedule/@expires))) "
-                "and count(instance('schedule:m1:p1:f{form_num}')/schedule/visit"  # scheduled visit for form
-                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
-                # where id > last_visit_number
-                "[@late_window = '' or today() &lt;= (date({anchor}) + int(@due) + int(@late_window))]) "
-                # not late
-                "&gt; 0"
+                "and {anchor} != '' and "                # anchor not empty
+                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
+                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires))))) and "
+                "({schedule}/@allow_unscheduled = 'True' or "
+                "count({visit}[{case}/last_visit_number_{form_id} = '' or "
+                "@id &gt; {case}/last_visit_number_{form_id}]["
+                "if(@repeats = 'True', "
+                "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
+                "(@expires = '' or "
+                "today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
+                "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and "
+                "(@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
+                "]) &gt; 0)"     # End count
             ).format(current_schedule_phase=current_schedule_phase,
-                     form_num=form_num, form_id=form_id, anchor=anchor, case=case[form_num])
+                     form_num=form_num, form_id=form_id, anchor=anchor, schedule=schedule, visit=visit,
+                     case=case[form_num])
 
             partial = """
             <partial>
@@ -328,13 +337,10 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
         last_visit_number_partial = (
             "<partial>"
-            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" calculate="'
-            "if(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
-            "session/data/case_id_case_clinic]/"
-            "last_visit_number_a1e369 = '', 1, "
-            "int(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/"
-            "session/data/case_id_case_clinic]/"
-            'last_visit_number_a1e369) + 1)" {xmlns}/>'
+            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" '
+            'calculate="/data/next_visit_number" '
+            'relevant="not(/data/unscheduled_visit)" '
+            '{xmlns}/>'
             '</partial>'
         )
         self._fetch_sources()
@@ -351,11 +357,12 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
     def test_last_visit_date(self):
         """ Set the date of the last visit when a form gets submitted """
-        # TODO: this should probably be "today"
         last_visit_date_partial = """
         <partial>
         <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
-         calculate="/data/meta/timeEnd" {xmlns}/>
+         calculate="/data/meta/timeEnd"
+        relevant="not(/data/unscheduled_visit)"
+        {xmlns}/>
         </partial>
         """
         self._fetch_sources()

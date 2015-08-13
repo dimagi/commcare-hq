@@ -22,8 +22,10 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,\
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import (
+    CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE,
+)
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -649,19 +651,25 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
-class ScheduleVisit(IdNode):
+class ScheduleFixtureVisit(IdNode):
     ROOT_NAME = 'visit'
 
-    due = StringField('@due')
-    late_window = StringField('@late_window')
+    due = IntegerField('@due')
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+
+    repeats = StringField('@repeats')
+    increment = IntegerField('@increment')
 
 
 class Schedule(XmlObject):
     ROOT_NAME = 'schedule'
 
-    expires = StringField('@expires')
-    post_schedule_increment = StringField('@post_schedule_increment')
-    visits = NodeListField('visit', ScheduleVisit)
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+    allow_unscheduled = StringField('@allow_unscheduled')
+
+    visits = NodeListField('visit', ScheduleFixtureVisit)
 
 
 class ScheduleFixture(Fixture):
@@ -1461,6 +1469,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     Adds the following variables for each form:
                     <anchor_{form_id} function="{anchor}"/>
                     <last_visit_number_{form_id} function="{last_visit_number}"/>
+                    <last_visit_date_{form_id} function="{last_visit_date}"/>
                     <next_{form_id} function={phase_set}/>
                     """
                     form_xpath = ScheduleFormXPath(form, phase, module)
@@ -1471,6 +1480,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
                     yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
                                          function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
+                    yield DetailVariable(name=form_xpath.last_visit_date_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id))
                     if phase.id == 1:
                         # If this is the first phase, `current_schedule_phase` and
                         # last_visit_num might not be set yet
@@ -1478,7 +1489,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     else:
                         yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-            yield DetailVariable(name='next_due', function='min({})'.format(','.join(forms_due)))
+            yield DetailVariable(name='next_due', function='date(min({}))'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='$next_due < today()')
 
     @staticmethod
@@ -2514,14 +2525,20 @@ class SuiteGenerator(SuiteGeneratorBase):
                 raise (ScheduleError(_("There is no schedule for form {form_id}")
                                      .format(form_id=form.unique_id)))
 
-            visits = [ScheduleVisit(id=visit.id, due=visit.due, late_window=visit.late_window)
+            visits = [ScheduleFixtureVisit(id=visit.id,
+                                           due=visit.due,
+                                           starts=visit.starts,
+                                           expires=visit.expires,
+                                           repeats=visit.repeats,
+                                           increment=visit.increment)
                       for visit in schedule.get_visits()]
 
             schedule_fixture = ScheduleFixture(
                 id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
                 schedule=Schedule(
+                    starts=schedule.starts if schedule.starts else '',
                     expires=schedule.expires if schedule.expires else '',
-                    post_schedule_increment=schedule.post_schedule_increment,
+                    allow_unscheduled=schedule.allow_unscheduled,
                     visits=visits,
                 )
             )
