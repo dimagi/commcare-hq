@@ -1,6 +1,8 @@
+from datetime import datetime
+from corehq.apps.groups.models import Group
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.ext.couchdbkit import *
-from . import dbaccessors
+from dimagi.utils.decorators.memoized import memoized
 
 
 class ScheduleConfiguration(DocumentSchema):
@@ -28,6 +30,13 @@ class PerformanceConfiguration(Document):
     template_variables = SchemaListProperty(TemplateVariable)
     template = StringProperty(required=True)
 
+    @property
+    @memoized
+    def group(self):
+        group = Group.get(self.recipient_id)
+        assert group.domain == self.domain
+        return group
+
     def fire_messages(self):
         recipient_phone_numbers = self.get_phone_numbers()
         message_text = self.get_message_text()
@@ -35,16 +44,16 @@ class PerformanceConfiguration(Document):
             send_sms_to_verified_number(number, message_text)
 
     def get_phone_numbers(self):
-        recipient_group = Group.get(recipient_id)
-        assert recipient_group.domain == self.domain
-        for user in recipient_group.users:
+        for user in self.group.users:
             yield user.get_verified_number()
 
     def get_message_text(self):
         raise NotImplementedError("Todo")
 
     @classmethod
-    def get_message_configs_at_this_hour(cls):
+    def get_message_configs_at_this_hour(cls, as_of=None):
+        from . import dbaccessors
+
         as_of = as_of or datetime.utcnow()
 
         def _keys(period, as_of):
