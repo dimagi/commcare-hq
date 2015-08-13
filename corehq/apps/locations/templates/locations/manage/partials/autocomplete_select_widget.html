@@ -9,6 +9,7 @@ $(function() {
 $("#{{ id }}").select2({
     placeholder: '{% trans "Select a Location" %}',
     allowClear: true,
+    multiple: {{ multiselect|JSON }},
     ajax: {
         url: "{{ query_url }}",
         dataType: 'json',

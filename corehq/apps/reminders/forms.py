@@ -18,12 +18,14 @@ from django import forms
 from django.forms import Field, Widget
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
@@ -35,6 +37,7 @@ from .models import (
     RECIPIENT_CASE,
     RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_OWNER,
+    RECIPIENT_LOCATION,
     MATCH_EXACT,
     MATCH_REGEX,
     MATCH_ANY_VALUE,
@@ -2567,9 +2570,18 @@ class BroadcastForm(Form):
         required=False,
         label=ugettext_lazy('Mobile Worker Group'),
     )
-    content_type = ChoiceField(choices=(
-        (METHOD_SMS, ugettext_lazy("SMS Message")),
-    ))
+    location_ids = CharField(
+        label='Location(s)',
+        required=False,
+    )
+    include_child_locations = BooleanField(
+        required=False,
+        label=ugettext_lazy('Also send to users at child locations'),
+    )
+    content_type = ChoiceField(
+        label=ugettext_lazy('Send'),
+        choices=((METHOD_SMS, ugettext_lazy("SMS Message")),)
+    )
     subject = TrimmedCharField(
         required=False,
         label=ugettext_lazy('Subject'),
@@ -2603,9 +2615,18 @@ class BroadcastForm(Form):
                 (METHOD_EMAIL, _('Email')),
             ])
 
+        if toggles.BROADCAST_TO_LOCATIONS.enabled(self.domain):
+            add_field_choices(self, 'recipient_type', [
+                (RECIPIENT_LOCATION, _('Location')),
+            ])
+
         self.fields['form_unique_id'].choices = form_choices(self.domain)
         self.fields['case_group_id'].choices = case_group_choices(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
+        self.fields['location_ids'].widget = SupplyPointSelectWidget(
+            domain=self.domain,
+            multiselect=True,
+        )
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
@@ -2631,6 +2652,15 @@ class BroadcastForm(Form):
                         data_bind='value: user_group_id',
                     ),
                     data_bind='visible: showUserGroupSelect',
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'location_ids',
+                    ),
+                    crispy.Field(
+                        'include_child_locations',
+                    ),
+                    data_bind='visible: showLocationSelect',
                 ),
             ),
             crispy.Fieldset(
@@ -2768,6 +2798,29 @@ class BroadcastForm(Form):
             return validate_form_unique_id(value, self.domain)
         else:
             return None
+
+    def clean_location_ids(self):
+        if self.cleaned_data.get('recipient_type') != RECIPIENT_LOCATION:
+            return []
+
+        value = self.cleaned_data.get('location_ids')
+        if not isinstance(value, basestring) or value.strip() == '':
+            raise ValidationError(_('Please choose at least one location'))
+
+        location_ids = [location_id.strip() for location_id in value.split(',')]
+        location_ids = list(set(location_ids))
+        expected_count = len(location_ids)
+
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            is_archived=False,
+            location_id__in=location_ids,
+        )
+        location_ids = [location.location_id for location in locations]
+        if len(location_ids) != expected_count:
+            raise ValidationError(_('One or more of the locations was not found.'))
+
+        return location_ids
 
     @property
     def current_values(self):

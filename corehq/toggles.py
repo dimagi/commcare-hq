@@ -580,3 +580,10 @@ EMAIL_IN_REMINDERS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+BROADCAST_TO_LOCATIONS = StaticToggle(
+    'broadcast_to_locations',
+    'Send broadcasts to locations',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

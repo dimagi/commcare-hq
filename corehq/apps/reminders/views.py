@@ -987,6 +987,8 @@ class CreateBroadcastView(BaseMessagingSectionView):
         broadcast.max_iteration_count = 1
         broadcast.sample_id = form.cleaned_data.get('case_group_id')
         broadcast.user_group_id = form.cleaned_data.get('user_group_id')
+        broadcast.location_ids = form.cleaned_data.get('location_ids')
+        broadcast.include_child_locations = form.cleaned_data.get('include_child_locations')
         broadcast.save()
 
     def post(self, request, *args, **kwargs):
@@ -1049,6 +1051,8 @@ class EditBroadcastView(CreateBroadcastView):
             'message': broadcast.events[0].message.get(broadcast.default_lang, None),
             'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
             'form_unique_id': broadcast.events[0].form_unique_id,
+            'location_ids': broadcast.location_ids,
+            'include_child_locations': broadcast.include_child_locations,
         }
         return BroadcastForm(initial=initial, **self.form_kwargs)
 

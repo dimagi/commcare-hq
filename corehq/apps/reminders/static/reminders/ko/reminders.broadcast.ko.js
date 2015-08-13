@@ -27,15 +27,19 @@ var BroadcastViewModel = function (initial_values) {
     });
 
     self.showSurveySelect = ko.computed(function () {
-        return self.content_type() == 'survey';
+        return self.content_type() === 'survey';
     });
 
     self.showCaseGroupSelect = ko.computed(function () {
-        return self.recipient_type() == 'SURVEY_SAMPLE';
+        return self.recipient_type() === 'SURVEY_SAMPLE';
     });
 
     self.showUserGroupSelect = ko.computed(function () {
-        return self.recipient_type() == 'USER_GROUP';
+        return self.recipient_type() === 'USER_GROUP';
+    });
+
+    self.showLocationSelect = ko.computed(function () {
+        return self.recipient_type() === 'LOCATION';
     });
 
     self.initDatePicker = function () {
