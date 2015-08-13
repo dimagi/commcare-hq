@@ -17,9 +17,20 @@ class PerformanceMessageEditForm(forms.Form):
     )
 
     def __init__(self, domain, config, *args, **kwargs):
-        super(PerformanceMessageEditForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.config = config
+
+        def _to_initial(config):
+            initial = config.to_json()
+            initial['schedule'] = config.schedule.interval
+            if config.template_variables:
+                # todo: needs to support multiple sources
+                initial['application'] = config.template_variables[0].app_id
+                initial['source'] = config.template_variables[0].source_id
+                initial['time_range'] = config.template_variables[0].time_range
+            return initial
+
+        super(PerformanceMessageEditForm, self).__init__(initial=_to_initial(config), *args, **kwargs)
 
         self.fields['recipient_id'] = GroupField(domain=domain, label=_('Recipient Group'))
 
@@ -53,3 +64,17 @@ class PerformanceMessageEditForm(forms.Form):
         if commit:
             self.config.save()
         return self.config
+
+    @property
+    def app_id(self):
+        # todo: need to support multiple sources
+        if self.config.template_variables:
+            return self.config.template_variables[0].app_id
+        return ''
+
+    @property
+    def source_id(self):
+        if self.config.template_variables:
+            print self.config.template_variables[0].source_id
+            return self.config.template_variables[0].source_id
+        return ''
