@@ -731,9 +731,6 @@ class MessagingTab(UITab):
         def reminder_subtitle(form=None, **context):
             return form['nickname'].value
 
-        def keyword_subtitle(keyword=None, **context):
-            return keyword.keyword
-
         reminders_urls = []
         if self.can_access_reminders:
             from corehq.apps.reminders.views import (
