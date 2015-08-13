@@ -22,7 +22,6 @@ class TemplateVariable(DocumentSchema):
 
 
 class PerformanceConfiguration(Document):
-
     domain = StringProperty(required=True)
     recipient_id = StringProperty(required=True)  # an ID of a Group
     schedule = SchemaProperty(ScheduleConfiguration)

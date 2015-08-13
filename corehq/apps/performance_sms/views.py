@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from corehq import toggles
 from corehq.apps.performance_sms import dbaccessors
+from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
 from corehq.apps.reminders.views import reminders_framework_permission
 
 
@@ -16,8 +17,11 @@ def list_performance_configs(request, domain):
 @reminders_framework_permission
 @toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
 def add_performance_config(request, domain):
+    form = PerformanceMessageEditForm(domain)
     return render(request, "performance_sms/add_performance_config.html", {
         'domain': domain,
+        'form': form,
+        'sources_map': form.app_source_helper.all_sources
     })
 
 
