@@ -8,8 +8,11 @@ from couchdbkit import ResourceNotFound
 from django.contrib.auth.forms import SetPasswordForm
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
+from braces.views import JsonRequestResponseMixin
 from openpyxl.shared.exc import InvalidFileException
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -17,6 +20,7 @@ from django.http import HttpResponseRedirect, HttpResponse,\
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
+from django.views.generic import View
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -46,6 +50,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
@@ -618,10 +623,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     page_title = ugettext_noop("New Mobile Worker")
 
     @property
-    def password_format(self):
-        return self.request.project.password_format()
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -634,16 +635,13 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            form = CommCareAccountForm(self.request.POST)
-            form.password_format = self.password_format
-            return form
+            return CommCareAccountForm(self.request.POST)
         return CommCareAccountForm()
 
     @property
     def page_context(self):
         return {
             'form': self.new_commcare_user_form,
-            'only_numeric': self.password_format == 'n',
             'data_fields_form': self.custom_data.form,
         }
 
@@ -676,6 +674,99 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))
         return self.get(request, *args, **kwargs)
+
+
+class MobileWorkerView(BaseUserSettingsView):
+    template_name = 'users/mobile_workers.html'
+    urlname = 'mobile_workers'
+    page_title = ugettext_noop("Mobile Workers")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, *args, **kwargs):
+        return super(MobileWorkerView, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.users.util import format_username
+        # Temporary thing to check timing of an ajax request
+        if not can_add_extra_mobile_workers(request):
+            raise PermissionDenied()
+        username = format_username(request.body, self.domain)
+        if CommCareUser.get_by_username(username, strict=True):
+            response = 'not available'
+        else:
+            response = 'available'
+        return HttpResponse(response)
+
+
+# This is almost entirely a duplicate of CreateCommCareUserView. That view will
+# be going away soon, so I didn't bother to abstract out the commonalities.
+class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
+    template_name = "users/new_mobile_worker_modal.html"
+    urlname = 'new_mobile_worker_modal'
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        if not can_add_extra_mobile_workers(request):
+            raise PermissionDenied()
+        return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
+
+    def render_form(self, status):
+        context = RequestContext(self.request, {
+            'form': self.new_commcare_user_form,
+            'data_fields_form': self.custom_data.form,
+        })
+        return self.render_json_response({
+            "status": status,
+            "form_html": render_to_string(self.template_name, context)
+        })
+
+    def get(self, request, *args, **kwargs):
+        return self.render_form("success")
+
+    @property
+    @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
+    @memoized
+    def new_commcare_user_form(self):
+        if self.request.method == "POST":
+            data = self.request.POST.dict()
+            data['domain'] = self.domain
+            return CommCareAccountForm(data)
+        return CommCareAccountForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
+            username = self.new_commcare_user_form.cleaned_data['username']
+            password = self.new_commcare_user_form.cleaned_data['password']
+            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
+
+            if 'location_id' in request.GET:
+                loc = get_document_or_404(Location, self.domain,
+                                          request.GET.get('location_id'))
+
+            user = CommCareUser.create(
+                self.domain,
+                username,
+                password,
+                phone_number=phone_number,
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
+            )
+
+            if 'location_id' in request.GET:
+                user.set_location(loc)
+
+            user_json = {'user_id': user._id, 'text': user.username_in_report}
+            return self.render_json_response({"status": "success",
+                                              "user": user_json})
+        return self.render_form("failure")
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):
