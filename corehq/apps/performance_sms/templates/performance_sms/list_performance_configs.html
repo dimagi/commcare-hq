@@ -13,14 +13,20 @@
                 <th>{% trans 'Recipient Group' %}</th>
                 <th>{% trans 'Frequency' %}</th>
                 <th>{% trans 'Message' %}</th>
+                <th>{% trans 'Edit' %}</th>
             </tr>
         </thead>
         <tbody>
         {% for performance_config in performance_configs %}
             <tr>
-                <td>{{ config.recipient_id }}</td>
-                <td>{{ config.schedule }}</td>
-                <td>{{ config.template }}</td>
+                <td>{{ performance_config.group.name }}</td>
+                <td>{{ performance_config.schedule.interval }}</td>
+                <td>{{ performance_config.template }}</td>
+                <td>
+                    <a class="btn btn-success" href="{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}">
+                        <i class="icon icon-white icon-edit"></i> {% trans 'Edit' %}
+                    </a>
+                </td>
             </tr>
         {% empty %}
             <tr><td colspan="3">{% trans "No performance messages setup yet." %}</td></tr>
