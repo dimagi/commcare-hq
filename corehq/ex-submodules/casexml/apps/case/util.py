@@ -120,20 +120,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError, e:
         if e.case_id and e.case_id not in case_id_blacklist:
-            form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
-            for form_id in form_ids:
-                if form_id != xform._id:
-                    form = XFormInstance.get(form_id)
-                    if form.doc_type == 'XFormInstance':
-                        reprocess_form_cases(
-                            form,
-                            CaseProcessingConfig(
-                                strict_asserts=True,
-                                case_id_blacklist=case_id_blacklist
-                            ),
-                            case_db=case_db
-                        )
             updated_log = get_properly_wrapped_sync_log(sync_log._id)
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
