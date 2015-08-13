@@ -12,7 +12,6 @@ from corehq.apps.performance_sms.message_sender import send_messages_for_config
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
 from corehq.util import get_document_or_404
-from dimagi.utils.logging import notify_exception
 
 
 @reminders_framework_permission
