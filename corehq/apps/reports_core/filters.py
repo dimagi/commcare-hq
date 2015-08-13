@@ -236,7 +236,7 @@ class DynamicChoiceListFilter(BaseFilter):
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
             return [Choice(tc, c) for (tc, c) in zip(typed_choices, choices)]
-        return [Choice(SHOW_ALL_CHOICE, '')]
+        return self.default_value()
 
     def default_value(self):
         return [Choice(SHOW_ALL_CHOICE, '')]
