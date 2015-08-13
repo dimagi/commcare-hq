@@ -1,4 +1,5 @@
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
@@ -25,7 +26,7 @@ class ScheduleConfiguration(DocumentSchema):
 class TemplateVariable(DocumentSchema):
 
     type = StringProperty(required=True, choices=['form'])  # todo: can extend to cases
-    time_range = StringProperty()
+    time_range = StringProperty(choices=[choice.slug for choice in get_simple_dateranges()])
     # Either the case type or the form xmlns that this template variable is based on.
     source_id = StringProperty()
     # The app that the form belongs to - not currently used, but could be used in the future to prevent
