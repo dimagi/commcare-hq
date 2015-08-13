@@ -71,8 +71,8 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     },
     'redis': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'BACKEND': 'redis_cache.cache.RedisCache',
+        'LOCATION': 'localhost:6379:0',
         'OPTIONS': {},
     },
 }
