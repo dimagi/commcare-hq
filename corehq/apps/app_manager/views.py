@@ -1630,6 +1630,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None, 'has_schedule': None,
+        'comment': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "case_list_form_id": None,
@@ -1740,6 +1741,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module[attribute][lang] = name
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit('comment'):
+        module.comment[lang] = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
         show = '{SLUG}-show'.format(SLUG=SLUG)
         label = '{SLUG}-label'.format(SLUG=SLUG)

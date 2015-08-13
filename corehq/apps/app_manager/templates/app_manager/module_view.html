@@ -243,6 +243,12 @@
                     </div>
                 </div>
                 {% endif %}
+                <div class="control-group">
+                    <label class="control-label">{% trans "Comment" %}</label>
+                    <div class="controls">
+                        {% textarea_trans module.comment langs 'comment' %}
+                    </div>
+                </div>
                 {% endblock %}
             </fieldset>
         </form>

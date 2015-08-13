@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load xforms_extras %}
 <div id="build_errors"></div>
+<div id="module_short_comment" class="module-slash-form-comment">{{ module.short_comment|trans:langs }}</div>
 <div class="delete-me">
     <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
         <button type="submit" class="disable-on-submit btn btn-danger">
