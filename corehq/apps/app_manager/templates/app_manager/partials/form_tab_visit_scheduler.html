@@ -39,7 +39,7 @@
             <div class="control-group">
                 <label class="control-label" for="anchor">{% trans "Anchor Date" %}</label>
                 <div class="controls">
-                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: anchor">
+                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
                     <span data-bind="visible: allowExpiry">
                     <label class="checkbox inline" for="expires">{% trans "Expires" %}</label>
                     <input type="checkbox" data-bind="checked: hasExpiry"/>

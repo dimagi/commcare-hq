@@ -8,10 +8,8 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from corehq.apps.app_manager.models import (
-    ApplicationBase,
-    get_app,
-)
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
