@@ -3,7 +3,9 @@ from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
     SCHEDULE_PHASE,
     SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
     SCHEDULE_TERMINATED,
+    SCHEDULE_MAX_DATE,
 )
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError
 from django.utils.translation import ugettext as _
@@ -322,6 +324,12 @@ class ScheduleFixtureInstance(XPath):
     def expires(self):
         return XPath(u"instance('{0}')/schedule/@expires".format(self))
 
+    def starts(self):
+        return XPath(u"instance('{0}')/schedule/@starts".format(self))
+
+    def unscheduled_visits(self):
+        return XPath(u"instance('{0}')/schedule/@allow_unscheduled".format(self))
+
 
 class ScheduleFormXPath(object):
     """
@@ -338,22 +346,30 @@ class ScheduleFormXPath(object):
             raise ScheduleError("Phase needs an Anchor")
 
         self.anchor_detail_variable_name = "anchor_{}".format(self.form.schedule_form_id)
-        self.last_visit_detail_variable_name = "last_visit_number_{}".format(self.form.schedule_form_id)
+        self.last_visit_detail_variable_name = SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
+        self.last_visit_date_detail_variable_name = SCHEDULE_LAST_VISIT_DATE.format(self.form.schedule_form_id)
 
         self.anchor = "${}".format(self.anchor_detail_variable_name)
         self.last_visit = "${}".format(self.last_visit_detail_variable_name)
+        self.last_visit_date = "${}".format(self.last_visit_date_detail_variable_name)
         self.current_schedule_phase = SCHEDULE_PHASE
 
     @property
-    def fixture(self):
+    def fixture_id(self):
         from corehq.apps.app_manager import id_strings
-        fixture_id = id_strings.schedule_fixture(self.module, self.phase, self.form)
-        return ScheduleFixtureInstance(fixture_id)
+        return id_strings.schedule_fixture(self.module, self.phase, self.form)
+
+    @property
+    def fixture(self):
+        return ScheduleFixtureInstance(self.fixture_id)
 
     @property
     def xpath_phase_set(self):
-        """returns the due date if there are valid upcoming schedules"""
-        return XPath.if_(self.next_valid_schedules(), self.due_date(), 0)
+        """
+        returns the due date if there are valid upcoming schedules
+        otherwise, returns a Really Big Number
+        """
+        return XPath.if_(self.next_valid_schedules(), self.due_date(), SCHEDULE_MAX_DATE)
 
     @property
     def first_visit_phase_set(self):
@@ -361,15 +377,30 @@ class ScheduleFormXPath(object):
         returns the first due date if the case hasn't been visited yet
         otherwise, returns the next due date of valid upcoming schedules
         """
-        zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))  # No visits yet
-        return XPath.if_(zeroth_phase, self.first_due_date(), self.xpath_phase_set)
+        within_zeroth_phase = XPath.and_(
+            XPath(self.current_schedule_phase).eq(XPath.string('')),  # No visits yet
+            XPath(self.anchor).neq(XPath.string('')),
+            self.within_form_relevancy(),
+        )
+
+        return XPath.if_(within_zeroth_phase, self.first_due_date(), self.xpath_phase_set)
+
+    @property
+    def next_visit_due_num(self):
+        return XPath.if_(self.next_valid_schedules(), self.next_visit_id(), 0)
+
+    @property
+    def is_unscheduled_visit(self):
+        """count(visit[within_window]) = 0"""
+        return XPath("{} = 0".format(
+            XPath.count(self.fixture.visit().select_raw(self.within_window()))
+        ))
 
     def filter_condition(self, phase_id):
         """returns the `relevant` condition on whether to show this form in the list"""
         next_valid_schedules = self.next_valid_schedules(phase_id)
-        num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
-        num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
-        return XPath.and_(next_valid_schedules, num_upcoming_visits_gt_0)
+        visit_allowed = self.visit_allowed()
+        return XPath.and_(next_valid_schedules, visit_allowed)
 
     def current_schedule_phase_calculation(self, termination_condition, transition_condition):
         """
@@ -391,13 +422,27 @@ class ScheduleFormXPath(object):
             ),
         )
 
+    def within_form_relevancy(self):
+        """
+        (today() >= date({anchor}) + int({schedule}/@starts)
+        and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
+        """
+        expires = self.fixture.expires()
+        starts = self.fixture.starts()
+
+        return XPath.and_(
+            XPath("today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
+            XPath.or_(
+                XPath(expires).eq(XPath.string('')),
+                "today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+            )
+        )
+
     def next_valid_schedules(self, phase_id=None):
         """
-         [current_schedule_phase = '' or ]current_schedule_phase = phase.id and (
-           instance(...)/schedule/fixture/@expires = ''
-           or
-           today() < (date(anchor) + instance(...)/schedule/@expires)
-         )
+        [current_schedule_phase = '' or ]current_schedule_phase = phase.id and
+        {anchor} != '' and
+        {within_form_relevancy_window}
         """
 
         current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
@@ -406,31 +451,63 @@ class ScheduleFormXPath(object):
             zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))
             current_phase_query = XPath.or_(zeroth_phase, current_phase_query)
 
-        expires = self.fixture.expires()
-
-        valid_not_expired = XPath.and_(
+        valid_within_window = XPath.and_(
             current_phase_query,
             XPath(self.anchor).neq(XPath.string('')),
-            XPath.or_(
-                XPath(expires).eq(XPath.string('')),
-                "today() < ({} + {})".format(XPath.date(self.anchor), expires)
-            ))
-        return valid_not_expired
+            self.within_form_relevancy(),
+        )
+
+        return valid_within_window
 
     def within_window(self):
-        """@late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))"""
-        return XPath.or_(
-            XPath('@late_window').eq(XPath.string('')),
-            XPath('today() <= ({} + {} + {})'.format(
+        """
+        if(@repeats = 'True',
+            today() >= date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and
+                 (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+            today() >= date({anchor}) + int(@due) + int(@starts) and
+                 (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+        )
+        """
+        within_repeat = XPath.and_(
+            XPath('today() >= ({} + {} + {})'.format(
+                XPath.date(self.last_visit_date),
+                XPath.int('@increment'),
+                XPath.int('@starts'),
+            )),
+            XPath.or_(
+                XPath('@expires').eq(XPath.string('')),
+                XPath('today() <= ({} + {} + {})'.format(
+                    XPath.date(self.last_visit_date),
+                    XPath.int('@increment'),
+                    XPath.int('@expires'))
+                )
+            )
+        )
+        within_standard = XPath.and_(
+            XPath('today() >= ({} + {} + {})'.format(
                 XPath.date(self.anchor),
                 XPath.int('@due'),
-                XPath.int('@late_window'))
+                XPath.int('@starts'),
+            )),
+            XPath.or_(
+                XPath('@expires').eq(XPath.string('')),
+                XPath('today() <= ({} + {} + {})'.format(
+                    XPath.date(self.anchor),
+                    XPath.int('@due'),
+                    XPath.int('@expires'))
+                )
             )
+        )
+        return XPath.if_(
+            "@repeats = 'True'",
+            within_repeat,
+            within_standard,
         )
 
     def due_first(self):
         """instance(...)/schedule/visit[within_window][1]/@due"""
-        return self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
+        due = self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
+        return "coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
 
     def next_visits(self):
         """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
@@ -445,11 +522,31 @@ class ScheduleFormXPath(object):
                 select_raw(self.next_visits()).
                 select_raw(self.within_window()))
 
+    def visit_allowed(self):
+        """
+        {schedule}/@allow_unscheduled = 'True' or
+        count({upcoming_scheduled_visits} > 0)
+        """
+        num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
+        num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
+        return XPath.or_(
+            XPath("{} = 'True'".format(self.fixture.unscheduled_visits())),
+            num_upcoming_visits_gt_0
+        )
+
     def due_later(self):
-        """instance(...)/schedule/visit/[next_visits][within_window][1]/@due"""
+        """coalesce(instance(...)/schedule/visit/[next_visits][within_window][1]/@due, [max_date]"""
+        due = (self.upcoming_scheduled_visits().
+               select_raw("1").
+               slash("@due"))
+
+        return ("coalesce({}, {})".format(due, SCHEDULE_MAX_DATE))
+
+    def next_visit_id(self):
+        """{visit}/[next_visits][within_window][1]/@id"""
         return (self.upcoming_scheduled_visits().
                 select_raw("1").
-                slash("@due"))
+                slash("@id"))
 
     def first_due_date(self):
         return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
@@ -468,5 +565,6 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath
         self.last_visit = self.case_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
+        self.last_visit_date = self.case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(self.form.schedule_form_id)
         self.anchor = self.case_xpath.slash(self.phase.anchor)
         self.current_schedule_phase = self.case_xpath.slash(SCHEDULE_PHASE)
