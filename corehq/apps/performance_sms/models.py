@@ -58,5 +58,5 @@ class PerformanceConfiguration(Document):
         for user in self.group.users:
             yield user.get_verified_number()
 
-    def get_message_text(self):
+    def get_message_text(self, user_id):
         raise NotImplementedError("Todo")
