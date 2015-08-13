@@ -135,7 +135,7 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.models import get_apps_in_domain
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
@@ -164,7 +164,6 @@ class ParentCasePropertyBuilder(object):
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
-            from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(

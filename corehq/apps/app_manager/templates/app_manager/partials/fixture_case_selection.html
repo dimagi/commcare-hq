@@ -1,0 +1,36 @@
+{% load i18n %}
+{% load xforms_extras %}
+
+<div data-bind="with: fixtureSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+    <legend>
+        {% trans "Fixture Case Selection" %}
+    </legend>
+    <form class="form form-horizontal">
+        <div class="control-group">
+            <label class="control-label">{% trans "Enable Fixture Filtering" %}
+                <span class="hq-help-template" data-title="{% trans "Fixture Case Selection" %}"data-content="{% trans "Enabling this allows you to filter the case list based on a fixture selection and an xpath expression that consumes that selection" %}"
+            ></span>
+            </label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: active"/>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Fixture Type" %}
+                <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+            </label>
+            <div class="controls">
+                <input type="text"name="case_type" data-bind="value: fixtureType" />
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "XPath filtering expression" %}
+            <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+            </label>
+            <div class="controls">
+                <input type="text"name="case_type" data-bind="value: xpath" />
+            </div>
+        </div>
+    </form>
+</div>
