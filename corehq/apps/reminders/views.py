@@ -916,6 +916,7 @@ class CreateBroadcastView(BaseMessagingSectionView):
     urlname = 'add_broadcast'
     page_title = ugettext_lazy('New Broadcast')
     template_name = 'reminders/broadcast.html'
+    force_create_new_broadcast = False
 
     @property
     @memoized
@@ -931,14 +932,17 @@ class CreateBroadcastView(BaseMessagingSectionView):
             },
         ]
 
-    @property
-    @memoized
-    def broadcast(self):
+    def create_new_broadcast(self):
         return CaseReminderHandler(
             domain=self.domain,
             nickname='One-time Reminder',
             reminder_type=REMINDER_TYPE_ONE_TIME,
         )
+
+    @property
+    @memoized
+    def broadcast(self):
+        return self.create_new_broadcast()
 
     @property
     def form_kwargs(self):
@@ -987,7 +991,12 @@ class CreateBroadcastView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.broadcast_form.is_valid():
-            self.save_model(self.broadcast, self.broadcast_form)
+            if self.force_create_new_broadcast:
+                broadcast = self.create_new_broadcast()
+            else:
+                broadcast = self.broadcast
+
+            self.save_model(broadcast, self.broadcast_form)
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
@@ -1042,6 +1051,12 @@ class EditBroadcastView(CreateBroadcastView):
             'form_unique_id': broadcast.events[0].form_unique_id,
         }
         return BroadcastForm(initial=initial, **self.form_kwargs)
+
+
+class CopyBroadcastView(EditBroadcastView):
+    urlname = 'copy_broadcast'
+    page_title = ugettext_lazy('Copy Broadcast')
+    force_create_new_broadcast = True
 
 
 @survey_reminders_permission
@@ -1609,6 +1624,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
                 self.format_content(broadcast),
                 broadcast._id,
                 reverse(EditBroadcastView.urlname, args=[self.domain, broadcast._id]),
+                reverse(CopyBroadcastView.urlname, args=[self.domain, broadcast._id]),
             ])
         return result
 

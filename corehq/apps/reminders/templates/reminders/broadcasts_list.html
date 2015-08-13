@@ -85,7 +85,15 @@
                     "sProcessing": '<img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
                     "sInfo": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
                     "sInfoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
-                }
+                },
+                "aoColumnDefs": [
+                    {
+                        "aTargets": [3],
+                        "fnRender": function(obj) {
+                            return '<a class="btn btn-primary" href="' + obj.aData[5] + '">{% trans "Copy" %}</a>';
+                        }
+                    }
+                ]
             });
         });
     </script>
