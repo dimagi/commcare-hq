@@ -43,7 +43,9 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=["default"], input_name='name'):
+def input_trans(name, langs=None, input_name='name'):
+    if langs is None:
+        langs = ["default"]
     template = '<input type="text" name="{}" value="%(value)s" placeholder="%(placeholder)s" />'.format(input_name)
     for lang in langs:
         if lang in name:
