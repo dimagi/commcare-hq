@@ -1,7 +1,7 @@
 from django.utils import http, importlib
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 from django.conf import settings
-from django_redis.exceptions import ConnectionInterrupted
+from redis_cache.exceptions import ConnectionInterrumped
 import simplejson
 from dimagi.utils.couch.cache.cache_core.const import INTERRUPTED, MISSING
 
@@ -112,7 +112,7 @@ class GenerationCache(object):
                 self.invalidate_all()
             cache_view_key = self._mk_view_cache_key(view_name, params)
             cached_view = rcache().get(cache_view_key, MISSING)
-        except ConnectionInterrupted:
+        except ConnectionInterrumped:
             cache_view_key = INTERRUPTED
             cached_view = INTERRUPTED
 

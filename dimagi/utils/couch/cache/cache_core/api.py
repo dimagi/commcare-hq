@@ -1,5 +1,5 @@
 from couchdbkit import MultipleResultsFound
-from django_redis.exceptions import ConnectionInterrupted
+from redis_cache.exceptions import ConnectionInterrumped
 import simplejson
 from . import COUCH_CACHE_TIMEOUT, CACHE_DOCS, rcache, key_doc_id
 from .const import INTERRUPTED
@@ -67,7 +67,7 @@ def cached_open_doc(db, doc_id, cache_expire=COUCH_CACHE_TIMEOUT, **params):
     """
     try:
         cached_doc = _get_cached_doc_only(doc_id)
-    except ConnectionInterrupted:
+    except ConnectionInterrumped:
         cached_doc = INTERRUPTED
     if cached_doc in (None, INTERRUPTED):
         doc = db.open_doc(doc_id, **params)
