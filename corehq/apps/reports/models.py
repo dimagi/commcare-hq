@@ -14,7 +14,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, DATE_RANGE_CHOICES
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -162,18 +162,6 @@ class TempCommCareUser(CommCareUser):
 
     class Meta:
         app_label = 'reports'
-
-
-DATE_RANGE_CHOICES = [
-    'last7',
-    'last30',
-    'lastn',
-    'lastmonth',
-    'lastyear',
-    'since',
-    'range',
-    '',
-]
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):

@@ -3,6 +3,18 @@ from corehq.apps.accounting.utils import get_previous_month_date_range
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 
 
+DATE_RANGE_CHOICES = [
+    'last7',
+    'last30',
+    'lastn',
+    'lastmonth',
+    'lastyear',
+    'since',
+    'range',
+    '',
+]
+
+
 def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None):
     today = datetime.date.today()
     if date_range == 'since':
