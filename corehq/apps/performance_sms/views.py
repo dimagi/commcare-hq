@@ -39,7 +39,7 @@ def _edit_performance_message_shared(request, domain, config):
         if form.is_valid():
             messages.success(request, _(u'Performance Message saved!'))
             form.save()
-            # return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))
+            return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))
     else:
         form = PerformanceMessageEditForm(domain, config=config)
 
