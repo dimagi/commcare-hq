@@ -39,7 +39,8 @@ var VisitScheduler = (function () {
             self.saveButton.fire('change');
         };
 
-        self.formSchedule = FormSchedule.wrap(params.schedule, self);
+        self.schedulePhase = SchedulePhase.wrap(params.phase, self);
+        self.formSchedule = FormSchedule.wrap(params.schedule, self, self.schedulePhase);
 
         self.init = function () {
             _.defer(function () {
@@ -79,11 +80,25 @@ var VisitScheduler = (function () {
         }
     };
 
+    var SchedulePhase = {
+        mapping: function(self){
+            return {
+                include: [
+                    'anchor',
+                ]
+            };
+        },
+        wrap: function (data, config) {
+            var self = {};
+            ko.mapping.fromJS(data, SchedulePhase.mapping(self), self);
+            return self;
+        }
+    };
+
     var FormSchedule = {
         mapping: function (self) {
             return {
                 include: [
-                    'anchor',
                     'expires',
                     'post_schedule_increment',
                     'transition_condition',
@@ -98,7 +113,7 @@ var VisitScheduler = (function () {
                 }
             };
         },
-        wrap: function (data, config) {
+        wrap: function (data, config, phase) {
             var self = {
                 config: config
             };
@@ -133,6 +148,8 @@ var VisitScheduler = (function () {
                 },
                 owner: self
             });
+
+            self.phase = phase;
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
@@ -184,6 +201,8 @@ var VisitScheduler = (function () {
             if (!self.hasPostSchedule()) {
                 schedule.post_schedule_increment = null;
             }
+
+            schedule.anchor = self.phase.anchor();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? 1 : -1);
                 return {
