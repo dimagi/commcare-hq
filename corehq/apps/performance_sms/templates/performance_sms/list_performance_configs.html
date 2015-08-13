@@ -1,5 +1,15 @@
 {% extends "performance_sms/performance_sms_base.html" %}
-{% load i18n %}
+g{% load i18n %}
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $('.send-message').click(function (event) {
+                var configId = $(this).data('config');
+                $('form#' + configId).submit();
+            });
+        });
+    </script>
+{% endblock %}
 {% block main_column %}
     <h2>{% trans 'Performance Messages' %}</h2>
     <p>{% trans 'Performance messages allow you to setup scheduled performance-based messages to your workforce in a few simple steps.' %}</p>
@@ -36,8 +46,10 @@
                     <ul class="dropdown-menu">
                         <li><a href="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}">{% trans "Show Sample" %}</a></li>
                         <li role="separator" class="divider"></li>
-                        <li><a href="{% url "performance_sms.send_performance_messages" domain performance_config.get_id %}">{% trans "Send Real Messages Now" %}</a></li>
+                        <li><a class="send-message" href="#" data-config="{{ performance_config.get_id }}">{% trans "Send Real Messages Now" %}</a></li>
                     </ul>
+                    <form id="{{ performance_config.get_id }}" action="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}" method="POST" class="hidden" >
+                    </form>
                 </td>
             </tr>
         {% empty %}

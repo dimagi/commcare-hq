@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 from corehq import toggles
 from corehq.apps.performance_sms import dbaccessors
 from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
@@ -60,6 +61,7 @@ def sample_performance_messages(request, domain, config_id):
 
 @reminders_framework_permission
 @toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
+@require_POST
 def send_performance_messages(request, domain, config_id):
     return _send_test_messages(request, domain, config_id, actually=True)
 
