@@ -239,4 +239,4 @@ class DynamicChoiceListFilter(BaseFilter):
         return [Choice(SHOW_ALL_CHOICE, '')]
 
     def default_value(self):
-        return None
+        return [Choice(SHOW_ALL_CHOICE, '')]
