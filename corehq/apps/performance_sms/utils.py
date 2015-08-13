@@ -3,9 +3,9 @@ from . import dbaccessors
 from .models import DAILY, WEEKLY, MONTHLY
 
 
-def get_message_configs_at_this_hour():
+def get_message_configs_at_this_hour(as_of=None):
 
-    now = datetime.utcnow()
+    now = as_of or datetime.utcnow()
 
     def _keys(period, now):
         if period == DAILY:
@@ -24,5 +24,5 @@ def get_message_configs_at_this_hour():
 
     for period in (DAILY, WEEKLY, MONTHLY):
         for keys in _keys(period, now):
-            for config in dbaccessors.by_interval(keys).all():
+            for config in dbaccessors.by_interval(keys):
                 yield config
