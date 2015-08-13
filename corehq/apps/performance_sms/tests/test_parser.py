@@ -20,17 +20,15 @@ class ParserTest(SimpleTestCase):
         self.assertEqual(GLOBAL_NAMESPACE, params[1].namespace)
         self.assertEqual('template_var', params[1].variable)
 
-    def test_whitespace(self):
-        params = extract_params('Hello {  person  }.')
-        self.assertEqual(1, len(params))
-        self.assertEqual('person', params[0])
-
     def test_validate_bad_formats(self):
         invalid_test_cases = [
             None,
             '',
             'too.many.periods',
-            'bad.namespace'
+            'bad.namespace',
+            ' prewhitespace',
+            'postwhitespace ',
+            'inner whitespace',
         ]
         for invalid in invalid_test_cases:
             with self.assertRaises(InvalidParameterException):

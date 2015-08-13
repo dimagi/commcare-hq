@@ -1,6 +1,7 @@
 from collections import namedtuple
 from string import Formatter
 from django.utils.translation import ugettext as _
+import re
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
 
 GLOBAL_NAMESPACE = 'global'
@@ -30,7 +31,7 @@ def extract_params(message_template):
     """
     Given a message template - extracts the relevant params.
     """
-    return [parsed[1].strip() for parsed in Formatter().parse(message_template) if parsed[1]]
+    return [parsed[1] for parsed in Formatter().parse(message_template) if parsed[1]]
 
 
 def validate_params(params):
@@ -45,6 +46,10 @@ def parse_param(param):
     """
     if not param:
         raise InvalidParameterException(_('Empty parameters are not allowed!'))
+
+    if re.search('\s', param):
+        raise InvalidParameterException(_('Sorry, no whitespace in parameters is allowed at this time.'))
+
     split = param.split('.')
     if len(split) > 2:
         raise InvalidParameterException(_('Parameters can have at most one period.'))
