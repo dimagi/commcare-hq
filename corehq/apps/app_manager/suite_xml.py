@@ -2325,7 +2325,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             schedule_fixture = ScheduleFixture(
                 id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
                 schedule=Schedule(
-                    starts=schedule.starts if schedule.starts else '',
+                    starts=schedule.starts,
                     expires=schedule.expires if schedule.expires else '',
                     allow_unscheduled=schedule.allow_unscheduled,
                     visits=visits,
