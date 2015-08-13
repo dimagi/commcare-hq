@@ -4,10 +4,6 @@
 
 <script type="text/javascript">
     $(function() {
-        $('#id_add_phone_number').keydown(function(event) {
-            $("#phone_number_paste_error").css("display", "none");
-            return allowNumeric(event);
-        });
         $('.verify-button').tooltip();
         $('#id_language').combobox({
             placeholder: "{% trans 'Select a language...' %}"
