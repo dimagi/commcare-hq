@@ -1885,11 +1885,26 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
+            fixture_select_filter = ''
+            if datum['module'].fixture_select.active:
+                datums.append({
+                    'datum': SessionDatum(
+                        id='fixture_select_{}'.format(datum['session_var']),
+                        nodeset='instance({ft})/{ft}_list/{ft}/'.format(ft=datum['module'].fixture_select.fixture_type),
+                        value=datum['module'].fixture_select.variable_column,
+                        detail_select='fixture_select'  # I think I need an identifier here
+                    )
+                })
+                fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
+                                                      .replace('$var', "instance('session')/session/fixture_value"))
+
+            #     <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open']" value="./@case_id"/>
+
             datums.append({
                 'datum': SessionDatum(
                     id=datum['session_var'],
                     nodeset=(SuiteGenerator.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                             + parent_filter),
+                             + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                     detail_confirm=(

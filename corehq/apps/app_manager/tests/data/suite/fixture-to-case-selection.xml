@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite descriptor="Suite File">
+  <xform>
+    <resource descriptor="Form: (Module my_module) - my_form" id="form_1">
+      <location authority="local">./modules-0/forms-0.xml</location>
+      <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+  </xform>
+  <locale language="default">
+    <resource descriptor="Translations: Default Language" id="app_default_strings">
+      <location authority="local">./default/app_strings.txt</location>
+      <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+  </locale>
+  <locale language="en">
+    <resource descriptor="Translations: English" id="app_en_strings">
+      <location authority="local">./en/app_strings.txt</location>
+      <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+  </locale>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="m0.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="m0.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="fixture_select">
+    <title>
+      <text>
+        <locale id="???"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="my_display_column"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <entry>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum detail-select="fixture_select" id="fixture_value" nodeset="instance('days')/days_list/days/" value="my_display_column"/>
+      <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][instance('session')/session/fixture_value &gt; 3]" value="./@case_id"/>
+    </session>
+  </entry>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0"/>
+  </menu>
+</suite>
