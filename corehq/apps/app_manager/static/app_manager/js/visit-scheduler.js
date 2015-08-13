@@ -169,7 +169,7 @@ var VisitScheduler = (function () {
             self.hasExpiry = ko.observable();
 
             self.hasRepeatVisit = ko.computed(function(){
-                return self.visits()[self.visits().length - 1].type() === 'repeats';
+                return self.visits().length > 0 && self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
             self.phase = phase;
