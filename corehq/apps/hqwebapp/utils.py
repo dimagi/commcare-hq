@@ -163,10 +163,12 @@ class InvitationView():
                     form = NewWebUserRegistrationForm(initial={
                         'email': invitation.email,
                         'hr_name': domain.hr_name if domain else invitation.domain,
-                        'create_domain': False
+                        'create_domain': False,
                     })
+                    raise Exception("good form: hr_name=%s" % (domain.hr_name if domain else invitation.domain))
                 else:
-                    form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                    raise Exception("bad form: self.inv_type=%s, id=%s, class=%s" % (self.inv_type, invitation.get_id, invitation.__class__))
+                    #form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})
 
@@ -201,7 +203,7 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
           [{'description': u'Grant other CommCare HQ users access
                             to your project and manage user roles.',
             'show_in_dropdown': True,
-            'subpages': [{'title': u'Invite Web User',
+            'subpages': [{'title': u'Add Web User',
                           'urlname': 'invite_web_user'},
                          {'title': <function web_username at 0x10982a9b0>,
                           'urlname': 'user_account'},
