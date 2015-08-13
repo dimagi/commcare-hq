@@ -234,6 +234,7 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
+    <div id="form_short_comment" class="module-slash-form-comment">{{ form.short_comment|trans:langs }}</div>
     {% if not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">

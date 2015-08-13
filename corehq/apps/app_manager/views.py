@@ -1989,6 +1989,8 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
             xform.set_name(name)
             save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': form.name[lang]}
+    if should_edit('comment'):
+        form.comment[lang] = request.POST['comment']
     if should_edit("xform"):
         try:
             # support FILES for upload and POST for ajax post from Vellum
