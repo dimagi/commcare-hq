@@ -16,9 +16,8 @@ def list_performance_configs(request, domain):
 @reminders_framework_permission
 @toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
 def add_performance_config(request, domain):
-    return render(request, "performance_sms/list_performance_configs.html", {
+    return render(request, "performance_sms/add_performance_config.html", {
         'domain': domain,
-        'performance_configs': dbaccessors.by_domain(domain)
     })
 
 
