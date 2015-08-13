@@ -4,19 +4,9 @@
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            {% if only_numeric %}
-            $('#add_commcare_account_form input[type=password]').keydown(allowNumeric);
-            {% else %}
-            $("#add_commcare_account_form .help-block").hide();
-            {% endif %}
-
             $('#submit_mobile_worker').click(function () {
                 $(this).text("{% trans 'Creating' %}")
                        .prepend('<i class="icon-refresh icon-spin"></i> ')
@@ -24,7 +14,6 @@
                        .attr('disabled', 'disabled');
                 $(this).parents('form').submit();
             });
-
         });
     </script>
 {% endblock %}
