@@ -749,8 +749,14 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
-            errors.append(dict(type="no form links", **meta))
+        if self.post_form_workflow == WORKFLOW_FORM:
+            if not self.form_links:
+                errors.append(dict(type="no form links", **meta))
+            for form_link in self.form_links:
+                try:
+                    self.get_app().get_form(form_link.form_id)
+                except FormNotFoundException:
+                    errors.append(dict(type='bad form link', **meta))
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
