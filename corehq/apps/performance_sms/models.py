@@ -7,6 +7,9 @@ from dimagi.utils.decorators.memoized import memoized
 DAILY = "daily"
 WEEKLY = "weekly"
 MONTHLY = "monthly"
+DEFAULT_HOUR = 8
+DEFAULT_WEEK_DAY = 1
+DEFAULT_MONTH_DAY = 1
 
 
 SCHEDULE_CHOICES = [DAILY, WEEKLY, MONTHLY]
@@ -14,9 +17,9 @@ SCHEDULE_CHOICES = [DAILY, WEEKLY, MONTHLY]
 
 class ScheduleConfiguration(DocumentSchema):
     interval = StringProperty(choices=SCHEDULE_CHOICES)
-    hour = IntegerProperty(default=8)
-    day_of_week = IntegerProperty(default=1)  # same as cron, 1 = Monday (0 and 7 = Sunday)
-    day_of_month = IntegerProperty(default=1)
+    hour = IntegerProperty(default=DEFAULT_HOUR)
+    day_of_week = IntegerProperty(default=DEFAULT_WEEK_DAY)  # same as cron, 1 = Monday (0 and 7 = Sunday)
+    day_of_month = IntegerProperty(default=DEFAULT_MONTH_DAY)
 
 
 class TemplateVariable(DocumentSchema):
