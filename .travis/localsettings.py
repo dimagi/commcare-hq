@@ -53,8 +53,8 @@ SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
 redis_cache = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://127.0.0.1:6379/0',
+    'BACKEND': 'redis_cache.cache.RedisCache',
+    'LOCATION': 'localhost:6379:0',
     'OPTIONS': {},
 }
 CACHES = {

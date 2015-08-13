@@ -178,8 +178,8 @@ SOIL_BACKEND = "soil.CachedDownload"
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 redis_cache = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://{}/0'.format(os.environ['REDIS_PORT_6379_TCP_PORT']),
+    'BACKEND': 'redis_cache.cache.RedisCache',
+    'LOCATION': 'redis:{}:0'.format(os.environ['REDIS_PORT_6379_TCP_PORT']),
     'OPTIONS': {},
 }
 CACHES = {

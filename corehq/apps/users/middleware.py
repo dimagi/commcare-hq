@@ -1,3 +1,4 @@
+from redis_cache.exceptions import ConnectionInterrumped
 from django.conf import settings
 import django.core.exceptions
 from dimagi.utils.couch.cache import cache_core
