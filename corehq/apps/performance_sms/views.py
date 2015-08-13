@@ -27,14 +27,13 @@ def add_performance_config(request, domain):
 
 def _edit_performance_message_shared(request, domain, config):
     if request.method == 'POST':
-        form = PerformanceMessageEditForm(domain, data=request.POST)
+        form = PerformanceMessageEditForm(domain, config=config, data=request.POST)
         if form.is_valid():
-            print form.cleaned_data
-
             messages.success(request, _(u'Performance Message saved!'))
+            form.save()
             # return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))
     else:
-        form = PerformanceMessageEditForm(domain)
+        form = PerformanceMessageEditForm(domain, config=config)
 
     return render(request, "performance_sms/add_performance_config.html", {
         'domain': domain,

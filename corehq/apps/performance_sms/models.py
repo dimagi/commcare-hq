@@ -9,8 +9,11 @@ WEEKLY = "weekly"
 MONTHLY = "monthly"
 
 
+SCHEDULE_CHOICES = [DAILY, WEEKLY, MONTHLY]
+
+
 class ScheduleConfiguration(DocumentSchema):
-    interval = StringProperty(choices=[DAILY, WEEKLY, MONTHLY])
+    interval = StringProperty(choices=SCHEDULE_CHOICES)
     hour = IntegerProperty(default=8)
     day_of_week = IntegerProperty(default=1)  # same as cron, 1 = Monday (0 and 7 = Sunday)
     day_of_month = IntegerProperty(default=1)
