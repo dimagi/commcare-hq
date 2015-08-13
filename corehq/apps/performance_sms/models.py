@@ -1,6 +1,5 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
@@ -25,6 +24,7 @@ class ScheduleConfiguration(DocumentSchema):
 
 class TemplateVariable(DocumentSchema):
 
+    slug = StringProperty(required=True, default='forms')
     type = StringProperty(required=True, choices=['form'])  # todo: can extend to cases
     time_range = StringProperty(choices=[choice.slug for choice in get_simple_dateranges()])
     # Either the case type or the form xmlns that this template variable is based on.
@@ -47,16 +47,3 @@ class PerformanceConfiguration(Document):
         group = Group.get(self.recipient_id)
         assert group.domain == self.domain
         return group
-
-    def fire_messages(self):
-        for user in self.group.users:
-            recipient_number = user.get_verified_number()
-            message_text = self.get_message_text(user)
-            send_sms_to_verified_number(recipient_number, message_text)
-
-    def get_phone_numbers(self, users):
-        for user in self.group.users:
-            yield user.get_verified_number()
-
-    def get_message_text(self, user_id):
-        raise NotImplementedError("Todo")

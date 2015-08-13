@@ -2,10 +2,12 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.performance_sms import dbaccessors
 from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
+from corehq.apps.performance_sms.message_sender import send_messages_for_config
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
 from corehq.util import get_document_or_404
@@ -54,15 +56,26 @@ def _edit_performance_message_shared(request, domain, config):
 @reminders_framework_permission
 @toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
 def send_performance_messages(request, domain, config_id):
-
     performance_config = PerformanceConfiguration.get(config_id)
     assert performance_config.domain == domain
-
     try:
-        performance_config.fire_messages()
-        messages.success(request, _(u"Success! Performance messages have been sent."))
-        return HttpResponseRedirect(reverse('message_log_report', args=[domain]))
+        sent_messages = send_messages_for_config(performance_config, actually_send=False)
+        if sent_messages:
+            messages.success(
+                request,
+                mark_safe(_(u"Success! The following messages have been sent: <br>{}").format(
+                    '<br>'.join([
+                        u' - {} (to {} via {})'.format(
+                            result.message, result.user.raw_username, result.user.phone_number
+                        )
+                        for result in sent_messages
+                    ])
+                )),
+                extra_tags='html'
+            )
+
     except:
+        raise
         notify_exception(request, "Failed to send performance messages")
         messages.error(request, _(u"Sorry, soemthing went wrong while sending your messages."))
-        return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))
+    return HttpResponseRedirect(reverse('performance_sms.list_performance_configs', args=[domain]))
