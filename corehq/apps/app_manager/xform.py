@@ -377,7 +377,7 @@ class CaseBlock(object):
         if not autoset_owner_id:
             owner_id_node.text = '-'
         elif has_case_sharing:
-            self.xform.Add_instance('groups', src='jr://fixture/user-groups')
+            self.xform.add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
                 ref="%scase/create/owner_id" % self.path,
                 value="instance('groups')/groups/group/@id"
