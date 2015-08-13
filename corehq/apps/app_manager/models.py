@@ -893,6 +893,20 @@ class FormBase(DocumentSchema):
 
     @property
     def short_comment(self):
+        """
+        Trim each translation of comment to 72 chars
+
+        >>> form = FormBase(
+        ...     comment={
+        ...         'ang': u"Twas bryllyg, and þe slythy toves "
+        ...                u"Did gyre and gymble in þe wabe: "
+        ...                u"All mimsy were þe borogoves; "
+        ...                u"And þe mome raths outgrabe."
+        ...     })
+        >>> form.short_comment
+        {'ang': u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'}
+
+        """
         return {lang: cmnt if len(cmnt) <= 72 else cmnt[:69] + '...' for lang, cmnt in self.comment.items()}
 
 
@@ -3489,6 +3503,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def short_comment(self):
+        """
+        Trim comment to 72 characters
+
+        >>> app = ApplicationBase(
+        ...     comment="'Twas brillig, and the slithy toves "
+        ...             "Did gyre and gimble in the wabe; "
+        ...             "All mimsy were the borogoves, "
+        ...             "And the mome raths outgrabe."
+        ... )
+        >>> app.short_comment
+        u"'Twas brillig, and the slithy toves Did gyre and gimble in the wabe; ..."
+
+        """
         return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
 
     @property
