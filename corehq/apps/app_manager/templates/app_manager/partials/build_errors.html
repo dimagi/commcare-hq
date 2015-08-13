@@ -202,7 +202,7 @@
                             A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "subcase repeat context" %}
-                            The subcase "{{ error.case_tag }}" is in a different repeat context to its parent
+                            The subcase "{{ error.case_tag }}" is in a different repeat context to its parent "{{ error.parent_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "circular ref" %}
                             A circular reference was detected in the hierarchy of subcase "{{ error.case_tag }}"

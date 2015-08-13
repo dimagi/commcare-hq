@@ -8,7 +8,8 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
     WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
     OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig, ParentSelect)
+    ReportModule, ReportAppConfig, ParentSelect, CaseIndex
+)
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
                                            interpolate_xpath, session_var)
@@ -126,7 +127,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_parent_child_custom_ref(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         form = app.get_module(1).get_form(2)
-        form.actions.load_update_cases[1].parent_reference_id = 'custom-parent-ref'
+        form.actions.load_update_cases[1].case_index.reference_id = 'custom-parent-ref'
         self.assertXmlPartialEqual(self.get_xml('custom-parent-ref'), app.create_suite(), "./entry[4]")
 
     def test_advanced_suite_case_list_filter(self):
@@ -1134,7 +1135,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     def _load_case(self, child_module_form, case_type, parent_module=None):
         action = LoadUpdateAction(case_tag=case_type, case_type=case_type)
         if parent_module:
-            action.parent_tag = parent_module.case_type
+            action.case_index = CaseIndex(tag=parent_module.case_type)
 
         child_module_form.actions.load_update_cases.append(action)
 
@@ -1320,6 +1321,8 @@ class RegexTest(SimpleTestCase):
             ('"jack" = #session/username', '"jack" = {session}/username'),
             ('./@case_id = #session/userid', '{case}/@case_id = {session}/userid'),
             ('#case/@case_id = #user/@case_id', '{case}/@case_id = {user}/@case_id'),
+            ('#host/foo = 42', "instance('casedb')/casedb/case[@case_id={case}/index/host]/foo = 42"),
+            ("'ham' = #parent/spam", "'ham' = instance('casedb')/casedb/case[@case_id={case}/index/parent]/spam"),
         ]
         for case in cases:
             self.assertEqual(
@@ -1399,7 +1402,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                             form.actions.load_update_cases.append(LoadUpdateAction(
                                 case_type=case_type,
                                 case_tag='update_{}'.format(case_type),
-                                parent_tag=parent,
+                                case_index=CaseIndex(tag=parent) if parent else CaseIndex()
                             ))
                     elif 'open_subacse':
                         if m_type == "basic":
@@ -1413,7 +1416,7 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
                                 case_type=case_type,
                                 case_tag='subcase_{}'.format(case_type),
                                 name_path='/data/name',
-                                parent_tag=parent
+                                case_indices=[CaseIndex(tag=parent)] if parent else []
                             ))
 
         return app
