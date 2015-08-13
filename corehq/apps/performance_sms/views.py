@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from corehq import toggles
+from corehq.apps.performance_sms import dbaccessors
 from corehq.apps.reminders.views import reminders_framework_permission
 
 
@@ -8,6 +9,7 @@ from corehq.apps.reminders.views import reminders_framework_permission
 def list_performance_configs(request, domain):
     return render(request, "performance_sms/list_performance_configs.html", {
         'domain': domain,
+        'performance_configs': dbaccessors.by_domain(domain)
     })
 
 

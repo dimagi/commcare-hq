@@ -1,4 +1,25 @@
 {% extends "reminders/reminders_base.html" %}
+{% load i18n %}
 {% block main_column %}
-<p>hello world!</p>
+    <h4>{% trans 'Performance Configurations' %}</h4>
+    <table class="table table-striped datatable table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans 'Recipient Group' %}</th>
+                <th>{% trans 'Frequency' %}</th>
+                <th>{% trans 'Message' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for performance_config in performance_configs %}
+            <tr>
+                <td>{{ config.recipient_id }}</td>
+                <td>{{ config.schedule }}</td>
+                <td>{{ config.template }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3">{% trans "No performance messages setup yet." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}
