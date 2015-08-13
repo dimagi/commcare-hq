@@ -53,7 +53,7 @@ class PerformanceConfiguration(Document):
             message_text = self.get_message_text(user)
             send_sms_to_verified_number(recipient_number, message_text)
 
-    def get_phone_numbers(self):
+    def get_phone_numbers(self, users):
         for user in self.group.users:
             yield user.get_verified_number()
 
