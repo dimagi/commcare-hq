@@ -1,15 +1,15 @@
 try:
     from .test_case_export import *
     from .test_cache import *
-    from corehq.apps.reports.tests.test_export_api import *
-    from corehq.apps.reports.tests.test_sql_reports import *
-    from corehq.apps.reports.tests.test_form_export import *
-    from corehq.apps.reports.tests.test_report_api import *
-    from corehq.apps.reports.tests.test_data_sources import *
-    from corehq.apps.reports.tests.test_readable_formdata import *
-    from corehq.apps.reports.tests.test_time_and_date_manipulations import *
-    from corehq.apps.reports.tests.test_generic import *
-    from corehq.apps.reports.tests.test_util import *
+    from .test_export_api import *
+    from .test_sql_reports import *
+    from .test_form_export import *
+    from .test_report_api import *
+    from .test_data_sources import *
+    from .test_readable_formdata import *
+    from .test_time_and_date_manipulations import *
+    from .test_generic import *
+    from .test_util import *
     from .test_filters import *
     from .test_pillows_xforms import *
     from .test_pillows_cases import *
