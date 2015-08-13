@@ -51,7 +51,7 @@
                     // this event has, so we only actually click
                     // once, after they're all complete.
                     var $target = $(event.delegateTarget);
-                    var count = $target.data("track-link-count");
+                    var count = $target.data("track-link-count") || 0;
                     count++;
                     $target.data("track-link-count", count);
 
