@@ -163,10 +163,12 @@ class InvitationView():
                     form = NewWebUserRegistrationForm(initial={
                         'email': invitation.email,
                         'hr_name': domain.hr_name if domain else invitation.domain,
-                        'create_domain': False
+                        'create_domain': False,
                     })
+                    raise Exception("good form: hr_name=%s" % (domain.hr_name if domain else invitation.domain))
                 else:
-                    form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                    raise Exception("bad form: self.inv_type=%s, id=%s, class=%s" % (self.inv_type, invitation.get_id, invitation.__class__))
+                    #form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
         return render(request, self.template, {"form": form})
 
