@@ -63,7 +63,6 @@ class QueryEngine(object):
                 context[param.variable] = value
             else:
                 setattr(context[param.namespace], param.variable, value)
-        print context
         return context
 
     def resolve(self, param, query_context):
