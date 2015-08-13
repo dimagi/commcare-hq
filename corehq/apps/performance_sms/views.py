@@ -55,15 +55,28 @@ def _edit_performance_message_shared(request, domain, config):
 
 @reminders_framework_permission
 @toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
+def sample_performance_messages(request, domain, config_id):
+    return _send_test_messages(request, domain, config_id, actually=False)
+
+@reminders_framework_permission
+@toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
 def send_performance_messages(request, domain, config_id):
+    return _send_test_messages(request, domain, config_id, actually=True)
+
+def _send_test_messages(request, domain, config_id, actually):
     performance_config = PerformanceConfiguration.get(config_id)
     assert performance_config.domain == domain
     try:
-        sent_messages = send_messages_for_config(performance_config, actually_send=False)
+        sent_messages = send_messages_for_config(performance_config, actually_send=actually)
+        heading = (
+            _('The following messages have been sent') if actually else
+            _('Would send the following messages')
+        )
         if sent_messages:
             messages.success(
                 request,
-                mark_safe(_(u"Success! The following messages have been sent: <br>{}").format(
+                mark_safe(_(u"{}: <br>{}").format(
+                    heading,
                     '<br>'.join([
                         u' - {} (to {} via {})'.format(
                             result.message, result.user.raw_username, result.user.phone_number
@@ -73,7 +86,8 @@ def send_performance_messages(request, domain, config_id):
                 )),
                 extra_tags='html'
             )
-
+        else:
+            messages.info(request, _('Unfortunately, here were no valid recipients for this message.'))
     except:
         raise
         notify_exception(request, "Failed to send performance messages")
