@@ -688,6 +688,27 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
     def query(self):
         return self.request.GET.get('query')
 
+    def _format_user(self, user_json):
+        user = CommCareUser(user_json)
+        return {
+            'username': user.username,
+            'domain': self.domain,
+            'name': user.full_name,
+            'phoneNumbers': user.phone_numbers,
+            'id': user.get_id,
+            'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT),
+            # TODO
+            'editUrl': "#",
+            'deactivateUrl': "#",
+        }
+
+    def _user_query(self, query, page, limit):
+        return (UserES()
+                .domain(self.domain)
+                .mobile_users()
+                .start(limit * (page - 1))
+                .size(limit))
+
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
         if not isinstance(in_data, dict):
@@ -702,32 +723,11 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         page = in_data.get('page', 1)
         query = in_data.get('query')
 
-        res = (UserES()
-               .domain(self.domain)
-               .mobile_users()
-               .start(limit * (page - 1))
-               .size(limit)
-               .run())
-        total = res.total
-        mobile_workers = res.hits
-
-        def _fmt_result(user_json):
-            user = CommCareUser(user_json)
-            return {
-                'username': user.username,
-                'domain': self.domain,
-                'name': user.full_name,
-                'phoneNumbers': user.phone_numbers,
-                'id': user.get_id,
-                'dateRegistered': user.created_on.strftime('%B %d, %Y'),
-                'editUrl': "#",
-                'deactivateUrl': "#",
-            }
-
+        users_data = self._user_query(query, page, limit).run()
         return {
             'response': {
-                'itemList': map(_fmt_result, mobile_workers),
-                'total': total,
+                'itemList': map(self._format_user, users_data.hits),
+                'total': users_data.total,
                 'page': page,
                 'query': query,
             },
