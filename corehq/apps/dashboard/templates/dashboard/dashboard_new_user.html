@@ -2,26 +2,23 @@
 {% load i18n %}{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        $appstoreLink = $('#appstore-link');
-        $helpLink = $('#help-link');
-        $newAppLink = $('#new-app-link');
+    <script>
+        $(function () {
+            $appstoreLink = $('#appstore-link');
+            $helpLink = $('#help-link');
+            $newAppLink = $('#new-app-link');
 
-        gaTrackLink($appstoreLink, 'Dashboard', 'Welcome Tile', 'exchange');
-        gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
-        gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
+            gaTrackLink($appstoreLink, 'Dashboard', 'Welcome Tile', 'exchange');
+            gaTrackLink($helpLink, 'Dashboard', 'Welcome Tile', 'help');
+            gaTrackLink($newAppLink, 'Dashboard', 'Welcome Tile', 'app');
 
-        analytics.workflow('Visited new user dashboard');
-        analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
-        analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
-        analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
+            analytics.workflow('Visited new user dashboard');
+            analytics.trackWorkflowLink($appstoreLink, 'Clicked Exchange in new user dashboard');
+            analytics.trackWorkflowLink($helpLink, "Clicked Help Site in new user dashboard");
+            analytics.trackWorkflowLink($newAppLink, "Clicked Applications in new user dashboard");
 
-    });
-</script>
-{% endblock js-inline %}
-
-{% block uncompressed-js %} {{ block.super }}
+        });
+    </script>
     <script type="text/javascript">
         (function (angular, undefined) {
             'use strict';
