@@ -2,7 +2,7 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from django_redis.cache import RedisCache
+from redis_cache.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
