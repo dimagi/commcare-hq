@@ -19,7 +19,7 @@ from custom.fri.models import (
     FRIExtraMessage,
 )
 from corehq.util.timezones.utils import get_timezone_for_user
-from redis_cache.cache import RedisCache
+from django_redis.cache import RedisCache
 from dimagi.utils.couch.cache import cache_core
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
