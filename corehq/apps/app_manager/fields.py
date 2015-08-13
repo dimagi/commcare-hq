@@ -58,9 +58,10 @@ class ApplicationDataSourceUIHelper(object):
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
-        self.application_field.choices = [
-            (app_id, source['name']) for app_id, source in self.all_sources.items()
-        ]
+        self.application_field.choices = sorted(
+            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
+            key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
+        )
         self.source_field.choices = []
 
         def _add_choices(field, choices):
