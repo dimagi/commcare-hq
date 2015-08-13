@@ -48,7 +48,7 @@ g{% load i18n %}
                         <li role="separator" class="divider"></li>
                         <li><a class="send-message" href="#" data-config="{{ performance_config.get_id }}">{% trans "Send Real Messages Now" %}</a></li>
                     </ul>
-                    <form id="{{ performance_config.get_id }}" action="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}" method="POST" class="hidden" >
+                    <form id="{{ performance_config.get_id }}" action="{% url "performance_sms.send_performance_messages" domain performance_config.get_id %}" method="POST" class="hidden" >
                     </form>
                 </td>
             </tr>
