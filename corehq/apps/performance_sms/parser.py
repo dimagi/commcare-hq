@@ -64,5 +64,3 @@ def parse_param(param):
             namespace, param, ', '.join(VALID_NAMESPACES)
         )))
     return ParsedParam(namespace, variable)
-
-
