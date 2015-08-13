@@ -7,13 +7,13 @@
     </schedule>
     </fixture>
     <fixture id="schedule:m1:p1:f1">
-        <schedule expires="" starts="" allow_unscheduled="True">
+        <schedule expires="" allow_unscheduled="True">
             <visit id="1" due="7" expires="4" repeats="False"/>
             <visit id="2" due="15" repeats="False"/>
         </schedule>
     </fixture>
     <fixture id="schedule:m1:p2:f0">
-        <schedule expires="" starts="" allow_unscheduled="False">
+        <schedule expires="" allow_unscheduled="False">
             <visit id="1" due="9" expires="1" repeats="False"/>
             <visit id="2" due="11" repeats="False"/>
         </schedule>

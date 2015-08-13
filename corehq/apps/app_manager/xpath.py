@@ -459,6 +459,35 @@ class ScheduleFormXPath(object):
 
         return valid_within_window
 
+    def before_window(self):
+        """
+        if(@repeats = 'True',
+             (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+             (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+        )
+        """
+        before_repeat = XPath.or_(
+            XPath('@expires').eq(XPath.string('')),
+            XPath('today() <= ({} + {} + {})'.format(
+                XPath.date(self.last_visit_date),
+                XPath.int('@increment'),
+                XPath.int('@expires'))
+            )
+        )
+        before_standard = XPath.or_(
+            XPath('@expires').eq(XPath.string('')),
+            XPath('today() <= ({} + {} + {})'.format(
+                XPath.date(self.anchor),
+                XPath.int('@due'),
+                XPath.int('@expires'))
+            )
+        )
+        return XPath.if_(
+            "@repeats = 'True'",
+            before_repeat,
+            before_standard,
+        )
+
     def within_window(self):
         """
         if(@repeats = 'True',
@@ -505,8 +534,8 @@ class ScheduleFormXPath(object):
         )
 
     def due_first(self):
-        """instance(...)/schedule/visit[within_window][1]/@due"""
-        due = self.fixture.visit().select_raw(self.within_window()).select_raw("1").slash("@due")
+        """instance(...)/schedule/visit[before_window][1]/@due"""
+        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
         return "coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
 
     def next_visits(self):
@@ -535,8 +564,10 @@ class ScheduleFormXPath(object):
         )
 
     def due_later(self):
-        """coalesce(instance(...)/schedule/visit/[next_visits][within_window][1]/@due, [max_date]"""
-        due = (self.upcoming_scheduled_visits().
+        """coalesce(instance(...)/schedule/visit/[next_visits][before_window][1]/@due, [max_date]"""
+        due = (self.fixture.visit().
+               select_raw(self.next_visits()).
+               select_raw(self.before_window()).
                select_raw("1").
                slash("@due"))
 
