@@ -8,6 +8,7 @@ from corehq.apps.performance_sms import dbaccessors
 from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
+from corehq.util import get_document_or_404
 
 
 @reminders_framework_permission
@@ -25,6 +26,13 @@ def add_performance_config(request, domain):
     return _edit_performance_message_shared(request, domain, PerformanceConfiguration(domain=domain))
 
 
+@reminders_framework_permission
+@toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator()
+def edit_performance_config(request, domain, config_id):
+    config = get_document_or_404(PerformanceConfiguration, domain, config_id)
+    return _edit_performance_message_shared(request, domain, config)
+
+
 def _edit_performance_message_shared(request, domain, config):
     if request.method == 'POST':
         form = PerformanceMessageEditForm(domain, config=config, data=request.POST)
@@ -35,7 +43,7 @@ def _edit_performance_message_shared(request, domain, config):
     else:
         form = PerformanceMessageEditForm(domain, config=config)
 
-    return render(request, "performance_sms/add_performance_config.html", {
+    return render(request, "performance_sms/edit_performance_config.html", {
         'domain': domain,
         'form': form,
         'sources_map': form.app_source_helper.all_sources
