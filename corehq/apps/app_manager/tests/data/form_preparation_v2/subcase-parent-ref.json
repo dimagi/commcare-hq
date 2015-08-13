@@ -311,7 +311,7 @@
                        }
                    },
                    "version": null,
-                   "media_image": "jr://file/commcare/image/form_name.png",
+                   "media_image": {"default": "jr://file/commcare/image/form_name.png"},
                    "show_count": false,
                    "requires": "none",
                    "unique_id": "6d9c76584578567983755edfe9c0bf520f96cfb2"
