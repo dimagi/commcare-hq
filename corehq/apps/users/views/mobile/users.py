@@ -701,10 +701,12 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'deactivateUrl': "#",
         }
 
-    def _user_query(self, query, page, limit):
+    def _user_query(self, search_string, page, limit):
+        default_search_fields = ["username", "last_name", "first_name"]
         return (UserES()
                 .domain(self.domain)
                 .mobile_users()
+                .search_string_query(search_string, default_search_fields)
                 .start(limit * (page - 1))
                 .size(limit))
 

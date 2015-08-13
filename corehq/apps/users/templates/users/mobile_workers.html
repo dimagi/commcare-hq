@@ -47,6 +47,7 @@
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
+                                   ng-keypress="updateQuery($event)"
                                    ng-model="query"
                                    placeholder="{% trans "Filter Workers..." %}">
                             <span class="input-group-btn">
