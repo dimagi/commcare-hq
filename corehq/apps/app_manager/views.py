@@ -1633,6 +1633,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None, 'has_schedule': None,
+        'comment': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "case_list_form_id": None,
@@ -1743,6 +1744,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module[attribute][lang] = name
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit('comment'):
+        module.comment[lang] = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
         show = '{SLUG}-show'.format(SLUG=SLUG)
         label = '{SLUG}-label'.format(SLUG=SLUG)
@@ -1992,6 +1995,8 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
             xform.set_name(name)
             save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': form.name[lang]}
+    if should_edit('comment'):
+        form.comment[lang] = request.POST['comment']
     if should_edit("xform"):
         try:
             # support FILES for upload and POST for ajax post from Vellum
@@ -2347,6 +2352,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
+        'comment',
         # Application only
         'cloudcare_enabled',
         'application_version',
@@ -2381,6 +2387,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('amplifies_workers', None),
         ('amplifies_project', None),
+        ('comment', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -3097,12 +3104,14 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
                 forms.append({
                     'id': form.unique_id,
                     'name': form.name,
+                    'short_comment': form.short_comment,
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
             modules.append({
                 'id': module.unique_id,
                 'name': module.name,
+                'short_comment': module.short_comment,
                 'forms': forms
             })
         return {

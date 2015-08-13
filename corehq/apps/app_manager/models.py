@@ -633,6 +633,7 @@ class FormBase(DocumentSchema):
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
+    comment = DictProperty(unicode)
 
     @classmethod
     def wrap(cls, data):
@@ -895,6 +896,24 @@ class FormBase(DocumentSchema):
     @property
     def is_case_list_form(self):
         return bool(self.case_list_modules)
+
+    @property
+    def short_comment(self):
+        """
+        Trim each translation of comment to 72 chars
+
+        >>> form = FormBase(
+        ...     comment={
+        ...         'ang': u"Twas bryllyg, and þe slythy toves "
+        ...                u"Did gyre and gymble in þe wabe: "
+        ...                u"All mimsy were þe borogoves; "
+        ...                u"And þe mome raths outgrabe."
+        ...     })
+        >>> form.short_comment
+        {'ang': u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'}
+
+        """
+        return {lang: cmnt if len(cmnt) <= 72 else cmnt[:69] + '...' for lang, cmnt in self.comment.items()}
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -1539,6 +1558,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
     root_module_id = StringProperty()
+    comment = DictProperty(unicode)
 
     @classmethod
     def wrap(cls, data):
@@ -1716,6 +1736,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     def is_usercaseonly(self):
         return False
+
+    @property
+    def short_comment(self):
+        return {lang: cmnt if len(cmnt) <= 72 else cmnt[:69] + '...' for lang, cmnt in self.comment.items()}
 
 
 class Module(ModuleBase):
@@ -3389,6 +3413,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
+    # Documentation comment for app builders and maintainers
+    comment = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -3538,6 +3565,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @property
     def short_name(self):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
+
+    @property
+    def short_comment(self):
+        """
+        Trim comment to 72 characters
+
+        >>> app = ApplicationBase(
+        ...     comment="'Twas brillig, and the slithy toves "
+        ...             "Did gyre and gimble in the wabe; "
+        ...             "All mimsy were the borogoves, "
+        ...             "And the mome raths outgrabe."
+        ... )
+        >>> app.short_comment
+        u"'Twas brillig, and the slithy toves Did gyre and gimble in the wabe; ..."
+
+        """
+        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
 
     @property
     def has_careplan_module(self):

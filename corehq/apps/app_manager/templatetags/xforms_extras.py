@@ -43,7 +43,9 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=["default"], input_name='name'):
+def input_trans(name, langs=None, input_name='name'):
+    if langs is None:
+        langs = ["default"]
     template = '<input type="text" name="{}" value="%(value)s" placeholder="%(placeholder)s" />'.format(input_name)
     for lang in langs:
         if lang in name:
@@ -56,6 +58,27 @@ def input_trans(name, langs=["default"], input_name='name'):
     if 'en' in name:
         default = name['en']
     return mark_safe(template % {"value": "", "placeholder": default})
+
+
+@register.simple_tag
+def textarea_trans(name, langs=None, input_name='name'):
+    if langs is None:
+        langs = ["default"]
+    template_ = ('<textarea'
+                 ' name="{}""'
+                 ' placeholder="%(placeholder)s"'
+                 ' rows="9">%(value)s</textarea>'.format(input_name))
+    for lang in langs:
+        if lang in name:
+            if langs and lang == langs[0]:
+                return template_ % {"value": name[lang], "placeholder": ""}
+            else:
+                return (template_ % {"value": "", "placeholder": name[lang]} +
+                        LANG_BUTTON % {"lang": lang, "extra_class": " langcode-input"})
+    default = "Untitled"
+    if 'en' in name:
+        default = name['en']
+    return mark_safe(template_ % {"value": "", "placeholder": default})
 
 
 @register.filter

@@ -113,6 +113,7 @@
         $scope.showLabels = true;
         $scope.showCalculations = false;
         $scope.showRelevance = false;
+        $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
 
         self.init = function () {

@@ -78,5 +78,33 @@
             </div>
             {% endif %}
         </div>
+
+        <legend>
+        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-docs">
+            <i class="icon-double-angle-down"></i>
+            <span data-bind="text: title">Documentation</span>
+        </a>
+        </legend>
+        <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-docs" style="overflow: hidden;">
+            <div class="control-group" data-bind="
+                visible: visible,
+                css: {error: hasError()}">
+
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Comment" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Comment" %}"
+                              data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
+                        ></span>
+                    </label>
+                    <div id="form-comment" class="controls">
+                        {% textarea_trans form.comment langs 'comment' %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </form>
 </div>
