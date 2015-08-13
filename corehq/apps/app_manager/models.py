@@ -5029,7 +5029,8 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = source.export_json()
         source = json.loads(source)
     else:
-        source = app_id_or_source
+        # Don't modify original app source
+        source = deepcopy(app_id_or_source)
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5044,6 +5045,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
     app.save()
 
     if not app.is_remote_app():
