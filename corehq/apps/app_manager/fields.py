@@ -45,9 +45,15 @@ class ApplicationDataSourceUIHelper(object):
             source_choices.append(("form", _("Form")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
-                                                   choices=source_choices,
-                                                   widget=forms.Select(choices=source_choices))
+        if enable_cases and enable_forms:
+            self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
+                                                       choices=source_choices,
+                                                       widget=forms.Select(choices=source_choices))
+        else:
+            self.source_type_field = forms.ChoiceField(choices=source_choices,
+                                                       widget=forms.HiddenInput(),
+                                                       initial=source_choices[0][0])
+
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
 
     def bootstrap(self, domain):
