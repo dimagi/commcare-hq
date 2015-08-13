@@ -1,3 +1,4 @@
+import copy
 from corehq.apps.groups.fields import GroupField
 from django import forms
 from django.utils.translation import ugettext as _
@@ -21,7 +22,7 @@ class PerformanceMessageEditForm(forms.Form):
         self.config = config
 
         def _to_initial(config):
-            initial = config.to_json()
+            initial = copy.copy(config._doc)
             initial['schedule'] = config.schedule.interval
             if config.template_variables:
                 # todo: needs to support multiple sources
