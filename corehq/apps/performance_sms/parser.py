@@ -12,6 +12,20 @@ VALID_NAMESPACES = (GLOBAL_NAMESPACE, USER_NAMESPACE, GROUP_NAMESPACE)
 ParsedParam = namedtuple('ParsedParam', ['namespace', 'variable'])
 
 
+def get_parsed_params(message_template):
+    """
+    Given a message template - extracts the relevant parsed params.
+
+    Raises an InvalidParameterException if any parameters aren't in the right format.
+    """
+    return [parse_param(param) for param in extract_params(message_template)]
+
+
+def validate(message_template):
+    # convenience method
+    get_parsed_params(message_template)
+
+
 def extract_params(message_template):
     """
     Given a message template - extracts the relevant params.
