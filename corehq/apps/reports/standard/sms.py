@@ -5,6 +5,7 @@ from django.http import Http404
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -316,7 +317,8 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     @memoized
     def uses_locations(self):
-        return Domain.get_by_name(self.domain).uses_locations
+        return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
+                and Domain.get_by_name(self.domain).uses_locations)
 
     @property
     def rows(self):

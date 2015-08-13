@@ -1648,7 +1648,7 @@ class Invoice(InvoiceBase):
         # finally, apply credits to the leftover invoice balance
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_invoice(self)
-        CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, invoice=self)
 
     @classmethod
     def exists_for_domain(cls, domain):
@@ -2094,7 +2094,7 @@ class LineItem(models.Model):
         """
         current_total = self.total
         credit_lines = CreditLine.get_credits_for_line_item(self)
-        CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(line_item=self))
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
 class CreditLine(models.Model):
@@ -2253,7 +2253,7 @@ class CreditLine(models.Model):
         return credit_line
 
     @classmethod
-    def apply_credits_toward_balance(cls, credit_lines, balance, adjust_balance_kwarg):
+    def apply_credits_toward_balance(cls, credit_lines, balance, **kwargs):
         for credit_line in credit_lines:
             if balance == Decimal('0.0000'):
                 return
@@ -2264,7 +2264,7 @@ class CreditLine(models.Model):
                 )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
-                credit_line.adjust_credit_balance(-adjustment_amount, **adjust_balance_kwarg)
+                credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
 

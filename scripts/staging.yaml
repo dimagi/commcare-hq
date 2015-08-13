@@ -50,21 +50,23 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-  - template-apps+icds/scheduler # Farid 8/6
+    #  - template-apps+icds/scheduler # Farid 8/6
+  - template-apps+due-list+icds/scheduler # TS 8/10
   - template-apps # Jenny, July 20
   - FormArchive # Sravan 7/22
-  # - due-list+icds/scheduler # TS 7/30
   - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
 #  - due-list # TS 7/30
   - fixture-locations  # Ethan 8/3
   - hide-report-locations  # Ethan 8/4
   - django17 # J$ 8/5
-  - ota-basic # Nick P 8/6
   - one-true-commtrack  # Ethan 8/6
   - parent-child-case-list-form  # SK 8/7
   - extension_cases  # Norman 8/8
   - upgrade-redis # Ben 8/10
+  - bootstrap3-final-reorg # Biyeun 8/11
+  - new-mobile-workers  # Ethan 8/11
+  - stock_api # Nick P 8/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

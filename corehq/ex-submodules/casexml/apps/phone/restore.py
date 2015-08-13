@@ -512,6 +512,7 @@ class RestoreConfig(object):
             try:
                 data = cache_payload['data']
                 self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
                 self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
