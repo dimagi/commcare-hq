@@ -678,7 +678,7 @@
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
             <div class="control-group">
-                <label for="is_safe" class="control-label">{% trans "Sensitive Data" %}</label>
+                <label for="is_safe" class="control-label"></label>
                 <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
                     <label class="checkbox">
                         <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
@@ -686,19 +686,17 @@
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
                 </div>
-                <div class="controls">
-                    <button class="btn"  data-bind="
-                        visible: !showDeidColumn(),
-                        click: animateShowDeidColumn
-                    ">
-                        {% trans "Allow me to mark sensitive data" %}
-                    </button>
-                </div>
+                <button class="btn" data-bind="
+                    visible: !showDeidColumn(),
+                    click: animateShowDeidColumn
+                ">
+                    {% trans "Allow me to mark sensitive data" %}
+                </button>
             </div>
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary" data-bind="
+            <button type="submit" class="btn btn-large btn-primary" data-bind="
                 click: save_no_preview,
                 disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
             ">
@@ -715,7 +713,7 @@
                 </span>
             </button>
             {% if request|toggle_enabled:"REVAMPED_EXPORTS" %}
-            <button type="submit" class="btn btn-primary" data-bind="
+            <button type="submit" class="btn btn-large btn-primary" data-bind="
                 click: save_preview,
                 disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
             ">
@@ -732,9 +730,9 @@
                 </span>
             </button>
             {% endif %}
-            <a class="btn" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
+            <a class="btn btn-large" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
-            <a class="btn btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
+            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
                 <i class="icon-remove icon-white"></i>
                 {% trans "Delete this Export" %}
             </a>
