@@ -198,7 +198,7 @@ requires imports/proptable.html to be included in the main template
             {% if show_edit_options %}
                 {% if show_edit_submission %}
                         <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
-                            <i class="icon-edit"></i> {% trans "Edit this submission" %}
+                            <i class="icon-edit"></i> {% trans "Edit this form" %}
                         </a>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
