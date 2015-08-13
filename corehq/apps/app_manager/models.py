@@ -3335,7 +3335,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     case_sharing = BooleanProperty(default=False)
 
     # Documentation comment for app builders and maintainers
-    comment = DictProperty(unicode)
+    comment = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -3489,7 +3489,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def short_comment(self):
-        return {lang: cmnt if len(cmnt) <= 72 else cmnt[:69] + '...' for lang, cmnt in self.comment.items()}
+        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
 
     @property
     def has_careplan_module(self):

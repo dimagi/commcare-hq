@@ -2385,6 +2385,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('amplifies_workers', None),
         ('amplifies_project', None),
+        ('comment', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -2404,9 +2405,6 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("success_message"):
         success_message = hq_settings['success_message']
         app.success_message[lang] = success_message
-
-    if should_edit('comment'):
-        app.comment[lang] = hq_settings['comment']
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release
