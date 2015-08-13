@@ -75,6 +75,12 @@
                             <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
                             &nbsp;{% trans "Show Display Conditions" %}
                         </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showComments = !showComments"
+                                ng-class="{ 'active': showComments }">
+                            <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Show Comments" %}
+                        </button>
                     </div>
                 </div>
              </div>
@@ -84,11 +90,17 @@
         <loading></loading>
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
-                 <h4><i class="hq-icon fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}</h4>
+                 <h4>
+                     <i class="hq-icon fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
+                     <span class="text-muted" ng-show="showComments"> &nbsp; {{ module.short_comment.en }}</span>
+                 </h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
-                    <h5>{% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}</h5>
+                    <h5>
+                        {% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}
+                        <span class="text-muted" ng-show="showComments"> &nbsp; {{ form.short_comment.en }}</span>
+                    </h5>
                         <ol>
                             <li ng-repeat="question in form.questions|filter:questionSearch">
                                 {% verbatim %}

@@ -3100,12 +3100,14 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
                 forms.append({
                     'id': form.unique_id,
                     'name': form.name,
+                    'short_comment': form.short_comment,
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
             modules.append({
                 'id': module.unique_id,
                 'name': module.name,
+                'short_comment': module.short_comment,
                 'forms': forms
             })
         return {
