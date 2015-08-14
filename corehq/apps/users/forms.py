@@ -365,6 +365,32 @@ else:
     validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
+class NewMobileWorkerForm(forms.Form):
+    username = forms.CharField(max_length=80, required=True)
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
+    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
+    domain = forms.CharField(widget=HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Create new Mobile Worker account'),
+                crispy.Field('username', ng_model='mobileWorker.username'),
+                crispy.Field('password', ng_model='mobileWorker.password'),
+                crispy.Field('password_2', ng_model='mobileWorker.password2'),
+            )
+        )
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if username == 'admin' or username == 'demo_user':
+            raise forms.ValidationError("The username %s is reserved for CommCare." % username)
+        return username
+
+
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
