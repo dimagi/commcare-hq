@@ -1333,7 +1333,7 @@ class XForm(WrappedNode):
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
-                    case_id = session_var(form.session_var_for_action('subcases', i))
+                    case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
                     name = 'subcase_%s' % i

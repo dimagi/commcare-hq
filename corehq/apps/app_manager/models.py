@@ -754,8 +754,14 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
-            errors.append(dict(type="no form links", **meta))
+        if self.post_form_workflow == WORKFLOW_FORM:
+            if not self.form_links:
+                errors.append(dict(type="no form links", **meta))
+            for form_link in self.form_links:
+                try:
+                    self.get_app().get_form(form_link.form_id)
+                except FormNotFoundException:
+                    errors.append(dict(type='bad form link', **meta))
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
@@ -1013,13 +1019,14 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
-    def session_var_for_action(self, action_type, subcase_index=None):
+    def session_var_for_action(self, action):
         module_case_type = self.get_module().case_type
-        if action_type == 'open_case':
+        if action == 'open_case':
             return 'case_id_new_{}_0'.format(module_case_type)
-        if action_type == 'subcases':
+        if isinstance(action, OpenSubCaseAction):
+            subcase_type = action.case_type
+            subcase_index = self.actions.subcases.index(action)
             opens_case = 'open_case' in self.active_actions()
-            subcase_type = self.actions.subcases[subcase_index].case_type
             if opens_case:
                 subcase_index += 1
             return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
@@ -1119,9 +1126,26 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return any([name.startswith('parent/')
             for name in self.actions.all_property_names()])
 
+    def get_registration_actions(self, case_type):
+        """
+        :return: List of actions that create a case. Subcase actions are included
+                 as long as they are not inside a repeat. If case_type is not None
+                 only return actions that create a case of the specified type.
+        """
+        reg_actions = []
+        if 'open_case' in self.active_actions() and (not case_type or self.get_module().case_type == case_type):
+            reg_actions.append('open_case')
+
+        subcase_actions = [action for action in self.actions.subcases if not action.repeat_context]
+        if case_type:
+            subcase_actions = [a for a in subcase_actions if a.case_type == case_type]
+
+        reg_actions.extend(subcase_actions)
+        return reg_actions
+
     def is_registration_form(self, case_type=None):
-        return not self.requires_case() and 'open_case' in self.active_actions() and \
-            (not case_type or self.get_module().case_type == case_type)
+        reg_actions = self.get_registration_actions(case_type)
+        return len(reg_actions) == 1
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
@@ -1562,9 +1586,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         except IndexError:
             raise FormNotFoundException()
 
-    def has_forms(self):
-        return bool(len(self.forms))
-
     def get_child_modules(self):
         return [
             module for module in self.get_app().get_modules()
@@ -1997,18 +2018,57 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def is_registration_form(self, case_type=None):
         """
-        Defined as form that opens a single case. Excludes forms that register
-        sub-cases and forms that require a case.
+        Defined as form that opens a single case. If the case is a sub-case then
+        the form is only allowed to load parent cases (and any auto-selected cases).
         """
         reg_actions = self.get_registration_actions(case_type)
-        return not self.requires_case() and reg_actions and \
-            len(reg_actions) == 1
+        if len(reg_actions) != 1:
+            return False
+
+        load_actions = [action for action in self.actions.load_update_cases if not action.auto_select]
+        if not load_actions:
+            return True
+
+        reg_action = reg_actions[0]
+        parent_tag = reg_action.parent_tag
+        if not parent_tag:
+            return False
+
+        actions_by_tag = deepcopy(self.actions.actions_meta_by_tag)
+        actions_by_tag.pop(reg_action.case_tag)
+        def check_parents(tag):
+            """Recursively check parent actions to ensure that all actions for this form are
+            either parents of the registration action or else auto-select actions.
+            """
+            if not tag:
+                return not actions_by_tag or all(
+                    getattr(a['action'], 'auto_select', False) for a in actions_by_tag.values()
+                )
+
+            try:
+                parent = actions_by_tag.pop(tag)
+            except KeyError:
+                return False
+
+            next_tag = parent['action'].parent_tag
+            return check_parents(next_tag)
+
+        return check_parents(parent_tag)
 
     def get_registration_actions(self, case_type=None):
-        return [
+        """
+        :return: List of actions that create a case. Subcase actions are included
+                 as long as they are not inside a repeat. If case_type is not None
+                 only return actions that create a case of the specified type.
+        """
+        registration_actions = [
             action for action in self.actions.get_open_actions()
-            if not action.is_subcase and (not case_type or action.case_type == case_type)
+            if not action.is_subcase or not action.repeat_context
         ]
+        if case_type:
+            registration_actions = [a for a in registration_actions if a.case_type == case_type]
+
+        return registration_actions
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -2393,21 +2453,23 @@ class AdvancedModule(ModuleBase):
             for form in forms:
                 info = self.get_module_info()
                 form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
-
-                if not form.requires_case():
+                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                if not non_auto_select_actions:
                     errors.append({
                         'type': 'case list module form must require case',
                         'module': info,
                         'form': form_info,
                     })
-                elif len(form.actions.load_update_cases) != 1:
-                    errors.append({
-                        'type': 'case list module form must require only one case',
-                        'module': info,
-                        'form': form_info,
-                    })
+                elif len(non_auto_select_actions) != 1:
+                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        if index > 0 and not non_auto_select_actions[index - 1].case_tag == action.parent_tag:
+                            errors.append({
+                                'type': 'case list module form can only load parent cases',
+                                'module': info,
+                                'form': form_info,
+                            })
 
-                case_action = form.actions.load_update_cases[0] if form.requires_case() else None
+                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
                 if case_action and case_action.case_type != self.case_type:
                     errors.append({
                         'type': 'case list module form must match module case type',

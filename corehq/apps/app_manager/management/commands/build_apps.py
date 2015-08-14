@@ -1,10 +1,17 @@
 import contextlib
 import json
-from optparse import make_option
+import time
 from django.core.management.base import BaseCommand
 from lxml import etree
 import os
 from corehq.apps.app_manager.models import Application, RemoteApp
+
+try:
+    from guppy import hpy
+    track_perf = True
+except ImportError:
+    track_perf = False
+
 
 _parser = etree.XMLParser(remove_blank_text=True)
 def normalize_xml(xml):
@@ -14,8 +21,6 @@ def normalize_xml(xml):
 
 @contextlib.contextmanager
 def record_performance_stats(filepath, slug):
-    from guppy import hpy
-    import time
     hp = hpy()
     before = hp.heap()
     start = time.clock()
@@ -31,10 +36,6 @@ def record_performance_stats(filepath, slug):
 
 class Command(BaseCommand):
     args = '<path_to_dir> <build-slug>'
-    option_list = BaseCommand.option_list + (
-        make_option('--perf', action='store_true', dest='track_perf', default=False,
-            help='Output performance metrics'),
-    )
     help = """
         Pass in a path to a directory (dir, below) with the following layout:
         dir/
@@ -71,7 +72,7 @@ class Command(BaseCommand):
                 app.domain = "test"
             build_path = os.path.join(path, build_slug, slug)
             print ' Creating files...'
-            if options.get('track_perf'):
+            if track_perf:
                 with record_performance_stats(perfpath, slug):
                     files = app.create_all_files()
             else:

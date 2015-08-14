@@ -271,13 +271,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
-        notify_exception(
-            None,
-            "This saved-report (id: %s) is unknown (report_type: %s). Might be a legacy report" % (
-                self._id,
-                self.report_type
+        if self.doc_type != 'ReportConfig-Deleted':
+            self.doc_type += '-Deleted'
+            self.save()
+            notify_exception(
+                None,
+                "This saved-report (id: %s) is unknown (report_type: %s) and so we have archived it" % (
+                    self._id,
+                    self.report_type
+                )
             )
-        )
         raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
@@ -351,6 +354,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             else:
                 url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
             return url_base + '?' + self.query_string
+        except UnsupportedSavedReportError:
+            return "#"
         except Exception:
             return "#"
 
@@ -363,9 +368,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         case.
 
         """
-        return self._dispatcher.get_report(
-            self.domain, self.report_slug, self.subreport_slug
-        )
+        try:
+            return self._dispatcher.get_report(
+                self.domain, self.report_slug, self.subreport_slug
+            )
+        except UnsupportedSavedReportError:
+            return None
 
     @property
     def report_name(self):
@@ -492,6 +500,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                      "can not be generated since you do not have the correct permissions. "
                      "Please talk to your Project Administrator about getting permissions for this"
                      "report.") % {'config_name': self.name}, None
+        except UnsupportedSavedReportError:
+            return _("We are sorry, but your saved report '%(config_name)s' "
+                     "is no longer available. If you think this is a mistake, please report an issue."
+                     ) % {'config_name': self.name}, None
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,

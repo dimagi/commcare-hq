@@ -261,7 +261,8 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(_fmt_error_info(sync_log))
                 columns.append('{:.10}...'.format(sync_log.get_state_hash()))
                 columns.append(_naturaltime_with_hover(sync_log.last_submitted))
-                columns.append(_naturaltime_with_hover(sync_log.last_cached))
+                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
+                                                     sync_log.hash_at_last_cached))
 
             return columns
 

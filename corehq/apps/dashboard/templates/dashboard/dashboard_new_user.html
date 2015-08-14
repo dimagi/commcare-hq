@@ -1,7 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}{% load hq_shared_tags %}
 
-{% block uncompressed-js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
 <script>
     $(function() {
         analytics.workflow('Visited new user dashboard');
@@ -13,7 +13,7 @@
         {% endfor %}
     });
 </script>
-{% endblock uncompressed-js %}
+{% endblock %}
 
 {% block dashboard-content %}
 <div class="page-header">

@@ -362,6 +362,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = []
         detail_allowed_methods = ['get']
         resource_name = 'form'
+        ordering = ['received_on']
         serializer = XFormInstanceSerializer()
 
 def _safe_bool(bundle, param, default=False):

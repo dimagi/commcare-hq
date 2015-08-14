@@ -189,6 +189,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+ADD_USERS_FROM_LOCATION = StaticToggle(
+    'add_users_from_location',
+    "Allow users to add new mobile workers from the locations page",
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
 DEMO_REPORTS = StaticToggle(
     'demo-reports',
     'Access to map-based demo reports',
@@ -495,6 +502,13 @@ INSTANCE_VIEWER = StaticToggle(
     'CloudCare Form Debugging Tool',
     TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_USER],
+)
+
+LOCATIONS_IN_REPORTS = StaticToggle(
+    'LOCATIONS_IN_REPORTS',
+    "Include locations in report filters",
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CLOUDCARE_CACHE = StaticToggle(

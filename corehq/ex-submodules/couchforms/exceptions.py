@@ -15,3 +15,7 @@ class DuplicateError(CouchFormException):
 
 class UnexpectedDeletedXForm(Exception):
     pass
+
+
+class PhoneDateValueError(CouchFormException):
+    pass
