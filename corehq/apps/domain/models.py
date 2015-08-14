@@ -1171,6 +1171,13 @@ class Domain(Document, SnapshotMixin):
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
 
+    def convert_to_commtrack(self):
+        """
+        One-stop-shop to make a domain CommTrack
+        """
+        from corehq.apps.commtrack.util import make_domain_commtrack
+        make_domain_commtrack(self)
+
 
 class DomainCounter(Document):
     domain = StringProperty()
