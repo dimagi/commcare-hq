@@ -232,24 +232,46 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             visit = "instance('schedule:m1:p1:f{form_num}')/schedule/visit".format(form_num=form_num)
             schedule = "instance('schedule:m1:p1:f{form_num}')/schedule".format(form_num=form_num)
 
+            current_phase_query = (
+                "({current_schedule_phase} = '' or {current_schedule_phase} = 1)"
+            ).format(current_schedule_phase=current_schedule_phase)
+
+            within_form_relevancy = (
+                "today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
+                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires)))"
+            ).format(schedule=schedule, anchor=anchor)
+
+            next_valid_schedules = (
+                "{current_phase_query} and "
+                "{anchor} != '' and "
+                "({within_form_relevancy})"
+            ).format(current_phase_query=current_phase_query, anchor=anchor,
+                     within_form_relevancy=within_form_relevancy)
+
+            allow_unscheduled = (
+                "{schedule}/@allow_unscheduled = 'True'"
+            ).format(schedule=schedule)
+
+            upcoming_scheduled_visits = (
+                "{visit}"
+                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
+                "[if(@repeats = 'True', "
+                    "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "  # noqa
+                        "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment)"  # noqa
+                        " + int(@expires))), "
+                    "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and "
+                        "(@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires)))"
+                ")]"
+            ).format(visit=visit, case=case[form_num], form_id=form_id, anchor=anchor)
+
+            visit_allowed = (
+                "{allow_unscheduled} or "
+                "count({upcoming_scheduled_visits}) &gt; 0"
+            ).format(allow_unscheduled=allow_unscheduled, upcoming_scheduled_visits=upcoming_scheduled_visits)
+
             filter_condition = (
-                "(({current_schedule_phase} = '' or {current_schedule_phase} = 1) "  # form phase == current phase
-                "and {anchor} != '' and "                # anchor not empty
-                "(today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
-                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires))))) and "
-                "({schedule}/@allow_unscheduled = 'True' or "
-                "count({visit}[{case}/last_visit_number_{form_id} = '' or "
-                "@id &gt; {case}/last_visit_number_{form_id}]["
-                "if(@repeats = 'True', "
-                "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "
-                "(@expires = '' or "
-                "today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@expires))), "
-                "today() &gt;= (date({anchor}) + int(@due) + int(@starts)) and "
-                "(@expires = '' or today() &lt;= (date({anchor}) + int(@due) + int(@expires))))"
-                "]) &gt; 0)"     # End count
-            ).format(current_schedule_phase=current_schedule_phase,
-                     form_num=form_num, form_id=form_id, anchor=anchor, schedule=schedule, visit=visit,
-                     case=case[form_num])
+                "({next_valid_schedules}) and ({visit_allowed})"
+            ).format(next_valid_schedules=next_valid_schedules, visit_allowed=visit_allowed)
 
             partial = """
             <partial>
@@ -260,7 +282,6 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             self.assertXmlPartialEqual(partial, suite, './menu/command[@id="m1-f{}"]'.format(form_num))
 
     def _fetch_sources(self):
-        # TODO: a better way of fetching the source
         for form in self.module.forms:
             form.source = base64.b64decode(
                 self.app._attachments['{}.xml'.format(form.unique_id)]['data']
@@ -277,13 +298,14 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Current Schedule Phase is set depending on transition and termination conditions """
         self._fetch_sources()
 
-        current_schedule_phase_partial = (
-            "<partial>"
-            '<bind type="xs:integer" nodeset="/data/case_case_clinic/case/update/current_schedule_phase"'
-            ' calculate="{value}" {xmlns}/>'
-            "</partial>"
-        )
-
+        current_schedule_phase_partial = """
+        <partial>
+            <bind type="xs:integer"
+                  nodeset="/data/case_case_clinic/case/update/current_schedule_phase"
+                  calculate="{value}"
+            {xmlns}/>
+        </partial>
+        """
         transition_question = '/data/successful_birth'
         transition_answer = 'yes'
         self.form_1.schedule.transition_condition = FormActionCondition(
@@ -310,7 +332,8 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         )
         self.assertXmlPartialEqual(
             current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
-            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/current_schedule_phase"]')
+            (xform_1.model_node.find(
+                './bind[@nodeset="/data/case_case_clinic/case/update/current_schedule_phase"]')
              .render()),
             '.'
         )
@@ -320,32 +343,35 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self._fetch_sources()
         self._apply_schedule_phases()
 
-        current_schedule_phase_partial = (
-            "<partial> "
-            '<bind type="xs:integer" nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"'
-            ' calculate="{value}" ''{xmlns}/> '
-            "</partial> "
-        )
+        current_schedule_phase_partial = """
+        <partial>
+            <bind type="xs:integer"
+                  nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"
+                  calculate="{value}"
+            {xmlns}/>
+        </partial>
+        """
         value = "if(false(), -1, if(false(), 2, {}))".format(self.form_2.get_phase().id)
         xform_2 = self.form_2.wrapped_xform()
         self.form_2.add_stuff_to_xform(xform_2)
         self.assertXmlPartialEqual(
             current_schedule_phase_partial.format(value=value, xmlns=self.xmlns),
-            (xform_2.model_node.find('./bind[@nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"]')
+            (xform_2.model_node.find(
+                './bind[@nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"]')
              .render()),
             '.'
         )
 
     def test_last_visit_number(self):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
-        last_visit_number_partial = (
-            "<partial>"
-            '<bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}" '
-            'calculate="/data/next_visit_number" '
-            'relevant="not(/data/unscheduled_visit)" '
-            '{xmlns}/>'
-            '</partial>'
-        )
+        last_visit_number_partial = """
+        <partial>
+            <bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}"
+                  calculate="/data/next_visit_number"
+                  relevant="not(/data/unscheduled_visit)"
+            {xmlns}/>
+        </partial>
+        """
         self._fetch_sources()
         self._apply_schedule_phases()
         xform_1 = self.form_1.wrapped_xform()
@@ -362,10 +388,11 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """ Set the date of the last visit when a form gets submitted """
         last_visit_date_partial = """
         <partial>
-        <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}" type="xsd:dateTime"
-         calculate="/data/meta/timeEnd"
-        relevant="not(/data/unscheduled_visit)"
-        {xmlns}/>
+            <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}"
+                  type="xsd:dateTime"
+                  calculate="/data/meta/timeEnd"
+                  relevant="not(/data/unscheduled_visit)"
+            {xmlns}/>
         </partial>
         """
         self._fetch_sources()
