@@ -11,7 +11,7 @@
         src="{% new_static 'users/js/web_users_list.ng.js' %}"></script>
 {% endblock %}
 
-{% block uncompressed-js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
 (function (angular, undefined) {
     'use strict';
