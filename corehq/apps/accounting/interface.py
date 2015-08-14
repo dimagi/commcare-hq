@@ -653,9 +653,13 @@ class InvoiceInterface(InvoiceInterfaceBase):
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
+            invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
-                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(invoice_href, invoice.invoice_number)),
+                    invoice.id,
+                ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
@@ -721,7 +725,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 columns.extend([
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
                     mark_safe(make_anchor_tag(
-                        reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+                        invoice_href,
                         "Go to Invoice",
                         {"class": "btn"},
                     ))
