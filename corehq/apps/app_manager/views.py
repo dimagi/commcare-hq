@@ -76,7 +76,7 @@ from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
-from corehq.util.view_utils import set_file_download, absolute_reverse
+from corehq.util.view_utils import set_file_download, absolute_reverse, json_error
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -136,7 +136,11 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest,
+    login_or_digest_or_basic,
+)
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
@@ -3273,7 +3277,8 @@ def update_build_comment(request, domain, app_id):
 
 
 # Used by CommCare CLI
-@login_and_domain_required
+@json_error
+@login_or_digest_or_basic
 def list_apps(request, domain):
     def app_to_json(app):
         return {
@@ -3291,7 +3296,8 @@ def list_apps(request, domain):
 
 
 # Used by CommCare CLI
-@login_and_domain_required
+@json_error
+@login_or_digest_or_basic
 def direct_ccz(request, domain):
     if 'app_id' in request.GET:
         app = get_app(domain, request.GET['app_id'])
