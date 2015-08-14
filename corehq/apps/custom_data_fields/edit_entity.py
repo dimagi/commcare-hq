@@ -114,6 +114,8 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
+        CustomDataForm.helper.label_class = 'col-sm-4'
+        CustomDataForm.helper.field_class = 'col-sm-8'
         if field_names:  # has custom data
             CustomDataForm.helper.layout = Layout(
                 Fieldset(_("Additional Information"), *field_names),
