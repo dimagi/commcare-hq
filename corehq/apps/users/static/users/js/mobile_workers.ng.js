@@ -1,17 +1,29 @@
 (function (angular, undefined) {
     'use strict';
 
-    var users = angular.module('hq.mobile_workers', []);
+    var mobileWorkers = angular.module('hq.mobile_workers', []);
 
     var MobileWorker = function (data) {
         var self = this;
-        self.email = data.email;
-        self.name = data.name;
-        self.role = data.role;
-        self.phoneNumbers = data.phoneNumbers;
-        self.removeUrl = data.removeUrl;
-        self.editUrl = data.editUrl;
+        self.username = data.username;
+        self.password = data.password;
+        self.password2 = data.password2;
         self.domain = data.domain;
+
+        _.each(data.customFields, function (value, key) {
+            self[key] = value;
+        });
     };
 
+    var mobileWorkerControllers = {};
+
+    mobileWorkerControllers.newMobileWorkerFormController = function ($scope) {
+        $scope.mobileWorker = {};
+        $scope.initializeMobileWorker = function (data) {
+            console.log(data);
+            $scope.mobileWorker = new MobileWorker(data);
+        };
+    };
+
+    mobileWorkers.controller(mobileWorkerControllers);
 }(window.angular));
