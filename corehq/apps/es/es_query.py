@@ -66,6 +66,7 @@ from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
 from . import facets
 from . import filters
+from . import queries
 
 
 class ESQuery(object):
@@ -105,7 +106,7 @@ class ESQuery(object):
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
-                "query": {'match_all': {}}
+                "query": queries.match_all()
             }
         }}
 
@@ -195,6 +196,12 @@ class ESQuery(object):
         es = deepcopy(self)
         es.es_query['query']['filtered']['query'] = query
         return es
+
+    def user_query_string(self, query, default_fields=None):
+        """
+        Accepts a user-defined query.
+        """
+        return self.set_query(queries.user_query_string(query, default_fields))
 
     def _assemble(self):
         """
