@@ -45,8 +45,10 @@ from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
 
 from couchexport.models import Format
-from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
-                                     MultipleSelectionForm, ConfirmExtraUserChargesForm)
+from corehq.apps.users.forms import (
+    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm
+)
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -676,6 +678,19 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
+
+    @property
+    @memoized
+    def new_mobile_worker_form(self):
+        if self.request.method == "POST":
+            return NewMobileWorkerForm(self.request.POST)
+        return NewMobileWorkerForm()
+
+    @property
+    def page_context(self):
+        return {
+            'new_mobile_worker_form': self.new_mobile_worker_form,
+        }
 
     @method_decorator(use_bootstrap3())
     @method_decorator(require_can_edit_commcare_users)
