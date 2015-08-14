@@ -31,10 +31,18 @@
         <div ng-controller="newMobileWorkerFormController">
             <button type="button"
                     class="btn btn-success"
-                    ng-click="initializeMobileWorker({username: 'heljsfdljds', password: 'lsdfjs', password2: 'sldfjs', domain: 'sdlsjf', customFields: {foo: 'bar'}})">
+                    ng-click="initializeMobileWorker()">
                 <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
             </button>
             {% crispy new_mobile_worker_form %}
+            {% if custom_fields_form.fields %}
+                {% crispy custom_fields_form %}
+            {% endif %}
+            <div>
+                {% angularjs %}
+                    {{ mobileWorker }}
+                {% endangularjs %}
+            </div>
         </div>
         <div class="panel panel-default" ng-controller="paginatedListController">
             <div class="panel-heading">
