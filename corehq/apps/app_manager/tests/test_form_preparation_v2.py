@@ -101,12 +101,6 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         xform.strip_vellum_ns_attributes()
         self.assertXmlEqual(xform.render(), after)
 
-    def test_case_list_form(self):
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        self.form.actions.open_case.condition.type = 'always'
-        self.module.case_list_form.form_id = self.form.get_unique_id()
-        self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
-
 
 class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')
@@ -381,16 +375,6 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
             form_index=2
         )
         self.assertXmlEqual(xml, form.render_xform())
-
-    def test_case_list_form(self):
-        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
-            case_type=self.module.case_type,
-            case_tag='open_1',
-            name_path="/data/question1"
-        ))
-        self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.module.case_list_form.form_id = self.form.get_unique_id()
-        self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
 
 
 class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
