@@ -161,22 +161,6 @@ def can_add_extra_mobile_workers(request):
     return True
 
 
-def smart_query_string(query):
-    """
-    If query does not use the ES query string syntax,
-    default to doing an infix search for each term.
-    returns (is_simple, query)
-    """
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in query:
-            return False, query
-    r = re.compile(r'\w+')
-    tokens = r.findall(query)
-    return True, "*{}*".format("* *".join(tokens))
-
-
 def user_display_string(username, first_name="", last_name=""):
     full_name = u"{} {}".format(first_name or u'', last_name or u'').strip()
 

@@ -32,13 +32,12 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.es import UserES
+from corehq.apps.es.queries import user_query_string
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
-from corehq.apps.users.util import (
-    can_add_extra_mobile_workers,
-    smart_query_string,
-)
+from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
@@ -378,17 +377,12 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
-        is_simple, query = smart_query_string(self.query)
-        default_fields = ["username.exact", "last_name", "first_name"]
         q = {
-            "query": {"query_string": {
-                "query": query,
-                "default_operator": "AND",
-                "fields": default_fields if is_simple else None
-            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
+        default_fields = ["username.exact", "last_name", "first_name"]
+        q["query"] = user_query_string(query, default_fields)
         params = {
             "domain": self.domain,
             "is_active": not self.show_inactive,
