@@ -365,24 +365,25 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         """
         Ensure module filter gets added correctly
         """
-        json = self.get_json('suite-workflow')
-        json['build_spec']['version'] = '2.20.0'
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.20.0'
+        module = app.add_module(Module.new_module('m0', None))
+        module.new_form('f0', None)
 
-        app = Application.wrap(json)
-        module = app.get_module(1)
         module.module_filter = "/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter'),
             app.create_suite(),
-            "./menu[@id='m1']"
+            "./menu[@id='m0']"
         )
 
     def test_module_filter_with_session(self):
-        json = self.get_json('suite-workflow')
-        json['build_spec']['version'] = '2.20.0'
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.20.0'
+        module = app.add_module(Module.new_module('m0', None))
+        form = module.new_form('f0', None)
+        form.xmlns = 'f0-xmlns'
 
-        app = Application.wrap(json)
-        module = app.get_module(0)
         module.module_filter = "#session/user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
