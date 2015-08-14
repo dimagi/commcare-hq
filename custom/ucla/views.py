@@ -3,10 +3,10 @@ from lxml import etree
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.models import(
     FormActionCondition,
-    get_app,
     OpenSubCaseAction,
 )
 from corehq.apps.app_manager.util import save_xform
