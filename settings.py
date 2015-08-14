@@ -223,6 +223,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -938,6 +939,7 @@ SOUTH_TESTS_MIGRATE = False
 # Dropbox
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
 
 try:

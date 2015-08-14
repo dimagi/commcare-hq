@@ -10,7 +10,7 @@ from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build
     BuildVersionSource
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -186,6 +186,9 @@ class SyncHistoryReport(DeploymentsReport):
             headers.add_column(DataTablesColumn(_("Sync Log Type")))
             headers.add_column(DataTablesColumn(_("Previous Sync Log")))
             headers.add_column(DataTablesColumn(_("Error Info")))
+            headers.add_column(DataTablesColumn(_("State Hash")))
+            headers.add_column(DataTablesColumn(_("Last Submitted")))
+            headers.add_column(DataTablesColumn(_("Last Cached")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -239,8 +242,10 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return u'<span class="label label-important">X</span> State error {}'.format(
-                        naturaltime(sync_log.error_date),
+                    return (u'<span class="label label-important">X</span>'
+                            u'State error {}<br>Expected hash: {:.10}...').format(
+                        _naturaltime_with_hover(sync_log.error_date),
+                        sync_log.error_hash,
                     )
 
             num_cases = sync_log.case_count()
@@ -254,6 +259,10 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
+                columns.append('{:.10}...'.format(sync_log.get_state_hash()))
+                columns.append(_naturaltime_with_hover(sync_log.last_submitted))
+                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
+                                                     sync_log.hash_at_last_cached))
 
             return columns
 
@@ -284,10 +293,14 @@ def _fmt_date(date):
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
-                text=_(naturaltime(date)),
+                text=_(_naturaltime_with_hover(date)),
             ),
             date.toordinal(),
         )
+
+
+def _naturaltime_with_hover(date):
+    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):

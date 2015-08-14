@@ -70,6 +70,7 @@ API_LIST = (
         v0_5.WebUserResource,
         v0_5.GroupResource,
         v0_5.BulkUserResource,
+        v0_5.StockTransactionResource,
         FixtureResource,
         ReportResource,
         v0_5.DeviceReportResource,

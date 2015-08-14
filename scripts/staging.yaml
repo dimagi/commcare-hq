@@ -50,15 +50,15 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-  - template-apps # Jenny, July 20
   - FormArchive # Sravan 7/22
-  # - due-list+icds/scheduler # TS 7/30
-  # - icds/scheduler # Farid 7/22
+  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
 #  - due-list # TS 7/30
-  - fixture-locations  # Ethan 8/3
-  - hide-report-locations  # Ethan 8/4
-  #- django17 # J$ 8/5
+  - django17 # J$ 8/5
+  - one-true-commtrack  # Ethan 8/6
+  - extension_cases  # Norman 8/8
+  - new-mobile-workers  # Ethan 8/11
+  - quickcache-user-roles  # Ethan 8/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -74,9 +74,11 @@ submodules:
     branches: []
   submodules/pillowtop-src:
     branches: []
+  submodules/dimagi-utils-src:
+    branches: []
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
-      #- django18
+    branches:
+      - django18
 

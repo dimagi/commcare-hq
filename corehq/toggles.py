@@ -16,12 +16,17 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None, description=None):
+    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
+                 description=None, save_fn=None):
         self.slug = slug
         self.label = label
         self.tag = tag
         self.help_link = help_link
         self.description = description
+        # Optionally provide a callable to be called whenever the toggle is
+        # updated.  This is only applicable to domain toggles.  It must accept
+        # two parameters, `domain_name` and `toggle_is_enabled`
+        self.save_fn = save_fn
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -189,6 +194,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+ADD_USERS_FROM_LOCATION = StaticToggle(
+    'add_users_from_location',
+    "Allow users to add new mobile workers from the locations page",
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
 DEMO_REPORTS = StaticToggle(
     'demo-reports',
     'Access to map-based demo reports',
@@ -269,6 +281,13 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+REMOTE_APPS = StaticToggle(
+    'remote-apps',
+    'Allow creation of remote applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 CAN_EDIT_EULA = StaticToggle(
@@ -448,7 +467,7 @@ OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
     'enable_owner_cleanliness_flags',
     'Enable tracking ownership cleanliness on submission',
     TAG_EXPERIMENTAL,
-    randomness=.05,
+    randomness=.20,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
@@ -483,11 +502,45 @@ API_THROTTLE_WHITELIST = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+
+def _commtrackify(domain_name, toggle_is_enabled):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(domain_name, strict=True)
+    if domain and domain.commtrack_enabled != toggle_is_enabled:
+        if toggle_is_enabled:
+            domain.convert_to_commtrack()
+        else:
+            domain.commtrack_enabled = False
+            domain.save()
+
+
+COMMTRACK = StaticToggle(
+    'commtrack',
+    "CommCare Supply",
+    TAG_PRODUCT_CORE,
+    description=(
+        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
+        "is a logistics and supply chain management module. It is designed "
+        "to improve the management, transport, and resupply of a variety of "
+        "goods and materials, from medication to food to bednets. <br/>"
+    ),
+    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_commtrackify,
+)
+
 INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
     'CloudCare Form Debugging Tool',
     TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_USER],
+)
+
+LOCATIONS_IN_REPORTS = StaticToggle(
+    'LOCATIONS_IN_REPORTS',
+    "Include locations in report filters",
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CLOUDCARE_CACHE = StaticToggle(
