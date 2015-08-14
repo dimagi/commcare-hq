@@ -739,7 +739,8 @@ class InviteWebUserView(BaseManageWebUserView):
                     domain_request.send_approval_email()
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
-                                         location_id=data["supply_point"], program_id=data["program"])
+                                         location_id=data.get("supply_point", None),
+                                         program_id=data.get("program", None))
                 messages.success(request, "%s added." % data["email"])
             else:
                 messages.success(request, "Invitation sent to %s" % data["email"])
