@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 from django import forms
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, Div, HTML
+from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
 from corehq.apps.style.forms.widgets import Select2MultipleChoiceWidget
 
 from dimagi.utils.decorators.memoized import memoized
@@ -61,11 +61,12 @@ class CustomDataEditor(object):
     Tool to edit the data for a particular entity, like for an individual user.
     """
     def __init__(self, field_view, domain, existing_custom_data=None,
-                 post_dict=None, required_only=False):
+                 post_dict=None, required_only=False, angular_model=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
+        self.angular_model = angular_model
         self.form = self.init_form(post_dict)
 
     @property
@@ -102,7 +103,13 @@ class CustomDataEditor(object):
         for field in self.model.get_fields(required_only=self.required_only):
             fields[field.slug] = _make_field(field)
 
-        field_names = fields.keys()
+        if self.angular_model:
+            field_names = [
+                Field(field, ng_model="{}.{}".format(self.angular_model, field))
+                for field in fields.keys()
+            ]
+        else:
+            field_names = fields.keys()
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
