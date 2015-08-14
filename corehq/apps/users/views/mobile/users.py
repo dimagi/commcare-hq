@@ -56,7 +56,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -688,12 +688,25 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm()
 
     @property
+    @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+            required_only=True,
+            angular_model="mobileWorker",
+        )
+
+    @property
     def page_context(self):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
+            'custom_fields_form': self.custom_data.form,
         }
 
     @method_decorator(use_bootstrap3())
+    @method_decorator(use_select2())
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerView, self).dispatch(*args, **kwargs)
