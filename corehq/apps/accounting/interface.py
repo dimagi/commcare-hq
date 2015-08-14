@@ -473,8 +473,12 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info = BillingContactInfo()
 
             account_url = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
+            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             columns = [
-                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(invoice_url, invoice.invoice_number)),
+                    invoice.id,
+                ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_url, invoice.account.name)),
                     invoice.account.name
@@ -501,7 +505,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             if not self.is_rendered_as_email:
                 columns.extend([
                     mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
