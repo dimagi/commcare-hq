@@ -1145,6 +1145,27 @@ class TestFormLinking(SimpleTestCase, TestFileMixin):
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):
+        """
+        {
+            "m": [
+                {
+                    "name": "m0",  # also the module ID
+                    "type": "basic / advanced",
+                    "case_type": "foo",  # defaults to 'frog',
+                    "parent": "m1",  # name / ID of parent module
+                    "f": [
+                        {
+                            "name": "m0f0",
+                            "actions": {
+                                "action": "open / update / open_subcase",
+                                "case_type": "foo"  # only applicable to advanced modules
+                                "parent": "{open / update}_{case_type}"  # only applicable to advanced modules
+                        }
+                    ]
+                },
+            ]
+        }
+        """
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         app.build_spec = BuildSpec.from_string('2.9.0/latest')
         case_type = "frog"
