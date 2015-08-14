@@ -9,7 +9,7 @@ from corehq import Domain, privileges, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.es.queries import user_query_string
+from corehq.apps.es.queries import search_string_query
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
@@ -17,7 +17,6 @@ from corehq.apps.style.decorators import (
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 import langcodes
 from datetime import datetime
@@ -363,7 +362,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             "sort": {'username.exact': 'asc'},
         }
         default_fields = ["username", "last_name", "first_name"]
-        q["query"] = user_query_string(query, default_fields)
+        q["query"] = search_string_query(query, default_fields)
         return es_query(
             params={}, q=q, es_url=ES_URLS["users"],
             size=limit, start_at=skip,

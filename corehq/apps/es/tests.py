@@ -277,14 +277,14 @@ class TestQueries(TestCase):
         self.assertHasQuery(query, {"fancy_query": {"foo": "bar"}})
 
     def test_null_query_string_queries(self):
-        query = HQESQuery('forms').user_query_string("")
+        query = HQESQuery('forms').search_string_query("")
         self.assertHasQuery(query, {"match_all": {}})
 
-        query = HQESQuery('forms').user_query_string(None)
+        query = HQESQuery('forms').search_string_query(None)
         self.assertHasQuery(query, {"match_all": {}})
 
     def test_basic_query_string_query(self):
-        query = HQESQuery('forms').user_query_string("foo")
+        query = HQESQuery('forms').search_string_query("foo")
         self.assertHasQuery(query, {
             "query_string": {
                 "query": "*foo*",
@@ -295,7 +295,7 @@ class TestQueries(TestCase):
 
     def test_query_with_fields(self):
         default_fields = ['name', 'type', 'date']
-        query = HQESQuery('forms').user_query_string("foo", default_fields)
+        query = HQESQuery('forms').search_string_query("foo", default_fields)
         self.assertHasQuery(query, {
             "query_string": {
                 "query": "*foo*",
@@ -306,7 +306,8 @@ class TestQueries(TestCase):
 
     def test_complex_query_with_fields(self):
         default_fields = ['name', 'type', 'date']
-        query = HQESQuery('forms').user_query_string("name: foo", default_fields)
+        query = (HQESQuery('forms')
+                 .search_string_query("name: foo", default_fields))
         self.assertHasQuery(query, {
             "query_string": {
                 "query": "name: foo",

@@ -197,11 +197,13 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
-    def user_query_string(self, query, default_fields=None):
+    def search_string_query(self, search_string, default_fields=None):
         """
-        Accepts a user-defined query.
+        Accepts a user-defined search string
         """
-        return self.set_query(queries.user_query_string(query, default_fields))
+        return self.set_query(
+            queries.search_string_query(search_string, default_fields)
+        )
 
     def _assemble(self):
         """

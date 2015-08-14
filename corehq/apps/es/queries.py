@@ -8,30 +8,30 @@ def match_all():
     return {"match_all": {}}
 
 
-def _smart_query_string(query):
+def _smart_query_string(search_string):
     special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
                      '~', '*', '?', ':', '\\', '/']
     for char in special_chars:
-        if char in query:
-            return False, query
+        if char in search_string:
+            return False, search_string
     r = re.compile(r'\w+')
-    tokens = r.findall(query)
+    tokens = r.findall(search_string)
     return True, "*{}*".format("* *".join(tokens))
 
 
-def user_query_string(query, default_fields=None):
+def search_string_query(search_string, default_fields=None):
     """
-    If query does not use the ES query string syntax,
+    If search_string does not use the ES query string syntax,
     default to doing an infix search for each term.
     returns (is_simple, query)
     """
-    if not query:
+    if not search_string:
         return match_all()
 
-    is_simple, query = _smart_query_string(query)
+    is_simple, query_string = _smart_query_string(search_string)
     return {
         "query_string": {
-            "query": query,
+            "query": query_string,
             "default_operator": "AND",
             "fields": default_fields if is_simple else None
         }

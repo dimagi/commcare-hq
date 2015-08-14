@@ -32,8 +32,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.es import UserES
-from corehq.apps.es.queries import user_query_string
+from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
@@ -382,7 +381,7 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
             "sort": {'username.exact': 'asc'},
         }
         default_fields = ["username.exact", "last_name", "first_name"]
-        q["query"] = user_query_string(query, default_fields)
+        q["query"] = search_string_query(self.query, default_fields)
         params = {
             "domain": self.domain,
             "is_active": not self.show_inactive,
