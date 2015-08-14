@@ -1,5 +1,5 @@
 DOMAIN_INDEX = "hqdomains_20150814_1658"
-DOMAIN_MAPPING={'_meta': {'comment': 'Farid modified on 5/12/2015',
+DOMAIN_MAPPING={'_meta': {'comment': 'Jenny modified on 8/14/2015',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
