@@ -50,9 +50,6 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-    #  - template-apps+icds/scheduler # Farid 8/6
-  - template-apps+due-list+icds/scheduler # TS 8/10
-  - template-apps # Jenny, July 20
   - FormArchive # Sravan 7/22
   - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
