@@ -7,13 +7,15 @@
 {% block js %}
 <script type="text/javascript"
         src="{% new_static 'style/js/pagination.ng.js' %}"></script>
+<script type="text/javascript"
+        src="{% new_static 'users/js/mobile_workers.ng.js' %}"></script>
 {% endblock %}
 
-{% block uncompressed-js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
 (function (angular, undefined) {
     'use strict';
-    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination']);
+    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers']);
     mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
     }]);
@@ -26,6 +28,14 @@
 
 {% block page_content %}
     <div ng-app="mobileWorkerApp">
+        <div ng-controller="newMobileWorkerFormController">
+            <button type="button"
+                    class="btn btn-success"
+                    ng-click="initializeMobileWorker({username: 'heljsfdljds', password: 'lsdfjs', password2: 'sldfjs', domain: 'sdlsjf', customFields: {foo: 'bar'}})">
+                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+            </button>
+            {% crispy new_mobile_worker_form %}
+        </div>
         <div class="panel panel-default" ng-controller="paginatedListController">
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
