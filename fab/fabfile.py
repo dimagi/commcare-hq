@@ -786,24 +786,6 @@ def clean_releases(keep=3):
 
 
 @task
-@roles(ROLES_ALL_SRC)
-def rollback():
-    releases = iter(sudo('ls {}'.format(env.releases)))
-    current_release = sudo('readlink {}'.format(env.code_current))
-
-    for release in releases:
-        if release == current_release:
-            break
-    try:
-        rollback_release = next(releases)
-    except StopIteration:
-        print 'No release to rollback to'
-        exit()
-
-    update_current(rollback_release)
-
-
-@task
 def force_update_static():
     _require_target()
     execute(_do_collectstatic)
