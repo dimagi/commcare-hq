@@ -47,7 +47,9 @@
 <legend>
     {% trans "Filtering and Sorting" %}
 </legend>
-
+{% if module.has_schedule %}
+<div class="label label-info">{% trans "Note: Form filters are disabled for scheduler modules" %}</div>
+{% else %}
 <div data-bind="with: filter">
 
     <div class="control-group">
@@ -91,6 +93,7 @@
     </div>
 
 </div>
+{% endif %}
 
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}

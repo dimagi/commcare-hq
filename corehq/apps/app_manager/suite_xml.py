@@ -2266,7 +2266,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
                             # If there is a schedule and another filter condition, disregard it...
                             # Other forms of filtering are disabled in the UI
-                            # TODO: disable filtering in the UI
+
                             schedule_filter_condition = self._schedule_filter_conditions(form, module, case)
                             if schedule_filter_condition is not None:
                                 command.relevant = schedule_filter_condition
