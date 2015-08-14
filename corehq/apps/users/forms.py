@@ -375,9 +375,11 @@ class NewMobileWorkerForm(forms.Form):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
         self.helper.layout = Layout(
             Fieldset(
-                _('Create new Mobile Worker account'),
+                _('Basic Information'),
                 crispy.Field('username', ng_model='mobileWorker.username'),
                 crispy.Field('password', ng_model='mobileWorker.password'),
                 crispy.Field('password_2', ng_model='mobileWorker.password2'),

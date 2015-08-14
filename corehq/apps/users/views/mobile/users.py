@@ -763,6 +763,13 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'success': True,
         }
 
+    @allow_remote_invocation
+    def create_mobile_worker(self, in_data):
+        print in_data
+        return {
+            'success': True,
+        }
+
 
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
 # be going away soon, so I didn't bother to abstract out the commonalities.
