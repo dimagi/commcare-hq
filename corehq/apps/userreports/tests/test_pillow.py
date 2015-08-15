@@ -2,12 +2,38 @@ import decimal
 import uuid
 from django.test import TestCase
 from mock import patch
-from datetime import datetime
+from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
+from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+
+
+class PillowBootstrapTest(TestCase):
+
+    def test_needs_bootstrap_on_initialization(self):
+        pillow = ConfigurableIndicatorPillow()
+        self.assertTrue(pillow.needs_bootstrap())
+
+    def test_bootstrap_sets_time(self):
+        before_now = datetime.utcnow() - timedelta(microseconds=1)
+        pillow = ConfigurableIndicatorPillow()
+        pillow.bootstrap([])
+        after_now = datetime.utcnow() + timedelta(microseconds=1)
+        self.assertTrue(pillow.bootstrapped)
+        self.assertTrue(before_now < pillow.last_bootstrapped)
+        self.assertTrue(after_now > pillow.last_bootstrapped)
+        self.assertFalse(pillow.needs_bootstrap())
+
+    def test_needs_bootstrap_window(self):
+        before_now = datetime.utcnow() - timedelta(microseconds=1)
+        pillow = ConfigurableIndicatorPillow()
+        pillow.bootstrap([])
+        pillow.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
+        self.assertFalse(pillow.needs_bootstrap())
+        pillow.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL)
+        self.assertTrue(pillow.needs_bootstrap())
 
 
 class IndicatorPillowTest(TestCase):

@@ -332,8 +332,9 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         update_product_availability_facility_data(org_summary)
 
         # alerts
-        populate_no_primary_alerts(facility, window_date)
-        populate_facility_stockout_alerts(facility, window_date)
+        with transaction.atomic():
+            populate_no_primary_alerts(facility, window_date)
+            populate_facility_stockout_alerts(facility, window_date)
 
 
 @transaction.atomic

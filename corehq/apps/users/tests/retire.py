@@ -5,9 +5,10 @@ import uuid
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 
 
 class RetireUserTestCase(TestCase):
@@ -29,6 +30,42 @@ class RetireUserTestCase(TestCase):
             user.delete()
         delete_all_cases()
         delete_all_xforms()
+
+    def test_deleted_indices_removed(self):
+        factory = CaseFactory(
+            self.domain,
+            case_defaults={
+                'user_id': self.commcare_user._id,
+                'owner_id': self.commcare_user._id,
+                'case_type': 'a-case',
+                'create': True,
+            },
+        )
+        # create a parent/child set of cases
+        parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
+        child, parent = factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            relationships=[
+                CaseRelationship(CaseStructure(case_id=parent_id))
+            ]
+        ))
+        # confirm the child has an index, and 1 form
+        self.assertEqual(1, len(child.indices))
+        self.assertEqual(parent_id, child.indices[0].referenced_id)
+        self.assertEqual(1, len(child.xform_ids))
+
+        # simulate parent deletion
+        parent.doc_type = 'CommCareCase-Deleted'
+        parent.save()
+
+        # call the remove index task
+        remove_indices_from_deleted_cases(self.domain, [parent_id])
+
+        # check that the index is removed via a new form
+        child = CommCareCase.get(child_id)
+        self.assertEqual(0, len(child.indices))
+        self.assertEqual(2, len(child.xform_ids))
+
 
     @mock.patch("casexml.apps.case.cleanup.rebuild_case")
     def test_rebuild_cases_with_new_owner(self, rebuild_case):

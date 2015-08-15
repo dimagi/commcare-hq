@@ -63,4 +63,10 @@ def user_ids(user_ids):
 
 
 def location(location_id):
-    return filters.term('location_id', location_id)
+    return filters.OR(
+        filters.AND(mobile_users(), filters.term('location_id', location_id)),
+        filters.AND(
+            web_users(),
+            filters.term('domain_memberships.location_id', location_id)
+        ),
+    )

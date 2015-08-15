@@ -17,6 +17,8 @@ from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
+from .dbaccessors import get_all_users_by_location
+
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
@@ -147,6 +149,16 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
 
+    def get_from_user_input(self, domain, user_input):
+        """
+        First check by site-code, if that fails, fall back to name.
+        Note that name lookup may raise MultipleObjectsReturned.
+        """
+        try:
+            return self.get(domain=domain, site_code=user_input)
+        except self.model.DoesNotExist:
+            return self.get(domain=domain, name__iexact=user_input)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -173,6 +185,10 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+
+    @property
+    def get_id(self):
+        return self.location_id
 
     @property
     def products(self):
@@ -228,13 +244,11 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def _make_group_object(self, user_id, case_sharing):
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
+    def get_path_display(self):
+        return '/'.join(self.get_ancestors(include_self=True)
+                            .values_list('name', flat=True))
 
+    def _make_group_object(self, user_id, case_sharing):
         from corehq.apps.groups.models import UnsavableGroup
 
         g = UnsavableGroup()
@@ -243,13 +257,13 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.utcnow()
 
         if case_sharing:
-            g.name = group_name() + '-Cases'
+            g.name = self.get_path_display() + '-Cases'
             g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
             # reporting groups
-            g.name = group_name()
+            g.name = self.get_path_display()
             g._id = LOCATION_REPORTING_PREFIX + self.location_id
             g.case_sharing = False
             g.reporting = True
@@ -483,11 +497,13 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and not sp.closed:
             close_case(sp._id, self.domain, COMMTRACK_USERNAME)
 
+        _unassign_users_from_location(self.domain, self._id)
+
     def archive(self):
         """
         Mark a location and its dependants as archived.
-        This will cause it (and its data) to not show up in default
-        Couch and SQL views.
+        This will cause it (and its data) to not show up in default Couch and
+        SQL views.  This also unassigns users assigned to the location.
         """
         for loc in [self] + self.descendants:
             loc._archive_single_location()
@@ -665,3 +681,14 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_object(self):
         return self._sql_location_type or self.sql_location.location_type
+
+
+def _unassign_users_from_location(domain, location_id):
+    """
+    Unset location for all users assigned to that location.
+    """
+    for user in get_all_users_by_location(domain, location_id):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()

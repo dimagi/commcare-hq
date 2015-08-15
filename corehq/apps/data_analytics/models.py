@@ -15,7 +15,8 @@ class MALTRow(models.Model):
     user_id = models.TextField()
     username = models.TextField()
     email = models.EmailField()
-    is_web_user = models.BooleanField(default=False)
+    user_type = models.TextField()
+
     domain_name = models.TextField(db_index=True)
     num_of_forms = models.PositiveIntegerField()
     app_id = models.TextField()

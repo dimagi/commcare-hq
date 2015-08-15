@@ -20,6 +20,7 @@ class LeadTimeHistory(ILSData):
     title = "Lead Time History"
     slug = "lead_time_history"
     show_chart = False
+    searchable = True
 
     @property
     def headers(self):
@@ -63,6 +64,7 @@ class DeliveryStatus(ILSData):
     show_table = True
     slug = "delivery_status"
     show_chart = False
+    searchable = True
 
     def __init__(self, config=None, css_class='row_chart'):
         super(DeliveryStatus, self).__init__(config, css_class)
@@ -117,7 +119,7 @@ class DeliveryStatus(ILSData):
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s&'
                            'datespan_type=%s&datespan_first=%s&datespan_second=%s',
-                           (self.config['location_id'],
+                           (child.location_id,
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
@@ -146,6 +148,7 @@ class DeliveryData(ILSData):
     show_chart = False
     slug = 'delivery_data'
     title = 'Delivery Data'
+    searchable = True
 
     @property
     def headers(self):

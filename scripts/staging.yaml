@@ -50,21 +50,20 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-  - template-apps # Jenny, July 20
-  - opbeat # Simon 7/22
   - FormArchive # Sravan 7/22
-  - due-list+icds/scheduler # TS 7/30
-  - icds/scheduler # Farid 7/22
+  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
-  - notify-exception-code-context  # Ben 7/30
-  - due-list # TS 7/30
+#  - due-list # TS 7/30
+  - django17 # J$ 8/5
+  - one-true-commtrack  # Ethan 8/6
+  - extension_cases  # Norman 8/8
+  - new-mobile-workers  # Ethan 8/11
+  - quickcache-user-roles  # Ethan 8/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - django17
-      - revert-148-revert-147-2.22_jars  # cz 7/23. also love this branch name.
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -72,11 +71,14 @@ submodules:
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
-    branches:
-      - django17
+    branches: []
   submodules/pillowtop-src:
-    branches:
-      - django17
+    branches: []
+  submodules/dimagi-utils-src:
+    branches: []
   submodules/django-soil-src:
     branches: []
+  submodules/django-prbac-src:
+    branches:
+      - django18
 
