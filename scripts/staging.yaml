@@ -59,6 +59,7 @@ branches:
 #  - extension_cases  # Norman 8/8
   - new-mobile-workers  # Ethan 8/11
   - quickcache-user-roles  # Ethan 8/13
+  - revert-7867-revert-7745-upgrade-redis # Ben 8/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -73,9 +74,11 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches:
+      - revert-122-revert-121-upgrade-redis # Ben 8/17
   submodules/dimagi-utils-src:
-    branches: []
+    branches:
+      - revert-304-revert-301-upgrade-redis # Ben 8/17
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
