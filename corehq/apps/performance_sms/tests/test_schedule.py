@@ -3,7 +3,8 @@ import random
 from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.apps.performance_sms.models import (DAILY, WEEKLY, MONTHLY, PerformanceConfiguration,
-                                                DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY)
+                                                DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY,
+                                                ScheduleConfiguration)
 from corehq.apps.performance_sms.utils import get_message_configs_at_this_hour
 
 
@@ -58,15 +59,18 @@ def _make_time(hours=None, day_of_week=None, day_of_month=None):
         return datetime(2013, random.choice(range(1, 13)), day_of_month)
 
 
-def _make_performance_config(domain, interval, hour=DEFAULT_HOUR, day_of_week=DEFAULT_WEEK_DAY, day_of_month=DEFAULT_MONTH_DAY):
+def _make_performance_config(domain, interval, hour=DEFAULT_HOUR, day_of_week=DEFAULT_WEEK_DAY,
+                             day_of_month=DEFAULT_MONTH_DAY):
     config = PerformanceConfiguration(
         domain=domain,
         recipient_id=uuid.uuid4().hex,
         template='test',
-        interval=interval,
-        hour=hour,
-        day_of_week=day_of_week,
-        day_of_month=day_of_month,
+        schedule=ScheduleConfiguration(
+            interval=interval,
+            hour=hour,
+            day_of_week=day_of_week,
+            day_of_month=day_of_month,
+        )
     )
     config.save()
     return config
