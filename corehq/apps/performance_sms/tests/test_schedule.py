@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.performance_sms.models import (DAILY, WEEKLY, MONTHLY, PerformanceConfiguration,
                                                 DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY,
                                                 ScheduleConfiguration)
-from corehq.apps.performance_sms.utils import get_message_configs_at_this_hour
+from corehq.apps.performance_sms.schedule import get_message_configs_at_this_hour
 
 
 class TestSchedule(TestCase):
