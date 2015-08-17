@@ -6,6 +6,7 @@ from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
+import stripe
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -278,6 +279,7 @@ class BillingAccount(models.Model):
         default=EntryPoint.NOT_SET,
         choices=EntryPoint.CHOICES,
     )
+    auto_pay_user = models.CharField(max_length=80, null=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -287,6 +289,10 @@ class BillingAccount(models.Model):
     def balance(self):
         # todo compute
         return 0.0
+
+    @property
+    def auto_pay_enabled(self):
+        return self.auto_pay_user is not None
 
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
@@ -339,6 +345,22 @@ class BillingAccount(models.Model):
                 account_type=BillingAccountType.TRIAL
             ).filter(created_by_domain=domain).latest('date_created')
         return None
+
+    def update_autopay_user(self, new_user):
+        """
+        Updates the autopay user
+
+        Triggers an email if there was a previous user
+        """
+        if self.auto_pay_enabled:
+            # send email to old user
+            pass
+        self.auto_pay_user = new_user
+        self.save()
+
+    def remove_autopay_user(self):
+        self.auto_pay_user = None
+        self.save()
 
 
 class BillingContactInfo(models.Model):
@@ -2352,6 +2374,111 @@ class PaymentMethod(models.Model):
 
     class Meta:
         app_label = 'accounting'
+
+
+class StripePaymentMethod(PaymentMethod):
+    """ Do stuff with Stripe  """
+    class Meta:
+        proxy = True
+
+    @property
+    @memoized
+    def customer(self):
+        return self._get_or_create_stripe_customer()
+
+    def _get_or_create_stripe_customer(self):
+        customer = None
+        if self.customer_id is not None:
+            try:
+                customer = self._get_stripe_customer()
+            except stripe.InvalidRequestError:
+                pass
+        if customer is None:
+            customer = self._create_stripe_customer()
+        return customer
+
+    def _create_stripe_customer(self):
+        customer = stripe.Customer.create(
+            description="{}'s cards".format(self.web_user),
+            email=self.web_user,
+        )
+        self.customer_id = customer.id
+        self.save()
+        return customer
+
+    def _get_stripe_customer(self):
+        return stripe.Customer.retrieve(self.customer_id)
+
+    def get_card(self, card_token):
+        return self.customer.cards.retrieve(card_token)
+
+    def get_autopay_card(self, billing_account):
+        return next((card for card in self.customer.cards
+                     if card.metadata[self._auto_pay_card_metadata_key(billing_account)] is True), None)
+
+    def remove_card(self, card):
+        return self.get_card(card).delete()
+
+    def create_card(self, stripe_token, billing_account, autopay=False):
+        card = self.customer.cards.create(card=stripe_token)
+        self.set_default_card(card)
+        if autopay:
+            self.set_autopay(card, billing_account)
+        return card
+
+    def set_default_card(self, card, save=True):
+        self.customer.default_card = card
+        if save:
+            self.customer.save()
+        return card
+
+    def set_autopay(self, card, billing_account):
+        """
+        Sets the auto_pay status on the card for a billing account
+
+        If there are other cards that auto_pay for that billing account, remove them
+        """
+        self._update_autopay_status(card, billing_account, autopay=True)
+
+        if billing_account.auto_pay_enabled:
+            self._remove_other_auto_pay_cards(billing_account)
+
+        billing_account.update_autopay_user(self.web_user)
+
+    def unset_autopay(self, card, billing_account):
+        """
+        Unsets the auto_pay status for this card, and removes it from the billing account
+        """
+        if card.metadata[self._auto_pay_card_metadata_key(billing_account)] is True:
+            self._update_autopay_status(card, billing_account, autopay=False)
+            billing_account.remove_autopay_user()
+
+    def _update_autopay_status(self, card, billing_account, autopay, save=True):
+        card.metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
+        if save:
+            card.save()
+
+    def _remove_autopay_card(self, billing_account):
+        autopay_card = self.get_autopay_card(billing_account)
+        if autopay_card is not None:
+            self._update_autopay_status(autopay_card, billing_account, autopay=False)
+
+    def _remove_other_auto_pay_cards(self, billing_account):
+        user = billing_account.auto_pay_user
+        try:
+            other_payment_method = StripePaymentMethod.objects.get(web_user=user)
+            other_payment_method._remove_autopay_card(billing_account)
+        except StripePaymentMethod.DoesNotExist:
+            pass
+
+    def _auto_pay_card_metadata_key(self, billing_account):
+        """
+        Returns the autopay key for the billing account
+
+        Cards can be used to autopay for multiple billing accounts. This is stored in the `metadata` property
+        on the card: {metadata: {auto_pay_{billing_account_id_1}: True, auto_pay_{billing_account_id_2}: False}}
+        """
+        return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
 
 class PaymentRecord(models.Model):

@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
     PaymentRecord,
     SoftwareProductType,
     FeatureType,
+    PaymentMethod,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -19,22 +20,6 @@ from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 logger = logging.getLogger('accounting')
-
-def get_or_create_stripe_customer(payment_method):
-    customer = None
-    if payment_method.customer_id is not None:
-        try:
-            customer = stripe.Customer.retrieve(payment_method.customer_id)
-        except stripe.InvalidRequestError:
-            pass
-    if customer is None:
-        customer = stripe.Customer.create(
-            description="{}'s cards".format(payment_method.web_user),
-            email=payment_method.web_user,
-        )
-    payment_method.customer_id = customer.id
-    payment_method.save()
-    return customer
 
 
 class BaseStripePaymentHandler(object):
@@ -87,6 +72,9 @@ class BaseStripePaymentHandler(object):
         remove_card = request.POST.get('removeCard')
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         save_card = request.POST.get('saveCard') and not is_saved_card
+        autopay = request.POST.get('autoPay')
+        customer = self.payment_method.customer
+        billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
                 'message': _(
@@ -98,34 +86,12 @@ class BaseStripePaymentHandler(object):
         }
         try:
             if remove_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
-                customer.cards.retrieve(card).delete()
-                return {
-                    'success': True,
-                    'removedCard': card,
-                }
+                self.payment_method.remove_card(card)
+                return {'success': True, 'removedCard': card, }
             if save_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
-                card = customer.cards.create(card=card)
-                customer.default_card = card
-                customer.save()
-                card = card
-            if is_saved_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
+                card = self.payment_method.create_card(card, billing_account, autopay=autopay)
+
             charge = self.create_charge(amount, card=card, customer=customer)
-            payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id, amount
-            )
-            self.update_credits(payment_record)
-            try:
-                self.send_email(payment_record)
-            except Exception:
-                logger.error(
-                    "[BILLING] Failed to send out an email receipt for "
-                    "payment related to PaymentRecord No. %s. "
-                    "Everything else succeeded."
-                    % payment_record.id, exc_info=True
-                )
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -151,6 +117,23 @@ class BaseStripePaymentHandler(object):
                     'error_msg': e,
                 }, exc_info=True)
             return generic_error
+
+        payment_record = PaymentRecord.create_record(
+            self.payment_method, charge.id, amount
+        )
+
+        self.update_credits(payment_record)
+
+        try:
+            self.send_email(payment_record)
+        except Exception:
+            logger.error(
+                "[BILLING] Failed to send out an email receipt for "
+                "payment related to PaymentRecord No. %s. "
+                "Everything else succeeded."
+                % payment_record.id, exc_info=True
+            )
+
         return {
             'success': True,
             'card': card,

@@ -58,7 +58,8 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    StripePaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -952,7 +953,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
             )
 
     def get_or_create_payment_method(self):
-        return PaymentMethod.objects.get_or_create(
+        return StripePaymentMethod.objects.get_or_create(
             web_user=self.domain_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
