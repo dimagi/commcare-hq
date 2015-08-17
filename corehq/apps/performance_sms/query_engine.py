@@ -2,13 +2,13 @@ from collections import namedtuple, defaultdict
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form
 from corehq.apps.performance_sms.exceptions import QueryResolutionError, MissingTemplateError
-from corehq.apps.performance_sms.parser import GLOBAL_NAMESPACE, USER_NAMESPACE
+from corehq.apps.performance_sms.parser import GLOBAL_NAMESPACE, USER_NAMESPACE, GROUP_NAMESPACE
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.apps.sofabed.models import FormData
 from dimagi.utils.decorators.memoized import memoized
 
 
-QueryContext = namedtuple('MessageContext', ['user', 'template_vars'])
+QueryContext = namedtuple('MessageContext', ['user', 'group', 'template_vars'])
 
 
 class Resolver(object):
@@ -26,6 +26,15 @@ class UserResolver(Resolver):
             raise QueryResolutionError(_("Couldn't resolve variable {}").format(variable))
 
 
+class GroupResolver(Resolver):
+
+    def resolve(self, variable, context):
+        try:
+            return getattr(context.group, variable)
+        except AttributeError:
+            raise QueryResolutionError(_("Couldn't resolve variable {}").format(variable))
+
+
 class TemplateResolver(Resolver):
 
     def resolve(self, variable, context):
@@ -38,8 +47,9 @@ class QueryEngine(object):
     def __init__(self, template_vars):
         self.template_vars = template_vars
         self.resolvers = {
+            GLOBAL_NAMESPACE: TemplateResolver(),
             USER_NAMESPACE: UserResolver(),
-            GLOBAL_NAMESPACE: TemplateResolver()
+            GROUP_NAMESPACE: GroupResolver(),
         }
 
     @memoized

@@ -13,7 +13,7 @@ def send_messages_for_config(config, actually_send=True):
     sent_messages = []
     for user in config.group.get_users():
         if user.phone_number:
-            query_context = QueryContext(user, template_vars=config.template_variables)
+            query_context = QueryContext(user, config.group, template_vars=config.template_variables)
             message_context = query_engine.get_context(params, query_context)
             message = config.template.format(**message_context)
             if actually_send:
