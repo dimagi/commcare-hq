@@ -1,6 +1,6 @@
 from datetime import datetime
 from . import dbaccessors
-from .models import DAILY, WEEKLY, MONTHLY, DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY
+from .models import DAILY, WEEKLY, MONTHLY
 
 
 def get_message_configs_at_this_hour(as_of=None):

@@ -1,5 +1,4 @@
 import uuid
-import random
 from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.apps.performance_sms.dbaccessors import delete_all_configs
