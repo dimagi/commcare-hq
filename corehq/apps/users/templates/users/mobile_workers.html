@@ -22,6 +22,9 @@
     mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
+    mobileWorkerApp.constant('formStrings', {
+        checkingUsername: "{% trans "Checking username" %}"
+    });
 }(window.angular));
 </script>
 {% endblock %}
@@ -84,6 +87,18 @@
             <h1>Pending</h1>
             <ul>
                 <li ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
+                    {{ worker.username }}
+                </li>
+            </ul>
+            <h1>Success</h1>
+            <ul>
+                <li ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
+                    {{ worker.username }}
+                </li>
+            </ul>
+            <h1>Error</h1>
+            <ul>
+                <li ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
                     {{ worker.username }}
                 </li>
             </ul>
