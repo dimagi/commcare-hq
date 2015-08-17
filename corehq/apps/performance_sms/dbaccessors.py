@@ -12,7 +12,8 @@ def by_domain(domain):
 
 def by_interval(interval_keys):
     return list(PerformanceConfiguration.view(
-        'performance_sms/all_configs',
+        'performance_sms/by_schedule',
         key=interval_keys,
-        include_docs=True
+        reduce=False,
+        include_docs=True,
     ))
