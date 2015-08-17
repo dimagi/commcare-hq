@@ -10,17 +10,17 @@ def get_message_configs_at_this_hour(as_of=None):
 
 def get_daily_messages(as_of):
     return dbaccessors.by_interval([
-        DAILY, as_of.hour, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY
+        DAILY, as_of.hour
     ])
 
 
 def get_weekly_messages(as_of):
     return dbaccessors.by_interval([
-        WEEKLY, DEFAULT_HOUR, as_of.weekday(), DEFAULT_MONTH_DAY
+        WEEKLY, as_of.weekday(), as_of.hour
     ])
 
 
 def get_monthly_messages(as_of):
     return dbaccessors.by_interval([
-        MONTHLY, DEFAULT_HOUR, DEFAULT_WEEK_DAY, as_of.day
+        MONTHLY, as_of.day, as_of.hour
     ])
