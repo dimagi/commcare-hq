@@ -42,17 +42,20 @@
     ) {
         $scope.mobileWorker = {};
 
-        var $username_element = $('#id_username').parent();
+        var $usernameElement = $('#id_username').parent();
+        var $passwordElement = $('#id_password_2').parent();
 
-        var clearStatus = function () {
+        var clearUsernameStatus = function () {
             $scope.usernameAvailable = null;
             $scope.usernameTaken = null;
             $scope.usernamePending = null;
-            $username_element.removeClass("has-warning has-error has-success");
+            $usernameElement.removeClass("has-warning has-error has-success");
         };
 
         $scope.initializeMobileWorker = function () {
-            clearStatus();
+            clearUsernameStatus();
+            $passwordElement.removeClass("has-error has-success");
+            $scope.isPasswordValid = true;
             $scope.mobileWorker = new MobileWorker({});
         };
 
@@ -62,27 +65,41 @@
         };
 
         $scope.checkUsername = function () {
-            clearStatus();
+            clearUsernameStatus();
             $scope.usernamePending = formStrings.checkingUsername;
-            $username_element.addClass("has-warning");
+            $usernameElement.addClass("has-warning");
             djangoRMI.check_username({
                 username: $scope.mobileWorker.username
             })
             .success(function (data) {
-                clearStatus();
+                clearUsernameStatus();
                 if (!!data.success) {
                     $scope.usernameAvailable = data.success;
-                    $username_element.addClass("has-success");
+                    $usernameElement.addClass("has-success");
                 } else {
-                    $username_element.addClass("has-error");
+                    $usernameElement.addClass("has-error");
                     $scope.usernameTaken = data.error;
                 }
             })
             .error(function (data) {
                 // TODO
-                clearStatus();
+                clearUsernameStatus();
                 console.log(data);
             });
+        };
+
+        $scope.checkPassword = function () {
+            if ($scope.mobileWorker.password !== $scope.mobileWorker.password2) {
+                $scope.isPasswordValid = false;
+                $passwordElement
+                    .removeClass("has-success")
+                    .addClass("has-error");
+            } else {
+                $scope.isPasswordValid = true;
+                $passwordElement
+                    .removeClass("has-error")
+                    .addClass("has-success");
+            }
         };
 
     };
