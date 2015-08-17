@@ -561,7 +561,8 @@ def preindex_views():
 @parallel
 def update_code():
     with cd(env.code_current):
-        submodules = sudo("git submodule | awk '{ print $2 }'").split()
+        if files.exists(env.code_current):
+            submodules = sudo("git submodule | awk '{ print $2 }'").split()
     with cd(env.code_root):
         if files.exists(env.code_current):
             local_submodule_clone = []
@@ -580,10 +581,8 @@ def update_code():
                 env.code_root
             ))
             sudo('git remote set-url origin {}'.format(env.code_repo))
-            exit()
-
         else:
-            sudo('git clone --recursive {} {}'.format(env.code_repo, env.code_root))
+            sudo('git clone {} {}'.format(env.code_repo, env.code_root))
 
         sudo('git remote prune origin')
         sudo('git fetch')
@@ -803,12 +802,17 @@ def copy_tf_localsettings():
 @task
 @roles(ROLES_ALL_SRC)
 def clean_releases(keep=3):
-    releases = sudo('ls {}'.format(env.releases))
+    releases = sudo('ls {}'.format(env.releases)).split()
+    current_release = os.path.basename(sudo('readlink {}'.format(env.code_current)))
+
     to_remove = []
     valid_releases = 0
     with cd(env.root):
         for index, release in enumerate(releases):
-            if files.contains(RELEASE_RECORD, release):
+            print release
+            if (files.contains(RELEASE_RECORD, release) or
+                    release == current_release or
+                    release == os.path.basename(env.code_root)):
                 valid_releases += 1
                 if valid_releases > keep:
                     to_remove.append(release)
@@ -816,16 +820,20 @@ def clean_releases(keep=3):
                 # cleans all releases that were not successful deploys
                 to_remove.append(release)
 
-    if len(to_remove) == len(release):
+    if len(to_remove) == len(releases):
         print 'Aborting, about to remove every release'
         exit()
 
+    print 'root: {}'.format(os.path.basename(env.code_root))
     if os.path.basename(env.code_root) in to_remove:
         print 'Aborting, about to remove current release'
         exit()
 
+    print releases
+    print to_remove
     for release in to_remove:
-        sudo('rm -rf {}{}'.format(env.releases, release))
+        pass
+        #sudo('rm -rf {}/{}'.format(env.releases, release))
 
 
 @task
