@@ -14,6 +14,10 @@
         SUCCESS: 'success'
     };
 
+    mobileWorkers.constant('formStrings', {
+        checkingUsername: 'Checking username'
+    });
+
     var MobileWorker = function (data) {
         var self = this;
         self.creationStatus = STATUS.NEW;
@@ -34,15 +38,53 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.newMobileWorkerFormController = function (
-            $scope, workerCreationService
+            $scope, workerCreationService, djangoRMI, formStrings
     ) {
         $scope.mobileWorker = {};
+
+        var $username_element = $('#id_username').parent();
+
+        var clearStatus = function () {
+            $scope.usernameAvailable = null;
+            $scope.usernameTaken = null;
+            $scope.usernamePending = null;
+            $username_element.removeClass("has-warning has-error has-success");
+        };
+
         $scope.initializeMobileWorker = function () {
+            clearStatus();
             $scope.mobileWorker = new MobileWorker({});
         };
+
         $scope.submitNewMobileWorker = function () {
             workerCreationService.stageNewMobileWorker($scope.mobileWorker);
+            $("#newMobileWorkerModal").modal('hide');
         };
+
+        $scope.checkUsername = function () {
+            clearStatus();
+            $scope.usernamePending = formStrings.checkingUsername;
+            $username_element.addClass("has-warning");
+            djangoRMI.check_username({
+                username: $scope.mobileWorker.username
+            })
+            .success(function (data) {
+                clearStatus();
+                if (!!data.success) {
+                    $scope.usernameAvailable = data.success;
+                    $username_element.addClass("has-success");
+                } else {
+                    $username_element.addClass("has-error");
+                    $scope.usernameTaken = data.error;
+                }
+            })
+            .error(function (data) {
+                // TODO
+                clearStatus();
+                console.log(data);
+            });
+        };
+
     };
 
     mobileWorkerControllers.newMobileWorkerStatusController = function (

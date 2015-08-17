@@ -365,8 +365,24 @@ else:
     validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
+_username_help = """
+<span ng-show="!!usernamePending">
+    <i class="fa fa-circle-o-notch fa-spin"></i>
+    {{ usernamePending }}
+</span>
+<span ng-show="!!usernameAvailable">
+    <i class="fa fa-check"></i>
+    {{ usernameAvailable }}
+</span>
+<span ng-show="!!usernameTaken">
+    <i class="fa fa-remove"></i>
+    {{ usernameTaken }}
+</span>
+"""
+
+
 class NewMobileWorkerForm(forms.Form):
-    username = forms.CharField(max_length=80, required=True)
+    username = forms.CharField(max_length=80, required=True, help_text=_username_help)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
@@ -380,7 +396,9 @@ class NewMobileWorkerForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
-                crispy.Field('username', ng_model='mobileWorker.username'),
+                crispy.Field('username',
+                             ng_blur='checkUsername()',
+                             ng_model='mobileWorker.username'),
                 crispy.Field('password', ng_model='mobileWorker.password'),
                 crispy.Field('password_2', ng_model='mobileWorker.password2'),
             )
