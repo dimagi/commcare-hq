@@ -4,6 +4,7 @@ from . import cases
 from . import domains
 from . import forms
 from . import users
+from . import queries
 
 CaseES = cases.CaseES
 DomainES = domains.DomainES
