@@ -565,7 +565,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id)
-        return data_source_config._id
+        return data_source_config
 
     def update_report(self):
         from corehq.apps.userreports.views import delete_data_source_shared
@@ -575,12 +575,12 @@ class ConfigureNewReportBase(forms.Form):
             if matching_data_source['id'] != self.existing_report.config_id:
 
                 # If no one else is using the current data source, delete it.
-                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
-                if data_source.get_report_count() <= 1:
-                    delete_data_source_shared(self.domain, data_source._id)
+                current_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+                if current_data_source.get_report_count() <= 1:
+                    delete_data_source_shared(self.domain, current_data_source._id)
 
                 self.existing_report.config_id = matching_data_source['id']
-
+            data_source = DataSourceConfiguration.get(self.existing_report.config_id)
         else:
             # We need to create a new data source
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
@@ -598,10 +598,10 @@ class ConfigureNewReportBase(forms.Form):
                     "data source (or the data source itself) and try again. "
                 ))
 
-            data_source_config_id = self._build_data_source()
-            self.existing_report.config_id = data_source_config_id
+            data_source = self._build_data_source()
+            self.existing_report.config_id = data_source._id
 
-        self.existing_report.aggregation_columns = self._report_aggregation_cols
+        self.existing_report.aggregation_columns = self.get_report_aggregation_cols(data_source)
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
@@ -617,13 +617,14 @@ class ConfigureNewReportBase(forms.Form):
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
         else:
-            data_source_config_id = self._build_data_source()
+            data_source = self._build_data_source()
+            data_source_config_id = data_source._id
 
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
             title=self.report_name,
-            aggregation_columns=self._report_aggregation_cols,
+            aggregation_columns=self.get_report_aggregation_cols(data_source),
             columns=self._report_columns,
             filters=self._report_filters,
             configured_charts=self._report_charts,
@@ -709,8 +710,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         return column_id in self._properties_by_column
 
-    @property
-    def _report_aggregation_cols(self):
+    def get_report_aggregation_cols(self, data_source):
         return ['doc_id']
 
     @property
@@ -797,8 +797,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     def aggregation_field(self):
         return self.cleaned_data["group_by"]
 
-    @property
-    def _report_aggregation_cols(self):
+    def get_report_aggregation_cols(self, data_source):
+        # Inspect data_source.indicators.indicators and call 'get_columns()' on the appropriate one
         return [
             self.data_source_properties[self.aggregation_field]['column_id']
         ]
@@ -911,8 +911,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             }
         return [_make_column(conf) for conf in self.cleaned_data['columns']]
 
-    @property
-    def _report_aggregation_cols(self):
+    def get_report_aggregation_cols(self, data_source):
         return ['doc_id']
 
 
@@ -979,9 +978,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             return [c for c in columns if c.property not in agg_properties]
         return columns
 
-    @property
-    @memoized
-    def _report_aggregation_cols(self):
+    def get_report_aggregation_cols(self, data_source):
         # we want the bar chart behavior, which is reproduced here:
         return [
             self.data_source_properties[self.aggregation_field]['column_id']
