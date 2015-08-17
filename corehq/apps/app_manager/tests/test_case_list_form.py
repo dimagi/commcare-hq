@@ -168,6 +168,39 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 
+    def test_case_list_form_parent_child_submodule(self):
+        """
+        * Register house (case type = house, basic)
+          * Register house form
+        * Register person (case type = person, parent select = 'Register house', advanced)
+          * Register person form
+        * Update house (case type = house, case list form = 'Register house')
+          * Update house form
+          * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
+              * Update person form
+        """
+        factory = AppFactory(build_version='2.9')
+        register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
+        factory.form_opens_case(register_house_form)
+
+        register_person_module, register_person_form = factory.new_advanced_module('register_person', 'person')
+        factory.form_updates_case(register_person_form, 'house')
+        factory.form_opens_case(register_person_form, 'person', is_subcase=True)
+
+        house_module, update_house_form = factory.new_advanced_module('update_house', 'house')
+        house_module.case_list_form.form_id = register_house_form.unique_id
+
+        factory.form_updates_case(update_house_form)
+
+        person_module, update_person_form = factory.new_advanced_module('update_person', 'person')
+        person_module.case_list_form.form_id = register_person_form.unique_id
+        person_module.root_module_id = house_module.unique_id
+
+        factory.form_updates_case(update_person_form, 'house')
+        factory.form_updates_case(update_person_form, 'person', parent_case_type='house')
+
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule'), factory.app.create_suite())
+
 
 class CaseListFormFormTests(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'case_list_form'
