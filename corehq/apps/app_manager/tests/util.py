@@ -48,30 +48,31 @@ class TestFileMixin(TestXmlMixin):
         return self.get_base()
 
     @classmethod
-    def get_base(cls):
-        return os.path.join(cls.root, *cls.file_path)
+    def get_base(cls, override_path=None):
+        path = override_path or cls.file_path
+        return os.path.join(cls.root, *path)
 
     @classmethod
-    def get_path(cls, name, ext):
-        return os.path.join(cls.get_base(), '%s.%s' % (name, ext))
+    def get_path(cls, name, ext, override_path=None):
+        return os.path.join(cls.get_base(override_path), '%s.%s' % (name, ext))
 
     @classmethod
-    def get_file(cls, name, ext):
-        with open(cls.get_path(name, ext)) as f:
+    def get_file(cls, name, ext, override_path=None):
+        with open(cls.get_path(name, ext, override_path)) as f:
             return f.read()
 
     @classmethod
-    def write_xml(cls, name, xml):
-        with open(cls.get_path(name, 'xml'), 'w') as f:
+    def write_xml(cls, name, xml, override_path=None):
+        with open(cls.get_path(name, 'xml', override_path), 'w') as f:
             return f.write(xml)
 
     @classmethod
-    def get_json(cls, name):
-        return json.loads(cls.get_file(name, 'json'))
+    def get_json(cls, name, override_path=None):
+        return json.loads(cls.get_file(name, 'json', override_path))
 
     @classmethod
-    def get_xml(cls, name):
-        return cls.get_file(name, 'xml')
+    def get_xml(cls, name, override_path=None):
+        return cls.get_file(name, 'xml', override_path)
 
 
 def normalize_attributes(xml):
