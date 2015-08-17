@@ -9,7 +9,7 @@ from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
 from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
     ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
-    CreateCommCareUserModal)
+    MobileWorkerView, CreateCommCareUserModal)
 
 
 urlpatterns = patterns('corehq.apps.users.views',
@@ -68,6 +68,9 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
     url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(),
         name=CreateCommCareUserView.urlname),
+    url(r'^commcare/mobile_workers/$',
+        MobileWorkerView.as_view(),
+        name=MobileWorkerView.urlname),
     url(r'^commcare/new_mobile_worker_modal/$',
         CreateCommCareUserModal.as_view(),
         name=CreateCommCareUserModal.urlname),
