@@ -150,7 +150,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, int(time.time()))
+    env.code_root = posixpath.join(env.releases, str(int(time.time())))
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
@@ -560,10 +560,31 @@ def preindex_views():
 @roles(ROLES_ALL_SRC)
 @parallel
 def update_code():
+    with cd(env.code_current):
+        submodules = sudo("git submodule | awk '{ print $2 }'").split()
     with cd(env.code_root):
         if files.exists(env.code_current):
-            sudo('git clone --depth 1 {}.git'.format(env.code_current))
+            local_submodule_clone = []
+            for submodule in submodules:
+                local_submodule_clone.append('-c')
+                local_submodule_clone.append(
+                    'submodule.{submodule}.url={code_current}/.git/modules/{submodule}'.format(
+                        submodule=submodule,
+                        code_current=env.code_current
+                    )
+                )
+
+            sudo('git clone --recursive {} {}/.git {}'.format(
+                ' '.join(local_submodule_clone),
+                env.code_current,
+                env.code_root
+            ))
             sudo('git remote set-url origin {}'.format(env.code_repo))
+            exit()
+
+        else:
+            sudo('git clone --recursive {} {}'.format(env.code_repo, env.code_root))
+
         sudo('git remote prune origin')
         sudo('git fetch')
         sudo("git submodule foreach 'git fetch'")
@@ -673,6 +694,9 @@ def _deploy_without_asking():
         max_wait = datetime.timedelta(minutes=5)
         pause_length = datetime.timedelta(seconds=5)
 
+        # Update localsettings
+        _execute_with_timing(copy_localsettings)
+        _execute_with_timing(copy_tf_localsettings)
         _execute_with_timing(preindex_views)
 
         start = datetime.datetime.utcnow()
@@ -748,13 +772,32 @@ def _deploy_without_asking():
 @task
 @roles(ROLES_ALL_SRC)
 def update_current(release=None):
-    sudo('ln -nfs {} {}'.format(release or env.code_root, env.current))
+    sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def unlink_current():
+    if files.exists(env.code_current):
+        sudo('unlink {}'.format(env.code_current))
 
 
 @task
 @roles(ROLES_ALL_SRC)
 def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
+
+
+@task
+@roles(ROLES_ALL_SRC)
+def copy_localsettings():
+    sudo('cp {}/localsettings.py {}/localsettings.py'.format(env.code_current, env.code_root))
+
+
+@task
+@roles(ROLES_TOUCHFORMS)
+def copy_tf_localsettings():
+    sudo('cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py {}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(env.code_current, env.code_root))
 
 
 @task
@@ -1060,7 +1103,7 @@ def version_static():
 
     """
 
-    cmd = 'resource_static' if not preindex else 'resource_static clear'
+    cmd = 'resource_static'
     with cd(env.code_root):
         sudo('rm -f tmp.sh resource_versions.py; {venv}/bin/python manage.py {cmd}'.format(
             venv=env.virtualenv_root, cmd=cmd
