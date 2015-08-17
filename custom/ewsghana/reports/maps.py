@@ -26,8 +26,11 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
     @property
     def locations(self):
         locations = self.active_location.get_descendants(
-            include_self=True).filter(location_type__administrative=False)
+            include_self=True
+        ).filter(location_type__administrative=False).exclude(is_archived=True)
         if 'loc_type' in self.config and self.config['loc_type']:
+            if isinstance(self.config['loc_type'], basestring):
+                self.config['loc_type'] = [self.config['loc_type']]
             locations = locations.filter(location_type__pk__in=self.config['loc_type'])
         return locations
 
@@ -108,6 +111,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     title = ugettext_noop("Maps")
     slug = "ews_mapreport"
     template_report = 'ewsghana/map_template.html'
+    report_partial_path = "ewsghana/partials/map.html"
 
     data_source = {
         'adapter': 'report',
@@ -192,6 +196,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
             }),
             'metrics': [
                 {
+                    'size': 5,
                     'color': {
                         'column': 'type',
                         'categories': categories
@@ -199,6 +204,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                 },
                 {
                     'default': True,
+                    'size': 5,
                     'color': {
                         'column': 'category',
                         'categories': {

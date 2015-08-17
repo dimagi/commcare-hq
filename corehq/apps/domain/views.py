@@ -835,7 +835,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     .filter(is_hidden=False))
         return invoices.aggregate(
             total_balance=Sum('balance')
-        ).get('total_balance', 0.00)
+        ).get('total_balance') or 0.00
 
     @property
     def column_names(self):
@@ -1127,14 +1127,18 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         try:
-            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id,
-                                          subscription__subscriber__domain=domain)
-        except Invoice.DoesNotExist:
-            try:
-                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id,
-                                                  domain=domain)
-            except WireInvoice.DoesNotExist:
-                raise Http404()
+            if invoice_pdf.is_wire:
+                invoice = WireInvoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    domain=domain
+                )
+            else:
+                invoice = Invoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    subscription__subscriber__domain=domain
+                )
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist):
+            raise Http404()
 
         if invoice.is_wire:
             edition = 'Bulk'
@@ -2442,9 +2446,10 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     @memoized
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
         return sorted(
-            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
+                for toggle in all_toggles()],
             key=_sort_key,
         )
 

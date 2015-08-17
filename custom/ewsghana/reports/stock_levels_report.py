@@ -136,13 +136,13 @@ class FacilityReportData(EWSData):
             else:
                 monthly_consumption = 'not enough data'
 
-            if values['reorder_level'] and values['reorder_level'] != 0.00:
-                maximum_level = int(values['reorder_level'])
+            if values['maximum_level'] and values['maximum_level'] != 0.00:
+                maximum_level = int(values['maximum_level'])
             else:
                 maximum_level = 'unknown'
 
-            if values['maximum_level'] and values['maximum_level'] != 0.00:
-                reorder_level = int(values['maximum_level'])
+            if values['reorder_level'] and values['reorder_level'] != 0.00:
+                reorder_level = int(values['reorder_level'])
             else:
                 reorder_level = 'unknown'
 
@@ -289,20 +289,25 @@ class UsersData(EWSData):
     @property
     def rendered_content(self):
         from corehq.apps.users.views.mobile.users import EditCommCareUserView
-        users = get_users_by_location_id(self.config['location_id'])
+        users = get_users_by_location_id(self.config['domain'],
+                                         self.config['location_id'])
         in_charges = FacilityInCharge.objects.filter(
             location=self.location
         ).values_list('user_id', flat=True)
-        district_in_charges = []
         if self.location.parent.location_type.name == 'district':
             children = self.location.parent.get_descendants()
-            district_in_charges = list(chain.from_iterable([
+            availaible_in_charges = list(chain.from_iterable([
                 filter(
                     lambda u: 'In Charge' in u.user_data.get('role', []),
-                    get_users_by_location_id(child.location_id)
+                    get_users_by_location_id(self.config['domain'], child.location_id)
                 )
                 for child in children
             ]))
+        else:
+            availaible_in_charges = filter(
+                lambda u: 'In Charge' in u.user_data.get('role', []),
+                get_users_by_location_id(self.domain, self.location_id)
+            )
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
@@ -328,7 +333,7 @@ class UsersData(EWSData):
             'domain': self.domain,
             'location_id': self.location_id,
             'web_users': web_users,
-            'district_in_charges': [user_to_dict(user) for user in district_in_charges]
+            'district_in_charges': [user_to_dict(user) for user in availaible_in_charges]
         })
 
 

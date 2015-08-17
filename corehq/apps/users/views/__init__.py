@@ -9,16 +9,15 @@ from corehq import Domain, privileges, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.queries import search_string_query
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.util import smart_query_string
 from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -279,8 +278,6 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -343,46 +340,6 @@ class BaseFullEditUserView(BaseEditUserView):
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
-class EditMyAccountDomainView(BaseFullEditUserView):
-    template_name = "users/edit_full_user.html"
-    urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
-    user_update_form_class = UpdateMyAccountInfoForm
-
-    @property
-    def editable_user_id(self):
-        return self.couch_user._id
-
-    @property
-    def editable_user(self):
-        return self.couch_user
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {
-            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
-        }
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
-            context.update({
-                'update_form': self.commtrack_form,
-            })
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if self.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
-
-
 class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.b3.html'
     page_title = ugettext_lazy("Web Users & Roles")
@@ -395,23 +352,17 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     def query_es(self, limit, skip, query=None):
-        is_simple, query = smart_query_string(query or '')
-
         web_user_filter = [
             {"term": {"user.domain_memberships.domain": self.domain}},
         ]
         web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
 
-        default_fields = ["username", "last_name", "first_name"]
         q = {
-            "query": {"query_string": {
-                "query": query,
-                "default_operator": "AND",
-                "fields": default_fields if is_simple else None
-            }},
             "filter": {"and": web_user_filter},
             "sort": {'username.exact': 'asc'},
         }
+        default_fields = ["username", "last_name", "first_name"]
+        q["query"] = search_string_query(query, default_fields)
         return es_query(
             params={}, q=q, es_url=ES_URLS["users"],
             size=limit, start_at=skip,
@@ -496,11 +447,8 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+            and self.couch_user.is_domain_admin
 
     @property
     @memoized
@@ -572,11 +520,8 @@ class ListWebUsersView(BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+            and self.couch_user.is_domain_admin
 
     @property
     @memoized
@@ -828,11 +773,8 @@ def make_phone_number_default(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -848,11 +790,8 @@ def delete_phone_number(request, domain, couch_user_id):
         return Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -877,11 +816,8 @@ def verify_phone_number(request, domain, couch_user_id):
     elif result == VERIFICATION__WORKFLOW_STARTED:
         messages.success(request, _('Verification workflow started.'))
 
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -921,7 +857,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
-        if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
+        if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
             form = SetPasswordForm(user=django_user)

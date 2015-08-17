@@ -21,6 +21,7 @@ from casexml.apps.case.exceptions import (
 )
 from django.conf import settings
 from couchforms.util import is_deprecation
+from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -336,24 +337,21 @@ def _get_or_update_cases(xforms, case_db):
     """
     # have to apply the deprecations before the updates
     sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
             case_doc = _get_or_update_model(case_update, xform, case_db)
+            touched_cases[case_doc['_id']] = case_doc
             if case_doc:
                 # todo: legacy behavior, should remove after new case processing
                 # is fully enabled.
                 if xform._id not in case_doc.xform_ids:
                     case_doc.xform_ids.append(xform.get_id)
-                case_db.set(case_doc.case_id, case_doc)
             else:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id
                 )
-
-    # at this point we know which cases we want to update so copy this away
-    # this prevents indices that end up in the cache from being added to the return value
-    touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
@@ -388,13 +386,14 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case._id, child_case.owner_id)
 
-    dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
     track_cleanliness = should_track_cleanliness(domain)
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
         dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 
@@ -404,9 +403,9 @@ def _get_or_update_model(case_update, xform, case_db):
     submitted form.  Doesn't save anything.
     """
     case = case_db.get(case_update.id)
-
     if case is None:
         case = CommCareCase.from_case_update(case_update, xform)
+        case_db.set(case['_id'], case)
         return case
     else:
         case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
@@ -450,7 +449,7 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.form
+        doc = doc.to_json()['form']
 
     return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
 
@@ -478,6 +477,8 @@ def _extract_case_blocks(data, path=None):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
+                        validate_phone_datetime(
+                            case_block.get('@date_modified'), none_ok=True)
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
                 for case_block in _extract_case_blocks(value, path=new_path):

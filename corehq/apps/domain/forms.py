@@ -49,8 +49,8 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     EntryPoint,
 )
-from corehq.apps.app_manager.models import (Application, RemoteApp,
-                                            FormBase, get_apps_in_domain)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
@@ -1527,7 +1527,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['end_date'].initial = self.current_subscription.date_end
             self.helper.layout = crispy.Layout(
                 TextField('software_plan_edition', plan_edition),
-                crispy.Hidden('software_plan_edition', plan_edition),
+                crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
                 TextField('start_date', self.current_subscription.date_start),

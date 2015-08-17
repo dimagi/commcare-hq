@@ -35,9 +35,6 @@
             <div class="control-group">
                 <label class="control-label">{% trans 'Edit Actions' %}</label>
                 <div class="controls">
-                    <p><i class="icon-info-sign"></i>
-                        {% blocktrans %}For a given incoming stock report, stock actions will be applied in the order listed below.{% endblocktrans %}
-                    </p>
                     {% include "domain/admin/commtrack_action_table.html" %}
                     <button type="button" class="btn" data-bind="click: new_action">
                         <i class="icon-plus"></i> {% trans "New Action" %}

@@ -7,13 +7,16 @@ from django.utils import html
 from django.utils.safestring import mark_safe
 from corehq import Domain
 from corehq.apps import reports
-from corehq.apps.accounting.utils import get_previous_month_date_range
-from corehq.apps.app_manager.models import get_app, Form, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
@@ -268,7 +271,17 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
-        raise Exception("Unknown dispatcher: %s" % self.report_type)
+        if self.doc_type != 'ReportConfig-Deleted':
+            self.doc_type += '-Deleted'
+            self.save()
+            notify_exception(
+                None,
+                "This saved-report (id: %s) is unknown (report_type: %s) and so we have archived it" % (
+                    self._id,
+                    self.report_type
+                )
+            )
+        raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
@@ -279,33 +292,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if not date_range:
             return {}
 
-        import datetime
-        today = datetime.date.today()
-        if date_range == 'since':
-            start_date = self.start_date
-            end_date = today
-        elif date_range == 'range':
-            start_date = self.start_date
-            end_date = self.end_date
-        elif date_range == 'lastmonth':
-            start_date, end_date = get_previous_month_date_range()
-        else:
-            end_date = today
-
-            if date_range == 'last7':
-                days = 7
-            elif date_range == 'last30':
-                days = 30
-            elif date_range == 'lastn':
-                days = self.days
-            else:
-                raise Exception("Invalid date range")
-
-            start_date = today - datetime.timedelta(days=days)
-
-        if start_date is None or end_date is None:
+        try:
+            start_date, end_date = get_daterange_start_end_dates(
+                date_range,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                days=self.days,
+            )
+        except InvalidDaterangeException:
             # this is due to bad validation. see: http://manage.dimagi.com/default.asp?110906
-            logging.error('scheduled report %s is in a bad state (no startdate or enddate)' % self._id)
+            logging.error('saved report %s is in a bad state - date range is misconfigured' % self._id)
             return {}
 
         dates = {
@@ -358,6 +354,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             else:
                 url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
             return url_base + '?' + self.query_string
+        except UnsupportedSavedReportError:
+            return "#"
         except Exception:
             return "#"
 
@@ -370,9 +368,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         case.
 
         """
-        return self._dispatcher.get_report(
-            self.domain, self.report_slug, self.subreport_slug
-        )
+        try:
+            return self._dispatcher.get_report(
+                self.domain, self.report_slug, self.subreport_slug
+            )
+        except UnsupportedSavedReportError:
+            return None
 
     @property
     def report_name(self):
@@ -499,6 +500,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                      "can not be generated since you do not have the correct permissions. "
                      "Please talk to your Project Administrator about getting permissions for this"
                      "report.") % {'config_name': self.name}, None
+        except UnsupportedSavedReportError:
+            return _("We are sorry, but your saved report '%(config_name)s' "
+                     "is no longer available. If you think this is a mistake, please report an issue."
+                     ) % {'config_name': self.name}, None
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
@@ -511,7 +516,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return isinstance(self._dispatcher, ConfigurableReport)
+        return self.report_type == ConfigurableReport.prefix
 
     @property
     @memoized
@@ -536,10 +541,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
-
-
-class UnsupportedScheduledReportError(Exception):
-    pass
 
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
@@ -626,6 +627,13 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
+
+            def _sort_key(config_id):
+                if config_id in self.config_ids:
+                    return self.config_ids.index(config_id)
+                else:
+                    return len(self.config_ids)
+            configs = sorted(configs, key=_sort_key)
         elif self.report_slug == 'admin_domains':
             raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")

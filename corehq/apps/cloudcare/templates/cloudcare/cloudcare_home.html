@@ -152,9 +152,13 @@
             <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {% blocktrans %}
                     You are using CloudCare as a Web User!
-                    Any data you submit will show up in reports as submitted by "Unknown User".
-                    Features that rely on mobile workers, like case sharing, lookup tables and user-as-a-case,
-                    will not work properly.
+                    Any data you submit will show up in reports as submitted by "Unknown User". There are a
+                    few features that rely on mobile workers and will not work properly:
+                    <ul>
+                        <li>Case sharing</li>
+                        <li>Lookup tables</li>
+                        <li>User-as-a-case</li>
+                    </ul>
                     For the best experience please logout and login as a Mobile Worker.
                     More information on CloudCare can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
@@ -213,13 +217,13 @@
                         </div>
                     </div>
                 </form>
-                <div id="question-viewer-pretty"></div>
-                <div id="xml-viewer-pretty"></div>
                 <input id="evaluate-result" style="display: block;"/>
                 <section>
                     <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
                     <input id="evaluate-button" type="submit" value="Evaluate" />
                 </section>
+                <div id="question-viewer-pretty"></div>
+                <div id="xml-viewer-pretty"></div>
             </div>
         {% endif %}
     </div>

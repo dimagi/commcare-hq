@@ -252,9 +252,23 @@ def get_xform_location(xform):
     """
     from corehq.apps.users.models import CouchUser
     user_id = getattr(xform.metadata, 'userID', None)
+    if not user_id:
+        return None
+
     user = CouchUser.get_by_user_id(user_id)
     if hasattr(user, 'get_sql_location'):
         return user.get_sql_location(xform.domain)
     elif hasattr(user, 'sql_location'):
         return user.sql_location
     return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )

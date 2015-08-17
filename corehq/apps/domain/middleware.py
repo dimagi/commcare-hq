@@ -40,9 +40,10 @@ class CCHQPRBACMiddleware(object):
                 return None
             except AccountingError:
                 pass
-        try:
-            request.role = Role.objects.get(slug='community_plan_v0')
-        except Role.DoesNotExist:
+        privilege = Role.get_privilege('community_plan_v0')
+        if privilege is not None:
+            request.role = privilege.role
+        else:
             request.role = Role()  # A fresh Role() has no privileges
 
 

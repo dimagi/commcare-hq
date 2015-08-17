@@ -1,12 +1,12 @@
 from celery.task import task
 from xml.etree import ElementTree
 from dimagi.utils.couch.database import is_bigcouch
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
 from casexml.apps.case.xml import V2
@@ -17,6 +17,7 @@ import uuid
 POOL_SIZE = 10
 PRIME_VIEW_FREQUENCY = 500
 CASEBLOCK_CHUNKSIZE = 100
+
 
 @task
 def bulk_import_async(import_id, config, domain, excel_id):
@@ -50,7 +51,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     def _submit_caseblocks(caseblocks):
         if caseblocks:
             submit_case_blocks(
-                [ElementTree.tostring(cb.as_xml(format_datetime=json_format_datetime)) for cb in caseblocks],
+                [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
                 domain,
                 username,
                 user_id,
@@ -133,7 +134,12 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if uploaded_owner_name:
             # If an owner name was provided, replace the provided
             # uploaded_owner_id with the id of the provided group or owner
-            uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
+            try:
+                uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
+            except SQLLocation.MultipleObjectsReturned:
+                errors.add(ImportErrors.DuplicateLocationName, i + 1)
+                continue
+
             if not uploaded_owner_id:
                 errors.add(ImportErrors.InvalidOwnerName, i + 1)
                 continue
@@ -226,7 +232,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             _submit_caseblocks(caseblocks)
             num_chunks += 1
             caseblocks = []
-
 
     # final purge of anything left in the queue
     _submit_caseblocks(caseblocks)

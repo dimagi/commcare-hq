@@ -24,7 +24,7 @@ from soil import DownloadBase
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -430,10 +430,6 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
     def valid_base_types(cls):
         return ['text']
 
-    def process_upload(self):
-        ret = super(ProcessTextFileUploadView, self).process_upload()
-        ret['text'] = self.data
-        return ret
 
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"

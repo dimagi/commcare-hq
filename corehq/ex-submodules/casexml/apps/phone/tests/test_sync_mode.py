@@ -18,7 +18,6 @@ from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
-from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
@@ -134,6 +133,7 @@ class SyncBaseTest(TestCase):
             # this is a lazy way of running tests on a variety of edge cases
             # without having to write explicit tests for the migration
             migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
+            self.assertEqual(sync_log.get_state_hash(), migrated_sync_log.get_state_hash())
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
     
@@ -541,7 +541,27 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
-        self.clean = False
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_close_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        self.factory.create_case(owner_id='irrelevant_1', close=True)
+
+    @run_with_all_restore_configs
+    def test_reassign_and_close_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        case_id = self.factory.create_case()._id
+        self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=case_id,
+                attrs={'owner_id': 'irrelevant', 'close': True},
+            )
+        )
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -775,7 +795,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         self._postFakeWithSyncToken(
             parent_case,
@@ -793,7 +813,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 owner_id=USER_ID,
                 version=V2,
                 index={'mother': ('mother', mother_id)}
-            ).as_xml(format_datetime=json_format_datetime),
+            ).as_xml(),
             latest_sync.get_id
         )
 
@@ -807,7 +827,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_type=PARENT_TYPE,
             owner_id=OTHER_USER_ID,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2,
@@ -821,7 +841,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # create a case from one user
         case_id = "multi_user_edits"
-        self._createCaseStubs([case_id], owner_id=SHARED_ID)
+        self._createCaseStubs([case_id], owner_id=SHARED_ID, date_modified=time)
 
         # both users syncs
         main_sync_log = synclog_from_restore_payload(
@@ -839,7 +859,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             my_change,
             main_sync_log.get_id
@@ -853,7 +873,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting_2': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             their_change,
             self.other_sync_log.get_id
@@ -874,7 +894,7 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=SHARED_ID,
             case_name='',
             case_type='mother',
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)

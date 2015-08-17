@@ -4,7 +4,6 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
     <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
 {% endblock %}
@@ -36,22 +35,41 @@ function loc_unarchive_url(loc_id) {
     return template.replace('-locid-', loc_id);
 }
 
+var archive_success_message = _.template(
+    '{% trans "You have successfully archived the location <%=name%>" %}'
+);
+
 archive_loc = function(button, name, loc_id) {
-    $(button).button('loading');
-    alert_user("You have successfully archived the location " + name, "success");
-    $.ajax({
-        type: 'POST',
-        url: loc_archive_url(loc_id),
-        dataType: 'json',
-        error: 'error',
-        success: function (response) {
-            remove_elements_after_action(button);
-        }
-    });
+    var archive_location_modal = $('#archive-location-modal')[0];
+
+    function archive_fn() {
+        $(button).disableButton();
+        $.ajax({
+            type: 'POST',
+            url: loc_archive_url(loc_id),
+            dataType: 'json',
+            error: 'error',
+            success: function (response) {
+                alert_user(archive_success_message({"name": name}), "success");
+                remove_elements_after_action(button);
+            }
+        });
+        $(archive_location_modal).modal('hide');
+    }
+
+    var modal_context = {
+        "name": name,
+        "loc_id": loc_id,
+        "archive_fn": archive_fn,
+    };
+    ko.cleanNode(archive_location_modal);
+    ko.applyBindings(modal_context, archive_location_modal);
+    $(archive_location_modal).modal('show');
+
 }
 
 unarchive_loc = function(button, loc_id) {
-    $(button).button('loading');
+    $(button).disableButton();
     $.ajax({
         type: 'POST',
         url: loc_unarchive_url(loc_id),
@@ -150,15 +168,15 @@ $(function() {
                     {% endif %}
 
                     {% if show_inactive %}
-                        <a class="btn btn-inverse"
+                        <button class="btn btn-inverse"
                             data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
                             {% trans "Unarchive" %}
-                        </a>
+                        </button>
                     {% else %}
-                        <a class="btn btn-inverse"
+                        <button class="btn btn-inverse"
                             data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
                             {% trans "Archive" %}
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
 
@@ -226,3 +244,26 @@ $(function() {
 </div>
 {% endblock %}
 
+{% block modals %}
+{{ block.super }}
+<div class="modal hide fade" id="archive-location-modal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h4>{% trans "Archive Location:" %} <span data-bind="text: name" \></h4>
+    </div>
+    <div class="modal-body">
+        <p>
+            {% blocktrans %}
+            <strong>Warning!</strong> Archiving a location will unassign any users
+            which were associated with that location.  You can unarchive this
+            location at any point, but you will have to reassign the users
+            manually.
+            {% endblocktrans %}
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+        <button data-bind="click: archive_fn" class="btn btn-warning">{% trans "Archive" %}</button>
+    </div>
+</div>
+{% endblock modals %}

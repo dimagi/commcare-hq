@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
 from corehq.util.global_request import get_request
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1333,7 +1333,8 @@ class Subscription(models.Model):
     def _get_plan_by_subscriber(cls, subscriber):
         active_subscriptions = cls.objects\
             .filter(subscriber=subscriber, is_active=True)\
-            .order_by('-date_created')[:2]
+            .order_by('-date_created')[:2]\
+            .select_related('plan_version__role')
 
         if not active_subscriptions:
             return None, None
@@ -1647,7 +1648,7 @@ class Invoice(InvoiceBase):
         # finally, apply credits to the leftover invoice balance
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_invoice(self)
-        CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(invoice=self))
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, invoice=self)
 
     @classmethod
     def exists_for_domain(cls, domain):
@@ -1962,6 +1963,7 @@ class BillingRecord(BillingRecordBase):
 class InvoicePdf(SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
+    is_wire = BooleanProperty(default=False)
 
     def generate_pdf(self, invoice):
         self.save()
@@ -2022,6 +2024,7 @@ class InvoicePdf(SafeSaveDocument):
 
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.utcnow()
+        self.is_wire = invoice.is_wire
         self.save()
 
     def get_filename(self, invoice):
@@ -2091,7 +2094,7 @@ class LineItem(models.Model):
         """
         current_total = self.total
         credit_lines = CreditLine.get_credits_for_line_item(self)
-        CreditLine.apply_credits_toward_balance(credit_lines, current_total, dict(line_item=self))
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
 class CreditLine(models.Model):
@@ -2250,7 +2253,7 @@ class CreditLine(models.Model):
         return credit_line
 
     @classmethod
-    def apply_credits_toward_balance(cls, credit_lines, balance, adjust_balance_kwarg):
+    def apply_credits_toward_balance(cls, credit_lines, balance, **kwargs):
         for credit_line in credit_lines:
             if balance == Decimal('0.0000'):
                 return
@@ -2261,7 +2264,7 @@ class CreditLine(models.Model):
                 )
             adjustment_amount = min(credit_line.balance, balance)
             if adjustment_amount > Decimal('0.0000'):
-                credit_line.adjust_credit_balance(-adjustment_amount, **adjust_balance_kwarg)
+                credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
 

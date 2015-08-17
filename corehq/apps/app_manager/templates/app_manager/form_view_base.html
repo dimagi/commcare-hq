@@ -93,7 +93,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
@@ -159,10 +159,13 @@
             {% if app.application_version == '2.0' %}
                 {% if allow_form_filtering %}
                 var putInRoot = {{ module.put_in_root|BOOL }};
+                var usercaseonlyModule = {{ module.is_usercaseonly|BOOL }}
                 var formFilter = {{ form.form_filter|JSON }};
                 var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
                 var formFilterAllowed = ko.computed(function () {
-                    return allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot;
+                    return (allOtherFormsRequireACase &&
+                            form_requires() === 'case' ||
+                            usercaseonlyModule) && !putInRoot;
                 });
                 ko.applyBindings({
                         formFilter: ko.observable(formFilter),
@@ -288,7 +291,7 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {%  if form.form_type == 'module_form' %}
+            {%  if allow_usercase and form.form_type == 'module_form' %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
                     {% trans "User Case Management" %}
