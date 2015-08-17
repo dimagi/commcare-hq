@@ -1345,6 +1345,20 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     )
                                     if d:
                                         r.append(d)
+            if module.fixture_select.active:
+                print module.fixture_select.display_column
+                # fields = get_column_generator(
+                #     self.app, module, detail,
+                #     detail_type=detail_type, *column_info
+                # ).fields
+                # field = Field(header='', template=module.fixture_select.display_column, sort_node='')
+                d = Detail(
+                    title=module.fixture_select.display_column,
+                )
+                col_info = get_detail_column_infos(d, False)
+                fields = get_column_generator(self.app, module, d, detail_type='fixture_select', *col_info).fields
+                d.fields = [fields]
+                r.append(d)
         return r
 
     @staticmethod
