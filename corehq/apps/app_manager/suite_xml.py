@@ -603,33 +603,38 @@ class StackFrameMeta(object):
     """
     Class used in computing the form workflow.
     """
-    def __init__(self, if_prefix, if_clause, child_datums=None, allow_empty_frame=False):
+    def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
         if if_prefix:
             template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
             if_clause = template.format(if_prefix)
         self.if_clause = unescape(if_clause) if if_clause else None
-        self.child_datums = child_datums or []
+        self.children = []
         self.allow_empty_frame = allow_empty_frame
 
+        if children:
+            for child in children:
+                self.add_child(child)
+
     def add_child(self, child):
-        self.child_datums.append(child)
+        if isinstance(child, basestring) and not isinstance(child, XPath):
+            child = XPath.string(child)
+        if isinstance(child, DatumMeta):
+            child = child.to_stack_datum()
+        self.children.append(child)
 
     def to_frame(self):
-        if not self.child_datums and not self.allow_empty_frame:
+        if not self.children and not self.allow_empty_frame:
             return
 
         frame = CreateFrame(if_clause=self.if_clause)
 
-        for child in self.child_datums:
+        for child in self.children:
             if isinstance(child, XPath):
                 frame.add_command(child)
-            elif isinstance(child, basestring):
-                frame.add_command(XPath.string(child))
             elif isinstance(child, StackDatum):
                 frame.add_datum(child)
             else:
-                value = session_var(child.source_id) if child.nodeset else child.function
-                frame.add_datum(StackDatum(id=child.id, value=value))
+                raise Exception("Unexpected child type: {} ({})".format(type(child), child))
 
         return frame
 
@@ -646,7 +651,6 @@ class DatumMeta(object):
         self.id = datum_id
         self.nodeset = nodeset
         self.function = function
-        self.source_id = self.id
 
     @classmethod
     def from_session_datum(cls, session_datum):
@@ -670,6 +674,10 @@ class DatumMeta(object):
         elif self.function:
             return _extract_type(self.function)
 
+    def to_stack_datum(self, datum_id=None, source_id=None):
+        value = session_var(source_id or self.id) if self.requires_selection else self.function
+        return StackDatum(id=datum_id or self.id, value=value)
+
     def __lt__(self, other):
         return self.id < other.id
 
@@ -680,7 +688,7 @@ class DatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={}, case_type={}, source_id={})'.format(self.id, self.case_type, self.source_id)
+        return 'DatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
 
 
 def get_default_sort_elements(detail):
@@ -925,15 +933,13 @@ class WorkflowHelper(object):
                                 raise
                         else:
                             meta = DatumMeta.from_session_datum(source_meta)
-                            meta.id = target_dm.id
-                            frame_case_created.add_child(meta)
-                            frame_case_not_created.add_child(meta)
+                            frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
+                            frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                     else:
                         source_case_type = get_case_type_created_by_form(form)
                         target_dm = get_target_dm(source_case_type)
-                        datum_meta = DatumMeta(target_dm.id, target_dm.nodeset, None)
-                        datum_meta.source_id = source_meta.id
-                        frame_case_created.add_child(datum_meta)
+                        datum_meta = DatumMeta.from_session_datum(target_dm)
+                        frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
 
         return stack_frames
 
@@ -999,15 +1005,13 @@ class WorkflowHelper(object):
                 try:
                     source_datum = source_datums[datum_index]
                 except IndexError:
-                    yield child
+                    yield child.to_stack_datum()
                 else:
                     if child.id != source_datum.id and not source_datum.case_type or \
                             source_datum.case_type == child.case_type:
-                        target_datum = copy.copy(child)
-                        target_datum.source_id = source_datum.id
-                        yield target_datum
+                        yield child.to_stack_datum(source_id=source_datum.id)
                     else:
-                        yield child
+                        yield child.to_stack_datum()
 
     def get_frame_children(self, target_form, module_only=False):
         """
