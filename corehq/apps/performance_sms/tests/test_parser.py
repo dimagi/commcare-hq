@@ -36,7 +36,7 @@ class ParserTest(SimpleTestCase):
 
     def test_valid_namespaces(self):
         for namespace in VALID_NAMESPACES:
-            unparsed =   '{}.variable_name'.format(namespace)
+            unparsed = '{}.variable_name'.format(namespace)
             parsed = parse_param(unparsed)
             self.assertEqual(namespace, parsed.namespace)
             self.assertEqual('variable_name', parsed.variable)

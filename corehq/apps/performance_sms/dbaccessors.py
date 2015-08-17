@@ -1,6 +1,5 @@
 from django.conf import settings
 from corehq.apps.performance_sms.models import PerformanceConfiguration
-from dimagi.utils.couch.database import iter_bulk_delete
 
 
 def by_domain(domain):
