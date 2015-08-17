@@ -102,10 +102,11 @@ class FormManagementMode(object):
             self.status_page_title = _("Restore Forms Status")
             self.progress_text = _("Restoring your forms, this may take some time...")
             self.complete_short = _("Restore complete!")
-            self.complete_long = _("Your forms are succesfully restored")
-            self.success_text = _("Succesfully restored ")
+            self.success_text = _("Successfully restored ")
             self.fail_text = _("Restore Failed. Details:")
             self.error_text = _("Problem restoring your forms! Please try again or report an issue")
+            self.help_message = _("To archive back any forms, use the Manage Forms report and "
+                                  "filter to Normal forms")
         else:
             self.mode_name = self.ARCHIVE_MODE
             self.xform_filter = ADD_TO_ES_FILTER['forms']
@@ -114,10 +115,11 @@ class FormManagementMode(object):
             self.status_page_title = _("Archive Forms Status")
             self.progress_text = _("Archiving your forms, this may take some time...")
             self.complete_short = _("Archive complete!")
-            self.complete_long = _("Your forms are succesfully archived")
-            self.success_text = _("Succesfully archived ")
+            self.success_text = _("Successfully archived ")
             self.fail_text = _("Archive Failed. Details:")
             self.error_text = _("Problem archiving your forms! Please try again or report an issue")
+            self.help_message = _("To restore any archived forms, use the Manage Forms report and "
+                                  "filter to Archived forms")
         if validate:
             self.validate_mode(mode)
 
