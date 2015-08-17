@@ -835,7 +835,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     .filter(is_hidden=False))
         return invoices.aggregate(
             total_balance=Sum('balance')
-        ).get('total_balance', 0.00)
+        ).get('total_balance') or 0.00
 
     @property
     def column_names(self):

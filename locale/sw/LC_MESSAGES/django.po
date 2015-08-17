@@ -24494,6 +24494,7 @@ msgid "Thank you for registering at %(sdp_name)s, %(contact_name)s"
 msgstr "Asante kwa kujisajili katika %(sdp_name)s, %(contact_name)s"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:21
+#: custom/ilsgateway/tanzania/reminders/__init__.py:43
 msgid ""
 "Please send in your stock on hand information in the format 'soh <product> "
 "<amount> <product> <amount>...'"
@@ -24547,15 +24548,6 @@ msgid ""
 msgstr ""
 "Asante. Je umefanyiwa usimamizi kwa mwezi huu? Tafadhali jibu 'usimamizi "
 "ndiyo' au 'usimamizi hapana'"
-
-#: custom/ilsgateway/tanzania/reminders/__init__.py:43
-#, fuzzy
-msgid ""
-"Please send in your stock on hand information in the format 'soh <product> "
-"<amount> <product> <amount>...'"
-msgstr ""
-"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
-"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:45
 msgid "Thank you for reporting your stock on hand this month"
