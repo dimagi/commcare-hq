@@ -1373,10 +1373,10 @@ def restore_edit(request, domain, instance_id):
     if isinstance(instance, XFormDeprecated):
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))
     else:
         messages.warning(request, _(u'Sorry, that form cannot be edited.'))
-
-    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 @login_or_digest
