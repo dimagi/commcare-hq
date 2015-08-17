@@ -113,6 +113,7 @@ def format_env(current_env, extra=None):
     important_props = [
         'environment',
         'code_root',
+        'code_current',
         'log_dir',
         'sudo_user',
         'host_string',
