@@ -22,6 +22,7 @@ class RRStatus(ILSData):
     title = "R&R Status"
     slug = "rr_status"
     show_chart = False
+    searchable = True
 
     @property
     def rows(self):
@@ -92,6 +93,7 @@ class RRReportingHistory(ILSData):
     show_table = True
     slug = "rr_reporting_history"
     show_chart = False
+    searchable = True
 
     def __init__(self, config=None, css_class='row_chart'):
         super(RRReportingHistory, self).__init__(config, css_class)
@@ -139,11 +141,11 @@ class RRReportingHistory(ILSData):
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s&'
                            'datespan_type=%s&datespan_first=%s&datespan_second=%s',
-                           (self.config['location_id'],
+                           (child.location_id,
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
-            contact = get_one_user_at_location(child.location_id)
+            contact = get_one_user_at_location(self.config['domain'], child.location_id)
 
             if contact:
                 role = contact.user_data.get('role') or ""

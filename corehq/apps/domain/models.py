@@ -444,22 +444,6 @@ class Domain(Document, SnapshotMixin):
     def apply_migrations(self):
         self.migrations.apply(self)
 
-    @staticmethod
-    def all_for_user(user):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
-            return []
-        from corehq.apps.users.models import CouchUser
-        couch_user = CouchUser.from_django_user(user)
-        if couch_user:
-            domain_names = couch_user.get_domains()
-            return Domain.view("domain/domains",
-                keys=domain_names,
-                reduce=False,
-                include_docs=True).all()
-        else:
-            return []
-
     def add(self, model_instance, is_active=True):
         """
         Add something to this domain, through the generic relation.
@@ -660,14 +644,6 @@ class Domain(Document, SnapshotMixin):
 
         return name
 
-
-    def password_format(self):
-        """
-        This was a performance hit, so for now we'll just return 'a' no matter what
-        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
-        """
-        return 'a'
-
     @classmethod
     def get_all(cls, include_docs=True):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
@@ -713,7 +689,7 @@ class Domain(Document, SnapshotMixin):
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   ignore=None, copy_by_id=None):
-        from corehq.apps.app_manager.models import get_app
+        from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
 
@@ -960,13 +936,13 @@ class Domain(Document, SnapshotMixin):
         if self.is_snapshot:
             return format_html(
                 "Snapshot of {0} &gt; {1}",
-                self.get_organization().title,
+                self.organization_title(),
                 self.copied_from.display_name()
             )
         if self.organization:
             return format_html(
                 '{0} &gt; {1}',
-                self.get_organization().title,
+                self.organization_title(),
                 self.hr_name or self.name
             )
         else:
@@ -1194,6 +1170,13 @@ class Domain(Document, SnapshotMixin):
         flag that should be set normally.
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+
+    def convert_to_commtrack(self):
+        """
+        One-stop-shop to make a domain CommTrack
+        """
+        from corehq.apps.commtrack.util import make_domain_commtrack
+        make_domain_commtrack(self)
 
 
 class DomainCounter(Document):

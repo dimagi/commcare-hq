@@ -118,6 +118,16 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # for debugging / logging
+    last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
+    last_cached = DateTimeProperty()  # last time this generated a cached response
+    hash_at_last_cached = StringProperty()  # the state hash of this when it was last cached
+
+    # save state errors and hashes here
+    had_state_error = BooleanProperty(default=False)
+    error_date = DateTimeProperty()
+    error_hash = StringProperty()
+
     strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
@@ -341,7 +351,7 @@ class SyncLog(AbstractSyncLog):
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
-                        self.phone_has_case(case._id),
+                        self.phone_is_holding_case(case._id),
                         "phone doesn't have case being updated: %s" % case._id,
                         case._id,
                     )
@@ -649,9 +659,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
             try:
                 if made_changes:
                     logger.debug('made changes, saving.')
+                    self.last_submitted = datetime.utcnow()
                     self.save()
-                if case_list:
-                    self.invalidate_cached_payloads()
+                    if case_list:
+                        try:
+                            self.invalidate_cached_payloads()
+                        except ResourceConflict:
+                            # this operation is harmless so just blindly retry and don't
+                            # reraise if it goes through the second time
+                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
@@ -675,14 +691,24 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for case_state in other_sync_log.cases_on_phone:
                 _add_state_contributions(ret, case_state)
 
+            dependent_case_ids = set()
             for case_state in other_sync_log.dependent_cases_on_phone:
                 _add_state_contributions(ret, case_state, is_dependent=True)
+                dependent_case_ids.add(case_state.case_id)
+
+            for dependent_case_id in dependent_case_ids:
+                # try to prune any dependent cases - the old format does this on
+                # access, but the new format does it ahead of time and always assumes
+                # its current state is accurate.
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                ret.prune_case(dependent_case_id)
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
             del ret['last_seq']
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
+
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)

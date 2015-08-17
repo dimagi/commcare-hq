@@ -6,13 +6,11 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
-from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.hqcase.utils import assign_case
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from couchforms.models import XFormInstance
 
 
 class CaseAssignmentTest(TestCase):
@@ -159,6 +157,6 @@ class CaseAssignmentTest(TestCase):
             owner_id=self.original_owner._id,
             version=V2,
             index=index,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)

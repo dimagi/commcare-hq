@@ -158,7 +158,7 @@ class ConfigurableReportDataSource(SqlData):
 
                     def sort_by(row):
                         value = row.get(sort_column_id, None)
-                        return value or get_default_sort_value(datatype, order)
+                        return value or get_default_sort_value(datatype)
 
                     ret.sort(
                         key=sort_by,

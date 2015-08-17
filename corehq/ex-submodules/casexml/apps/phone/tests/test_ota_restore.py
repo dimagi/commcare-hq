@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 import os
 import time
 from django.test.utils import override_settings
@@ -20,31 +20,7 @@ from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class OtaRestoreTest(TestCase):
-    """Tests OTA Restore"""
-
-    @classmethod
-    def setUpClass(cls):
-        delete_all_cases()
-        delete_all_sync_logs()
-        cls.project = Domain(name='ota-restore-tests')
-
-    def tearDown(self):
-        delete_all_cases()
-        delete_all_sync_logs()
-        restore_config = RestoreConfig(project=self.project, user=dummy_user())
-        restore_config.cache.delete(restore_config._initial_cache_key())
-
-    def testFromDjangoUser(self):
-        django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
-        django_user.save()
-        user = User.from_django_user(django_user)
-        self.assertEqual(str(django_user.pk), user.user_id)
-        self.assertEqual("foo", user.username)
-        self.assertEqual("secret", user.password)
-        self.assertEqual(datetime(2011, 6, 9), user.date_joined)
-        self.assertFalse(bool(user.user_data))
+class SimpleOtaRestoreTest(SimpleTestCase):
 
     def testRegistrationXML(self):
         check_xml_line_by_line(self, dummy_user_xml(),
@@ -74,6 +50,33 @@ class OtaRestoreTest(TestCase):
         assertRegistrationData("first_name", "mclovin")
         assertRegistrationData("last_name", None)
         assertRegistrationData("phone_number", "0019042411080")
+
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+class OtaRestoreTest(TestCase):
+    """Tests OTA Restore"""
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_cases()
+        delete_all_sync_logs()
+        cls.project = Domain(name='ota-restore-tests')
+
+    def tearDown(self):
+        delete_all_cases()
+        delete_all_sync_logs()
+        restore_config = RestoreConfig(project=self.project, user=dummy_user())
+        restore_config.cache.delete(restore_config._initial_cache_key())
+
+    def testFromDjangoUser(self):
+        django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
+        django_user.save()
+        user = User.from_django_user(django_user)
+        self.assertEqual(str(django_user.pk), user.user_id)
+        self.assertEqual("foo", user.username)
+        self.assertEqual("secret", user.password)
+        self.assertEqual(datetime(2011, 6, 9), user.date_joined)
+        self.assertFalse(bool(user.user_data))
 
     def testUserRestore(self):
         self.assertEqual(0, SyncLog.view(

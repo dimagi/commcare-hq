@@ -24,6 +24,9 @@ from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from no_exceptions.exceptions import Http400
 
 
+logger = logging.getLogger('es')
+
+
 DEFAULT_SIZE = 10
 
 
@@ -113,7 +116,7 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
 
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(es_query)))
+        logger.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(es_query)))
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything
@@ -153,7 +156,7 @@ class ESView(View):
             if res_domain == self.domain:
                 hits.append(res)
             else:
-                logging.info("Requester domain %s does not match result domain %s" % (
+                logger.info("Requester domain %s does not match result domain %s" % (
                     self.domain, res_domain))
         es_results['hits']['hits'] = hits
         return es_results
@@ -295,7 +298,7 @@ class UserES(ESView):
         Returns the raw query json back, or None if there's an error
         """
 
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (
+        logger.info("ESlog: [%s.%s] ESquery: %s" % (
             self.__class__.__name__, self.domain, json.dumps(es_query)))
 
         self.validate_query(es_query)
@@ -323,7 +326,7 @@ class UserES(ESView):
                 if res_domain == self.domain:
                     hits.append(res)
                 else:
-                    logging.info(
+                    logger.info(
                         "Requester domain %s does not match result domain %s" % (
                         self.domain, res_domain))
             else:

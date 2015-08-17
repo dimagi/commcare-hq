@@ -47,11 +47,25 @@
                     // This page isn't being redirected
                     trackFunction();
                 } else {
+                    // Track how many trackLinkHelper-related handlers
+                    // this event has, so we only actually click
+                    // once, after they're all complete.
+                    var $target = $(event.delegateTarget);
+                    var count = $target.data("track-link-count") || 0;
+                    count++;
+                    $target.data("track-link-count", count);
+
                     event.preventDefault();
                     var callbackCalled = false;
                     var callback = function () {
                         if (!callbackCalled) {
-                            document.location = $this.attr('href');
+                            var $target = $(event.delegateTarget);
+                            var count = $target.data("track-link-count");
+                            count--;
+                            $target.data("track-link-count", count);
+                            if (!count) {
+                                document.location = $this.attr('href');
+                            }
                             callbackCalled = true;
                         }
                     };

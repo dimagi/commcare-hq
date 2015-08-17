@@ -21,6 +21,7 @@ from casexml.apps.case.exceptions import (
 )
 from django.conf import settings
 from couchforms.util import is_deprecation
+from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -448,7 +449,7 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.form
+        doc = doc.to_json()['form']
 
     return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
 
@@ -476,6 +477,8 @@ def _extract_case_blocks(data, path=None):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
+                        validate_phone_datetime(
+                            case_block.get('@date_modified'), none_ok=True)
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
                 for case_block in _extract_case_blocks(value, path=new_path):

@@ -1,7 +1,10 @@
+from django.test import TestCase
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
+from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 from mock import patch
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 
@@ -78,3 +81,36 @@ class UserLocMapTest(CommTrackTest):
             self.mapping.save()
             mapping2.save()
             self.assertEqual(get_supply_point.call_count, 1)
+
+
+class TestUserBulkUpload(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name='mydomain')
+        cls.domain.save()
+        cls.user_specs = [{
+            u'username': u'hello',
+            u'user_id': u'should not update',
+            u'name': u'Another One',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'23424123',
+            u'password': 123,
+            u'email': None
+        }]
+
+    def test_upload_with_user_id(self):
+        bulk_upload_async(
+            self.domain.name,
+            list(self.user_specs),
+            list([]),
+            list([])
+        )
+
+        user = CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
+            self.user_specs[0]['username'],
+            self.domain.name))
+        self.assertNotEqual(self.user_specs[0]['user_id'], user._id)
+        self.assertEqual(self.user_specs[0]['phone-number'], user.phone_number)
+        self.assertEqual(self.user_specs[0]['name'], user.name)

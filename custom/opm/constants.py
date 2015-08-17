@@ -13,6 +13,7 @@ CFU2_XMLNS = "http://openrosa.org/formdesigner/9ef423bba8595a99976f0bc9532617841
 CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609ed16649"
 GROWTH_MONITORING_XMLNS= "http://openrosa.org/formdesigner/F1356F3F-C695-491F-9277-7F9B5522200C"
 
+CLOSE_FORM = "http://openrosa.org/formdesigner/41A1B3E0-C1A4-41EA-AE90-71A328F0D8FD"
 CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, CHILD_FOLLOWUP_XMLNS]
 
 # TODO Move these to a cached fixtures lookup

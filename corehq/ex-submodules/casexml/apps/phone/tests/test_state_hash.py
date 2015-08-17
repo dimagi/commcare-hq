@@ -42,8 +42,8 @@ class StateHashTest(TestCase):
             )
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
-            self.assertEqual(empty_hash, e.expected)
-            self.assertEqual(wrong_hash, e.actual)
+            self.assertEqual(empty_hash, e.server_hash)
+            self.assertEqual(wrong_hash, e.phone_hash)
             self.assertEqual(0, len(e.case_ids))
 
         response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2,
@@ -74,8 +74,8 @@ class StateHashTest(TestCase):
                                      version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
-            self.assertEqual(real_hash, e.expected)
-            self.assertEqual(bad_hash, e.actual)
+            self.assertEqual(real_hash, e.server_hash)
+            self.assertEqual(bad_hash, e.phone_hash)
             self.assertEqual(2, len(e.case_ids))
             self.assertTrue("abc123" in e.case_ids)
             self.assertTrue("123abc" in e.case_ids)

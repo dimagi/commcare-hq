@@ -9,15 +9,14 @@ from corehq import Domain, privileges, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.queries import search_string_query
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.util import smart_query_string
 from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 import langcodes
 from datetime import datetime
@@ -353,23 +352,17 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     def query_es(self, limit, skip, query=None):
-        is_simple, query = smart_query_string(query or '')
-
         web_user_filter = [
             {"term": {"user.domain_memberships.domain": self.domain}},
         ]
         web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
 
-        default_fields = ["username", "last_name", "first_name"]
         q = {
-            "query": {"query_string": {
-                "query": query,
-                "default_operator": "AND",
-                "fields": default_fields if is_simple else None
-            }},
             "filter": {"and": web_user_filter},
             "sort": {'username.exact': 'asc'},
         }
+        default_fields = ["username", "last_name", "first_name"]
+        q["query"] = search_string_query(query, default_fields)
         return es_query(
             params={}, q=q, es_url=ES_URLS["users"],
             size=limit, start_at=skip,
@@ -864,7 +857,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
-        if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
+        if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
             form = SetPasswordForm(user=django_user)

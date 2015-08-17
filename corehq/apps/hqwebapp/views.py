@@ -337,7 +337,7 @@ def _login(req, domain_name, template_name):
         domain = Domain.get_by_name(domain_name)
         context.update({
             'domain': domain_name,
-            'hr_name': domain.hr_name if domain else domain_name,
+            'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 
@@ -395,7 +395,7 @@ def logout(req):
         return HttpResponseRedirect(reverse('login'))
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
+def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
 
 
@@ -412,7 +412,9 @@ def dropbox_upload(request, download_id):
         raise Http404
     else:
         filename = download.get_filename()
-        dest = os.path.basename(filename)
+        # Hack to get target filename from content disposition
+        match = re.search('filename="([^"]*)"', download.content_disposition)
+        dest = match.group(1) if match else 'download.txt'
 
         try:
             uploader = DropboxUploadHelper.create(
@@ -435,7 +437,8 @@ def dropbox_upload(request, download_id):
 
         messages.success(
             request,
-            "{} is queued to sync to dropbox! You will receive an email when it completes.".format(dest)
+            _(u"Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
         )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
@@ -584,7 +587,7 @@ def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html", {'tmpl': template})
+    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
 
 
 def eula(request):
@@ -620,7 +623,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'hqwebapp/base_page.html'
+    template_name = 'style/bootstrap2/base_page.html'
 
     @property
     def page_name(self):
@@ -899,7 +902,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'hqwebapp/partials/create_item_form.html', {
+            'style/includes/create_item_form.html', {
                 'form': create_form
             }
         )
@@ -909,7 +912,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'style/bootstrap2/partials/update_item_form.html', {
                 'form': update_form
             }
         )
