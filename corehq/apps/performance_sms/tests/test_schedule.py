@@ -2,6 +2,7 @@ import uuid
 import random
 from datetime import datetime, timedelta
 from django.test import TestCase
+from corehq.apps.performance_sms.dbaccessors import delete_all_configs
 from corehq.apps.performance_sms.models import (DAILY, WEEKLY, MONTHLY, PerformanceConfiguration,
                                                 DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY,
                                                 ScheduleConfiguration)
@@ -11,38 +12,49 @@ from corehq.apps.performance_sms.schedule import get_message_configs_at_this_hou
 class TestSchedule(TestCase):
     domain = uuid.uuid4().hex
 
+    @classmethod
+    def setUpClass(cls):
+        delete_all_configs()
+
     def test_daily_schedule(self):
         config = _make_performance_config(self.domain, DAILY, hour=4)
+        try:
+            configs_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=4))
+            self.assertEqual(1, len(configs_at_4_hours))
+            self.assertEqual(config._id, configs_at_4_hours[0]._id)
 
-        configs_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=4))
-        self.assertTrue(config._id in [c._id for c in configs_at_4_hours])
-
-        # any hour that's not 4am
-        not_4 = random.choice(range(0, 4) + range(5, 24))
-        configs_not_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
-        self.assertFalse(config._id in [c._id for c in configs_not_at_4_hours])
+            # any hour that's not 4am
+            not_4 = random.choice(range(0, 4) + range(5, 24))
+            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+        finally:
+            config.delete()
 
     def test_weekly_schedule(self):
         config = _make_performance_config(self.domain, WEEKLY, day_of_week=4)
+        try:
+            configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_week=4))
+            self.assertEqual(1, len(configs_on_4th_day))
+            self.assertEqual(config._id, configs_on_4th_day[0]._id)
 
-        configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_week=4))
-        self.assertTrue(config._id in [c._id for c in configs_on_4th_day])
-
-        # any weekday that's not 4th
-        not_4 = random.choice(range(1, 4) + range(5, 8))
-        configs_not_on_4thday = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
-        self.assertFalse(config._id in [c._id for c in configs_not_on_4thday])
+            # any weekday that's not 4th
+            not_4 = random.choice(range(1, 4) + range(5, 8))
+            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+        finally:
+            config.delete()
 
     def test_monthly_schedule(self):
         # Todo, doesn't handle last-day-of-month
         config = _make_performance_config(self.domain, MONTHLY, day_of_month=4)
+        try:
+            configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_month=4))
+            self.assertEqual(1, len(configs_on_4th_day))
+            self.assertEqual(config._id, configs_on_4th_day[0]._id)
 
-        configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_month=4))
-        self.assertTrue(config._id in [c._id for c in configs_on_4th_day])
-        # any day of month that's not 4th
-        not_4 = random.choice(range(1, 4) + range(5, 29))
-        configs_not_on_4thday = get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))
-        self.assertFalse(config._id in [c._id for c in configs_not_on_4thday])
+            # any day of month that's not 4th
+            not_4 = random.choice(range(1, 4) + range(5, 29))
+            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+        finally:
+            config.delete()
 
 
 def _make_time(hours=None, day_of_week=None, day_of_month=None):
