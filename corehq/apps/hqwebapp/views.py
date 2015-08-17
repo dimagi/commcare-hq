@@ -337,7 +337,7 @@ def _login(req, domain_name, template_name):
         domain = Domain.get_by_name(domain_name)
         context.update({
             'domain': domain_name,
-            'hr_name': domain.hr_name if domain else domain_name,
+            'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 

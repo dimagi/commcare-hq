@@ -17,3 +17,5 @@ from .handlers.stockonhand import *
 from .handlers.stop import *
 from .handlers.supervision import *
 from .handlers.yes import *
+from .handlers.stockout import *
+from .handlers.messageinitatior import *
