@@ -25,6 +25,7 @@
     mobileWorkerApp.constant('formStrings', {
         checkingUsername: "{% trans "Checking username" %}"
     });
+    mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
 }(window.angular));
 </script>
 {% endblock %}
@@ -67,7 +68,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" ng-disabled="!validateForm()" class="btn btn-primary">
                                     {% trans "Create" %}
                                 </button>
                             </div>
