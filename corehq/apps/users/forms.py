@@ -407,11 +407,11 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field('username',
                              ng_blur='checkUsername()',
-                             ng_model='mobileWorker.username'),
-                crispy.Field('password', ng_model='mobileWorker.password'),
+                             ng_model='mobileWorker.fields.username'),
+                crispy.Field('password', ng_model='mobileWorker.fields.password'),
                 crispy.Field('password_2',
                              ng_keyup='checkPassword()',
-                             ng_model='mobileWorker.password2'),
+                             ng_model='mobileWorker.fields.password2'),
             )
         )
 

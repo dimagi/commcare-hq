@@ -98,9 +98,14 @@ class CustomDataEditor(object):
         self.form.is_valid()
         return dict(cleaned_data, **system_data)
 
+    @property
+    @memoized
+    def fields(self):
+        return self.model.get_fields(required_only=self.required_only)
+
     def init_form(self, post_dict=None):
         fields = OrderedDict()
-        for field in self.model.get_fields(required_only=self.required_only):
+        for field in self.fields:
             fields[field.slug] = _make_field(field)
 
         if self.angular_model:
