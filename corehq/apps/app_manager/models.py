@@ -1013,8 +1013,17 @@ class NavMenuItemMediaMixin(DocumentSchema):
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
     def _get_media_by_language(self, media_attr, lang, strict=False):
-        # if strict is False, media for a random lang is returned if given lang
-        # doesn't have media set
+        """
+        Return media-path for given language if one exists, else 1st path in the
+        sorted lang->media-path list
+
+        *args:
+            media_attr: one of 'media_image' or 'media_audio'
+            lang: language code
+        **kwargs:
+            strict: whether to return None if media-path is not set for lang or
+            to return first path in sorted lang->media-path list
+        """
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr)
@@ -1075,20 +1084,17 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def icon_app_string(self, lang, for_default=False):
         """
-            Return lang/app_strings.txt translation for given lang
-            - if a path exists for the lang, returns the path
-              otherwise None
-            - if for_default is True (default/app_strings.txt), returns
-              an invalid path deliberately, so that if media is set
-              for one lang but not other, the media for other lang will
-              not be shown. Mobile prefers an invalid path over empty path
-              [Hacky - see http://manage.dimagi.com/default.asp?176008]
+        Return lang/app_strings.txt translation for given lang
+        if a path exists for the lang
+
+        **kwargs:
+            for_default: whether app_string is for default/app_strings.txt
         """
 
         if not for_default and self.icon_by_language(lang, strict=True):
             return self.icon_by_language(lang, strict=True)
 
-        if for_default and any(self.all_image_paths()):
+        if for_default:
             return self.icon_by_language(lang, strict=False)
 
     def audio_app_string(self, lang, for_default=False):
@@ -1099,7 +1105,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         if not for_default and self.audio_by_language(lang, strict=True):
             return self.audio_by_language(lang, strict=True)
 
-        if for_default and any(self.all_audio_paths()):
+        if for_default:
             return self.audio_by_language(lang, strict=False)
 
 
