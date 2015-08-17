@@ -38,7 +38,7 @@ from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
-from corehq.apps.users.util import can_add_extra_mobile_workers
+from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
@@ -764,11 +764,22 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     @allow_remote_invocation
+    def check_username(self, in_data):
+        try:
+            username = in_data['username']
+        except KeyError:
+            return HttpResponseBadRequest('You must specify a username')
+        full_username = format_username(username, self.domain)
+        if CommCareUser.get_by_username(full_username, strict=True):
+            return {'error': _('Username {} is already taken'.format(username))}
+        return {'success': _('Username {} is available'.format(username))}
+
+    @allow_remote_invocation
     def create_mobile_worker(self, in_data):
+        #  if not can_add_extra_mobile_workers(request):
+            #  raise PermissionDenied()
         print in_data
-        return {
-            'success': True,
-        }
+        return {'success': True}
 
 
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
