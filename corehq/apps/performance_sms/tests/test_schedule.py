@@ -37,8 +37,8 @@ class TestSchedule(TestCase):
             self.assertEqual(config._id, configs_on_4th_day[0]._id)
 
             # any weekday that's not 4th
-            not_4 = random.choice(range(1, 4) + range(5, 8))
-            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+            not_4 = random.choice(range(0, 4) + range(5, 7))
+            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(day_of_week=not_4))))
         finally:
             config.delete()
 
@@ -52,7 +52,7 @@ class TestSchedule(TestCase):
 
             # any day of month that's not 4th
             not_4 = random.choice(range(1, 4) + range(5, 29))
-            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(day_of_month=not_4))))
         finally:
             config.delete()
 
