@@ -809,7 +809,6 @@ def clean_releases(keep=3):
     valid_releases = 0
     with cd(env.root):
         for index, release in enumerate(releases):
-            print release
             if (files.contains(RELEASE_RECORD, release) or
                     release == current_release or
                     release == os.path.basename(env.code_root)):
@@ -824,16 +823,12 @@ def clean_releases(keep=3):
         print 'Aborting, about to remove every release'
         exit()
 
-    print 'root: {}'.format(os.path.basename(env.code_root))
     if os.path.basename(env.code_root) in to_remove:
         print 'Aborting, about to remove current release'
         exit()
 
-    print releases
-    print to_remove
     for release in to_remove:
-        pass
-        #sudo('rm -rf {}/{}'.format(env.releases, release))
+        sudo('rm -rf {}/{}'.format(env.releases, release))
 
 
 @task
