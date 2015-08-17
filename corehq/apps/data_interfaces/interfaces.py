@@ -133,9 +133,16 @@ class FormManagementMode(object):
 
 class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     slug = 'archive_or_restore'
-    default_text = ugettext_noop("Select...")
     placeholder = ''
+    default_text = None
     label = _('Archived/Restored')
+    help_text = mark_safe("Archived forms are removed from reports and exports and "
+                          "any case changes they make are reversed. Archiving forms "
+                          "can remove accidental form submissions. Use this report "
+                          "to bulk archive forms or restore a set of archived forms. "
+                          "<a href='https://confluence.dimagi.com/display/commcarepublic/Archive+Forms'>"
+                          "Learn more</a>")
+    help_style_bubble = True
 
     @property
     def options(self):
