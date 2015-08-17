@@ -82,7 +82,7 @@ def _build_choice_list_indicator(spec, context):
             )
         ) for choice in spec['choices']
     ]
-    return CompoundIndicator(base_display_name, choice_indicators)
+    return CompoundIndicator(base_display_name, spec['column_id'], choice_indicators)
 
 
 def _build_repeat_iteration_indicator(spec, context):

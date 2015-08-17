@@ -41,14 +41,15 @@ class ConfigurableIndicatorMixIn(object):
 
 class ConfigurableIndicator(ConfigurableIndicatorMixIn):
 
-    def __init__(self, display_name):
+    def __init__(self, display_name, id):
         self.display_name = display_name
+        self.id = id
 
 
 class SingleColumnIndicator(ConfigurableIndicator):
 
     def __init__(self, display_name, column):
-        super(SingleColumnIndicator, self).__init__(display_name)
+        super(SingleColumnIndicator, self).__init__(display_name, column.id)
         self.column = column
 
     def get_columns(self):
@@ -86,8 +87,8 @@ class CompoundIndicator(ConfigurableIndicator):
     """
     An indicator that wraps other indicators.
     """
-    def __init__(self, display_name, indicators):
-        super(CompoundIndicator, self).__init__(display_name)
+    def __init__(self, display_name, id, indicators):
+        super(CompoundIndicator, self).__init__(display_name, id)
         self.indicators = indicators
 
     def get_columns(self):

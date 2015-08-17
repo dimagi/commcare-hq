@@ -157,6 +157,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             }, self.named_filter_objects))
         return CompoundIndicator(
             self.display_name,
+            None,
             default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.named_filter_objects)
                 for indicator in self.configured_indicators

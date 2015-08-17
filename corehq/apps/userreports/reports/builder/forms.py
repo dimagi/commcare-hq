@@ -616,6 +616,7 @@ class ConfigureNewReportBase(forms.Form):
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
+            data_source = DataSourceConfiguration.get(data_source_config_id)
         else:
             data_source = self._build_data_source()
             data_source_config_id = data_source._id
@@ -798,10 +799,11 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         return self.cleaned_data["group_by"]
 
     def get_report_aggregation_cols(self, data_source):
-        # Inspect data_source.indicators.indicators and call 'get_columns()' on the appropriate one
-        return [
-            self.data_source_properties[self.aggregation_field]['column_id']
-        ]
+        column_id = self.data_source_properties[self.aggregation_field]['column_id']
+        for indicator in data_source.indicators.indicators:
+            if indicator.id == column_id:
+                return [column.id for column in indicator.get_columns()]
+        raise Exception("The data source and form/case are inconsistent")
 
     @property
     def _report_charts(self):
