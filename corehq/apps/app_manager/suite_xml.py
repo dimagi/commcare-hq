@@ -889,11 +889,9 @@ class WorkflowHelper(object):
                 case_count = CaseIDXPath(source_case_id).case().count()
 
                 frame_case_created = StackFrameMeta(None, get_if_clause(case_count.gt(0)))
-                frame_case_created.add_child(target_command)
                 stack_frames.append(frame_case_created)
 
                 frame_case_not_created = StackFrameMeta(None, get_if_clause(case_count.eq(0)))
-                frame_case_not_created.add_child(target_command)
                 stack_frames.append(frame_case_not_created)
 
                 def get_case_type_created_by_form(form):
@@ -906,40 +904,71 @@ class WorkflowHelper(object):
                     elif form.form_type == 'advanced_form':
                         return form.get_registration_actions(target_module.case_type)[0].case_type
 
-                source_form_dm = self.get_form_datums(form)
-                # assume all forms in the module have the same datums
-                target_form_dm = self.get_form_datums(target_module.get_form(0))
+                def add_datums_for_target(module, source_form_dm, allow_missing=False):
+                    """
+                    Given a target module and a list of datums from the source module add children
+                    to the stack frames that are required to by the target module and present in the source datums
+                    list.
+                    """
+                    # assume all forms in the module have the same datums
+                    target_form_dm = self.get_form_datums(module.get_form(0))
 
-                def get_target_dm(case_type):
-                    try:
-                        [target_dm] = [
-                            target_meta for target_meta in target_form_dm
-                            if target_meta.case_type == case_type
-                        ]
-                    except ValueError:
-                        raise SuiteError(
-                            "Return module for case list form has mismatching datums: {}".format(form.unique_id)
-                        )
-
-                    return target_dm
-
-                for source_meta in source_form_dm:
-                    if source_meta.case_type:
-                        # This is true for registration forms where the case being created is a subcase
+                    def get_target_dm(case_type):
                         try:
-                            target_dm = get_target_dm(source_meta.case_type)
-                        except SuiteError:
-                            if source_meta.requires_selection:
-                                raise
+                            [target_dm] = [
+                                target_meta for target_meta in target_form_dm
+                                if target_meta.case_type == case_type
+                            ]
+                        except ValueError:
+                            raise SuiteError(
+                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                            )
+
+                        return target_dm
+
+                    used = set()
+                    for source_meta in source_form_dm:
+                        if source_meta.case_type:
+                            # This is true for registration forms where the case being created is a subcase
+                            try:
+                                target_dm = get_target_dm(source_meta.case_type)
+                            except SuiteError:
+                                if source_meta.requires_selection:
+                                    raise
+                            else:
+                                used.add(source_meta)
+                                meta = DatumMeta.from_session_datum(source_meta)
+                                frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
+                                frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                         else:
-                            meta = DatumMeta.from_session_datum(source_meta)
-                            frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
-                            frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
-                    else:
-                        source_case_type = get_case_type_created_by_form(form)
-                        target_dm = get_target_dm(source_case_type)
-                        datum_meta = DatumMeta.from_session_datum(target_dm)
-                        frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
+                            source_case_type = get_case_type_created_by_form(form)
+                            try:
+                                target_dm = get_target_dm(source_case_type)
+                            except SuiteError:
+                                if not allow_missing:
+                                    raise
+                            else:
+                                used.add(source_meta)
+                                datum_meta = DatumMeta.from_session_datum(target_dm)
+                                frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
+
+                    # return any source datums that were not already added to the target
+                    return [dm for dm in source_form_dm if dm not in used]
+
+                source_form_dm = self.get_form_datums(form)
+
+                if target_module.root_module_id:
+                    # add stack children for the root module before adding any for the child module.
+                    root_module = target_module.root_module
+                    root_module_command = XPath.string(id_strings.menu_id(root_module))
+                    frame_case_created.add_child(root_module_command)
+                    frame_case_not_created.add_child(root_module_command)
+
+                    source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
+
+                frame_case_created.add_child(target_command)
+                frame_case_not_created.add_child(target_command)
+                add_datums_for_target(target_module, source_form_dm)
 
         return stack_frames
 
