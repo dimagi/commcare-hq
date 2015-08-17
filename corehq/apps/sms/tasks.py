@@ -2,7 +2,6 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from django_redis.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
@@ -171,17 +170,7 @@ def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
     """
-    # Note that Redis error/exception notifications go out from the
-    # run_sms_queue command, so no need to send them out here
-    # otherwise we'd get too many emails.
-    rcache = cache_core.get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        return
-    try:
-        client = rcache.raw_client
-    except NotImplementedError:
-        return
-
+    client = cache_core.get_redis_client()
     utcnow = datetime.utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.

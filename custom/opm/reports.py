@@ -785,8 +785,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
 
         cache = get_redis_client()
-        if cache.exists(self.redis_key):
-            rows = pickle.loads(cache.get(self.redis_key))
+        value = cache.get(self.redis_key)
+        if value is not None:
+            rows = pickle.loads(value)
         else:
             rows = self.rows
 

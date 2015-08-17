@@ -1,12 +1,9 @@
 from datetime import datetime
 from time import sleep
 from django.core.management.base import BaseCommand
-from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
 from dimagi.utils.logging import notify_exception
-from django_redis.cache import RedisCache
 
-class RedisClientError(Exception):
-    pass
 
 class GenericEnqueuingOperation(BaseCommand):
     """
@@ -31,14 +28,14 @@ class GenericEnqueuingOperation(BaseCommand):
                 self.populate_queue()
             except RedisClientError:
                 notify_exception(None,
-                    message="Could not get redis connection. Is redis up?")
+                    message="Could not get redis cache. Is redis configured?")
             except:
                 notify_exception(None,
                     message="Could not populate %s." % self.get_queue_name())
             sleep(15)
 
     def populate_queue(self):
-        client = self.get_redis_client()
+        client = get_redis_client()
         utcnow = datetime.utcnow()
         entries = self.get_items_to_be_processed(utcnow)
         if entries:
@@ -48,7 +45,7 @@ class GenericEnqueuingOperation(BaseCommand):
                 self.enqueue(item_id, process_datetime_str, redis_client=client)
 
     def enqueue(self, item_id, process_datetime_str, redis_client=None):
-        client = redis_client or self.get_redis_client()
+        client = redis_client or get_redis_client()
         queue_name = self.get_queue_name()
         enqueuing_lock = self.get_enqueuing_lock(client,
             "%s-enqueuing-%s-%s" % (queue_name, item_id, process_datetime_str))
@@ -58,12 +55,6 @@ class GenericEnqueuingOperation(BaseCommand):
             except:
                 # We couldn't enqueue, so release the lock
                 enqueuing_lock.release()
-
-    def get_redis_client(self):
-        rcache = cache_core.get_redis_default_cache()
-        if not isinstance(rcache, RedisCache):
-            raise RedisClientError("Could not get redis connection.")
-        return rcache
 
     def get_enqueuing_lock(self, client, key):
         lock_timeout = self.get_enqueuing_timeout() * 60
