@@ -380,11 +380,20 @@ _username_help = """
 </span>
 """
 
+_password_help = ('<span ng-show="!isPasswordValid">{}</span>'
+                  .format(_("The passwords do not match.")))
+
 
 class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(max_length=80, required=True, help_text=_username_help)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
-    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
+    password_2 = forms.CharField(
+        label='Password (reenter)',
+        widget=PasswordInput(),
+        required=True,
+        min_length=1,
+        help_text=_password_help
+    )
     domain = forms.CharField(widget=HiddenInput())
 
     def __init__(self, *args, **kwargs):
@@ -400,7 +409,9 @@ class NewMobileWorkerForm(forms.Form):
                              ng_blur='checkUsername()',
                              ng_model='mobileWorker.username'),
                 crispy.Field('password', ng_model='mobileWorker.password'),
-                crispy.Field('password_2', ng_model='mobileWorker.password2'),
+                crispy.Field('password_2',
+                             ng_keyup='checkPassword()',
+                             ng_model='mobileWorker.password2'),
             )
         )
 
