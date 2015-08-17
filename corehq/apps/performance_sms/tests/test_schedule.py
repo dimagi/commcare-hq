@@ -20,7 +20,7 @@ class TestSchedule(TestCase):
     def test_daily_schedule(self):
         config = _make_performance_config(self.domain, DAILY, hour=4)
         try:
-            as_of = _make_time(hours=4)
+            as_of = datetime(2015, 1, 1, 4)
             configs_at_4_hours = get_message_configs_at_this_hour(as_of=as_of)
             self.assertEqual(1, len(configs_at_4_hours))
             self.assertEqual(config._id, configs_at_4_hours[0]._id)
@@ -30,16 +30,20 @@ class TestSchedule(TestCase):
             self.assertEqual(0, len(get_weekly_messages(as_of)))
             self.assertEqual(0, len(get_monthly_messages(as_of)))
 
-            # any hour that's not 4am
-            not_4 = random.choice(range(0, 4) + range(5, 24))
-            self.assertEqual(0, len(get_daily_messages(_make_time(hours=not_4))))
+            # test wrong hour
+            wrong_hour = as_of.replace(hour=5)
+            self.assertEqual(0, len(get_daily_messages(wrong_hour)))
+
+            # test different day is fine
+            new_day = as_of + timedelta(days=5)
+            self.assertEqual(1, len(get_daily_messages(new_day)))
         finally:
             config.delete()
 
     def test_weekly_schedule(self):
-        config = _make_performance_config(self.domain, WEEKLY, day_of_week=4)
+        config = _make_performance_config(self.domain, WEEKLY, day_of_week=4, hour=8)
         try:
-            as_of = _make_time(day_of_week=4)
+            as_of = datetime(2015, 8, 14, 8)  # happens to be a friday (weekday 4)
             configs_on_4th_day = get_message_configs_at_this_hour(as_of=as_of)
             self.assertEqual(1, len(configs_on_4th_day))
             self.assertEqual(config._id, configs_on_4th_day[0]._id)
@@ -50,8 +54,17 @@ class TestSchedule(TestCase):
             self.assertEqual(0, len(get_monthly_messages(as_of)))
 
             # any weekday that's not 4th
-            not_4 = random.choice(range(0, 4) + range(5, 7))
-            self.assertEqual(0, len(get_weekly_messages(as_of=_make_time(day_of_week=not_4))))
+            wrong_day = as_of.replace(day=15)
+            self.assertEqual(0, len(get_weekly_messages(wrong_day)))
+
+            # wrong hour
+            wrong_hour = as_of.replace(hour=7)
+            self.assertEqual(0, len(get_weekly_messages(wrong_hour)))
+
+            # one week later should be ok
+            next_week = as_of + timedelta(days=7)
+            self.assertEqual(1, len(get_weekly_messages(next_week)))
+
         finally:
             config.delete()
 
@@ -76,22 +89,12 @@ class TestSchedule(TestCase):
             # check wrong hour
             wrong_hour = as_of.replace(hour=5)
             self.assertEqual(0, len(get_monthly_messages(as_of=wrong_hour)))
+
+            # next month ok
+            next_month = as_of.replace(month=2)
+            self.assertEqual(1, len(get_monthly_messages(as_of=next_month)))
         finally:
             config.delete()
-
-
-def _make_time(hours=None, day_of_week=None, day_of_month=None):
-    if hours:
-        return datetime(2013, random.choice(range(1, 13)), random.choice(range(1, 29)), hours)
-
-    if day_of_week:
-        base_date = datetime(2013, random.choice(range(1, 13)), 1)
-        while base_date.weekday() != day_of_week:
-            base_date = base_date + timedelta(days=1)
-        return base_date
-
-    if day_of_month:
-        return datetime(2013, random.choice(range(1, 13)), day_of_month)
 
 
 def _make_performance_config(domain, interval, hour=DEFAULT_HOUR, day_of_week=DEFAULT_WEEK_DAY,
