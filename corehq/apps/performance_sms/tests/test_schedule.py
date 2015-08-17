@@ -6,7 +6,8 @@ from corehq.apps.performance_sms.dbaccessors import delete_all_configs
 from corehq.apps.performance_sms.models import (DAILY, WEEKLY, MONTHLY, PerformanceConfiguration,
                                                 DEFAULT_HOUR, DEFAULT_WEEK_DAY, DEFAULT_MONTH_DAY,
                                                 ScheduleConfiguration)
-from corehq.apps.performance_sms.schedule import get_message_configs_at_this_hour
+from corehq.apps.performance_sms.schedule import get_message_configs_at_this_hour, get_daily_messages, \
+    get_weekly_messages, get_monthly_messages
 
 
 class TestSchedule(TestCase):
@@ -19,40 +20,62 @@ class TestSchedule(TestCase):
     def test_daily_schedule(self):
         config = _make_performance_config(self.domain, DAILY, hour=4)
         try:
-            configs_at_4_hours = get_message_configs_at_this_hour(as_of=_make_time(hours=4))
+            as_of = _make_time(hours=4)
+            configs_at_4_hours = get_message_configs_at_this_hour(as_of=as_of)
             self.assertEqual(1, len(configs_at_4_hours))
             self.assertEqual(config._id, configs_at_4_hours[0]._id)
 
+            # check subfunctions
+            self.assertEqual(1, len(get_daily_messages(as_of)))
+            self.assertEqual(0, len(get_weekly_messages(as_of)))
+            self.assertEqual(0, len(get_monthly_messages(as_of)))
+
             # any hour that's not 4am
             not_4 = random.choice(range(0, 4) + range(5, 24))
-            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(hours=not_4))))
+            self.assertEqual(0, len(get_daily_messages(_make_time(hours=not_4))))
         finally:
             config.delete()
 
     def test_weekly_schedule(self):
         config = _make_performance_config(self.domain, WEEKLY, day_of_week=4)
         try:
-            configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_week=4))
+            as_of = _make_time(day_of_week=4)
+            configs_on_4th_day = get_message_configs_at_this_hour(as_of=as_of)
             self.assertEqual(1, len(configs_on_4th_day))
             self.assertEqual(config._id, configs_on_4th_day[0]._id)
 
+            # check subfunctions
+            self.assertEqual(0, len(get_daily_messages(as_of)))
+            self.assertEqual(1, len(get_weekly_messages(as_of)))
+            self.assertEqual(0, len(get_monthly_messages(as_of)))
+
             # any weekday that's not 4th
             not_4 = random.choice(range(0, 4) + range(5, 7))
-            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(day_of_week=not_4))))
+            self.assertEqual(0, len(get_weekly_messages(as_of=_make_time(day_of_week=not_4))))
         finally:
             config.delete()
 
     def test_monthly_schedule(self):
         # Todo, doesn't handle last-day-of-month
-        config = _make_performance_config(self.domain, MONTHLY, day_of_month=4)
+        config = _make_performance_config(self.domain, MONTHLY, hour=8, day_of_month=4)
         try:
-            configs_on_4th_day = get_message_configs_at_this_hour(as_of=_make_time(day_of_month=4))
+            as_of = datetime(2015, 1, 4, 8)
+            configs_on_4th_day = get_message_configs_at_this_hour(as_of=as_of)
             self.assertEqual(1, len(configs_on_4th_day))
             self.assertEqual(config._id, configs_on_4th_day[0]._id)
 
-            # any day of month that's not 4th
-            not_4 = random.choice(range(1, 4) + range(5, 29))
-            self.assertEqual(0, len(get_message_configs_at_this_hour(as_of=_make_time(day_of_month=not_4))))
+            # check subfunctions
+            self.assertEqual(0, len(get_daily_messages(as_of)))
+            self.assertEqual(0, len(get_weekly_messages(as_of)))
+            self.assertEqual(1, len(get_monthly_messages(as_of)))
+
+            # check wrong day
+            wrong_day = as_of.replace(day=5)
+            self.assertEqual(0, len(get_monthly_messages(as_of=wrong_day)))
+
+            # check wrong hour
+            wrong_hour = as_of.replace(hour=5)
+            self.assertEqual(0, len(get_monthly_messages(as_of=wrong_hour)))
         finally:
             config.delete()
 
