@@ -182,12 +182,13 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
                 ),
                 sortable=False, span=2
             ),
-            DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(_("View Form"), span=2),
+            DataTablesColumn(_("Username"), prop_name='form.meta.username', span=3),
             DataTablesColumn(
                 _("Submission Time") if self.by_submission_time
                 else _("Completion Time"),
-                prop_name=self.time_field
+                prop_name=self.time_field,
+                span=3,
             ),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
         ]
