@@ -85,8 +85,12 @@ def login_and_domain_required(view_func):
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+                elif domain.allow_domain_requests:
+                    from corehq.apps.users.views import DomainRequestView
+                    return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
-                    raise Http404
+                    raise Exception("404 in login_and_domain_required, user %s is not a member of %s" %
+                                    (couch_user.username, domain))
             else:
                 login_url = reverse('domain_login', kwargs={'domain': domain})
                 return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
