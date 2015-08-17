@@ -17,28 +17,31 @@
     mobileWorkers.constant('formStrings', {
         checkingUsername: 'Checking username'
     });
+    mobileWorkers.constant('customFields', []);
 
     var MobileWorker = function (data) {
         var self = this;
         self.creationStatus = STATUS.NEW;
-        self.username = data.username;
-        self.password = data.password;
-        self.password2 = data.password2;
-        self.domain = data.domain;
+
+        self.fields = {
+            username: data.username || '',
+            password: data.password || '',
+            password2: data.password2 || '',
+        };
 
         self.isPending = function () {
             return self.creationStatus === STATUS.PENDING;
         };
 
-        _.each(data.customFields, function (value, key) {
-            self[key] = value;
+        _.each(data.customFields, function (key) {
+            self.fields[key] = '';
         });
     };
 
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.newMobileWorkerFormController = function (
-            $scope, workerCreationService, djangoRMI, formStrings
+            $scope, workerCreationService, djangoRMI, formStrings, customFields
     ) {
         $scope.mobileWorker = {};
 
@@ -56,7 +59,8 @@
             clearUsernameStatus();
             $passwordElement.removeClass("has-error has-success");
             $scope.isPasswordValid = true;
-            $scope.mobileWorker = new MobileWorker({});
+            $(".select2multiplechoicewidget").select2('data', null);
+            $scope.mobileWorker = new MobileWorker({customFields: customFields});
         };
 
         $scope.submitNewMobileWorker = function () {
@@ -69,7 +73,7 @@
             $scope.usernamePending = formStrings.checkingUsername;
             $usernameElement.addClass("has-warning");
             djangoRMI.check_username({
-                username: $scope.mobileWorker.username
+                username: $scope.mobileWorker.fields.username
             })
             .success(function (data) {
                 clearUsernameStatus();
@@ -89,7 +93,7 @@
         };
 
         $scope.checkPassword = function () {
-            if ($scope.mobileWorker.password !== $scope.mobileWorker.password2) {
+            if ($scope.mobileWorker.fields.password !== $scope.mobileWorker.fields.password2) {
                 $scope.isPasswordValid = false;
                 $passwordElement
                     .removeClass("has-success")
@@ -100,6 +104,13 @@
                     .removeClass("has-error")
                     .addClass("has-success");
             }
+        };
+
+        $scope.validateForm = function () {
+            var areFieldsSet = _.every($scope.mobileWorker.fields, function (val, key) {
+                return !_.isEmpty(val);
+            });
+            return areFieldsSet && $scope.isPasswordValid && !!$scope.usernameAvailable;
         };
 
     };
@@ -133,7 +144,7 @@
             self.mobileWorkers.push(newWorker);
 
             djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker
+                mobileWorker: newWorker.fields
             })
             .success(function (data) {
                 newWorker.creationStatus = STATUS.SUCCESS;
