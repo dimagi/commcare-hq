@@ -86,6 +86,5 @@ class PerformanceMessageEditForm(forms.Form):
     @property
     def source_id(self):
         if self.config.template_variables:
-            print self.config.template_variables[0].source_id
             return self.config.template_variables[0].source_id
         return ''
