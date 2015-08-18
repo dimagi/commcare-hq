@@ -49,14 +49,14 @@ branches:
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
   - reverseLanguageMedia # Sravan 6/10
-#  - web-user-requests # Jenny, July 16
+  - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
 #  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
 #  - due-list # TS 7/30
   - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
-  - quickcache-user-roles  # Ethan 8/13
+#  - quickcache-user-roles  # Ethan 8/13
   - revert-7867-revert-7745-upgrade-redis # Ben 8/17
 #  - optmize-deploy+knockout-js # Ben 8/18
   - knockout-js # Ben 8/17
