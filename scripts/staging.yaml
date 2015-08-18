@@ -48,22 +48,23 @@ branches:
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-  - languageMedia # Sravan 6/10
+  - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
-  - icds/scheduler # Farid 8/6
+#  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
 #  - due-list # TS 7/30
-  - django17 # J$ 8/5
-  - one-true-commtrack  # Ethan 8/6
+#  - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
-  - new-mobile-workers  # Ethan 8/11
   - quickcache-user-roles  # Ethan 8/13
+  - revert-7867-revert-7745-upgrade-redis # Ben 8/17
+  - knockout-js # Ben 8/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - knockout-js # Ben 8/17
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -73,12 +74,14 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches:
+      - revert-122-revert-121-upgrade-redis # Ben 8/17
   submodules/dimagi-utils-src:
-    branches: []
+    branches:
+      - revert-304-revert-301-upgrade-redis # Ben 8/17
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches:
-      - django18
+    branches: []
+#      - django18
 
