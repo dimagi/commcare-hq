@@ -4,7 +4,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
-from django.core.validators import EmailValidator
+from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
@@ -456,6 +456,45 @@ class CommtrackUserForm(forms.Form):
                 user.set_location(Location.get(location_id))
         else:
             user.unset_location()
+
+
+class DomainRequestForm(forms.Form):
+    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True)
+    email = forms.CharField(
+        label=ugettext_lazy('Email Address'),
+        required=True,
+        help_text=ugettext_lazy('You will use this email to log in.'),
+    )
+    domain = forms.CharField(widget=forms.HiddenInput(), required=True)
+
+    @property
+    def form_actions(self):
+        return FormActions(
+            crispy.ButtonHolder(
+                crispy.Submit(
+                    'submit',
+                    ugettext_lazy('Request Access')
+                )
+            )
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(DomainRequestForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.show_form_errors = True
+        self.helper.layout = crispy.Layout(
+            crispy.Field('full_name'),
+            crispy.Field('email'),
+            crispy.Field('domain'),
+            self.form_actions,
+        )
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip().lower()
+        validate_email(data)
+        return data
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
