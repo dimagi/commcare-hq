@@ -623,8 +623,18 @@ class UserInvitationView(InvitationView):
         return reverse("domain_homepage", args=[self.domain,])
 
     def invite(self, invitation, user):
-        user.add_as_web_user(invitation.domain, role=invitation.role,
-                             location_id=invitation.supply_point, program_id=invitation.program)
+        project = Domain.get_by_name(self.domain)
+        user.add_domain_membership(domain=self.domain)
+        user.set_role(self.domain, invitation.role)
+
+        if project.commtrack_enabled:
+            user.get_domain_membership(self.domain).program_id = invitation.program
+
+        if project.uses_locations:
+            user.get_domain_membership(self.domain).location_id = invitation.supply_point
+        user.save()
+        #user.add_as_web_user(invitation.domain, role=invitation.role,
+        #                     location_id=invitation.supply_point, program_id=invitation.program)
 
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
