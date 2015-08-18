@@ -135,7 +135,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
-            bundle.obj = CommCareUser.create(domain=kwargs['domain'], username=bundle.data['username'],
+            bundle.obj = CommCareUser.create(domain=kwargs['domain'], username=bundle.data['username'].lower(),
                                              password=bundle.data['password'], email=bundle.data.get('email', ''))
             del bundle.data['password']
             self._update(bundle)
@@ -195,7 +195,7 @@ class WebUserResource(v0_1.WebUserResource):
     def obj_create(self, bundle, request=None, **kwargs):
         try:
             self._meta.domain = kwargs['domain']
-            bundle.obj = WebUser.create(domain=kwargs['domain'], username=bundle.data['username'],
+            bundle.obj = WebUser.create(domain=kwargs['domain'], username=bundle.data['username'].lower(),
                                              password=bundle.data['password'], email=bundle.data.get('email', ''))
             del bundle.data['password']
             self._update(bundle)
