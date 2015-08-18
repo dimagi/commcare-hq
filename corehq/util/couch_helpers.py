@@ -1,5 +1,6 @@
 import base64
 from copy import copy
+import hashlib
 from mimetypes import guess_type
 import datetime
 import threading
@@ -50,6 +51,16 @@ class CouchAttachmentsBuilder(object):
     def __init__(self, original=None):
         self._dict = original or {}
 
+    @staticmethod
+    def couch_style_digest(data):
+        return 'md5-{}'.format(base64.b64encode(hashlib.md5(data).digest()))
+
+    def no_change(self, name, data):
+        return (
+            self._dict.get(name) and
+            self._dict[name].get('digest') == self.couch_style_digest(data)
+        )
+
     def add(self, content, name=None, content_type=None):
         if hasattr(content, 'read'):
             if hasattr(content, 'seek'):
@@ -61,10 +72,20 @@ class CouchAttachmentsBuilder(object):
             data = data.encode('utf-8')
         if content_type is None:
             content_type = ';'.join(filter(None, guess_type(name)))
-        self._dict[name] = {
-            'data': base64.b64encode(data),
-            'content_type': content_type,
-        }
+        # optimization alert:
+        # don't make couch re-save attachment if there's no change in content
+        if self.no_change(name, data):
+            # just set the content_type in case it's different
+            # don't know of any case where this matters
+            # but seems semantically correct
+            self._dict[name].update({
+                'content_type': content_type,
+            })
+        else:
+            self._dict[name] = {
+                'data': base64.b64encode(data),
+                'content_type': content_type,
+            }
 
     def remove(self, name):
         """

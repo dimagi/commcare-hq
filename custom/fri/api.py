@@ -19,8 +19,7 @@ from custom.fri.models import (
     FRIExtraMessage,
 )
 from corehq.util.timezones.utils import get_timezone_for_user
-from redis_cache.cache import RedisCache
-from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 
@@ -200,11 +199,6 @@ def randomize_messages(case):
         randomized_message.save()
         order += 1
 
-def get_redis_client():
-    rcache = cache_core.get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        raise Exception("Could not get redis client. Is redis down?")
-    return rcache.raw_client
 
 def already_randomized(case):
     any_message = FRIRandomizedMessage.view(
