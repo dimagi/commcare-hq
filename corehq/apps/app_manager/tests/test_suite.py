@@ -4,15 +4,15 @@ import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    AdvancedModule,
-    AdvancedOpenCaseAction,
-    Application,
-    AutoSelectCase,
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     AUTO_SELECT_USERCASE,
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    AutoSelectCase,
     CaseIndex,
     DetailColumn,
     FormActionCondition,
@@ -33,8 +33,12 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
-from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
-                                           interpolate_xpath, session_var)
+from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
+    UserCaseXPath,
+    interpolate_xpath,
+    session_var,
+)
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
