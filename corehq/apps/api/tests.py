@@ -392,7 +392,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.language, "en")
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
-        self.assertEqual(user_back.default_phone_number, "+50253311399")
+        self.assertEqual(user_back.default_phone_number, "50253311399")
         user_back.delete()
         group.delete()
 
