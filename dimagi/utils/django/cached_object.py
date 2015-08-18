@@ -230,7 +230,6 @@ class CachedObject(object):
 
         rcache = self.rcache
         object_stream.seek(0)
-        import ipdb; ipdb.set_trace()
         rcache.set(self.stream_key(OBJECT_ORIGINAL), object_stream.read(),
                    timeout=timeout)
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(object_meta.to_json()),
