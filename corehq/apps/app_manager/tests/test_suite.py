@@ -803,7 +803,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         module.fixture_select.fixture_type = 'days'
         module.fixture_select.display_column = 'my_display_column'
         module.fixture_select.variable_column = 'my_variable_column'
-        module.fixture_select.xpath = '$fixture > 3'
+        module.fixture_select.xpath = '$fixture_value > 3'
 
         form = app.new_form(0, 'my_form', lang='en')
         form.unique_id = 'form_1'

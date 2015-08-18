@@ -1540,6 +1540,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
     root_module_id = StringProperty()
+    fixture_select = SchemaProperty(FixtureSelect)
 
     @classmethod
     def wrap(cls, data):
@@ -1736,7 +1737,6 @@ class Module(ModuleBase):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-    fixture_select = SchemaProperty(FixtureSelect)
 
     @classmethod
     def wrap(cls, data):
