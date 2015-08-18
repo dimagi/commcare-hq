@@ -83,8 +83,6 @@ MIN_HEIGHT = 300; //px
 $(document).ready(function() {
     if (CONTEXT !== '') {
         load(CONTEXT, ICON_PATH);
-        console.log(CONTEXT)
-        var awc_names = [];
         var div = '<div id="extra-legend" class="control-pane leaflet-control"><h4>AWC Name</h4><div>' +
                 '<table class="enumlegend"><tbody>';
         for(var awc_name in CONTEXT.config.metrics[0].children[3].color.categories) {
