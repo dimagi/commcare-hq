@@ -1338,7 +1338,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             if module.fixture_select.active:
                 from corehq.apps.app_manager.detail_screen import get_column_generator
                 d = Detail(
-                    id='fixture_select',
+                    id='m{}_fixture_select'.format(module.id),
                     title=Text(),
                 )
                 fields = [Field(header=Header(text=Text()),
@@ -1894,7 +1894,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         id='fixture_value',
                         nodeset="instance('item-list:{ft}')/{ft}_list/{ft}".format(ft=datum['module'].fixture_select.fixture_type),
                         value=datum['module'].fixture_select.variable_column,
-                        detail_select='fixture_select'  # I think I need an identifier here
+                        detail_select='m{}_fixture_select'.format(datum['module'].id)
                     )
                 })
                 fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
