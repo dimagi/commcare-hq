@@ -14,6 +14,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
 
@@ -82,7 +83,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types
+from couchforms.models import XFormInstance, doc_types, XFormDeprecated
 from corehq.apps.reports.templatetags.xform_tags import render_form
 from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.domain.decorators import (login_or_digest)
@@ -1359,6 +1360,23 @@ def edit_form_instance(request, domain, instance_id):
         }
     })
     return render(request, 'reports/form/edit_submission.html', context)
+
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def restore_edit(request, domain, instance_id):
+    if not (has_privilege(request, privileges.DATA_CLEANUP)):
+        raise Http404()
+
+    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    if isinstance(instance, XFormDeprecated):
+        submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
+        messages.success(request, _(u'Form was restored from a previous version.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))
+    else:
+        messages.warning(request, _(u'Sorry, that form cannot be edited.'))
+        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 @login_or_digest
