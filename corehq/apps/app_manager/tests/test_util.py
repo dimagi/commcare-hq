@@ -3,9 +3,22 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     Application, Module, OpenCaseAction, OpenSubCaseAction)
 from django.test.testcases import SimpleTestCase
+from mock import patch
 
 
 class SchemaTest(SimpleTestCase):
+
+    def setUp(self):
+        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
+        self.models_is_usercase_in_use_mock.return_value = False
+        self.util_is_usercase_in_use_patch = patch('corehq.apps.app_manager.util.is_usercase_in_use')
+        self.util_is_usercase_in_use_mock = self.util_is_usercase_in_use_patch.start()
+        self.util_is_usercase_in_use_mock.return_value = False
+
+    def tearDown(self):
+        self.models_is_usercase_in_use_patch.stop()
+        self.util_is_usercase_in_use_patch.stop()
 
     def test_get_casedb_schema_empty_app(self):
         app = self.make_app()
@@ -92,7 +105,6 @@ class SchemaTest(SimpleTestCase):
         return form
 
     def make_app(self):
-        # empty domain means util.is_usercase_in_use(domain) -> False
-        app = Application.new_app('', 'New App', APP_V2)
+        app = Application.new_app('domain', 'New App', APP_V2)
         app.version = 1
         return app
