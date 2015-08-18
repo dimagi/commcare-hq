@@ -312,7 +312,8 @@ class CachedImage(CachedObject):
         """
         Is a given sized image cached already
         """
-        return self.rcache.exists(self.stream_key(size_key)) and self.rcache.exists(self.meta_key(size_key))
+        return (self.rcache.get(self.stream_key(size_key)) is not None and
+            self.rcache.get(self.meta_key(size_key)) is not None)
 
     def make_size(self, size_key):
         """
