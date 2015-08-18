@@ -129,7 +129,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 elif key == 'groups':
                     bundle.obj.set_groups(bundle.data.get("groups", []))
                     should_save = True
-                elif key == 'username':
+                elif key in ['email', 'username']:
                     bundle.obj.username = value.lower()
                     should_save = True
                 else:
@@ -139,8 +139,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
-            bundle.obj = CommCareUser.create(domain=kwargs['domain'], username=bundle.data['username'].lower(),
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = CommCareUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()
@@ -192,7 +196,7 @@ class WebUserResource(v0_1.WebUserResource):
                         if idx == 0:
                             bundle.obj.set_default_phone_number(strip_plus(phone_number))
                         should_save = True
-                elif key == 'username':
+                elif key in ['email', 'username']:
                     bundle.obj.username = value.lower()
                     should_save = True
                 else:
@@ -203,8 +207,12 @@ class WebUserResource(v0_1.WebUserResource):
     def obj_create(self, bundle, request=None, **kwargs):
         try:
             self._meta.domain = kwargs['domain']
-            bundle.obj = WebUser.create(domain=kwargs['domain'], username=bundle.data['username'].lower(),
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = WebUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()
