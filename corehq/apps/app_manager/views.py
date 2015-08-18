@@ -3307,7 +3307,6 @@ def list_apps(request, domain):
 
 # Used by CommCare CLI
 @json_error
-@login_or_digest_or_basic
 def direct_ccz(request, domain):
     if 'app_id' in request.GET:
         app = get_app(domain, request.GET['app_id'])
