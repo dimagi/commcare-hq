@@ -130,7 +130,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     bundle.obj.set_groups(bundle.data.get("groups", []))
                     should_save = True
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj.username, key, value.lower())
+                    setattr(bundle.obj, key, value.lower())
                     should_save = True
                 else:
                     setattr(bundle.obj, key, value)
@@ -197,7 +197,7 @@ class WebUserResource(v0_1.WebUserResource):
                             bundle.obj.set_default_phone_number(strip_plus(phone_number))
                         should_save = True
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj.username, key, value.lower())
+                    setattr(bundle.obj, key, value.lower())
                     should_save = True
                 else:
                     setattr(bundle.obj, key, value)
