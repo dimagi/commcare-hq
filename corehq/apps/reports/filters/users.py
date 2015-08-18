@@ -3,7 +3,6 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
-from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
@@ -129,8 +128,9 @@ class EmwfUtils(object):
             "[%s]" % HQUserType.human_readable[t]
         )
 
-    def location_group_tuple(self, loc_group):
-        return (loc_group._id, loc_group.name + ' [group]')
+    def location_tuple(self, location):
+        return ("l__%s" % location.location_id,
+                '%s [location]' % location.get_path_display())
 
     @property
     @memoized
@@ -201,11 +201,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return [g[3:] for g in emws if g.startswith("g__")]
 
     @classmethod
-    def selected_location_reporting_group_ids(cls, request):
+    def selected_location_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [
-            g for g in emws if g.startswith(LOCATION_REPORTING_PREFIX)
-        ]
+        return [l[3:] for l in emws if l.startswith("l__")]
 
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
@@ -270,18 +268,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 if group['fields'].get("reporting", False)]
 
     def selected_location_entries(self, request):
-        location_reporting_ids = self.selected_location_reporting_group_ids(request)
-        if not location_reporting_ids:
+        location_ids = self.selected_location_ids(request)
+        if not location_ids:
             return []
-
-        selected = []
-        for loc_group_id in location_reporting_ids:
-            loc = SQLLocation.objects.get(
-                location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
-            )
-            loc_group = loc.reporting_group_object()
-            selected.append(self.utils.location_group_tuple(loc_group))
-        return selected
+        return map(self.utils.location_tuple,
+                   SQLLocation.objects.filter(location_id__in=location_ids))
 
     @property
     def filter_context(self):

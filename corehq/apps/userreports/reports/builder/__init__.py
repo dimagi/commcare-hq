@@ -58,6 +58,90 @@ def make_case_property_indicator(property_name, column_id=None):
     }
 
 
+def make_owner_name_indicator(column_id):
+    return {
+        "datatype": "string",
+        "type": "expression",
+        "column_id": column_id,
+        "expression": {
+            "test": {
+                "operator": "eq",
+                "expression": {
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "doc_type"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Group",
+                    "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "Group"
+            },
+            "expression_if_true": {
+                "value_expression": {
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "type": "related_doc",
+                "related_doc_type": "Group",
+                "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+                "type": "conditional",
+                "test": {
+                    "operator": "eq",
+                    "expression": {
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "doc_type"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareUser",
+                        "doc_id_expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id"
+                        }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "CommCareUser"
+                },
+                "expression_if_true": {
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "username"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    }
+                },
+                "expression_if_false": {
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Location",
+                    "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    }
+                }
+            }
+        }
+    }
+
+
 def make_form_question_indicator(question, column_id=None):
     """
     Return a data source indicator configuration (a dict) for the given form

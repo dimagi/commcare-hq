@@ -613,6 +613,13 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
+
+        if self.action:
+            for frame in self.action.stack.frames:
+                result.add(frame.if_clause)
+                for datum in getattr(frame, 'datums', []):
+                    result.add(datum.value)
+
         for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)
@@ -677,28 +684,76 @@ class Suite(OrderedXmlObject):
     descriptor = StringField('@descriptor')
 
 
+class StackFrameMeta(object):
+    """
+    Class used in computing the form workflow.
+    """
+    def __init__(self, if_prefix, if_clause, child_datums=None, allow_empty_frame=False):
+        if if_prefix:
+            template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
+            if_clause = template.format(if_prefix)
+        self.if_clause = unescape(if_clause) if if_clause else None
+        self.child_datums = child_datums or []
+        self.allow_empty_frame = allow_empty_frame
+
+    def add_child(self, child):
+        self.child_datums.append(child)
+
+    def to_frame(self):
+        if not self.child_datums and not self.allow_empty_frame:
+            return
+
+        frame = CreateFrame(if_clause=self.if_clause)
+
+        for child in self.child_datums:
+            if isinstance(child, XPath):
+                frame.add_command(child)
+            elif isinstance(child, basestring):
+                frame.add_command(XPath.string(child))
+            elif isinstance(child, StackDatum):
+                frame.add_datum(child)
+            else:
+                value = session_var(child.source_id) if child.nodeset else child.function
+                frame.add_datum(StackDatum(id=child.id, value=value))
+
+        return frame
+
+
 @total_ordering
 class DatumMeta(object):
     """
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
-    type_regex = re.compile("\[@case_type='([\w_]+)'\]")
+    type_regex = re.compile("\[@case_type='([\w_-]+)'\]")
 
-    def __init__(self, session_datum):
-        self.id = session_datum.id
-        self.nodeset = session_datum.nodeset
-        self.function = session_datum.function
+    def __init__(self, datum_id, nodeset, function):
+        self.id = datum_id
+        self.nodeset = nodeset
+        self.function = function
         self.source_id = self.id
+
+    @classmethod
+    def from_session_datum(cls, session_datum):
+        return cls(session_datum.id, session_datum.nodeset, session_datum.function)
+
+    @property
+    def requires_selection(self):
+        return bool(self.nodeset)
 
     @property
     @memoized
     def case_type(self):
-        if not self.nodeset:
-            return None
+        """Get the case type from the nodeset or the function if possible
+        """
+        def _extract_type(xpath):
+            match = self.type_regex.search(xpath)
+            return match.group(1) if match else None
 
-        match = self.type_regex.search(self.nodeset)
-        return match.group(1)
+        if self.nodeset:
+            return _extract_type(self.nodeset)
+        elif self.function:
+            return _extract_type(self.function)
 
     def __lt__(self, other):
         return self.id < other.id
@@ -869,57 +924,150 @@ class WorkflowHelper(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import (
-            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
-        )
-
         for module in self.modules:
             for form in module.get_forms():
-                if form.post_form_workflow == WORKFLOW_DEFAULT:
-                    continue
-
                 form_command = id_strings.form_command(form)
+                if_prefix = None
+                stack_frames = []
+                case_list_form_frames = self.case_list_forms_frames(form)
+                stack_frames.extend(case_list_form_frames)
 
-                if form.post_form_workflow == WORKFLOW_ROOT:
-                    self.create_workflow_stack(form_command, [], True)
-                elif form.post_form_workflow == WORKFLOW_MODULE:
-                    module_command = id_strings.menu_id(module)
-                    frame_children = [module_command] if module_command != id_strings.ROOT else []
-                    self.create_workflow_stack(form_command, frame_children)
-                elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                    frame_children = self.get_frame_children(form)
+                if case_list_form_frames:
+                    if_prefix = session_var(RETURN_TO).count().eq(0)
 
-                    # since we want to go the 'previous' screen we need to drop the last
-                    # datum
-                    last = frame_children.pop()
-                    while isinstance(last, DatumMeta) and last.function:
-                        # keep removing last element until we hit a command
-                        # or a non-autoselect datum
-                        last = frame_children.pop()
+                stack_frames.extend(self.form_workflow_frames(if_prefix, module, form))
 
-                    self.create_workflow_stack(form_command, frame_children)
-                elif form.post_form_workflow == WORKFLOW_FORM:
-                    module_id, form_id = form_command.split('-')
-                    source_form_datums = self.get_form_datums(module_id, form_id)
-                    for link in form.form_links:
-                        target_form = self.app.get_form(link.form_id)
-                        target_module = target_form.get_module()
+                self.create_workflow_stack(form_command, stack_frames)
 
-                        frame_children = self.get_frame_children(target_form)
-                        frame_children = WorkflowHelper.get_datums_matched_to_source(frame_children, source_form_datums)
+    def case_list_forms_frames(self, form):
+        stack_frames = []
+        if form.is_registration_form() and form.is_case_list_form:
+            for target_module in form.case_list_modules:
 
-                        if target_module in module.get_child_modules():
-                            parent_frame_children = self.get_frame_children(module.get_form(0), module_only=True)
+                return_to = session_var(RETURN_TO)
+                target_command = XPath.string(id_strings.menu_id(target_module))
 
-                            # exclude frame children from the child module if they are already
-                            # supplied by the parent module
-                            child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
-                            frame_children = parent_frame_children + [
-                                child for child in frame_children
-                                if getattr(child, "id", child) not in child_ids_in_parent
-                            ]
+                def get_if_clause(case_count_xpath):
+                    return XPath.and_(
+                        return_to.count().eq(1),
+                        return_to.eq(target_command),
+                        case_count_xpath
+                    )
 
-                        self.create_workflow_stack(form_command, frame_children, if_clause=link.xpath)
+                if form.form_type == 'module_form':
+                    [reg_action] = form.get_registration_actions(target_module.case_type)
+                    source_session_var = form.session_var_for_action(reg_action)
+                if form.form_type == 'advanced_form':
+                    # match case session variable
+                    reg_action = form.get_registration_actions(target_module.case_type)[0]
+                    source_session_var = reg_action.case_session_var
+
+                source_case_id = session_var(source_session_var)
+                case_count = CaseIDXPath(source_case_id).case().count()
+
+                frame_case_created = StackFrameMeta(None, get_if_clause(case_count.gt(0)))
+                frame_case_created.add_child(target_command)
+                stack_frames.append(frame_case_created)
+
+                frame_case_not_created = StackFrameMeta(None, get_if_clause(case_count.eq(0)))
+                frame_case_not_created.add_child(target_command)
+                stack_frames.append(frame_case_not_created)
+
+                def get_case_type_created_by_form(form):
+                    if form.form_type == 'module_form':
+                        [reg_action] = form.get_registration_actions(target_module.case_type)
+                        if reg_action == 'open_case':
+                            return form.get_module().case_type
+                        else:
+                            return reg_action.case_type
+                    elif form.form_type == 'advanced_form':
+                        return form.get_registration_actions(target_module.case_type)[0].case_type
+
+                source_form_dm = self.get_form_datums(form)
+                # assume all forms in the module have the same datums
+                target_form_dm = self.get_form_datums(target_module.get_form(0))
+
+                def get_target_dm(case_type):
+                    try:
+                        [target_dm] = [
+                            target_meta for target_meta in target_form_dm
+                            if target_meta.case_type == case_type
+                        ]
+                    except ValueError:
+                        raise SuiteError(
+                            "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                        )
+
+                    return target_dm
+
+                for source_meta in source_form_dm:
+                    if source_meta.case_type:
+                        # This is true for registration forms where the case being created is a subcase
+                        try:
+                            target_dm = get_target_dm(source_meta.case_type)
+                        except SuiteError:
+                            if source_meta.requires_selection:
+                                raise
+                        else:
+                            meta = DatumMeta.from_session_datum(source_meta)
+                            meta.id = target_dm.id
+                            frame_case_created.add_child(meta)
+                            frame_case_not_created.add_child(meta)
+                    else:
+                        source_case_type = get_case_type_created_by_form(form)
+                        target_dm = get_target_dm(source_case_type)
+                        datum_meta = DatumMeta(target_dm.id, target_dm.nodeset, None)
+                        datum_meta.source_id = source_meta.id
+                        frame_case_created.add_child(datum_meta)
+
+        return stack_frames
+
+    def form_workflow_frames(self, if_prefix, module, form):
+        from corehq.apps.app_manager.models import (
+            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
+        )
+        stack_frames = []
+        if form.post_form_workflow == WORKFLOW_ROOT:
+            stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
+        elif form.post_form_workflow == WORKFLOW_MODULE:
+            module_command = id_strings.menu_id(module)
+            frame_children = [module_command] if module_command != id_strings.ROOT else []
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_PREVIOUS:
+            frame_children = self.get_frame_children(form)
+
+            # since we want to go the 'previous' screen we need to drop the last
+            # datum
+            last = frame_children.pop()
+            while isinstance(last, DatumMeta) and not last.requires_selection:
+                # keep removing last element until we hit a command
+                # or a non-autoselect datum
+                last = frame_children.pop()
+
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_FORM:
+            source_form_datums = self.get_form_datums(form)
+            for link in form.form_links:
+                target_form = self.app.get_form(link.form_id)
+                target_module = target_form.get_module()
+
+                frame_children = self.get_frame_children(target_form)
+                frame_children = WorkflowHelper.get_datums_matched_to_source(frame_children, source_form_datums)
+
+                if target_module in module.get_child_modules():
+                    parent_frame_children = self.get_frame_children(module.get_form(0), module_only=True)
+
+                    # exclude frame children from the child module if they are already
+                    # supplied by the parent module
+                    child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
+                    frame_children = parent_frame_children + [
+                        child for child in frame_children
+                        if getattr(child, "id", child) not in child_ids_in_parent
+                    ]
+
+                stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
+
+        return stack_frames
 
     @staticmethod
     def get_datums_matched_to_source(target_frame_elements, source_datums):
@@ -929,7 +1077,7 @@ class WorkflowHelper(object):
         """
         datum_index = -1
         for child in target_frame_elements:
-            if not isinstance(child, DatumMeta) or child.function:
+            if not isinstance(child, DatumMeta) or not child.requires_selection:
                 yield child
             else:
                 datum_index += 1
@@ -994,44 +1142,29 @@ class WorkflowHelper(object):
 
         return frame_children
 
-    def create_workflow_stack(self, form_command, frame_children,
-                              allow_empty_stack=False, if_clause=None):
-        if not frame_children and not allow_empty_stack:
+    def create_workflow_stack(self, form_command, frame_metas):
+        frames = filter(None, [meta.to_frame() for meta in frame_metas])
+        if not frames:
             return
 
-        entry, is_new = self._get_entry(form_command)
-        entry = self.get_form_entry(form_command)
-        if not is_new:
-            # TODO: find a more general way of handling multiple contributions to the workflow
-            if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
-            template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
-            if_clause = template.format(if_prefix)
-
-        if_clause = unescape(if_clause) if if_clause else None
-        frame = CreateFrame(if_clause=if_clause)
-        entry.stack.add_frame(frame)
-
-        for child in frame_children:
-            if isinstance(child, basestring):
-                frame.add_command(XPath.string(child))
-            else:
-                value = session_var(child.source_id) if child.nodeset else child.function
-                frame.add_datum(StackDatum(id=child.id, value=value))
-        return frame
-
-    @memoized
-    def _get_entry(self, form_command):
         entry = self.get_form_entry(form_command)
         if not entry.stack:
             entry.stack = Stack()
-            return entry, True
-        else:
-            return entry, False
 
-    def get_form_datums(self, module_id, form_id):
+        for frame in frames:
+            entry.stack.add_frame(frame)
+
+    def get_form_datums(self, form):
+        """
+        :return: List of DatumMeta objects for this form
+        """
+        module_id, form_id = id_strings.form_command(form).split('-')
         return self.get_module_datums(module_id)[form_id]
 
     def get_module_datums(self, module_id):
+        """
+        :return: Dictionary keyed by form ID containing list of DatumMeta objects for each form.
+        """
         _, datums = self._get_entries_datums()
         return datums[module_id]
 
@@ -1057,7 +1190,7 @@ class WorkflowHelper(object):
                 datums[module_id][form_id] = []
             else:
                 for d in e.datums:
-                    datums[module_id][form_id].append(DatumMeta(d))
+                    datums[module_id][form_id].append(DatumMeta.from_session_datum(d))
 
         return entries, datums
 
@@ -1075,6 +1208,11 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def __init__(self, app):
         super(SuiteGenerator, self).__init__(app)
+        self.detail_ids = {
+            id_strings.detail(module, detail_type)
+            for module in self.modules for detail_type, detail, enabled in module.get_details()
+            if enabled and detail.columns
+        }
 
     def post_process(self, suite):
         if self.app.enable_post_form_workflow:
@@ -1191,8 +1329,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 d.fields.extend(fields)
 
             # Add actions
-            if module.case_list_form.form_id and detail_type.endswith('short') and \
-                    not (hasattr(module, 'parent_select') and module.parent_select.active):
+            if module.case_list_form.form_id and detail_type.endswith('short'):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
 
@@ -1218,17 +1355,39 @@ class SuiteGenerator(SuiteGeneratorBase):
                 frame = PushFrame()
                 frame.add_command(XPath.string(id_strings.form_command(form)))
 
-                if form.form_type == 'module_form':
-                    datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
-                elif form.form_type == 'advanced_form':
-                    datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
-                    datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+                def get_datums_meta_for_form(form):
+                    if form.form_type == 'module_form':
+                        datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+                    elif form.form_type == 'advanced_form':
+                        datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                        datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+                    else:
+                        raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+                            form.form_type, form.unique_id
+                        ))
+                    return datums_meta
 
-                for meta in datums_meta:
-                    if meta['requires_selection']:
-                        raise SuiteError("Form selected as case list form requires a case: {}".format(form.unique_id))
-                    s_datum = meta['datum']
-                    frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
+                target_form_dm = get_datums_meta_for_form(form)
+                source_form_dm = get_datums_meta_for_form(module.get_form(0))
+                for target_meta in target_form_dm:
+                    if target_meta['requires_selection']:
+                        # This is true for registration forms where the case being created is a subcase
+                        try:
+                            [source_dm] = [
+                                source_meta for source_meta in source_form_dm
+                                if source_meta['case_type'] == target_meta['case_type']
+                            ]
+                        except ValueError:
+                            raise SuiteError("Form selected as case list form requires a case "
+                                             "but no matching case could be found: {}".format(form.unique_id))
+                        else:
+                            frame.add_datum(StackDatum(
+                                id=target_meta['datum'].id,
+                                value=session_var(source_dm['datum'].id))
+                            )
+                    else:
+                        s_datum = target_meta['datum']
+                        frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
                 frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)
@@ -1488,7 +1647,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             module=module,
             detail_type=detail_type,
         )
-        return detail_id if detail_id in self.get_detail_mapping() else None
+        return detail_id if detail_id in self.detail_ids else None
 
     def get_instances_for_module(self, module, additional_xpaths=None):
         """
@@ -1745,13 +1904,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
             if 'subcases' in actions:
-                for i, subcase in enumerate(actions['subcases']):
+                for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
                         datums.append({
                             'datum': SessionDatum(
-                                id=form.session_var_for_action('subcases', i), function='uuid()'
+                                id=form.session_var_for_action(subcase), function='uuid()'
                             ),
                             'case_type': subcase.case_type,
                             'requires_selection': False,
@@ -1768,35 +1927,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                     })
 
         return datums
-
-    @staticmethod
-    def configure_entry_as_case_list_form(form, entry):
-        target_module = form.case_list_module
-        if form.form_type == 'module_form':
-            source_session_var = form.session_var_for_action('open_case')
-        if form.form_type == 'advanced_form':
-            # match case session variable
-            reg_action = form.get_registration_actions(target_module.case_type)[0]
-            source_session_var = reg_action.case_session_var
-
-        target_session_var = 'case_id'
-        if target_module.module_type == 'advanced':
-            # match case session variable for target module
-            form = target_module.forms[0]
-            target_session_var = form.actions.load_update_cases[0].case_session_var
-
-        entry.stack = Stack()
-        source_case_id = session_var(source_session_var)
-        case_count = CaseIDXPath(source_case_id).case().count()
-        return_to = session_var(RETURN_TO)
-        frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
-        frame_case_created.add_command(return_to)
-        frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
-        entry.stack.add_frame(frame_case_created)
-
-        frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
-        frame_case_not_created.add_command(return_to)
-        entry.stack.add_frame(frame_case_not_created)
 
     def get_case_datums_basic_module(self, module, form):
         datums = []
@@ -1821,9 +1951,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         self.add_parent_datums(datums, module)
         for datum in datums:
             e.datums.append(datum['datum'])
-
-        if form and 'open_case' in form.active_actions() and form.is_case_list_form:
-            SuiteGenerator.configure_entry_as_case_list_form(form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             SuiteGenerator.add_case_sharing_assertion(e)
@@ -1970,9 +2097,6 @@ class SuiteGenerator(SuiteGeneratorBase):
         # assertions come after session
         e.assertions.extend(assertions)
 
-        if form.is_registration_form() and form.is_case_list_form:
-            SuiteGenerator.configure_entry_as_case_list_form(form, e)
-
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             SuiteGenerator.add_case_sharing_assertion(e)
 
@@ -2000,9 +2124,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if case_type == module.case_type:
                     return module
 
-                target_modules = [mod for mod in module.get_app().modules
-                                      if mod.case_type == case_type and
-                                         (not with_product_details or hasattr(mod, 'product_details'))]
+                target_modules = [
+                    mod for mod in module.get_app().modules
+                    if mod.case_type == case_type and (not with_product_details or hasattr(mod, 'product_details'))
+                ]
                 try:
                     return target_modules[0]
                 except IndexError:
@@ -2435,8 +2560,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = '../../{}'.format(path)
-            local_path = './{}/{}'.format(path, name)
+            install_path = u'../../{}'.format(path)
+            local_path = u'./{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item

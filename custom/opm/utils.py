@@ -1,6 +1,10 @@
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.common import ALL_OPTION
+from dimagi.utils.decorators.memoized import memoized
+
+
+EMPTY_FIELD = "---"
 
 
 class BaseMixin(object):
@@ -30,7 +34,8 @@ def _safeint(value):
 
 class UserSqlData(SqlData):
     table_name = "fluff_OpmUserFluff"
-    group_by = ['doc_id', 'awc', 'awc_code', 'gp', 'block']
+    group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
+                'ifs_code', 'account_number', 'gp', 'block', 'village', 'gps']
 
     @property
     def filters(self):
@@ -40,10 +45,16 @@ class UserSqlData(SqlData):
     def columns(self):
         return [
             DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('name', SimpleColumn('name')),
             DatabaseColumn('awc', SimpleColumn('awc')),
             DatabaseColumn('awc_code', SimpleColumn('awc_code')),
+            DatabaseColumn('bank_name', SimpleColumn('bank_name')),
+            DatabaseColumn('ifs_code', SimpleColumn('ifs_code')),
+            DatabaseColumn('account_number', SimpleColumn('account_number')),
             DatabaseColumn('gp', SimpleColumn('gp')),
             DatabaseColumn('block', SimpleColumn('block')),
+            DatabaseColumn('village', SimpleColumn('village')),
+            DatabaseColumn('gps', SimpleColumn('gps'))
         ]
 
     def transformed_data(self):
@@ -73,6 +84,16 @@ class UserSqlData(SqlData):
             hierarchy[block][gp][awc_name_with_code] = None
         return hierarchy
 
+    @property
+    @memoized
+    def data_by_doc_id(self):
+        return {user['doc_id']: (user['awc_code'], user['gp']) for user in self.get_data()}
+
+
+@memoized
+def user_sql_data():
+    return UserSqlData()
+
 
 def get_matching_users(awcs=None, gps=None, blocks=None):
     """
@@ -89,7 +110,7 @@ def get_matching_users(awcs=None, gps=None, blocks=None):
         raise TypeError("You must pass at least one of awc, gp, or block")
     key, selected = non_null[0]  # get most specific selection
     return [
-        user for user in UserSqlData().transformed_data()
+        user for user in user_sql_data().transformed_data()
         if user[key] in selected
     ]
 
@@ -102,3 +123,12 @@ def numeric_fn(val):
     except TypeError:
         sort_val = -1
     return {'sort_key': sort_val, 'html': val}
+
+
+def format_bool(bool_or_none):
+    if bool_or_none is None:
+        return EMPTY_FIELD
+    elif bool_or_none:
+        return 'Yes'
+    elif not bool_or_none:
+        return 'No'

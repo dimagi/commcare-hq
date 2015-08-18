@@ -835,7 +835,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     .filter(is_hidden=False))
         return invoices.aggregate(
             total_balance=Sum('balance')
-        ).get('total_balance', 0.00)
+        ).get('total_balance') or 0.00
 
     @property
     def column_names(self):
@@ -2446,9 +2446,10 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     @memoized
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
         return sorted(
-            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
+                for toggle in all_toggles()],
             key=_sort_key,
         )
 

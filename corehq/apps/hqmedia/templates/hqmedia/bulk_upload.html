@@ -35,26 +35,9 @@
             <div class="hqm-select-files-container">
                 <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
             </div>
-            <a class="hqm-upload btn disabled" href="#hqm-upload-modal" data-toggle="modal">
+            <a class="hqm-upload hqm-upload-confirm btn disabled" data-toggle="modal">
                 <i class="icon icon-cloud-upload"></i> {% trans 'Begin Upload' %}
             </a>
-        </div>
-        <div id="hqm-upload-modal" class="modal hide fade">
-            <div class="modal-header">
-                <a class="close" href="#" data-dismiss="modal">&times;</a>
-                <h3>{% trans 'Configure this Upload' %}</h3>
-            </div>
-            <div class="form-horizontal hqm-upload-form">
-                <div class="modal-body">
-                    {% include 'hqmedia/partials/hqm_upload_form.html' %}
-                </div>
-                <div class="modal-footer">
-                    <a class="hqm-upload hqm-upload-confirm btn disabled">
-                        <i class="icon-cloud-upload"></i> {% trans 'Continue with Upload' %}
-                    </a>
-                    <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
-                </div>
-            </div>
         </div>
         <h3>{% trans 'Bulk Upload File Queue' %}</h3>
         <table class="table table-striped table-bordered hqm-upload-list">

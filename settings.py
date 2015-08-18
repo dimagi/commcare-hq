@@ -223,6 +223,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -454,7 +455,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'zapier+billing-support@dimagi.com'
+PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -938,6 +939,7 @@ SOUTH_TESTS_MIGRATE = False
 # Dropbox
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
 
 try:
@@ -964,7 +966,8 @@ try:
                     )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-    pass
+   # fallback in case nothing else is found - used for readthedocs
+   from dev_settings import *
 
 if DEBUG:
     try:

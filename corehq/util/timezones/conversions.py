@@ -3,7 +3,7 @@ import pytz
 
 from corehq.apps.tzmigration import phone_timezones_have_been_processed
 
-from corehq.const import USER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.dates import safe_strftime
 
@@ -40,6 +40,9 @@ class ServerTime(_HQUTCTime):
     def phone_time(self, phone_tz_guess):
         return PhoneTime(_adjust_utc_datetime_to_phone_datetime(
             self._datetime, phone_tz_guess))
+
+    def ui_string(self, fmt=SERVER_DATETIME_FORMAT):
+        return safe_strftime(self._datetime.replace(tzinfo=pytz.utc), fmt)
 
 
 class UserTime(_HQTZTime):

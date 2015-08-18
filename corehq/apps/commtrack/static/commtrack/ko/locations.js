@@ -43,7 +43,8 @@ function LocationSettingsViewModel() {
     };
 
     this.new_loctype = function() {
-        var new_loctype = new LocationTypeModel({}, this);
+        var parent_pk = (_.last(settings.loc_types()) || {}).pk;
+        var new_loctype = new LocationTypeModel({parent_type: parent_pk}, this);
         new_loctype.onBind = function() {
             var $inp = $(this.$e).find('.loctype_name');
             $inp.focus();

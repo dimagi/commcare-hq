@@ -1,31 +1,30 @@
 from datetime import datetime
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
+from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.warehouse import const
+from custom.ilsgateway.tanzania.warehouse.const import NO_PRIMARY_CONTACT
 from dimagi.utils.dates import add_months
 from custom.ilsgateway.models import Alert, ProductAvailabilityData
 
 
 def populate_no_primary_alerts(location, date):
     # First of all we have to delete all existing alert for this date.
-    alert = Alert.objects.filter(location_id=location._id, date=date, type=const.NO_PRIMARY_CONTACT)
+    alert = Alert.objects.filter(location_id=location.get_id, date=date, type=const.NO_PRIMARY_CONTACT)
     alert.delete()
     # create no primary contact alerts
-    # TODO Too slow. Figure out better solution.
-    """
-    if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
-                  CommCareUser.by_domain(org.domain)):
-        create_multilevel_alert(org, date, NO_PRIMARY_CONTACT, {'org': org})
-    """
+    if not get_users_by_location_id(location.domain, location.get_id):
+        create_alert(location, date, NO_PRIMARY_CONTACT, {'org': location})
 
 
-def populate_facility_stockout_alerts(facility_id, date):
+def populate_facility_stockout_alerts(facility, date):
     # delete stockout alerts
-    alert = Alert.objects.filter(location_id=facility_id, date=date, type=const.PRODUCT_STOCKOUT)
+    alert = Alert.objects.filter(location_id=facility.get_id, date=date, type=const.PRODUCT_STOCKOUT)
     alert.delete()
     # create stockout alerts
-    product_data = ProductAvailabilityData.objects.filter(location_id=facility_id, date=date, without_stock=1)
+    product_data = ProductAvailabilityData.objects.filter(location_id=facility.get_id, date=date, without_stock=1)
     for p in product_data:
-        create_multilevel_alert(facility_id, date, const.PRODUCT_STOCKOUT,
-                                {'org': facility_id, 'product': p.product})
+        create_alert(facility, date, const.PRODUCT_STOCKOUT,
+                     {'org': facility, 'product': SQLProduct.objects.get(product_id=p.product)})
 
 
 def create_multilevel_alert(location, date, alert_type, details):

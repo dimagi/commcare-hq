@@ -658,7 +658,8 @@ class LocationImportView(BaseLocationView):
 
 
 @locations_access_required
-def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id,
+                               template="style/bootstrap2/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:

@@ -1,16 +1,11 @@
 <partial>
     <entry>
-        <form>http://openrosa.org/formdesigner/D226B5F1-64E0-4C9A-B1F0-9AB8CEF84EBA</form>
+        <form>f0-xmlns</form>
         <command id="m0-f0">
             <text>
                 <locale id="forms.m0f0"/>
             </text>
         </command>
         <instance id="commcaresession" src="jr://instance/session"/>
-        <stack>
-            <create>
-              <command value="'m0'"/>
-            </create>
-        </stack>
     </entry>
 </partial>
