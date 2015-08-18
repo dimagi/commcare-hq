@@ -72,10 +72,13 @@ def login_and_domain_required(view_func):
                     ).format(domain=domain_name))
                     messages.info(req, msg)
                     return HttpResponseRedirect(reverse("domain_select"))
+                debug = ""
                 if hasattr(req, "couch_user"):
+                    debug = "req, and django's membership is %s" % CouchUser.from_django_user(user).is_member_of(domain)
                     couch_user = req.couch_user # set by user middleware
                 else:
                     # some views might not have this set
+                    debug = "django"
                     couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domain) or domain.is_public:
                     return view_func(req, domain_name, *args, **kwargs)
@@ -85,8 +88,12 @@ def login_and_domain_required(view_func):
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+                elif domain.allow_domain_requests:
+                    from corehq.apps.users.views import DomainRequestView
+                    return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
-                    raise Http404
+                    raise Exception("404 in login_and_domain_required, user %s is not a member of %s, debug: %s" %
+                                    (couch_user.username, domain, debug))
             else:
                 login_url = reverse('domain_login', kwargs={'domain': domain})
                 return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
