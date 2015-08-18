@@ -530,21 +530,6 @@ class AdvancedFormActions(DocumentSchema):
     def actions_meta_by_parent_tag(self):
         return self._action_meta()['by_parent_tag']
 
-    def get_action_hierarchy(self, action):
-        current = action
-        hierarchy = [current]
-        while current and current.case_indices:
-            for case_index in current.case_indices:
-                parent = self.get_action_from_tag(case_index.tag)
-                current = parent
-                if parent:
-                    if parent in hierarchy:
-                        circular = [a.case_tag for a in hierarchy + [parent]]
-                        raise ValueError("Circular reference in subcase hierarchy: {0}".format(circular))
-                    hierarchy.append(parent)
-
-        return hierarchy
-
     @property
     def auto_select_actions(self):
         return self._action_meta()['by_auto_select_mode']
@@ -2092,11 +2077,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                             errors.append({'type': 'subcase repeat context',
                                            'case_tag': action.case_tag,
                                            'parent_tag': case_index.tag})
-
-            try:
-                self.actions.get_action_hierarchy(action)
-            except ValueError:
-                errors.append({'type': 'circular ref', 'case_tag': action.case_tag})
 
             errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
