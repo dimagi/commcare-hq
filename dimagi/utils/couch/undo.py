@@ -39,9 +39,11 @@ class UndoableDocument(Document):
 
 def is_deleted(doc):
     """
-    Guess if a document is deleted. Returns False if we're not sure.
+    Return True if a document was deleted via the UndoableDocument.soft_delete mechanism.
+
+    Returns False otherwise.
     """
     try:
-        return doc['doc_type'].endswith(DELETED_SUFFIX)
+        return doc and doc['doc_type'].endswith(DELETED_SUFFIX)
     except KeyError:
         return False
