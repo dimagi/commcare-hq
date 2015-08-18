@@ -2,6 +2,8 @@ import logging
 from django.conf import settings
 from django.core import cache
 from django.core.cache import InvalidCacheBackendError
+from django_redis.cache import RedisCache
+
 
 log = logging.getLogger(__name__)
 
@@ -43,19 +45,12 @@ def get_redis_default_cache():
 
 
 def get_redis_client():
-    if not REDIS_CACHE:
-        raise RedisClientError("No redis cache defined in settings")
+    rcache = get_redis_default_cache()
 
-    try:
-        try:
-            client = REDIS_CACHE.raw_client
-        except AttributeError:
-            # version >= 3.8.0
-            client = REDIS_CACHE.client.get_client()
-    except Exception:
-        log.error("Could not get redis connection.", exc_info=True)
-        raise RedisClientError("Could not get redis connection.")
-    return client
+    if not isinstance(rcache, RedisCache):
+        raise RedisClientError('Could not get redis cache. Is the redis cache configured?')
+
+    return rcache
 
 
 def key_doc_id(doc_id):
