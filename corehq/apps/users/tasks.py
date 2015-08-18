@@ -4,7 +4,7 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -82,7 +82,14 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
     # todo: we may need to add retry logic here but will wait to see
     # what errors we should be catching
-    remove_indices_from_deleted_cases(domain, case_ids)
+    try:
+        remove_indices_from_deleted_cases(domain, case_ids)
+    except BulkSaveError as e:
+        notify_exception(
+            "_remove_indices_from_deleted_cases_task "
+            "experienced a BulkSaveError. errors: {!r}".format(e.errors)
+        )
+        raise
 
 
 def remove_indices_from_deleted_cases(domain, case_ids):

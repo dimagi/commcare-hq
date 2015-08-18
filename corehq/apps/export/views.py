@@ -7,7 +7,8 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
 from corehq import toggle_enabled, toggles
-from corehq.apps.app_manager.models import Application, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
@@ -304,7 +305,7 @@ def create_basic_form_checkpoint(index):
 
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_form_export'
-    page_title = ugettext_noop("Create Form Export: Select Form")
+    page_title = ugettext_noop("Create Form Export")
     template_name = 'export/create_form_export.html'
 
     @property
@@ -355,13 +356,6 @@ class CreateFormExportView(BaseProjectDataView):
         }
 
     @property
-    def breadcrumbs(self):
-        return [{
-            'link': FormExportInterface.get_url(domain=self.domain),
-            'title': ugettext_lazy("Form Exports")
-        }]
-
-    @property
     def module_to_form_options(self):
         return {
             module.unique_id: [{
@@ -371,13 +365,6 @@ class CreateFormExportView(BaseProjectDataView):
             for app in get_apps_in_domain(self.domain)
             for module in app.modules
         }
-
-    @property
-    def parent_pages(self):
-        return [{
-            'link': FormExportInterface.get_url(domain=self.domain),
-            'title': ugettext_lazy("Form Exports")
-        }]
 
 
 class CreateCaseExportView(BaseProjectDataView):

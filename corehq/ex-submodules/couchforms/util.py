@@ -28,7 +28,8 @@ import xml2json
 
 import couchforms
 from . import const
-from .exceptions import DuplicateError, UnexpectedDeletedXForm
+from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
+    PhoneDateValueError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
@@ -486,6 +487,8 @@ class SubmissionPost(object):
             cases = []
             responses = []
             errors = []
+            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
                 if instance.doc_type == 'XFormInstance':
@@ -497,7 +500,7 @@ class SubmissionPost(object):
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
                             stock_result = process_stock(instance, case_db)
-                        except (IllegalCaseId, UsesReferrals, MissingProductId) as e:
+                        except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form

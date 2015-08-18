@@ -4,11 +4,33 @@ import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
-    AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule, Module, AdvancedModule,
-    WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, PreloadAction, MappingItem, OpenCaseAction,
-    OpenSubCaseAction, FormActionCondition, UpdateCaseAction, WORKFLOW_FORM, FormLink, AUTO_SELECT_USERCASE,
-    ReportModule, ReportAppConfig, ParentSelect, CaseIndex
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    AutoSelectCase,
+    AUTO_SELECT_CASE,
+    AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW,
+    AUTO_SELECT_USER,
+    AUTO_SELECT_USERCASE,
+    CaseIndex,
+    DetailColumn,
+    FormActionCondition,
+    FormLink,
+    FormSchedule,
+    LoadUpdateAction,
+    MappingItem,
+    Module,
+    OpenCaseAction,
+    OpenSubCaseAction,
+    ParentSelect,
+    PreloadAction,
+    ReportAppConfig,
+    ReportModule,
+    ScheduleVisit,
+    SortElement,
+    UpdateCaseAction,
+    WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (dot_interpolate, UserCaseXPath,
@@ -321,51 +343,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_attached_picture(self):
         self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
-    def test_form_workflow_previous(self):
-        """
-        m0 - standard module - no case
-            f0 - no case management
-            f1 - no case management
-        m1 - standard module - patient case
-            f0 - register case
-            f1 - update case
-        m2 - standard module - patient case
-            f0 - update case
-            f1 - update case
-        m3 - standard module - child case
-            f0 - update child case
-            f1 - update child case
-        m4 - advanced module - patient case
-            f0 - load a -> b
-            f1 - load a -> b -> c
-            f2 - load a -> b -> autoselect
-        """
-        self._test_generic_suite_partial('suite-workflow', "./entry", 'suite-workflow-previous')
-
-    def test_form_workflow_module(self):
-        app = Application.wrap(self.get_json('suite-workflow'))
-        for module in app.get_modules():
-            for form in module.get_forms():
-                form.post_form_workflow = WORKFLOW_MODULE
-
-        self.assertXmlPartialEqual(self.get_xml('suite-workflow-module'), app.create_suite(), "./entry")
-
-    def test_form_workflow_module_in_root(self):
-        app = Application.wrap(self.get_json('suite-workflow'))
-        for m in [1, 2]:
-            module = app.get_module(m)
-            module.put_in_root = True
-
-        self.assertXmlPartialEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite(), "./entry")
-
-    def test_form_workflow_root(self):
-        app = Application.wrap(self.get_json('suite-workflow'))
-        for module in app.get_modules():
-            for form in module.get_forms():
-                form.post_form_workflow = WORKFLOW_ROOT
-
-        self.assertXmlPartialEqual(self.get_xml('suite-workflow-root'), app.create_suite(), "./entry")
-
     def test_copy_form(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         module = app.add_module(AdvancedModule.new_module('module', None))
@@ -411,24 +388,25 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         """
         Ensure module filter gets added correctly
         """
-        json = self.get_json('suite-workflow')
-        json['build_spec']['version'] = '2.20.0'
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.20.0'
+        module = app.add_module(Module.new_module('m0', None))
+        module.new_form('f0', None)
 
-        app = Application.wrap(json)
-        module = app.get_module(1)
         module.module_filter = "/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter'),
             app.create_suite(),
-            "./menu[@id='m1']"
+            "./menu[@id='m0']"
         )
 
     def test_module_filter_with_session(self):
-        json = self.get_json('suite-workflow')
-        json['build_spec']['version'] = '2.20.0'
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.20.0'
+        module = app.add_module(Module.new_module('m0', None))
+        form = module.new_form('f0', None)
+        form.xmlns = 'f0-xmlns'
 
-        app = Application.wrap(json)
-        module = app.get_module(0)
         module.module_filter = "#session/user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
@@ -533,153 +511,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
-
-    def _prep_case_list_form_app(self):
-        app = Application.wrap(self.get_json('app'))
-        app.build_spec.version = '2.9'
-        case_module = app.get_module(0)
-        case_module.get_form(0)
-
-        register_module = app.add_module(Module.new_module('register', None))
-        register_module.unique_id = 'register_case_module'
-        register_module.case_type = case_module.case_type
-        register_form = app.new_form(1, 'Register Case Form', lang='en')
-        register_form.unique_id = 'register_case_form'
-        register_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        register_form.actions.open_case.condition.type = 'always'
-
-        case_module.case_list_form.form_id = register_form.get_unique_id()
-        case_module.case_list_form.label = {
-            'en': 'New Case'
-        }
-        return app
-
-    def test_case_list_registration_form(self):
-        app = self._prep_case_list_form_app()
-        case_module = app.get_module(0)
-        case_module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
-        case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
-        self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
-
-    def test_case_list_registration_form_usercase(self):
-        app = self._prep_case_list_form_app()
-        register_module = app.get_module(1)
-        register_form = register_module.get_form(0)
-        register_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
-        register_form.actions.usercase_preload.condition.type = 'always'
-        self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
-
-    def test_case_list_registration_form_end_for_form_nav(self):
-        app = self._prep_case_list_form_app()
-        app.build_spec.version = '2.9'
-        registration_form = app.get_module(1).get_form(0)
-        registration_form.post_form_workflow = WORKFLOW_MODULE
-
-        self.assertXmlPartialEqual(
-            self.get_xml('case-list-form-suite-form-nav-entry'),
-            app.create_suite(),
-            "./entry[3]"
-        )
-
-    def test_case_list_registration_form_no_media(self):
-        app = self._prep_case_list_form_app()
-        self.assertXmlPartialEqual(
-            self.get_xml('case-list-form-suite-no-media-partial'),
-            app.create_suite(),
-            "./detail[@id='m0_case_short']/action"
-        )
-
-    def test_case_list_form_multiple_modules(self):
-        app = self._prep_case_list_form_app()
-        case_module1 = app.get_module(0)
-
-        case_module2 = app.add_module(Module.new_module('update2', None))
-        case_module2.unique_id = 'update case 2'
-        case_module2.case_type = case_module1.case_type
-        update2 = app.new_form(2, 'Update Case Form2', lang='en')
-        update2.unique_id = 'update_case_form2'
-        update2.requires = 'case'
-        update2.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
-        update2.actions.update_case.condition.type = 'always'
-
-        case_module2.case_list_form.form_id = 'register_case_form'
-        case_module2.case_list_form.label = {
-            'en': 'New Case'
-        }
-        self.assertXmlEqual(
-            self.get_xml('case-list-form-suite-multiple-references'),
-            app.create_suite(),
-        )
-
-    def test_case_list_registration_form_advanced(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        app.build_spec.version = '2.9'
-
-        register_module = app.add_module(AdvancedModule.new_module('create', None))
-        register_module.unique_id = 'register_module'
-        register_module.case_type = 'dugong'
-        register_form = app.new_form(0, 'Register Case', lang='en')
-        register_form.unique_id = 'register_case_form'
-        register_form.actions.open_cases.append(AdvancedOpenCaseAction(
-            case_type='dugong',
-            case_tag='open_dugong',
-            name_path='/data/name'
-        ))
-
-        case_module = app.add_module(AdvancedModule.new_module('update', None))
-        case_module.unique_id = 'case_module'
-        case_module.case_type = 'dugong'
-        update_form = app.new_form(1, 'Update Case', lang='en')
-        update_form.unique_id = 'update_case_form'
-        update_form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type='dugong',
-            case_tag='load_dugong',
-            details_module=case_module.unique_id
-        ))
-
-        case_module.case_list_form.form_id = register_form.get_unique_id()
-        case_module.case_list_form.label = {
-            'en': 'Register another Dugong'
-        }
-        self.assertXmlEqual(self.get_xml('case-list-form-advanced'), app.create_suite())
-
-    def test_case_list_registration_form_advanced_autoload(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        app.build_spec.version = '2.9'
-
-        register_module = app.add_module(AdvancedModule.new_module('create', None))
-        register_module.unique_id = 'register_module'
-        register_module.case_type = 'dugong'
-        register_form = app.new_form(0, 'Register Case', lang='en')
-        register_form.unique_id = 'register_case_form'
-        register_form.actions.open_cases.append(AdvancedOpenCaseAction(
-            case_type='dugong',
-            case_tag='open_dugong',
-            name_path='/data/name'
-        ))
-        register_form.actions.load_update_cases.append(LoadUpdateAction(
-            case_tag='usercase',
-            auto_select=AutoSelectCase(
-                mode=AUTO_SELECT_USERCASE,
-            )
-        ))
-
-        case_module = app.add_module(AdvancedModule.new_module('update', None))
-        case_module.unique_id = 'case_module'
-        case_module.case_type = 'dugong'
-        update_form = app.new_form(1, 'Update Case', lang='en')
-        update_form.unique_id = 'update_case_form'
-        update_form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type='dugong',
-            case_tag='load_dugong',
-            details_module=case_module.unique_id
-        ))
-
-        case_module.case_list_form.form_id = register_form.get_unique_id()
-        case_module.case_list_form.label = {
-            'en': 'Register another Dugong'
-        }
-        self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), app.create_suite())
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')

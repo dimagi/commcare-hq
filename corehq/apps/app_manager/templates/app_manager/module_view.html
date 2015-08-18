@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
@@ -47,7 +47,7 @@
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
-    {% include 'hqwebapp/key_value_mapping.html' %}
+    {% include 'style/bootstrap2/partials/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
@@ -236,8 +236,8 @@
                     <div class="controls">
                         <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
                         <option value="">{% trans "No Parent" %}</option>
-                        {% for module in valid_parent_modules %}
-                            <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
+                        {% for mod in valid_parent_modules %}
+                            <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
                         {% endfor %}
                         </select>
                     </div>

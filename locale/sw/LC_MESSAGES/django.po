@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-11 19:34+0000\n"
+"POT-Creation-Date: 2015-08-12 13:00+0000\n"
 "PO-Revision-Date: 2015-08-07 15:24+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -82,7 +82,6 @@ msgstr ""
 
 #: corehq/__init__.py:198 corehq/privileges.py:76
 #: corehq/apps/accounting/user_text.py:219 corehq/apps/fixtures/views.py:285
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:126
 msgid "Lookup Tables"
 msgstr ""
 
@@ -210,7 +209,6 @@ msgid ""
 msgstr ""
 
 #: corehq/privileges.py:77 corehq/apps/accounting/user_text.py:218
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:128
 msgid "API Access"
 msgstr ""
 
@@ -528,6 +526,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:16
 #: corehq/apps/domain/forms.py:1455
 #: corehq/apps/domain/templates/domain/current_subscription.html:247
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:83
 msgid "Software Plan"
 msgstr ""
 
@@ -1003,9 +1002,8 @@ msgstr ""
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/07_system_integration.html:24
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:24
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:52
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:80
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:90
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:52
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:89
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:79
 msgid "Community"
 msgstr ""
 
@@ -1025,7 +1023,6 @@ msgstr ""
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/07_system_integration.html:29
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:29
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:57
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:57
 msgid "Standard"
 msgstr ""
 
@@ -1045,11 +1042,10 @@ msgstr ""
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/07_system_integration.html:34
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:34
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:62
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:90
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:98
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:100
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:108
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:62
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:99
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:107
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:89
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:97
 msgid "Pro"
 msgstr ""
 
@@ -1072,11 +1068,10 @@ msgstr ""
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/07_system_integration.html:39
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:39
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:67
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:106
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:114
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:116
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:124
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:67
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:115
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:123
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:105
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:113
 msgid "Advanced"
 msgstr ""
 
@@ -1097,7 +1092,6 @@ msgstr ""
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/07_system_integration.html:44
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:44
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:72
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:72
 msgid "Enterprise"
 msgstr ""
 
@@ -1345,27 +1339,23 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py:255
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:82
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:83
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:93
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:82
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:92
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:82
 msgid "Free"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:255
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:87
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:87
 msgid "$100 /month"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:255
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:92
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:92
 msgid "$500 /month"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:255
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:97
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:97
 msgid "$1,000 /month"
 msgstr ""
 
@@ -3301,7 +3291,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:335
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:337
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:190
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:116
 msgid "Case Management"
 msgstr ""
 
@@ -5058,7 +5047,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html:13
 #: corehq/apps/hqadmin/templates/hqadmin/partials/reset-pillow-checkpoint-modal.html:18
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:34
-#: corehq/apps/prelogin/templates/prelogin/base.html:124
+#: corehq/apps/prelogin/templates/prelogin/base.html:125
 #: corehq/apps/registration/templates/registration/org_request.html:70
 #: corehq/apps/registration/templates/registration/partials/eula_modal.html:11
 #: corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
@@ -6861,6 +6850,7 @@ msgid "Secure submissions"
 msgstr ""
 
 #: corehq/apps/domain/forms.py:633 corehq/apps/hqadmin/reports.py:696
+#: corehq/apps/prelogin/templates/prelogin/base.html:85
 msgid "Services"
 msgstr ""
 
@@ -8370,7 +8360,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:35
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:78
 msgid "Pricing"
 msgstr ""
 
@@ -12868,10 +12857,10 @@ msgid "Impact"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/base.html:84
-msgid "Software & Services"
+msgid "Software Pricing"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:111
+#: corehq/apps/prelogin/templates/prelogin/base.html:112
 #, python-format
 msgid ""
 "\n"
@@ -12882,7 +12871,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:126
+#: corehq/apps/prelogin/templates/prelogin/base.html:127
 msgid "Get in Touch With Us: Contact Dimagi"
 msgstr ""
 
@@ -13947,12 +13936,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:8
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:8
 msgid "CommCare Software Plans"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:16
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:16
 msgid ""
 "\n"
 "                        Core Features are always FREE. Choose a plan\n"
@@ -13961,7 +13948,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:22
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:22
 msgid ""
 "\n"
 "                    For additional questions, please see our\n"
@@ -13974,7 +13960,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:31
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:31
 msgid ""
 "\n"
 "                        Want to try CommCare for FREE?\n"
@@ -13982,12 +13967,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:34
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:34
 msgid "Sign up for a FREE account"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:103
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:103
 msgid "Contact Us"
 msgstr ""
 
@@ -14000,499 +13983,15 @@ msgstr ""
 msgid "Price Per Additional Mobile User"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:8
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:8
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:7
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:7
 msgid ""
 "\n"
 "                        Implementation Bundles\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:16
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:663
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:29
-msgid ""
-"\n"
-"                        Inquire About Dimagi's Implementation Bundles\n"
-"                        "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:36
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:49
-msgid "Scope"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:39
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:52
-msgid "Launch"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:42
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:55
-msgid "Boost"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:45
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:58
-msgid "Growth"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:48
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:61
-msgid "Scale"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:53
-msgid "Cost"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:56
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:66
-msgid "$10,000"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:59
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:69
-msgid "$35,000"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:62
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:72
-msgid "$50,000"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:65
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:75
-msgid "$80,000"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:68
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:78
-msgid "$150,000"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:74
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:84
-msgid "Included Software Plan"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:92
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:100
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:108
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:102
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:110
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:118
-msgid "12 months"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:116
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:126
-msgid "18 months"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:122
-msgid "Application Development Support"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:128
-msgid ""
-"\n"
-"                                Workflow Design\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:163
-msgid ""
-"\n"
-"                                Launch &amp; Tested Application\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:198
-msgid ""
-"\n"
-"                                Additional Tech for Monitoring Outcomes\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:233
-msgid ""
-"\n"
-"                                Launched v2 application\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:268
-msgid ""
-"\n"
-"                                Supervisor Application\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:303
-msgid ""
-"\n"
-"                                Monitored app usage\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:338
-msgid ""
-"\n"
-"                                Additional Tech for Reminder Messages\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:372
-msgid "Implementation Services"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:378
-msgid ""
-"\n"
-"                                On-Site Scoping Visit\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:413
-msgid ""
-"\n"
-"                                Mobile System Workflow Design\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:448
-msgid ""
-"\n"
-"                                Field Testing &amp; Iteration\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:483
-msgid ""
-"\n"
-"                                Pilot Users Training\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:518
-msgid ""
-"\n"
-"                                Capacity Service: Worker Performance "
-"Monitoring\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:553
-msgid ""
-"\n"
-"                                Capacity Service: Application "
-"Troubleshooting\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:588
-msgid ""
-"\n"
-"                                Capacity Service: Training of Trainers\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:623
-msgid ""
-"\n"
-"                                Capacity Service: App Building\n"
-"                            "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:8
-msgid ""
-"\n"
-"                        Capacity Services\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:16
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:211
-msgid ""
-"\n"
-"                        Inquire About Dimagi's Capacity Services\n"
-"                        "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:26
-msgid ""
-"\n"
-"                        Program Capacity Services\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:31
-msgid ""
-"\n"
-"                        Dimagi travels on-site to build capacity, spending "
-"one\n"
-"                        on one time to develop skills with your staff.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:38
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:129
-msgid ""
-"\n"
-"                        $10,000 per capacity service package.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:47
-msgid ""
-"\n"
-"                        Worker Performance Monitoring\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:54
-msgid ""
-"\n"
-"                    Strategic implementation of standard CommCare HQ "
-"reports\n"
-"                    to strengthen supervision and monitoring processes.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:64
-msgid ""
-"\n"
-"                        Training of Trainers\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:71
-msgid ""
-"\n"
-"                        Capacity building for organization’s trainers for "
-"future\n"
-"                        scale, including instruction on phone preparation "
-"&amp;\n"
-"                        installation.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:82
-msgid ""
-"\n"
-"                        Capacity for Technical Support\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:89
-msgid ""
-"\n"
-"                        Train technical staff about troubleshooting and "
-"issue\n"
-"                        tracking for mobile technology.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:99
-msgid ""
-"\n"
-"                        Capacity to Build Applications\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:106
-msgid ""
-"\n"
-"                        Learn how to build your own applications,\n"
-"                        including case management, advanced logic, and\n"
-"                        multimedia.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:117
-msgid ""
-"\n"
-"                        Technology Capacity Services\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:122
-msgid ""
-"\n"
-"                        Dimagi provides additional system refinement or new\n"
-"                        technical capabilities to your program.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:138
-msgid ""
-"\n"
-"                        Technology for Outcomes Monitoring\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:145
-msgid ""
-"\n"
-"                        Create customized, offline Excel reports for 5-10\n"
-"                        outcome indicators. Optimize app to track "
-"indicators\n"
-"                        more effectively.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:156
-msgid ""
-"\n"
-"                        Apps for Supportive Supervision\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:163
-msgid ""
-"\n"
-"                        Integrate a mobile application designed for field "
-"based\n"
-"                        supervisors. Use data to provide supportive "
-"supervision\n"
-"                        and monitor quality of FLW service delivery.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:174
-msgid ""
-"\n"
-"                        App Refinement by Dimagi\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:181
-msgid ""
-"\n"
-"                        Dimagi to make modifications to application based "
-"on\n"
-"                        feedback from a deployed application.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:191
-msgid ""
-"\n"
-"                        Technology for Reminder Messages\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:198
-msgid ""
-"\n"
-"                        Send SMS reminders directly to beneficiaries or\n"
-"                        staff about notifications or upcoming visits.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/faq.html:9
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/faq.html:9
-msgid ""
-"\n"
-"                        Have questions?\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/faq.html:14
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/faq.html:14
-msgid ""
-"\n"
-"                        <a href=\"#contactDimagi\"\n"
-"                           data-toggle=\"modal\"\n"
-"                           class=\"btn btn-success btn-xl\">Get in Touch "
-"With Us</a>\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:9
-msgid ""
-"\n"
-"                            CommCare<br class=\"visible-xs-block\" /> Global "
-"Implementation Services\n"
-"                        "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:14
-msgid ""
-"\n"
-"                            We’re here to help you design, deploy, or\n"
-"                            scale a mobile system, big or small.\n"
-"                        "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:57
-msgid ""
-"\n"
-"                        Based all over the world.<br />\n"
-"                        Tailored specifically for local needs.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:63
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:67
-msgid ""
-"\n"
-"                        Our experienced services team is ready to design,\n"
-"                        implement, and maintain mobile systems.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:74
-msgid ""
-"\n"
-"                        Dimagi has a strong history\n"
-"                        of helping organizations deploy mobile systems.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:80
-msgid ""
-"\n"
-"                        View our <a href=\"http://www.dimagi.com/partners/"
-"\">list of partners</a> to see who\n"
-"                        we’ve worked with in the past.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:91
-msgid ""
-"\n"
-"                        On site. In person.<br />\n"
-"                        Our team works with your organization directly.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:97
-msgid ""
-"\n"
-"                        We help assess your project’s level of maturity\n"
-"                        for a mobile deployment and its targeted outcome.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:108
-msgid ""
-"\n"
-"                        We then build the ideal project roadmap, taking\n"
-"                        into account capacity-building needs.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:114
-msgid ""
-"\n"
-"                        Using our custom tools and experience, we create\n"
-"                        a plan tailored to your project.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:13
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:12
 msgid ""
 "\n"
 "                        From two weeks of on-site field support to a full,\n"
@@ -14500,7 +13999,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:19
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:18
 msgid ""
 "\n"
 "                        Bundles are designed to take partners as far along\n"
@@ -14510,7 +14009,80 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:133
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:28
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:15
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:662
+msgid ""
+"\n"
+"                        Inquire About Dimagi's Implementation Bundles\n"
+"                        "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:48
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:35
+msgid "Scope"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:51
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:38
+msgid "Launch"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:54
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:41
+msgid "Boost"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:57
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:44
+msgid "Growth"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:60
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:47
+msgid "Scale"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:65
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:55
+msgid "$10,000"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:68
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:58
+msgid "$35,000"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:71
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:61
+msgid "$50,000"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:74
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:64
+msgid "$80,000"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:77
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:67
+msgid "$150,000"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:101
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:109
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:117
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:91
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:99
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:107
+msgid "12 months"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:125
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:115
+msgid "18 months"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:132
 msgid ""
 "\n"
 "                                Application Development &amp; Implementation "
@@ -14518,19 +14090,19 @@ msgid ""
 "                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:140
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:139
 msgid "Workflow Design"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:141
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:140
 msgid "On-Site Scoping Visit"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:142
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:141
 msgid "Mobile System Workflow Design"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:148
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:147
 msgid ""
 "\n"
 "                                    Everything in<br />\n"
@@ -14538,19 +14110,19 @@ msgid ""
 "                                "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:153
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:152
 msgid "Build &amp; Launch Application"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:154
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:153
 msgid "Field Testing &amp; Iteration"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:155
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:154
 msgid "Users Training"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:161
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:160
 msgid ""
 "\n"
 "                                    Everything in<br />\n"
@@ -14558,16 +14130,16 @@ msgid ""
 "                                "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:166
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:70
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:165
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:69
 msgid "Technology for Outcomes Monitoring"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:167
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:166
 msgid "Capacity Building for Worker Performance Monitoring"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:173
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:172
 msgid ""
 "\n"
 "                                    Everything in<br />\n"
@@ -14575,19 +14147,19 @@ msgid ""
 "                                "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:178
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:177
 msgid "Refined Application"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:179
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:178
 msgid "Additional Supervisor App"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:180
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:179
 msgid "Application Troubleshooting Capacity Building"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:186
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:185
 msgid ""
 "\n"
 "                                    Everything in<br />\n"
@@ -14595,36 +14167,36 @@ msgid ""
 "                                "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:191
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:190
 msgid "Monitored Application Usage"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:192
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:191
 msgid "Additional Tech for Reminder Messages"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:193
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:48
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:192
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:47
 msgid "Training of Trainers"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:194
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:50
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:193
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:49
 msgid "Capacity to Build Applications"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:200
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/bundles.html:204
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:53
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:76
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:199
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:203
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:52
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:75
 msgid "See More..."
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:8
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:7
 msgid "Capacity Services"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:11
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:10
 msgid ""
 "\n"
 "                        Improve the program or technology for an existing\n"
@@ -14632,7 +14204,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:17
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:16
 msgid ""
 "\n"
 "                        Each package includes approximately two weeks of "
@@ -14644,11 +14216,11 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:28
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:27
 msgid "Inquire About Dimagi's Capacity Services"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:39
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:38
 #: corehq/apps/products/forms.py:28
 #: corehq/apps/products/templates/products/manage/products.html:112
 #: corehq/apps/programs/templates/programs/manage/programs.html:62
@@ -14656,190 +14228,453 @@ msgstr ""
 msgid "Program"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:42
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:65
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:41
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:64
 msgid ""
 "\n"
 "                            $10,000 per capacity service\n"
 "                        "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:47
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:46
 msgid "Worker Performance Monitoring"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:49
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:48
 msgid "Capacity for Technical Support"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:62
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:61
 msgid "Technology"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:71
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:70
 msgid "Apps for Supportive Supervision"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:72
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:71
 msgid "App Refinement by Dimagi"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/capacity.html:73
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/capacity.html:72
 msgid "Technology for Reminder Messages"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:8
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/faq.html:8
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/faq.html:8
 msgid ""
 "\n"
-"                            CommCare Software Pricing <br class=\"visible-xs "
-"visible-sm\" />& Implementation Services\n"
+"                        Have questions?\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/faq.html:13
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/faq.html:13
+msgid ""
+"\n"
+"                        <a href=\"#contactDimagi\"\n"
+"                           data-toggle=\"modal\"\n"
+"                           class=\"btn btn-success btn-xl\">Get in Touch "
+"With Us</a>\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:8
+msgid ""
+"\n"
+"                            CommCare<br class=\"visible-xs-block\" /> Global "
+"Implementation Services\n"
 "                        "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:13
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:13
 msgid ""
 "\n"
-"                            Use CommCare to design and deploy your own "
-"mobile\n"
-"                            apps,<br />or have Dimagi's experienced field "
-"staff\n"
-"                            help you.\n"
+"                            We’re here to help you design, deploy, or\n"
+"                            scale a mobile system, big or small.\n"
 "                        "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:28
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:56
 msgid ""
 "\n"
-"                        Not a developer?<br />Not a problem.\n"
+"                        Based all over the world.<br />\n"
+"                        Tailored specifically for local needs.\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:33
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:62
 msgid ""
 "\n"
-"                        Hundreds of organizations are building CommCare\n"
-"                        apps for their programs from scratch!\n"
+"                        Our experienced services team is ready to design,\n"
+"                        implement, and maintain mobile systems.\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:39
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:73
 msgid ""
 "\n"
-"                        Use Dimagi's FREE resources and build your own FREE\n"
-"                        mobile app today, or find a plan that works best for "
-"your project's needs.\n"
+"                        Dimagi has a strong history\n"
+"                        of helping organizations deploy mobile systems.\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:46
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:83
-msgid "View Software Features & Pricing"
-msgstr ""
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:55
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:79
 msgid ""
 "\n"
-"                        From Design through Scale:<br />We're here to help.\n"
+"                        View our <a href=\"http://www.dimagi.com/partners/"
+"\">list of partners</a> to see who\n"
+"                        we’ve worked with in the past.\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:60
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:90
 msgid ""
 "\n"
-"                        For groups that would like\n"
-"                        in-person support, Dimagi has a strong history of\n"
-"                        successful project execution.\n"
+"                        On site. In person.<br />\n"
+"                        Our team works with your organization directly.\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:74
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:90
-msgid "View Implementation Services"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:96
+msgid ""
+"\n"
+"                        We help assess your project’s level of maturity\n"
+"                        for a mobile deployment and its targeted outcome.\n"
+"                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:109
-msgid "Feature Summary"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:107
+msgid ""
+"\n"
+"                        We then build the ideal project roadmap, taking\n"
+"                        into account capacity-building needs.\n"
+"                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:114
-msgid "Up to 50 users"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services/lead.html:113
+msgid ""
+"\n"
+"                        Using our custom tools and experience, we create\n"
+"                        a plan tailored to your project.\n"
+"                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:115
-msgid "CommCare App Builder"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:52
+msgid "Cost"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:117
-#, fuzzy
-msgid "Pre-Built Reports"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:118
-msgid "Online Learning Resources"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:73
+msgid "Included Software Plan"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:125
-msgid "Up to 100 users"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:121
+msgid "Application Development Support"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:127
-msgid "Case Importer"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:127
+msgid ""
+"\n"
+"                                Workflow Design\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:129
-msgid "One-way SMS"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:162
+msgid ""
+"\n"
+"                                Launch &amp; Tested Application\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:136
-msgid "Up to 500 users"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:197
+msgid ""
+"\n"
+"                                Additional Tech for Monitoring Outcomes\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:137
-msgid "Report builder"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:232
+msgid ""
+"\n"
+"                                Launched v2 application\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:138
-msgid "Data management tools"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:267
+msgid ""
+"\n"
+"                                Supervisor Application\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:139
-msgid "Web-based applications"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:302
+msgid ""
+"\n"
+"                                Monitored app usage\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:140
-msgid "Two-way SMS"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:337
+msgid ""
+"\n"
+"                                Additional Tech for Reminder Messages\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:147
-msgid "Up to 1,000 users"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:371
+msgid "Implementation Services"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:148
-msgid "Custom branding"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:377
+msgid ""
+"\n"
+"                                On-Site Scoping Visit\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:149
-msgid "HIPAA compliance assurance"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:412
+msgid ""
+"\n"
+"                                Mobile System Workflow Design\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:150
-msgid "External app integration framework"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:447
+msgid ""
+"\n"
+"                                Field Testing &amp; Iteration\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:151
-msgid "Priority Support"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:482
+msgid ""
+"\n"
+"                                Pilot Users Training\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:158
-msgid "1,000+ users"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:517
+msgid ""
+"\n"
+"                                Capacity Service: Worker Performance "
+"Monitoring\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:159
-msgid "Custom pricing is available for large scale projects."
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:552
+msgid ""
+"\n"
+"                                Capacity Service: Application "
+"Troubleshooting\n"
+"                            "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:160
-msgid "Dedicated Account Manager"
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:587
+msgid ""
+"\n"
+"                                Capacity Service: Training of Trainers\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/bundles.html:622
+msgid ""
+"\n"
+"                                Capacity Service: App Building\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:7
+msgid ""
+"\n"
+"                        Capacity Services\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:15
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:210
+msgid ""
+"\n"
+"                        Inquire About Dimagi's Capacity Services\n"
+"                        "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:25
+msgid ""
+"\n"
+"                        Program Capacity Services\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:30
+msgid ""
+"\n"
+"                        Dimagi travels on-site to build capacity, spending "
+"one\n"
+"                        on one time to develop skills with your staff.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:37
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:128
+msgid ""
+"\n"
+"                        $10,000 per capacity service package.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:46
+msgid ""
+"\n"
+"                        Worker Performance Monitoring\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:53
+msgid ""
+"\n"
+"                    Strategic implementation of standard CommCare HQ "
+"reports\n"
+"                    to strengthen supervision and monitoring processes.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:63
+msgid ""
+"\n"
+"                        Training of Trainers\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:70
+msgid ""
+"\n"
+"                        Capacity building for organization’s trainers for "
+"future\n"
+"                        scale, including instruction on phone preparation "
+"&amp;\n"
+"                        installation.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:81
+msgid ""
+"\n"
+"                        Capacity for Technical Support\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:88
+msgid ""
+"\n"
+"                        Train technical staff about troubleshooting and "
+"issue\n"
+"                        tracking for mobile technology.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:98
+msgid ""
+"\n"
+"                        Capacity to Build Applications\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:105
+msgid ""
+"\n"
+"                        Learn how to build your own applications,\n"
+"                        including case management, advanced logic, and\n"
+"                        multimedia.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:116
+msgid ""
+"\n"
+"                        Technology Capacity Services\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:121
+msgid ""
+"\n"
+"                        Dimagi provides additional system refinement or new\n"
+"                        technical capabilities to your program.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:137
+msgid ""
+"\n"
+"                        Technology for Outcomes Monitoring\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:144
+msgid ""
+"\n"
+"                        Create customized, offline Excel reports for 5-10\n"
+"                        outcome indicators. Optimize app to track "
+"indicators\n"
+"                        more effectively.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:155
+msgid ""
+"\n"
+"                        Apps for Supportive Supervision\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:162
+msgid ""
+"\n"
+"                        Integrate a mobile application designed for field "
+"based\n"
+"                        supervisors. Use data to provide supportive "
+"supervision\n"
+"                        and monitor quality of FLW service delivery.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:173
+msgid ""
+"\n"
+"                        App Refinement by Dimagi\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:180
+msgid ""
+"\n"
+"                        Dimagi to make modifications to application based "
+"on\n"
+"                        feedback from a deployed application.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:190
+msgid ""
+"\n"
+"                        Technology for Reminder Messages\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/capacity.html:197
+msgid ""
+"\n"
+"                        Send SMS reminders directly to beneficiaries or\n"
+"                        staff about notifications or upcoming visits.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/services_details/lead.html:8
+msgid ""
+"\n"
+"                        Full Implementation Bundles<br />\n"
+"                        &amp; Capacity Services\n"
+"                        "
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/solutions/last.html:8
@@ -15274,8 +15109,8 @@ msgstr ""
 #: corehq/apps/sms/forms.py:79 corehq/apps/sms/forms.py:506
 #: corehq/apps/sms/forms.py:634 corehq/apps/sms/forms.py:729
 #: corehq/apps/sms/messages.py:47
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_form_helper.py:129
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_form_helper.py:139
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_form_helper.py:129
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_form_helper.py:139
 msgid "This field is required."
 msgstr ""
 
@@ -18106,7 +17941,7 @@ msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:413
 #: corehq/apps/sms/templates/sms/default.html:60
-#: custom/ilsgateway/tanzania/reminders/__init__.py:123
+#: custom/ilsgateway/tanzania/reminders/__init__.py:133
 msgid "Sent"
 msgstr ""
 
@@ -24659,15 +24494,16 @@ msgid "Thank you for registering at %(sdp_name)s, %(contact_name)s"
 msgstr "Asante kwa kujisajili katika %(sdp_name)s, %(contact_name)s"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:21
+#: custom/ilsgateway/tanzania/reminders/__init__.py:43
 msgid ""
-"Please send in your stock on hand informationin the format 'soh <product> "
+"Please send in your stock on hand information in the format 'soh <product> "
 "<amount> <product> <amount>...'"
 msgstr ""
 "Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
 "<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:25
-#: custom/ilsgateway/tanzania/reminders/__init__.py:57
+#: custom/ilsgateway/tanzania/reminders/__init__.py:66
 msgid ""
 "Have you sent in your R&R form yet for this quarter? Please reply \"submitted"
 "\" or \"not submitted\""
@@ -24676,7 +24512,7 @@ msgstr ""
 "\"sijatuma\""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:29
-#: custom/ilsgateway/tanzania/reminders/__init__.py:61
+#: custom/ilsgateway/tanzania/reminders/__init__.py:70
 msgid ""
 "How many R&R forms have you submitted to MSD? Reply with 'submitted A "
 "<number of R&Rs submitted for group A> B <number of R&Rs submitted for group "
@@ -24686,7 +24522,7 @@ msgstr ""
 "ya R&R fomu za kundi a> B <idadi ya R&R fomu za kundi B>...'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:34
-#: custom/ilsgateway/tanzania/reminders/__init__.py:71
+#: custom/ilsgateway/tanzania/reminders/__init__.py:81
 msgid ""
 "Did you receive your delivery yet? Please reply 'delivered <product> "
 "<amount> <product> <amount>...'"
@@ -24696,7 +24532,7 @@ msgstr ""
 "'sijapokea'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:37
-#: custom/ilsgateway/tanzania/reminders/__init__.py:74
+#: custom/ilsgateway/tanzania/reminders/__init__.py:84
 msgid ""
 "Did you receive your delivery yet? Please reply 'delivered' or 'not "
 "delivered'"
@@ -24705,7 +24541,7 @@ msgstr ""
 "'nimepokea', kama haujapokea jibu 'sijapokea'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:39
-#: custom/ilsgateway/tanzania/reminders/__init__.py:53
+#: custom/ilsgateway/tanzania/reminders/__init__.py:62
 msgid ""
 "Have you received supervision this month? Please reply 'supervision yes' or "
 "'supervision no'"
@@ -24713,16 +24549,29 @@ msgstr ""
 "Asante. Je umefanyiwa usimamizi kwa mwezi huu? Tafadhali jibu 'usimamizi "
 "ndiyo' au 'usimamizi hapana'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:43
-msgid ""
-"To report stock on hand, send SOH [space] [product code] [space] [amount]"
-msgstr ""
-
-#: custom/ilsgateway/tanzania/reminders/__init__.py:44
+#: custom/ilsgateway/tanzania/reminders/__init__.py:45
 msgid "Thank you for reporting your stock on hand this month"
 msgstr "Asante kwa kutoa taarifa za hesabu ya mkono kwa mwezi huu"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:47
+#, fuzzy
+msgid ""
+"Thank you. Please send in your adjustments in the format 'la <product> +-"
+"<amount> +-<product> +-<amount>...'"
+msgstr ""
+"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
+"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:50
+#, fuzzy, python-format
+msgid ""
+"Thank you %(contact_name)s for reporting your stock on hand for "
+"%(facility_name)s.  Still missing %(product_list)s."
+msgstr ""
+"Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
+"%(facility_name)s"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:56
 msgid ""
 "Supervision reminders will come monthly, and you can respond 'supervision "
 "yes' if you have received supervision or 'supervision no' if you have not"
@@ -24731,20 +24580,27 @@ msgstr ""
 "ndiyo' kama umefanyiwa usimamizi au 'usimamizi hapana' kama haujafanyiwa "
 "usimamizi."
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:50
+#: custom/ilsgateway/tanzania/reminders/__init__.py:59
 msgid ""
 "You have reported that you have not yet received supervision this month."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:51
+#: custom/ilsgateway/tanzania/reminders/__init__.py:60
 msgid "Thank you for reporting that you have received supervision this month."
 msgstr "Asante kwa kutoa taarifa za hesabu ya mkono kwa mwezi huu"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:66
+#: custom/ilsgateway/tanzania/reminders/__init__.py:75
 msgid "You have reported that you haven't yet received your delivery."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:68
+#: custom/ilsgateway/tanzania/reminders/__init__.py:77
+#, python-format
+msgid ""
+"Thank you, you reported a delivery of %(reply_list)s. If incorrect, please "
+"resend."
+msgstr ""
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:78
 #, python-format
 msgid ""
 "Thank you %(contact_name)s for reporting your delivery for %(facility_name)s"
@@ -24752,7 +24608,7 @@ msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
 "%(facility_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:69
+#: custom/ilsgateway/tanzania/reminders/__init__.py:79
 msgid ""
 "To record a delivery, respond with \"delivered product amount product "
 "amount...\""
@@ -24760,7 +24616,7 @@ msgstr ""
 "Kutuma taarifa za kupokea vifaa, jibu  \"nimepokea<acha nafasi><jina la "
 "kifaa><acha nafasi><idadi ya kifaa><acha nafasi>...\""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:76
+#: custom/ilsgateway/tanzania/reminders/__init__.py:86
 #, python-format
 msgid ""
 "Facility deliveries for group %(group_name)s (out of %(group_total)d): "
@@ -24771,11 +24627,11 @@ msgstr ""
 "%(not_responded_count)d havijajibu na %(not_received_count)d vimetoa taarifa "
 "kua havijapokea vifaa. Tizama kwenye ilsgateway.com"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:81
+#: custom/ilsgateway/tanzania/reminders/__init__.py:91
 msgid "You have reported that you haven't yet sent in your R&R."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:84
+#: custom/ilsgateway/tanzania/reminders/__init__.py:94
 #, python-format
 msgid ""
 "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
@@ -24784,34 +24640,34 @@ msgstr ""
 "%(district_name)s imetuma R&R fomu kwenda MSD: %(group_a)s kwa ajili ya "
 "Kundi A, %(group_b)s kwa ajili ya Kundi B %(group_c)s kwa ajili ya Kundi C"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:87
+#: custom/ilsgateway/tanzania/reminders/__init__.py:97
 #, python-format
 msgid ""
 "Thank you %(contact_name)s for submitting your R and R form for %(sp_name)s"
 msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya %(sp_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:88
+#: custom/ilsgateway/tanzania/reminders/__init__.py:98
 #, python-format
 msgid ""
 "District %(district_name)s has reported that they sent their R&R forms to MSD"
 msgstr ""
 "Wilaya %(district_name)s imetoa taarifa kuwa fomu za R&R zimewasilishwa MSD"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:90
+#: custom/ilsgateway/tanzania/reminders/__init__.py:100
 msgid "To report an arrival, please send 'arrived <MSD code>'."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:91
+#: custom/ilsgateway/tanzania/reminders/__init__.py:101
 msgid "Thank you for confirming your arrival at the health facility."
 msgstr "Asante kwa kuthibitisha kufika kwako katika Kituo cha Afya"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:92
+#: custom/ilsgateway/tanzania/reminders/__init__.py:102
 #, python-format
 msgid "Thank you for confirming your arrival at %(facility)s."
 msgstr "Asante kwa kuthibitisha kufika kwako katika %(facility)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:95
+#: custom/ilsgateway/tanzania/reminders/__init__.py:105
 msgid ""
 "Welcome to ILSGateway. Available commands are soh, delivered, not delivered, "
 "submitted, not submitted, language, sw, en, stop, supervision, la"
@@ -24820,27 +24676,27 @@ msgstr ""
 "nimepokea, sijapokea, nimetuma, sijatuma, lugha sw, lugha en, acha, "
 "usimamizi, um"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:102
+#: custom/ilsgateway/tanzania/reminders/__init__.py:112
 msgid "To set your language, send LANGUAGE <CODE>"
 msgstr "Kubadilisha lugha, tuma LUGHA <KIFUPISHO>"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:103
+#: custom/ilsgateway/tanzania/reminders/__init__.py:113
 msgid ""
 "You must JOIN or IDENTIFY yourself before you can set your language "
 "preference"
 msgstr "Lazima kujiunga kwanza kabla ya kuchagua lugha unayotaka"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:104
+#: custom/ilsgateway/tanzania/reminders/__init__.py:114
 #, python-format
 msgid "I will speak to you in %(language)s."
 msgstr "Nitaongea na wewe kwa %(language)s."
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:105
+#: custom/ilsgateway/tanzania/reminders/__init__.py:115
 #, python-format
 msgid "Sorry, I don't speak \"%(language)s\"."
 msgstr "Samahani, sielewi \"%(language)s\""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:108
+#: custom/ilsgateway/tanzania/reminders/__init__.py:118
 msgid ""
 "You have requested to stop reminders to this number. Send 'help' to this "
 "number for instructions on how to reactivate."
@@ -24848,7 +24704,7 @@ msgstr ""
 "Umesitisha kukumbushwa kwenye hii namba. tafadhali tuma 'msaada' kupata "
 "maelekezo jinsi ya kujiunga tena"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:113
+#: custom/ilsgateway/tanzania/reminders/__init__.py:123
 msgid ""
 "If you have submitted your R&R, respond \"submitted\". If you have received "
 "your delivery, respond \"delivered\""
@@ -24856,7 +24712,7 @@ msgstr ""
 "Kama umetuma R&R fomu yako jibu 'nimetuma', kama umepokea vifaa jibu "
 "'nimepokea'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:119
+#: custom/ilsgateway/tanzania/reminders/__init__.py:129
 msgid ""
 "To test a reminder, send \"test [remindername] [msd code]\"; valid tests are "
 "soh, delivery, randr. Remember to setup your contact details!"
@@ -24864,12 +24720,48 @@ msgstr ""
 "_To test a reminder, send \"test [remindername] [msd code]\"; valid tests "
 "are soh, delivery, randr. Remember to setup your contact details!"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:122
+#: custom/ilsgateway/tanzania/reminders/__init__.py:132
 #, python-format
 msgid "Invalid msd code %(code)s"
 msgstr "Namba ya MSD sio sahihi %(code)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:128
+#: custom/ilsgateway/tanzania/reminders/__init__.py:135
+#, fuzzy
+msgid ""
+"Please send in your adjustments in the format 'la <product> +-<amount> +-"
+"<product> +-<amount>...'"
+msgstr ""
+"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
+"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:137
+#, fuzzy
+msgid ""
+"Sorry, invalid format.  The message should be in the format 'la <product> +-"
+"<amount> +-<product> +-<amount>..."
+msgstr ""
+"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
+"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:139
+#, fuzzy
+msgid ""
+"Thank you. Have you received supervision this month? Please reply "
+"'supervision yes' or 'supervision no'"
+msgstr ""
+"Asante. Je umefanyiwa usimamizi kwa mwezi huu? Tafadhali jibu 'usimamizi "
+"ndiyo' au 'usimamizi hapana'"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:142
+#, fuzzy, python-format
+msgid ""
+"Thank you %(contact_name)s for reporting stockouts of %(product_names)s for "
+"%(facility_name)s."
+msgstr ""
+"Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
+"%(facility_name)s"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:148
 #, python-format
 msgid ""
 "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s did not "
@@ -24879,7 +24771,7 @@ msgstr ""
 "%(not_submitted)s/%(total)s hawajawasilisha R&R, %(not_responding)s/"
 "%(total)s hawajajibu ujumbe"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:132
+#: custom/ilsgateway/tanzania/reminders/__init__.py:152
 #, python-format
 msgid ""
 "SOH - %(submitted)s/%(total)s reported, %(not_responding)s/%(total)s did not "
@@ -24888,7 +24780,7 @@ msgstr ""
 "Hesabu ya mkono: %(submitted)s/%(total)s wametoa taarifa ya hmk, "
 "%(not_responding)s/%(total)s hawajajibu ujumbe"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:136
+#: custom/ilsgateway/tanzania/reminders/__init__.py:156
 #, python-format
 msgid ""
 "Deliveries - %(received)s/%(total)s received, %(not_received)s/%(total)s did "
@@ -25151,10 +25043,6 @@ msgstr ""
 
 #: custom/ilsgateway/templates/ilsgateway/partials/tabs.html:19
 msgid "Supervision"
-msgstr ""
-
-#: custom/ilsgateway/tests/handlers/loss_adjust.py:29
-msgid "received stock report for loc1(Test Facility 1) L jd10 mc69"
 msgstr ""
 
 #: custom/intrahealth/filters.py:62
@@ -28104,15 +27992,15 @@ msgstr ""
 msgid "Audited Model Changes"
 msgstr ""
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout.py:467
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout.py:467
 msgid "i18n text"
 msgstr ""
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout.py:469
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout.py:469
 msgid "i18n legend"
 msgstr ""
 
-#: submodules/bootstrap3_crispy/bootstrap3_crispy/tests/test_layout_objects.py:111
+#: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout_objects.py:111
 msgid "Enter a valid value."
 msgstr ""
 
@@ -28527,6 +28415,10 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Pre-Built Reports"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Read Case Study"
 #~ msgstr "Manejo de Casos"
