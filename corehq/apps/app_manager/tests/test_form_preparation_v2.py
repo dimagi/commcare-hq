@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     UpdateCaseAction,
     OpenSubCaseAction,
-)
+    CaseIndex)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -493,7 +493,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1'
+            case_indices=[CaseIndex(tag='load_1')]
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('subcase'), self.form.render_xform())
@@ -507,7 +507,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -524,7 +524,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='open_1',
+            case_indices=[CaseIndex(tag='open_1')],
             repeat_context="/data/child"
         ))
         for action in self.form.actions.open_cases:
@@ -540,7 +540,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -556,7 +556,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child1',
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[0].open_condition.type = 'if'
@@ -567,7 +567,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child2',
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[1].open_condition.type = 'if'
