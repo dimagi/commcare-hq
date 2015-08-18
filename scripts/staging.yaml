@@ -57,7 +57,7 @@ branches:
   - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
-  - revert-7867-revert-7745-upgrade-redis # Ben 8/17
+#  - revert-7867-revert-7745-upgrade-redis # Ben 8/17
 #  - optmize-deploy+knockout-js # Ben 8/18
   - knockout-js # Ben 8/17
 #  - optmize-deploy # Ben 8/18
@@ -76,11 +76,11 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches:
-      - revert-122-revert-121-upgrade-redis # Ben 8/17
+    branches: []
+#      - revert-122-revert-121-upgrade-redis # Ben 8/17
   submodules/dimagi-utils-src:
-    branches:
-      - revert-304-revert-301-upgrade-redis # Ben 8/17
+    branches: []
+#      - revert-304-revert-301-upgrade-redis # Ben 8/17
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
