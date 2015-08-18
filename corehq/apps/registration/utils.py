@@ -16,7 +16,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from corehq.feature_previews import enable_commtrack_previews
 from corehq.apps.hqwebapp.tasks import send_mail_async
 
 
@@ -177,11 +176,10 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
+
 def request_new_domain(request, form, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
-
-    commtrack_enabled = domain_type == 'commtrack'
 
     dom_req = RegistrationRequest()
     if new_user:
@@ -197,13 +195,9 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
             hr_name=form.cleaned_data['hr_name'],
             is_active=False,
             date_created=datetime.utcnow(),
-            commtrack_enabled=commtrack_enabled,
             creating_user=current_user.username,
             secure_submissions=True,
         )
-
-        if commtrack_enabled:
-            enable_commtrack_previews(new_domain)
 
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
@@ -217,6 +211,9 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
 
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
+
+    if domain_type == 'commtrack':
+        new_domain.convert_to_commtrack()
 
     if not new_domain.name:
         new_domain.name = new_domain._id

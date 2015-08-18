@@ -1,0 +1,1071 @@
+{
+  "multimedia_map": {
+    
+  },
+  "build_langs": [
+    "en"
+  ],
+  "auto_gps_capture": false,
+  "deployment_date": null,
+  "user_type": null,
+  "text_input": "roman",
+  "secure_submissions": true,
+  "build_broken": false,
+  "phone_model": null,
+  "build_signed": true,
+  "user_registration": {
+    "doc_type": "UserRegistrationForm",
+    "xmlns": null,
+    "name": {
+      
+    },
+    "password_path": "password",
+    "auto_gps_capture": false,
+    "show_count": false,
+    "version": null,
+    "no_vellum": false,
+    "form_links": [
+      
+    ],
+    "post_form_workflow": "default",
+    "form_type": "user_registration",
+    "data_paths": {
+      
+    },
+    "unique_id": "10944f0854bf817920957ac923c10d542c244a67",
+    "username_path": "username"
+  },
+  "copy_history": [
+    
+  ],
+  "is_released": false,
+  "use_custom_suite": false,
+  "platform": "nokia\/s40",
+  "admin_password": null,
+  "build_spec": {
+    "doc_type": "BuildSpec",
+    "version": "2.14.0",
+    "build_number": null,
+    "latest": true
+  },
+  "commtrack_requisition_mode": null,
+  "logo_refs": {
+    
+  },
+  "success_message": {
+    
+  },
+  "amplifies_workers": "not_set",
+  "comment_from": null,
+  "cloudcare_enabled": false,
+  "description": null,
+  "recipients": "",
+  "translations": {
+    
+  },
+  "built_on": null,
+  "built_with": {
+    "doc_type": "BuildRecord",
+    "build_number": null,
+    "signed": true,
+    "datetime": null,
+    "version": null,
+    "latest": null
+  },
+  "profile": {
+    "features": {
+      "users": "true",
+      "sense": "false"
+    },
+    "properties": {
+      "cc-days-form-retain": "-1",
+      "cc-show-saved": "yes",
+      "unsent-time-limit": "5",
+      "log_prop_daily": "log_never",
+      "restore-tolerance": "loose",
+      "cc-user-mode": "cc-u-normal",
+      "cc-autoup-freq": "freq-never",
+      "purge-freq": "0",
+      "server-tether": "push-only",
+      "user_reg_server": "required",
+      "extra_key_action": "audio",
+      "cc-autosync-freq": "freq-never",
+      "ViewStyle": "v_chatterbox",
+      "cc-resize-images": "none",
+      "cc-entry-mode": "cc-entry-quick",
+      "cc-send-procedure": "cc-send-http",
+      "cc-login-images": "No",
+      "log_prop_weekly": "log_short",
+      "cc-show-incomplete": "yes",
+      "cc-send-unsent": "cc-su-auto",
+      "loose_media": "no",
+      "password_format": "n",
+      "unsent-number-limit": "5",
+      "cc-content-valid": "no",
+      "logenabled": "Enabled"
+    }
+  },
+  "langs": [
+    "en"
+  ],
+  "application_version": "2.0",
+  "build_comment": null,
+  "build_broken_reason": null,
+  "doc_type": "Application",
+  "cached_properties": {
+    
+  },
+  "name": "Case Management",
+  "amplifies_project": "not_set",
+  "modules": [
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "name": {
+        "en": "Registration"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "media_image": null,
+      "parent_select": {
+        "active": false,
+        "module_id": null,
+        "relationship": "parent",
+        "doc_type": "ParentSelect"
+      },
+      "case_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+                
+              ],
+              "header": {
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "graph_configuration": {
+                "doc_type": "GraphConfiguration",
+                "series": [
+                  
+                ],
+                "locale_specific_config": {
+                  
+                },
+                "graph_type": null,
+                "config": {
+                  
+                },
+                "annotations": [
+                  
+                ]
+              },
+              "advanced": ""
+            }
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+                
+              ],
+              "header": {
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "graph_configuration": {
+                "doc_type": "GraphConfiguration",
+                "series": [
+                  
+                ],
+                "locale_specific_config": {
+                  
+                },
+                "graph_type": null,
+                "config": {
+                  
+                },
+                "annotations": [
+                  
+                ]
+              },
+              "advanced": ""
+            }
+          ]
+        }
+      },
+      "case_type": "case",
+      "case_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "module_filter": null,
+      "doc_type": "Module",
+      "module_type": "basic",
+      "put_in_root": true,
+      "case_list_form": {
+        "doc_type": "CaseListForm",
+        "label": {
+          
+        },
+        "media_audio": null,
+        "form_id": null,
+        "media_image": null
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "root_module_id": null,
+      "forms": [
+        {
+          "doc_type": "Form",
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/11FAC65A-F2CD-427F-A870-CF126336AAB5",
+          "name": {
+            "en": "Registration"
+          },
+          "auto_gps_capture": false,
+          "media_audio": null,
+          "show_count": false,
+          "post_form_workflow": "default",
+          "requires": "none",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [
+              
+            ],
+            "usercase_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "sample_number_question": "\/data\/sample_number_question",
+                "sample_choice_question": "\/data\/sample_choice_question"
+              },
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
+            },
+            "open_case": {
+              "name_path": "\/data\/name",
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "always"
+              }
+            },
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                
+              },
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "referral_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "media_image": null,
+          "form_type": "module_form",
+          "form_filter": "",
+          "unique_id": "2da350db77049e660d052849a7f6a5ed3125718"
+        }
+      ],
+      "ref_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            
+          ]
+        }
+      },
+      "media_audio": null,
+      "unique_id": "37fa1ba361352016c277661662eaca964c2e9cf2",
+      "referral_label": {
+        "en": "Referrals"
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "name": {
+        "en": "Follow Up"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "media_image": null,
+      "parent_select": {
+        "active": false,
+        "module_id": null,
+        "relationship": "parent",
+        "doc_type": "ParentSelect"
+      },
+      "case_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+                
+              ],
+              "header": {
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "graph_configuration": {
+                "doc_type": "GraphConfiguration",
+                "series": [
+                  
+                ],
+                "locale_specific_config": {
+                  
+                },
+                "graph_type": null,
+                "config": {
+                  
+                },
+                "annotations": [
+                  
+                ]
+              },
+              "advanced": ""
+            }
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            {
+              "doc_type": "DetailColumn",
+              "filter_xpath": "",
+              "format": "plain",
+              "late_flag": 30,
+              "enum": [
+                
+              ],
+              "header": {
+                "en": "Name"
+              },
+              "time_ago_interval": 365.25,
+              "case_tile_field": null,
+              "field": "name",
+              "calc_xpath": ".",
+              "model": "case",
+              "graph_configuration": {
+                "doc_type": "GraphConfiguration",
+                "series": [
+                  
+                ],
+                "locale_specific_config": {
+                  
+                },
+                "graph_type": null,
+                "config": {
+                  
+                },
+                "annotations": [
+                  
+                ]
+              },
+              "advanced": ""
+            }
+          ]
+        }
+      },
+      "case_type": "case",
+      "case_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "module_filter": null,
+      "doc_type": "Module",
+      "module_type": "basic",
+      "put_in_root": false,
+      "case_list_form": {
+        "doc_type": "CaseListForm",
+        "label": {
+          "en": ""
+        },
+        "media_audio": null,
+        "form_id": "",
+        "media_image": null
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "show": false,
+        "media_audio": null,
+        "media_image": null,
+        "label": {
+          
+        }
+      },
+      "root_module_id": null,
+      "forms": [
+        {
+          "doc_type": "Form",
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/52D111C9-79C6-403F-BF4C-D24B64A872E2",
+          "name": {
+            "en": "Visit"
+          },
+          "auto_gps_capture": false,
+          "media_audio": null,
+          "show_count": false,
+          "post_form_workflow": "default",
+          "requires": "case",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [
+              
+            ],
+            "usercase_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "sample_number_question": "\/data\/sample_number_question",
+                "sample_choice_question": "\/data\/sample_choice_question"
+              },
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
+            },
+            "open_case": {
+              "name_path": null,
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                
+              },
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "referral_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "media_image": null,
+          "form_type": "module_form",
+          "form_filter": "",
+          "unique_id": "115b21498803ecc47fa6d013efbdc9879c1be1ff"
+        },
+        {
+          "doc_type": "Form",
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/5CCB1614-68B3-44C0-A166-D63AA7C1D4FB",
+          "name": {
+            "en": "Close"
+          },
+          "auto_gps_capture": false,
+          "media_audio": null,
+          "show_count": false,
+          "post_form_workflow": "default",
+          "requires": "case",
+          "actions": {
+            "doc_type": "FormActions",
+            "subcases": [
+              
+            ],
+            "usercase_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_case": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "close_reason": "\/data\/close_reason"
+              },
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              },
+              "followup_date": null
+            },
+            "open_case": {
+              "name_path": null,
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "condition": {
+                "operator": null,
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "usercase_update": {
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                
+              },
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "update_referral": {
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null,
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "referral_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": null,
+                "question": null,
+                "type": "never"
+              }
+            },
+            "case_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "answer": null,
+                "question": null,
+                "type": "always",
+                "operator": null,
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_case": {
+              "doc_type": "FormAction",
+              "condition": {
+                "operator": "=",
+                "doc_type": "FormActionCondition",
+                "answer": "yes",
+                "question": "\/data\/close_confirmation",
+                "type": "if"
+              }
+            }
+          },
+          "version": null,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "media_image": null,
+          "form_type": "module_form",
+          "form_filter": "",
+          "unique_id": "f1e5769b1f93d686b13c74d37e48d2d2d2e4e856"
+        }
+      ],
+      "ref_details": {
+        "doc_type": "DetailPair",
+        "short": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "short",
+          "columns": [
+            
+          ]
+        },
+        "long": {
+          "doc_type": "Detail",
+          "lookup_name": null,
+          "sort_elements": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_image": null,
+          "filter": null,
+          "persist_tile_on_forms": null,
+          "custom_xml": null,
+          "lookup_enabled": false,
+          "pull_down_tile": null,
+          "use_case_tiles": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_action": null,
+          "display": "long",
+          "columns": [
+            
+          ]
+        }
+      },
+      "media_audio": null,
+      "unique_id": "f681eaa9ed0eb82adb01c0aa7a3ac6be8b366232",
+      "referral_label": {
+        "en": "Referrals"
+      }
+    }
+  ],
+  "_attachments": {
+    "f1e5769b1f93d686b13c74d37e48d2d2d2e4e856.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Close<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/5CCB1614-68B3-44C0-A166-D63AA7C1D4FB\" uiVersion=\"1\" version=\"1\" name=\"Close\">\n\t\t\t\t\t<welcome_message \/>\n\t\t\t\t\t<close_confirmation \/>\n\t\t\t\t\t<close_reason \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/welcome_message\" \/>\n\t\t\t<bind nodeset=\"\/data\/close_confirmation\" \/>\n\t\t\t<bind nodeset=\"\/data\/close_reason\" type=\"xsd:string\" relevant=\"\/data\/close_confirmation = 'yes'\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"welcome_message-label\">\n\t\t\t\t\t\t<value>This is a case close form.  It lets you select a previously registered case and remove it from the phone. Its important to remove cases from the phone so that the user only sees the cases that they need to see.  However, all information collected about the case will still be stored on CommCareHQ.  \n\n* You can add questions to collect information about why the case is being closed.\n* You can also save this information to the case before closing it by updating the seings on the main form page.\n* You can also reference previously collected information just like a followup form \n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your application, you can use the Try In CloudCare option on the form settings page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t\t<value form=\"markdown\">This is a case close form.  It lets you select a previously registered case and remove it from the phone. Its important to remove cases from the phone so that the user only sees the cases that they need to see.  However, all information collected about the case will still be stored on CommCareHQ.  \n\n* You can add questions to collect information about why the case is being closed.\n* You can also save this information to the case before closing it by updating the seings on the main form page.\n* You can also reference previously collected information just like a followup form \n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your application, you can use the Try In CloudCare option on the form settings page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"close_confirmation-label\">\n\t\t\t\t\t\t<value>Confirm case close<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"close_confirmation-yes-label\">\n\t\t\t\t\t\t<value>Yes<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"close_confirmation-no-label\">\n\t\t\t\t\t\t<value>No<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"close_reason-label\">\n\t\t\t\t\t\t<value>Close Reason<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<trigger ref=\"\/data\/welcome_message\" appearance=\"minimal\">\n\t\t\t<label ref=\"jr:itext('welcome_message-label')\" \/>\n\t\t<\/trigger>\n\t\t<select1 ref=\"\/data\/close_confirmation\">\n\t\t\t<label ref=\"jr:itext('close_confirmation-label')\" \/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('close_confirmation-yes-label')\" \/>\n\t\t\t\t<value>yes<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('close_confirmation-no-label')\" \/>\n\t\t\t\t<value>no<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<input ref=\"\/data\/close_reason\">\n\t\t\t<label ref=\"jr:itext('close_reason-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "2da350db77049e660d052849a7f6a5ed3125718.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Registration<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/11FAC65A-F2CD-427F-A870-CF126336AAB5\" uiVersion=\"1\" version=\"1\" name=\"Registration\">\n\t\t\t\t\t<welcome_message \/>\n\t\t\t\t\t<name \/>\n\t\t\t\t\t<sample_choice_question \/>\n\t\t\t\t\t<sample_number_question \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/welcome_message\" \/>\n\t\t\t<bind nodeset=\"\/data\/name\" type=\"xsd:string\" required=\"true()\" \/>\n\t\t\t<bind nodeset=\"\/data\/sample_choice_question\" \/>\n\t\t\t<bind nodeset=\"\/data\/sample_number_question\" type=\"xsd:int\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"welcome_message-label\">\n\t\t\t\t\t\t<value>This is a registration form.  It adds new items (**Cases**) to track.  You can save some or all of the questions in this form to the case as **case properties**, which means you can refer to them in later forms, display them on the phone as a record, or use them to distinguish among cases.  \n\nAdd questions to this form using the toolbar above:\n\n* You can add text, number, multiple choice, or other question types.  \n* For multiple and single choice questions, use the circle button in the toolbar to add more choices. \n* For a given question, set the Question ID to the name of your data variable and the Label to the text you want the user to see.\n\nOn the main form settings page, you can choose which of these questions you want to *save to the case* as case properties.\n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your form, you can use the Try In CloudCare option on the main form page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t\t<value form=\"markdown\">This is a registration form.  It adds new items (**Cases**) to track.  You can save some or all of the questions in this form to the case as **case properties**, which means you can refer to them in later forms, display them on the phone as a record, or use them to distinguish among cases.  \n\nAdd questions to this form using the toolbar above:\n\n* You can add text, number, multiple choice, or other question types.  \n* For multiple and single choice questions, use the circle button in the toolbar to add more choices. \n* For a given question, set the Question ID to the name of your data variable and the Label to the text you want the user to see.\n\nOn the main form settings page, you can choose which of these questions you want to *save to the case* as case properties.\n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your form, you can use the Try In CloudCare option on the main form page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Name\n\n**This question is configured to be the \"name\" of the case**<\/value>\n\t\t\t\t\t\t<value form=\"markdown\">Name\n\n**This question is configured to be the \"name\" of the case**<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-label\">\n\t\t\t\t\t\t<value>Sample Choice Question<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice1-label\">\n\t\t\t\t\t\t<value>Choice 1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice2-label\">\n\t\t\t\t\t\t<value>Choice 2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice3-label\">\n\t\t\t\t\t\t<value>Choice 3<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_number_question-label\">\n\t\t\t\t\t\t<value>Sample Number Question<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<trigger ref=\"\/data\/welcome_message\" appearance=\"minimal\">\n\t\t\t<label ref=\"jr:itext('welcome_message-label')\" \/>\n\t\t<\/trigger>\n\t\t<input ref=\"\/data\/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" \/>\n\t\t<\/input>\n\t\t<select1 ref=\"\/data\/sample_choice_question\">\n\t\t\t<label ref=\"jr:itext('sample_choice_question-label')\" \/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice1-label')\" \/>\n\t\t\t\t<value>choice1<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice2-label')\" \/>\n\t\t\t\t<value>choice2<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice3-label')\" \/>\n\t\t\t\t<value>choice3<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<input ref=\"\/data\/sample_number_question\">\n\t\t\t<label ref=\"jr:itext('sample_number_question-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "115b21498803ecc47fa6d013efbdc9879c1be1ff.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Visit<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/52D111C9-79C6-403F-BF4C-D24B64A872E2\" uiVersion=\"1\" version=\"1\" name=\"Visit\">\n\t\t\t\t\t<welcome_message \/>\n\t\t\t\t\t<sample_choice_question \/>\n\t\t\t\t\t<sample_number_question \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind nodeset=\"\/data\/welcome_message\" \/>\n\t\t\t<bind nodeset=\"\/data\/sample_choice_question\" \/>\n\t\t\t<bind nodeset=\"\/data\/sample_number_question\" type=\"xsd:int\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"welcome_message-label\">\n\t\t\t\t\t\t<value>This is a **follow up form**.  It will collect additional or updated information about a previously registered case.  You can then save this information to the case as **case properties**, reference previously collected data, or update properties (ex. child's weight). \n\n* To setup how the list of cases will look on the phone, choose the Follow Up module, and then select which case properties you want to display in the list and detail screens ([Help Site Info on Case List and Detail Screens](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+List+and+Case+Detail+Configuration))\n* You can add text, number, multiple choice or other question types to this form.\n* For multiple choice questions, use the circle button in the toolbar to add more choices. \n* On the main form page, you can choose which of these questions you want to *save to the case* as case properties.\n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your application, you can use the Try In CloudCare option on the form settings page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t\t<value form=\"markdown\">This is a **follow up form**.  It will collect additional or updated information about a previously registered case.  You can then save this information to the case as **case properties**, reference previously collected data, or update properties (ex. child's weight). \n\n* To setup how the list of cases will look on the phone, choose the Follow Up module, and then select which case properties you want to display in the list and detail screens ([Help Site Info on Case List and Detail Screens](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+List+and+Case+Detail+Configuration))\n* You can add text, number, multiple choice or other question types to this form.\n* For multiple choice questions, use the circle button in the toolbar to add more choices. \n* On the main form page, you can choose which of these questions you want to *save to the case* as case properties.\n\nFor more help, see the following Help Site Pages:\n\n* [CommCare Forms](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Form+Builder)\n* [Case Management Overview](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Case+Management).\n* [Application Building Tutorials](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Application+Building+Tutorial+Series)\n\nWhen you're ready to test your application, you can use the Try In CloudCare option on the form settings page, or [install it on a phone using our deploy manager](https:\/\/confluence.dimagi.com\/display\/commcarepublic\/Deploy+an+Application+on+CommCareHQ).<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-label\">\n\t\t\t\t\t\t<value>Sample Choice Question<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice1-label\">\n\t\t\t\t\t\t<value>Choice 1<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice2-label\">\n\t\t\t\t\t\t<value>Choice 2<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_choice_question-choice3-label\">\n\t\t\t\t\t\t<value>Choice 3<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t\t<text id=\"sample_number_question-label\">\n\t\t\t\t\t\t<value>Sample Number Question<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<trigger ref=\"\/data\/welcome_message\" appearance=\"minimal\">\n\t\t\t<label ref=\"jr:itext('welcome_message-label')\" \/>\n\t\t<\/trigger>\n\t\t<select1 ref=\"\/data\/sample_choice_question\">\n\t\t\t<label ref=\"jr:itext('sample_choice_question-label')\" \/>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice1-label')\" \/>\n\t\t\t\t<value>choice1<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice2-label')\" \/>\n\t\t\t\t<value>choice2<\/value>\n\t\t\t<\/item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('sample_choice_question-choice3-label')\" \/>\n\t\t\t\t<value>choice3<\/value>\n\t\t\t<\/item>\n\t\t<\/select1>\n\t\t<input ref=\"\/data\/sample_number_question\">\n\t\t\t<label ref=\"jr:itext('sample_number_question-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
+  },
+  "attribution_notes": null,
+  "admin_password_charset": "n",
+  "translation_strategy": "select-known",
+  "case_sharing": false,
+  "show_user_registration": false
+}

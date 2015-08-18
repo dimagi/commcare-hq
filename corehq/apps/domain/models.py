@@ -644,14 +644,6 @@ class Domain(Document, SnapshotMixin):
 
         return name
 
-
-    def password_format(self):
-        """
-        This was a performance hit, so for now we'll just return 'a' no matter what
-        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
-        """
-        return 'a'
-
     @classmethod
     def get_all(cls, include_docs=True):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
@@ -697,7 +689,7 @@ class Domain(Document, SnapshotMixin):
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   ignore=None, copy_by_id=None):
-        from corehq.apps.app_manager.models import get_app
+        from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
 
@@ -1178,6 +1170,13 @@ class Domain(Document, SnapshotMixin):
         flag that should be set normally.
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+
+    def convert_to_commtrack(self):
+        """
+        One-stop-shop to make a domain CommTrack
+        """
+        from corehq.apps.commtrack.util import make_domain_commtrack
+        make_domain_commtrack(self)
 
 
 class DomainCounter(Document):

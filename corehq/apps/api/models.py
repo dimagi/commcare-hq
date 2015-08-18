@@ -78,8 +78,7 @@ def _require_api_user(permission=None):
             if ApiUser.auth(request.POST.get('username', ''), request.POST.get('password', ''), permission):
                 response = fn(request, *args, **kwargs)
             else:
-                response = HttpResponse()
-                response.status_code = 401
+                response = HttpResponse(status=401)
             return response
         return _outer
     return _outer2
