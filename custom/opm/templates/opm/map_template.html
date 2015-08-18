@@ -58,7 +58,7 @@
         </style>
     {% endif %}
     <style>
-        #legend {
+        #legend, #extra-legend{
             max-height: 17em !important;
             overflow-y: auto;
         }
@@ -72,6 +72,31 @@
     </style>
     {{ block.super }}
 {% endblock js-libs %}
+
+{% block js-script %}
+<script>
+
+CONTEXT = {{ context|JSON }};
+ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+MIN_HEIGHT = 300; //px
+
+$(document).ready(function() {
+    if (CONTEXT !== '') {
+        load(CONTEXT, ICON_PATH);
+        console.log(CONTEXT)
+        var awc_names = [];
+        var div = '<div id="extra-legend" class="control-pane leaflet-control"><h4>AWC Name</h4><div>' +
+                '<table class="enumlegend"><tbody>';
+        for(var awc_name in CONTEXT.config.metrics[0].children[3].color.categories) {
+            div += "<tr><td>" + awc_name + "</td></tr>"
+        }
+        div += '</tbody></table></div></div>';
+        $('#info').after(div)
+    }
+});
+
+</script>
+{% endblock js-script %}
 
 {% block content %}
     <h2 class="media-heading">{{ report.report_title }}</h2>
