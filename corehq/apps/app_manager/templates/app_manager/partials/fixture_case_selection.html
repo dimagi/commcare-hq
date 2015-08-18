@@ -21,7 +21,12 @@
                 <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
             </label>
             <div class="controls">
-                <input type="text" name="fixture_type" data-bind="value: fixtureType" />
+                <select type="text" name="fixture_type" data-bind="value: fixtureType">
+                    <option value="">Select One</option>
+                    {% for fixture in fixtures %}
+                    <option value="{{ fixture }}">{{ fixture }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
         <div class="control-group">
@@ -30,7 +35,12 @@
                 <span class="hq-help-template" data-title="{% trans "Display Column" %}"data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}"></span>
             </label>
             <div class="controls">
-                <input type="text" name="display_column" data-bind="value: displayColumn" />
+                <select type="text" name="display_column" data-bind="value: displayColumn">
+                    <option value="">Select One</option>
+                    {% for fc in fixture_columns %}
+                    <option value="{{ fc }}">{{ fc }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
         <div class="control-group">
@@ -39,7 +49,12 @@
                 <span class="hq-help-template" data-title="{% trans "Variable Column" %}"data-content="{% trans "This Column will be used as the variable which is input into the xpath expression below" %}"></span>
             </label>
             <div class="controls">
-                <input type="text" name="variable_column" data-bind="value: variableColumn" />
+                <select type="text" name="variable_column" data-bind="value: variableColumn">
+                    <option value="">Select One</option>
+                    {% for fc in fixture_columns %}
+                    <option value="{{ fc }}">{{ fc }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
         <div class="control-group">
