@@ -826,6 +826,7 @@ def get_module_view_context_and_template(app, module):
             child_case_types.update(m.get_child_case_types())
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
+    fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
 
     def get_parent_modules(case_type_):
         parent_types = builder.get_parent_types(case_type_)
@@ -962,6 +963,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
+            'fixture_columns': fixture_columns,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
