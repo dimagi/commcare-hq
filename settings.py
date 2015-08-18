@@ -960,7 +960,8 @@ try:
                     )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-    pass
+   # fallback in case nothing else is found - used for readthedocs
+   from dev_settings import *
 
 if DEBUG:
     try:
