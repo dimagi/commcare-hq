@@ -1337,20 +1337,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
             if module.fixture_select.active:
                 from corehq.apps.app_manager.detail_screen import get_column_generator
-                # fields = get_column_generator(
-                #     self.app, module, detail,
-                #     detail_type=detail_type, *column_info
-                # ).fields
-                # field = Field(header='', template=, sort_node='')
                 d = Detail(
                     id='fixture_select',
-                    title=Text(locale_id=id_strings.detail_title_locale(module, 'fixture_select')),
+                    title=Text(),
                 )
-                fields = [Field(header=Header(text=Text(xpath_function=module.fixture_select.display_column)),
+                fields = [Field(header=Header(text=Text()),
                                 template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
                                 sort_node='')]
-                # col_info = get_detail_column_infos(d, False)
-                # fields = get_column_generator(self.app, module, d, detail_type='fixture_select', *col_info).fields
 
                 d.fields = fields
                 r.append(d)
@@ -1898,14 +1891,14 @@ class SuiteGenerator(SuiteGeneratorBase):
             if datum['module'].fixture_select.active:
                 datums.append({
                     'datum': SessionDatum(
-                        id='fixture_select_{}'.format(datum['session_var']),
-                        nodeset="instance('item-list:{ft}')/{ft}_list/{ft}/".format(ft=datum['module'].fixture_select.fixture_type),
+                        id='fixture_value',
+                        nodeset="instance('item-list:{ft}')/{ft}_list/{ft}".format(ft=datum['module'].fixture_select.fixture_type),
                         value=datum['module'].fixture_select.variable_column,
                         detail_select='fixture_select'  # I think I need an identifier here
                     )
                 })
                 fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
-                                                      .replace('$fixture_value', "instance('commcaresession')/session/fixture_value"))
+                                                      .replace('$fixture_value', "instance('commcaresession')/session/data/fixture_value"))
 
             datums.append({
                 'datum': SessionDatum(
