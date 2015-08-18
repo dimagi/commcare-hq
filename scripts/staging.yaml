@@ -53,7 +53,7 @@ branches:
   - FormArchive # Sravan 7/22
 #  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
-#  - due-list # TS 7/30
+  - due-list # TS 7/30
   - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
