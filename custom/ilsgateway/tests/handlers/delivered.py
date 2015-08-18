@@ -13,7 +13,7 @@ class ILSDeliveredTest(ILSTestScript):
     def test_delivery_facility_received_no_quantities_reported(self):
 
         script = """
-            5551234 > delivered
+            5551234 > nimepokea
             5551234 < {0}
         """.format(unicode(DELIVERY_PARTIAL_CONFIRM))
         self.run_script(script)
@@ -29,7 +29,7 @@ class ILSDeliveredTest(ILSTestScript):
         script = """
             5551234 > delivered jd 400 mc 569
             5551234 < {0}
-            """.format("received stock report for loc1(Test Facility 1) R jd400 mc569")
+            """.format("Thank you, you reported a delivery of jd 400, mc 569. If incorrect, please resend.")
         self.run_script(script)
         self.assertEqual(2, StockState.objects.count())
         for ps in StockState.objects.all():

@@ -27,7 +27,8 @@ from corehq.apps.reports.models import HQGroupExportConfiguration, \
     FormExportSchema, CaseExportSchema
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
-from corehq.apps.app_manager.models import get_app, Application
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
@@ -486,8 +487,6 @@ class FormExportReport(FormExportReportBase):
             'export': self.exports[0],
             'exports': self.exports,
             "use_bulk": len(self.export_ids) > 1,
-            "filter_title": ugettext_noop("Export Filters"),
-            "back_url": FormExportInterface.get_url(domain=self.domain),
             'additional_params': mark_safe(
                 '&'.join('export_id=%(export_id)s' % {
                     'export_id': export_id,
@@ -518,13 +517,6 @@ class FormExportReport(FormExportReportBase):
                 'exporttype': 'form',
             } for export in self.exports
         }
-
-    @property
-    def breadcrumbs(self):
-        return [{
-            'link': FormExportInterface.get_url(domain=self.domain),
-            'title': ugettext_lazy("Form Exports")
-        }]
 
 
 class NewCaseExportReport(CaseExportReport):

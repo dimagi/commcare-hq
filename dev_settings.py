@@ -28,3 +28,14 @@ SHELL_PLUS_POST_IMPORTS = (
 
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'localhost',
+        'PORT': '5432'
+    }
+}
