@@ -177,7 +177,6 @@ class CachedObject(object):
         self.cache_key = cache_key
 
     def is_cached(self):
-        import ipdb; ipdb.set_trace()
         return (self.rcache.get(self.stream_key(OBJECT_ORIGINAL)) is not None and
             self.rcache.get(self.meta_key(OBJECT_ORIGINAL)) is not None)
 
