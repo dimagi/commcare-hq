@@ -2,6 +2,7 @@ from celery.task import task
 import sys
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from pillow_retry.models import PillowError
 from pillowtop.utils import import_pillow_string, get_pillow_by_name
@@ -44,7 +45,7 @@ def process_pillow_retry(error_doc_id):
             try:
                 error_doc.delete()
             finally:
-                lock.release()
+                release_lock(lock, True)
 
         change = error_doc.change_dict
         if pillow.include_docs:
@@ -62,4 +63,4 @@ def process_pillow_retry(error_doc_id):
         else:
             error_doc.delete()
         finally:
-            lock.release()
+            release_lock(lock, True)
