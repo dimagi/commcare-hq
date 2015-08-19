@@ -7,7 +7,7 @@ from corehq.apps.commtrack.models import SupplyPointCase, StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
     SECOND_INCOMPLETE_SOH_REMINDER, THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER, STOCKOUT_REPORT, \
@@ -17,6 +17,132 @@ import settings
 
 IN_CHARGE_ROLE = 'In Charge'
 DAYS_UNTIL_LATE = 5
+
+
+class Reminder(object):
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def recipients_filter(self, user):
+        raise NotImplemented()
+
+    def get_users(self):
+        return CommCareUser.by_domain(self.domain)
+
+    def get_recipients(self):
+        for user in self.get_users():
+            if user.get_verified_number() and self.recipients_filter(user):
+                yield user.get_verified_number()
+
+    def get_message(self, recipient):
+        raise NotImplemented()
+
+    def get_users_messages(self):
+        for recipient in self.get_recipients():
+            yield recipient, self.get_message(recipient)
+
+    def send(self):
+        for recipient, message in self.get_users_messages():
+            print(recipient, message)
+
+
+class FirstSOHReminder(Reminder):
+
+    def recipients_filter(self, user):
+        roles = user.user_data.get('role', [])
+        if not roles:
+            return False
+        return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])])
+
+    def get_message(self, recipient):
+        return STOCK_ON_HAND_REMINDER % {'name': recipient.owner.name}
+
+
+class SecondSOHReminder(Reminder):
+
+    def recipients_filter(self, user):
+        roles = user.user_data.get('role', [])
+        if not roles or not user.location:
+            return False
+        return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])])
+
+    def get_message_for_location(self, location):
+        now = datetime.datetime.utcnow()
+        date = now - datetime.timedelta(days=DAYS_UNTIL_LATE)
+        supply_point = SupplyPointCase.get_by_location(location)
+        if not supply_point:
+            return
+
+        stock_states = StockState.objects.filter(
+            case_id=supply_point.get_id,
+            last_modified_date__gte=date
+        )
+        products = location.sql_location.products
+        location_products_ids = [product.product_id for product in products]
+        reported_products_ids = [stock_state.product_id for stock_state in stock_states]
+        missing_products_ids = set(location_products_ids) - set(reported_products_ids)
+
+        if not stock_states:
+            return SECOND_STOCK_ON_HAND_REMINDER, {}
+        elif missing_products_ids:
+            products_names = [
+                product.name
+                for product in products
+                if product.product_id in missing_products_ids
+            ]
+
+            return SECOND_INCOMPLETE_SOH_REMINDER, {'products_names': products_names}
+
+    def get_message(self, recipient):
+        user = recipient.owner
+        if not user_has_reporting_location(user) or not user.get_verified_number():
+            return
+
+        message, kwargs = self.get_message_for_location(user.location)
+        kwargs['name'] = user.name
+        return message % kwargs
+
+
+class ThirdSOHReminder(SecondSOHReminder):
+
+    def get_users_messages(self):
+        for sql_location in SQLLocation.objects.filter(domain=self.domain, location_type__administrative=False):
+            in_charges = sql_location.facilityincharge_set.all()
+            message, kwargs = self.get_message_for_location(sql_location.couch_location)
+
+            for in_charge in in_charges:
+                user = CommCareUser.get_by_user_id(in_charge.user_id, self.domain)
+                if not user.get_verified_number():
+                    continue
+
+                kwargs['name'] = user.name
+                yield user.get_verified_number(), message % kwargs
+
+
+class StockoutReminder(Reminder):
+
+    def get_users(self):
+        return WebUser.by_domain(self.domain)
+
+    def recipients_filter(self, user):
+        CommCareUser.get_by_username()
+        return user.user_data.get('sms_notifications', False) and user.get_verified_number()
+
+    def get_message(self, recipient):
+        return
+
+
+class RRIRVReminder(Reminder):
+
+    def recipients_filter(self, user):
+        roles = user.user_data.get('role', [])
+        if not roles and not user_has_reporting_location(user):
+            return False
+        return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])])
+
+    def get_message(self, recipient):
+        return RRIRV_REMINDER % recipient.owner.name
 
 
 def reporting_types(domain):
@@ -42,26 +168,7 @@ def user_has_role(user, role):
 def first_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        for user in CommCareUser.by_domain(domain):
-            roles = user.user_data.get('role')
-            if roles and IN_CHARGE_ROLE in roles:
-                first_soh_process_user(user)
-
-
-def first_soh_process_user(user, test=False):
-    if user_has_reporting_location(user):
-        if user.get_verified_number():
-            message = STOCK_ON_HAND_REMINDER % {'name': user.name}
-            if not test:
-                send_sms_to_verified_number(
-                    user.get_verified_number(),
-                    message
-                )
-            else:
-                send_test_message(
-                    user.get_verified_number(),
-                    message
-                )
+        FirstSOHReminder(domain).send()
 
 
 @periodic_task(run_every=crontab(day_of_week=0, hour=13, minute=57),
@@ -69,59 +176,7 @@ def first_soh_process_user(user, test=False):
 def second_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        for user in CommCareUser.by_domain(domain):
-            roles = user.user_data.get('role')
-            if roles and IN_CHARGE_ROLE in roles:
-                second_soh_process_user(user)
-
-
-def second_soh_process_user(user, test=False):
-    now = datetime.datetime.utcnow()
-    date = now - datetime.timedelta(days=DAYS_UNTIL_LATE)
-    supply_point = SupplyPointCase.get_by_location(user.location)
-    if not supply_point:
-        return
-
-    stock_states = StockState.objects.filter(
-        case_id=supply_point._id,
-        last_modified_date__gte=date
-    )
-    products = user.sql_location.products
-    location_products_ids = [product.product_id for product in products]
-    reported_products_ids = [stock_state.product_id for stock_state in stock_states]
-    missing_products_ids = set(location_products_ids) - set(reported_products_ids)
-    if not user_has_reporting_location(user) or not user.get_verified_number():
-        return
-
-    if not stock_states:
-        if not test:
-            send_sms_to_verified_number(
-                user.get_verified_number(),
-                SECOND_STOCK_ON_HAND_REMINDER % {'name': user.name}
-            )
-        else:
-            send_test_message(
-                user.get_verified_number(),
-                SECOND_STOCK_ON_HAND_REMINDER % {'name': user.name}
-            )
-    elif missing_products_ids:
-        products_names = [
-            product.name
-            for product in products
-            if product.product_id in missing_products_ids
-        ]
-        if not test:
-            send_sms_to_verified_number(
-                user.get_verified_number(),
-                SECOND_INCOMPLETE_SOH_REMINDER %
-                {'name': user.name, 'products': ", ".join(products_names)}
-            )
-        else:
-            send_test_message(
-                user.get_verified_number(),
-                SECOND_INCOMPLETE_SOH_REMINDER %
-                {'name': user.name, 'products': ", ".join(products_names)}
-            )
+        SecondSOHReminder(domain).send()
 
 
 @periodic_task(run_every=crontab(day_of_week=2, hour=13, minute=54),
@@ -129,62 +184,7 @@ def second_soh_process_user(user, test=False):
 def third_soh_to_super():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        facilities = SQLLocation.objects.filter(location_type__name__in=reporting_types(domain))
-        users = CommCareUser.by_domain(domain)
-        third_soh_process_users_and_facilities(users, facilities)
-
-
-def third_soh_process_users_and_facilities(users, facilities, test=False):
-    date = datetime.datetime.utcnow() - datetime.timedelta(days=DAYS_UNTIL_LATE)
-    for facility in facilities:
-        if not facility.supply_point_id:
-            continue
-        on_time_products = StockState.objects.filter(
-            case_id=facility.supply_point_id,
-            last_modified_date__gte=date
-        )
-
-        location_products = [product.product_id for product in facility.products]
-        reported_products = [stock_state.product_id for stock_state in on_time_products]
-        missing_products = set(location_products) - set(reported_products)
-        if not on_time_products:
-            for user in users:
-                if user.location and user.location._id == facility.location_id \
-                        and user_has_role(user, IN_CHARGE_ROLE) and user.get_verified_number():
-                    if not test:
-                        send_sms_to_verified_number(
-                            user.get_verified_number(),
-                            THIRD_STOCK_ON_HAND_REMINDER % {'name': user.name, 'facility': facility.name}
-                        )
-                    else:
-                        send_test_message(
-                            user.get_verified_number(),
-                            THIRD_STOCK_ON_HAND_REMINDER % {'name': user.name, 'facility': facility.name}
-                        )
-        elif missing_products:
-            for user in users:
-                if user.location and user.location._id == facility.location_id and \
-                        user_has_role(user, IN_CHARGE_ROLE) and user.get_verified_number():
-                    if not test:
-                        send_sms_to_verified_number(
-                            user.get_verified_number(),
-                            INCOMPLETE_SOH_TO_SUPER % {
-                                'name': user.name,
-                                'facility': facility.name,
-                                'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product_id).name for product_id in missing_products])
-                            }
-                        )
-                    else:
-                        send_test_message(
-                            user.get_verified_number(),
-                            INCOMPLETE_SOH_TO_SUPER % {
-                                'name': user.name,
-                                'facility': facility.name,
-                                'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product_id).name for product_id in missing_products])
-                            }
-                        )
+        ThirdSOHReminder(domain).send()
 
 
 @periodic_task(run_every=crontab(day_of_month="2", hour=14, minute=6),
