@@ -3,10 +3,12 @@ import time
 import uuid
 import os
 import hashlib
+from django.template import Template, Context
 
 from django.test import TestCase
 import lxml
 from django.core.files.uploadedfile import UploadedFile
+from mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, TEST_DOMAIN_NAME
@@ -42,15 +44,16 @@ class BaseCaseMultimediaTest(TestCase):
             xml_data = f.read()
         return xml_data
 
-    def _formatXForm(self, doc_id, raw_xml, attachment_block):
-        final_xml = raw_xml % ({
+    def _formatXForm(self, doc_id, raw_xml, attachment_block, date=None):
+        if date is None:
+            date = datetime.utcnow()
+        final_xml = Template(raw_xml).render(Context({
             "attachments": attachment_block,
-            "time_start": json_format_datetime(datetime.utcnow()
-                                               - timedelta(minutes=4)),
-            "time_end": json_format_datetime(datetime.utcnow()),
-            "date_modified": json_format_datetime(datetime.utcnow()),
+            "time_start": json_format_datetime(date - timedelta(minutes=4)),
+            "time_end": json_format_datetime(date),
+            "date_modified": json_format_datetime(date),
             "doc_id": doc_id
-        })
+        }))
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):
@@ -74,7 +77,7 @@ class BaseCaseMultimediaTest(TestCase):
         with open(MEDIA_FILES[key], 'rb') as attach:
             return hashlib.md5(attach.read()).hexdigest()
 
-    def _do_submit(self, xml_data, dict_attachments, sync_token=None):
+    def _do_submit(self, xml_data, dict_attachments, sync_token=None, date=None):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
@@ -83,6 +86,7 @@ class BaseCaseMultimediaTest(TestCase):
             domain=TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
+            received_on=date,
         )
         response, xform, cases = sp.run()
         self.assertEqual(set(dict_attachments.keys()),
@@ -90,8 +94,9 @@ class BaseCaseMultimediaTest(TestCase):
         [case] = cases
         self.assertEqual(case.case_id, TEST_CASE_ID)
 
-    def _submit_and_verify(self, doc_id, xml_data, dict_attachments, sync_token=None):
-        self._do_submit(xml_data, dict_attachments, sync_token)
+    def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
+                           sync_token=None, date=None):
+        self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
         time.sleep(2)
         form = XFormInstance.get(doc_id)
@@ -111,15 +116,17 @@ class BaseCaseMultimediaTest(TestCase):
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
         self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
 
-    def _doSubmitUpdateWithMultimedia(self, new_attachments=None, removes=None, sync_token=None):
+    def _doSubmitUpdateWithMultimedia(self, new_attachments=None, removes=None,
+                                      sync_token=None, date=None):
         new_attachments = new_attachments if new_attachments is not None \
             else ['commcare_logo_file', 'dimagi_logo_file']
         removes = removes if removes is not None else ['fruity_file']
         attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
         raw_xform = self._getXFormString('multimedia_update.xml')
         doc_id = uuid.uuid4().hex
-        final_xform = self._formatXForm(doc_id, raw_xform, attachment_block)
-        self._submit_and_verify(doc_id, final_xform, dict_attachments, sync_token)
+        final_xform = self._formatXForm(doc_id, raw_xform, attachment_block, date)
+        self._submit_and_verify(doc_id, final_xform, dict_attachments,
+                                sync_token, date=date)
 
 
 class CaseMultimediaTest(BaseCaseMultimediaTest):
@@ -229,6 +236,34 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
+
+    def testUpdateWithNoNewAttachment(self):
+        self.testAttachInCreate()
+        bulk_save = XFormInstance.get_db().bulk_save
+        bulk_save_attachments = []
+
+        # pull out and record attachments to docs being bulk saved
+        def new_bulk_save(docs, *args, **kwargs):
+            for doc in docs:
+                if doc['_id'] == TEST_CASE_ID:
+                    bulk_save_attachments.append(doc['_attachments'])
+            bulk_save(docs, *args, **kwargs)
+
+        self._doSubmitUpdateWithMultimedia(
+            new_attachments=[], removes=[])
+
+        with patch('couchforms.models.XFormInstance._db.bulk_save', new_bulk_save):
+            # submit from the 2 min in the past to trigger a rebuild
+            self._doSubmitUpdateWithMultimedia(
+                new_attachments=[], removes=[],
+                date=datetime.utcnow() - timedelta(minutes=2))
+
+        # make sure there's exactly one bulk save recorded
+        self.assertEqual(len(bulk_save_attachments), 1)
+        # make sure none of the attachments were re-saved in rebuild
+        self.assertEqual(
+            [key for key, value in bulk_save_attachments[0].items()
+             if value.get('data')], [])
 
     def test_sync_log_invalidation_bug(self):
         sync_log = SyncLog(user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5')

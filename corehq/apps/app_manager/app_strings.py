@@ -42,9 +42,11 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 label = trans(module.case_label)
             elif detail_type.startswith('referral'):
                 label = trans(module.referral_label)
+            elif detail_type in ('product_short', 'product_long'):
+                label = ''
             else:
                 label = None
-            if label:
+            if label is not None:
                 yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():

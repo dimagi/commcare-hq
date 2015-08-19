@@ -3739,7 +3739,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_jar_path(self):
         build = self.get_build()
-        setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
+        setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
         value = self.text_input
         setting_version = setting['since'].get(value)
 
@@ -4219,7 +4219,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
-        for setting in commcare_settings.SETTINGS:
+        for setting in commcare_settings.get_custom_commcare_settings():
             setting_type = setting['type']
             setting_id = setting['id']
 
@@ -4701,7 +4701,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         setting = self.profile.get(s_type, {}).get(s_id)
         if setting is not None:
             return setting
-        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        yaml_setting = commcare_settings.get_commcare_settings_lookup()[s_type][s_id]
         for contingent in yaml_setting.get("contingent_default", []):
             if check_condition(self, contingent["condition"]):
                 setting = contingent["value"]
