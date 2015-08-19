@@ -630,7 +630,7 @@ def record_successful_deploy(url):
         })
 
     with cd(env.root):
-        files.append(RELEASE_RECORD, str(env.code_root))
+        files.append(RELEASE_RECORD, str(env.code_root), use_sudo=True)
 
 
 @task
