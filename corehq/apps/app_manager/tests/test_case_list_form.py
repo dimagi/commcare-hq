@@ -3,6 +3,7 @@ from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase, OpenSubCaseAction, \
     FormActionCondition
+from corehq.apps.app_manager.tests.app_factory import setup_case_list_form_app
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from mock import patch
 
@@ -10,42 +11,15 @@ from mock import patch
 class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'case_list_form')
 
-    def _prep_case_list_form_app(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        app.build_spec.version = '2.9'
-
-        case_module = app.add_module(Module.new_module('Case module', None))
-        case_module.unique_id = 'case_module'
-        case_module.case_type = 'suite_test'
-        update_case_form = app.new_form(0, 'Update case', lang='en')
-        update_case_form.unique_id = 'update_case'
-        update_case_form.requires = 'case'
-        update_case_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
-        update_case_form.actions.update_case.condition.type = 'always'
-
-        register_module = app.add_module(Module.new_module('register', None))
-        register_module.unique_id = 'register_case_module'
-        register_module.case_type = case_module.case_type
-        register_form = app.new_form(1, 'Register Case Form', lang='en')
-        register_form.unique_id = 'register_case_form'
-        register_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        register_form.actions.open_case.condition.type = 'always'
-
-        case_module.case_list_form.form_id = register_form.get_unique_id()
-        case_module.case_list_form.label = {
-            'en': 'New Case'
-        }
-        return app
-
     def test_case_list_registration_form(self):
-        app = self._prep_case_list_form_app()
+        app = setup_case_list_form_app()
         case_module = app.get_module(0)
         case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png')
         case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
     def test_case_list_registration_form_usercase(self):
-        app = self._prep_case_list_form_app()
+        app = setup_case_list_form_app()
         register_module = app.get_module(1)
         register_form = register_module.get_form(0)
         register_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
@@ -53,7 +27,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
 
     def test_case_list_registration_form_end_for_form_nav(self):
-        app = self._prep_case_list_form_app()
+        app = setup_case_list_form_app()
         app.build_spec.version = '2.9'
         registration_form = app.get_module(1).get_form(0)
         registration_form.post_form_workflow = WORKFLOW_MODULE
@@ -65,7 +39,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         )
 
     def test_case_list_registration_form_no_media(self):
-        app = self._prep_case_list_form_app()
+        app = setup_case_list_form_app()
 
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
@@ -74,7 +48,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         )
 
     def test_case_list_form_multiple_modules(self):
-        app = self._prep_case_list_form_app()
+        app = setup_case_list_form_app()
         case_module1 = app.get_module(0)
 
         case_module2 = app.add_module(Module.new_module('update2', None))
