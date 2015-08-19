@@ -787,6 +787,7 @@ def unlink_current():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
@@ -805,6 +806,7 @@ def copy_tf_localsettings():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def clean_releases(keep=3):
     releases = sudo('ls {}'.format(env.releases)).split()
     current_release = os.path.basename(sudo('readlink {}'.format(env.code_current)))
