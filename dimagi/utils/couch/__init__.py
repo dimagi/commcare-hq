@@ -154,12 +154,12 @@ class RedisLockableMixIn(object):
         return cls.get_obj_by_id(obj_id)
 
     @classmethod
-    def get_obj_lock(cls, obj, timeout_seconds=30):
+    def get_obj_lock(cls, obj, timeout_seconds=120):
         obj_id = cls.get_obj_id(obj)
         return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
 
     @classmethod
-    def get_obj_lock_by_id(cls, obj_id, timeout_seconds=30):
+    def get_obj_lock_by_id(cls, obj_id, timeout_seconds=120):
         return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
 
     @classmethod
@@ -169,7 +169,7 @@ class RedisLockableMixIn(object):
         return lock
 
     @classmethod
-    def get_class_lock(cls, timeout_seconds=30):
+    def get_class_lock(cls, timeout_seconds=120):
         return cls.get_redis_lock(cls._redis_class_lock_key(), timeout_seconds)
 
     @classmethod
@@ -191,11 +191,12 @@ class RedisLockableMixIn(object):
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
         degrade_gracefully = kwargs.pop('degrade_gracefully', False)
+        timeout_seconds = kwargs.pop('timeout_seconds', 120)
 
         if _id:
-            lock = cls.get_obj_lock_by_id(_id)
+            lock = cls.get_obj_lock_by_id(_id, timeout_seconds=timeout_seconds)
         else:
-            lock = cls.get_class_lock(timeout_seconds=60)
+            lock = cls.get_class_lock(timeout_seconds=timeout_seconds)
 
         lock = acquire_lock(lock, degrade_gracefully, blocking=True)
         try:
