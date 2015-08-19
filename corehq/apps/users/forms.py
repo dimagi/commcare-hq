@@ -66,6 +66,9 @@ class BaseUpdateUserForm(forms.Form):
     def direct_properties(self):
         return []
 
+    def clean_email(self):
+        return self.cleaned_data['email'].lower()
+
     def update_user(self, existing_user=None, save=True, **kwargs):
         is_update_successful = False
         if not existing_user and 'email' in self.cleaned_data:

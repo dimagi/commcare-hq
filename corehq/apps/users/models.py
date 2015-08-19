@@ -60,7 +60,7 @@ from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -688,27 +688,26 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
 
 class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
-    def _adjust_value(self, value):
-        if value is not None:
-            return value.lower()
+    def __init__(self, validators=None, *args, **kwargs):
+        if validators is None:
+            validators = ()
 
-#    def __set__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
+        def check_lowercase(value):
+            if value and any(char.isupper() for char in value):
+                raise BadValueError('uppercase characters not allowed')
 
-#    def __property_init__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__property_init__(instance, self._adjust_value(value))
-
-    def to_json(self, value):
-        return super(LowercaseStringProperty, self).to_json(self._adjust_value(value))
-
+        validators += (check_lowercase,)
+        super(LowercaseStringProperty, self).__init__(validators=validators, *args, **kwargs)
 
 
 class DjangoUserMixin(DocumentSchema):
