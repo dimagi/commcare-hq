@@ -1851,6 +1851,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
         datums.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
         datums.extend(SuiteGenerator.get_extra_case_id_datums(form))
+        self.add_parent_datums(datums, module)
         return datums
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
@@ -1865,7 +1866,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         datums = self.get_case_datums_basic_module(module, form)
-        self.add_parent_datums(datums, module)
         for datum in datums:
             e.datums.append(datum['datum'])
 
