@@ -117,6 +117,10 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         except TableNotFoundException as e:
             raise TableNotFoundWarning
+
+        return self._sort_data(ret)
+
+    def _sort_data(self, data):
         # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
         try:
             # If a sort order is specified, sort by it.
@@ -160,21 +164,21 @@ class ConfigurableReportDataSource(SqlData):
                         value = row.get(sort_column_id, None)
                         return value or get_default_sort_value(datatype)
 
-                    ret.sort(
+                    data.sort(
                         key=sort_by,
                         reverse=is_descending
                     )
-                return ret
+                return data
             # Otherwise sort by the first column
             else:
-                return sorted(ret, key=lambda x: x.get(
+                return sorted(data, key=lambda x: x.get(
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
         except (SortConfigurationError, TypeError):
             # if the data isn't sortable according to the report spec
             # just return the data in the order we got it
-            return ret
+            return data
 
     def get_total_records(self):
         return len(self.get_data())
