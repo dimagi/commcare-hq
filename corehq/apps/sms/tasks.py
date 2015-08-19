@@ -1,5 +1,4 @@
 import math
-import redis
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
