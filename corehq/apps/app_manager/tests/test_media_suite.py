@@ -1,5 +1,5 @@
 from copy import deepcopy
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from lxml import etree
 
@@ -105,7 +105,7 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         self.assertEqual(len(app.all_media), 0)
 
 
-class LocalizedMediaSuiteTest(TestCase, TestFileMixin):
+class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
     """
         For CC >= 2.21
         Tests following for form, module, case_list_menu, case_list_form
