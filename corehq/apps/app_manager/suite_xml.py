@@ -2208,16 +2208,19 @@ class SuiteGenerator(SuiteGeneratorBase):
             Return the datums of the first form in the given module
             """
             datums_ = []
-            if module_ and module_.module_type == 'basic':
-                # For advanced modules the onus is on the user to make things work by loading the correct cases and
-                # using the correct case tags.
+            if module_:
                 try:
                     # assume that all forms in the module have the same case management
                     form = module_.get_form(0)
                 except FormNotFoundException:
                     pass
                 else:
-                    datums_.extend(self.get_case_datums_basic_module(module_, form))
+                    if form.form_type == 'module_form':
+                        datums_.extend(self.get_case_datums_basic_module(module_, form))
+                    elif form.form_type == 'advanced_form':
+                        datums_adv, _ = self.get_datum_meta_assertions_advanced(module_, form)
+                        datums_.extend(datums_adv)
+
             return datums_
 
         def append_update(dict_, new_dict):
