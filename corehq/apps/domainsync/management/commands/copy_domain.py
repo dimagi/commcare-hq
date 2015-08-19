@@ -1,9 +1,12 @@
+import logging
 from multiprocessing import Process, Queue
 import sys
 import os
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from http_parser.http import ParserError
+from restkit import RequestError
 from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
@@ -165,6 +168,7 @@ class Command(BaseCommand):
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
+        assert len(set(doc_ids)) == total
         count = 0
         msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (type) if type else ""
@@ -239,9 +243,20 @@ class Worker(Process):
                           (doc["doc_type"], count, self.total, doc["doc_type"], doc["_id"])
                 else:
                     if not self.simulate:
-                        dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
-                        save(dt, self.targetdb)
+                        for i in reversed(range(5)):
+                            try:
+                                dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
+                                break
+                            except RequestError:
+                                if i == 0:
+                                    raise
+                        for i in reversed(range(5)):
+                            try:
+                                save(dt, self.targetdb)
+                            except (ResourceConflict, ParserError, TypeError):
+                                if i == 0:
+                                    raise
                     print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:
                 self.err_log.write('%s\n' % doc["_id"])
-                print "     Document %s failed! Error is: %s" % (doc["_id"], e)
+                print "     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e)
