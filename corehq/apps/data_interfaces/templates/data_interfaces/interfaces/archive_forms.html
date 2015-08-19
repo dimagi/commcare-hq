@@ -43,9 +43,9 @@
             })
             $XFormManagement.find('input[name="select_all"]').on('change', function(){
                 if (this.checked) {
-                    $(".selectedCount").text({{ total_xForms }});
                     $XFormManagement.find('a.select-all').click();
                     enable_disable_button(1);
+                    $(".selectedCount").text({{ total_xForms }});
                 }
                 else {
                     $(".selectedCount").text(0);
