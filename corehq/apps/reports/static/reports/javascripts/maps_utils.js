@@ -404,7 +404,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             feature.visible = (feature._conf != null);
             if (!feature.visible) {
                 if(feature.$tr === void(0)){
-                    feature.visible
+                    return feature.visible;
                 }
                 feature.$tr.addClass('inactive-row');
             }
