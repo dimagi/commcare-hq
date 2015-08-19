@@ -42,7 +42,8 @@ from corehq.apps.users.util import (
     user_data_from_registration_form,
     user_display_string,
 )
-from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
+from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
+    tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -56,10 +57,9 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-from dimagi.utils.parsing import json_format_datetime
 from xml.etree import ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -677,27 +677,26 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
 
 class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
-    def _adjust_value(self, value):
-        if value is not None:
-            return value.lower()
+    def __init__(self, validators=None, *args, **kwargs):
+        if validators is None:
+            validators = ()
 
-#    def __set__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
+        def check_lowercase(value):
+            if value and any(char.isupper() for char in value):
+                raise BadValueError('uppercase characters not allowed')
 
-#    def __property_init__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__property_init__(instance, self._adjust_value(value))
-
-    def to_json(self, value):
-        return super(LowercaseStringProperty, self).to_json(self._adjust_value(value))
-
+        validators += (check_lowercase,)
+        super(LowercaseStringProperty, self).__init__(validators=validators, *args, **kwargs)
 
 
 class DjangoUserMixin(DocumentSchema):
@@ -1661,7 +1660,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
@@ -1923,7 +1922,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
+                caseblock.as_xml()
             ),
             self.domain,
             self.username,

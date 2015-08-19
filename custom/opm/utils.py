@@ -1,6 +1,7 @@
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.common import ALL_OPTION
+from dimagi.utils.decorators.memoized import memoized
 
 
 EMPTY_FIELD = "---"
@@ -83,6 +84,16 @@ class UserSqlData(SqlData):
             hierarchy[block][gp][awc_name_with_code] = None
         return hierarchy
 
+    @property
+    @memoized
+    def data_by_doc_id(self):
+        return {user['doc_id']: (user['awc_code'], user['gp']) for user in self.get_data()}
+
+
+@memoized
+def user_sql_data():
+    return UserSqlData()
+
 
 def get_matching_users(awcs=None, gps=None, blocks=None):
     """
@@ -99,7 +110,7 @@ def get_matching_users(awcs=None, gps=None, blocks=None):
         raise TypeError("You must pass at least one of awc, gp, or block")
     key, selected = non_null[0]  # get most specific selection
     return [
-        user for user in UserSqlData().transformed_data()
+        user for user in user_sql_data().transformed_data()
         if user[key] in selected
     ]
 

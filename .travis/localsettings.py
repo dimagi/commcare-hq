@@ -53,8 +53,8 @@ SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
 redis_cache = {
-    'BACKEND': 'redis_cache.cache.RedisCache',
-    'LOCATION': 'localhost:6379:0',
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
     'OPTIONS': {},
 }
 CACHES = {
@@ -102,3 +102,5 @@ LOGGING = {
 SOUTH_TESTS_MIGRATE = True
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
+
+ENABLE_PRELOGIN_SITE = True

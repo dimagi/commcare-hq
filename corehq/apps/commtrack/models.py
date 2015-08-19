@@ -321,6 +321,7 @@ class StockReportHelper(object):
         self.timestamp = timestamp
         self.tag = tag
         self.transactions = transactions
+        self.server_date = form.received_on
 
 
 class StockTransactionHelper(object):
@@ -428,7 +429,7 @@ class SupplyPointCase(CommCareCase):
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
         username = const.COMMTRACK_USERNAME
-        casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=dateparse.json_format_datetime))
+        casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, domain, username, const.get_commtrack_user_id(domain),
                            xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
         return cls.get(caseblock._id)
@@ -771,7 +772,3 @@ def reprocess_form(sender, xform, *args, **kwargs):
     result = process_stock(xform)
     result.commit()
     CommCareCase.get_db().bulk_save(result.relevant_cases)
-
-
-# import signals
-from . import signals

@@ -43,7 +43,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, get_matching_users, UserSqlData)
+from .utils import (BaseMixin, get_matching_users)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
 from .health_status import AWCHealthStatus
 from .incentive import Worker
@@ -701,12 +701,10 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['doc_id']: (user['awc_code'], user['gp'])
-                     for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):
             try:
-                case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
+                case_row = self.get_row_data(row, index=1)
                 if not case_row.case_is_out_of_range:
                     total_payment += case_row.cash_amt
                     rows.append(case_row)
@@ -740,7 +738,7 @@ class MetReport(CaseReportMixin, BaseReport):
         })
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
+        return self.model(row, self, child_index=kwargs.get('index', 1))
 
     def get_rows(self):
         result = super(MetReport, self).get_rows()
@@ -787,8 +785,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
 
         cache = get_redis_client()
-        if cache.exists(self.redis_key):
-            rows = pickle.loads(cache.get(self.redis_key))
+        value = cache.get(self.redis_key)
+        if value is not None:
+            rows = pickle.loads(value)
         else:
             rows = self.rows
 

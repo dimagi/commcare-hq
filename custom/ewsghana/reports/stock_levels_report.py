@@ -306,7 +306,7 @@ class UsersData(EWSData):
         else:
             availaible_in_charges = filter(
                 lambda u: 'In Charge' in u.user_data.get('role', []),
-                get_users_by_location_id(self.location_id)
+                get_users_by_location_id(self.domain, self.location_id)
             )
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,

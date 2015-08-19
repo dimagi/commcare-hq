@@ -5,21 +5,23 @@
     xmlns="http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB">
     <name>fgg</name>
     <date>2011-06-07</date>
-    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="%(date_modified)s" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="{{ date_modified }}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:create>
             <n0:case_type_id>cc_bc_demo</n0:case_type_id>
             <n0:case_name>fgg</n0:case_name>
         </n0:create>
+        {% if attachments %}
         <n0:attachment>
-            %(attachments)s
+            {{ attachments|safe }}
         </n0:attachment>
+        {% endif %}
     </n0:case>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>354957031935664</n1:deviceID>
-        <n1:timeStart>%(time_start)s</n1:timeStart>
-        <n1:timeEnd>%(time_end)s</n1:timeEnd>
+        <n1:timeStart>{{ time_start }}</n1:timeStart>
+        <n1:timeEnd>{{ time_end }}</n1:timeEnd>
         <n1:username>bcdemo</n1:username>
         <n1:userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</n1:userID>
-        <n1:instanceID>%(doc_id)s</n1:instanceID>
+        <n1:instanceID>{{ doc_id }}</n1:instanceID>
     </n1:meta>
 </data>
