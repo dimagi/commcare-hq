@@ -237,7 +237,7 @@ class CaseDbCache(object):
             if lock:
                 try:
                     lock.release()
-                except redis.ConnectionError:
+                except redis.RedisError:
                     pass
 
     def validate_doc(self, doc):
@@ -265,7 +265,7 @@ class CaseDbCache(object):
             elif self.lock:
                 try:
                     case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.ConnectionError:
+                except redis.RedisError:
                     case_doc = CommCareCase.get(case_id)
                 else:
                     self.locks.append(lock)
