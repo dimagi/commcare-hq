@@ -4,9 +4,10 @@ from datetime import timedelta
 from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
-import redis
+from redis.exceptions import RedisError, LockError
 import json
 
 LOCK_EXPIRATION = timedelta(hours=1)
@@ -76,7 +77,7 @@ class ReleaseOnError(object):
 def acquire_lock(lock, degrade_gracefully, **kwargs):
     try:
         lock.acquire(**kwargs)
-    except redis.RedisError:
+    except RedisError:
         if degrade_gracefully:
             lock = None
         else:
@@ -88,9 +89,15 @@ def release_lock(lock, degrade_gracefully):
     if lock:
         try:
             lock.release()
-        except redis.RedisError:
+        except RedisError as e:
             if not degrade_gracefully:
                 raise
+            elif isinstance(e, LockError):
+                try:
+                    notify_exception(None, message='Warning: Could not release a '
+                        'redis lock. This may mean the timeout is too small.')
+                except:
+                    pass
 
 
 class RedisLockableMixIn(object):
