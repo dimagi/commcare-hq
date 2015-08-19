@@ -6,11 +6,14 @@ from django_prbac.models import Role
 
 
 class BaseAccountingTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        generator.instantiate_accounting_for_tests()
 
     def setUp(self):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         for domain in Domain.get_all():
             domain.delete()
