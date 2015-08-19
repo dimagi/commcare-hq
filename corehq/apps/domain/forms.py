@@ -1290,13 +1290,17 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def form_actions(self):
-        return FormActions(
-            crispy.ButtonHolder(
-                crispy.Submit(
-                    self.slug,
-                    ugettext_noop('Update')
+        return (
+            crispy.Hidden('slug', self.slug),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        self.slug,
+                        ugettext_noop('Update'),
+                        css_class='disable-on-submit',
+                    )
                 )
-            )
+            ),
         )
 
 
@@ -1316,7 +1320,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
                 'sure this is an internal Dimagi test space, not in use by a '
                 'partner.'
             )),
-            self.form_actions
+            *self.form_actions
         )
 
     def process_subscription_management(self):
@@ -1400,7 +1404,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             ) % {
                 'end_date': end_date,
             }),
-            self.form_actions
+            *self.form_actions
         )
 
     def process_subscription_management(self):
@@ -1521,7 +1525,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                         'accounts_email': settings.ACCOUNTS_EMAIL,
                     }
                 ),
-                self.form_actions
+                *self.form_actions
             )
         else:
             self.fields['end_date'].initial = self.current_subscription.date_end
@@ -1543,7 +1547,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     'Please use this page only to extend the existing services contract.</p>'
                     '</div>'
                 )),
-                self.form_actions
+                *self.form_actions
             )
 
     def process_subscription_management(self):
