@@ -788,7 +788,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 min_pwd = 4
 max_pwd = 20
-pwd_pattern = re.compile(r"([-\w]){4,20}")
+pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
     if len(txt) < min_pwd:
