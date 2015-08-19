@@ -772,8 +772,10 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             return HttpResponseBadRequest('You must specify a username')
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
-            return {'error': _('Username {} is already taken'.format(username))}
-        return {'success': _('Username {} is available'.format(username))}
+            result = {'error': _('Username {} is already taken'.format(username))}
+        else:
+            result = {'success': _('Username {} is available'.format(username))}
+        return result
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
