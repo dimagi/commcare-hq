@@ -3271,9 +3271,10 @@ class VersionedDoc(LazyAttachmentDoc):
             if field in source:
                 del source[field]
         _attachments = {}
-        for name in source.get('_attachments', {}):
+        for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
-                _attachments[name] = self.fetch_attachment(name)
+                _attachments[name] = self.lazy_fetch_attachment(name)
+
         source['_attachments'] = _attachments
         self.scrub_source(source)
 
@@ -4797,7 +4798,8 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = json.loads(source)
     else:
         # Don't modify original app source
-        source = deepcopy(app_id_or_source)
+        app = Application.wrap(deepcopy(app_id_or_source))
+        source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:
