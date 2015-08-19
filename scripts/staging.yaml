@@ -50,11 +50,11 @@ branches:
   - update-submodules # TS 5/6
   - languageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-  - FormArchive # Sravan 7/22
+#  - FormArchive # Sravan 7/22
 #  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - due-list # TS 7/30
-#  - django17 # J$ 8/5
+  - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
 #  - optmize-deploy+knockout-js # Ben 8/18
@@ -81,6 +81,6 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
-#      - django18
+    branches: 
+      - django18
 
