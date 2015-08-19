@@ -16,11 +16,25 @@ class TestLocationQuerysetMethods(LocationHierarchyTestCase):
         ])
     ]
 
-    def test_filter_by_ancestry(self):
+    def test_filter_by_user_input(self):
         middlesex_locs = (SQLLocation.objects
-                          .filter(domain=self.domain,
-                                  name="Middlesex")
-                          .include_children())
+                          .filter_by_user_input(self.domain, "Middlesex"))
+        self.assertItemsEqual(
+            ['Middlesex'],
+            [loc.name for loc in middlesex_locs]
+        )
+
+    def test_filter_path_by_user_input(self):
+        middlesex_locs = (SQLLocation.objects
+                          .filter_path_by_user_input(self.domain, "Middlesex"))
+        self.assertItemsEqual(
+            ['Middlesex', 'Cambridge', 'Somerville'],
+            [loc.name for loc in middlesex_locs]
+        )
+
+    def test_filter_by_partial_match(self):
+        middlesex_locs = (SQLLocation.objects
+                          .filter_path_by_user_input(self.domain, "Middle"))
         self.assertItemsEqual(
             ['Middlesex', 'Cambridge', 'Somerville'],
             [loc.name for loc in middlesex_locs]
