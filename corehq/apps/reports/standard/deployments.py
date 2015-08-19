@@ -300,7 +300,7 @@ def _fmt_date(date):
 
 
 def _naturaltime_with_hover(date):
-    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
+    return u'<span title="{}">{}</span>'.format(date, _(naturaltime(date)) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):
