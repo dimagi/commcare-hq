@@ -1626,6 +1626,13 @@ class ParentSelect(DocumentSchema):
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
 
+class FixtureSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    fixture_type = StringProperty()
+    display_column = StringProperty()
+    variable_column = StringProperty()
+    xpath = StringProperty(default='')
+
 
 class DetailPair(DocumentSchema):
     short = SchemaProperty(Detail)
@@ -1654,6 +1661,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
     root_module_id = StringProperty()
+    fixture_select = SchemaProperty(FixtureSelect)
 
     @classmethod
     def wrap(cls, data):

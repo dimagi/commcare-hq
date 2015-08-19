@@ -436,6 +436,15 @@ function ParentSelect(init) {
     });
 }
 
+function FixtureSelect(init) {
+    var self = this;
+    self.active = ko.observable(init.active);
+    self.fixtureType = ko.observable(init.fixtureType);
+    self.displayColumn = ko.observable(init.displayColumn);
+    self.variableColumn = ko.observable(init.variableColumn);
+    self.xpath = ko.observable(init.xpath);
+}
+
 var DetailScreenConfig = (function () {
     "use strict";
 
@@ -748,6 +757,7 @@ var DetailScreenConfig = (function () {
             // of these configurations.
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
+            this.containsFixtureConfiguration = options.containsFixtureConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
@@ -938,6 +948,19 @@ var DetailScreenConfig = (function () {
                     }
                     data.parent_select = JSON.stringify(parentSelect);
                 }
+                if (this.containsFixtureConfiguration) {
+                    var fixtureSelect;
+                    if (this.config.hasOwnProperty('fixtureSelect')) {
+                        fixtureSelect = {
+                            active: this.config.fixtureSelect.active(),
+                            fixture_type: this.config.fixtureSelect.fixtureType(),
+                            display_column: this.config.fixtureSelect.displayColumn(),
+                            variable_column: this.config.fixtureSelect.variableColumn(),
+                            xpath: this.config.fixtureSelect.xpath()
+                        };
+                    }
+                    data.fixture_select = JSON.stringify(fixtureSelect);
+                }
                 if (this.containsSortConfiguration) {
                     data.sort_elements = JSON.stringify(_.map(this.config.sortRows.sortRows(), function(row){
                         return {
@@ -1008,6 +1031,16 @@ var DetailScreenConfig = (function () {
                     langs: this.langs
                 });
             }
+
+            if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
+                this.fixtureSelect = new FixtureSelect({
+                    active: spec.fixtureSelect.active,
+                    fixtureType: spec.fixtureSelect.fixture_type,
+                    displayColumn: spec.fixtureSelect.display_column,
+                    variableColumn: spec.fixtureSelect.variable_column,
+                    xpath: spec.fixtureSelect.xpath
+                })
+            }
             this.saveUrl = spec.saveUrl;
             this.contextVariables = spec.contextVariables;
 
@@ -1033,6 +1066,7 @@ var DetailScreenConfig = (function () {
                         fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
+                        containsFixtureConfiguration: (columnType == "short" && window.toggles.FIXTURE_CASE_SELECTION),
                         containsFilterConfiguration: columnType == "short",
                         containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
                         containsCustomXMLConfiguration: columnType == "short",
