@@ -224,12 +224,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         datatables_params = DatatablesParams.from_request_dict(request.GET)
         end = min(datatables_params.start + datatables_params.count, total_records)
         page = list(data.get_data())[datatables_params.start:end]
-        return self.render_json_response({
+
+        json_response = {
             'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
-        })
+        }
+        if data.has_total_row:
+            json_response.update({
+                "total_row": data.get_total_row(page),
+            })
+        return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
         pass
