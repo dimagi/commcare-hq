@@ -154,7 +154,8 @@ def _setup_path():
     env.code_root = posixpath.join(env.releases, str(int(time.time())))
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
-    env.virtualenv_root = posixpath.join(env.root, 'python_env')
+    env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
+    env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
     env.services = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
@@ -463,19 +464,20 @@ def create_pg_db():
 
 
 @task
+@roles(ROLES_ALL_SRC)
 def bootstrap():
     """Initialize remote host environment (virtualenv, deploy, update)
 
     Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
     """
     _require_target()
-    sudo('mkdir -p %(root)s' % env, shell=False)
-    clone_repo()
 
+    create_code_dir()
     update_code()
     create_virtualenvs()
     update_virtualenv()
     setup_dirs()
+    update_current()
 
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
@@ -491,26 +493,17 @@ def unbootstrap():
     require('code_root', 'virtualenv_root')
 
     with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_root)s %(code_root)s') % env)
+        sudo(('rm -rf %(virtualenv_current)s %(code_current)s') % env)
 
 
 @roles(ROLES_ALL_SRC)
+@parallel
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', provided_by=('staging', 'production', 'india'))
 
     args = '--distribute --no-site-packages'
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
-
-
-@roles(ROLES_ALL_SRC)
-def clone_repo():
-    """clone a new copy of the git repository"""
-    with settings(warn_only=True):
-        with cd(env.root):
-            exists_results = sudo('ls -d %(code_root)s' % env)
-            if exists_results.strip() != env['code_root']:
-                sudo('git clone %(code_repo)s %(code_root)s' % env)
 
 
 @task
@@ -920,6 +913,11 @@ def update_virtualenv():
     """
     _require_target()
     requirements = posixpath.join(env.code_root, 'requirements')
+
+    # Optimization if we have current setup (i.e. not the first deploy)
+    if files.exists(env.virtualenv_current):
+        sudo("virtualenv-clone {} {}".format(env.virtualenv_current, env.virtualenv_root))
+
     with cd(env.code_root):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
             env.sudo_user, env.virtualenv_root)
