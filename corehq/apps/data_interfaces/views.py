@@ -28,7 +28,7 @@ from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
 from .dispatcher import require_form_management_privilege
-from .interfaces import FormManagementMode
+from .interfaces import FormManagementMode, BulkArchiveFormInterface
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
@@ -532,7 +532,8 @@ def xform_management_job_poll(request, domain, download_id,
 
     context.update({
         'on_complete_short': mode.complete_short,
-        'on_complete_long': mode.complete_long,
         'mode': mode,
+        'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
+                                       args=[domain, BulkArchiveFormInterface.slug])
     })
     return render(request, template, context)
