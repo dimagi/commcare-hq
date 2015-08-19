@@ -1382,7 +1382,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self
 
     def clear_quickcache_for_user(self):
-        self.usercase_id.clear(self)
+        self.get_usercase_id.clear(self)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
@@ -2055,9 +2055,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self=self
         ))
 
-    @property
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
-    def usercase_id(self):
+    def get_usercase_id(self):
         from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
         usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
         return usercase.case_id if usercase else None
