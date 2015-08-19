@@ -2348,9 +2348,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                 def get_commands():
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
-                        if module.all_forms_require_a_case() and \
-                                not module.put_in_root and \
-                                getattr(form, 'form_filter', None):
+                        if (
+                            (module.all_forms_require_a_case() or module.is_usercaseonly()) and
+                            not module.put_in_root and
+                            getattr(form, 'form_filter', None)
+                        ):
                             if isinstance(form, AdvancedForm):
                                 try:
                                     action = next(a for a in form.actions.load_update_cases if not a.auto_select)
