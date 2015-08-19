@@ -6,6 +6,7 @@ from lxml import etree
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
+from corehq.apps.app_manager.tests.app_factory import setup_case_list_form_app
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage
@@ -54,7 +55,7 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
 
         self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
-    
+
     def test_update_image_id(self):
         """
         When an image is updated, change only version number, not resource id
@@ -187,12 +188,11 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
         self._test_correct_audio_translations(self.app, self.module, audio_locale)
 
     def test_case_list_form_media(self):
-        app = Application.wrap(self.get_json('app'))
-        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+        app = setup_case_list_form_app()
+        app.build_spec = self.min_spec
 
         app.get_module(0).case_list_form.set_icon('en', self.image_path)
         app.get_module(0).case_list_form.set_audio('en', self.audio_path)
-        app.build_spec = self.min_spec
 
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
         self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
