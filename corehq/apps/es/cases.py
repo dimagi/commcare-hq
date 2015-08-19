@@ -1,3 +1,9 @@
+"""
+CaseES
+------
+
+
+"""
 from .es_query import HQESQuery
 from . import filters
 

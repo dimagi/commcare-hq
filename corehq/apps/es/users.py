@@ -20,6 +20,7 @@ class UserES(HQESQuery):
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
+        """Include inactive users, which would normally be filtered out."""
         return self.remove_default_filter('active')
 
 
