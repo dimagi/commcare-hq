@@ -48,7 +48,7 @@ class LockManager(namedtuple('ObjectLockTuple', 'obj lock')):
     >>> obj, lock = LockManager(obj, lock)
     >>> # do stuff...
     >>> if lock:
-    ...     lock.release()
+    ...     release_lock(lock, True)
 
     >>> # as a context manager
     >>> with LockManager(obj, lock) as obj:
@@ -76,7 +76,7 @@ class ReleaseOnError(object):
 def acquire_lock(lock, degrade_gracefully, **kwargs):
     try:
         lock.acquire(**kwargs)
-    except redis.ConnectionError:
+    except redis.RedisError:
         if degrade_gracefully:
             lock = None
         else:
@@ -88,7 +88,7 @@ def release_lock(lock, degrade_gracefully):
     if lock:
         try:
             lock.release()
-        except redis.ConnectionError:
+        except redis.RedisError:
             if not degrade_gracefully:
                 raise
 
@@ -170,7 +170,7 @@ class RedisLockableMixIn(object):
         """
         Returns a two-tuple containing the object and its lock, which has 
         already been acquired. Once you're finished processing the object, 
-        you should call .release() on the lock.
+        you should call release_lock() on the lock.
 
         Pass in a kwarg of _id to get the object with get_obj_by_id. Otherwise,
         the object will be retrieved by calling get_obj and passing it all of
@@ -242,7 +242,7 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
     >>> patient, lock = Patient.get_locked_obj("pid-1234", create=True)
     >>> patient.last_visit = date(2014, 1, 24)
     >>> patient.save()
-    >>> lock.release()
+    >>> release_lock(lock, True)
 
     >>> # Prevent doc update conflict
     >>> patient, lock = Patient.get_locked_obj("pid-1234")
@@ -251,7 +251,7 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
     >>>
     >>> patient.last_visit = date(2014, 1, 25)
     >>> patient.save()
-    >>> lock.release()
+    >>> release_lock(lock, True)
 
     >>> # Lookup using couch doc _id
     >>> patient, lock = Patient.get_locked_obj(_id="fa98e2...")
@@ -260,7 +260,7 @@ class CouchDocLockableMixIn(RedisLockableMixIn):
     >>>
     >>> patient.last_visit = date(2014, 1, 26)
     >>> patient.save()
-    >>> lock.release()
+    >>> release_lock(lock, True)
 
     >>> # or using 'with' syntax
 
@@ -333,10 +333,7 @@ class CriticalSection(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         for lock in self.locks:
-            try:
-                lock.release()
-            except:
-                pass
+            release_lock(lock, True)
 
 
 class LooselyEqualDocumentSchema(DocumentSchema):
