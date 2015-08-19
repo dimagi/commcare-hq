@@ -57,9 +57,9 @@ branches:
   - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
-#  - optmize-deploy+knockout-js # Ben 8/18
+  - optmize-deploy+knockout-js # Ben 8/18
   - knockout-js # Ben 8/17
-#  - optmize-deploy # Ben 8/18
+  - optmize-deploy # Ben 8/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
