@@ -379,6 +379,11 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         })
         return context
 
+stripe_generic_errors = (stripe.error.AuthenticationError,
+                         stripe.error.InvalidRequestError,
+                         stripe.error.APIConnectionError,
+                         stripe.error.StripeError, )
+
 
 class AutoPayInvoicePaymentHandler(object):
     @classmethod
@@ -386,22 +391,56 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices for the month of date_start """
         autopayable_invoices = Invoice.autopayable_invoices(date_start)
         for invoice in autopayable_invoices:
+            amount = invoice.balance.quantize(Decimal(10) ** -2)
+
             auto_payer = invoice.subscription.account.auto_pay_user
             payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
             autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
-            amount = invoice.balance.quantize(Decimal(10) ** -2)
-            payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+            if autopay_card is None:
+                continue
+
+            try:
+                payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+            except stripe.error.CardError:
+                cls._handle_card_declined(invoice, payment_method)
+                continue
+            except stripe_generic_errors as e:
+                cls._handle_card_errors(invoice, payment_method, e)
+                continue
+
             invoice.pay_invoice(amount, payment_record)
             cls._send_payment_receipt(invoice, payment_record)
 
     @classmethod
     def _send_payment_receipt(cls, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
-        receipt_email_template = 'accounting/invoice_receipt_email.html'
-        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
-        domain = invoice.subscription.account.created_by_domain
-        product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
-        context = {}
-        send_purchase_receipt.delay(
-            payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
-        )
+
+        try:
+            receipt_email_template = 'accounting/invoice_receipt_email.html'
+            receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+            domain = invoice.subscription.account.created_by_domain
+            product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
+            context = {}
+            send_purchase_receipt.delay(
+                payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
+            )
+        except:
+            cls._handle_email_failure(invoice, payment_record)
+
+    @classmethod
+    def _handle_card_declined(cls, invoice):
+        logger.error("[Billing] An automatic payment failed for invoice: {} "
+                     "because the card was declined".format(invoice.id))
+        print "card declined"
+        # TODO: send an email
+        # TODO: add to retry queue
+
+    @classmethod
+    def _handle_card_errors(cls, invoice):
+        # TODO: probably do the same stuff as if the card is declined
+        print "card error"
+
+    @classmethod
+    def _handle_email_failure(cls, payment_record):
+        logger.error("[Billing] During an automatic payment, sending a payment receipt failed"
+                     " for Payment Record: {}. everything else succeeded".format(payment_record.id))

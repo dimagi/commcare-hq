@@ -28,6 +28,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
                                                    random.randint(2, self.subscription_length))
         self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
                                                   customer_id=self.fake_stripe_customer.id)
+        self.payment_method.set_autopay(self.fake_card, self.account)
         self.payment_method.save()
 
         self.account_2 = generator.billing_account(self.dimagi_user, self.web_user)
