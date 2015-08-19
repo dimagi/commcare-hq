@@ -366,21 +366,25 @@ else:
 
 
 _username_help = """
-<span ng-show="!!usernamePending">
+<span ng-if="usernameAvailabilityStatus === 'pending'">
     <i class="fa fa-circle-o-notch fa-spin"></i>
-    {{ usernamePending }}
+    {}
 </span>
-<span ng-show="!!usernameAvailable">
-    <i class="fa fa-check"></i>
-    {{ usernameAvailable }}
-</span>
-<span ng-show="!!usernameTaken">
+<span ng-if="usernameAvailabilityStatus === 'taken'">
     <i class="fa fa-remove"></i>
-    {{ usernameTaken }}
+    {}
 </span>
-"""
+<span ng-if="usernameAvailabilityStatus === 'available'">
+    <i class="fa fa-check"></i>
+    {}
+</span>
+""".format(
+    _('Checking Availability....'),
+    _('Username is already taken.'),
+    _('Username is available')
+)
 
-_password_help = ('<span ng-show="!isPasswordValid">{}</span>'
+_password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
                   .format(_("The passwords do not match.")))
 
 
@@ -405,13 +409,31 @@ class NewMobileWorkerForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
-                crispy.Field('username',
-                             ng_blur='checkUsername()',
-                             ng_model='mobileWorker.fields.username'),
-                crispy.Field('password', ng_model='mobileWorker.fields.password'),
-                crispy.Field('password_2',
-                             ng_keyup='checkPassword()',
-                             ng_model='mobileWorker.fields.password2'),
+                crispy.Field(
+                    'username',
+                    ng_required="true",
+                    validate_username="",
+                    # What this says is, update as normal or when the element
+                    # loses focus. If the update is normal, wait 300 ms to
+                    # send the request again. If the update is on blur,
+                    # send the request.
+                    ng_model_options="{ "
+                                      " updateOn: 'default blur', "
+                                      " debounce: {'default': 300, 'blur': 0} "
+                                      "}",
+                    ng_model='mobileWorker.username'
+                ),
+                crispy.Field(
+                    'password',
+                    ng_required="true",
+                    ng_model='mobileWorker.password'
+                ),
+                crispy.Field(
+                    'password_2',
+                    ng_required="true",
+                    confirm_password="",
+                    ng_model='mobileWorker.password2'
+                ),
             )
         )
 
