@@ -4,6 +4,7 @@ from django.db import models
 from corehq import Domain
 import mock
 import uuid
+from django.core import mail
 
 from corehq.apps.accounting import generator, tasks
 from corehq.apps.accounting.models import (
@@ -34,6 +35,20 @@ class TestBillingAccount(BaseAccountingTest):
 
     def test_deletions(self):
         self.assertRaises(models.ProtectedError, self.currency.delete)
+
+    def test_autopay_user(self):
+        self.assertFalse(self.billing_account.auto_pay_enabled)
+
+        autopay_user = generator.arbitrary_web_user()
+        self.billing_account.update_autopay_user(autopay_user.username)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertTrue(self.billing_account.auto_pay_enabled)
+        self.assertEqual(self.billing_account.auto_pay_user, autopay_user.username)
+
+        other_autopay_user = generator.arbitrary_web_user()
+        self.billing_account.update_autopay_user(other_autopay_user.username)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user.username)
 
     def tearDown(self):
         self.billing_contact.delete()

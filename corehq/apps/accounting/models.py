@@ -347,16 +347,32 @@ class BillingAccount(models.Model):
         return None
 
     def update_autopay_user(self, new_user):
-        """
-        Updates the autopay user
+        """Updates the autopay user"""
 
-        Triggers an email if there was a previous user
-        """
         if self.auto_pay_enabled:
-            # send email to old user
-            pass
+            # If there was already an autopay user, send them an email that they have been removed
+            self._send_autopay_card_removed_email(old_user=self.auto_pay_user, new_user=new_user)
+
         self.auto_pay_user = new_user
         self.save()
+
+    def _send_autopay_card_removed_email(self, old_user, new_user):
+        """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
+
+        subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
+            billing_account=self.name)
+
+        context = {
+            'new_user': new_user,
+            'billing_account_name': self.name,
+        }
+
+        send_html_email_async.delay(
+            subject,
+            old_user,
+            render_to_string('accounting/autopay_card_removed.txt', context),
+            text_content=render_to_string('accounting/autopay_card_removed.txt', context),
+        )
 
     def remove_autopay_user(self):
         self.auto_pay_user = None
