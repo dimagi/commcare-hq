@@ -58,7 +58,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         start_date, _ = utils.get_previous_month_date_range(self.invoice_date)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
 
-        AutoPayInvoicePaymentHandler.pay_autopayable_invoices(start_date)
+        AutoPayInvoicePaymentHandler().pay_autopayable_invoices(start_date)
         self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)

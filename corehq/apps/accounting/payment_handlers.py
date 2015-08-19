@@ -386,8 +386,7 @@ stripe_generic_errors = (stripe.error.AuthenticationError,
 
 
 class AutoPayInvoicePaymentHandler(object):
-    @classmethod
-    def pay_autopayable_invoices(cls, date_start):
+    def pay_autopayable_invoices(self, date_start):
         """ Pays the full balance of all autopayable invoices for the month of date_start """
         autopayable_invoices = Invoice.autopayable_invoices(date_start)
         for invoice in autopayable_invoices:
@@ -402,17 +401,16 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
             except stripe.error.CardError:
-                cls._handle_card_declined(invoice, payment_method)
+                self._handle_card_declined(invoice, payment_method)
                 continue
             except stripe_generic_errors as e:
-                cls._handle_card_errors(invoice, payment_method, e)
+                self._handle_card_errors(invoice, payment_method, e)
                 continue
 
             invoice.pay_invoice(amount, payment_record)
-            cls._send_payment_receipt(invoice, payment_record)
+            self._send_payment_receipt(invoice, payment_record)
 
-    @classmethod
-    def _send_payment_receipt(cls, invoice, payment_record):
+    def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
 
         try:
@@ -425,22 +423,19 @@ class AutoPayInvoicePaymentHandler(object):
                 payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
-            cls._handle_email_failure(invoice, payment_record)
+            self._handle_email_failure(invoice, payment_record)
 
-    @classmethod
-    def _handle_card_declined(cls, invoice):
+    def _handle_card_declined(self, invoice):
         logger.error("[Billing] An automatic payment failed for invoice: {} "
                      "because the card was declined".format(invoice.id))
         print "card declined"
         # TODO: send an email
         # TODO: add to retry queue
 
-    @classmethod
-    def _handle_card_errors(cls, invoice):
+    def _handle_card_errors(self, invoice):
         # TODO: probably do the same stuff as if the card is declined
         print "card error"
 
-    @classmethod
-    def _handle_email_failure(cls, payment_record):
+    def _handle_email_failure(self, payment_record):
         logger.error("[Billing] During an automatic payment, sending a payment receipt failed"
                      " for Payment Record: {}. everything else succeeded".format(payment_record.id))

@@ -143,7 +143,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='3'))
 def pay_autopay_invoices():
-    AutoPayInvoicePaymentHandler.pay_autopayable_invoices()
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices()
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
