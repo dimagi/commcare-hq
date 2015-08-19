@@ -1,5 +1,6 @@
 import datetime
 from django.utils.datastructures import SortedDict
+from django.utils.translation import ugettext
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
@@ -179,6 +180,25 @@ class ConfigurableReportDataSource(SqlData):
             # if the data isn't sortable according to the report spec
             # just return the data in the order we got it
             return data
+
+    def get_total_row(self, data):
+        total_row = [0] * len(self.column_configs)
+        for i, column_config in enumerate(self.column_configs):
+            if column_config.calculate_total:
+                total_row[i] = reduce(
+                    lambda x, y: (
+                        x + y
+                        if isinstance(x, (int, long, float)) and isinstance(y, (int, long, float))
+                        else ''
+                    ),
+                    map(lambda row: row[column_config.column_id], data),
+                    0
+                )
+            else:
+                total_row[i] = ''
+        if total_row[0] == '' and self.aggregation_columns:
+            total_row[0] = ugettext('Total')
+        return total_row
 
     def get_total_records(self):
         return len(self.get_data())
