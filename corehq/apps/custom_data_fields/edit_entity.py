@@ -110,8 +110,13 @@ class CustomDataEditor(object):
 
         if self.angular_model:
             field_names = [
-                Field(field, ng_model="{}.{}".format(self.angular_model, field))
-                for field in fields.keys()
+
+                Field(
+                    field_name,
+                    ng_model="{}.{}".format(self.angular_model, field_name),
+                    ng_required="true" if field.required else "false"
+                )
+                for field_name, field in fields.items()
             ]
         else:
             field_names = fields.keys()
