@@ -3,10 +3,10 @@ from decimal import Decimal
 from django.db import models
 from corehq import Domain
 import mock
-import uuid
 from django.core import mail
 
 from corehq.apps.accounting import generator, tasks
+from corehq.apps.accounting.generator import FakeStripeCard, FakeStripeCustomer
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
@@ -158,22 +158,6 @@ class TestBillingRecord(BaseAccountingTest):
 
         self.invoice.is_hidden = True
         self.assertFalse(self.billing_record.should_send_email)
-
-
-class FakeStripeCard(mock.MagicMock):
-    def __init__(self):
-        super(FakeStripeCard, self).__init__()
-        self.metadata = {}
-
-    def save(self):
-        pass
-
-
-class FakeStripeCustomer(mock.MagicMock):
-    def __init__(self, cards):
-        super(FakeStripeCustomer, self).__init__()
-        self.id = uuid.uuid4().hex.lower()[:25]
-        self.cards = cards
 
 
 @mock.patch.object(StripePaymentMethod, 'customer')

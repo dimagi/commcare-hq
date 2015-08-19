@@ -4,6 +4,7 @@ from decimal import Decimal
 import random
 import datetime
 import uuid
+import mock
 
 from django.conf import settings
 from django.core.management import call_command
@@ -228,3 +229,19 @@ def create_excess_community_users(domain):
                                       community_plan.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users
+
+
+class FakeStripeCard(mock.MagicMock):
+    def __init__(self):
+        super(FakeStripeCard, self).__init__()
+        self.metadata = {}
+
+    def save(self):
+        pass
+
+
+class FakeStripeCustomer(mock.MagicMock):
+    def __init__(self, cards):
+        super(FakeStripeCustomer, self).__init__()
+        self.id = uuid.uuid4().hex.lower()[:25]
+        self.cards = cards

@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductType,
     FeatureType,
     PaymentMethod,
+    StripePaymentMethod,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -377,3 +378,30 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             'items': self._humanized_products() + self._humanized_features()
         })
         return context
+
+
+class AutoPayInvoicePaymentHandler(object):
+    @classmethod
+    def pay_autopayable_invoices(cls, date_start):
+        """ Pays the full balance of all autopayable invoices for the month of date_start """
+        autopayable_invoices = Invoice.autopayable_invoices(date_start)
+        for invoice in autopayable_invoices:
+            auto_payer = invoice.subscription.account.auto_pay_user
+            payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+            autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+            amount = invoice.balance.quantize(Decimal(10) ** -2)
+            payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+            invoice.pay_invoice(amount, payment_record)
+            cls._send_payment_receipt(invoice, payment_record)
+
+    @classmethod
+    def _send_payment_receipt(cls, invoice, payment_record):
+        from corehq.apps.accounting.tasks import send_purchase_receipt
+        receipt_email_template = 'accounting/invoice_receipt_email.html'
+        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+        domain = invoice.subscription.account.created_by_domain
+        product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
+        context = {}
+        send_purchase_receipt.delay(
+            payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
+        )

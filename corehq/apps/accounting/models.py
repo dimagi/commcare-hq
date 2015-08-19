@@ -1740,6 +1740,31 @@ class Invoice(InvoiceBase):
     def get_domain(self):
         return self.subscription.subscriber.domain
 
+    @classmethod
+    def autopayable_invoices(cls, date_start):
+        """ Invoices that can be auto paid starting on date_start """
+        invoices = (cls.objects.
+                    select_related('subscription__account').
+                    filter(subscription__account__auto_pay_user__isnull=False).
+                    filter(date_start=date_start))
+        return invoices
+
+    def pay_invoice(self, amount, payment_record):
+        """ Creates a CreditAdjustment (thru adding credits) and updates the invoice balance """
+        CreditLine.add_credit(
+            payment_record.amount,
+            account=self.subscription.account,
+            payment_record=payment_record,
+        )
+        CreditLine.add_credit(
+            -payment_record.amount,
+            account=self.subscription.account,
+            invoice=self,
+        )
+
+        self.update_balance()
+        self.save()
+
 
 class SubscriptionAdjustment(models.Model):
     """
@@ -1874,6 +1899,7 @@ class BillingRecordBase(models.Model):
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
+            'auto_pay_user': self.invoice.subscription.account.auto_pay_user,
         }
         return context
 
@@ -2429,8 +2455,12 @@ class StripePaymentMethod(PaymentMethod):
         return self.customer.cards.retrieve(card_token)
 
     def get_autopay_card(self, billing_account):
-        return next((card for card in self.customer.cards
-                     if card.metadata[self._auto_pay_card_metadata_key(billing_account)] is True), None)
+        try:
+            return next((card for card in self.customer.cards
+                         if card.metadata[self._auto_pay_card_metadata_key(billing_account)] is True), None)
+        except KeyError:
+            # No autopay card set for this billing account
+            return None
 
     def remove_card(self, card):
         return self.get_card(card).delete()
@@ -2495,6 +2525,18 @@ class StripePaymentMethod(PaymentMethod):
         on the card: {metadata: {auto_pay_{billing_account_id_1}: True, auto_pay_{billing_account_id_2}: False}}
         """
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
+
+    def create_charge(self, card, amount_in_dollars, description=None):
+        """ Charges a stripe card and returns a payment record """
+        amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
+        transaction = stripe.Charge.create(
+            card=card,
+            customer=self.customer,
+            amount=amount_in_cents,
+            currency=settings.DEFAULT_CURRENCY,
+            description=description if description else '',
+        )
+        return PaymentRecord.create_record(self, transaction.id, amount_in_dollars)
 
 
 class PaymentRecord(models.Model):

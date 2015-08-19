@@ -29,6 +29,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
@@ -138,6 +139,11 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "[BILLING] Error occurred while creating invoice for "
                     "domain %s: %s" % (domain.name, e)
                 )
+
+
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='3'))
+def pay_autopay_invoices():
+    AutoPayInvoicePaymentHandler.pay_autopayable_invoices()
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
