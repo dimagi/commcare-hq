@@ -94,8 +94,10 @@ def release_lock(lock, degrade_gracefully):
                 raise
             elif isinstance(e, LockError):
                 try:
-                    notify_exception(None, message='Warning: Could not release a '
-                        'redis lock. This may mean the timeout is too small.')
+                    # TODO: uncomment notify_exception once timeout errors are fixed
+                    pass
+                    # notify_exception(None, message='Warning: Could not release a '
+                    #    'redis lock. This may mean the timeout is too small.')
                 except:
                     pass
 
