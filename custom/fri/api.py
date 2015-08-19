@@ -19,7 +19,7 @@ from custom.fri.models import (
     FRIExtraMessage,
 )
 from corehq.util.timezones.utils import get_timezone_for_user
-from dimag.utils.couch import release_lock
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
