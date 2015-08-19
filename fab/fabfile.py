@@ -629,6 +629,11 @@ def record_successful_deploy(url):
             'url': url,
         })
 
+
+@task
+@roles(ROLES_ALL_SRC)
+@parallel
+def record_successful_release():
     with cd(env.root):
         files.append(RELEASE_RECORD, str(env.code_root), use_sudo=True)
 
@@ -768,6 +773,7 @@ def _deploy_without_asking():
     else:
         _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
+        _execute_with_timing(record_successful_release)
         url = _tag_commit()
         _execute_with_timing(record_successful_deploy, url)
 
