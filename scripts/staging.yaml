@@ -59,7 +59,7 @@ branches:
   - quickcache-user-roles  # Ethan 8/13
   - optmize-deploy+knockout-js # Ben 8/18
   - knockout-js # Ben 8/17
-  - optmize-deploy # Ben 8/18
+  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
