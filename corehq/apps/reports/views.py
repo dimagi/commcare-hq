@@ -1495,9 +1495,9 @@ def clear_report_caches(request, domain):
 def export_report(request, domain, export_hash, format):
     cache = get_redis_client()
 
-    if cache.exists(export_hash):
+    content = cache.get(export_hash)
+    if content is not None:
         if format in Format.VALID_FORMATS:
-            content = cache.get(export_hash)
             file = ContentFile(content)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
