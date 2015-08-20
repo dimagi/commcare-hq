@@ -177,7 +177,7 @@ var VisitScheduler = (function () {
             self.phase = phase;
 
             self.relevancy = ScheduleRelevancy.wrap(data);
-            self.schedule_form_id = ko.observable(schedule_form_id);
+            self.schedule_form_id = ko.observable(schedule_form_id).snakeCase();
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
