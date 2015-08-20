@@ -58,6 +58,7 @@ branches:
   - due-list # TS 7/30
   - django17 # J$ 8/5
   - optmize-deploy+extension_cases
+  - extension_cases+knockout-js
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
   - optmize-deploy+knockout-js # Ben 8/18
