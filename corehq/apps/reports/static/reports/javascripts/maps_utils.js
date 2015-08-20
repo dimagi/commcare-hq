@@ -403,7 +403,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             // store visibility on the feature object so datatables can access it
             feature.visible = (feature._conf != null);
             if (!feature.visible) {
-                if(feature.$tr === void(0)){
+                if(feature.$tr){
                     return feature.visible;
                 }
                 feature.$tr.addClass('inactive-row');
