@@ -181,6 +181,10 @@ class ConfigurableReportDataSource(SqlData):
             # just return the data in the order we got it
             return data
 
+    @property
+    def has_total_row(self):
+        return any(column_config.calculate_total for column_config in self.column_configs)
+
     def get_total_row(self, data):
         total_row = [0] * len(self.column_configs)
         for i, column_config in enumerate(self.column_configs):
