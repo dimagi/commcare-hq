@@ -936,8 +936,8 @@ class SavedBasicExport(Document):
     def set_payload(self, payload):
         self.put_attachment(payload, self.get_attachment_name())
 
-    def get_payload(self):
-        return self.fetch_attachment(self.get_attachment_name())
+    def get_payload(self, stream=False):
+        return self.fetch_attachment(self.get_attachment_name(), stream=stream)
 
     @classmethod
     def by_index(cls, index):

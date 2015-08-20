@@ -1,3 +1,5 @@
+from wsgiref.util import FileWrapper
+from django.http.response import StreamingHttpResponse
 from couchexport.export import Format
 from django.http import HttpResponse
 import json
@@ -51,13 +53,13 @@ def export_data(request, **kwargs):
 
 def download_saved_export(request, export_id):
     export = SavedBasicExport.get(export_id)
-    response = HttpResponse(content_type=Format.from_format(export.configuration.format).mimetype)
-    response.write(export.get_payload())
+    content_type = Format.from_format(export.configuration.format).mimetype
+    payload = export.get_payload(stream=True)
+    response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if export.configuration.format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
         normalized_filename = unicodedata.normalize(
             'NFKD', unicode(export.configuration.filename),
-        ).encode('ascii','ignore')
+        ).encode('ascii', 'ignore')
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
-
     return response
