@@ -924,6 +924,7 @@ def update_virtualenv():
 
     # Optimization if we have current setup (i.e. not the first deploy)
     if files.exists(env.virtualenv_current):
+        print 'Cloning virtual env'
         sudo("virtualenv-clone {} {}".format(env.virtualenv_current, env.virtualenv_root))
 
     with cd(env.code_root):
