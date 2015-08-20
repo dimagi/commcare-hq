@@ -23,35 +23,40 @@
     (function () {
         function applyCheckboxBindings() {
             var $XFormManagement = $('#form-management');
+            var $allFormsButton = $XFormManagement.find('input[name="select_all"]');
+            var $checkboxes = $XFormManagement.find('input.xform-checkbox');
 
+            // bindings for 'all' button
             $XFormManagement.find('a.select-visible').click(function () {
-                $XFormManagement.find('input[name="select_all"]').attr('checked', false);
-                $XFormManagement.find('input.xform-checkbox').attr('checked', true).change();
+                $allFormsButton.attr('checked', false);
+                $checkboxes.attr('checked', true).change();
                 return false;
             });
 
-            $XFormManagement.find('a.select-none').click(function() {selectNone(); return false;});
-            $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
-            $XFormManagement.find('.dataTables_length select').change(selectNone);
-
+            // bindings for 'none' button
+            $XFormManagement.find('a.select-none').click(function(){
+                selectNone(); return false;
+            });
             function selectNone() {
                 $XFormManagement.find('input.xform-checkbox:checked').attr('checked', false).change();
-                $XFormManagement.find('input[name="select_all"]').attr('checked', false);
+                $allFormsButton.attr('checked', false);
             }
-            $XFormManagement.find('input.xform-checkbox').on('change', function(){
+
+            // bindings for form checkboxes
+            $checkboxes.on('change', function(){
                 // updates text like '3 of 5 selected'
                 updateFormCounts();
             })
-
-            $XFormManagement.find('input.xform-checkbox').on('click', function(){
-                $('#form-management').find('input[name="select_all"]').attr('checked', false);
+            $checkboxes.on('click', function(){
+                $allFormsButton.attr('checked', false);
             })
 
-            $XFormManagement.find('input[name="select_all"]').on('click', function(){
+            // bindings for 'Select all' checkboxe
+            $allFormsButton.on('click', function(){
                 if (this.checked) {
-                    $XFormManagement.find('input.xform-checkbox').attr('checked', true).change();
+                    $checkboxes.attr('checked', true).change();
                     enable_disable_button(1);
-                    $(".selectedCount").text(79);
+                    $(".selectedCount").text({{ total_xForms }});
                 }
                 else {
                     $(".selectedCount").text(0);
@@ -59,6 +64,9 @@
                     enable_disable_button(0);
                 }
             })
+
+            $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
+            $XFormManagement.find('.dataTables_length select').change(selectNone);
         }
 
         var keepTrying = setInterval(function () {
