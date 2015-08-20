@@ -222,3 +222,7 @@ def get_unverified_number_for_recipient(recipient):
             except InvalidFormatException:
                 return None
     return None
+
+
+def get_preferred_phone_number_for_recipient(recipient):
+    return get_verified_number_for_recipient(recipient) or get_unverified_number_for_recipient(recipient)
