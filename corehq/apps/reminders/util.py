@@ -194,3 +194,11 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
 
 def can_use_survey_reminders(request):
     return has_privilege(request, privileges.INBOUND_SMS)
+
+
+def get_verified_number_for_recipient(recipient):
+    if hasattr(recipient, "get_verified_numbers"):
+        contact_verified_numbers = recipient.get_verified_numbers(False)
+        if len(contact_verified_numbers) > 0:
+            return sorted(contact_verified_numbers.iteritems())[0][1]
+    return None

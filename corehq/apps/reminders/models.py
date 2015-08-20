@@ -14,7 +14,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.reminders.util import enqueue_reminder_directly
+from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
@@ -934,15 +934,7 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            if hasattr(r, "get_verified_numbers"):
-                contact_verified_numbers = r.get_verified_numbers(False)
-                if len(contact_verified_numbers) > 0:
-                    verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
-                else:
-                    verified_number = None
-            else:
-                verified_number = None
-            verified_numbers[r.get_id] = verified_number
+            verified_numbers[r.get_id] = get_verified_number_for_recipient(r)
         
         # Set the event initiation timestamp if we're not on any timeouts
         if reminder.callback_try_count == 0:
