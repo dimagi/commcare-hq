@@ -15,7 +15,15 @@ Server layout:
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
         Each environment has its own subfolder named for its evironment
-        (i.e. ~/www/staging/logs and ~/www/production/logs).
+        (i.e. ~/www/staging/log and ~/www/production/log).
+
+    ~/www/<environment>/releases/<YYYY-MM-DD-HH.SS>
+        This folder contains a release of commcarehq. Each release has its own virtual environment that can be
+        found in `python_env`.
+
+    ~/www/<environment>/current
+        This path is a symlink to the release that is being run
+        (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
 """
 import datetime
 import json
