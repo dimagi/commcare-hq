@@ -1,7 +1,7 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.performance_sms.message_sender import send_messages_for_config
-from .utils import get_message_configs_at_this_hour
+from .schedule import get_message_configs_at_this_hour
 import settings
 
 
