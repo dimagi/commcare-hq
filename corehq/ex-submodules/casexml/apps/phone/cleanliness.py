@@ -4,6 +4,7 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_indexed_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
+from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
@@ -13,6 +14,7 @@ from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.logging import notify_exception
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -54,7 +56,10 @@ def set_cleanliness_flags_for_enabled_domains(force_full=False):
     """
     for domain in Domain.get_all_names():
         if OWNERSHIP_CLEANLINESS.enabled(domain):
-            set_cleanliness_flags_for_domain(domain, force_full=force_full)
+            try:
+                set_cleanliness_flags_for_domain(domain, force_full=force_full)
+            except InvalidDomainError as e:
+                notify_exception(None, unicode(e))
 
 
 def set_cleanliness_flags_for_domain(domain, force_full=False):
@@ -63,14 +68,22 @@ def set_cleanliness_flags_for_domain(domain, force_full=False):
     """
     for owner_id in get_all_case_owner_ids(domain):
         if owner_id and owner_id not in WEIRD_USER_IDS:
-            set_cleanliness_flags(domain, owner_id, force_full=force_full)
+            try:
+                set_cleanliness_flags(domain, owner_id, force_full=force_full)
+            except InvalidOwnerIdError as e:
+                notify_exception(None, unicode(e))
 
 
 def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
-    assert owner_id, "Can't set cleanliness flags for null or blank owner ids"
+    if not domain or len(domain) > 100:
+        raise InvalidDomainError(u'Domain {} must be a non-empty string less than 100 characters'.format(domain))
+    if not owner_id or len(owner_id) > 100:
+        raise InvalidOwnerIdError(
+            u'Owner ID {} must be a non-empty string less than 100 characters'.format(owner_id)
+        )
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,
