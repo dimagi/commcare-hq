@@ -5,7 +5,7 @@ from .schedule import get_message_configs_at_this_hour
 import settings
 
 
-@periodic_task(run_every=crontab(hour="*/1", minute="0"),
+@periodic_task(run_every=crontab(hour="*", minute="0"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def fire_performance_sms():
     for config in get_message_configs_at_this_hour():
