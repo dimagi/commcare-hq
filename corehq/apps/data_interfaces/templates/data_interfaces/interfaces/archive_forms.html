@@ -24,7 +24,8 @@
         function applyCheckboxBindings() {
             var $XFormManagement = $('#form-management');
 
-            $XFormManagement.find('a.select-all').click(function () {
+            $XFormManagement.find('a.select-visible').click(function () {
+                $XFormManagement.find('input[name="select_all"]').attr('checked', false);
                 $XFormManagement.find('input.xform-checkbox').attr('checked', true).change();
                 return false;
             });
@@ -41,11 +42,16 @@
                 // updates text like '3 of 5 selected'
                 updateFormCounts();
             })
-            $XFormManagement.find('input[name="select_all"]').on('change', function(){
+
+            $XFormManagement.find('input.xform-checkbox').on('click', function(){
+                $('#form-management').find('input[name="select_all"]').attr('checked', false);
+            })
+
+            $XFormManagement.find('input[name="select_all"]').on('click', function(){
                 if (this.checked) {
-                    $XFormManagement.find('a.select-all').click();
+                    $XFormManagement.find('input.xform-checkbox').attr('checked', true).change();
                     enable_disable_button(1);
-                    $(".selectedCount").text({{ total_xForms }});
+                    $(".selectedCount").text(79);
                 }
                 else {
                     $(".selectedCount").text(0);

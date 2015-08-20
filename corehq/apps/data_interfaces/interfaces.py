@@ -185,7 +185,7 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a class="select-all btn btn-mini btn-inverse">all</a>
+                    Select  <a class="select-visible btn btn-mini btn-inverse">all</a>
                     <a class="select-none btn btn-mini btn-warning">none</a>'
                     """
                 ),
