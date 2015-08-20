@@ -1067,6 +1067,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
+        from corehq.apps.style.utils import set_bootstrap_version3
+        from crispy_forms.utils import set_template_pack
+        set_bootstrap_version3()
+        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 
