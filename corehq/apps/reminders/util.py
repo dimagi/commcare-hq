@@ -8,6 +8,7 @@ from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
 from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
@@ -201,4 +202,23 @@ def get_verified_number_for_recipient(recipient):
         contact_verified_numbers = recipient.get_verified_numbers(False)
         if len(contact_verified_numbers) > 0:
             return sorted(contact_verified_numbers.iteritems())[0][1]
+    return None
+
+
+def get_unverified_number_for_recipient(recipient):
+    if isinstance(recipient, CouchUser):
+        try:
+            return recipient.phone_number
+        except Exception:
+            # todo: catch more specific error
+            return None
+    elif isinstance(recipient, CommCareCase):
+        unverified_number = recipient.get_case_property("contact_phone_number")
+        unverified_number = apply_leniency(unverified_number)
+        if unverified_number:
+            try:
+                CommCareMobileContactMixin.validate_number_format(unverified_number)
+                return unverified_number
+            except InvalidFormatException:
+                return None
     return None
