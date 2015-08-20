@@ -1133,8 +1133,9 @@ class HealthMapSource(NewHealthStatusReport):
     @property
     @memoized
     def get_users(self):
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
         config = {
-            'awc': tuple(self.awcs),
+            'awc': tuple(awcs),
             'gp': tuple(self.gp),
             'block': tuple(self.blocks)
         }
@@ -1346,3 +1347,23 @@ class LongitudinalCMRReport(MetReport):
     slug = 'longitudinal_cmr'
     model = LongitudinalConditionsMet
     show_total = False
+    exportable = True
+    export_format_override = Format.XLS
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s&is_open=%s" % (
+            self.blocks,
+            self.gp,
+            self.awcs,
+            self.request_params.get('is_open')
+        )
+        return redis_key

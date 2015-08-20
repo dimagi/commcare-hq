@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource id="update_case" descriptor="Form: (Module Case module) - Update case">
+    <resource id="case_module_form" descriptor="Form: (Module case_module module) - case_module form">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="register_case_form" descriptor="Form: (Module register) - Register Case Form">
+    <resource id="register_case_form" descriptor="Form: (Module register_case module) - register_case form">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>
