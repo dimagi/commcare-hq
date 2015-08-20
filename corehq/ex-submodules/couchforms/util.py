@@ -15,7 +15,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 import iso8601
-from redis import ConnectionError
+from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -102,7 +102,7 @@ def acquire_lock_for_xform(xform_id):
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
-    except ConnectionError:
+    except RedisError:
         lock = None
     return lock
 

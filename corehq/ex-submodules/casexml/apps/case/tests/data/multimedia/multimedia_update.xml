@@ -5,20 +5,22 @@
 	xmlns="http://openrosa.org/formdesigner/78A1B843-E564-4AD0-8FFD-BD5DC2F943C9">
 	<incident>gjh</incident>
 	<lost>no</lost>
-    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="%(date_modified)s" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="{{ date_modified }}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
 		<n0:update>
             <n0:foo>bar</n0:foo>
 		</n0:update>
+        {% if attachments %}
         <n0:attachment>
-            %(attachments)s
+            {{ attachments|safe }}
         </n0:attachment>
+        {% endif %}
 	</n0:case>
 	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
 		<n1:deviceID>354957031935664</n1:deviceID>
-		<n1:timeStart>%(time_start)s</n1:timeStart>
-		<n1:timeEnd>%(time_end)s</n1:timeEnd>
+		<n1:timeStart>{{ time_start }}</n1:timeStart>
+		<n1:timeEnd>{{ time_end }}</n1:timeEnd>
 		<n1:username>bcdemo</n1:username>
 		<n1:userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</n1:userID>
-		<n1:instanceID>%(doc_id)s</n1:instanceID>
+		<n1:instanceID>{{ doc_id }}</n1:instanceID>
 	</n1:meta>
 </data>

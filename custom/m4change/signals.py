@@ -2,7 +2,8 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.models import XFormInstance
 from fluff.signals import indicator_document_updated
 import json
-from dimagi.utils.couch import get_redis_client
+from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.core.exceptions import ObjectDoesNotExist
 from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, IMMUNIZATION_FORMS, \
     BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, REDIS_FIXTURE_KEYS, \
@@ -131,7 +132,7 @@ def handle_fixture_location_update(sender, doc, diff, backend, **kwargs):
                         location_ids.append(location_id)
                     client.set(redis_key, json.dumps(location_ids))
                 finally:
-                    lock.release()
+                    release_lock(lock, True)
 
 
 indicator_document_updated.connect(handle_fixture_location_update)

@@ -15,7 +15,15 @@ Server layout:
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
         Each environment has its own subfolder named for its evironment
-        (i.e. ~/www/staging/logs and ~/www/production/logs).
+        (i.e. ~/www/staging/log and ~/www/production/log).
+
+    ~/www/<environment>/releases/<YYYY-MM-DD-HH.SS>
+        This folder contains a release of commcarehq. Each release has its own virtual environment that can be
+        found in `python_env`.
+
+    ~/www/<environment>/current
+        This path is a symlink to the release that is being run
+        (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
 """
 import datetime
 import json
@@ -151,10 +159,11 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, str(int(time.time())))
+    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M'))
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
-    env.virtualenv_root = posixpath.join(env.root, 'python_env')
+    env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
+    env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
     env.services = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
@@ -454,19 +463,20 @@ def create_pg_db():
 
 
 @task
+@roles(ROLES_ALL_SRC)
 def bootstrap():
     """Initialize remote host environment (virtualenv, deploy, update)
 
     Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
     """
     _require_target()
-    sudo('mkdir -p %(root)s' % env, shell=False)
-    clone_repo()
 
+    create_code_dir()
     update_code()
     create_virtualenvs()
     update_virtualenv()
     setup_dirs()
+    update_current()
 
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
@@ -482,26 +492,17 @@ def unbootstrap():
     require('code_root', 'virtualenv_root')
 
     with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_root)s %(code_root)s') % env)
+        sudo(('rm -rf %(virtualenv_current)s %(code_current)s') % env)
 
 
 @roles(ROLES_ALL_SRC)
+@parallel
 def create_virtualenvs():
     """set up virtualenv on remote host"""
     require('virtualenv_root', provided_by=('staging', 'production', 'india'))
 
     args = '--distribute --no-site-packages'
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
-
-
-@roles(ROLES_ALL_SRC)
-def clone_repo():
-    """clone a new copy of the git repository"""
-    with settings(warn_only=True):
-        with cd(env.root):
-            exists_results = sudo('ls -d %(code_root)s' % env)
-            if exists_results.strip() != env['code_root']:
-                sudo('git clone %(code_repo)s %(code_root)s' % env)
 
 
 @task
@@ -551,31 +552,35 @@ def preindex_views():
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def update_code():
-    with cd(env.code_current):
-        if files.exists(env.code_current):
-            submodules = sudo("git submodule | awk '{ print $2 }'").split()
-    with cd(env.code_root):
-        if files.exists(env.code_current):
-            local_submodule_clone = []
-            for submodule in submodules:
-                local_submodule_clone.append('-c')
-                local_submodule_clone.append(
-                    'submodule.{submodule}.url={code_current}/.git/modules/{submodule}'.format(
-                        submodule=submodule,
-                        code_current=env.code_current
+def update_code(use_current_release=False):
+    # If not updating current release,  we are making a new release and thus have to do cloning
+    # we should only ever not make a new release when doing a hotfix deploy
+    if not use_current_release:
+        with cd(env.code_current):
+            if files.exists(env.code_current):
+                submodules = sudo("git submodule | awk '{ print $2 }'").split()
+        with cd(env.code_root):
+            if files.exists(env.code_current):
+                local_submodule_clone = []
+                for submodule in submodules:
+                    local_submodule_clone.append('-c')
+                    local_submodule_clone.append(
+                        'submodule.{submodule}.url={code_current}/.git/modules/{submodule}'.format(
+                            submodule=submodule,
+                            code_current=env.code_current
+                        )
                     )
-                )
 
-            sudo('git clone --recursive {} {}/.git {}'.format(
-                ' '.join(local_submodule_clone),
-                env.code_current,
-                env.code_root
-            ))
-            sudo('git remote set-url origin {}'.format(env.code_repo))
-        else:
-            sudo('git clone {} {}'.format(env.code_repo, env.code_root))
+                sudo('git clone --recursive {} {}/.git {}'.format(
+                    ' '.join(local_submodule_clone),
+                    env.code_current,
+                    env.code_root
+                ))
+                sudo('git remote set-url origin {}'.format(env.code_repo))
+            else:
+                sudo('git clone {} {}'.format(env.code_repo, env.code_root))
 
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
         sudo('git fetch')
         sudo("git submodule foreach 'git fetch'")
@@ -621,6 +626,14 @@ def record_successful_deploy(url):
 
 
 @task
+@roles(ROLES_ALL_SRC)
+@parallel
+def record_successful_release():
+    with cd(env.root):
+        files.append(RELEASE_RECORD, str(env.code_root), use_sudo=True)
+
+
+@task
 def hotfix_deploy():
     """
     deploy ONLY the code with no extra cleanup or syncing
@@ -635,9 +648,8 @@ def hotfix_deploy():
 
     _require_target()
     run('echo ping!')  # workaround for delayed console response
-
     try:
-        execute(update_code)
+        execute(update_code, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -712,6 +724,39 @@ def _deploy_without_asking():
         if not done:
             raise PreindexNotFinished()
 
+        _execute_with_timing(install_npm_packages)
+        _execute_with_timing(update_touchforms)
+
+        max_wait = datetime.timedelta(minutes=5)
+        pause_length = datetime.timedelta(seconds=5)
+
+        # Update localsettings
+        _execute_with_timing(copy_localsettings)
+        _execute_with_timing(copy_tf_localsettings)
+        _execute_with_timing(preindex_views)
+
+        start = datetime.datetime.utcnow()
+
+        @roles(ROLES_DB_ONLY)
+        def preindex_complete():
+            with settings(warn_only=True):
+                return sudo(
+                    '%(virtualenv_root)s/bin/python '
+                    '%(code_root)s/manage.py preindex_everything '
+                    '--check' % env,
+                    user=env.sudo_user,
+                ).succeeded
+
+        done = False
+        while not done and datetime.datetime.utcnow() - start < max_wait:
+            time.sleep(pause_length.seconds)
+            if preindex_complete():
+                done = True
+            pause_length *= 2
+
+        if not done:
+            raise PreindexNotFinished()
+
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
@@ -753,6 +798,7 @@ def _deploy_without_asking():
     else:
         _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
+        _execute_with_timing(record_successful_release)
         url = _tag_commit()
         _execute_with_timing(record_successful_deploy, url)
 
@@ -772,6 +818,7 @@ def unlink_current():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
@@ -790,6 +837,7 @@ def copy_tf_localsettings():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def clean_releases(keep=3):
     releases = sudo('ls {}'.format(env.releases)).split()
     current_release = os.path.basename(sudo('readlink {}'.format(env.code_current)))
@@ -889,6 +937,11 @@ def update_virtualenv():
     """
     _require_target()
     requirements = posixpath.join(env.code_root, 'requirements')
+
+    # Optimization if we have current setup (i.e. not the first deploy)
+    if files.exists(env.virtualenv_current):
+        sudo("virtualenv-clone {} {}".format(env.virtualenv_current, env.virtualenv_root))
+
     with cd(env.code_root):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
             env.sudo_user, env.virtualenv_root)
