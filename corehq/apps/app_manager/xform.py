@@ -1274,14 +1274,14 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = session_var(form.session_var_for_action('open_case'))
+                case_id_xpath = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
-                    case_id=case_id
+                    case_id=case_id_xpath
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
@@ -1289,22 +1289,27 @@ class XForm(WrappedNode):
                 # This is a submodule. case_id will have changed to avoid a clash with the parent case.
                 # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
                 case_id = '_'.join((CASE_ID, form.get_case_type()))
-                session_case_id = CaseIDXPath(session_var(case_id))
+                case_id_xpath = CaseIDXPath(session_var(case_id))
                 self.add_bind(
                     nodeset="case/@case_id",
-                    calculate=session_case_id,
+                    calculate=case_id_xpath,
                 )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=SESSION_CASE_ID,
                 )
+                case_id_xpath = SESSION_CASE_ID
 
             if 'update_case' in actions or extra_updates:
                 self.add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
-                    extra_updates=extra_updates)
+                    extra_updates=extra_updates,
+                    # case_id_xpath is set based on an assumption about the way suite_xml.py determines the
+                    # case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
+                    case_id_xpath=case_id_xpath
+                )
 
             if 'close_case' in actions:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
