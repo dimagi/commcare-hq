@@ -1,7 +1,7 @@
 import copy
 from corehq.apps.groups.fields import GroupField
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.performance_sms import parser
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
@@ -13,7 +13,7 @@ from crispy_forms.layout import Submit
 
 class PerformanceMessageEditForm(forms.Form):
     recipient_id = forms.CharField()
-    schedule = forms.ChoiceField(choices=[(choice, choice) for choice in SCHEDULE_CHOICES])
+    schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
     template = forms.CharField(widget=forms.Textarea)
     time_range = forms.ChoiceField(
         choices=[(choice.slug, choice.description) for choice in get_simple_dateranges()]
