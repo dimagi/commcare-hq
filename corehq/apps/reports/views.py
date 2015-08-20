@@ -1042,6 +1042,9 @@ def resave_case(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def bootstrap_ledgers(request, domain, case_id):
+    # todo: this is just to fix a mobile issue that requires ledgers to be initialized
+    # this view and code can be removed when that bug is released (likely anytime after
+    # october 2015 if you are reading this after then)
     case = get_document_or_404(CommCareCase, domain, case_id)
     if (not StockTransaction.objects.filter(case_id=case_id).exists() and
             SQLProduct.objects.filter(domain=domain).exists()):
