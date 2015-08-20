@@ -2361,9 +2361,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     case = None
                             else:
                                 case = SESSION_CASE_ID.case()
-
-                            if case:
-                                command.relevant = interpolate_xpath(form.form_filter, case)
+                            command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:
