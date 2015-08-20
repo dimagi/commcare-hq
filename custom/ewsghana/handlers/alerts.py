@@ -37,7 +37,6 @@ class AlertsHandler(KeywordHandler):
                     )
                     begin_soh = 0
                     if latest:
-                        print latest
                         begin_soh = float(latest.stock_on_hand)
 
                 if transaction.action == 'receipts':
