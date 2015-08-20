@@ -724,39 +724,6 @@ def _deploy_without_asking():
         if not done:
             raise PreindexNotFinished()
 
-        _execute_with_timing(install_npm_packages)
-        _execute_with_timing(update_touchforms)
-
-        max_wait = datetime.timedelta(minutes=5)
-        pause_length = datetime.timedelta(seconds=5)
-
-        # Update localsettings
-        _execute_with_timing(copy_localsettings)
-        _execute_with_timing(copy_tf_localsettings)
-        _execute_with_timing(preindex_views)
-
-        start = datetime.datetime.utcnow()
-
-        @roles(ROLES_DB_ONLY)
-        def preindex_complete():
-            with settings(warn_only=True):
-                return sudo(
-                    '%(virtualenv_root)s/bin/python '
-                    '%(code_root)s/manage.py preindex_everything '
-                    '--check' % env,
-                    user=env.sudo_user,
-                ).succeeded
-
-        done = False
-        while not done and datetime.datetime.utcnow() - start < max_wait:
-            time.sleep(pause_length.seconds)
-            if preindex_complete():
-                done = True
-            pause_length *= 2
-
-        if not done:
-            raise PreindexNotFinished()
-
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
