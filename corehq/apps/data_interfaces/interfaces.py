@@ -137,7 +137,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     slug = 'archive_or_restore'
     placeholder = ''
     default_text = None
-    label = _('Archived/Restored')
+    label = ugettext_lazy('Archived/Restored')
     help_text = mark_safe("Archived forms are removed from reports and exports and "
                           "any case changes they make are reversed. Archiving forms "
                           "can remove accidental form submissions. Use this report "
