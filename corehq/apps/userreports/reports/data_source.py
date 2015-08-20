@@ -172,7 +172,8 @@ class ConfigurableReportDataSource(SqlData):
                     next(x.itervalues())
                 ))
         except (SortConfigurationError, TypeError):
-            # if the first column isn't sortable just return the data in the order we got it
+            # if the data isn't sortable according to the report spec
+            # just return the data in the order we got it
             return ret
 
     def get_total_records(self):

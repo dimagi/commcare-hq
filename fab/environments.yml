@@ -86,9 +86,12 @@ production:
   should_migrate: True
 
   new_relic_enabled:
-    - hqdjango3.internal.commcarehq.org
-    - hqdjango4.internal.commcarehq.org
-    - hqdjango5.internal.commcarehq.org
+    - hqdjango6.internal.commcarehq.org
+    - hqdjango7.internal.commcarehq.org
+    - hqdjango8.internal.commcarehq.org
+    - hqdjango9.internal.commcarehq.org
+    - hqdjango10.internal.commcarehq.org
+    - hqdjango11.internal.commcarehq.org
     - hqcelery1.internal.commcarehq.org
     - hqcelery0.internal.commcarehq.org
 

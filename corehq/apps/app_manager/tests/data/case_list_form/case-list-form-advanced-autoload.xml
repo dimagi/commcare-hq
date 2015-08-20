@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource id="register_case_form" descriptor="Form: (Module create) - Register Case">
+    <resource id="register_dugong_form" descriptor="Form: (Module register_dugong module) - register_dugong form">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="update_case_form" descriptor="Form: (Module update) - Update Case">
+    <resource id="update_dugong_form" descriptor="Form: (Module update_dugong module) - update_dugong form">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>

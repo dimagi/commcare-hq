@@ -44,6 +44,7 @@
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
 
+{% if detail.type == 'case' %}
 <legend>
     {% trans "Filtering and Sorting" %}
 </legend>
@@ -198,6 +199,7 @@
 
 {% endif %}
 </div>
+{% endif %}
 
 {% if detail.parent_select %}
 <div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
