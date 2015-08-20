@@ -70,8 +70,8 @@ from corehq.apps.app_manager.util import (
     save_xform,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
-    actions_use_usercase
-)
+    actions_use_usercase,
+    update_unique_ids)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -3374,7 +3374,7 @@ class VersionedDoc(LazyAttachmentDoc):
         application source, such as ids, etc.
 
         """
-        raise NotImplemented()
+        return source
 
     def export_json(self, dump_json=True):
         source = deepcopy(self.to_json())
@@ -3382,11 +3382,12 @@ class VersionedDoc(LazyAttachmentDoc):
             if field in source:
                 del source[field]
         _attachments = {}
-        for name in source.get('_attachments', {}):
+        for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
-                _attachments[name] = self.fetch_attachment(name)
+                _attachments[name] = self.lazy_fetch_attachment(name)
+
         source['_attachments'] = _attachments
-        self.scrub_source(source)
+        source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
 
@@ -4466,26 +4467,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
-        def change_unique_id(form):
-            unique_id = form['unique_id']
-            new_unique_id = FormBase.generate_id()
-            form['unique_id'] = new_unique_id
-            if ("%s.xml" % unique_id) in source['_attachments']:
-                source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
-            return new_unique_id
-
-        change_unique_id(source['user_registration'])
-        id_changes = {}
-        for m, module in enumerate(source['modules']):
-            for f, form in enumerate(module['forms']):
-                old_id = form['unique_id']
-                new_id = change_unique_id(source['modules'][m]['forms'][f])
-                id_changes[old_id] = new_id
-
-        for reference_path in form_id_references:
-            for reference in reference_path.find(source):
-                if reference.value in id_changes:
-                    jsonpath_update(reference, id_changes[reference.value])
+        return update_unique_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
@@ -4854,9 +4836,6 @@ class RemoteApp(ApplicationBase):
                 files.update({location: data})
         return files
 
-    def scrub_source(self, source):
-        pass
-
     def make_questions_map(self):
         if self.copy_of:
             xmlns_map = {}
@@ -4908,7 +4887,8 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = json.loads(source)
     else:
         # Don't modify original app source
-        source = deepcopy(app_id_or_source)
+        app = Application.wrap(deepcopy(app_id_or_source))
+        source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:

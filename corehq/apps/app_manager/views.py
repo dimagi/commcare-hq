@@ -957,12 +957,15 @@ def get_module_view_context_and_template(app, module):
     else:
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
+        # don't allow this for modules with parent selection until this mobile bug is fixed:
+        # http://manage.dimagi.com/default.asp?178635
+        case_list_form_allowed = module.all_forms_require_a_case() and not module.parent_select.active
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
+            'case_list_form_allowed': case_list_form_allowed,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and

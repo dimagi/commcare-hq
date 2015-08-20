@@ -6,7 +6,7 @@ from lxml import etree
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
-from corehq.apps.app_manager.tests.app_factory import setup_case_list_form_app
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage
@@ -188,7 +188,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
         self._test_correct_audio_translations(self.app, self.module, audio_locale)
 
     def test_case_list_form_media(self):
-        app = setup_case_list_form_app()
+        app = AppFactory.case_list_form_app_factory().app
         app.build_spec = self.min_spec
 
         app.get_module(0).case_list_form.set_icon('en', self.image_path)
