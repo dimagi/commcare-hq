@@ -1048,6 +1048,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.close_mother_mo = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_mo')
         self.leave_program = self.get_value_from_form(CLOSE_FORM, 'form/leave_program')
         self.close_mother_dead = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_dead')
+        # set year 1900 and day 1 because we want only month name.
         self.disp_month = datetime.date(year=1900, month=self.month, day=1).strftime("%B")
 
     def get_first_or_empty(self, list):
