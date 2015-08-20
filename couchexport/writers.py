@@ -352,7 +352,7 @@ class Excel2007ExportWriter(ExportWriter):
             u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]')
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
-        # see: http://packages.python.org/openpyxl/optimized.html
+        # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
         sheet.append(
             [dirty_chars.sub(
                 u'?',
