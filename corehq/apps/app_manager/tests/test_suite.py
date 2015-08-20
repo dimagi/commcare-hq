@@ -264,51 +264,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
-    def test_schedule(self):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        mod = app.get_module(1)
-        mod.has_schedule = True
-        f1 = mod.get_form(0)
-        f2 = mod.get_form(1)
-        f3 = mod.get_form(2)
-        f1.schedule = FormSchedule(
-            anchor='edd',
-            expires=120,
-            post_schedule_increment=15,
-            visits=[
-                ScheduleVisit(due=5, late_window=4),
-                ScheduleVisit(due=10, late_window=9),
-                ScheduleVisit(due=20, late_window=5)
-            ]
-        )
-
-        f2.schedule = FormSchedule(
-            anchor='dob',
-            visits=[
-                ScheduleVisit(due=7, late_window=4),
-                ScheduleVisit(due=15)
-            ]
-        )
-
-        f3.schedule = FormSchedule(
-            anchor='dob',
-            visits=[
-                ScheduleVisit(due=9, late_window=1),
-                ScheduleVisit(due=11)
-            ]
-        )
-        mod.case_details.short.columns.append(
-            DetailColumn(
-                header={'en': 'Next due'},
-                model='case',
-                field='schedule:nextdue',
-                format='plain',
-            )
-        )
-        suite = app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('schedule-fixture'), suite, './fixture')
-        self.assertXmlPartialEqual(self.get_xml('schedule-entry'), suite, "./detail[@id='m1_case_short']")
-
     def _test_format(self, detail_format, template_form):
         app = Application.wrap(self.get_json('app_audio_format'))
         details = app.get_module(0).case_details
@@ -508,6 +463,26 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
+
+    def test_fixture_to_case_selection(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
+
+        module = app.add_module(Module.new_module('my_module', None))
+        module.case_type = 'cases'
+
+        module.fixture_select.active = True
+        module.fixture_select.fixture_type = 'days'
+        module.fixture_select.display_column = 'my_display_column'
+        module.fixture_select.variable_column = 'my_variable_column'
+        module.fixture_select.xpath = '$fixture_value > 3'
+
+        form = app.new_form(0, 'my_form', lang='en')
+        form.unique_id = 'form_1'
+        form.requires = 'case'
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), app.create_suite())
+
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
