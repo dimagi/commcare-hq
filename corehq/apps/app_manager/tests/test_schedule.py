@@ -1,3 +1,4 @@
+# encoding: utf-8
 from mock import patch
 import copy
 import base64
@@ -30,6 +31,16 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.form_2 = self.module.get_form(1)
         self.form_3 = self.module.get_form(2)
 
+        self._add_form_abbreviations()
+        self._add_form_schedules()
+        self._add_form_detail_variable()
+
+    def _add_form_abbreviations(self):
+        self.form_1.schedule_form_id = u"हिन्दी"
+        self.form_2.schedule_form_id = u"a983e9"
+        self.form_3.schedule_form_id = u"39f0ea"
+
+    def _add_form_schedules(self):
         self.form_1.schedule = FormSchedule(
             expires=120,
             starts=-5,
@@ -55,6 +66,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             ]
         )
 
+    def _add_form_detail_variable(self):
         self.module.case_details.short.columns.append(
             DetailColumn(
                 header={'en': 'Next due'},
@@ -63,6 +75,8 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                 format='plain',
             )
         )
+
+
 
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
@@ -203,7 +217,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             )
         ]
 
-        expected_fixture = """
+        expected_fixture = u"""
              <partial>
              <fixture id="schedule:m2:p1:f0">
                  <schedule expires="" allow_unscheduled="False">
@@ -237,23 +251,23 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             ).format(current_schedule_phase=current_schedule_phase)
 
             within_form_relevancy = (
-                "today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
-                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires)))"
+                u"today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
+                u"({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires)))"
             ).format(schedule=schedule, anchor=anchor)
 
             next_valid_schedules = (
-                "{current_phase_query} and "
+                u"{current_phase_query} and "
                 "{anchor} != '' and "
                 "({within_form_relevancy})"
             ).format(current_phase_query=current_phase_query, anchor=anchor,
                      within_form_relevancy=within_form_relevancy)
 
             allow_unscheduled = (
-                "{schedule}/@allow_unscheduled = 'True'"
+                u"{schedule}/@allow_unscheduled = 'True'"
             ).format(schedule=schedule)
 
             upcoming_scheduled_visits = (
-                "{visit}"
+                u"{visit}"
                 "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
                 "[if(@repeats = 'True', "
                     "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "  # noqa
@@ -265,15 +279,15 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             ).format(visit=visit, case=case[form_num], form_id=form_id, anchor=anchor)
 
             visit_allowed = (
-                "{allow_unscheduled} or "
+                u"{allow_unscheduled} or "
                 "count({upcoming_scheduled_visits}) &gt; 0"
             ).format(allow_unscheduled=allow_unscheduled, upcoming_scheduled_visits=upcoming_scheduled_visits)
 
             filter_condition = (
-                "({next_valid_schedules}) and ({visit_allowed})"
+                u"({next_valid_schedules}) and ({visit_allowed})"
             ).format(next_valid_schedules=next_valid_schedules, visit_allowed=visit_allowed)
 
-            partial = """
+            partial = u"""
             <partial>
                 <command id='m1-f{form_num}' relevant="{filter_condition}" />
             </partial>
@@ -343,7 +357,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self._fetch_sources()
         self._apply_schedule_phases()
 
-        current_schedule_phase_partial = """
+        current_schedule_phase_partial = u"""
         <partial>
             <bind type="xs:integer"
                   nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"
@@ -364,7 +378,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
     def test_last_visit_number(self):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
-        last_visit_number_partial = """
+        last_visit_number_partial = u"""
         <partial>
             <bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}"
                   calculate="/data/next_visit_number"
@@ -379,14 +393,14 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_number_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_number_{}"]'
+            (xform_1.model_node.find(u'./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_number_{}"]'
                                      .format(form_id)).render()),
             '.'
         )
 
     def test_last_visit_date(self):
         """ Set the date of the last visit when a form gets submitted """
-        last_visit_date_partial = """
+        last_visit_date_partial = u"""
         <partial>
             <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}"
                   type="xsd:dateTime"
@@ -402,7 +416,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_date_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_date_{}"]'
+            (xform_1.model_node.find(u'./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_date_{}"]'
                                      .format(form_id)).render()),
             '.'
         )

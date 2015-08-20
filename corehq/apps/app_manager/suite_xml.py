@@ -1419,8 +1419,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                             .format(form_name=trans(form["name"], langs=[module.get_app().default_language]),
                                     module_name=module.default_name()))
                     form_xpath = ScheduleFormXPath(form, phase, module)
-                    name = "next_{}".format(form.schedule_form_id)
-                    forms_due.append("${}".format(name))
+                    name = u"next_{}".format(form.schedule_form_id)
+                    forms_due.append(u"${}".format(name))
 
                     # Add an anchor and last_visit variables so we can reference it in the calculation
                     yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
@@ -1435,7 +1435,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     else:
                         yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-            yield DetailVariable(name='next_due', function='date(min({}))'.format(','.join(forms_due)))
+            yield DetailVariable(name='next_due', function=u'date(min({}))'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='$next_due < today()')
 
             if len(forms_due) != len(set(forms_due)):

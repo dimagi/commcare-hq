@@ -345,13 +345,13 @@ class ScheduleFormXPath(object):
         except AttributeError:
             raise ScheduleError("Phase needs an Anchor")
 
-        self.anchor_detail_variable_name = "anchor_{}".format(self.form.schedule_form_id)
+        self.anchor_detail_variable_name = u"anchor_{}".format(self.form.schedule_form_id)
         self.last_visit_detail_variable_name = SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
         self.last_visit_date_detail_variable_name = SCHEDULE_LAST_VISIT_DATE.format(self.form.schedule_form_id)
 
-        self.anchor = "${}".format(self.anchor_detail_variable_name)
-        self.last_visit = "${}".format(self.last_visit_detail_variable_name)
-        self.last_visit_date = "${}".format(self.last_visit_date_detail_variable_name)
+        self.anchor = u"${}".format(self.anchor_detail_variable_name)
+        self.last_visit = u"${}".format(self.last_visit_detail_variable_name)
+        self.last_visit_date = u"${}".format(self.last_visit_date_detail_variable_name)
         self.current_schedule_phase = SCHEDULE_PHASE
 
     @property
@@ -392,7 +392,7 @@ class ScheduleFormXPath(object):
     @property
     def is_unscheduled_visit(self):
         """count(visit[within_window]) = 0"""
-        return XPath("{} = 0".format(
+        return XPath(u"{} = 0".format(
             XPath.count(self.fixture.visit().select_raw(self.within_window()))
         ))
 
@@ -431,10 +431,10 @@ class ScheduleFormXPath(object):
         starts = self.fixture.starts()
 
         return XPath.and_(
-            XPath("today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
+            XPath(u"today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
             XPath.or_(
                 XPath(expires).eq(XPath.string('')),
-                "today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+                u"today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
             )
         )
 
@@ -468,7 +468,7 @@ class ScheduleFormXPath(object):
         """
         before_repeat = XPath.or_(
             XPath('@expires').eq(XPath.string('')),
-            XPath('today() <= ({} + {} + {})'.format(
+            XPath(u'today() <= ({} + {} + {})'.format(
                 XPath.date(self.last_visit_date),
                 XPath.int('@increment'),
                 XPath.int('@expires'))
@@ -476,7 +476,7 @@ class ScheduleFormXPath(object):
         )
         before_standard = XPath.or_(
             XPath('@expires').eq(XPath.string('')),
-            XPath('today() <= ({} + {} + {})'.format(
+            XPath(u'today() <= ({} + {} + {})'.format(
                 XPath.date(self.anchor),
                 XPath.int('@due'),
                 XPath.int('@expires'))
@@ -498,14 +498,14 @@ class ScheduleFormXPath(object):
         )
         """
         within_repeat = XPath.and_(
-            XPath('today() >= ({} + {} + {})'.format(
+            XPath(u'today() >= ({} + {} + {})'.format(
                 XPath.date(self.last_visit_date),
                 XPath.int('@increment'),
                 XPath.int('@starts'),
             )),
             XPath.or_(
                 XPath('@expires').eq(XPath.string('')),
-                XPath('today() <= ({} + {} + {})'.format(
+                XPath(u'today() <= ({} + {} + {})'.format(
                     XPath.date(self.last_visit_date),
                     XPath.int('@increment'),
                     XPath.int('@expires'))
@@ -513,14 +513,14 @@ class ScheduleFormXPath(object):
             )
         )
         within_standard = XPath.and_(
-            XPath('today() >= ({} + {} + {})'.format(
+            XPath(u'today() >= ({} + {} + {})'.format(
                 XPath.date(self.anchor),
                 XPath.int('@due'),
                 XPath.int('@starts'),
             )),
             XPath.or_(
                 XPath('@expires').eq(XPath.string('')),
-                XPath('today() <= ({} + {} + {})'.format(
+                XPath(u'today() <= ({} + {} + {})'.format(
                     XPath.date(self.anchor),
                     XPath.int('@due'),
                     XPath.int('@expires'))
@@ -536,12 +536,12 @@ class ScheduleFormXPath(object):
     def due_first(self):
         """instance(...)/schedule/visit[before_window][1]/@due"""
         due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
-        return "coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
+        return u"coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
 
     def next_visits(self):
         """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
-        next_visits = XPath('@id > {}'.format(self.last_visit))
-        first_visit = XPath("{} = ''".format(self.last_visit))
+        next_visits = XPath(u'@id > {}'.format(self.last_visit))
+        first_visit = XPath(u"{} = ''".format(self.last_visit))
         return XPath.or_(first_visit, next_visits)
 
     def upcoming_scheduled_visits(self):
@@ -557,9 +557,9 @@ class ScheduleFormXPath(object):
         count({upcoming_scheduled_visits} > 0)
         """
         num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
-        num_upcoming_visits_gt_0 = XPath('{} > 0'.format(num_upcoming_visits))
+        num_upcoming_visits_gt_0 = XPath(u'{} > 0'.format(num_upcoming_visits))
         return XPath.or_(
-            XPath("{} = 'True'".format(self.fixture.unscheduled_visits())),
+            XPath(u"{} = 'True'".format(self.fixture.unscheduled_visits())),
             num_upcoming_visits_gt_0
         )
 
@@ -571,7 +571,7 @@ class ScheduleFormXPath(object):
                select_raw("1").
                slash("@due"))
 
-        return ("coalesce({}, {})".format(due, SCHEDULE_MAX_DATE))
+        return (u"coalesce({}, {})".format(due, SCHEDULE_MAX_DATE))
 
     def next_visit_id(self):
         """{visit}/[next_visits][within_window][1]/@id"""
@@ -580,10 +580,10 @@ class ScheduleFormXPath(object):
                 slash("@id"))
 
     def first_due_date(self):
-        return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
+        return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
 
     def due_date(self):
-        return "{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_later()))
+        return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_later()))
 
 
 class QualifiedScheduleFormXPath(ScheduleFormXPath):
