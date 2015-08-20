@@ -25,6 +25,7 @@
             var $XFormManagement = $('#form-management');
             var $allFormsButton = $XFormManagement.find('input[name="select_all"]');
             var $checkboxes = $XFormManagement.find('input.xform-checkbox');
+            var $indicator = $('#count_indicator');
 
             // bindings for 'all' button
             $XFormManagement.find('a.select-visible').click(function () {
@@ -46,6 +47,7 @@
             $checkboxes.on('change', function(){
                 // updates text like '3 of 5 selected'
                 updateFormCounts();
+                $indicator.show();
             })
             $checkboxes.on('click', function(){
                 $allFormsButton.attr('checked', false);
@@ -55,10 +57,12 @@
             $allFormsButton.on('click', function(){
                 if (this.checked) {
                     $checkboxes.attr('checked', true).change();
+                    $indicator.hide();
                     enable_disable_button(1);
                     $(".selectedCount").text({{ total_xForms }});
                 }
                 else {
+                    $indicator.show();
                     $(".selectedCount").text(0);
                     $XFormManagement.find('a.select-none').click();
                     enable_disable_button(0);
@@ -101,8 +105,8 @@
                             Select all {{ total_xForms }} forms
                         </label>
                     </div>
-                    <div>
-                        (<span class="selectedCount">0</span> of {{ total_xForms }} forms selected)
+                    <div id="count_indicator">
+                        (<span class="selectedCount">0</span> forms selected)
                     </div>
                     <input type="hidden" name="mode" value="{{ mode.mode_name }}">
                 </div>
