@@ -19,7 +19,6 @@ from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
