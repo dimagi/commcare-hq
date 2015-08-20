@@ -1,0 +1,8 @@
+<partial>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0" relevant="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/is_awesome = 'yes'"/>
+  </menu>
+</partial>

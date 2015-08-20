@@ -464,6 +464,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
+    def test_usercaseonly_form_filter(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        module = app.add_module(Module.new_module("Untitled Module", None))
+        module.case_type = 'child'
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m1-f0'
+        form.actions.usercase_update = UpdateCaseAction(update={'name': '/data/question1'})
+        form.actions.usercase_update.condition.type = 'always'
+        form.form_filter = "#user/is_awesome = 'yes'"
+
+        self.assertXmlPartialEqual(self.get_xml('usercaseonly_form_filter'), app.create_suite(), "./menu")
+
     def test_open_case_and_subcase(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
