@@ -52,6 +52,7 @@ branches:
   - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
+  - due-list+icds/scheduler # Farid 8/20
   - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - due-list # TS 7/30
