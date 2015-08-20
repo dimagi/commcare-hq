@@ -6,7 +6,8 @@ from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.exceptions import CaseError
-from corehq.apps.app_manager.models import AppEditingError, get_app
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import AppEditingError
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required

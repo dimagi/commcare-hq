@@ -142,13 +142,10 @@ def latest_status(location_id, type, value=None, start_date=None, end_date=None)
 
     if start_date and end_date:
         rr = reporting_window(start_date, end_date)
-        qs = qs.filter(status_date__gt=rr[0], status_date__lte=rr[1])
+        qs = qs.filter(status_date__gt=rr[0], status_date__lte=rr[1]).exclude(status_value="reminder_sent")
 
-    if qs.exclude(status_value="reminder_sent").exists():
-        # HACK around bad data.
-        qs = qs.exclude(status_value="reminder_sent")
     qs = qs.order_by("-status_date")
-    return qs[0] if qs.count() else None
+    return qs.first()
 
 
 def latest_status_or_none(location_id, type, start_date, end_date, value=None):
@@ -164,11 +161,11 @@ def latest_status_or_none(location_id, type, start_date, end_date, value=None):
 def randr_value(location_id, start_date, end_date):
     latest_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
                                           start_date, end_date, value=SupplyPointStatusValues.SUBMITTED)
-    latest_not_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                              start_date, end_date, value=SupplyPointStatusValues.NOT_SUBMITTED)
     if latest_submit:
         return True, latest_submit.status_date
     else:
+        latest_not_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                          start_date, end_date, value=SupplyPointStatusValues.NOT_SUBMITTED)
         return False, latest_not_submit.status_date if latest_not_submit else None
 
 
@@ -205,14 +202,14 @@ def get_last_reported(supplypoint, domain, enddate):
         type='stockonhand',
         report__date__lte=last_bd_of_the_month,
         report__domain=domain
-    ).order_by('-report__date')
+    ).order_by('-report__date').first()
     last_of_last_month = datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
     last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
                                              last_of_last_month.month,
                                              -1), time())
     if st:
-        sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
-        return sts, st[0].report.date.date()
+        sts = _reported_on_time(last_bd_of_last_month, st.report.date)
+        return sts, st.report.date.date()
     else:
         sts = OnTimeStates.NO_DATA
         return sts, None

@@ -24,11 +24,10 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
-from couchdbkit.exceptions import BadValueError, DocTypeError
+from couchdbkit.exceptions import BadValueError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import Http404
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -63,16 +62,16 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
-from corehq.apps.app_manager import current_builds, app_strings, remote_app
-from corehq.apps.app_manager import suite_xml, commcare_settings
+from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
+    id_strings, suite_xml, commcare_settings
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
-    get_correct_app_class,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
-    actions_use_usercase
-)
+    actions_use_usercase,
+    update_unique_ids)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -92,7 +91,6 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
 )
-from corehq.apps.app_manager import id_strings
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
 
@@ -148,6 +146,13 @@ def _rename_key(dct, old, new):
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
+
+
+@memoized
+def load_app_template(slug):
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
+    with open(os.path.join(path, slug + '.json')) as f:
+        return json.load(f)
 
 
 @memoized
@@ -749,8 +754,14 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        if self.post_form_workflow == WORKFLOW_FORM and not self.form_links:
-            errors.append(dict(type="no form links", **meta))
+        if self.post_form_workflow == WORKFLOW_FORM:
+            if not self.form_links:
+                errors.append(dict(type="no form links", **meta))
+            for form_link in self.form_links:
+                try:
+                    self.get_app().get_form(form_link.form_id)
+                except FormNotFoundException:
+                    errors.append(dict(type='bad form link', **meta))
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
@@ -2030,7 +2041,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             either parents of the registration action or else auto-select actions.
             """
             if not tag:
-                return not actions_by_tag or all(a['action'].auto_select for a in actions_by_tag.values())
+                return not actions_by_tag or all(
+                    getattr(a['action'], 'auto_select', False) for a in actions_by_tag.values()
+                )
 
             try:
                 parent = actions_by_tag.pop(tag)
@@ -3250,7 +3263,7 @@ class VersionedDoc(LazyAttachmentDoc):
         application source, such as ids, etc.
 
         """
-        raise NotImplemented()
+        return source
 
     def export_json(self, dump_json=True):
         source = deepcopy(self.to_json())
@@ -3258,11 +3271,12 @@ class VersionedDoc(LazyAttachmentDoc):
             if field in source:
                 del source[field]
         _attachments = {}
-        for name in source.get('_attachments', {}):
+        for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
-                _attachments[name] = self.fetch_attachment(name)
+                _attachments[name] = self.lazy_fetch_attachment(name)
+
         source['_attachments'] = _attachments
-        self.scrub_source(source)
+        source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
 
@@ -3615,7 +3629,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_jar_path(self):
         build = self.get_build()
-        setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
+        setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
         value = self.text_input
         setting_version = setting['since'].get(value)
 
@@ -3907,6 +3921,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    created_from_template = StringProperty()
 
     @property
     @memoized
@@ -4094,7 +4109,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
-        for setting in commcare_settings.SETTINGS:
+        for setting in commcare_settings.get_custom_commcare_settings():
             setting_type = setting['type']
             setting_id = setting['id']
 
@@ -4341,26 +4356,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
-        def change_unique_id(form):
-            unique_id = form['unique_id']
-            new_unique_id = FormBase.generate_id()
-            form['unique_id'] = new_unique_id
-            if ("%s.xml" % unique_id) in source['_attachments']:
-                source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
-            return new_unique_id
-
-        change_unique_id(source['user_registration'])
-        id_changes = {}
-        for m, module in enumerate(source['modules']):
-            for f, form in enumerate(module['forms']):
-                old_id = form['unique_id']
-                new_id = change_unique_id(source['modules'][m]['forms'][f])
-                id_changes[old_id] = new_id
-
-        for reference_path in form_id_references:
-            for reference in reference_path.find(source):
-                if reference.value in id_changes:
-                    jsonpath_update(reference, id_changes[reference.value])
+        return update_unique_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
@@ -4576,7 +4572,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         setting = self.profile.get(s_type, {}).get(s_id)
         if setting is not None:
             return setting
-        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        yaml_setting = commcare_settings.get_commcare_settings_lookup()[s_type][s_id]
         for contingent in yaml_setting.get("contingent_default", []):
             if check_condition(self, contingent["condition"]):
                 setting = contingent["value"]
@@ -4729,9 +4725,6 @@ class RemoteApp(ApplicationBase):
                 files.update({location: data})
         return files
 
-    def scrub_source(self, source):
-        pass
-
     def make_questions_map(self):
         if self.copy_of:
             xmlns_map = {}
@@ -4764,96 +4757,6 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-def get_apps_in_domain(domain, full=False, include_remote=True):
-    """
-    Returns all apps(not builds) in a domain
-
-    full use applications when true, otherwise applications_brief
-    """
-    if full:
-        view_name = 'app_manager/applications'
-        startkey = [domain, None]
-        endkey = [domain, None, {}]
-    else:
-        view_name = 'app_manager/applications_brief'
-        startkey = [domain]
-        endkey = [domain, {}]
-
-    view_results = Application.get_db().view(view_name,
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True,
-    )
-
-    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
-    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
-    return filter(remote_app_filter, wrapped_apps)
-
-
-def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
-    """
-    Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
-    (Application or RemoteApp).
-
-    """
-
-    if latest:
-        try:
-            original_app = get_db().get(app_id)
-        except ResourceNotFound:
-            raise Http404()
-        if not domain:
-            try:
-                domain = original_app['domain']
-            except Exception:
-                raise Http404()
-
-        if original_app.get('copy_of'):
-            parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version'] if original_app.get('is_released') else -1
-        else:
-            parent_app_id = original_app['_id']
-            min_version = -1
-
-        if target == 'build':
-            # get latest-build regardless of star
-            couch_view = 'app_manager/saved_app'
-            startkey = [domain, parent_app_id, {}]
-            endkey = [domain, parent_app_id]
-        else:
-            # get latest starred-build
-            couch_view = 'app_manager/applications'
-            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
-            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
-
-        latest_app = get_db().view(
-            couch_view,
-            startkey=startkey,
-            endkey=endkey,
-            limit=1,
-            descending=True,
-            include_docs=True
-        ).one()
-
-        try:
-            app = latest_app['doc']
-        except TypeError:
-            # If no builds/starred-builds, return act as if latest=False
-            app = original_app
-    else:
-        try:
-            app = get_db().get(app_id)
-        except Exception:
-            raise Http404()
-    if domain and app['domain'] != domain:
-        raise Http404()
-    try:
-        cls = wrap_cls or get_correct_app_class(app)
-    except DocTypeError:
-        raise Http404()
-    app = cls.wrap(app)
-    return app
-
 str_to_cls = {
     "Application": Application,
     "Application-Deleted": Application,
@@ -4862,7 +4765,7 @@ str_to_cls = {
 }
 
 
-def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
         source = get_app(None, app_id)
@@ -4872,20 +4775,24 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
         source = source.export_json()
         source = json.loads(source)
     else:
-        source = app_id_or_source
+        # Don't modify original app source
+        app = Application.wrap(deepcopy(app_id_or_source))
+        source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:
         attachments = {}
     finally:
         source['_attachments'] = {}
-    if name:
-        source['name'] = name
+    if source_properties is not None:
+        for key, value in source_properties.iteritems():
+            source[key] = value
     cls = str_to_cls[source['doc_type']]
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
     app.save()
 
     if not app.is_remote_app():

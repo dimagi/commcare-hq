@@ -40,8 +40,17 @@ REMINDER_SUPERVISION = _(
     "Please reply 'supervision yes' or 'supervision no'"
 )
 
-SOH_HELP_MESSAGE = _("To report stock on hand, send SOH [space] [product code] [space] [amount]")
+SOH_HELP_MESSAGE = _("Please send in your stock on hand information in the format"
+                     " 'soh <product> <amount> <product> <amount>...'")
 SOH_THANK_YOU = _("Thank you for reporting your stock on hand this month")
+SOH_CONFIRM = _(
+    "Thank you. Please send in your adjustments in the format 'la <product> +-<amount> +-<product> +-<amount>...'"
+)
+SOH_PARTIAL_CONFIRM = _(
+    'Thank you %(contact_name)s for reporting your stock on hand for %(facility_name)s.'
+    '  Still missing %(product_list)s.'
+)
+
 
 SUPERVISION_HELP = _(
     "Supervision reminders will come monthly, and you can respond 'supervision yes' "
@@ -65,6 +74,7 @@ SUBMITTED_REMINDER_DISTRICT = _(
 
 NOT_DELIVERED_CONFIRM = _("You have reported that you haven't yet received your delivery.")
 
+DELIVERED_CONFIRM = _("Thank you, you reported a delivery of %(reply_list)s. If incorrect, please resend.")
 DELIVERY_CONFIRM_DISTRICT = _("Thank you %(contact_name)s for reporting your delivery for %(facility_name)s")
 DELIVERY_PARTIAL_CONFIRM = _("To record a delivery, respond with \"delivered product amount product amount...\"")
 DELIVERY_REMINDER_FACILITY = _(
@@ -121,6 +131,16 @@ TEST_HANDLER_HELP = _(
 )
 TEST_HANDLER_BAD_CODE = _("Invalid msd code %(code)s")
 TEST_HANDLER_CONFIRM = _("Sent")
+
+LOSS_ADJUST_HELP = _("Please send in your adjustments in the format "
+                     "'la <product> +-<amount> +-<product> +-<amount>...'")
+LOSS_ADJUST_BAD_FORMAT = _("Sorry, invalid format.  The message should be in the format"
+                           " 'la <product> +-<amount> +-<product> +-<amount>...")
+LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
+                        "Please reply 'supervision yes' or 'supervision no'")
+
+STOCKOUT_CONFIRM = _('Thank you %(contact_name)s '
+                     'for reporting stockouts of %(product_names)s for %(facility_name)s.')
 
 
 # reminder reports

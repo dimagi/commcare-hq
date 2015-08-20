@@ -162,7 +162,7 @@ class InvitationView():
                     domain = Domain.get_by_name(invitation.domain)
                     form = NewWebUserRegistrationForm(initial={
                         'email': invitation.email,
-                        'hr_name': domain.hr_name if domain else invitation.domain,
+                        'hr_name': domain.display_name() if domain else invitation.domain,
                         'create_domain': False
                     })
                 else:

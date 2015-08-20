@@ -21,6 +21,8 @@ from casexml.apps.case.exceptions import (
 )
 from django.conf import settings
 from couchforms.util import is_deprecation
+from couchforms.validators import validate_phone_datetime
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -234,10 +236,7 @@ class CaseDbCache(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock in self.locks:
             if lock:
-                try:
-                    lock.release()
-                except redis.ConnectionError:
-                    pass
+                release_lock(lock, True)
 
     def validate_doc(self, doc):
         if self.domain and doc['domain'] != self.domain:
@@ -264,7 +263,7 @@ class CaseDbCache(object):
             elif self.lock:
                 try:
                     case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.ConnectionError:
+                except redis.RedisError:
                     case_doc = CommCareCase.get(case_id)
                 else:
                     self.locks.append(lock)
@@ -448,7 +447,7 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.form
+        doc = doc.to_json()['form']
 
     return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
 
@@ -476,6 +475,8 @@ def _extract_case_blocks(data, path=None):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
+                        validate_phone_datetime(
+                            case_block.get('@date_modified'), none_ok=True)
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
                 for case_block in _extract_case_blocks(value, path=new_path):

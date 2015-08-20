@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.views.generic.base import TemplateView
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views import DomainViewMixin
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception

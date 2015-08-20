@@ -27,7 +27,12 @@
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no form links" %}
                             {% blocktrans %}
-                            Link to other form is selected, but no form links have been provided
+                            Link to other form is selected, but no form links have been provided.
+                            {% endblocktrans %}
+                            {% include "app_manager/partials/form_error_message.html" %}
+                        {% case "bad form link" %}
+                            {% blocktrans %}
+                            Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no ref detail" %}

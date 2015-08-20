@@ -26,7 +26,8 @@ from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
