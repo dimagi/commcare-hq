@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -30,7 +30,6 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 import re
-import settings
 
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
@@ -66,6 +65,9 @@ class BaseUpdateUserForm(forms.Form):
     @property
     def direct_properties(self):
         return []
+
+    def clean_email(self):
+        return self.cleaned_data['email'].lower()
 
     def update_user(self, existing_user=None, save=True, **kwargs):
         is_update_successful = False
@@ -168,7 +170,7 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     email_opt_out = forms.BooleanField(
         required=False,
-        label=ugettext_noop("Opt out of emails about CommCare updates."),
+        label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
     def __init__(self, *args, **kwargs):
@@ -283,7 +285,7 @@ class CommCareAccountForm(forms.Form):
     max_len_username = 80
 
     username = forms.CharField(max_length=max_len_username, required=True)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
@@ -297,14 +299,6 @@ class CommCareAccountForm(forms.Form):
                 'Create new Mobile Worker account',
                 'username',
                 'password',
-                HTML("{% if only_numeric %}"
-                     "<div class=\"control-group\"><div class=\"controls\">"
-                     "To enable alphanumeric passwords, go to the "
-                     "applications this user will use, go to CommCare "
-                     "Settings, and change Password Format to Alphanumeric."
-                     "</div></div>"
-                     "{% endif %}"
-                ),
                 'password_2',
                 'phone_number',
                 Div(
@@ -339,8 +333,6 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
-            if self.password_format == 'n' and not password.isnumeric():
-                raise forms.ValidationError("Password is not numeric")
 
         try:
             username = self.cleaned_data['username']

@@ -24,7 +24,12 @@ try:
     from .test_get_questions import *
     from .test_repeater import *
     from .test_broken_build import *
+    from .test_translations import *
     from corehq.apps.app_manager.tests.test_case_meta import *
+    from corehq.apps.app_manager.tests.test_case_list_form import *
+    from corehq.apps.app_manager.tests.test_form_workflow import *
+    from corehq.apps.app_manager.tests.test_case_list_lookup import *
+    from corehq.apps.app_manager.tests.test_child_module import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

@@ -49,6 +49,7 @@ class SupervisionData(ILSData):
     slug = 'supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -112,6 +113,7 @@ class DistrictSupervisionData(ILSData):
     slug = 'district_supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -138,7 +140,7 @@ class DistrictSupervisionData(ILSData):
                     total=1
                 )
 
-                if not group_summaries.exists():
+                if not group_summaries:
                     continue
 
                 for group_summary in group_summaries:

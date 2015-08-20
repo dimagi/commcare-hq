@@ -11,6 +11,8 @@ from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
     rebuild_stock_state
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.sofabed.models import FormData
+from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -294,6 +296,16 @@ class RebuildStockStateView(BaseCommTrackManageView):
     page_title = ugettext_noop("Rebuild Stock State")
     template_name = 'commtrack/manage/rebuild_stock_state.html'
 
+    @memoized
+    def get_server_date_by_form_id(self, form_id):
+        server_dates = (FormData.objects.filter(instance_id=form_id)
+                        .values_list('received_on'))
+        if server_dates:
+            (server_date,), = server_dates
+            return ServerTime(server_date).ui_string()
+        else:
+            return None
+
     @property
     def page_context(self, **kwargs):
         stock_state_limit = 100
@@ -317,7 +329,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
         for stock_state_key in stock_state_keys:
             case_id, section_id, product_id = stock_state_key
             actions = [
-                (action.__class__.__name__, action) for action in
+                (
+                    action.__class__.__name__,
+                    action,
+                    self.get_server_date_by_form_id(
+                        action.stock_transaction.report.form_id),
+                ) for action in
                 plan_rebuild_stock_state(case_id, section_id, product_id)
             ]
             stock_transaction_count += len(actions)

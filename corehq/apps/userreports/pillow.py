@@ -1,5 +1,6 @@
 from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
+from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
@@ -12,6 +13,9 @@ from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
 
+REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
+
+
 class ConfigurableIndicatorPillow(PythonPillow):
 
     def __init__(self):
@@ -20,6 +24,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db)
         self.bootstrapped = False
+        self.last_bootstrapped = datetime.utcnow()
 
     def get_all_configs(self):
         return DataSourceConfiguration.all()
@@ -27,6 +32,16 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def run(self):
         self.bootstrap()
         super(ConfigurableIndicatorPillow, self).run()
+
+    def needs_bootstrap(self):
+        return (
+            not self.bootstrapped
+            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=REBUILD_CHECK_INTERVAL)
+        )
+
+    def bootstrap_if_needed(self):
+        if self.needs_bootstrap():
+            self.bootstrap()
 
     def bootstrap(self, configs=None):
         # sets up the initial stuff
@@ -36,6 +51,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         self.table_adapters = [IndicatorSqlAdapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
+        self.last_bootstrapped = datetime.utcnow()
 
     def rebuild_tables_if_necessary(self):
         tables_by_engine = defaultdict(dict)
@@ -64,8 +80,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         return True
 
     def change_trigger(self, changes_dict):
-        if not self.bootstrapped:
-            self.bootstrap()
+        self.bootstrap_if_needed()
         if changes_dict.get('deleted', False):
             # we don't currently support hard-deletions at all.
             # we may want to change this at some later date but seem ok for now.
@@ -83,9 +98,6 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def set_checkpoint(self, change):
         # override this to rebootstrap the tables
         super(ConfigurableIndicatorPillow, self).set_checkpoint(change)
-
-        # todo: may want to consider adjusting the frequency or using another mechanism for this
-        self.bootstrap()
 
 
 class CustomDataSourcePillow(ConfigurableIndicatorPillow):

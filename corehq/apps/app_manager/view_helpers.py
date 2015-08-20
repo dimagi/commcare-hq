@@ -1,7 +1,9 @@
+from django.http import Http404
 from django.views.generic.base import TemplateView
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views import DomainViewMixin
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 
 
 class ApplicationViewMixin(DomainViewMixin):
@@ -24,8 +26,10 @@ class ApplicationViewMixin(DomainViewMixin):
             # if get_app is mainly used for views,
             # maybe it should be a classmethod of this mixin? todo
             return get_app(self.domain, self.app_id)
-        except Exception:
-            pass
+        except Http404 as e:
+            raise e
+        except Exception as e:
+            notify_exception(self.request, message=e.message)
         return None
 
 

@@ -12,7 +12,6 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormDeprecated, XFormInstance, \
     UnfinishedSubmissionStub
 from couchforms.tests.testutils import post_xform_to_couch
-from dimagi.utils.parsing import json_format_datetime
 
 
 def access_edits(**kwargs):
@@ -156,7 +155,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'original value'
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
@@ -178,7 +177,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'edited value'
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         case = CommCareCase.get(case_id)
@@ -197,7 +196,7 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='person',
             version=V2,
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # submit an edit form with a bad case update (for example a bad ID)
@@ -206,7 +205,7 @@ class EditFormTest(TestCase):
             case_id='',
             case_type='person',
             version=V2,
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         form = XFormInstance.get(form_id)
@@ -226,7 +225,7 @@ class EditFormTest(TestCase):
             case_type='person',
             owner_id=owner_id,
             version=V2,
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         create_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -246,7 +245,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'first value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -263,7 +262,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'final value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -282,7 +281,7 @@ class EditFormTest(TestCase):
                 'property': 'edited value',
                 'added_property': 'added value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
 
         # ensure that the middle edit stays in the right place and is applied

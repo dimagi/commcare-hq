@@ -835,7 +835,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     .filter(is_hidden=False))
         return invoices.aggregate(
             total_balance=Sum('balance')
-        ).get('total_balance', 0.00)
+        ).get('total_balance') or 0.00
 
     @property
     def column_names(self):
@@ -1192,15 +1192,13 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @property
     def get_post_form(self):
-        for form_slug in self.slug_to_form:
-            if form_slug in self.request.POST:
-                return self.slug_to_form[form_slug]
+        return self.slug_to_form[self.request.POST.get('slug')]
 
     @property
     @memoized
     def slug_to_form(self):
         def create_form(form_class):
-            if self.request.method == 'POST' and form_class.slug in self.request.POST:
+            if self.request.method == 'POST' and form_class.slug == self.request.POST.get('slug'):
                 return form_class(self.domain, self.request.couch_user.username, self.request.POST)
             return form_class(self.domain, self.request.couch_user.username)
         return {form_class.slug: create_form(form_class) for form_class in self.form_classes}
@@ -2446,9 +2444,10 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     @memoized
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
         return sorted(
-            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
+                for toggle in all_toggles()],
             key=_sort_key,
         )
 

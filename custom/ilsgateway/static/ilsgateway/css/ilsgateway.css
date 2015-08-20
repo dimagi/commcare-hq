@@ -80,12 +80,9 @@ h4.media-heading {
     text-align: center;
 }
 
-.row_chart {
-    height: 530px;
-}
 
 .row_chart > div, .row_chart_all > div {
-    background-color: #f8f8f8;
+    background-color: #EFEDED;
     margin-left: 0 !important;
 }
 
@@ -95,4 +92,17 @@ h4.media-heading {
 
 .dataTables_scrollHeadInner, .dataTable {
     width: 100% !important;
+}
+
+.dataTables_filter {
+    display: none;
+}
+
+.searchable {
+    height: 60px;
+    line-height: 3;
+}
+
+.searchable input {
+    margin-top: 10px;
 }

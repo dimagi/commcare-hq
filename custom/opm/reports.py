@@ -43,8 +43,8 @@ from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, get_matching_users, UserSqlData)
-from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
+from .utils import (BaseMixin, get_matching_users)
+from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
 from .health_status import AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
@@ -449,7 +449,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             try:
                 case = self.get_row_data(row)
                 if self.include_out_of_range_cases or not case.case_is_out_of_range:
-                    rows.append(self.get_row_data(row))
+                    rows.append(case)
                 else:
                     if self.debug:
                         self._debug_data.append({
@@ -664,7 +664,9 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         if len(rows) == 1:
             return rows[0]
         def zip_fn((i, values)):
-            if isinstance(values[0], int):
+            if i == self.column_index('num_children'):
+                return values[0]
+            elif isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
                 unique_values = set(v for v in values if v is not None)
@@ -690,6 +692,7 @@ class MetReport(CaseReportMixin, BaseReport):
     exportable = False
     default_rows = 5
     cache_key = 'opm-report'
+    show_total = True
 
     @property
     def row_objects(self):
@@ -698,12 +701,10 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['awc']: user['awc_code']
-                     for user in UserSqlData().get_data()}
         total_payment = 0
         for index, row in enumerate(self.get_rows(), 1):
             try:
-                case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
+                case_row = self.get_row_data(row, index=1)
                 if not case_row.case_is_out_of_range:
                     total_payment += case_row.cash_amt
                     rows.append(case_row)
@@ -720,10 +721,10 @@ class MetReport(CaseReportMixin, BaseReport):
             except InvalidRow as e:
                 if self.debug:
                     self.add_debug_data(row._id, e)
-
-        self.total_row = ["" for __ in self.model.method_map]
-        self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
+        if self.show_total:
+            self.total_row = ["" for __ in self.model.method_map]
+            self.total_row[0] = _("Total Payment")
+            self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
 
     def add_debug_data(self, row_id, e):
@@ -737,7 +738,7 @@ class MetReport(CaseReportMixin, BaseReport):
         })
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
+        return self.model(row, self, child_index=kwargs.get('index', 1))
 
     def get_rows(self):
         result = super(MetReport, self).get_rows()
@@ -784,8 +785,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
 
         cache = get_redis_client()
-        if cache.exists(self.redis_key):
-            rows = pickle.loads(cache.get(self.redis_key))
+        value = cache.get(self.redis_key)
+        if value is not None:
+            rows = pickle.loads(value)
         else:
             rows = self.rows
 
@@ -1052,18 +1054,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     @property
     @memoized
-    def users_matching_filter(self):
-        config = {}
-        for lvl in ['awc', 'gp', 'block']:
-            req_prop = 'hierarchy_%s' % lvl
-            request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == ALL_OPTION:
-                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
-                break
-        return UsersIdsData(config=config).get_data()
-
-    @property
-    @memoized
     def awc_data(self):
         """
         Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
@@ -1143,8 +1133,9 @@ class HealthMapSource(NewHealthStatusReport):
     @property
     @memoized
     def get_users(self):
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
         config = {
-            'awc': tuple(self.awcs),
+            'awc': tuple(awcs),
             'gp': tuple(self.gp),
             'block': tuple(self.blocks)
         }
@@ -1349,3 +1340,30 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         self.override_template = "opm/map_template.html"
 
         return HttpResponse(self._async_context()['report'])
+
+
+class LongitudinalCMRReport(MetReport):
+    name = "Longitudinal CMR"
+    slug = 'longitudinal_cmr'
+    model = LongitudinalConditionsMet
+    show_total = False
+    exportable = True
+    export_format_override = Format.XLS
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s&is_open=%s" % (
+            self.blocks,
+            self.gp,
+            self.awcs,
+            self.request_params.get('is_open')
+        )
+        return redis_key

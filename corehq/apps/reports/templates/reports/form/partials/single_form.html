@@ -198,7 +198,7 @@ requires imports/proptable.html to be included in the main template
             {% if show_edit_options %}
                 {% if show_edit_submission %}
                         <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
-                            <i class="icon-edit"></i> {% trans "Edit submission" %}
+                            <i class="icon-edit"></i> {% trans "Edit this form" %}
                         </a>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
@@ -210,6 +210,18 @@ requires imports/proptable.html to be included in the main template
                     ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
+                        <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
+                    </button>
+                </form>
+                {% elif edit_info.was_edited %}
+                <form action="{% url "restore_edit" domain instance.get_id %}" method="POST" id="archive-form">
+                    <span class="hq-help-template"
+                        data-title="{% trans "Restoring Edited Forms" %}"
+                        data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
+                        data-placement="left"
+                    ></span>
+                    <button type="submit" class="btn btn-danger" id="archive-form-btn">
+                        {% trans "Restore this version" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
