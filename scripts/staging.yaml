@@ -51,7 +51,7 @@ branches:
 #  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
   - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
-#  - FormArchive # Sravan 7/22
+  - FormArchive # Sravan 7/22
 #  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - due-list # TS 7/30
