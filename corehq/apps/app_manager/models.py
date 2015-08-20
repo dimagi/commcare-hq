@@ -90,6 +90,7 @@ from .exceptions import (
     XFormException,
     XFormIdNotUnique,
     XFormValidationError,
+    ScheduleError,
 )
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
@@ -579,13 +580,26 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
-class ScheduleVisit(DocumentSchema):
+class ScheduleVisit(IndexedSchema):
     """
     due:         Days after the anchor date that this visit is due
-    late_window: Days after the due day that this visit is valid until
+    starts:      Days before the due date that this visit is valid from
+    expires:     Days after the due date that this visit is valid until (optional)
+
+    repeats:     Whether this is a repeat visit (one per form allowed)
+    increment:   Days after the last visit that the repeat visit occurs
     """
     due = IntegerProperty()
-    late_window = IntegerProperty()
+    starts = IntegerProperty()
+    expires = IntegerProperty()
+    repeats = BooleanProperty(default=False)
+    increment = IntegerProperty()
+
+    @property
+    def id(self):
+        """Visits are 1-based indexed"""
+        _id = super(ScheduleVisit, self).id
+        return _id + 1
 
 
 class FormLink(DocumentSchema):
@@ -599,17 +613,19 @@ class FormLink(DocumentSchema):
 
 class FormSchedule(DocumentSchema):
     """
-    anchor:                     Case property containing a date after which this schedule becomes active
-    expiry:                     Days after the anchor date that this schedule expires (optional)
-    visit_list:                 List of visits in this schedule
-    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
-    transition_condition:       Condition under which the schedule transitions to the next phase
-    termination_condition:      Condition under which the schedule terminates
+    starts:                     Days after the anchor date that this schedule starts
+    expires:                    Days after the anchor date that this schedule expires (optional)
+    visits:		        List of visits in this schedule
+    allow_unscheduled:          Allow unscheduled visits in this schedule
+    transition_condition:       Condition under which we transition to the next phase
+    termination_condition:      Condition under which we terminate the whole schedule
     """
-    anchor = StringProperty()
+    starts = IntegerProperty()
     expires = IntegerProperty()
+    allow_unscheduled = BooleanProperty(default=False)
     visits = SchemaListProperty(ScheduleVisit)
-    post_schedule_increment = IntegerProperty()
+    get_visits = IndexedSchema.Getter('visits')
+
     transition_condition = SchemaProperty(FormActionCondition)
     termination_condition = SchemaProperty(FormActionCondition)
 
@@ -685,6 +701,9 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
+    def _pre_delete_hook(self):
+        raise NotImplementedError()
 
     @property
     def schedule_form_id(self):
@@ -1527,6 +1546,13 @@ class ParentSelect(DocumentSchema):
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
 
+class FixtureSelect(DocumentSchema):
+    active = BooleanProperty(default=False)
+    fixture_type = StringProperty()
+    display_column = StringProperty()
+    variable_column = StringProperty()
+    xpath = StringProperty(default='')
+
 
 class DetailPair(DocumentSchema):
     short = SchemaProperty(Detail)
@@ -1555,6 +1581,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
     root_module_id = StringProperty()
+    fixture_select = SchemaProperty(FixtureSelect)
 
     @classmethod
     def wrap(cls, data):
@@ -2014,6 +2041,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return super(AdvancedForm, cls).wrap(data)
 
+    def _pre_delete_hook(self):
+        try:
+            self.get_phase().remove_form(self)
+        except (ScheduleError, TypeError):
+            pass
+
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
@@ -2084,6 +2117,20 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def all_other_forms_require_a_case(self):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+
+    def get_module(self):
+        return self._parent
+
+    def get_phase(self):
+        module = self.get_module()
+
+        if not module.has_schedule:
+            raise TypeError("The module this form is in has no schedule")
+
+        return next((phase for phase in module.get_schedule_phases()
+                     for form in phase.get_forms()
+                     if form.unique_id == self.unique_id),
+                    None)
 
     def check_actions(self):
         errors = []
@@ -2165,7 +2212,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and not (self.schedule and self.schedule.anchor):
+        if module.has_schedule and (not self.schedule or not self.get_phase()):
             error = {
                 'type': 'validation error',
                 'validation_message': _("All forms in this module require a visit schedule.")
@@ -2257,6 +2304,89 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class SchedulePhaseForm(IndexedSchema):
+    """
+    A reference to a form in a schedule phase.
+    """
+    form_id = FormIdProperty("modules[*].schedule_phases[*].forms[*].form_id")
+
+
+class SchedulePhase(IndexedSchema):
+    """
+    SchedulePhases are attached to a module.
+    A Schedule Phase is a grouping of forms that occur within a period and share an anchor
+    A module should not have more than one SchedulePhase with the same anchor
+
+    anchor:                     Case property containing a date after which this phase becomes active
+    forms: 			The forms that are to be filled out within this phase
+    """
+    anchor = StringProperty()
+    forms = SchemaListProperty(SchedulePhaseForm)
+
+    @property
+    def id(self):
+        """ A Schedule Phase is 1-indexed """
+        _id = super(SchedulePhase, self).id
+        return _id + 1
+
+    @property
+    def phase_id(self):
+        return "{}_{}".format(self.anchor, self.id)
+
+    def get_module(self):
+        return self._parent
+
+    _get_forms = IndexedSchema.Getter('forms')
+
+    def get_forms(self):
+        """Returns the actual form objects related to this phase"""
+        module = self.get_module()
+        return (module.get_form_by_unique_id(form.form_id) for form in self._get_forms())
+
+    def get_form(self, desired_form):
+        return next((form for form in self.get_forms() if form.unique_id == desired_form.unique_id), None)
+
+    def get_phase_form_index(self, form):
+        """
+        Returns the index of the form with respect to the phase
+
+        schedule_phase.forms = [a,b,c]
+        schedule_phase.get_phase_form_index(b)
+        => 1
+        schedule_phase.get_phase_form_index(c)
+        => 2
+        """
+        return next((phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id),
+                    None)
+
+    def remove_form(self, form):
+        """
+        Remove a form from the phase
+
+        If this results in an empty phase, delete the phase
+        """
+        idx = self.get_phase_form_index(form)
+        if idx is None:
+            raise ScheduleError("That form doesn't exist in the phase")
+
+        self.forms.remove(self.forms[idx])
+
+        if len(self.forms) == 0:
+            # I'm useless now
+            self.get_module().schedule_phases.remove(self)
+
+    def add_form(self, form):
+        """
+        Adds a form to this phase, removing it from other phases
+        """
+        old_phase = form.get_phase()
+        if old_phase is not None and old_phase.anchor != self.anchor:
+            old_phase.remove_form(form)
+
+        if self.get_form(form) is None:
+            self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
+
+
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
@@ -2266,6 +2396,8 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
+    schedule_phases = SchemaListProperty(SchedulePhase)
+    get_schedule_phases = IndexedSchema.Getter('schedule_phases')
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2308,6 +2440,7 @@ class AdvancedModule(ModuleBase):
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
         if self.has_schedule:
+            # TODO: verify that this is what we want to have happen here
             form.schedule = FormSchedule()
 
         self.forms.append(form)
@@ -2530,6 +2663,22 @@ class AdvancedModule(ModuleBase):
         the usercase, return True.
         """
         return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
+
+    def get_or_create_schedule_phase(self, anchor):
+        """Returns a tuple of (phase, new?)"""
+        if anchor is None or anchor.strip() == '':
+            raise ScheduleError(_("You can't create a phase without an anchor property"))
+
+        phase = next((phase for phase in self.get_schedule_phases() if phase.anchor == anchor), None)
+        is_new_phase = False
+
+        if phase is None:
+            self.schedule_phases.append(SchedulePhase(anchor=anchor))
+            # TODO: is there a better way of doing this?
+            phase = list(self.get_schedule_phases())[-1]  # get the phase from the module so we know the _parent
+            is_new_phase = True
+
+        return (phase, is_new_phase)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -4324,6 +4473,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             datetime=datetime.utcnow(),
         )
         record.save()
+
+        try:
+            form._pre_delete_hook()
+        except NotImplementedError:
+            pass
+
         del module['forms'][form.id]
         return record
 

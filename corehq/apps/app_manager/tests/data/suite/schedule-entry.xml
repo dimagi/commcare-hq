@@ -6,11 +6,20 @@
             </text>
         </title>
         <variables>
-            <next_a1e369 function="if(current_schedule_phase = '', date(edd) + int(instance('schedule:m1:f0')/schedule/visit[@late_window = '' or today() &lt;= (date(edd) + int(@due) + int(@late_window))][1]/@due), if(current_schedule_phase = 1 and edd != '' and (instance('schedule:m1:f0')/schedule/@expires = '' or today() &lt; (date(edd) + instance('schedule:m1:f0')/schedule/@expires)), date(edd) + int(instance('schedule:m1:f0')/schedule/visit[@id &gt; last_visit_number_a1e369][@late_window = '' or today() &lt;= (date(edd) + int(@due) + int(@late_window))][1]/@due), 0))"/>
-            <next_a983e9 function="if(current_schedule_phase = 2 and dob != '' and (instance('schedule:m1:f1')/schedule/@expires = '' or today() &lt; (date(dob) + instance('schedule:m1:f1')/schedule/@expires)), date(dob) + int(instance('schedule:m1:f1')/schedule/visit[@id &gt; last_visit_number_a983e9][@late_window = '' or today() &lt;= (date(dob) + int(@due) + int(@late_window))][1]/@due), 0)"/>
-            <next_39f0ea function="if(current_schedule_phase = 3 and dob != '' and (instance('schedule:m1:f2')/schedule/@expires = '' or today() &lt; (date(dob) + instance('schedule:m1:f2')/schedule/@expires)), date(dob) + int(instance('schedule:m1:f2')/schedule/visit[@id &gt; last_visit_number_39f0ea][@late_window = '' or today() &lt;= (date(dob) + int(@due) + int(@late_window))][1]/@due), 0)"/>
-            <next_due function="min(next_a1e369,next_a983e9,next_39f0ea)"/>
-            <is_late function="next_due &lt; today()"/>
+            <anchor_a1e369 function="edd"/>
+            <last_visit_number_a1e369 function="last_visit_number_a1e369"/>
+            <last_visit_date_a1e369 function="last_visit_date_a1e369"/>
+            <next_a1e369 function="if(current_schedule_phase = '' and $anchor_a1e369 != '' and (today() &gt;= (date($anchor_a1e369) + int(instance('schedule:m1:p1:f0')/schedule/@starts)) and (instance('schedule:m1:p1:f0')/schedule/@expires = '' or today() &lt;= (date($anchor_a1e369) + int(instance('schedule:m1:p1:f0')/schedule/@expires)))), date($anchor_a1e369) + int(coalesce(instance('schedule:m1:p1:f0')/schedule/visit[if(@repeats = 'True', @expires = '' or today() &lt;= (date($last_visit_date_a1e369) + int(@increment) + int(@expires)), @expires = '' or today() &lt;= (date($anchor_a1e369) + int(@due) + int(@expires)))][1]/@due, 2147483647)), if(current_schedule_phase = 1 and $anchor_a1e369 != '' and (today() &gt;= (date($anchor_a1e369) + int(instance('schedule:m1:p1:f0')/schedule/@starts)) and (instance('schedule:m1:p1:f0')/schedule/@expires = '' or today() &lt;= (date($anchor_a1e369) + int(instance('schedule:m1:p1:f0')/schedule/@expires)))), date($anchor_a1e369) + int(coalesce(instance('schedule:m1:p1:f0')/schedule/visit[$last_visit_number_a1e369 = '' or @id &gt; $last_visit_number_a1e369][if(@repeats = 'True', @expires = '' or today() &lt;= (date($last_visit_date_a1e369) + int(@increment) + int(@expires)), @expires = '' or today() &lt;= (date($anchor_a1e369) + int(@due) + int(@expires)))][1]/@due, 2147483647)), 2147483647))"/>
+            <anchor_a983e9 function="edd"/>
+            <last_visit_number_a983e9 function="last_visit_number_a983e9"/>
+            <last_visit_date_a983e9 function="last_visit_date_a983e9"/>
+            <next_a983e9 function="if(current_schedule_phase = '' and $anchor_a983e9 != '' and (today() &gt;= (date($anchor_a983e9) + int(instance('schedule:m1:p1:f1')/schedule/@starts)) and (instance('schedule:m1:p1:f1')/schedule/@expires = '' or today() &lt;= (date($anchor_a983e9) + int(instance('schedule:m1:p1:f1')/schedule/@expires)))), date($anchor_a983e9) + int(coalesce(instance('schedule:m1:p1:f1')/schedule/visit[if(@repeats = 'True', @expires = '' or today() &lt;= (date($last_visit_date_a983e9) + int(@increment) + int(@expires)), @expires = '' or today() &lt;= (date($anchor_a983e9) + int(@due) + int(@expires)))][1]/@due, 2147483647)), if(current_schedule_phase = 1 and $anchor_a983e9 != '' and (today() &gt;= (date($anchor_a983e9) + int(instance('schedule:m1:p1:f1')/schedule/@starts)) and (instance('schedule:m1:p1:f1')/schedule/@expires = '' or today() &lt;= (date($anchor_a983e9) + int(instance('schedule:m1:p1:f1')/schedule/@expires)))), date($anchor_a983e9) + int(coalesce(instance('schedule:m1:p1:f1')/schedule/visit[$last_visit_number_a983e9 = '' or @id &gt; $last_visit_number_a983e9][if(@repeats = 'True', @expires = '' or today() &lt;= (date($last_visit_date_a983e9) + int(@increment) + int(@expires)), @expires = '' or today() &lt;= (date($anchor_a983e9) + int(@due) + int(@expires)))][1]/@due, 2147483647)), 2147483647))"/>
+            <anchor_39f0ea function="dob"/>
+            <last_visit_number_39f0ea function="last_visit_number_39f0ea"/>
+            <last_visit_date_39f0ea function="last_visit_date_39f0ea"/>
+            <next_39f0ea function="if(current_schedule_phase = 2 and $anchor_39f0ea != '' and (today() &gt;= (date($anchor_39f0ea) + int(instance('schedule:m1:p2:f0')/schedule/@starts)) and (instance('schedule:m1:p2:f0')/schedule/@expires = '' or today() &lt;= (date($anchor_39f0ea) + int(instance('schedule:m1:p2:f0')/schedule/@expires)))), date($anchor_39f0ea) + int(coalesce(instance('schedule:m1:p2:f0')/schedule/visit[$last_visit_number_39f0ea = '' or @id &gt; $last_visit_number_39f0ea][if(@repeats = 'True', @expires = '' or today() &lt;= (date($last_visit_date_39f0ea) + int(@increment) + int(@expires)), @expires = '' or today() &lt;= (date($anchor_39f0ea) + int(@due) + int(@expires)))][1]/@due, 2147483647)), 2147483647)"/>
+            <next_due function="date(min($next_a1e369,$next_a983e9,$next_39f0ea))"/>
+            <is_late function="$next_due &lt; today()"/>
         </variables>
         <field>
             <header>
@@ -37,7 +46,7 @@
             </header>
             <template>
                 <text>
-                    <xpath function="nextdue"/>
+                    <xpath function="$nextdue"/>
                 </text>
             </template>
         </field>
