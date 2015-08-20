@@ -509,6 +509,26 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
+    def test_fixture_to_case_selection(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app.build_spec.version = '2.9'
+
+        module = app.add_module(Module.new_module('my_module', None))
+        module.case_type = 'cases'
+
+        module.fixture_select.active = True
+        module.fixture_select.fixture_type = 'days'
+        module.fixture_select.display_column = 'my_display_column'
+        module.fixture_select.variable_column = 'my_variable_column'
+        module.fixture_select.xpath = '$fixture_value > 3'
+
+        form = app.new_form(0, 'my_form', lang='en')
+        form.unique_id = 'form_1'
+        form.requires = 'case'
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), app.create_suite())
+
+
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
