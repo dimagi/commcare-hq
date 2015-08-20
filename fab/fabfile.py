@@ -159,7 +159,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M'))
+    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time())))
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
