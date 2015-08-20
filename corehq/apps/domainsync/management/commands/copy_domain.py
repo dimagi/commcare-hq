@@ -1,4 +1,3 @@
-import logging
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -7,7 +6,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from http_parser.http import ParserError
 from restkit import RequestError
-from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.dates import iso_string_to_date
@@ -15,7 +13,8 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
 from optparse import make_option
-from datetime import datetime
+from corehq.util.soft_assert.api import soft_assert
+_soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com')
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
@@ -168,7 +167,6 @@ class Command(BaseCommand):
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
-        assert len(set(doc_ids)) == total
         count = 0
         msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (type) if type else ""
@@ -247,14 +245,16 @@ class Worker(Process):
                             try:
                                 dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
                                 break
-                            except RequestError:
+                            except RequestError as r:
                                 if i == 0:
+                                    _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(r))
                                     raise
                         for i in reversed(range(5)):
                             try:
                                 save(dt, self.targetdb)
-                            except (ResourceConflict, ParserError, TypeError):
+                            except (ResourceConflict, ParserError, TypeError) as e:
                                 if i == 0:
+                                    _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(e))
                                     raise
                     print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:
