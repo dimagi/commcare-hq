@@ -838,3 +838,20 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
+
+
+@require_superuser
+def malt_as_csv(request):
+    from django.core.exceptions import ValidationError
+    from corehq.apps.data_analytics.views import malt_csv_response
+
+    if 'year_month' in request.GET:
+        try:
+            year, month = request.GET['year_month'].split('-')
+            year, month = int(year), int(month)
+            return malt_csv_response(month, year)
+        except ValueError, VaidationError:
+            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+            return render(request, "hqadmin/malt_downloader.html")
+    else:
+        return render(request, "hqadmin/malt_downloader.html")
