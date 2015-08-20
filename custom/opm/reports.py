@@ -1133,8 +1133,9 @@ class HealthMapSource(NewHealthStatusReport):
     @property
     @memoized
     def get_users(self):
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
         config = {
-            'awc': tuple(self.awcs),
+            'awc': tuple(awcs),
             'gp': tuple(self.gp),
             'block': tuple(self.blocks)
         }
