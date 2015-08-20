@@ -53,6 +53,8 @@ class DataTablesColumn(object):
             aoColumns["bVisible"] = self.visible
         if self.data_slug:
             aoColumns['mDataProp'] = self.data_slug
+        if self.data_slug:
+            aoColumns['sClass'] = self.data_slug # make sure this is the same as the column_id
         return aoColumns
 
 

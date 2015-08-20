@@ -86,6 +86,14 @@
             });
             event.preventDefault();
             reportTables.render();
+            setInterval(function () {
+                _.each($('td.y_num'), function (elem) { // reference the column_id
+                    var $elem = $(elem)[0];
+                    if($elem.innerHTML == '1') { // store comparator (and have a 'comparator'->func mapping) and value
+                        $elem.setAttribute('style', 'background-color: pink');  // store a dict of prop_name -> value
+                    }
+                });
+            }, 100);
         });
 
         $(function() {
