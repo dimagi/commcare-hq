@@ -32,8 +32,9 @@
         home: $('#visit-scheduler'),
         questions: {{ xform_questions|JSON }},
         save_url: "{% url "corehq.apps.app_manager.views.edit_visit_schedule" app.domain app.id module.id nav_form.id %}",
-    	schedule: {{ form.schedule|JSON }},
-    	phase: {{ schedule_phase|JSON }}
+        schedule: {{ form.schedule|JSON }},
+        schedule_form_id: {{ schedule_form_id|JSON }},
+        phase: {{ schedule_phase|JSON }}
     });
     visitScheduler.init();
     {% endif %}

@@ -7,9 +7,20 @@
         <div data-bind="saveButton: saveButton"></div>
         <!--ko with: formSchedule -->
         <fieldset>
-            <legend>{% trans "Schedule Anchor Date" %}</legend>
+            <legend>{% trans "Form Settings" %}</legend>
             <div class="controls">
-                <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
+                <label>
+                    {% trans "Form abbreviation" %}
+                    <input type="text" id="schedule_form_id"
+                           placeholder="Form Abbreviation"
+                           data-bind="value: schedule_form_id">
+                </label>
+            </div>
+            <div class="controls">
+                <label>
+                    {% trans "Schedule Anchor Date" %}
+                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
+                </label>
             </div>
         </fieldset>
         <fieldset>

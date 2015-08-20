@@ -1413,6 +1413,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                     <last_visit_date_{form_id} function="{last_visit_date}"/>
                     <next_{form_id} function={phase_set}/>
                     """
+                    if not form.schedule_form_id:
+                        raise ScheduleError(
+                            _("Form '{form_name}' in module '{module_name}' is missing an abbreviation")
+                            .format(form_name=trans(form["name"], langs=[module.get_app().default_language]),
+                                    module_name=module.default_name()))
                     form_xpath = ScheduleFormXPath(form, phase, module)
                     name = "next_{}".format(form.schedule_form_id)
                     forms_due.append("${}".format(name))
@@ -1432,6 +1437,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             yield DetailVariable(name='next_due', function='date(min({}))'.format(','.join(forms_due)))
             yield DetailVariable(name='is_late', function='$next_due < today()')
+
+            if len(forms_due) != len(set(forms_due)):
+                raise ScheduleError(_("Your app has multiple forms with the same schedule abbreviation"))
 
     @staticmethod
     def detail_variables(module, detail, detail_column_infos):

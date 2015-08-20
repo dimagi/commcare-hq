@@ -40,7 +40,8 @@ var VisitScheduler = (function () {
         };
 
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
-        self.formSchedule = FormSchedule.wrap(params.schedule, self, self.schedulePhase);
+        self.formSchedule = FormSchedule.wrap(params.schedule, self, self.schedulePhase, params.schedule_form_id);
+
 
         self.init = function () {
             _.defer(function () {
@@ -134,7 +135,8 @@ var VisitScheduler = (function () {
                     'expires',
                     'allow_unscheduled',
                     'transition_condition',
-                    'termination_condition'
+                    'termination_condition',
+                    'schedule_form_id'
                 ],
                 visits: {
                     create: function (options) {
@@ -145,7 +147,7 @@ var VisitScheduler = (function () {
                 }
             };
         },
-        wrap: function (data, config, phase) {
+        wrap: function (data, config, phase, schedule_form_id) {
             var self = {
                 config: config
             };
@@ -175,6 +177,7 @@ var VisitScheduler = (function () {
             self.phase = phase;
 
             self.relevancy = ScheduleRelevancy.wrap(data);
+            self.schedule_form_id = ko.observable(schedule_form_id);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
@@ -232,6 +235,7 @@ var VisitScheduler = (function () {
             }
 
             schedule.anchor = self.phase.anchor();
+            schedule.schedule_form_id = self.schedule_form_id();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? -1 : 1);
                 var repeats = visit.type === 'repeats';

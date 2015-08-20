@@ -654,6 +654,7 @@ class FormBase(DocumentSchema):
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
+    schedule_form_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -704,10 +705,6 @@ class FormBase(DocumentSchema):
 
     def _pre_delete_hook(self):
         raise NotImplementedError()
-
-    @property
-    def schedule_form_id(self):
-        return self.unique_id[:6]
 
     def wrapped_xform(self):
         return XForm(self.source)
