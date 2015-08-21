@@ -1,39 +1,24 @@
-from corehq.apps.app_manager.const import APP_V2, USERCASE_TYPE, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction, AdvancedModule, \
-    LoadUpdateAction, AdvancedOpenCaseAction, AutoSelectCase
+from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.models import Application, Module, AdvancedModule, LoadUpdateAction, \
+    AdvancedOpenCaseAction, AutoSelectCase
 from django.test import SimpleTestCase
-from mock import patch
 
 
 class ModuleTests(SimpleTestCase):
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-        self.is_usercase_in_use_mock.return_value = True
-
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         self.module = self.app.add_module(Module.new_module('Untitled Module', None))
         self.module.case_type = 'another_case_type'
         self.form = self.module.new_form("Untitled Form", None)
 
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
-
 
 class AdvancedModuleTests(SimpleTestCase):
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-        self.is_usercase_in_use_mock.return_value = True
-
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         self.module = self.app.add_module(AdvancedModule.new_module('Untitled Module', None))
         self.form = self.module.new_form("Untitled Form", None)
-
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
 
     def test_registration_form_simple(self):
         self.form.actions.open_cases = [

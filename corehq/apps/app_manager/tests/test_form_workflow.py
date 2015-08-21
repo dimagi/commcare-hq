@@ -1,6 +1,5 @@
 import copy
 from django.test import SimpleTestCase
-from mock import patch
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import WORKFLOW_FORM, FormLink, AdvancedOpenCaseAction, OpenCaseAction, \
     AdvancedModule, Application, Module, UpdateCaseAction, LoadUpdateAction, OpenSubCaseAction, FormActionCondition, \
@@ -35,14 +34,8 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.models_is_usercase_in_use_patch.start()
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
-        self.suite_xml_is_usercase_in_use_patch.start()
 
     def tearDown(self):
-        self.models_is_usercase_in_use_patch.stop()
-        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):

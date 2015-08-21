@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase
-from mock import patch
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import FormActionCondition, OpenSubCaseAction, UpdateCaseAction, ParentSelect, \
     PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application
@@ -14,11 +13,6 @@ class ModuleAsChildTestBase(TestFileMixin):
     child_module_class = None
 
     def setUp(self):
-        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
-        self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
-
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
         update_toggle_cache(MODULE_FILTER.slug, self.app.domain, True, NAMESPACE_DOMAIN)
         self.module_0 = self.app.add_module(Module.new_module('parent', None))
@@ -30,8 +24,6 @@ class ModuleAsChildTestBase(TestFileMixin):
             self.app.new_form(m_id, "Form", None)
 
     def tearDown(self):
-        self.models_is_usercase_in_use_patch.stop()
-        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def _load_case(self, child_module_form, case_type, parent_module=None):
@@ -252,8 +244,6 @@ class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
 
     def setUp(self):
         super(UserCaseOnlyModuleAsChildTest, self).setUp()
-        self.models_is_usercase_in_use_mock.return_value = True
-        self.suite_xml_is_usercase_in_use_mock.return_value = True
 
     def test_child_module_session_datums_added(self):
         self.module_1.root_module_id = self.module_0.unique_id

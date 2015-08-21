@@ -10,13 +10,6 @@ from mock import patch
 class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'case_list_form')
 
-    def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
-        self.is_usercase_in_use_patch.start()
-
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
-
     def _prep_case_list_form_app(self):
         factory = AppFactory(build_version='2.9')
 
