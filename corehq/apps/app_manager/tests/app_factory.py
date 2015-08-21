@@ -117,3 +117,17 @@ class AppFactory(object):
                 action.parent_tag = form.actions.load_update_cases[-1].case_tag
 
             form.actions.open_cases.append(action)
+
+    @staticmethod
+    def advanced_form_autoloads(form, mode, value_key, value_source=None):
+        """See corehq.apps.app_manager.models.AutoSelectCase
+        """
+        assert isinstance(form, AdvancedForm)
+        form.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='auto_select_{}'.format(mode),
+            auto_select=AutoSelectCase(
+                mode=mode,
+                value_source=value_source,
+                value_key=value_key
+            )
+        ))
