@@ -850,7 +850,7 @@ def malt_as_csv(request):
             year, month = request.GET['year_month'].split('-')
             year, month = int(year), int(month)
             return malt_csv_response(month, year)
-        except ValueError, VaidationError:
+        except (ValueError, ValidationError):
             messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
             return render(request, "hqadmin/malt_downloader.html")
     else:
