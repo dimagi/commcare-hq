@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
-    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application
+    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
+    AutoSelectCase
 
 
 class AppFactory(object):
@@ -26,7 +27,7 @@ class AppFactory(object):
 
         self.slugs = {}
 
-    def new_module(self, ModuleClass, slug, case_type, with_form=True):
+    def new_module(self, ModuleClass, slug, case_type, with_form=True, parent_module=None):
         if slug in self.slugs:
             raise Exception("duplicate slug")
 
@@ -34,15 +35,18 @@ class AppFactory(object):
         module.unique_id = '{}_module'.format(slug)
         module.case_type = case_type
 
+        if parent_module:
+            module.root_module_id = parent_module if isinstance(parent_module, basestring) else parent_module.unique_id
+
         self.slugs[module.unique_id] = slug
 
         return (module, self.new_form(module)) if with_form else module
 
-    def new_basic_module(self, slug, case_type, with_form=True):
-        return self.new_module(Module, slug, case_type, with_form)
+    def new_basic_module(self, slug, case_type, with_form=True, parent_module=None):
+        return self.new_module(Module, slug, case_type, with_form, parent_module)
 
-    def new_advanced_module(self, slug, case_type, with_form=True):
-        return self.new_module(AdvancedModule, slug, case_type, with_form)
+    def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None):
+        return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module)
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
