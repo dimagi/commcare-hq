@@ -27,7 +27,7 @@ class AppFactory(object):
 
         self.slugs = {}
 
-    def new_module(self, ModuleClass, slug, case_type, with_form=True, parent_module=None):
+    def new_module(self, ModuleClass, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         if slug in self.slugs:
             raise Exception("duplicate slug")
 
@@ -35,18 +35,24 @@ class AppFactory(object):
         module.unique_id = '{}_module'.format(slug)
         module.case_type = case_type
 
+        def get_unique_id(module_or_form):
+            return module_or_form if isinstance(module_or_form, basestring) else module_or_form.unique_id
+
         if parent_module:
-            module.root_module_id = parent_module if isinstance(parent_module, basestring) else parent_module.unique_id
+            module.root_module_id = get_unique_id(parent_module)
+
+        if case_list_form:
+            module.case_list_form.form_id = get_unique_id(case_list_form)
 
         self.slugs[module.unique_id] = slug
 
         return (module, self.new_form(module)) if with_form else module
 
-    def new_basic_module(self, slug, case_type, with_form=True, parent_module=None):
-        return self.new_module(Module, slug, case_type, with_form, parent_module)
+    def new_basic_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
+        return self.new_module(Module, slug, case_type, with_form, parent_module, case_list_form)
 
-    def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None):
-        return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module)
+    def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
+        return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
