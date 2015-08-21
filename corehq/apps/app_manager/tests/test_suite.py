@@ -756,7 +756,7 @@ class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
 
         __, update_form = self.factory.new_basic_module('update_mother', 'mother')
         self.factory.form_updates_case(update_form)
-        update_form.form_filter = '#user/due_date <= today()'
+        update_form.form_filter = '#case/due_date <= today()'
 
         expected = """
         <partial>
@@ -764,7 +764,7 @@ class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
             <text>
               <locale id="modules.m0"/>
             </text>
-            <command id="m0-f0" relevant="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/due_date &lt;= today()"/>
+            <command id="m0-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/due_date &lt;= today()"/>
           </menu>
         </partial>
         """
