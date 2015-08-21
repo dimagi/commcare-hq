@@ -221,6 +221,15 @@ class TestExpandedColumn(TestCase):
         self.assertTrue(too_many_values)
         self.assertEqual(len(distinct_vals), DEFAULT_MAXIMUM_EXPANSION)
 
+    def test_allowed_expansion(self):
+        num_columns = DEFAULT_MAXIMUM_EXPANSION + 1
+        vals = ['foo' + str(i) for i in range(num_columns)]
+        data_source, column = self._build_report(vals)
+        column.max_expansion = num_columns
+        distinct_vals, too_many_values = _get_distinct_values(data_source.config, column, expansion_limit=num_columns)
+        self.assertFalse(too_many_values)
+        self.assertEqual(len(distinct_vals), num_columns)
+
     def test_unbuilt_data_source(self):
         data_source, column = self._build_report(['apple'], build_data_source=False)
         distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
