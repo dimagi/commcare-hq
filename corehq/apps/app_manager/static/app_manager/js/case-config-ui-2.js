@@ -23,7 +23,6 @@ var CaseConfig = (function () {
         }(params.actions));
         self.questions = params.questions;
         self.save_url = params.save_url;
-        // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
@@ -64,7 +63,7 @@ var CaseConfig = (function () {
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
-                        self.requires(requires);
+                        self.requires = requires;
                         self.setPropertiesMap(data.propertiesMap);
                     }
                 });
@@ -215,7 +214,7 @@ var CaseConfig = (function () {
 
         self.actionType = ko.observable((function () {
                 var opens_case = self.case_transaction.condition.type() !== 'never';
-                var requires_case = self.caseConfig.requires() === 'case';
+                var requires_case = self.caseConfig.requires === 'case';
                 var has_subcases = self.subcases().length;
                 if (requires_case) {
                     return 'update';
@@ -716,7 +715,7 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
+            var required_properties = caseConfig.requires === 'none' && !o.update_case.update.name ? [{
                 key: 'name',
                 path: self.open_case.name_path,
                 required: true

@@ -9,7 +9,7 @@ var CaseConfig = (function () {
             this.actions = params.actions;
             this.questions = params.questions;
             this.save_url = params.save_url;
-            this.requires = ko.utils.unwrapObservable(params.requires);
+            this.requires = params.requires;
             this.save_requires_url = params.save_requires_url;
             this.template = new EJS({
                 url: "/static/app_manager/ejs/casexml.ejs",
