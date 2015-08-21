@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
@@ -706,3 +707,8 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case[0], replacements['case']),
                 case[1].format(**replacements)
             )
+
+    def test_interpolate_xpath_error(self):
+        for case in ('./lmp < 570.5', '#case/lmp < 570.5'):
+            with self.assertRaises(CaseXPathValidationError):
+                interpolate_xpath(case, None),

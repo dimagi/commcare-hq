@@ -86,6 +86,7 @@ from .exceptions import (
     ModuleIdMissingException,
     NoMatchingFilterException,
     RearrangeError,
+    SuiteValidationError,
     VersioningError,
     XFormException,
     XFormIdNotUnique,
@@ -3703,7 +3704,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_jar_path()
             self.create_all_files()
         except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied) as e:
+                PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:
