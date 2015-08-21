@@ -58,15 +58,11 @@
   </detail>
   <detail id="fixture_select">
     <title>
-      <text>
-        <locale id="m0.fixture_select.title"/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
-        <text>
-          <xpath function="my_display_column"/>
-        </text>
+        <text/>
       </header>
       <template>
         <text>
@@ -85,8 +81,8 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="item-list:days" src="jr://fixture/item-list:days"/>
     <session>
-      <datum detail-select="fixture_select" id="fixture_select_case_id" nodeset="instance('item-list:days')/days_list/days/" value="my_variable_column"/>
-      <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][instance('commcaresession')/session/fixture_value &gt; 3]" value="./@case_id"/>
+      <datum detail-select="fixture_select" id="fixture_value" nodeset="instance('item-list:days')/days_list/days" value="my_variable_column"/>
+      <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][instance('commcaresession')/session/data/fixture_value &gt; 3]" value="./@case_id"/>
     </session>
   </entry>
   <menu id="m0">
