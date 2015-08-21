@@ -2399,8 +2399,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
                                 except IndexError:
                                     case = None
-                            else:
+                            elif form.requires_case():
                                 case = SESSION_CASE_ID.case()
+                            else:
+                                case = None
                             command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
