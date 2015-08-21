@@ -119,7 +119,7 @@ These can be copied directly into data sources or modified to suit specific apps
 This saves the submission date as a `date` object.
 If you want to include the time change the datatypes to `"datetime"`.
 
-```
+```json
 {
     "type": "expression",
     "expression": {
@@ -130,6 +130,28 @@ If you want to include the time change the datatypes to `"datetime"`.
     "display_name": "Submission date",
     "datatype": "date",
     "column_id": "received_on"
+}
+```
+
+### User ID
+
+```json
+{
+    "display_name": "User ID",
+    "datatype": "string",
+    "expression": {
+        "type": "property_path",
+        "property_path": [
+            "form",
+            "meta",
+            "userID"
+        ]
+    },
+    "is_primary_key": false,
+    "transform": {},
+    "is_nullable": true,
+    "type": "expression",
+    "column_id": "user_id"
 }
 ```
 
@@ -234,6 +256,36 @@ In the example below, the indicator is inside a form group question called "impa
                     "property_name":"owner_id"
                 }
             }
+        }
+    }
+}
+```
+
+
+### Get a custom user data property from a form submission
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "column_id":"confirmed_referral_target",
+    "expression":{
+        "type":"related_doc",
+        "related_doc_type":"CommCareUser",
+        "doc_id_expression":{
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "userID"
+            ]
+        },
+        "value_expression":{
+            "type":"property_path",
+            "property_path": [
+                "user_data",
+                "confirmed_referral_target"
+            ]
         }
     }
 }
