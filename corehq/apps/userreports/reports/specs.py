@@ -1,9 +1,11 @@
 import json
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
+from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
 from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
+    IntegerProperty,
     JsonObject,
     ListProperty,
     ObjectProperty,
@@ -147,6 +149,7 @@ class FieldColumn(ReportColumn):
 class ExpandedColumn(ReportColumn):
     type = TypeProperty('expanded')
     field = StringProperty(required=True)
+    max_expansion = IntegerProperty(default=DEFAULT_MAXIMUM_EXPANSION)
 
     @classmethod
     def wrap(cls, obj):

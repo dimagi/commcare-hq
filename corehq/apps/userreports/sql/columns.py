@@ -46,11 +46,10 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
     :param column_warnings:
     :return:
     """
-    MAXIMUM_EXPANSION = 10
     column_warnings = []
     try:
         vals, over_expansion_limit = _get_distinct_values(
-            data_source_configuration, column_config, MAXIMUM_EXPANSION
+            data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
         return SqlColumnConfig([], warnings=[unicode(e)])
@@ -61,12 +60,15 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
                 u'Expansion limited to {max} distinct values.'
             ).format(
                 header=column_config.get_header(lang),
-                max=MAXIMUM_EXPANSION
+                max=column_config.max_expansion,
             ))
         return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
-def _get_distinct_values(data_source_configuration, column_config, expansion_limit=10):
+DEFAULT_MAXIMUM_EXPANSION = 10
+
+
+def _get_distinct_values(data_source_configuration, column_config, expansion_limit=DEFAULT_MAXIMUM_EXPANSION):
     """
     Return a tuple. The first item is a list of distinct values in the given
     ExpandedColumn no longer than expansion_limit. The second is a boolean which
