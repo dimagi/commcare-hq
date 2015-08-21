@@ -2389,9 +2389,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
                         if (
-                            (is_usercase_in_use(self.app.domain) or module.all_forms_require_a_case()) and
+                            getattr(form, 'form_filter', None) and
                             not module.put_in_root and
-                            getattr(form, 'form_filter', None)
+                            (is_usercase_in_use(self.app.domain) or module.all_forms_require_a_case())
                         ):
                             if isinstance(form, AdvancedForm):
                                 try:
