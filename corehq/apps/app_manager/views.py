@@ -176,7 +176,7 @@ from corehq.apps.app_manager.models import (
     str_to_cls,
     ReportAppConfig,
     FixtureSelect,)
-from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
+from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
