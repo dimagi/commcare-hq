@@ -639,5 +639,4 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'Send response about invalid stock on hand',
     TAG_UNKNOWN,
     [NAMESPACE_DOMAIN]
-
 )
