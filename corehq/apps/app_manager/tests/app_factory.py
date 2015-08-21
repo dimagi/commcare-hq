@@ -27,6 +27,9 @@ class AppFactory(object):
 
         self.slugs = {}
 
+    def get_form(self, module_index, form_index):
+        return self.app.get_module(module_index).get_form(form_index)
+
     def new_module(self, ModuleClass, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         if slug in self.slugs:
             raise Exception("duplicate slug")
@@ -56,8 +59,9 @@ class AppFactory(object):
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
-        form = module.new_form('{} form'.format(slug), lang='en')
-        form.unique_id = '{}_form'.format(slug)
+        index = len(module.forms)
+        form = module.new_form('{} form {}'.format(slug, index), lang='en')
+        form.unique_id = '{}_form_{}'.format(slug, index)
         return form
 
     @staticmethod
@@ -77,9 +81,10 @@ class AppFactory(object):
                 module.parent_select.module_id = parent_select_module.unique_id
         else:
             case_type = case_type or form.get_module().case_type
+            index = len([load for load in form.actions.load_update_cases if load.case_type == case_type])
             action = LoadUpdateAction(
                 case_type=case_type,
-                case_tag='load_{}'.format(case_type),
+                case_tag='load_{}_{}'.format(case_type, index),
             )
 
             if parent_case_type:

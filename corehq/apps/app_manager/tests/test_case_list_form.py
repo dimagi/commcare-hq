@@ -71,7 +71,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         case_module2, update2 = factory.new_basic_module('update case 2', case_module1.case_type)
         factory.form_updates_case(update2)
 
-        case_module2.case_list_form.form_id = 'register_case_form'
+        case_module2.case_list_form.form_id = factory.get_form(1, 0).unique_id
         case_module2.case_list_form.label = {
             'en': 'New Case'
         }
