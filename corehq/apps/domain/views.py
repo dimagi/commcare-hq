@@ -2172,14 +2172,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'sf_account_id',
             'services',
             'initiative',
-            'workshop_region',
+            'self_started',
             'area',
             'sub_area',
             'organization_name',
             'notes',
-            'self_started',
             'phone_model',
             'commtrack_domain',
+            'business_unit',
+            'workshop_region',
         ]
         if can_edit_eula:
             internal_attrs += [
