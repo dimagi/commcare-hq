@@ -2,7 +2,6 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
-from mock import Mock
 import os
 import logging
 import hashlib
@@ -1968,16 +1967,15 @@ class Module(ModuleBase):
 
     def is_usercaseonly(self):
         """
-        Return False if the usercase is unused, or if any forms update a
+        Return False if the usercase is unused, or if any forms create or update a
         different case type. If the only case type updated in the module is
         the usercase, return True.
         """
         def actions_use_another_case(actions):
-            empty_action = Mock(update={}, preload={})
-            update_case = actions.get('update_case', empty_action)
-            case_preload = actions.get('case_preload', empty_action)
-            return ((update_case.update and update_case.condition.type != 'never') or
-                    (case_preload.preload and case_preload.condition.type != 'never'))
+            actions.pop('usercase_preload', None)
+            actions.pop('usercase_update', None)
+
+            return bool(actions)
 
         return self.uses_usercase() and not any(
             form for form in self.forms

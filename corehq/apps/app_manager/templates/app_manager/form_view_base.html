@@ -163,8 +163,8 @@
                 var formFilter = {{ form.form_filter|JSON }};
                 var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
                 var formFilterAllowed = ko.computed(function () {
-                    return (allOtherFormsRequireACase &&
-                            form_requires() === 'case' ||
+                    return ((allOtherFormsRequireACase &&
+                            form_requires() === 'case') ||
                             usercaseonlyModule) && !putInRoot;
                 });
                 ko.applyBindings({
