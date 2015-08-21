@@ -226,7 +226,11 @@ class TestExpandedColumn(TestCase):
         vals = ['foo' + str(i) for i in range(num_columns)]
         data_source, column = self._build_report(vals)
         column.max_expansion = num_columns
-        distinct_vals, too_many_values = _get_distinct_values(data_source.config, column, expansion_limit=num_columns)
+        distinct_vals, too_many_values = _get_distinct_values(
+            data_source.config,
+            column,
+            expansion_limit=num_columns,
+        )
         self.assertFalse(too_many_values)
         self.assertEqual(len(distinct_vals), num_columns)
 
