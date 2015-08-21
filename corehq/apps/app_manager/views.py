@@ -951,7 +951,11 @@ def get_module_view_context_and_template(app, module):
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
             ],
-            'child_module_enabled': True
+            'child_module_enabled': True,
+            'schedule_phases': [{
+                'anchor':schedule.anchor,
+                'forms':[form.schedule_form_id for form in schedule.get_forms()],
+            } for schedule in module.get_schedule_phases()],
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
@@ -2093,6 +2097,12 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
     else:
         return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
 
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_schedule_phases(request, domain, app_id, module_id):
+    phases = json.loads(request.POST.get('phases'))
+
+    return json_response('success')
 
 @no_conflict_require_POST
 @require_can_edit_apps

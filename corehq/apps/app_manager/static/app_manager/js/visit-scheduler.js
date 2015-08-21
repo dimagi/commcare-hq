@@ -3,6 +3,89 @@
 var VisitScheduler = (function () {
     'use strict';
 
+    var ModuleScheduler = function(params){
+        // Edits the schedule phases on the module setting page
+        var self = this;
+        self.home = params.home;
+
+        self.init = function () {
+            _.defer(function () {
+                ko.applyBindings(self, self.home.get(0));
+                self.home.on('textchange', 'input', self.change)
+                // all select2's are represented by an input[type="hidden"]
+                    .on('change', 'select, input[type="hidden"]', self.change)
+                    .on('click', 'a:not(.header)', self.change)
+                    .on('change', 'input[type="checkbox"]', self.change);
+
+                // https://gist.github.com/mkelly12/424774/#comment-92080
+                $('#module-scheduler input').on('textchange', self.change);
+            });
+        };
+
+        self.change = function () {
+            self.saveButton.fire('change');
+        };
+
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged schedule settings",
+            save: function() {
+                var phases = JSON.stringify(self.serialize());
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: params.saveUrl,
+                    data: {
+                        phases: phases
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                    }
+                });
+            }
+        });
+
+        var Phase = function(anchor, forms){
+            var self = this;
+            self.anchor = uiElement.input().val(anchor);
+            self.anchor.observableVal = ko.observable(self.anchor.val());
+            self.anchor.on("change", function(){
+                self.anchor.observeVal(self.anchor.val());
+            });
+            CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
+            self.forms = ko.observable(forms);
+        };
+
+        self.hasSchedule = ko.observable(params.hasSchedule);
+
+        self.phases = ko.observableArray(
+            _.map(params.schedulePhases, function(phase){
+                return new Phase(phase.anchor, phase.forms);
+            })
+        );
+        self.phases.subscribe(function(phase){
+            self.change();
+        });
+
+        self.selectedPhase = ko.observable();
+        self.selectPhase = function(phase){
+            self.selectedPhase(phase);
+        };
+
+        self.addPhase = function(){
+            self.phases.push(new Phase("", []));
+        };
+
+        self.removePhase = function(phase){
+            self.phases.destroy(phase);
+        };
+
+        self.serialize = function(){
+            return _.map(self.phases(), function(phase){
+                return phase.anchor.val();
+            });
+        };
+    };
+
     var Scheduler = function (params) {
         var self = this;
 
@@ -11,7 +94,7 @@ var VisitScheduler = (function () {
         self.save_url = params.save_url;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged case settings",
+            unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
                 self.saveButton.ajax({
@@ -252,6 +335,40 @@ var VisitScheduler = (function () {
     };
 
     return {
-        Scheduler: Scheduler
+        Scheduler: Scheduler,
+        ModuleScheduler: ModuleScheduler
     };
 }());
+
+//connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+            }
+        });
+    }
+};
+
+//control visibility, give element focus, and select the contents (in order)
+ko.bindingHandlers.visibleAndSelect = {
+    update: function(element, valueAccessor) {
+        ko.bindingHandlers.visible.update(element, valueAccessor);
+        if (valueAccessor()) {
+            setTimeout(function() {
+                $(element).focus().select();
+            }, 0); //new tasks are not in DOM yet
+        }
+    }
+}

@@ -68,9 +68,9 @@
                         {% trans "Transition to the next phase" %}
                     </label>
                     <div data-bind="template: {
-                    name: 'case-config:condition',
-                    data: {condition: transition_condition, config: $data},
-                    }"></div>
+                                    name: 'case-config:condition',
+                                    data: {condition: transition_condition, config: $data},
+                                    }"></div>
                 </div>
             </div>
             <div class="control-group">
@@ -80,9 +80,9 @@
                         {% trans "Terminate the schedule" %}
                     </label>
                     <div data-bind="template: {
-                    name: 'case-config:condition',
-                    data: {condition: termination_condition, config: $data},
-                    }"></div>
+                                    name: 'case-config:condition',
+                                    data: {condition: termination_condition, config: $data},
+                                    }"></div>
                 </div>
             </div>
         </fieldset>
@@ -143,8 +143,8 @@
         <!--/ko-->
     </form>
     {% else %}
-        <p class="alert alert-warning">
-            {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-        </p>
+    <p class="alert alert-warning">
+        {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
+    </p>
     {% endif %}
 </div>
