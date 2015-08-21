@@ -1362,68 +1362,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                 d.fields.extend(fields)
 
             # Add actions
-            if module.case_list_form.form_id and detail_type.endswith('short'):
-                # add form action to detail
-                form = self.app.get_form(module.case_list_form.form_id)
-
-                if self.app.enable_localized_menu_media:
-                    case_list_form = module.case_list_form
-                    d.action = LocalizedAction(
-                        menu_locale_id=id_strings.case_list_form_locale(module),
-                        media_image=bool(len(case_list_form.all_image_paths())),
-                        media_audio=bool(len(case_list_form.all_audio_paths())),
-                        image_locale_id=id_strings.case_list_form_icon_locale(module),
-                        audio_locale_id=id_strings.case_list_form_audio_locale(module),
-                        stack=Stack()
-                    )
-                else:
-                    d.action = Action(
-                        display=Display(
-                            text=Text(locale_id=id_strings.case_list_form_locale(module)),
-                            media_image=module.case_list_form.default_media_image,
-                            media_audio=module.case_list_form.default_media_audio,
-                        ),
-                        stack=Stack()
-                    )
-                frame = PushFrame()
-                frame.add_command(XPath.string(id_strings.form_command(form)))
-
-                def get_datums_meta_for_form(form):
-                    if form.form_type == 'module_form':
-                        datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
-                    elif form.form_type == 'advanced_form':
-                        datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
-                        datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
-                    else:
-                        raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
-                            form.form_type, form.unique_id
-                        ))
-                    return datums_meta
-
-                target_form_dm = get_datums_meta_for_form(form)
-                source_form_dm = get_datums_meta_for_form(module.get_form(0))
-                for target_meta in target_form_dm:
-                    if target_meta['requires_selection']:
-                        # This is true for registration forms where the case being created is a subcase
-                        try:
-                            [source_dm] = [
-                                source_meta for source_meta in source_form_dm
-                                if source_meta['case_type'] == target_meta['case_type']
-                            ]
-                        except ValueError:
-                            raise SuiteError("Form selected as case list form requires a case "
-                                             "but no matching case could be found: {}".format(form.unique_id))
-                        else:
-                            frame.add_datum(StackDatum(
-                                id=target_meta['datum'].id,
-                                value=session_var(source_dm['datum'].id))
-                            )
-                    else:
-                        s_datum = target_meta['datum']
-                        frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
-
-                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-                d.action.stack.add_frame(frame)
+            if module.case_list_form.form_id and detail_type.endswith('short')\
+                    and not module.put_in_root:
+                self._add_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -1433,6 +1374,70 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _add_action_to_detail(self, detail, module):
+        # add form action to detail
+        form = self.app.get_form(module.case_list_form.form_id)
+
+        if self.app.enable_localized_menu_media:
+            case_list_form = module.case_list_form
+            detail.action = LocalizedAction(
+                menu_locale_id=id_strings.case_list_form_locale(module),
+                media_image=bool(len(case_list_form.all_image_paths())),
+                media_audio=bool(len(case_list_form.all_audio_paths())),
+                image_locale_id=id_strings.case_list_form_icon_locale(module),
+                audio_locale_id=id_strings.case_list_form_audio_locale(module),
+                stack=Stack()
+            )
+        else:
+            detail.action = Action(
+                display=Display(
+                    text=Text(locale_id=id_strings.case_list_form_locale(module)),
+                    media_image=module.case_list_form.default_media_image,
+                    media_audio=module.case_list_form.default_media_audio,
+                ),
+                stack=Stack()
+            )
+
+        frame = PushFrame()
+        frame.add_command(XPath.string(id_strings.form_command(form)))
+
+        def get_datums_meta_for_form(form):
+            if form.form_type == 'module_form':
+                datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            elif form.form_type == 'advanced_form':
+                datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+            else:
+                raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+                    form.form_type, form.unique_id
+                ))
+            return datums_meta
+
+        target_form_dm = get_datums_meta_for_form(form)
+        source_form_dm = get_datums_meta_for_form(module.get_form(0))
+        for target_meta in target_form_dm:
+            if target_meta['requires_selection']:
+                # This is true for registration forms where the case being created is a subcase
+                try:
+                    [source_dm] = [
+                        source_meta for source_meta in source_form_dm
+                        if source_meta['case_type'] == target_meta['case_type']
+                    ]
+                except ValueError:
+                    raise SuiteError("Form selected as case list form requires a case "
+                                     "but no matching case could be found: {}".format(form.unique_id))
+                else:
+                    frame.add_datum(StackDatum(
+                        id=target_meta['datum'].id,
+                        value=session_var(source_dm['datum'].id))
+                    )
+            else:
+                s_datum = target_meta['datum']
+                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
+
+        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
+        detail.action.stack.add_frame(frame)
 
     @property
     @memoized

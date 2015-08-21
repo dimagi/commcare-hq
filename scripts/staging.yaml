@@ -48,11 +48,11 @@ branches:
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-#  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
-  - reverseLanguageMedia # Sravan 6/10
+  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
+#  - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
-#  - icds/scheduler # Farid 8/6
+  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - due-list # TS 7/30
   - django17 # J$ 8/5
