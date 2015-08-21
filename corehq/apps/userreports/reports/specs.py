@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
 from jsonobject.base import DefaultProperty
-from sqlagg import CountUniqueColumn, SumColumn
+from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
 from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
@@ -20,7 +20,11 @@ from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
+    'avg': MeanColumn,
     'count_unique': CountUniqueColumn,
+    'count': CountColumn,
+    'min': MinColumn,
+    'max': MaxColumn,
     'month': MonthColumn,
     'sum': SumColumn,
     'simple': SimpleColumn,
