@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
@@ -49,12 +50,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-        self.is_usercase_in_use_mock.return_value = True
+        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
+        self.models_is_usercase_in_use_mock.return_value = True
+        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
+        self.suite_xml_is_usercase_in_use_mock.return_value = True
 
     def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
+        self.models_is_usercase_in_use_patch.stop()
+        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -464,6 +469,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
+    def test_usercaseonly_form_filter(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        module = app.add_module(Module.new_module("Untitled Module", None))
+        module.case_type = 'child'
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m1-f0'
+        form.actions.usercase_update = UpdateCaseAction(update={'name': '/data/question1'})
+        form.actions.usercase_update.condition.type = 'always'
+        form.form_filter = "#user/is_awesome = 'yes'"
+
+        self.assertXmlPartialEqual(self.get_xml('usercaseonly_form_filter'), app.create_suite(), "./menu")
+
     def test_open_case_and_subcase(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
@@ -702,3 +721,8 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case[0], replacements['case']),
                 case[1].format(**replacements)
             )
+
+    def test_interpolate_xpath_error(self):
+        for case in ('./lmp < 570.5', '#case/lmp < 570.5'):
+            with self.assertRaises(CaseXPathValidationError):
+                interpolate_xpath(case, None),

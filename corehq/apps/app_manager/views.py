@@ -1727,6 +1727,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             app.enable_module_filtering and
             should_edit('module_filter')):
         module['module_filter'] = request.POST.get('module_filter')
+        if '#user' in module['module_filter']:
+            enable_usercase(domain)
 
     if should_edit('case_list_form_id'):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
@@ -2056,6 +2058,8 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         form.put_in_root = True if put_in_root == "True" else False
     if should_edit('form_filter'):
         form.form_filter = request.POST['form_filter']
+        if '#user' in form.form_filter:
+            enable_usercase(domain)
     if should_edit('post_form_workflow'):
         form.post_form_workflow = request.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
