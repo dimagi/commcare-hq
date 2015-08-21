@@ -22,8 +22,11 @@ def interpolate_xpath(string, case_xpath=None):
     if case_xpath is None and ('#case' in string or re.search(DOT_INTERPOLATE_PATTERN, string)):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError('Your filter refers to a case, but no case is available')
-
+        raise CaseXPathValidationError(
+            'Your filter refers to a case, but the case is not available. Either filter using the user case, or '
+            'make sure all the forms in this module update or close a case, which means registration forms must '
+            'go in a different module'
+        )
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

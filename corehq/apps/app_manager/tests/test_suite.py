@@ -50,12 +50,16 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-        self.is_usercase_in_use_mock.return_value = True
+        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
+        self.models_is_usercase_in_use_mock.return_value = True
+        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
+        self.suite_xml_is_usercase_in_use_mock.return_value = True
 
     def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
+        self.models_is_usercase_in_use_patch.stop()
+        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)

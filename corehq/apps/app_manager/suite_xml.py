@@ -26,7 +26,7 @@ from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    actions_use_usercase
+    actions_use_usercase, is_usercase_in_use
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
@@ -2349,7 +2349,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
                         if (
-                            (module.all_forms_require_a_case() or module.is_usercaseonly()) and
+                            (is_usercase_in_use(self.app.domain) or module.all_forms_require_a_case()) and
                             not module.put_in_root and
                             getattr(form, 'form_filter', None)
                         ):

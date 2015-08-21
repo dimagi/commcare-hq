@@ -35,11 +35,14 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_patch.start()
+        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.models_is_usercase_in_use_patch.start()
+        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_patch.start()
 
     def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
+        self.models_is_usercase_in_use_patch.stop()
+        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def make_app(self, spec):
