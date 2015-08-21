@@ -1720,9 +1720,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return False
 
-    def is_usercaseonly(self):
-        return False
-
 
 class Module(ModuleBase):
     """
@@ -1966,24 +1963,6 @@ class Module(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
-
-    def is_usercaseonly(self):
-        """
-        Return False if the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        def actions_use_another_case(actions):
-            empty_action = Mock(update={}, preload={})
-            update_case = actions.get('update_case', empty_action)
-            case_preload = actions.get('case_preload', empty_action)
-            return ((update_case.update and update_case.condition.type != 'never') or
-                    (case_preload.preload and case_preload.condition.type != 'never'))
-
-        return self.uses_usercase() and not any(
-            form for form in self.forms
-            if actions_use_another_case(form.active_actions())
-        )
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2512,14 +2491,6 @@ class AdvancedModule(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return self._uses_case_type(USERCASE_TYPE)
-
-    def is_usercaseonly(self):
-        """
-        Return False is the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
