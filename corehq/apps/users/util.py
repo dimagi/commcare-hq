@@ -9,7 +9,6 @@ from corehq import privileges
 
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
-from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
 
@@ -159,22 +158,6 @@ def can_add_extra_mobile_workers(request):
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
-
-
-def smart_query_string(query):
-    """
-    If query does not use the ES query string syntax,
-    default to doing an infix search for each term.
-    returns (is_simple, query)
-    """
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in query:
-            return False, query
-    r = re.compile(r'\w+')
-    tokens = r.findall(query)
-    return True, "*{}*".format("* *".join(tokens))
 
 
 def user_display_string(username, first_name="", last_name=""):

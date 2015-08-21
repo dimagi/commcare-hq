@@ -121,17 +121,17 @@ def _expand_column(report_column, distinct_values, lang):
     :return:
     """
     columns = []
-    for val in distinct_values:
+    for index, val in enumerate(distinct_values):
         columns.append(DatabaseColumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             SumWhen(
                 report_column.field,
                 whens={val: 1},
                 else_=0,
-                alias=u"{}-{}".format(report_column.column_id, val),
+                alias=u"{}-{}".format(report_column.column_id, index),
             ),
             sortable=False,
-            data_slug=u"{}-{}".format(report_column.column_id, val),
+            data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),
             help_text=report_column.description
         ))

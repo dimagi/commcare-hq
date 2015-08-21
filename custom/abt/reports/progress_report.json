@@ -94,6 +94,88 @@
             "aggregation":"simple"
         },
         {
+            "column_id":"total_sprayers",
+            "type":"field",
+            "field": "total_sprayers",
+            "aggregation":"sum",
+            "display":{
+                "fra": "# Applicateurs",
+                "en": "SOPs Worked"
+            }
+        },
+        {
+            "column_id":"structures_found",
+            "type":"field",
+            "field":"structures_found",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Pieces Trouvées",
+                "en":"# Structures found"
+            }
+        },
+        {
+            "column_id":"structures_sprayed",
+            "type":"field",
+            "field":"structures_sprayed",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Pieces Traitées",
+                "en":"# Structures Sprayed"
+            }
+        },
+        {
+            "column_id":"insecticide_used",
+            "type":"field",
+            "field":"insecticide_used",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Bouteilles Utilisées",
+                "en": "# Insecticide Used"
+            }
+        },
+        {
+            "column_id":"cum_building_per_worker",
+            "type":"percent",
+            "format":"decimal",
+            "numerator":{
+                "column_id":"cum_building_per_worker_numerator",
+                "type":"field",
+                "field":"structures_sprayed",
+                "aggregation":"sum"
+            },
+            "denominator":{
+                "column_id":"cum_building_per_worker_denominator",
+                "type":"field",
+                "field":"total_sprayers",
+                "aggregation":"sum"
+            },
+            "display":{
+                "fra":"Moyenne de pièces par applicateur",
+                "en":"# Structures per SOP"
+            }
+        },
+        {
+            "column_id":"cum_building_per_bottle",
+            "type":"percent",
+            "format":"decimal",
+            "numerator":{
+                "column_id":"cum_building_per_bottle_numerator",
+                "type":"field",
+                "field":"structures_sprayed",
+                "aggregation":"sum"
+            },
+            "denominator":{
+                "column_id":"cum_building_per_bottle_denominator",
+                "type":"field",
+                "field":"insecticide_used",
+                "aggregation":"sum"
+            },
+            "display":{
+                "fra":"Moyenne de pièces par bouteille",
+                "en":"# Structures per IU"
+            }
+        },
+        {
             "description":null,
             "format":"both",
             "denominator":{
@@ -132,6 +214,16 @@
                 "en":"Cumulative Spray Coverage: Level 2"
             },
             "aggregation":"simple"
+        },
+        {
+            "column_id":"target",
+            "type":"field",
+            "field":"target_number",
+            "aggregation":"simple",
+            "display":{
+                "fra":"Cible",
+                "en":"Target"
+            }
         },
         {
             "description":null,

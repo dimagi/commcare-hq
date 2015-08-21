@@ -15,7 +15,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 import iso8601
-from redis import ConnectionError
+from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -28,7 +28,8 @@ import xml2json
 
 import couchforms
 from . import const
-from .exceptions import DuplicateError, UnexpectedDeletedXForm
+from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
+    PhoneDateValueError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
@@ -101,7 +102,7 @@ def acquire_lock_for_xform(xform_id):
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
-    except ConnectionError:
+    except RedisError:
         lock = None
     return lock
 
@@ -486,6 +487,8 @@ class SubmissionPost(object):
             cases = []
             responses = []
             errors = []
+            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
                 if instance.doc_type == 'XFormInstance':
@@ -497,7 +500,7 @@ class SubmissionPost(object):
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
                             stock_result = process_stock(instance, case_db)
-                        except (IllegalCaseId, UsesReferrals, MissingProductId) as e:
+                        except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form

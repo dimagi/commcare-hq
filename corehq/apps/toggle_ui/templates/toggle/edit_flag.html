@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_page.html' %}
+{% extends 'style/bootstrap2/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -108,7 +108,7 @@
 {% endblock %}
 {% block page_content %}
     {% if toggle_meta.description %}
-        <p>{{ toggle_meta.description }}</p>
+        <p>{{ toggle_meta.description|safe }}</p>
     {% endif %}
     <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
     {% if toggle_meta.help_link %}

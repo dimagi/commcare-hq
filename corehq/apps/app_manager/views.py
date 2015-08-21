@@ -11,17 +11,19 @@ import re
 import json
 import yaml
 from collections import defaultdict, OrderedDict
+from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
+from soil import DownloadBase
 from xml.dom.minidom import parseString
 
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
-from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppManagerException,
@@ -52,6 +54,7 @@ from corehq.apps.hqmedia.models import (
     ApplicationMediaReference,
     CommCareImage,
 )
+from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     ProcessImageFileUploadView,
@@ -73,7 +76,7 @@ from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
-from corehq.util.view_utils import set_file_download
+from corehq.util.view_utils import set_file_download, absolute_reverse, json_error
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
@@ -133,9 +136,14 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest,
+    login_or_digest_or_basic,
+)
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     AdvancedForm,
@@ -162,7 +170,8 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ReportModule,
     SavedAppBuild,
-    get_app,
+    SortElement,
+    load_app_template,
     load_case_reserved_words,
     str_to_cls,
     ReportAppConfig,
@@ -322,7 +331,7 @@ def app_source(request, domain, app_id):
 
 @require_can_edit_apps
 def copy_app_check_domain(request, domain, name, app_id):
-    app_copy = import_app_util(app_id, domain, name=name)
+    app_copy = import_app_util(app_id, domain, {'name': name})
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -334,6 +343,22 @@ def copy_app(request, domain):
         return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+
+
+@require_can_edit_apps
+def app_from_template(request, domain, slug):
+    _clear_app_cache(request, domain)
+    template = load_app_template(slug)
+    app = import_app_util(template, domain, {
+        'created_from_template': '%s' % slug,
+    })
+    module_id = 0
+    form_id = 0
+    try:
+        app.get_module(module_id).get_form(form_id)
+    except (ModuleNotFoundException, FormNotFoundException):
+        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -357,7 +382,7 @@ def import_app(request, domain, template="app_manager/import_app.html"):
         source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, name=name)
+        app = import_app_util(source, domain, {'name': name})
 
         return back_to_main(request, domain, app_id=app._id)
     else:
@@ -544,7 +569,7 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        commcare_settings.LAYOUT[app.get_doc_type()])
+        get_commcare_settings_layout()[app.get_doc_type()])
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
@@ -865,6 +890,10 @@ def get_module_view_context_and_template(app, module):
 
     # make sure all modules have unique ids
     app.ensure_module_unique_ids(should_save=True)
+
+    def case_list_form_allowed(allow=True):
+        return allow and module.all_forms_require_a_case() and not module.put_in_root
+
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
@@ -901,7 +930,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': module.all_forms_require_a_case(),
+            'case_list_form_allowed': case_list_form_allowed(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -934,12 +963,15 @@ def get_module_view_context_and_template(app, module):
     else:
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
+        # don't allow this for modules with parent selection until this mobile bug is fixed:
+        # http://manage.dimagi.com/default.asp?178635
+        allow_case_list_form = case_list_form_allowed(not module.parent_select.active)
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
+            'case_list_form_allowed': allow_case_list_form,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and
@@ -982,16 +1014,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         return bail(request, domain, app_id)
 
     context = get_apps_base_context(request, domain, app)
-    if not app:
-        all_applications = ApplicationBase.view('app_manager/applications_brief',
-            startkey=[domain],
-            endkey=[domain, {}],
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-        if all_applications:
-            app_id = all_applications[0].id
-            return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                                form_id=form_id)
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
@@ -1046,7 +1068,13 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         template = "app_manager/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
-        template = "dashboard/dashboard_new_user.html"
+        from corehq.apps.dashboard.views import NewUserDashboardView
+        from corehq.apps.style.utils import set_bootstrap_version3
+        from crispy_forms.utils import set_template_pack
+        set_bootstrap_version3()
+        set_template_pack('bootstrap3')
+        template = NewUserDashboardView.template_name
+        context.update({'templates': NewUserDashboardView.templates(domain)})
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -2085,8 +2113,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
-        response.status_code = 409
+        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}), status=409)
         return response
 
 @require_GET
@@ -3262,6 +3289,7 @@ def upload_bulk_app_translations(request, domain, app_id):
         reverse('app_languages', args=[domain, app_id])
     )
 
+
 @require_deploy_apps
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
@@ -3272,6 +3300,44 @@ def update_build_comment(request, domain, app_id):
     build.build_comment = request.POST.get('comment')
     build.save()
     return json_response({'status': 'success'})
+
+
+# Used by CommCare CLI
+@json_error
+@login_or_digest_or_basic
+def list_apps(request, domain):
+    def app_to_json(app):
+        return {
+            'name': app.name,
+            'version': app.version,
+            'app_id': app.get_id,
+            'download_url': absolute_reverse('direct_ccz', args=[domain],
+                                             params={'app_id': app.get_id})
+        }
+    applications = Domain.get_by_name(domain).applications()
+    return json_response({
+        'status': 'success',
+        'applications': map(app_to_json, applications),
+    })
+
+
+# Used by CommCare CLI
+@json_error
+def direct_ccz(request, domain):
+    if 'app_id' in request.GET:
+        app = get_app(domain, request.GET['app_id'])
+        download = DownloadBase()
+        build_application_zip(
+            include_multimedia_files=False,
+            include_index_files=True,
+            app=app,
+            download_id=download.download_id,
+            compress_zip=True,
+            filename='{}.ccz'.format(slugify(app.name)),
+        )
+        return DownloadBase.get(download.download_id).toHttpResponse()
+    msg = "You must specify `app_id` in your GET parameters"
+    return json_response({'status': 'error', 'message': msg}, status_code=400)
 
 
 common_module_validations = [

@@ -74,7 +74,7 @@ def format_subtab_menu(context):
     else:
         subtabs = None
 
-    return mark_safe(render_to_string("hqwebapp/partials/subtab_menu.html", {
+    return mark_safe(render_to_string("style/bootstrap2/partials/subtab_menu.html", {
         'subtabs': subtabs if subtabs and len(subtabs) > 1 else None
     }))
 

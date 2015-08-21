@@ -1661,11 +1661,14 @@ class AdjustBalanceForm(forms.Form):
     )
 
     method = forms.ChoiceField(
-        choices=CreditAdjustmentReason.CHOICES,
+        choices=(
+            (CreditAdjustmentReason.MANUAL, "Update balance directly"),
+            (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
+        )
     )
 
     note = forms.CharField(
-        required=False,
+        required=True,
         widget=forms.Textarea,
     )
 
@@ -1743,15 +1746,39 @@ class AdjustBalanceForm(forms.Form):
                                   % adjustment_type)
 
     def adjust_balance(self, web_user=None):
-        CreditLine.add_credit(
-            -self.amount,
-            account=self.invoice.subscription.account,
-            subscription=self.invoice.subscription,
-            note=self.cleaned_data['note'],
-            invoice=self.invoice,
-            reason=self.cleaned_data['method'],
-            web_user=web_user,
-        )
+        method = self.cleaned_data['method']
+        kwargs = {
+            'account': self.invoice.subscription.account,
+            'note': self.cleaned_data['note'],
+            'reason': method,
+            'subscription': self.invoice.subscription,
+            'web_user': web_user,
+        }
+        if method == CreditAdjustmentReason.MANUAL:
+            CreditLine.add_credit(
+                -self.amount,
+                invoice=self.invoice,
+                **kwargs
+            )
+            CreditLine.add_credit(
+                self.amount,
+                **kwargs
+            )
+        elif method == CreditAdjustmentReason.TRANSFER:
+            credit_line_balance = sum(
+                credit_line.balance
+                for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
+            )
+            transfer_balance = (
+                min(self.amount, credit_line_balance)
+                if credit_line_balance > 0 else min(0, self.amount)
+            )
+            CreditLine.add_credit(
+                -transfer_balance,
+                invoice=self.invoice,
+                **kwargs
+            )
+
         self.invoice.update_balance()
         self.invoice.save()
 
