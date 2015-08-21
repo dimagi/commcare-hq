@@ -1,3 +1,6 @@
+ESQuery
+=======
+
 .. automodule:: corehq.apps.es.es_query
    :members:
 
