@@ -1,7 +1,14 @@
 import json
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
+from dimagi.ext.jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    StringProperty,
+)
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
 from sqlagg.columns import (
