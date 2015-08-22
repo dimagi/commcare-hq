@@ -2107,16 +2107,13 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_schedule_phases(request, domain, app_id, module_id):
-    NEW_ANCHORS = -1
+    NEW_PHASE_ID = -1
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     phases = json.loads(request.POST.get('phases'))
-    changed_anchors = []
-    all_anchors = []
-    for phase in phases:
-        if phase['id'] != NEW_ANCHORS:
-            changed_anchors.append((phase['id'], phase['anchor']))
-        all_anchors.append(phase['anchor'])
+    changed_anchors = [(phase['id'], phase['anchor'])
+                       for phase in phases if phase['id'] != NEW_PHASE_ID]
+    all_anchors = [phase['anchor'] for phase in phases]
 
     try:
         module.update_schedule_phase_anchors(changed_anchors)

@@ -54,6 +54,11 @@ var VisitScheduler = (function () {
             });
             CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
+            self.form_abbreviations = ko.computed(function(){
+                return _.map(self.forms(), function(form){
+                    return form === '' ? '(no abbreviation)' : form;
+                }).join(', ');
+            });
         };
 
         self.hasSchedule = ko.observable(params.hasSchedule);
@@ -73,7 +78,8 @@ var VisitScheduler = (function () {
         };
 
         self.addPhase = function(){
-            self.phases.push(new Phase(-1, "", []));
+            var NEW_PHASE_ID = -1;
+            self.phases.push(new Phase(NEW_PHASE_ID, "", []));
         };
 
         self.removePhase = function(phase){
@@ -320,7 +326,7 @@ var VisitScheduler = (function () {
                 schedule.expires = null;
             }
 
-            schedule.anchor = self.phase.anchor();
+            schedule.anchor = self.phase.anchor() || '';
             schedule.schedule_form_id = self.schedule_form_id();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? -1 : 1);

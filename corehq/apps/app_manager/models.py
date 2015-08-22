@@ -2657,7 +2657,7 @@ class AdvancedModule(ModuleBase):
         self.schedule_phases = []
 
     def update_schedule_phases(self, anchors):
-        """ Take a list of anchors, reorders, deletes and creates phases from it"""
+        """ Take a list of anchors, reorders, deletes and creates phases from it """
         old_phases = {phase.anchor: phase for phase in self.get_schedule_phases()}
         self._clear_schedule_phases()
 
@@ -2676,11 +2676,12 @@ class AdvancedModule(ModuleBase):
         return self.get_schedule_phases()
 
     def update_schedule_phase_anchors(self, new_anchors):
-        """ takes a list of tuples (id, new_anchor) and updates the phase anchors"""
+        """ takes a list of tuples (id, new_anchor) and updates the phase anchors """
         for anchor in new_anchors:
             id = anchor[0] - 1
+            new_anchor = anchor[1]
             try:
-                self.schedule_phases[id].anchor = anchor[1]
+                self.schedule_phases[id].change_anchor(new_anchor)
             except KeyError:
                 raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
 
