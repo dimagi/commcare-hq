@@ -1357,7 +1357,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('3 Month Trial')
+    subscription_type = ugettext_noop('Extended Trial')
 
     organization_name = forms.CharField(
         label=ugettext_noop('Organization Name'),
