@@ -13,7 +13,7 @@
     <script>
         var viewModel = {
             subscriptionType: ko.observable($('#id_subscription_type').val() || null),
-            trialLength: ko.observable(0)
+            trialLength: ko.observable(90)
         };
         viewModel.end_date = ko.computed(function() {
             var date = new Date('{{ today.isoformat }}');
