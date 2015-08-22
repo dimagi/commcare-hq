@@ -7,9 +7,26 @@
         <div data-bind="saveButton: saveButton"></div>
         <!--ko with: formSchedule -->
         <fieldset>
-            <legend>{% trans "Schedule Anchor Date" %}</legend>
+            <legend>{% trans "Form Settings" %}</legend>
             <div class="controls">
-                <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
+                <label>
+                    {% trans "Form abbreviation" %}
+                    <input type="text" id="schedule_form_id"
+                           placeholder="Form Abbreviation"
+                           data-bind="value: schedule_form_id">
+                </label>
+            </div>
+            <div class="controls">
+                <label>
+                    {% trans "Schedule Phase" %}
+                    <select id="achor"
+                            data-bind="options: all_schedule_phase_anchors,
+                                       optionsCaption: '{% trans "Please select a phase..." %}',
+                            value: phase.anchor"></select>
+                    <span class="hq-help-template"
+                              data-title="{% trans 'Schedule Phase' %}"
+                              data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
+                </label>
             </div>
         </fieldset>
         <fieldset>
@@ -57,9 +74,9 @@
                         {% trans "Transition to the next phase" %}
                     </label>
                     <div data-bind="template: {
-                    name: 'case-config:condition',
-                    data: {condition: transition_condition, config: $data},
-                    }"></div>
+                                    name: 'case-config:condition',
+                                    data: {condition: transition_condition, config: $data},
+                                    }"></div>
                 </div>
             </div>
             <div class="control-group">
@@ -69,9 +86,9 @@
                         {% trans "Terminate the schedule" %}
                     </label>
                     <div data-bind="template: {
-                    name: 'case-config:condition',
-                    data: {condition: termination_condition, config: $data},
-                    }"></div>
+                                    name: 'case-config:condition',
+                                    data: {condition: termination_condition, config: $data},
+                                    }"></div>
                 </div>
             </div>
         </fieldset>
@@ -132,8 +149,8 @@
         <!--/ko-->
     </form>
     {% else %}
-        <p class="alert alert-warning">
-            {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-        </p>
+    <p class="alert alert-warning">
+        {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
+    </p>
     {% endif %}
 </div>

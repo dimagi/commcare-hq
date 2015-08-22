@@ -1404,11 +1404,11 @@ class XForm(WrappedNode):
 
             self.add_instance(
                 schedule_form_xpath.fixture_id,
-                'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
+                u'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
             )
 
             self.add_bind(
-                nodeset='{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
                 type="xs:integer",
                 calculate=schedule_form_xpath.current_schedule_phase_calculation(
                     self.action_relevance(form.schedule.termination_condition),
@@ -1418,31 +1418,31 @@ class XForm(WrappedNode):
             update_block.append(make_case_elem(SCHEDULE_PHASE))
 
             self.add_bind(
-                nodeset='/data/{}'.format(SCHEDULE_NEXT_VISIT_NUMBER),
+                nodeset=u'/data/{}'.format(SCHEDULE_NEXT_VISIT_NUMBER),
                 calculate=schedule_form_xpath.next_visit_due_num
             )
             self.data_node.append(_make_elem(SCHEDULE_NEXT_VISIT_NUMBER))
 
             self.add_bind(
-                nodeset='/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
+                nodeset=u'/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
                 calculate=schedule_form_xpath.is_unscheduled_visit,
             )
             self.data_node.append(_make_elem(SCHEDULE_UNSCHEDULED_VISIT))
 
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             self.add_bind(
-                nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_num),
-                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
-                calculate="/data/{}".format(SCHEDULE_NEXT_VISIT_NUMBER),
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_num),
+                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate=u"/data/{}".format(SCHEDULE_NEXT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
-                nodeset='{}/case/update/{}'.format(case_tag(action), last_visit_date),
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd"),
-                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
 

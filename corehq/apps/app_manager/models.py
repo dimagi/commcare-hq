@@ -654,6 +654,7 @@ class FormBase(DocumentSchema):
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
+    schedule_form_id = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -704,10 +705,6 @@ class FormBase(DocumentSchema):
 
     def _pre_delete_hook(self):
         raise NotImplementedError()
-
-    @property
-    def schedule_form_id(self):
-        return self.unique_id[:6]
 
     def wrapped_xform(self):
         return XForm(self.source)
@@ -2349,31 +2346,26 @@ class SchedulePhase(IndexedSchema):
                     None)
 
     def remove_form(self, form):
-        """
-        Remove a form from the phase
-
-        If this results in an empty phase, delete the phase
-        """
+        """Remove a form from the phase"""
         idx = self.get_phase_form_index(form)
         if idx is None:
             raise ScheduleError("That form doesn't exist in the phase")
 
         self.forms.remove(self.forms[idx])
 
-        if len(self.forms) == 0:
-            # I'm useless now
-            self.get_module().schedule_phases.remove(self)
-
     def add_form(self, form):
-        """
-        Adds a form to this phase, removing it from other phases
-        """
+        """Adds a form to this phase, removing it from other phases"""
         old_phase = form.get_phase()
         if old_phase is not None and old_phase.anchor != self.anchor:
             old_phase.remove_form(form)
 
         if self.get_form(form) is None:
             self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
+
+    def change_anchor(self, new_anchor):
+        if new_anchor is None or new_anchor.strip() == '':
+            raise ScheduleError(_("You can't create a phase without an anchor property"))
+        self.anchor = new_anchor
 
 
 class AdvancedModule(ModuleBase):
@@ -2668,6 +2660,37 @@ class AdvancedModule(ModuleBase):
             is_new_phase = True
 
         return (phase, is_new_phase)
+
+    def _clear_schedule_phases(self):
+        self.schedule_phases = []
+
+    def update_schedule_phases(self, anchors):
+        """ Take a list of anchors, reorders, deletes and creates phases from it"""
+        old_phases = {phase.anchor: phase for phase in self.get_schedule_phases()}
+        self._clear_schedule_phases()
+
+        for anchor in anchors:
+            try:
+                self.schedule_phases.append(old_phases.pop(anchor))
+            except KeyError:
+                self.get_or_create_schedule_phase(anchor)
+
+        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.iteritems() if len(phase.forms)]
+        if deleted_phases_with_forms:
+            raise ScheduleError(_("You can't delete phases with anchors "
+                                  "{phase_anchors} because they have forms attached to them").format(
+                                      phase_anchors=(", ").join(deleted_phases_with_forms)))
+
+        return self.get_schedule_phases()
+
+    def update_schedule_phase_anchors(self, new_anchors):
+        """ takes a list of tuples (id, new_anchor) and updates the phase anchors"""
+        for anchor in new_anchors:
+            id = anchor[0] - 1
+            try:
+                self.schedule_phases[id].anchor = anchor[1]
+            except KeyError:
+                raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):

@@ -432,16 +432,22 @@ def default(request, domain):
 
 
 def get_schedule_context(form):
-        from corehq.apps.app_manager.models import SchedulePhase
-        schedule_context = {}
-        module = form.get_module()
-        if module.has_schedule:
-            phase = form.get_phase()
-            if phase is not None:
-                schedule_context.update({'schedule_phase': phase})
-            else:
-                schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
-        return schedule_context
+    from corehq.apps.app_manager.models import SchedulePhase
+    schedule_context = {}
+    module = form.get_module()
+
+    schedule_context.update({
+        'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
+        'schedule_form_id': form.schedule_form_id,
+    })
+
+    if module.has_schedule:
+        phase = form.get_phase()
+        if phase is not None:
+            schedule_context.update({'schedule_phase': phase})
+        else:
+            schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+    return schedule_context
 
 
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
@@ -953,7 +959,12 @@ def get_module_view_context_and_template(app, module):
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
             ],
-            'child_module_enabled': True
+            'child_module_enabled': True,
+            'schedule_phases': [{
+                'id': schedule.id,
+                'anchor': schedule.anchor,
+                'forms': [form.schedule_form_id for form in schedule.get_forms()],
+            } for schedule in module.get_schedule_phases()],
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
@@ -2102,6 +2113,31 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def edit_schedule_phases(request, domain, app_id, module_id):
+    NEW_ANCHORS = -1
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    phases = json.loads(request.POST.get('phases'))
+    changed_anchors = []
+    all_anchors = []
+    for phase in phases:
+        if phase['id'] != NEW_ANCHORS:
+            changed_anchors.append((phase['id'], phase['anchor']))
+        all_anchors.append(phase['anchor'])
+
+    try:
+        module.update_schedule_phase_anchors(changed_anchors)
+        module.update_schedule_phases(all_anchors)
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
+
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -2109,12 +2145,14 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
 
     json_loads = json.loads(request.POST.get('schedule'))
     anchor = json_loads.pop('anchor')
+    schedule_form_id = json_loads.pop('schedule_form_id')
 
     try:
         phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
     except ScheduleError as e:
         return HttpResponseBadRequest(unicode(e))
 
+    form.schedule_form_id = schedule_form_id
     form.schedule = FormSchedule.wrap(json_loads)
     phase.add_form(form)
 

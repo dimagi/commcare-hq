@@ -3,6 +3,91 @@
 var VisitScheduler = (function () {
     'use strict';
 
+    var ModuleScheduler = function(params){
+        // Edits the schedule phases on the module setting page
+        var self = this;
+        self.home = params.home;
+
+        self.init = function () {
+            _.defer(function () {
+                ko.applyBindings(self, self.home.get(0));
+                self.home.on('textchange', 'input', self.change)
+                // all select2's are represented by an input[type="hidden"]
+                    .on('change', 'select, input[type="hidden"]', self.change)
+                    .on('click', 'a:not(.header)', self.change)
+                    .on('change', 'input[type="checkbox"]', self.change);
+
+                // https://gist.github.com/mkelly12/424774/#comment-92080
+                $('#module-scheduler input').on('textchange', self.change);
+            });
+        };
+
+        self.change = function () {
+            self.saveButton.fire('change');
+        };
+
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged schedule settings",
+            save: function() {
+                var phases = JSON.stringify(self.serialize());
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: params.saveUrl,
+                    data: {
+                        phases: phases
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                    }
+                });
+            }
+        });
+
+        var Phase = function(id, anchor, forms){
+            var self = this;
+            self.id = id;
+            self.anchor = uiElement.input().val(anchor);
+            self.anchor.observableVal = ko.observable(self.anchor.val());
+            self.anchor.on("change", function(){
+                self.anchor.observableVal(self.anchor.val());
+            });
+            CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
+            self.forms = ko.observable(forms);
+        };
+
+        self.hasSchedule = ko.observable(params.hasSchedule);
+
+        self.phases = ko.observableArray(
+            _.map(params.schedulePhases, function(phase){
+                return new Phase(phase.id, phase.anchor, phase.forms);
+            })
+        );
+        self.phases.subscribe(function(phase){
+            self.change();
+        });
+
+        self.selectedPhase = ko.observable();
+        self.selectPhase = function(phase){
+            self.selectedPhase(phase);
+        };
+
+        self.addPhase = function(){
+            self.phases.push(new Phase(-1, "", []));
+        };
+
+        self.removePhase = function(phase){
+            self.phases.destroy(phase);
+        };
+
+        self.serialize = function(){
+            return _.map(self.phases(), function(phase){
+                return {id: phase.id,
+                        anchor: phase.anchor.val()};
+            });
+        };
+    };
+
     var Scheduler = function (params) {
         var self = this;
 
@@ -11,7 +96,7 @@ var VisitScheduler = (function () {
         self.save_url = params.save_url;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged case settings",
+            unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
                 self.saveButton.ajax({
@@ -40,7 +125,8 @@ var VisitScheduler = (function () {
         };
 
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
-        self.formSchedule = FormSchedule.wrap(params.schedule, self, self.schedulePhase);
+        self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
+
 
         self.init = function () {
             _.defer(function () {
@@ -134,7 +220,8 @@ var VisitScheduler = (function () {
                     'expires',
                     'allow_unscheduled',
                     'transition_condition',
-                    'termination_condition'
+                    'termination_condition',
+                    'schedule_form_id'
                 ],
                 visits: {
                     create: function (options) {
@@ -147,9 +234,11 @@ var VisitScheduler = (function () {
         },
         wrap: function (data, config, phase) {
             var self = {
-                config: config
+                config: config,
+                all_schedule_phase_anchors: data.all_schedule_phase_anchors,
+                phase: phase
             };
-            ko.mapping.fromJS(data, FormSchedule.mapping(self), self);
+            ko.mapping.fromJS(data.schedule, FormSchedule.mapping(self), self);
 
             // for compatibility with common template: case-config:condition
             self.allow = {
@@ -172,9 +261,9 @@ var VisitScheduler = (function () {
                 return self.visits().length > 0 && self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
-            self.phase = phase;
-
-            self.relevancy = ScheduleRelevancy.wrap(data);
+            self.relevancy = ScheduleRelevancy.wrap(data.schedule);
+            var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
+            self.schedule_form_id = ko.observable(data.schedule_form_id).snakeCase(xmlRe);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
@@ -232,6 +321,7 @@ var VisitScheduler = (function () {
             }
 
             schedule.anchor = self.phase.anchor();
+            schedule.schedule_form_id = self.schedule_form_id();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? -1 : 1);
                 var repeats = visit.type === 'repeats';
@@ -248,6 +338,40 @@ var VisitScheduler = (function () {
     };
 
     return {
-        Scheduler: Scheduler
+        Scheduler: Scheduler,
+        ModuleScheduler: ModuleScheduler
     };
 }());
+
+//connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+            }
+        });
+    }
+};
+
+//control visibility, give element focus, and select the contents (in order)
+ko.bindingHandlers.visibleAndSelect = {
+    update: function(element, valueAccessor) {
+        ko.bindingHandlers.visible.update(element, valueAccessor);
+        if (valueAccessor()) {
+            setTimeout(function() {
+                $(element).focus().select();
+            }, 0); //new tasks are not in DOM yet
+        }
+    }
+};
