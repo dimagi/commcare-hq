@@ -1532,6 +1532,7 @@ class ParentSelect(DocumentSchema):
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
 
+
 class FixtureSelect(DocumentSchema):
     active = BooleanProperty(default=False)
     fixture_type = StringProperty()

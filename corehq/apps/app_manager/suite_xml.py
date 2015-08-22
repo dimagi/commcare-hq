@@ -1383,7 +1383,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     if d:
                                         r.append(d)
             if module.fixture_select.active:
-                from corehq.apps.app_manager.detail_screen import get_column_generator
                 d = Detail(
                     id='m{}_fixture_select'.format(module.id),
                     title=Text(),
@@ -1909,7 +1908,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datums.append({
                     'datum': SessionDatum(
                         id='fixture_value',
+<<<<<<< HEAD
                         nodeset="instance('item-list:{ft}')/{ft}_list/{ft}".format(ft=datum['module'].fixture_select.fixture_type),
+=======
+                        nodeset="instance('item-list:{ft}')/{ft}_list/{ft}"
+                            .format(ft=datum['module'].fixture_select.fixture_type),
+>>>>>>> 9077c490c791e182522e5160274f8d8c5f08a991
                         value=datum['module'].fixture_select.variable_column,
                         detail_select='m{}_fixture_select'.format(datum['module'].id)
                     )

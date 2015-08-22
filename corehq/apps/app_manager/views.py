@@ -179,7 +179,7 @@ from corehq.apps.app_manager.models import (
     SchedulePhaseForm,
     FixtureSelect,
 )
-from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
+from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -1099,6 +1099,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
+        from corehq.apps.style.utils import set_bootstrap_version3
+        from crispy_forms.utils import set_template_pack
+        set_bootstrap_version3()
+        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 

@@ -1039,7 +1039,7 @@ var DetailScreenConfig = (function () {
                     displayColumn: spec.fixtureSelect.display_column,
                     variableColumn: spec.fixtureSelect.variable_column,
                     xpath: spec.fixtureSelect.xpath
-                })
+                });
             }
             this.saveUrl = spec.saveUrl;
             this.contextVariables = spec.contextVariables;

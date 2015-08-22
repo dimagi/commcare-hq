@@ -483,7 +483,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), app.create_suite())
 
-
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 

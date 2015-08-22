@@ -729,11 +729,11 @@ class ConfigureNewReportBase(forms.Form):
             'Numeric': 'numeric'
         }
 
-        def _make_report_filter(conf):
+        def _make_report_filter(conf, index):
             col_id = self.data_source_properties[conf["property"]]['column_id']
             ret = {
                 "field": col_id,
-                "slug": col_id,
+                "slug": "{}-{}".format(col_id, index),
                 "display": conf["display_text"],
                 "type": filter_type_map[conf['format']]
             }
@@ -742,7 +742,7 @@ class ConfigureNewReportBase(forms.Form):
             return ret
 
         filter_configs = self.cleaned_data['filters']
-        filters = [_make_report_filter(f) for f in filter_configs]
+        filters = [_make_report_filter(f, i) for i, f in enumerate(filter_configs)]
         if self.source_type == 'case':
             # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
             # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
