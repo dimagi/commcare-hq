@@ -1369,8 +1369,9 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
-    end_date = forms.DateField(
-        widget=forms.HiddenInput,
+    trial_length = forms.ChoiceField(
+        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        label="Trial Length",
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
@@ -1389,7 +1390,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
-            crispy.Field('end_date'),
+            crispy.Field('trial_length'),
             crispy.HTML(_(
                 '<p><i class="icon-info-sign"></i> The 3 month trial includes '
                 'access to all features, 5 mobile workers, and 25 SMS.  Fees '
@@ -1431,7 +1432,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
         fields.update({
             'auto_generate_credits': False,
-            'date_end': self.cleaned_data['end_date'],
+            'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
         })
