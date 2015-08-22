@@ -557,7 +557,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
-    interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    interval = StringProperty(choices=[
+        "daily",
+        "weekly",
+        "n_weeks",
+        "monthly",
+    ])
+    n_weeks = IntegerProperty(default=1)
+    offset_weeks = IntegerProperty(default=0)
 
 
     @property
