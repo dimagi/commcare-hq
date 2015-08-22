@@ -1188,6 +1188,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
+            'today': datetime.date.today(),
         }
 
     @property
