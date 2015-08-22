@@ -1,13 +1,14 @@
-ko.subscribable.fn.snakeCase = function() {
+ko.subscribable.fn.snakeCase = function(re) {
     // Converts non-word characters to snake case
     // this.my_thing = ko.observable('hi there').snakeCase()
     // -> hi_there
+    re = re || /\W+/g;
     return ko.computed({
         read: function() {
-            return this().replace(/\W+/g, '_');
+            return this().replace(re, '_');
         },
         write: function(value) {
-            this(value.replace(/\W+/g, '_'));
+            this(value.replace(re, '_'));
             this.valueHasMutated();
         },
         owner: this

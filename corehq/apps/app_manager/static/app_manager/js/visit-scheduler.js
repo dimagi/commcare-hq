@@ -260,7 +260,8 @@ var VisitScheduler = (function () {
             self.phase = phase;
 
             self.relevancy = ScheduleRelevancy.wrap(data);
-            self.schedule_form_id = ko.observable(schedule_form_id).snakeCase();
+            var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
+            self.schedule_form_id = ko.observable(schedule_form_id).snakeCase(xmlRe);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
