@@ -1375,11 +1375,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
-        end_date = datetime.date.today() + relativedelta(months=3)
-        kwargs['initial'] = {
-            'end_date': end_date,
-        }
-
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
         self.fields['organization_name'].initial = self.autocomplete_account_name
@@ -1390,21 +1385,20 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
-            crispy.Field('trial_length'),
+            crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.HTML(_(
-                '<p><i class="icon-info-sign"></i> The 3 month trial includes '
+                '<p><i class="icon-info-sign"></i> The trial includes '
                 'access to all features, 5 mobile workers, and 25 SMS.  Fees '
                 'apply for users or SMS in excess of these limits (1 '
                 'USD/user/month, regular SMS fees).</p>'
             )),
             crispy.HTML(_(
                 '<p><i class="icon-info-sign"></i> The trial will begin as soon '
-                'as you hit "Update" and end on %(end_date)s.  On %(end_date)s '
-                ' the project space will automatically be subscribed to the '
+                'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
+                'On <span data-bind="text: end_date"></span> '
+                'the project space will automatically be subscribed to the '
                 'Community plan.</p>'
-            ) % {
-                'end_date': end_date,
-            }),
+            )),
             *self.form_actions
         )
 
