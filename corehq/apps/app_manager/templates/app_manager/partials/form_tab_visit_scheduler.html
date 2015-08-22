@@ -18,8 +18,14 @@
             </div>
             <div class="controls">
                 <label>
-                    {% trans "Schedule Anchor Date" %}
-                    <input type="text" id="anchor" placeholder="Anchor" data-bind="value: phase.anchor">
+                    {% trans "Schedule Phase" %}
+                    <select id="achor"
+                            data-bind="options: all_schedule_phase_anchors,
+                                       optionsCaption: '{% trans "Please select a phase..." %}',
+                            value: phase.anchor"></select>
+                    <span class="hq-help-template"
+                              data-title="{% trans 'Schedule Phase' %}"
+                              data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
                 </label>
             </div>
         </fieldset>

@@ -434,7 +434,12 @@ def get_schedule_context(form):
     from corehq.apps.app_manager.models import SchedulePhase
     schedule_context = {}
     module = form.get_module()
-    schedule_context.update({'schedule_form_id': form.schedule_form_id})
+
+    schedule_context.update({
+        'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
+        'schedule_form_id': form.schedule_form_id,
+    })
+
     if module.has_schedule:
         phase = form.get_phase()
         if phase is not None:

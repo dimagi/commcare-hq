@@ -2338,25 +2338,15 @@ class SchedulePhase(IndexedSchema):
                     None)
 
     def remove_form(self, form):
-        """
-        Remove a form from the phase
-
-        If this results in an empty phase, delete the phase
-        """
+        """Remove a form from the phase"""
         idx = self.get_phase_form_index(form)
         if idx is None:
             raise ScheduleError("That form doesn't exist in the phase")
 
         self.forms.remove(self.forms[idx])
 
-        if len(self.forms) == 0:
-            # I'm useless now
-            self.get_module().schedule_phases.remove(self)
-
     def add_form(self, form):
-        """
-        Adds a form to this phase, removing it from other phases
-        """
+        """Adds a form to this phase, removing it from other phases"""
         old_phase = form.get_phase()
         if old_phase is not None and old_phase.anchor != self.anchor:
             old_phase.remove_form(form)

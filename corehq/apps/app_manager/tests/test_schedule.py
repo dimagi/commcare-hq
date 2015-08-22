@@ -210,10 +210,6 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         with self.assertRaises(ScheduleError):
             phase.remove_form(form_1)
 
-        # Removing all the forms deletes the phase
-        phase.remove_form(form_2)
-        self.assertEqual(len(self.module.schedule_phases), 0)
-
     def test_add_form_to_phase(self):
         self.module.schedule_phases = [
             SchedulePhase(

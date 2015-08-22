@@ -125,7 +125,7 @@ var VisitScheduler = (function () {
         };
 
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
-        self.formSchedule = FormSchedule.wrap(params.schedule, self, self.schedulePhase, params.schedule_form_id);
+        self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
 
 
         self.init = function () {
@@ -232,11 +232,13 @@ var VisitScheduler = (function () {
                 }
             };
         },
-        wrap: function (data, config, phase, schedule_form_id) {
+        wrap: function (data, config, phase) {
             var self = {
-                config: config
+                config: config,
+                all_schedule_phase_anchors: data.all_schedule_phase_anchors,
+                phase: phase
             };
-            ko.mapping.fromJS(data, FormSchedule.mapping(self), self);
+            ko.mapping.fromJS(data.schedule, FormSchedule.mapping(self), self);
 
             // for compatibility with common template: case-config:condition
             self.allow = {
@@ -259,11 +261,9 @@ var VisitScheduler = (function () {
                 return self.visits().length > 0 && self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
-            self.phase = phase;
-
-            self.relevancy = ScheduleRelevancy.wrap(data);
+            self.relevancy = ScheduleRelevancy.wrap(data.schedule);
             var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
-            self.schedule_form_id = ko.observable(schedule_form_id).snakeCase(xmlRe);
+            self.schedule_form_id = ko.observable(data.schedule_form_id).snakeCase(xmlRe);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
@@ -374,4 +374,4 @@ ko.bindingHandlers.visibleAndSelect = {
             }, 0); //new tasks are not in DOM yet
         }
     }
-}
+};
