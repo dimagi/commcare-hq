@@ -76,8 +76,6 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             )
         )
 
-
-
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
 
@@ -131,6 +129,39 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
         with self.assertRaises(ScheduleError):
             self.module.get_or_create_schedule_phase(anchor=None)
+
+    def test_update_schedule_phases(self):
+        pre_made_phase = SchedulePhase(anchor='foo')
+        pre_made_phase_2 = SchedulePhase(anchor='bar')
+        self.module.schedule_phases = [pre_made_phase, pre_made_phase_2]
+
+        new_phase = SchedulePhase(anchor='baz')
+        updated_phases = [new_phase.anchor, pre_made_phase.anchor]
+
+        self.module.update_schedule_phases(updated_phases)
+        self.assertEqual([phase.anchor for phase in self.module.get_schedule_phases()], updated_phases)
+
+        # Test reordering
+        self.module.schedule_phases = [pre_made_phase, pre_made_phase_2]
+        updated_phases = [pre_made_phase_2.anchor, pre_made_phase.anchor]
+        self.module.update_schedule_phases(updated_phases)
+        self.assertEqual([phase.anchor for phase in self.module.get_schedule_phases()], updated_phases)
+
+        # Test deletion
+        self.module.schedule_phases = [pre_made_phase, pre_made_phase_2]
+        updated_phases = []
+        self.module.update_schedule_phases(updated_phases)
+        self.assertEqual([phase.anchor for phase in self.module.get_schedule_phases()], updated_phases)
+
+        # Test deletion with forms
+        phase_with_forms = SchedulePhase(
+            anchor='edd',
+            forms=[SchedulePhaseForm(form_id=self.form_1.unique_id)],
+        )
+        self.module.schedule_phases = [phase_with_forms]
+        updated_phases = []
+        with self.assertRaises(ScheduleError):
+            self.module.update_schedule_phases(updated_phases)
 
     def test_form_in_phase_requires_schedule(self):
         self._apply_schedule_phases()

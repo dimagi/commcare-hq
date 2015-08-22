@@ -2658,6 +2658,27 @@ class AdvancedModule(ModuleBase):
 
         return (phase, is_new_phase)
 
+    def _clear_schedule_phases(self):
+        self.schedule_phases = []
+
+    def update_schedule_phases(self, anchors):
+        """ Take a list of anchors, reorders, deletes and creates phases from it"""
+        old_phases = {phase.anchor: phase for phase in self.get_schedule_phases()}
+        self._clear_schedule_phases()
+
+        for anchor in anchors:
+            try:
+                self.schedule_phases.append(old_phases.pop(anchor))
+            except KeyError:
+                self.get_or_create_schedule_phase(anchor)
+
+        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.iteritems() if len(phase.forms)]
+        if deleted_phases_with_forms:
+            raise ScheduleError(_("You can't delete phases with anchors "
+                                  "{phase_anchors} because they have forms attached to them").format(
+                                      phase_anchors=(", ").join(deleted_phases_with_forms)))
+
+        return self.get_schedule_phases()
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'careplan_form'
