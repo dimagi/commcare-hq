@@ -2364,6 +2364,11 @@ class SchedulePhase(IndexedSchema):
         if self.get_form(form) is None:
             self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
 
+    def change_anchor(self, new_anchor):
+        if new_anchor is None or new_anchor.strip() == '':
+            raise ScheduleError(_("You can't create a phase without an anchor property"))
+        self.anchor = new_anchor
+
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
@@ -2679,6 +2684,16 @@ class AdvancedModule(ModuleBase):
                                       phase_anchors=(", ").join(deleted_phases_with_forms)))
 
         return self.get_schedule_phases()
+
+    def update_schedule_phase_anchors(self, new_anchors):
+        """ takes a list of tuples (id, new_anchor) and updates the phase anchors"""
+        for anchor in new_anchors:
+            id = anchor[0] - 1
+            try:
+                self.schedule_phases[id].anchor = anchor[1]
+            except KeyError:
+                raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
+
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'careplan_form'

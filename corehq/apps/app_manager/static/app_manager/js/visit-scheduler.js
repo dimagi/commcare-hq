@@ -44,12 +44,13 @@ var VisitScheduler = (function () {
             }
         });
 
-        var Phase = function(anchor, forms){
+        var Phase = function(id, anchor, forms){
             var self = this;
+            self.id = id;
             self.anchor = uiElement.input().val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function(){
-                self.anchor.observeVal(self.anchor.val());
+                self.anchor.observableVal(self.anchor.val());
             });
             CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
@@ -59,7 +60,7 @@ var VisitScheduler = (function () {
 
         self.phases = ko.observableArray(
             _.map(params.schedulePhases, function(phase){
-                return new Phase(phase.anchor, phase.forms);
+                return new Phase(phase.id, phase.anchor, phase.forms);
             })
         );
         self.phases.subscribe(function(phase){
@@ -72,7 +73,7 @@ var VisitScheduler = (function () {
         };
 
         self.addPhase = function(){
-            self.phases.push(new Phase("", []));
+            self.phases.push(new Phase(-1, "", []));
         };
 
         self.removePhase = function(phase){
@@ -81,7 +82,8 @@ var VisitScheduler = (function () {
 
         self.serialize = function(){
             return _.map(self.phases(), function(phase){
-                return phase.anchor.val();
+                return {id: phase.id,
+                        anchor: phase.anchor.val()};
             });
         };
     };

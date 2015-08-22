@@ -163,6 +163,25 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         with self.assertRaises(ScheduleError):
             self.module.update_schedule_phases(updated_phases)
 
+    def test_update_schedule_phase_anchors(self):
+        pre_made_phase = SchedulePhase(anchor='foo',
+                                       forms=[SchedulePhaseForm(form_id=self.form_1.unique_id)],)
+        pre_made_phase_2 = SchedulePhase(anchor='bar',
+                                         forms=[SchedulePhaseForm(form_id=self.form_2.unique_id)])
+        pre_made_phase_3 = SchedulePhase(anchor='burp')
+        self.module.schedule_phases = [pre_made_phase, pre_made_phase_2, pre_made_phase_3]
+
+        new_anchors = [(2, 'baz'), (1, 'quux')]
+
+        self.module.update_schedule_phase_anchors(new_anchors)
+        self.assertEqual(self.module.schedule_phases[0].forms[0].form_id, self.form_1.unique_id)
+        self.assertEqual(self.module.schedule_phases[0].anchor, new_anchors[1][1])
+
+        self.assertEqual(self.module.schedule_phases[1].forms[0].form_id, self.form_2.unique_id)
+        self.assertEqual(self.module.schedule_phases[1].anchor, new_anchors[0][1])
+
+        self.assertEqual(self.module.schedule_phases[2].anchor, 'burp')
+
     def test_form_in_phase_requires_schedule(self):
         self._apply_schedule_phases()
         self.form_3.schedule = None

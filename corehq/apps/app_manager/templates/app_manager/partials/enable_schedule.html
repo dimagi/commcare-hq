@@ -36,9 +36,9 @@
             <table class="table table-hover table-condensed">
                 <thead>
                     <th></th>
-                    <th>Schedule Phase Number</th>
-                    <th>Schedule Anchor Property</th>
-                    <th>Forms in this phase</th>
+                    <th>{% trans "Schedule Phase Number" %}</th>
+                    <th>{% trans "Schedule Anchor Property" %}</th>
+                    <th>{% trans "Forms in this phase" %}</th>
                     <th></th>
                 </thead>
                 <tbody data-bind="template: { name: 'phase-template', foreach: phases},
@@ -65,7 +65,13 @@
             <td>
                 <i style="cursor: pointer;"
                    data-bind="css: COMMCAREHQ.icons.DELETE,
-                              click: $parent.removePhase"></i>
+                              click: $parent.removePhase,
+                              visible: forms().length == 0
+                              "></i>
+                <i style="cursor: pointer;"
+                   class="icon-question-sign icon-blue"
+                   title="{% trans 'You can only delete phases that have no forms' %}"
+                   data-bind="visible: forms().length != 0"></i>
             </td>
         </tr>
     </script>
