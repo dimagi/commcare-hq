@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -342,7 +343,7 @@ class SMSLoadBalancingInfo(object):
                     dumpable[k] = [json_format_datetime(t) for t in v]
                 self.redis_client.set(self.stats_key, json.dumps(dumpable))
             if self.lock:
-                self.lock.release()
+                release_lock(self.lock, True)
         except:
             if raise_exc:
                 raise
@@ -455,7 +456,7 @@ class SMSLoadBalancingMixin(Document):
             # However, if no exception occurs, we don't release the lock since
             # it must be released by calling the .finish() method on the return
             # value.
-            lock.release()
+            release_lock(lock, True)
             raise
 
     def get_next_phone_number(self, redis_client, raise_exc=False):

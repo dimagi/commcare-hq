@@ -149,14 +149,13 @@ def make_form_question_indicator(question, column_id=None):
     """
     path = question['value'].split('/')
     data_type = question['type']
-    options = question.get('options')
     ret = {
         "type": "raw",
         "column_id": column_id or question['value'],
         'property_path': ['form'] + path[2:],
         "display_name": path[-1],
     }
-    ret.update(_get_form_indicator_data_type(data_type, options))
+    ret.update(_get_form_indicator_data_type(data_type))
     return ret
 
 
@@ -174,19 +173,11 @@ def make_form_meta_block_indicator(spec, column_id=None):
         "property_path": ['form', 'meta'] + [field_name],
         "display_name": field_name,
     }
-    ret.update(_get_form_indicator_data_type(data_type, []))
+    ret.update(_get_form_indicator_data_type(data_type))
     return ret
 
 
-def _get_form_indicator_data_type(data_type, options):
+def _get_form_indicator_data_type(data_type):
     if data_type in ["date", "datetime"]:
         return {"datatype": data_type}
-    if data_type == "MSelect":
-        return {
-            "type": "choice_list",
-            "select_style": FORM_QUESTION_DATATYPE_MAP[data_type],
-            "choices": [
-                option['value'] for option in options
-            ],
-        }
     return {"datatype": "string"}
