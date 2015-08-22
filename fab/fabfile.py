@@ -925,7 +925,9 @@ def update_virtualenv():
     # Optimization if we have current setup (i.e. not the first deploy)
     if files.exists(env.virtualenv_current):
         print 'Cloning virtual env'
-        sudo("virtualenv-clone {} {}".format(env.virtualenv_current, env.virtualenv_root))
+        # There's a bug in virtualenv-clone that doesn't allow us to clone envs from symlinks
+        current_release = sudo('readlink {}'.format(env.code_current))
+        sudo("virtualenv-clone {} {}".format(current_release, env.virtualenv_root))
 
     with cd(env.code_root):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
