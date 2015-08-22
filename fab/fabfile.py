@@ -159,7 +159,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M'))
+    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time())))
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
@@ -812,10 +812,10 @@ def clean_releases(keep=3):
     to_remove = []
     valid_releases = 0
     with cd(env.root):
-        for index, release in enumerate(releases):
-            if (files.contains(RELEASE_RECORD, release) or
-                    release == current_release or
-                    release == os.path.basename(env.code_root)):
+        for index, release in enumerate(reversed(releases)):
+            if (release == current_release or release == os.path.basename(env.code_root)):
+                valid_releases += 1
+            elif (files.contains(RELEASE_RECORD, release)):
                 valid_releases += 1
                 if valid_releases > keep:
                     to_remove.append(release)
@@ -907,7 +907,10 @@ def update_virtualenv():
 
     # Optimization if we have current setup (i.e. not the first deploy)
     if files.exists(env.virtualenv_current):
-        sudo("virtualenv-clone {} {}".format(env.virtualenv_current, env.virtualenv_root))
+        print 'Cloning virtual env'
+        # There's a bug in virtualenv-clone that doesn't allow us to clone envs from symlinks
+        current_virtualenv = sudo('readlink -f {}'.format(env.virtualenv_current))
+        sudo("virtualenv-clone {} {}".format(current_virtualenv, env.virtualenv_root))
 
     with cd(env.code_root):
         cmd_prefix = 'export HOME=/home/%s && source %s/bin/activate && ' % (
