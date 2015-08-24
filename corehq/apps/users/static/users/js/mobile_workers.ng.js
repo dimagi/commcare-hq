@@ -71,6 +71,7 @@
         checkingUsername: 'Checking username'
     });
     mobileWorkers.constant('customFields', []);
+    mobileWorkers.constant('customFieldNames', []);
 
     var MobileWorker = function (data) {
         var self = this;
@@ -100,11 +101,14 @@
 
     var mobileWorkerControllers = {};
 
-    mobileWorkerControllers.newMobileWorkerFormController = function (
-            $scope, workerCreationService, djangoRMI, formStrings, customFields
+    mobileWorkerControllers.MobileWorkerCreationController = function (
+            $scope, workerCreationFactory, djangoRMI, formStrings, customFields,
+            customFieldNames
     ) {
         $scope.mobileWorker = {};
         $scope.usernameAvailabilityStatus = null;
+        $scope.customFormFields = customFields;
+        $scope.customFormFieldNames = customFieldNames;
 
         $scope.initializeMobileWorker = function () {
             visualFormCtrl.passwordClear();
