@@ -1,6 +1,14 @@
+from corehq.apps.commtrack.models import StockState
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE
+from collections import defaultdict
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
+from casexml.apps.stock.models import StockTransaction
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
+from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
+from custom.ewsghana.reminders import ERROR_MESSAGE
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
-from custom.ewsghana.alerts.alerts import report_completion_check, stock_alerts
+from custom.ewsghana.alerts.alerts import stock_alerts
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.commtrack.sms import *
 
@@ -114,7 +122,51 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
             raise ProductCodeException(unicode(INVALID_PRODUCT_CODE % prod_code))
 
 
+def get_transactions_by_product(transactions):
+    result = defaultdict(list)
+    for tx in transactions:
+        result[tx.product_id].append(tx)
+    return result
+
+
 class AlertsHandler(KeywordHandler):
+
+    def get_valid_reports(self, data, verified_contact):
+        filtered_transactions = []
+        excluded_products = []
+        for product_id, transactions in get_transactions_by_product(data['transactions']).iteritems():
+            begin_soh = None
+            end_soh = None
+            receipt = 0
+            for transaction in transactions:
+                if begin_soh is None:
+                    sql_location = SQLLocation.objects.get(location_id=transaction.location_id)
+                    latest = StockTransaction.latest(
+                        sql_location.supply_point_id,
+                        SECTION_TYPE_STOCK,
+                        transaction.product_id
+                    )
+                    begin_soh = 0
+                    if latest:
+                        begin_soh = float(latest.stock_on_hand)
+
+                if transaction.action == 'receipts':
+                    receipt += float(transaction.quantity)
+                elif not end_soh:
+                    end_soh = float(transaction.quantity)
+            if end_soh > begin_soh + receipt:
+                excluded_products.append(transaction.product_id)
+            else:
+                filtered_transactions.append(transaction)
+        if excluded_products:
+            message = ERROR_MESSAGE.format(products_list=', '.join(
+                [
+                    SQLProduct.objects.get(product_id=product_id).code
+                    for product_id in set(excluded_products)
+                ]
+            ))
+            send_sms_to_verified_number(verified_contact, message)
+        return filtered_transactions
 
     def handle(self):
         verified_contact = self.verified_contact
@@ -134,6 +186,14 @@ class AlertsHandler(KeywordHandler):
             data = EWSStockAndReceiptParser(domain, verified_contact).parse(EWSFormatter().format(text))
             if not data:
                 return False
+            if EWS_INVALID_REPORT_RESPONSE.enabled(self.domain):
+                filtered_transactions = self.get_valid_reports(data, verified_contact)
+
+                if not filtered_transactions:
+                    return True
+
+                data['transactions'] = filtered_transactions
+
         except NotAUserClassError:
             return False
         except SMSError:
@@ -147,6 +207,7 @@ class AlertsHandler(KeywordHandler):
                 raise
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
             return True
+
         process(domain.name, data)
         transactions = data['transactions']
         stock_alerts(transactions, user)

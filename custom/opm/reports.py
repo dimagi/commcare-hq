@@ -14,6 +14,7 @@ import json
 import re
 import urllib
 from dateutil import parser
+from dateutil.rrule import MONTHLY, rrule
 
 from django.http import HttpResponse
 from django.template import RequestContext
@@ -1133,8 +1134,9 @@ class HealthMapSource(NewHealthStatusReport):
     @property
     @memoized
     def get_users(self):
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
         config = {
-            'awc': tuple(self.awcs),
+            'awc': tuple(awcs),
             'gp': tuple(self.gp),
             'block': tuple(self.blocks)
         }
@@ -1346,3 +1348,60 @@ class LongitudinalCMRReport(MetReport):
     slug = 'longitudinal_cmr'
     model = LongitudinalConditionsMet
     show_total = False
+    exportable = True
+    export_format_override = Format.XLS
+    month = None
+    year = None
+
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        now = datetime.datetime.now()
+        for index, row in enumerate(self.get_rows(), 1):
+            months = list(
+                rrule(MONTHLY, dtstart=datetime.date(row.opened_on.year, row.opened_on.month, 1),
+                      until=datetime.date(now.year, now.month, 1))
+            )
+            for month in months:
+                self.month = month.month
+                self.year = month.year
+                try:
+                    case_row = self.get_row_data(row, index=1)
+                    if not case_row.case_is_out_of_range:
+                        rows.append(case_row)
+                    else:
+                        case_row.one = ''
+                        case_row.two = ''
+                        case_row.three = ''
+                        case_row.four = ''
+                        case_row.five = ''
+                        case_row.pay = '--'
+                        case_row.payment_last_month = '--'
+                        case_row.issue = _('Reporting period incomplete')
+                        rows.append(case_row)
+                except InvalidRow as e:
+                    if self.debug:
+                        self.add_debug_data(row._id, e)
+        return rows
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s&is_open=%s" % (
+            self.blocks,
+            self.gp,
+            self.awcs,
+            self.request_params.get('is_open')
+        )
+        return redis_key

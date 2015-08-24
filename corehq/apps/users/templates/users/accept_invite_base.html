@@ -19,8 +19,17 @@
                         {% csrf_token %}
                         {{ form.as_table }}
                         <fieldset>
-                            <legend>Accept Invite?</legend>
-                            <p>{% if invited_user %}<strong>Note:</strong> You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want{% else %}Would you like{% endif %} to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ user.username }}</strong>?</p>
+                            <legend>{% trans "Accept Invite?" %}</legend>
+                            <p>{% if invited_user %}<strong>{% trans "Note:" %}</strong>
+                            {% blocktrans %}
+                            You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want
+                            {% endblocktrans %}
+                            {% else %}
+                            {% trans "Would you like" %}
+                            {% endif %}
+                            {% blocktrans %}
+                            to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ user.username }}</strong>?</p>
+                            {% endblocktrans %}
                         </fieldset>
                         <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
                     </form>
@@ -32,14 +41,18 @@
             <div class="span4">
                 <aside class="well">
                     <h3>Not {{ user.username }}?</h3>
-                    <a href="?create=true" class="btn">Create an Account</a><br />
-                    or<br />
-                    <a href="?switch=true" class="btn">Switch Accounts</a>
+                    <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
+                    {% trans "or" %}<br />
+                    <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
                 </aside>
             </div>
         {% else %}
             <div class="page-header">
-                <h1>{{ invite_type|capfirst }} Invitation, Account Required<br /><small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small></h1>
+                <h1>
+                {% blocktrans %}
+                {{ invite_type|capfirst }} Invitation, Account Required<br /><small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
+                {% endblocktrans %}
+                </h1>
             </div>
             <div class="span8">
                 <form name="form" method="post" action="" class="form-horizontal">

@@ -14,6 +14,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.decorators.memoized import memoized
@@ -1034,6 +1035,28 @@ def resave_case(request, domain, case_id):
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
     )
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def bootstrap_ledgers(request, domain, case_id):
+    # todo: this is just to fix a mobile issue that requires ledgers to be initialized
+    # this view and code can be removed when that bug is released (likely anytime after
+    # october 2015 if you are reading this after then)
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    if (not StockTransaction.objects.filter(case_id=case_id).exists() and
+            SQLProduct.objects.filter(domain=domain).exists()):
+        submit_case_blocks([
+            '''<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="stock">
+           <entry id="{product_id}" quantity="0" />
+        </balance>'''.format(
+            date=json_format_datetime(datetime.utcnow()),
+            case_id=case_id,
+            product_id=SQLProduct.objects.filter(domain=domain).values_list('product_id', flat=True)[0]
+        )], domain=domain)
+        messages.success(request, _(u'An empty ledger was added to Case %s.' % case.name),)
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 

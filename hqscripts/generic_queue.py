@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import sleep
 from django.core.management.base import BaseCommand
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
 from dimagi.utils.logging import notify_exception
 
@@ -54,7 +55,7 @@ class GenericEnqueuingOperation(BaseCommand):
                 self.enqueue_item(item_id)
             except:
                 # We couldn't enqueue, so release the lock
-                enqueuing_lock.release()
+                release_lock(enqueuing_lock, True)
 
     def get_enqueuing_lock(self, client, key):
         lock_timeout = self.get_enqueuing_timeout() * 60
