@@ -774,6 +774,8 @@ def child_locations_for_select2(request, domain):
     if id:
         try:
             loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'no location with id %s found' % id},
