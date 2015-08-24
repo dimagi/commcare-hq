@@ -527,6 +527,7 @@ class AddSavedReportConfigView(View):
             'last7',
             'lastn',
             'lastmonth',
+            'lastyear',
         ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")
