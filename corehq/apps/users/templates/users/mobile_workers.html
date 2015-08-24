@@ -31,6 +31,24 @@
         customFormFieldNames: {{ custom_field_names|JSON }}
     });
     {% angularjs %}
+    mobileWorkerApp.directive('workertableHeader', function () {
+        return {
+            restrict: 'A',
+            template: '<tr><th class="col-xs-3">' +
+                    '{% trans "Username" %}</th><th ng-repeat="field_name in ' +
+                    'customFormFieldNames">{{ field_name }}</th><th ' +
+                    'class="col-xs-2">{% trans 'Action' %}</th></tr>'
+        }
+    });
+    mobileWorkerApp.directive('customFieldColumn', function () {
+        return {
+            restrict: 'A',
+            template: '<span ng-show="_.isArray(field_val)">' +
+                      '<ul class="list-table"><li ng-repeat="d in field_val">{{ d }}</li></ul>' +
+                      '</span>' +
+                      '<span ng-show="!_.isArray(field_val)">{{ field_val }}</span>'
+        }
+    });
     mobileWorkerApp.constant('paginationLimits', [
         [10, '{% trans "Show 10 Mobile Workers" %}'],
         [25, '{% trans "Show 25 Mobile Workers" %}'],
@@ -127,36 +145,73 @@
                     </form>
                 </div>
             </div>
+            {% angularjs %}
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-circle-o-notch fa-spin"></i>
+                        {% trans 'Pending Mobile Workers' %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead workertable-header></thead>
+                        <tbody>
+                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
+                                <td>{{ worker.username }}</td>
+                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
+                                <td>
+                                    <i class="fa fa-circle-o-notch fa-spin"></i>
+                                    {% trans 'Pending...' %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel panel-success" ng-show="hasSuccess">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans 'New Mobile Workers' %}</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead workertable-header></thead>
+                        <tbody>
+                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
+                                <td><i class="fa fa-check"></i></td>
+                                <td>{{ worker.username }}</td>
+                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
+                                <td><a href="#" class="btn btn-primary">{% trans 'Edit' %}</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-success" ng-show="hasError">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans 'Error Creating These Mobile Workers' %}</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead workertable-header></thead>
+                        <tbody>
+                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
+                                <td><i class="fa fa-check"></i></td>
+                                <td>{{ worker.username }}</td>
+                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
+                                <td>
+                                    <a href="#" class="btn btn-default">{% trans 'Retry' %}</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endangularjs %}
         </div>
-        {% angularjs %}
-        <div ng-controller="newMobileWorkerStatusController">
-            <h1>All</h1>
-            <ul>
-                <li ng-repeat="worker in workers">
-                    {{ worker.username }} {{ worker.creationStatus }}
-                </li>
-            </ul>
-            <h1>Pending</h1>
-            <ul>
-                <li ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
-                    {{ worker.username }}
-                </li>
-            </ul>
-            <h1>Success</h1>
-            <ul>
-                <li ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
-                    {{ worker.username }}
-                </li>
-            </ul>
-            <h1>Error</h1>
-            <ul>
-                <li ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
-                    {{ worker.username }}
-                </li>
-            </ul>
-        </div>
-        {% endangularjs %}
-        <div class="panel panel-default" ng-controller="paginatedListController">
+        <div class="panel panel-default" ng-controller="PaginatedListController">
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
             </div>
