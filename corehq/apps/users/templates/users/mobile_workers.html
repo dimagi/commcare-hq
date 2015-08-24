@@ -219,6 +219,22 @@
                         </tr>
                     </tbody>
                 </table>
+                <div class="alert alert-info"
+                     ng-hide="hasError"
+                     ng-show="notLoaded">
+                    <i class="fa fa-circle-o-notch fa-spin"></i>
+                    {% trans "Loading Workers..." %}
+                </div>
+                <div class="alert alert-danger"
+                     ng-show="hasError">
+                    {% blocktrans %}
+                        <strong>There was an issue contacting the server.</strong>
+                        Please check your internet connection.
+                        If this issue continues, please
+                        <a href="#modalReportIssue"
+                           data-toggle="modal">file a bug report</a>.
+                    {% endblocktrans %}
+                </div>
                 <pagination direction-links="true"
                             total-items="total"
                             items-per-page="limit"
