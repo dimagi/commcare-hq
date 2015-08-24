@@ -1,6 +1,5 @@
 import datetime
 from django.utils.datastructures import SortedDict
-from django.utils.translation import ugettext
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
