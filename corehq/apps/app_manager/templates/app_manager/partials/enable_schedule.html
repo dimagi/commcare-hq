@@ -1,29 +1,83 @@
 {% load i18n %}
+{% load xforms_extras %}
 {% load hq_shared_tags %}
-<div class="control-group">
-    <label class="control-label">
-        {% trans "Enable visit schedule" %}
-        <span class="hq-help-template"
-              data-title="{% trans "Visit Schedule" %}"
-              data-content="{% trans "Be able to configure a visit schedule" %}"
-        ></span>
-        <span class="label label-info">{% trans "Preview" %}</span>
-    </label>
-    <div class="controls">
-        <label class="checkbox">
-            {% if module.all_forms_require_a_case or module.has_schedule %}
-                <input type="checkbox" name="has_schedule" {% if module.has_schedule %}checked{% endif %}>
-                {% if not module.all_forms_require_a_case %}
-                <div class="alert alert-error" data-bind="visible: value">
-                    <strong>{% trans "Visit schedule will be ignored as not all forms in the module update or close a case." %}</strong>
+{% if module.all_forms_require_a_case or module.has_schedule %}
+    <div id="module-scheduler">
+        <div data-bind="saveButton: saveButton"></div>
+        <legend>
+            {% trans "Visit Scheduler" %}
+        </legend>
+
+        <form>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        {% trans "Enable visit scheduler" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans 'Visit Schedule' %}"
+                              data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
+                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
+                        {% if not module.all_forms_require_a_case %}
+                            <div class="alert alert-error" data-bind="visible: value">
+                                <strong>
+                                    {% blocktrans %}
+                                        Visit schedule will be ignored as not all
+                                        forms in the module update or close a case.
+                                    {% endblocktrans %}
+                                </strong>
+                            </div>
+                        {% endif %}
+                    </label>
                 </div>
-                {% endif %}
-            {% else %}
-                {% blocktrans %}
-                    Visit schedules can only be used on modules where all the forms in the module<br/>
-                    update or close a case, which means registration forms must go in a separate module.
-                {% endblocktrans %}
-            {% endif %}
-        </label>
+            </div>
+        </form>
+        <fieldset data-bind="visible: hasSchedule">
+            <legend>{% trans "Schedule Phases" %}</legend>
+            <table class="table table-hover table-condensed">
+                <thead>
+                    <th></th>
+                    <th>{% trans "Schedule Phase Number" %}</th>
+                    <th>{% trans "Schedule Anchor Property" %}</th>
+                    <th>{% trans "Forms in this phase" %}</th>
+                    <th></th>
+                </thead>
+                <tbody data-bind="template: { name: 'phase-template', foreach: phases},
+                                  sortableList: phases"></tbody>
+            </table>
+            <button class="btn" data-bind="click: addPhase">{% trans "Add Phase" %}</button>
+        </fieldset>
     </div>
-</div>
+    <script id="phase-template" type="text/html">
+        <tr class="phase" data-bind="style: {cursor: 'move'}">
+            <td>
+                <i class="grip sortable-handle"
+                   data-bind="css: COMMCAREHQ.icons.GRIP,
+                              event: {mousedown: function(){ $(':focus').blur(); }},
+                              visible: $data !== $parent.selectedPhase()"></i>
+                <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
+                                  event: { blur: function() { $parent.selectPhase(''); } }"/>
+            </td>
+            <td data-bind="text: $index() + 1"></td>
+            <td>
+                <div href="#" data-bind="jqueryElement: anchor.ui"></div>
+            </td>
+            <td data-bind="text: forms().join(', ')"></td>
+            <td>
+                <i style="cursor: pointer;"
+                   data-bind="css: COMMCAREHQ.icons.DELETE,
+                              click: $parent.removePhase,
+                              visible: forms().length == 0
+                              "></i>
+                <i style="cursor: pointer;"
+                   class="icon-question-sign icon-blue"
+                   title="{% trans 'You can only delete phases that have no forms' %}"
+                   data-bind="visible: forms().length != 0"></i>
+            </td>
+        </tr>
+    </script>
+{% else %}
+    {% blocktrans %}
+        Visit schedules can only be used on modules where all the forms in the module<br/>
+        update or close a case, which means registration forms must go in a separate module.
+    {% endblocktrans %}
+{% endif %}
