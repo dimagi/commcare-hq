@@ -3,154 +3,170 @@
 {% load hq_shared_tags %}
 <div class="tab-pane" id="visit-scheduler">
     {% if form.source %}
-    <form class="form-horizontal">
-        <div data-bind="saveButton: saveButton"></div>
-        <!--ko with: formSchedule -->
-        <fieldset>
-            <legend>{% trans "Form Settings" %}</legend>
-            <div class="controls">
-                <label>
-                    {% trans "Form abbreviation" %}
-                    <input type="text" id="schedule_form_id"
-                           placeholder="Form Abbreviation"
-                           data-bind="value: schedule_form_id">
-                </label>
-            </div>
-            <div class="controls">
-                <label>
-                    {% trans "Schedule Phase" %}
-                    <select id="achor"
-                            data-bind="options: all_schedule_phase_anchors,
-                                       optionsCaption: '{% trans "Please select a phase..." %}',
-                            value: phase.anchor"></select>
-                    <span class="hq-help-template"
-                              data-title="{% trans 'Schedule Phase' %}"
-                              data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
-                </label>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>{% trans "Form Relevancy Window" %}</legend>
-            <div class="control-group">
-                <div class="controls">
-                    {% trans "Show this form " %}
-                    <input type="text" class="input-mini" data-bind="numericValue: relevancy.starts"/>
-                    {% trans "days" %}
-                    <select data-bind="value: relevancy.starts_type">
-                        <option value="before">{% trans "before the anchor date" %}</option>
-                        <option value="after">{% trans "after the anchor date" %}</option>
-                    </select>
+        <form class="form-horizontal">
+            <div data-bind="saveButton: saveButton"></div>
+            <!--ko with: formSchedule -->
+            <fieldset>
+                <legend>{% trans "Form Settings" %}</legend>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox inline">
+                            <input type="checkbox"
+                                   data-bind="checked: scheduleEnabled" />
+                            {% trans "This form has a schedule" %}
+                        </label>
+                        <span class="hq-help-template"
+                                  data-title="{% trans 'Schedule Phase' %}"
+                                  data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
+                        </span>
+                    </div>
+                    <div class="controls" data-bind="visible: scheduleEnabled">
+                        <label>
+                            {% trans "Form abbreviation" %}
+                            <input type="text" id="schedule_form_id"
+                                   placeholder="Form Abbreviation"
+                                   data-bind="value: schedule_form_id">
+                        </label>
+                    </div>
+                    <div class="controls" data-bind="visible: scheduleEnabled">
+                        <label>
+                            {% trans "Schedule Phase" %}
+                            <select id="achor"
+                                    data-bind="options: all_schedule_phase_anchors,
+                                               optionsCaption: '{% trans "Please select a phase..." %}',
+                                               value: phase.anchor"></select>
+                            <span class="hq-help-template"
+                                  data-title="{% trans 'Schedule Phase' %}"
+                                  data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
+                            </span>
+                        </label>
+                    </div>
                 </div>
-            </div>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox inline">
-                        <input type="checkbox"
-                               data-bind="checked: relevancy.enableFormExpiry,
-                                          enable: allowExpiry">
-                        {% trans "Hide this form " %}
-                    </label>
-                    <input type="text" class="input-mini"
-                           data-bind="numericValue: relevancy.expires,
-                                      enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
-                    {% trans "days" %}
-                    <select data-bind="value: relevancy.expires_type,
-                                       enable: (relevancy.enableFormExpiry() && allowExpiry())">
-                        <option value="before">{% trans "before the anchor date" %}</option>
-                        <option value="after">{% trans "after the anchor date" %}</option>
-                    </select>
-                    <span class="label label-info" data-bind="visible: !allowExpiry()">
-                        {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
-                    </span>
-                </div>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>{% trans "Transitions" %}</legend>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: transition">
-                        {% trans "Transition to the next phase" %}
-                    </label>
-                    <div data-bind="template: {
-                                    name: 'case-config:condition',
-                                    data: {condition: transition_condition, config: $data},
-                                    }"></div>
-                </div>
-            </div>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox"  data-bind="checked: terminate">
-                        {% trans "Terminate the schedule" %}
-                    </label>
-                    <div data-bind="template: {
-                                    name: 'case-config:condition',
-                                    data: {condition: termination_condition, config: $data},
-                                    }"></div>
-                </div>
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>{% trans "Visit Schedule" %}</legend>
-            <div class="control-group">
-                <label class="checkbox">
-                    <input type="checkbox"  data-bind="checked: allow_unscheduled">
-                    {% trans "Allow unscheduled visits" %}
-                </label>
-            </div>
-            <div data-bind="foreach: visits">
-                <fieldset class="nested-fieldset">
-                    <legend>
-                        <a href="#" data-bind="click: $parent.removeVisit">
-                            <i class="icon-remove"></i>
-                        </a>
-                        <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
-                        {% trans "Visit" %}
-                        <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
-                    </legend>
+            </fieldset>
+            <div id="scheduler" data-bind="visible: scheduleEnabled">
+                <fieldset>
+                    <legend>{% trans "Form Relevancy Window" %}</legend>
                     <div class="control-group">
                         <div class="controls">
-                            {% trans "Due" %}
-                            <input type="text" class="input-mini" data-bind="numericValue: due"/>
+                            {% trans "Show this form " %}
+                            <input type="text" class="input-mini" data-bind="numericValue: relevancy.starts"/>
                             {% trans "days" %}
-                            <select data-bind="value: type">
+                            <select data-bind="value: relevancy.starts_type">
                                 <option value="before">{% trans "before the anchor date" %}</option>
                                 <option value="after">{% trans "after the anchor date" %}</option>
-                                <option value="repeats"
-                                        data-bind="disable: $index() !== ($parent.visits().length - 1)">
-                                    {% trans "after the last visit" %}
-                                </option>
                             </select>
                         </div>
                     </div>
                     <div class="control-group">
                         <div class="controls">
-                            {% trans "Visit can be made up to" %}
-                            <input type="text" class="input-mini" data-bind="numericValue: starts"/>
-                            {% trans "days early and" %}
-                            <input type="text" class="input-mini" data-bind="numericValue: expires"/>
-                            {% trans "days late" %}
+                            <label class="checkbox inline">
+                                <input type="checkbox"
+                                       data-bind="checked: relevancy.enableFormExpiry,
+                                                  enable: allowExpiry">
+                                {% trans "Hide this form " %}
+                            </label>
+                            <input type="text" class="input-mini"
+                                   data-bind="numericValue: relevancy.expires,
+                                              enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
+                            {% trans "days" %}
+                            <select data-bind="value: relevancy.expires_type,
+                                               enable: (relevancy.enableFormExpiry() && allowExpiry())">
+                                <option value="before">{% trans "before the anchor date" %}</option>
+                                <option value="after">{% trans "after the anchor date" %}</option>
+                            </select>
+                            <span class="label label-info" data-bind="visible: !allowExpiry()">
+                                {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
+                            </span>
                         </div>
                     </div>
                 </fieldset>
+                <fieldset>
+                    <legend>{% trans "Transitions" %}</legend>
+                    <div class="control-group">
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: transition">
+                                {% trans "Transition to the next phase" %}
+                            </label>
+                            <div data-bind="template: {
+                                            name: 'case-config:condition',
+                                            data: {condition: transition_condition, config: $data},
+                                            }"></div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input type="checkbox"  data-bind="checked: terminate">
+                                {% trans "Terminate the schedule" %}
+                            </label>
+                            <div data-bind="template: {
+                                            name: 'case-config:condition',
+                                            data: {condition: termination_condition, config: $data},
+                                            }"></div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>{% trans "Visit Schedule" %}</legend>
+                    <div class="control-group">
+                        <label class="checkbox">
+                            <input type="checkbox"  data-bind="checked: allow_unscheduled">
+                            {% trans "Allow unscheduled visits" %}
+                        </label>
+                    </div>
+                    <div data-bind="foreach: visits">
+                        <fieldset class="nested-fieldset">
+                            <legend>
+                                <a href="#" data-bind="click: $parent.removeVisit">
+                                    <i class="icon-remove"></i>
+                                </a>
+                                <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
+                                {% trans "Visit" %}
+                                <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
+                            </legend>
+                            <div class="control-group">
+                                <div class="controls">
+                                    {% trans "Due" %}
+                                    <input type="text" class="input-mini" data-bind="numericValue: due"/>
+                                    {% trans "days" %}
+                                    <select data-bind="value: type">
+                                        <option value="before">{% trans "before the anchor date" %}</option>
+                                        <option value="after">{% trans "after the anchor date" %}</option>
+                                        <option value="repeats"
+                                                data-bind="disable: $index() !== ($parent.visits().length - 1)">
+                                            {% trans "after the last visit" %}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <div class="controls">
+                                    {% trans "Visit can be made up to" %}
+                                    <input type="text" class="input-mini" data-bind="numericValue: starts"/>
+                                    {% trans "days early and" %}
+                                    <input type="text" class="input-mini" data-bind="numericValue: expires"/>
+                                    {% trans "days late" %}
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn"
+                                data-bind="click: addVisit,
+                                           disable: hasRepeatVisit()">
+                            <i class="icon-plus"></i>
+                            {% trans "Add Visit" %}
+                        </button>
+                    </div>
+                </fieldset>
             </div>
-            <div class="control-group">
-                <button class="btn"
-                        data-bind="click: addVisit,
-                                   disable: hasRepeatVisit()">
-                    <i class="icon-plus"></i>
-                    {% trans "Add Visit" %}
-                </button>
-            </div>
-        </fieldset>
-        <!--/ko-->
-    </form>
+            <!--/ko-->
+        </form>
     {% else %}
-    <p class="alert alert-warning">
-        {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-    </p>
+        <p class="alert alert-warning">
+            {% trans "You have not created a form yet. Create a form in order to view and edit schedules." %}
+        </p>
     {% endif %}
 </div>

@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
-    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_NEXT_VISIT_NUMBER
+    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER
 )
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
@@ -1418,10 +1418,10 @@ class XForm(WrappedNode):
             update_block.append(make_case_elem(SCHEDULE_PHASE))
 
             self.add_bind(
-                nodeset=u'/data/{}'.format(SCHEDULE_NEXT_VISIT_NUMBER),
+                nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
                 calculate=schedule_form_xpath.next_visit_due_num
             )
-            self.data_node.append(_make_elem(SCHEDULE_NEXT_VISIT_NUMBER))
+            self.data_node.append(_make_elem(SCHEDULE_CURRENT_VISIT_NUMBER))
 
             self.add_bind(
                 nodeset=u'/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
@@ -1433,7 +1433,7 @@ class XForm(WrappedNode):
             self.add_bind(
                 nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_num),
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
-                calculate=u"/data/{}".format(SCHEDULE_NEXT_VISIT_NUMBER),
+                calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
 
@@ -1475,7 +1475,8 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and getattr(form.get_phase(), 'anchor', False)
+        has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled and
+                        getattr(form.get_phase(), 'anchor', False))
         adjusted_datums = {}
         if module.root_module and module.root_module.module_type == 'basic':
             # for child modules the session variable for a case may have been
