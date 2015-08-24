@@ -1051,7 +1051,7 @@ class EditBroadcastView(CreateBroadcastView):
             'message': broadcast.events[0].message.get(broadcast.default_lang, None),
             'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
             'form_unique_id': broadcast.events[0].form_unique_id,
-            'location_ids': broadcast.location_ids,
+            'location_ids': json.dumps(broadcast.location_ids),
             'include_child_locations': broadcast.include_child_locations,
         }
         return BroadcastForm(initial=initial, **self.form_kwargs)
@@ -1600,6 +1600,8 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     def format_recipients(self, broadcast):
         reminders = broadcast.get_reminders()
+        if len(reminders) == 0:
+            return _('(none)')
         return get_recipient_name(reminders[0].recipient, include_desc=False)
 
     def format_content(self, broadcast):

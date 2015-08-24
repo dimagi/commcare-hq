@@ -24,11 +24,18 @@ $("#{{ id }}").select2({
         }
     },
     initSelection: function(element, callback) {
-        var id = $(element).val();
+        var val = $(element).val();
+        {% if multiselect %}
+        $(element).val($.parseJSON(val).join());
+        {% endif %}
 
-        if (id !== "") {
+        if (val !== "") {
             $.get("{{ query_url }}", {
-                id: id
+                {% if multiselect %}
+                ids: val
+                {% else %}
+                id: val
+                {% endif %}
             }).done(function(data) { callback(data); });
         }
     },

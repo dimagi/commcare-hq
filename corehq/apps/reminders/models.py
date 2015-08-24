@@ -455,7 +455,7 @@ class CaseReminderHandler(Document):
 
     # Only used when recipient is RECIPIENT_LOCATION
     # All users belonging to these locations will be recipients
-    # Should be a list of SQLLocation pk ids
+    # Should be a list of (Couch model) Location ids
     location_ids = ListProperty()
 
     # If True, all users belonging to any child locations of the above
@@ -1077,6 +1077,8 @@ class CaseReminderHandler(Document):
             recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
             recipient = CommCareCase.get(self.case_id)
+        elif self.recipient == RECIPIENT_LOCATION:
+            recipient = self.locations
         else:
             recipient = None
         
@@ -1215,6 +1217,16 @@ class CaseReminderHandler(Document):
                 raise IllegalModelStateException("Minimum tick for a schedule "
                     "repeated multiple times intraday is %s minutes." % minutes)
 
+    @property
+    def locations(self):
+        """
+        Always returns a list of locations even if there is just one.
+        Also, ensures that the result returned by this property is
+        specifically a list type since filter() returns a QuerySet,
+        and other parts of the framework check for the list type.
+        """
+        return list(SQLLocation.objects.filter(location_id__in=self.location_ids,
+            is_archived=False))
 
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
@@ -1467,12 +1479,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_USER_GROUP:
             return Group.get(handler.user_group_id)
         elif handler.recipient == RECIPIENT_LOCATION:
-            # Always return a list of locations even if there is just one.
-            # Also, ensure that the result returned by this method is
-            # specifically a list type since filter() returns a QuerySet,
-            # and other parts of the framework look for the list type.
-            return list(SQLLocation.objects.filter(pk__in=handler.location_ids,
-                is_archived=False))
+            return handler.locations
         else:
             return None
     

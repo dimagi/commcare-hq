@@ -184,7 +184,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         obj = None
         try:
             if recipient_type == 'SQLLocation':
-                obj = SQLLocation.objects.get(pk=recipient_id)
+                obj = SQLLocation.objects.get(location_id=recipient_id)
         except Exception:
             pass
 

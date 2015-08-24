@@ -19,6 +19,7 @@ from django.forms import Field, Widget
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
@@ -2808,19 +2809,12 @@ class BroadcastForm(Form):
             raise ValidationError(_('Please choose at least one location'))
 
         location_ids = [location_id.strip() for location_id in value.split(',')]
-        location_ids = list(set(location_ids))
-        expected_count = len(location_ids)
-
-        locations = SQLLocation.objects.filter(
-            domain=self.domain,
-            is_archived=False,
-            location_id__in=location_ids,
-        )
-        location_ids = [location.location_id for location in locations]
-        if len(location_ids) != expected_count:
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
             raise ValidationError(_('One or more of the locations was not found.'))
 
-        return location_ids
+        return [location.location_id for location in locations]
 
     @property
     def current_values(self):

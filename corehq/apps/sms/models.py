@@ -1076,7 +1076,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations
                                   else RECIPIENT_LOCATION)
-                recipient_id = recipient[0].pk
+                recipient_id = recipient[0].location_id
             elif len(recipient) > 1:
                 recipient_type = (cls.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations
