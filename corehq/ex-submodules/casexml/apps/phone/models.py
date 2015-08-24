@@ -627,6 +627,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         to_prune.add(case._id)
                         made_changes = True
                     else:
+                        if phone_owns_case and not log_has_case:
+                            # this can happen if a create sets the owner id to something invalid
+                            # and an update in the same block/form sets it back to valid
+                            self._add_primary_case(case._id)
+                            made_changes = True
                         if case._id in self.dependent_case_ids_on_phone:
                             self.dependent_case_ids_on_phone.remove(case._id)
                             made_changes = True
