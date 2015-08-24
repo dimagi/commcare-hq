@@ -1,6 +1,6 @@
 from corehq.apps.app_manager.const import APP_V2, USERCASE_TYPE, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import Application, Module, UpdateCaseAction, AdvancedModule, LoadUpdateAction, \
-    AdvancedOpenCaseAction, AutoSelectCase
+    AdvancedOpenCaseAction, AutoSelectCase, CaseIndex
 from django.test import SimpleTestCase
 from mock import patch
 
@@ -105,7 +105,7 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             )
         ]
 
@@ -144,7 +144,7 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             )
         ]
 
@@ -160,13 +160,13 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             ),
             AdvancedOpenCaseAction(
                 case_tag="grandchild",
                 case_type="grandchild",
                 name_path="/data/children/question1",
-                parent_tag="child",
+                case_indices=[CaseIndex(tag="child")]
             )
         ]
 

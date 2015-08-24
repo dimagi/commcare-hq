@@ -2078,12 +2078,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             return True
 
         reg_action = reg_actions[0]
-        parent_tag = reg_action.parent_tag
-        if not parent_tag:
+        if not reg_action.case_indices:
             return False
 
         actions_by_tag = deepcopy(self.actions.actions_meta_by_tag)
         actions_by_tag.pop(reg_action.case_tag)
+
         def check_parents(tag):
             """Recursively check parent actions to ensure that all actions for this form are
             either parents of the registration action or else auto-select actions.
@@ -2098,10 +2098,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             except KeyError:
                 return False
 
-            next_tag = parent['action'].parent_tag
-            return check_parents(next_tag)
+            return all(check_parents(p.tag) for p in parent['action'].case_indices)
 
-        return check_parents(parent_tag)
+        return all(check_parents(parent.tag) for parent in reg_action.case_indices)
 
     def get_registration_actions(self, case_type=None):
         """
@@ -2516,7 +2515,10 @@ class AdvancedModule(ModuleBase):
                     })
                 elif len(non_auto_select_actions) != 1:
                     for index, action in reversed(list(enumerate(non_auto_select_actions))):
-                        if index > 0 and not non_auto_select_actions[index - 1].case_tag == action.parent_tag:
+                        if (
+                            index > 0 and
+                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                        ):
                             errors.append({
                                 'type': 'case list module form can only load parent cases',
                                 'module': info,
