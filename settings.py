@@ -120,6 +120,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = [
+    'silk.middleware.SilkyMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',

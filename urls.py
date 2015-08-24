@@ -133,6 +133,8 @@ urlpatterns = patterns('',
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
 ) + patterns('', *LOCAL_APP_URLS)
 
+urlpatterns += patterns('', url(r'^silk/', include('silk.urls', namespace='silk')))
+
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
