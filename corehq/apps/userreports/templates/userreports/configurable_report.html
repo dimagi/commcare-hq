@@ -91,6 +91,7 @@
     </script>
 {% endblock %}
 {% block report_alerts %}
+    {{ block.super }}
     <div id="built-warning" class="alert alert-info hide">
         {% blocktrans %}
         Warning! Your report is still being populated.
