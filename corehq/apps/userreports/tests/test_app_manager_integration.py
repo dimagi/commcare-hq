@@ -10,6 +10,14 @@ from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATY
 
 class AppManagerDataSourceConfigTest(SimpleTestCase):
 
+    def setUp(self):
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+        is_usercase_in_use_mock.return_value = False
+
+    def tearDown(self):
+        self.is_usercase_in_use_patch.stop()
+
     def get_json(self, name):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'app_manager', name)) as f:
             return json.loads(f.read())
