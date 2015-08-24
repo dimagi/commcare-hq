@@ -105,6 +105,7 @@
             $scope, workerCreationFactory, djangoRMI, formStrings, customFields,
             customFieldNames
     ) {
+        $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
         $scope.usernameAvailabilityStatus = null;
         $scope.usernameStatusMessage = null;
