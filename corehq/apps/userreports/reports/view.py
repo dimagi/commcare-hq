@@ -17,6 +17,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsFilterError)
 from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.util import get_total_row
 from corehq.apps.userreports.util import default_language, localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
@@ -233,7 +234,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         }
         if data.has_total_row:
             json_response.update({
-                "total_row": data.get_total_row(page),
+                "total_row": get_total_row(page, data.aggregation_columns, data.column_configs),
             })
         return self.render_json_response(json_response)
 
@@ -291,7 +292,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         headers = [column.header for column in self.data_source.columns]
         columns = [column.column_id for column in report_config.report_columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
-        total_rows = [data.get_total_row(rows)] if data.has_total_row else []
+        total_rows = (
+            [get_total_row(raw_rows, data.aggregation_columns, data.column_configs)]
+            if data.has_total_row else []
+        )
         return [
             [
                 self.title,
