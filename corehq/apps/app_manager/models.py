@@ -3033,6 +3033,7 @@ class StaticDatespanFilter(ReportAppFilter):
             'last7',
             'last30',
             'lastmonth',
+            'lastyear',
         ],
         required=True,
     )

@@ -57,7 +57,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         case_module2, update2 = factory.new_basic_module('update case 2', case_module1.case_type)
         factory.form_updates_case(update2)
 
-        case_module2.case_list_form.form_id = 'register_case_form'
+        case_module2.case_list_form.form_id = factory.get_form(1, 0).unique_id
         case_module2.case_list_form.label = {
             'en': 'New Case'
         }
@@ -120,8 +120,11 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form, 'house')
         factory.form_opens_case(register_person_form, 'person', is_subcase=True)
 
-        person_module, update_person_form = factory.new_basic_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            case_list_form=register_person_form
+        )
         person_module.parent_select.active = True
         person_module.parent_select.module_id = register_house_module.unique_id
 
@@ -147,8 +150,11 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form)
         factory.form_opens_case(register_person_form, case_type='person', is_subcase=True)
 
-        person_module, update_person_form = factory.new_basic_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            case_list_form=register_person_form
+        )
 
         factory.form_updates_case(update_person_form, parent_case_type='house')
 
@@ -173,13 +179,19 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form, 'house')
         factory.form_opens_case(register_person_form, 'person', is_subcase=True)
 
-        house_module, update_house_form = factory.new_basic_module('update_house', 'house')
+        house_module, update_house_form = factory.new_basic_module(
+            'update_house',
+            'house',
+            case_list_form=register_house_form
+        )
         factory.form_updates_case(update_house_form)
-        house_module.case_list_form.form_id = register_house_form.unique_id
 
-        person_module, update_person_form = factory.new_basic_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
-        person_module.root_module_id = house_module.unique_id
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            parent_module=house_module,
+            case_list_form=register_person_form
+        )
 
         factory.form_updates_case(update_person_form, 'person', parent_case_type='house')
 
@@ -204,14 +216,20 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form, 'house')
         factory.form_opens_case(register_person_form, 'person', is_subcase=True)
 
-        house_module, update_house_form = factory.new_advanced_module('update_house', 'house')
-        house_module.case_list_form.form_id = register_house_form.unique_id
+        house_module, update_house_form = factory.new_advanced_module(
+            'update_house',
+            'house',
+            case_list_form=register_house_form
+        )
 
         factory.form_updates_case(update_house_form)
 
-        person_module, update_person_form = factory.new_advanced_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
-        person_module.root_module_id = house_module.unique_id
+        person_module, update_person_form = factory.new_advanced_module(
+            'update_person',
+            'person',
+            parent_module=house_module,
+            case_list_form=register_person_form
+        )
 
         factory.form_updates_case(update_person_form, 'house')
         factory.form_updates_case(update_person_form, 'person', parent_case_type='house')
@@ -232,16 +250,22 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form, 'house')
         factory.form_opens_case(register_person_form, 'person', is_subcase=True)
 
-        house_module, update_house_form = factory.new_advanced_module('update_house', 'house')
-        house_module.case_list_form.form_id = register_house_form.unique_id
+        house_module, update_house_form = factory.new_advanced_module(
+            'update_house',
+            'house',
+            case_list_form=register_house_form
+        )
 
         factory.form_updates_case(update_house_form)
         # changing this case tag should result in the session var in the submodule entry being updated to match it
         update_house_form.actions.load_update_cases[0].case_tag = 'load_house_renamed'
 
-        person_module, update_person_form = factory.new_advanced_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
-        person_module.root_module_id = house_module.unique_id
+        person_module, update_person_form = factory.new_advanced_module(
+            'update_person',
+            'person',
+            parent_module=house_module,
+            case_list_form=register_person_form
+        )
 
         factory.form_updates_case(update_person_form, 'house')
         factory.form_updates_case(update_person_form, 'person', parent_case_type='house')
@@ -270,14 +294,20 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         factory.form_updates_case(register_person_form, 'house')
         factory.form_opens_case(register_person_form, 'person', is_subcase=True)
 
-        house_module, update_house_form = factory.new_advanced_module('update_house', 'house')
-        house_module.case_list_form.form_id = register_house_form.unique_id
+        house_module, update_house_form = factory.new_advanced_module(
+            'update_house',
+            'house',
+            case_list_form=register_house_form
+        )
 
         factory.form_updates_case(update_house_form)
 
-        person_module, update_person_form = factory.new_basic_module('update_person', 'person')
-        person_module.case_list_form.form_id = register_person_form.unique_id
-        person_module.root_module_id = house_module.unique_id
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            parent_module=house_module,
+            case_list_form=register_person_form
+        )
 
         factory.form_updates_case(update_person_form, 'person', parent_case_type='house')
 
