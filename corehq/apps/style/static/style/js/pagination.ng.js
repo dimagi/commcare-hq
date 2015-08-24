@@ -8,12 +8,6 @@
         'ng.django.rmi'
     ]);
 
-    pagination.constant('paginationConfig', {
-        transformSuccessItem: function (data) {
-            // transforms data from the djangular endpoint
-            return data;
-        }
-    });
     pagination.constant('paginationLimits', [
         [10, "Limit 10"]
     ]);
@@ -54,10 +48,7 @@
         self.updateList = function (data) {
             console.log(data);
             if (data.success) {
-                $scope.paginatedItems = _.map(
-                    data.response.itemList,
-                    paginationConfig.transformSuccessItem
-                );
+                $scope.paginatedItems = data.response.itemList;
                 $scope.total = data.response.total;
                 $scope.currentPage = data.response.page;
                 $scope.query = data.response.query;
