@@ -142,3 +142,4 @@ def prepare_planning_db(domain):
         for case_id, case_actions in case_actions_by_case_id.items():
             planning_db.ensure_case(case_id)
             planning_db.add_case_actions(case_id, case_actions)
+    return planning_db
