@@ -57,7 +57,8 @@
         NEW: 'new',
         PENDING: 'pending',
         ERROR: 'error',
-        SUCCESS: 'success'
+        SUCCESS: 'success',
+        RETRIED: 'retried'
     };
 
     var USERNAME_STATUS = {
