@@ -44,16 +44,50 @@
 
 {% block page_content %}
     <div ng-app="mobileWorkerApp">
-        <div ng-controller="newMobileWorkerFormController">
-
-            <button type="button"
-                    class="btn btn-success"
-                    data-toggle="modal"
-                    data-target="#newMobileWorkerModal"
-                    ng-click="initializeMobileWorker()">
-                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-            </button>
-
+        <div ng-controller="MobileWorkerCreationController">
+            <div class="row">
+                <div class="col-sm-8">
+                    <p class="lead">
+                        {% blocktrans %}
+                            Mobile Workers can log into applications in this project space
+                            and submit data.
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans %}
+                            Their activity and form submissions can be
+                            monitored in the Reports section of this CommCareHQ project space.
+                            <br />
+                            Read more about managing mobile workers on our
+                            <a href="http://help.commcarehq.org/" target="_blank">Help Site</a>.
+                        {% endblocktrans %}
+                    </p>
+                    <div class="btn-toolbar" style="margin-bottom: 20px;">
+                        {% if can_add_extra_users %}
+                            <button type="button"
+                                    class="btn btn-success"
+                                    data-toggle="modal"
+                                    data-target="#newMobileWorkerModal"
+                                    ng-click="initializeMobileWorker()">
+                                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+                            </button>
+                        {% endif %}
+                        {% if can_bulk_edit_users %}
+                            <a id="bulk_download" class="btn btn-info" href="{% url "download_commcare_users" domain %}">
+                                <i class="icon-download-alt"></i> {% trans "Download Mobile Workers" %}
+                            </a>
+                            <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+                                {% trans "Bulk Upload" %}
+                            </a>
+                        {% endif %}
+                        {% if can_add_extra_users %}
+                            <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                                {% trans "Edit User Fields" %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
             <div class="modal fade" id="newMobileWorkerModal">
                 <div class="modal-dialog">
                     <form id="newMobileWorkerForm"
