@@ -79,7 +79,6 @@
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log("wah waaaah");
                     $('#error-message').html(errorThrown);
                     $('#report-error').removeClass('hide');
                 }
@@ -121,6 +120,7 @@
 {% endblock %}
 
 {% block main_column %}
+{% block report_alerts %}
 <div id="report-error" class="alert alert-error hide">
     {% blocktrans %}
     There was an error rendering your report.
@@ -133,7 +133,8 @@
     {% endblocktrans %}
     <div id="warning-message"></div>
 </div>
-
+{% endblock report_alerts %}
+{% block main_column_content %}
 <div class="report-controls">
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
@@ -195,4 +196,5 @@
     </table>
 </div>
 {% endblock reporttable %}
-{% endblock %}
+{% endblock main_column_content %}
+{% endblock main_column %}
