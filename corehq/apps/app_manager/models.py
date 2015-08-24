@@ -2357,7 +2357,11 @@ class SchedulePhase(IndexedSchema):
     def change_anchor(self, new_anchor):
         if new_anchor is None or new_anchor.strip() == '':
             raise ScheduleError(_("You can't create a phase without an anchor property"))
+
         self.anchor = new_anchor
+
+        if self.get_module().phase_anchors.count(new_anchor) > 1:
+            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor))
 
 
 class AdvancedModule(ModuleBase):
@@ -2637,6 +2641,10 @@ class AdvancedModule(ModuleBase):
         """
         return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
 
+    @property
+    def phase_anchors(self):
+        return [phase.anchor for phase in self.schedule_phases]
+
     def get_or_create_schedule_phase(self, anchor):
         """Returns a tuple of (phase, new?)"""
         if anchor is None or anchor.strip() == '':
@@ -2681,9 +2689,9 @@ class AdvancedModule(ModuleBase):
             id = anchor[0] - 1
             new_anchor = anchor[1]
             try:
-                self.schedule_phases[id].change_anchor(new_anchor)
-            except KeyError:
-                raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
+                list(self.get_schedule_phases())[id].change_anchor(new_anchor)
+            except IndexError:
+                pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
