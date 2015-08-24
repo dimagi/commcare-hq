@@ -845,11 +845,7 @@ def get_module_view_context_and_template(app, module):
     if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
-    child_case_types = set()
-    for m in app.get_modules():
-        if m.case_type == module.case_type:
-            child_case_types.update(m.get_child_case_types())
-    child_case_types = list(child_case_types)
+    subcase_types = list(app.get_subcase_types(module.case_type))
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
     fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
 
@@ -885,7 +881,7 @@ def get_module_view_context_and_template(app, module):
             'sort_elements': module.case_details.short.sort_elements,
             'short': module.case_details.short,
             'long': module.case_details.long,
-            'child_case_types': child_case_types,
+            'subcase_types': subcase_types,
         }
         case_properties = builder.get_properties(case_type_)
         if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
@@ -905,7 +901,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 })
         else:
             item['parent_select'] = module.parent_select
@@ -934,7 +930,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
                 {
                     'label': _('Task List'),
@@ -945,7 +941,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
             ],
         }
