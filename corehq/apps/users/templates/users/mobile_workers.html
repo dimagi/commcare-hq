@@ -26,6 +26,7 @@
         checkingUsername: "{% trans "Checking username" %}"
     });
     mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
+    mobileWorkerApp.constant('customFieldNames', {{ custom_field_names|JSON }});
 }(window.angular));
 </script>
 {% endblock %}
