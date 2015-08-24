@@ -90,7 +90,7 @@
         });
     </script>
 {% endblock %}
-{% block main_column %}
+{% block main_column_content %}
     <div id="built-warning" class="alert alert-info hide">
         {% blocktrans %}
         Warning! Your report is still being populated.
@@ -101,7 +101,7 @@
     {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder %}
     <div class="clearfix">
         <div class="pull-right">
-            <a class="btn btn-primary" style="margin-bottom: 8px" href="
+            <a class="btn btn-primary" href="
                 {% if report.spec.report_meta.created_by_builder %}
                     {% url 'edit_report_in_builder' domain report.report_config_id %}
                 {% else %}
