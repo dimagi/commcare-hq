@@ -41,6 +41,7 @@
 
         self.retries = 0;
 
+        $scope.paginationCustomData = paginationCustomData;
         _.each(paginationCustomData, function (val, key) {
             $scope[key] = val;
         });
@@ -68,11 +69,15 @@
         };
 
         self.getData = function () {
-            djangoRMI.get_pagination_data({
+            var paginationData = {
                 limit: $scope.limit,
                 page: $scope.currentPage,
                 query: $scope.query
-            })
+            };
+            _.each($scope.paginationCustomData, function (val, key) {
+                paginationData[key] = $scope[key];
+            });
+            djangoRMI.get_pagination_data(paginationData)
                 .success(self.updateList)
                 .error(self.retry);
         };
