@@ -562,7 +562,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         def _remove_case(to_remove):
             # uses closures for assertions
-            logger.debug('removing: {}'.format(case_id))
+            logger.debug('removing: {}'.format(to_remove))
             assert to_remove in self.dependent_case_ids_on_phone
             indices = self.index_tree.indices.pop(to_remove, {})
             if to_remove != case_id:
