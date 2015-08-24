@@ -704,6 +704,7 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
+            'custom_field_names': [f.label for f in self.custom_data.fields],
         }
 
     @method_decorator(use_bootstrap3())
