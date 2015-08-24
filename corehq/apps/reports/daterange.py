@@ -13,6 +13,9 @@ def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, da
         end_date = end_date
     elif date_range == 'lastmonth':
         start_date, end_date = get_previous_month_date_range()
+    elif date_range == 'lastyear':
+        last_year = today.year - 1
+        return datetime.date(last_year, 1, 1), datetime.date(last_year, 12, 31)
     else:
         end_date = today
         days = {

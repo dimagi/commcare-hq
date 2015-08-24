@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
-    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application
+    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
+    AutoSelectCase
 
 
 class AppFactory(object):
@@ -26,7 +27,10 @@ class AppFactory(object):
 
         self.slugs = {}
 
-    def new_module(self, ModuleClass, slug, case_type, with_form=True):
+    def get_form(self, module_index, form_index):
+        return self.app.get_module(module_index).get_form(form_index)
+
+    def new_module(self, ModuleClass, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         if slug in self.slugs:
             raise Exception("duplicate slug")
 
@@ -34,20 +38,30 @@ class AppFactory(object):
         module.unique_id = '{}_module'.format(slug)
         module.case_type = case_type
 
+        def get_unique_id(module_or_form):
+            return module_or_form if isinstance(module_or_form, basestring) else module_or_form.unique_id
+
+        if parent_module:
+            module.root_module_id = get_unique_id(parent_module)
+
+        if case_list_form:
+            module.case_list_form.form_id = get_unique_id(case_list_form)
+
         self.slugs[module.unique_id] = slug
 
         return (module, self.new_form(module)) if with_form else module
 
-    def new_basic_module(self, slug, case_type, with_form=True):
-        return self.new_module(Module, slug, case_type, with_form)
+    def new_basic_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
+        return self.new_module(Module, slug, case_type, with_form, parent_module, case_list_form)
 
-    def new_advanced_module(self, slug, case_type, with_form=True):
-        return self.new_module(AdvancedModule, slug, case_type, with_form)
+    def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
+        return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
-        form = module.new_form('{} form'.format(slug), lang='en')
-        form.unique_id = '{}_form'.format(slug)
+        index = len(module.forms)
+        form = module.new_form('{} form {}'.format(slug, index), lang='en')
+        form.unique_id = '{}_form_{}'.format(slug, index)
         return form
 
     @staticmethod
@@ -67,9 +81,10 @@ class AppFactory(object):
                 module.parent_select.module_id = parent_select_module.unique_id
         else:
             case_type = case_type or form.get_module().case_type
+            index = len([load for load in form.actions.load_update_cases if load.case_type == case_type])
             action = LoadUpdateAction(
                 case_type=case_type,
-                case_tag='load_{}'.format(case_type),
+                case_tag='load_{}_{}'.format(case_type, index),
             )
 
             if parent_case_type:
@@ -102,3 +117,17 @@ class AppFactory(object):
                 action.parent_tag = form.actions.load_update_cases[-1].case_tag
 
             form.actions.open_cases.append(action)
+
+    @staticmethod
+    def advanced_form_autoloads(form, mode, value_key, value_source=None):
+        """See corehq.apps.app_manager.models.AutoSelectCase
+        """
+        assert isinstance(form, AdvancedForm)
+        form.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='auto_select_{}'.format(mode),
+            auto_select=AutoSelectCase(
+                mode=mode,
+                value_source=value_source,
+                value_key=value_key
+            )
+        ))

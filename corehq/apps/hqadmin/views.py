@@ -45,6 +45,8 @@ from pillowtop import get_all_pillows_json, get_pillow_by_name
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -79,6 +81,7 @@ from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
@@ -838,3 +841,25 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
+
+
+@require_superuser
+def malt_as_csv(request):
+    from django.core.exceptions import ValidationError
+
+    if 'year_month' in request.GET:
+        try:
+            year, month = request.GET['year_month'].split('-')
+            year, month = int(year), int(month)
+            return _malt_csv_response(month, year)
+        except (ValueError, ValidationError):
+            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+            return render(request, "hqadmin/malt_downloader.html")
+    else:
+        return render(request, "hqadmin/malt_downloader.html")
+
+
+def _malt_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = MALTRow.objects.filter(month=query_month)
+    return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
