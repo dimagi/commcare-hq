@@ -11,26 +11,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'case_list_form')
 
     def _prep_case_list_form_app(self):
-        factory = AppFactory(build_version='2.9')
-
-        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
-        factory.form_updates_case(update_case_form)
-
-        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
-        factory.form_opens_case(register_form)
-
-        case_module.case_list_form.form_id = register_form.get_unique_id()
-        case_module.case_list_form.label = {
-            'en': 'New Case'
-        }
-        return factory
+        return AppFactory.case_list_form_app_factory()
 
     def test_case_list_registration_form(self):
         factory = self._prep_case_list_form_app()
         app = factory.app
         case_module = app.get_module(0)
-        case_module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
-        case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
+        case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png')
+        case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
     def test_case_list_registration_form_usercase(self):
@@ -45,7 +33,6 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
     def test_case_list_registration_form_end_for_form_nav(self):
         factory = self._prep_case_list_form_app()
         app = factory.app
-
         registration_form = app.get_module(1).get_form(0)
         registration_form.post_form_workflow = WORKFLOW_MODULE
 
@@ -57,7 +44,6 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
 
     def test_case_list_registration_form_no_media(self):
         factory = self._prep_case_list_form_app()
-
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
             factory.app.create_suite(),
