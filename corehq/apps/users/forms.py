@@ -368,21 +368,19 @@ else:
 _username_help = """
 <span ng-if="usernameAvailabilityStatus === 'pending'">
     <i class="fa fa-circle-o-notch fa-spin"></i>
-    {}
+    %(checking)s
 </span>
 <span ng-if="usernameAvailabilityStatus === 'taken'">
     <i class="fa fa-remove"></i>
-    {}
+    {{ usernameStatusMessage }}
 </span>
 <span ng-if="usernameAvailabilityStatus === 'available'">
     <i class="fa fa-check"></i>
-    {}
+    {{ usernameStatusMessage }}
 </span>
-""".format(
-    _('Checking Availability....'),
-    _('Username is already taken.'),
-    _('Username is available')
-)
+""" % {
+    'checking': _('Checking Availability...'),
+}
 
 _password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
                   .format(_("The passwords do not match.")))

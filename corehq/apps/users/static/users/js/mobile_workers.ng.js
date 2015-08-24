@@ -107,68 +107,105 @@
     ) {
         $scope.mobileWorker = {};
         $scope.usernameAvailabilityStatus = null;
+        $scope.usernameStatusMessage = null;
+        $scope.workers = [];
         $scope.customFormFields = customFields;
         $scope.customFormFieldNames = customFieldNames;
 
-        $scope.initializeMobileWorker = function () {
+        $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.passwordClear();
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
+            $scope.usernameStatusMessage = null;
 
             // clears select 2 widget from old data
             $(".select2multiplechoicewidget").select2('data', null);
 
             // initialize mobile worker model
-            $scope.mobileWorker = new MobileWorker({customFields: customFields});
+            $scope.mobileWorker = new MobileWorker(mobileWorker || {customFields: customFields});
         };
 
         $scope.submitNewMobileWorker = function () {
-            workerCreationService.stageNewMobileWorker($scope.mobileWorker);
             $("#newMobileWorkerModal").modal('hide');
+            $scope.workers.push($scope.mobileWorker);
+            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker)
+                .then(
+                    // success
+                    function (data) {
+                        console.log("worker complete");
+                        console.log("data");
+                    },
+                    // error
+                    function (data) {
+                        alert(data);
+                    }
+                );
         };
 
-    };
-
-    mobileWorkerControllers.newMobileWorkerStatusController = function (
-        $scope, workerCreationService
-    ) {
-        var showPending = function (worker) {
-        };
-
-        $scope.workers = [];
+        $scope.hasPending = false;
         $scope.$watch(
-            function () {
-                return workerCreationService.mobileWorkers;
+            function(scope) {
+                var pendingWorkers = _.filter(scope.workers, function (worker) {
+                    return worker.creationStatus === STATUS.PENDING;
+                });
+                return pendingWorkers.length > 0;
             },
-            function (newVal, oldVal) {
-                $scope.workers = newVal;
-            },
-            true
+            function (newVal) {
+                $scope.hasPending = newVal;
+            }
         );
+
+        $scope.hasSuccess = false;
+        $scope.$watch(
+            function(scope) {
+                var successWorkers = _.filter(scope.workers, function (worker) {
+                    return worker.creationStatus === STATUS.SUCCESS;
+                });
+                return successWorkers.length > 0;
+            },
+            function (newVal) {
+                $scope.hasSuccess = newVal;
+            }
+        );
+
+        $scope.hasError = false;
+        $scope.$watch(
+            function(scope) {
+                var errorWorkers = _.filter(scope.workers, function (worker) {
+                    return worker.creationStatus === STATUS.ERROR;
+                });
+                return errorWorkers.length > 0;
+            },
+            function (newVal) {
+                $scope.hasSuccess = newVal;
+            }
+        );
+
     };
 
-    var mobileWorkerServices = {};
-
-    mobileWorkerServices.workerCreationService = function (djangoRMI) {
+    var mobileWorkerFactories = {};
+    mobileWorkerFactories.workerCreationFactory = function ($q, djangoRMI) {
         var self = {};
-        self.mobileWorkers = [];
 
         self.stageNewMobileWorker = function (newWorker) {
             newWorker.creationStatus = STATUS.PENDING;
-            self.mobileWorkers.push(newWorker);
-
+            var deferred = $q.defer();
             djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker.fields
+                mobileWorker: newWorker
             })
             .success(function (data) {
                 newWorker.creationStatus = STATUS.SUCCESS;
+                deferred.resolve(data);
                 // remove newWorker from pending, add to successful
             })
-            .error();
+            .error(function () {
+                deferred.reject(
+                    "Sorry, there was an issue communicating with the server."
+                );
+            });
 
-            console.log("added to mobileWorkers");
+            return deferred.promise;
         };
-
         return self;
     };
 
@@ -194,15 +231,19 @@
                             if (!!data.success) {
                                 visualFormCtrl.usernameSuccess();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-                                deferred.resolve();
+                                deferred.resolve(data.success);
+                                $scope.usernameStatusMessage = data.success;
                             } else {
                                 visualFormCtrl.usernameError();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
-                                deferred.reject();
+                                deferred.reject(data.error);
+                                $scope.usernameStatusMessage = data.error;
                             }
                         })
-                        .error(function (data) {
-                            deferred.reject();
+                        .error(function () {
+                            deferred.reject(
+                                "Sorry, there was an issue communicating with the server."
+                            );
                         });
                     }
                     return deferred.promise;
