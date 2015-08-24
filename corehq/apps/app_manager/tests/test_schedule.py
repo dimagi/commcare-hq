@@ -427,7 +427,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         last_visit_number_partial = u"""
         <partial>
             <bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}"
-                  calculate="/data/next_visit_number"
+                  calculate="/data/current_visit_number"
                   relevant="not(/data/unscheduled_visit)"
             {xmlns}/>
         </partial>
