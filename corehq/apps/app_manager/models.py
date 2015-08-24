@@ -2416,9 +2416,7 @@ class AdvancedModule(ModuleBase):
         form = AdvancedForm(
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
-        if self.has_schedule:
-            # TODO: verify that this is what we want to have happen here
-            form.schedule = FormSchedule()
+        form.schedule = FormSchedule(enabled=False)
 
         self.forms.append(form)
         form = self.get_form(-1)

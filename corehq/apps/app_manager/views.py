@@ -435,6 +435,11 @@ def get_schedule_context(form):
     schedule_context = {}
     module = form.get_module()
 
+    if not form.schedule:
+        # Forms created before the scheduler module existed don't have this property
+        # so we need to add it so everything works.
+        form.schedule = FormSchedule(enabled=False)
+
     schedule_context.update({
         'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
         'schedule_form_id': form.schedule_form_id,
