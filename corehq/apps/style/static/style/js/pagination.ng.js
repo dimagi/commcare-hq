@@ -31,7 +31,6 @@
         });
         $scope.limit = 10;
         $scope.total = 1;
-        $scope.maxSize = 8;
         $scope.currentPage = 1;
 
         $scope.query = '';
