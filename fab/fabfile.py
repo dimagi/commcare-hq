@@ -127,10 +127,13 @@ def format_env(current_env, extra=None):
     host = current_env.get('host_string')
     if host in current_env.get('new_relic_enabled', []):
         ret['new_relic_command'] = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-        ret['supervisor_env_vars'] = 'NEW_RELIC_CONFIG_FILE="%(root)s/newrelic.ini",NEW_RELIC_ENVIRONMENT="%(environment)s"' % env
+        ret['supervisor_env_vars'] = {
+            'NEW_RELIC_CONFIG_FILE': '%(root)s/newrelic.ini' % env,
+            'NEW_RELIC_ENVIRONMENT': '%(environment)s' % env
+        }
     else:
         ret['new_relic_command'] = ''
-        ret['supervisor_env_vars'] = ''
+        ret['supervisor_env_vars'] = []
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
