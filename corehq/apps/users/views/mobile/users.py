@@ -694,7 +694,7 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker",
+            angular_model="mobileWorker.customFields",
         )
 
     @property
