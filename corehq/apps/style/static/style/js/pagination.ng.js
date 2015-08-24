@@ -28,8 +28,8 @@
 
         $scope.query = '';
 
-        $scope.error = null;
         $scope.notLoaded = true;
+        $scope.hasError = false;
 
         self.retries = 0;
 
@@ -54,7 +54,7 @@
                 self.retries ++;
                 self.getData();
             } else {
-                // TODO: show error
+                $scope.hasError = true;
             }
         };
 
