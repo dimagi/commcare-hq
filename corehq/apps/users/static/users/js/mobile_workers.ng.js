@@ -77,8 +77,13 @@
         self.creationStatus = STATUS.NEW;
 
         self.username = data.username || '';
-        self.password = data.password || '';
-        self.password2 = data.password2 || '';
+        self.userId = data.user_id || '';
+        self.archiveStatus = data.status || '';
+        self.editUrl = data.editUrl || '';
+
+        self.password = '';
+        self.password2 = '';
+        self.customFields = {};
 
         self.isPending = function () {
             return self.creationStatus === STATUS.PENDING;
@@ -86,8 +91,10 @@
 
         if (_.isArray(data.customFields)) {
             _.each(data.customFields, function (key) {
-                self[key] = '';
+                self.customFields[key] = '';
             });
+        } else if (_.isObject(data.customFields)) {
+            self.customFields = data.customFields;
         }
     };
 
@@ -220,7 +227,7 @@
     };
 
     mobileWorkers.directive(mobileWorkerDirectives);
-    mobileWorkers.service(mobileWorkerServices);
+    mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);
     
 }(window.angular));
