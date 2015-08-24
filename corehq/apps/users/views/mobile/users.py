@@ -731,17 +731,20 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         return self.request.GET.get('query')
 
     def _format_user(self, user_json):
-        user = CommCareUser(user_json)
+        user = CommCareUser.wrap(user_json)
+        user_data = {}
+        for field in self.custom_data.fields:
+            user_data[field.slug] = user.user_data.get(field.slug, '')
         return {
-            'username': user.username,
-            'domain': self.domain,
+            'username': user.raw_username,
+            'customFields': user_data,
             'name': user.full_name,
             'phoneNumbers': user.phone_numbers,
-            'id': user.get_id,
+            'user_id': user.user_id,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT),
-            # TODO
-            'editUrl': "#",
+            'editUrl': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
             'deactivateUrl': "#",
+            'status': "" if user.is_active else _("Deactivated"),
         }
 
     def _user_query(self, search_string, page, limit):
