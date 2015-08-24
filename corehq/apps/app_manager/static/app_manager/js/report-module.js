@@ -204,7 +204,7 @@ var ReportModule = (function () {
         // TODO - add user-friendly text
         this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
-        this.date_range_options = ['last7', 'last30', 'lastmonth'];
+        this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
     }
 
     function ReportConfig(report_id, display, availableReportIds,

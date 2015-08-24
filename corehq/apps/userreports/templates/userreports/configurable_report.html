@@ -90,7 +90,7 @@
         });
     </script>
 {% endblock %}
-{% block main_column %}
+{% block report_alerts %}
     <div id="built-warning" class="alert alert-info hide">
         {% blocktrans %}
         Warning! Your report is still being populated.
@@ -98,18 +98,22 @@
         The report will refresh automatically when the data is finished being populated.
         {% endblocktrans %}
     </div>
-    {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder %}
+{% endblock %}
+{% block main_column_content %}
+    {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder %}
+    <div class="clearfix">
         <div class="pull-right">
             <a class="btn btn-primary" href="
-                {% url 'edit_configurable_report' domain report.report_config_id %}
-            ">{% trans "Edit Report" %}</a>
+                {% if report.spec.report_meta.created_by_builder %}
+                    {% url 'edit_report_in_builder' domain report.report_config_id %}
+                {% else %}
+                    {% url 'edit_configurable_report' domain report.report_config_id %}
+                {% endif %}
+            ">
+                {% trans "Edit Report" %}
+            </a>
         </div>
-    {% elif request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder %}
-        <div class="pull-right">
-            <a class="btn btn-primary pull-right" href="
-                {% url 'edit_report_in_builder' domain report.report_config_id %}
-            ">{% trans "Edit Report" %}</a>
-        </div>
+    </div>
     {% endif %}
     {{ block.super }}
 {% endblock %}
