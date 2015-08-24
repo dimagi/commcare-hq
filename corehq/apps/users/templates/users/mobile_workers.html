@@ -246,26 +246,20 @@
                        style="margin-bottom: 0;">
                     <thead>
                         <tr>
-                            <th>{% trans "Username" %}</th>
-                            <th>{% trans "Name" %}</th>
-                            <th>{% trans "Phone Numbers" %}</th>
-                            <th>{% trans "Date Registered" %}</th>
-                            <th>{% trans "Actions" %}</th>
+                            <th class="col-xs-3">{% trans "Username" %}</th>
+                            {% angularjs %}
+                            <th ng-repeat="field_name in customFormFieldNames">{{ field_name }}</th>
+                            {% endangularjs %}
+                            <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+                            <th class="col-xs-2">{% trans 'Action' %}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-show="notLoaded">
-                            <td colspan="5">{% trans "Loading Workers..." %}</td>
-                        </tr>
                         <tr ng-repeat="user in paginatedItems">
                             {% angularjs %}
                             <td><a href="{{ user.editUrl }}">{{ user.username }}</a></td>
-                            <td>{{ user.name }}</td>
-                            <td>
-                                <ul>
-                                    <li ng-repeat="number in user.phoneNumbers">{{ number }}</li>
-                                </ul>
-                            </td>
+                            <td ng-repeat="(slug, field_val) in user.customFields"
+                                custom-field-column></td>
                             <td>{{ user.dateRegistered }}</td>
                             <td>
                                 <div ng-show="user.deactivateUrl">
