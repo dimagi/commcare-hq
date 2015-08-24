@@ -1,7 +1,9 @@
 from casexml.apps.stock.models import StockTransaction
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE, NAMESPACE_DOMAIN
+from custom.ewsghana.handlers import INVALID_MESSAGE
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, restore_location_products, \
     assign_products_to_location, TEST_DOMAIN
+from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 
 
 class StockOnHandTest(EWSScriptTest):
@@ -15,6 +17,15 @@ class StockOnHandTest(EWSScriptTest):
            5551234 > SOH LF 10.0 MC 20.0
            5551234 < Dear {0}, thank you for reporting the commodities you have in stock.
            """.format(self.user1.full_name)
+        self.run_script(a)
+
+    def test_nothing(self):
+        a = """
+            5551234 >
+            5551234 < {}
+            5551234 > soh
+            5551234 < {}
+        """.format(unicode(INVALID_MESSAGE), unicode(SOH_HELP_MESSAGE))
         self.run_script(a)
 
     def test_stockout(self):
@@ -54,7 +65,7 @@ class StockOnHandTest(EWSScriptTest):
 
     def test_soh_and_receipt(self):
         a = """
-           5551234 > soh lf 10.20 mc 20.0
+           5551234 > soh lf 10 20 mc 20.0
            5551234 < Dear {}, thank you for reporting the commodities you have. You received lf 20.
            """.format(self.user1.full_name)
         self.run_script(a)
@@ -128,6 +139,26 @@ class StockOnHandTest(EWSScriptTest):
            222222 < Dear {}, Test Facility is experiencing the following problems: overstocked Micro-G
            333333 < Dear {}, these items are overstocked: mg. The district admin has been informed.
            """.format(self.user2.full_name, self.user3.full_name)
+        self.run_script(a)
+
+    def test_string_cleaner(self):
+        a = """
+           5551234 > soh lf 10-20 mc 20.0
+           5551234 < Dear {}, thank you for reporting the commodities you have. You received lf 20.
+           """.format(self.user1.full_name)
+        self.run_script(a)
+
+    def test_bad_code(self):
+        a = """
+           5551234 > lf 0.0 badcode 10.0
+           5551234 < You reported: lf, but there were errors: Unrecognized commodity codes: badcode. Please contact your DHIO or RHIO for assistance.
+           5551234 > badcode 10.0
+           5551234 < badcode is not a recognized commodity code. Please contact your DHIO or RHIO for help.
+           5551234 > soh lf 10.10 m20
+           5551234 < You reported: lf, but there were errors: Unrecognized commodity codes: m. Please contact your DHIO or RHIO for assistance.
+           5551234 > ad50 -0 as65-0 al25-0 qu0-0 sp0-0 rd0-0
+           5551234 < You reported: ad, al, qu, rd, sp, but there were errors: Unrecognized commodity codes: as. Please contact your DHIO or RHIO for assistance.
+           """
         self.run_script(a)
 
     def test_incomplete_report(self):

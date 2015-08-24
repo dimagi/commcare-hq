@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.models import StockState
-from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE
+from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE
 from collections import defaultdict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
@@ -7,10 +7,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
 from custom.ewsghana.reminders import ERROR_MESSAGE
+from custom.ewsghana.utils import ProductsReportHelper
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ewsghana.alerts.alerts import stock_alerts
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.commtrack.sms import *
+from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 
 
 class ProductCodeException(Exception):
@@ -115,11 +117,62 @@ class EWSFormatter(object):
 
 class EWSStockAndReceiptParser(StockAndReceiptParser):
 
+    def __init__(self, domain, v):
+        super(EWSStockAndReceiptParser, self).__init__(domain, v)
+        self.bad_codes = set()
+
     def product_from_code(self, prod_code):
         try:
             return super(EWSStockAndReceiptParser, self).product_from_code(prod_code)
         except SMSError:
-            raise ProductCodeException(unicode(INVALID_PRODUCT_CODE % prod_code))
+            return None
+
+    def single_action_transactions(self, action, args):
+        products = []
+        for idx, arg in enumerate(args):
+            if self.looks_like_prod_code(arg):
+                product = self.product_from_code(arg)
+                if product:
+                    products.append(product)
+                else:
+                    if idx == 0:
+                        raise ProductCodeException(INVALID_PRODUCT_CODE % arg)
+                    self.bad_codes.add(arg)
+            else:
+                if not products:
+                    continue
+                if len(products) > 1:
+                    raise SMSError('missing quantity for product "%s"' % products[-1].code)
+
+                # NOTE also custom code here, must be formatted like 11.22
+                if re.compile("^\d+\.\d+$").match(arg):
+                    value = arg
+                else:
+                    raise SMSError('could not understand product quantity "%s"' % arg)
+
+                for p in products:
+                    # for EWS we have to do two transactions, one being a receipt
+                    # and second being a transaction (that's reverse of the order
+                    # the user provides them)
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location'].get_id,
+                        case_id=self.case_id,
+                        product_id=p.get_id,
+                        action=const.StockActions.RECEIPTS,
+                        quantity=value.split('.')[1]
+                    )
+                    yield StockTransactionHelper(
+                        domain=self.domain.name,
+                        location_id=self.location['location'].get_id,
+                        case_id=self.case_id,
+                        product_id=p.get_id,
+                        action=const.StockActions.STOCKONHAND,
+                        quantity=value.split('.')[0]
+                    )
+                products = []
+        if products:
+            raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
 
 def get_transactions_by_product(transactions):
@@ -168,6 +221,30 @@ class AlertsHandler(KeywordHandler):
             send_sms_to_verified_number(verified_contact, message)
         return filtered_transactions
 
+    def send_errors(self, transactions, bad_codes):
+        report_helper = ProductsReportHelper(self.user.sql_location, transactions)
+
+        kwargs = {}
+
+        if report_helper.reported_products():
+            kwargs['stocks'] = ", ". join(
+                [product.code for product in report_helper.reported_products().order_by('code')]
+            )
+            error_message = 'You reported: {stocks}, but there were errors: {err}'
+        else:
+            error_message = '{err}'
+
+        missing = report_helper.missing_products()
+        if missing:
+            kwargs['missing'] = ", ".join([product.code for product in missing])
+            error_message += " Please report {missing}"
+
+        bad_codes = ', '.join(bad_codes)
+        if bad_codes:
+            kwargs['err'] = 'Unrecognized commodity codes: {bad_codes}.'.format(bad_codes=bad_codes)
+
+        self.respond('{} {}'.format(error_message.format(**kwargs), unicode(ASSISTANCE_MESSAGE)))
+
     def handle(self):
         verified_contact = self.verified_contact
         user = verified_contact.owner
@@ -183,7 +260,10 @@ class AlertsHandler(KeywordHandler):
         if not domain.commtrack_enabled:
             return False
         try:
-            data = EWSStockAndReceiptParser(domain, verified_contact).parse(EWSFormatter().format(text))
+            parser = EWSStockAndReceiptParser(domain, verified_contact)
+            formatted_text = EWSFormatter().format(text)
+
+            data = parser.parse(formatted_text)
             if not data:
                 return False
             if EWS_INVALID_REPORT_RESPONSE.enabled(self.domain):
@@ -210,5 +290,13 @@ class AlertsHandler(KeywordHandler):
 
         process(domain.name, data)
         transactions = data['transactions']
-        stock_alerts(transactions, user)
+        if not parser.bad_codes:
+            stock_alerts(transactions, user)
+        else:
+            self.send_errors(transactions, parser.bad_codes)
+
+        return True
+
+    def help(self):
+        self.respond(SOH_HELP_MESSAGE)
         return True

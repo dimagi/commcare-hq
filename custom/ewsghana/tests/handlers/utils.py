@@ -71,6 +71,12 @@ class EWSScriptTest(TestScript):
         p5 = Product(domain=domain.name, name='Micro-G', code='mg', unit='each')
         p5.save()
 
+        Product(domain=domain.name, name='Ad', code='ad', unit='each').save()
+        Product(domain=domain.name, name='Al', code='al', unit='each').save()
+        Product(domain=domain.name, name='Qu', code='qu', unit='each').save()
+        Product(domain=domain.name, name='Sp', code='sp', unit='each').save()
+        Product(domain=domain.name, name='Rd', code='rd', unit='each').save()
+
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
         SupplyPointCase.create_from_location(TEST_DOMAIN, loc)
         loc.save()
