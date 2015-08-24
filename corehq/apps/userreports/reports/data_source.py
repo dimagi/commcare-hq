@@ -1,5 +1,6 @@
 import datetime
 from django.utils.datastructures import SortedDict
+from django.utils.translation import ugettext as _
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
@@ -106,6 +107,8 @@ class ConfigurableReportDataSource(SqlData):
 
     @memoized
     def get_data(self, slugs=None):
+        if len(self.columns) > 50:
+            raise UserReportsError(_("This report has too many columns to be displayed"))
         try:
             ret = super(ConfigurableReportDataSource, self).get_data(slugs)
             for report_column in self.column_configs:

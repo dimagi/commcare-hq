@@ -204,6 +204,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 raise
             return self.render_json_response({
                 'error': e.message,
+                'aaData': [],
             })
         except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:
