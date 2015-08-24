@@ -47,7 +47,6 @@
         });
 
         self.updateList = function (data) {
-            console.log(data);
             if (data.success) {
                 $scope.paginatedItems = data.response.itemList;
                 $scope.total = data.response.total;
