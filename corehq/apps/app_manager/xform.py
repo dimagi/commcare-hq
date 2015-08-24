@@ -1475,7 +1475,8 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and getattr(form.get_phase(), 'anchor', False)
+        has_schedule = (module.has_schedule and form.schedule.enabled and
+                        getattr(form.get_phase(), 'anchor', False))
         adjusted_datums = {}
         if module.root_module and module.root_module.module_type == 'basic':
             # for child modules the session variable for a case may have been

@@ -620,6 +620,8 @@ class FormSchedule(DocumentSchema):
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
+    enabled = BooleanProperty(default=True)
+
     starts = IntegerProperty()
     expires = IntegerProperty()
     allow_unscheduled = BooleanProperty(default=False)
@@ -2022,7 +2024,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def _pre_delete_hook(self):
         try:
             self.get_phase().remove_form(self)
-        except (ScheduleError, TypeError):
+        except (ScheduleError, TypeError, AttributeError):
             pass
 
     def add_stuff_to_xform(self, xform):
@@ -2103,12 +2105,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         module = self.get_module()
 
         if not module.has_schedule:
-            raise TypeError("The module this form is in has no schedule")
+            raise ScheduleError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
                      if form.unique_id == self.unique_id),
                     None)
+
+    def disable_schedule(self):
+        self.schedule.enabled = False
+        phase = self.get_phase()
+        if phase:
+            phase.remove_form(self)
 
     def check_actions(self):
         errors = []
@@ -2190,14 +2198,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and (not self.schedule or not self.get_phase()):
-            error = {
-                'type': 'validation error',
-                'validation_message': _("All forms in this module require a visit schedule.")
-            }
-            error.update(error_meta)
-            errors.append(error)
-
         if validate_module:
             errors.extend(module.get_case_errors(
                 needs_case_type=False,

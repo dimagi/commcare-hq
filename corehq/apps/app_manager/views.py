@@ -2134,17 +2134,23 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     form = module.get_form(form_id)
 
     json_loads = json.loads(request.POST.get('schedule'))
+    enabled = json_loads.pop('enabled')
     anchor = json_loads.pop('anchor')
     schedule_form_id = json_loads.pop('schedule_form_id')
 
-    try:
-        phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
-    except ScheduleError as e:
-        return HttpResponseBadRequest(unicode(e))
-
-    form.schedule_form_id = schedule_form_id
-    form.schedule = FormSchedule.wrap(json_loads)
-    phase.add_form(form)
+    if enabled:
+        try:
+            phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+        except ScheduleError as e:
+            return HttpResponseBadRequest(unicode(e))
+        form.schedule_form_id = schedule_form_id
+        form.schedule = FormSchedule.wrap(json_loads)
+        phase.add_form(form)
+    else:
+        try:
+            form.disable_schedule()
+        except ScheduleError:
+            pass
 
     response_json = {}
     app.save(response_json)

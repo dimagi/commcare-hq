@@ -253,6 +253,7 @@ var VisitScheduler = (function () {
                 }
             };
 
+            self.scheduleEnabled = ko.observable(data.schedule.enabled);
             self.transition = ko.computed(FormSchedule.conditionComputed(self.config, self.transition_condition));
             self.terminate = ko.computed(FormSchedule.conditionComputed(self.config, self.termination_condition));
 
@@ -318,6 +319,7 @@ var VisitScheduler = (function () {
             FormSchedule.cleanCondition(self.transition_condition);
             FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
+            schedule.enabled = self.scheduleEnabled();
             schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
             if (self.relevancy.enableFormExpiry() && self.allowExpiry()){
                 schedule.expires = self.relevancy.expires() * (self.relevancy.expires_type() === 'before' ? -1 : 1);
