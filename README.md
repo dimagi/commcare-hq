@@ -52,7 +52,7 @@ individual project sites when necessary.
 + [elasticsearch][elasticsearch] (including Java 7).
   - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
   - `brew install homebrew/versions/elasticsearch090` works well on mac
-+ redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
++ redis >= 3.0.3 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
