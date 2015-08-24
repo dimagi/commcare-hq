@@ -21,6 +21,7 @@
         paginationCustomData
     ) {
         var self = this;
+        $scope._ = _;  // makes underscore available
         $scope.paginatedItems = [];
 
         $scope.paginationLimits = _.map(paginationLimits, function (l) {
