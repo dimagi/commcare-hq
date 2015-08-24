@@ -83,7 +83,7 @@ var VisitScheduler = (function () {
         };
 
         self.removePhase = function(phase){
-            self.phases.destroy(phase);
+            self.phases.remove(phase);
         };
 
         self.serialize = function(){
