@@ -171,7 +171,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             self.assertLess(abs(next_check_time - repeat_record.next_check),
-                            timedelta(seconds=2))
+                            timedelta(seconds=3))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()
 
