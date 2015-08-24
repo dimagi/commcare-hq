@@ -27,6 +27,17 @@
     });
     mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
     mobileWorkerApp.constant('customFieldNames', {{ custom_field_names|JSON }});
+    mobileWorkerApp.constant('paginationCustomData', {
+        customFormFieldNames: {{ custom_field_names|JSON }}
+    });
+    {% angularjs %}
+    mobileWorkerApp.constant('paginationLimits', [
+        [10, '{% trans "Show 10 Mobile Workers" %}'],
+        [25, '{% trans "Show 25 Mobile Workers" %}'],
+        [50, '{% trans "Show 50 Mobile Workers" %}'],
+        [100, '{% trans "Show 100 Mobile Workers" %}']
+    ]);
+    {% endangularjs %}
 }(window.angular));
 </script>
 {% endblock %}
@@ -117,18 +128,15 @@
             </div>
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <select class="form-control"
                                 ng-change="pageChanged()"
                                 ng-model="limit"
-                                convert-to-number>
-                            <option value="10">Show 10 Workers</option>
-                            <option value="25">Show 25 Workers</option>
-                            <option selected="selected" value="50">Show 50 Workers</option>
-                            <option value="100">Show 100 Workers</option>
+                                ng-init="limit = {{ default_limit }}"
+                                ng-options="pl.value as pl.key for pl in paginationLimits">
                         </select>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
