@@ -1,6 +1,7 @@
 from soil import DownloadBase, CachedDownload, FileDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import heartbeat_enabled, is_alive
+from django.conf import settings
 
 
 def expose_cached_download(payload, expiry, **kwargs):
@@ -49,8 +50,17 @@ def get_download_context(download_id, check_state=False):
     if heartbeat_enabled():
         alive = is_alive()
 
-    context['is_ready'] = is_ready
+    progress = download_data.get_progress()
+
+    def progress_complete():
+        return (
+            getattr(settings, 'CELERY_ALWAYS_EAGER', False) and
+            progress.get('percent', 0) == 100 and
+            not progress.get('error', False)
+        )
+
+    context['is_ready'] = is_ready or progress_complete()
     context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
+    context['progress'] = progress
     context['download_id'] = download_id
     return context
