@@ -14,13 +14,27 @@
             return data;
         }
     });
+    pagination.constant('paginationLimits', [
+        [10, "Limit 10"]
+    ]);
+
+    pagination.constant("paginationCustomData", {});
 
     var paginationControllers = {};
 
-    paginationControllers.paginatedListController = function($scope, djangoRMI, paginationConfig) {
+    paginationControllers.PaginatedListController = function(
+        $scope, djangoRMI, paginationConfig, paginationLimits,
+        paginationCustomData
+    ) {
         var self = this;
         $scope.paginatedItems = [];
 
+        $scope.paginationLimits = _.map(paginationLimits, function (l) {
+            return {
+                value: l[0],
+                key: l[1]
+            }
+        });
         $scope.limit = 10;
         $scope.total = 1;
         $scope.maxSize = 8;
@@ -32,6 +46,10 @@
         $scope.hasError = false;
 
         self.retries = 0;
+
+        _.each(paginationCustomData, function (val, key) {
+            $scope[key] = val;
+        });
 
         self.updateList = function (data) {
             console.log(data);
