@@ -2,7 +2,7 @@
 <suite version="1" descriptor="Media Suite File">
   <media path="../../commcare">
     <resource id="media-adff3d5ce46324fa838827b9a7d0d005-case_list_audo.mp3" version="1">
-      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/456/case_list_audo.mp3</location>
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/456/case_list_audo.mp3</location>
     </resource>
   </media>
   <media path="../../commcare">
