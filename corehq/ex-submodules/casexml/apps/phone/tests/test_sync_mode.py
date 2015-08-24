@@ -570,6 +570,13 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
 
     @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_relevant_owner_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': USER_ID}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
