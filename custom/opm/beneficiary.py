@@ -652,6 +652,10 @@ class OPMCaseRow(object):
         return self.raw_num_children
 
     @property
+    def num_children_disp(self):
+        return {'sort_key': self.num_children, 'html': self.num_children}
+
+    @property
     def raw_num_children(self):
         # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
@@ -896,7 +900,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('block_name', ugettext_lazy("Block Name"), True, None),
         ('village', ugettext_lazy("Village Name"), True, None),
-        ('num_children', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('num_children_disp', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
         ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
         ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
         ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
