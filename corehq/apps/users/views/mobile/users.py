@@ -681,6 +681,16 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_noop("Mobile Workers")
 
     @property
+    def can_bulk_edit_users(self):
+        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
+            return False
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+
+    @property
+    def can_add_extra_users(self):
+        return can_add_extra_mobile_workers(self.request)
+
+    @property
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
@@ -705,6 +715,8 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
             'custom_field_names': [f.label for f in self.custom_data.fields],
+            'can_bulk_edit_users': self.can_bulk_edit_users,
+            'can_add_extra_users': self.can_add_extra_users,
             'default_limit': 50,
         }
 
