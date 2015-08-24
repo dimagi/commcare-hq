@@ -552,7 +552,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not (
             (isinstance(module, AdvancedModule) and module.has_schedule)),
-        'allow_form_workflow': not isinstance(form, CareplanForm)  and not (
+        'allow_form_workflow': not isinstance(form, CareplanForm) and not (
             (isinstance(module, AdvancedModule) and module.has_schedule)),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
     }
@@ -2116,10 +2116,11 @@ def edit_schedule_phases(request, domain, app_id, module_id):
     changed_anchors = [(phase['id'], phase['anchor'])
                        for phase in phases if phase['id'] != NEW_PHASE_ID]
     all_anchors = [phase['anchor'] for phase in phases]
-
+    enabled = json.loads(request.POST.get('has_schedule'))
     try:
         module.update_schedule_phase_anchors(changed_anchors)
         module.update_schedule_phases(all_anchors)
+        module.has_schedule = enabled
     except ScheduleError as e:
         return HttpResponseBadRequest(unicode(e))
 

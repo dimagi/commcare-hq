@@ -29,12 +29,12 @@ var VisitScheduler = (function () {
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged schedule settings",
             save: function() {
-                var phases = JSON.stringify(self.serialize());
                 self.saveButton.ajax({
                     type: 'post',
                     url: params.saveUrl,
                     data: {
-                        phases: phases
+                        phases: JSON.stringify(self.serializePhases()),
+                        has_schedule: self.hasSchedule()
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -86,7 +86,7 @@ var VisitScheduler = (function () {
             self.phases.remove(phase);
         };
 
-        self.serialize = function(){
+        self.serializePhases = function(){
             return _.map(self.phases(), function(phase){
                 return {id: phase.id,
                         anchor: phase.anchor.val()};
