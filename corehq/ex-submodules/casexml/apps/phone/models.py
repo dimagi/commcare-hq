@@ -579,7 +579,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # it should be removed when there are no longer any instances of the assertion
                 if self.date < datetime(2015, 8, 25):
                     _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
-                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(self._id, to_remove))
+                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
+                        self._id, to_remove)
+                    )
                 else:
                     raise
 
