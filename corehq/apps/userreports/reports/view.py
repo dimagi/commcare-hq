@@ -291,11 +291,11 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         headers = [column.header for column in self.data_source.columns]
         columns = [column.column_id for column in report_config.report_columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
-        total_row = [data.get_total_row(rows)] if data.has_total_row else []
+        total_rows = [data.get_total_row(rows)] if data.has_total_row else []
         return [
             [
                 self.title,
-                [headers] + rows + total_row
+                [headers] + rows + total_rows
             ]
         ]
 
