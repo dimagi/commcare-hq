@@ -18,7 +18,7 @@
                               data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
                         <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
                         {% if not module.all_forms_require_a_case %}
-                            <div class="alert alert-error" data-bind="visible: value">
+                            <div class="alert alert-error">
                                 <strong>
                                     {% blocktrans %}
                                         Visit schedule will be ignored as not all
@@ -61,7 +61,7 @@
             <td>
                 <div href="#" data-bind="jqueryElement: anchor.ui"></div>
             </td>
-            <td data-bind="text: forms().join(', ')"></td>
+            <td data-bind="text: form_abbreviations"></td>
             <td>
                 <i style="cursor: pointer;"
                    data-bind="css: COMMCAREHQ.icons.DELETE,

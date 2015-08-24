@@ -620,6 +620,8 @@ class FormSchedule(DocumentSchema):
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
+    enabled = BooleanProperty(default=True)
+
     starts = IntegerProperty()
     expires = IntegerProperty()
     allow_unscheduled = BooleanProperty(default=False)
@@ -2142,7 +2144,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def _pre_delete_hook(self):
         try:
             self.get_phase().remove_form(self)
-        except (ScheduleError, TypeError):
+        except (ScheduleError, TypeError, AttributeError):
             pass
 
     def add_stuff_to_xform(self, xform):
@@ -2223,12 +2225,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         module = self.get_module()
 
         if not module.has_schedule:
-            raise TypeError("The module this form is in has no schedule")
+            raise ScheduleError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
                      if form.unique_id == self.unique_id),
                     None)
+
+    def disable_schedule(self):
+        self.schedule.enabled = False
+        phase = self.get_phase()
+        if phase:
+            phase.remove_form(self)
 
     def check_actions(self):
         errors = []
@@ -2310,14 +2318,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and (not self.schedule or not self.get_phase()):
-            error = {
-                'type': 'validation error',
-                'validation_message': _("All forms in this module require a visit schedule.")
-            }
-            error.update(error_meta)
-            errors.append(error)
-
         if validate_module:
             errors.extend(module.get_case_errors(
                 needs_case_type=False,
@@ -2477,7 +2477,11 @@ class SchedulePhase(IndexedSchema):
     def change_anchor(self, new_anchor):
         if new_anchor is None or new_anchor.strip() == '':
             raise ScheduleError(_("You can't create a phase without an anchor property"))
+
         self.anchor = new_anchor
+
+        if self.get_module().phase_anchors.count(new_anchor) > 1:
+            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor))
 
 
 class AdvancedModule(ModuleBase):
@@ -2757,6 +2761,10 @@ class AdvancedModule(ModuleBase):
         """
         return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
 
+    @property
+    def phase_anchors(self):
+        return [phase.anchor for phase in self.schedule_phases]
+
     def get_or_create_schedule_phase(self, anchor):
         """Returns a tuple of (phase, new?)"""
         if anchor is None or anchor.strip() == '':
@@ -2777,7 +2785,7 @@ class AdvancedModule(ModuleBase):
         self.schedule_phases = []
 
     def update_schedule_phases(self, anchors):
-        """ Take a list of anchors, reorders, deletes and creates phases from it"""
+        """ Take a list of anchors, reorders, deletes and creates phases from it """
         old_phases = {phase.anchor: phase for phase in self.get_schedule_phases()}
         self._clear_schedule_phases()
 
@@ -2796,13 +2804,14 @@ class AdvancedModule(ModuleBase):
         return self.get_schedule_phases()
 
     def update_schedule_phase_anchors(self, new_anchors):
-        """ takes a list of tuples (id, new_anchor) and updates the phase anchors"""
+        """ takes a list of tuples (id, new_anchor) and updates the phase anchors """
         for anchor in new_anchors:
             id = anchor[0] - 1
+            new_anchor = anchor[1]
             try:
-                self.schedule_phases[id].anchor = anchor[1]
-            except KeyError:
-                raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
+                list(self.get_schedule_phases())[id].change_anchor(new_anchor)
+            except IndexError:
+                pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
