@@ -119,4 +119,4 @@ class AdvancedModuleTests(SimpleTestCase):
         self.test_registration_form_subcase_multiple()
         self.form.actions.open_cases[-1].repeat_context = "/data/children"
 
-        self.assertFalse(self.form.is_registration_form())
+        self.assertTrue(self.form.is_registration_form())
