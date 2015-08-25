@@ -4,7 +4,6 @@ from custom.ewsghana.handlers import INVALID_MESSAGE
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.alerts import AlertsHandler
-from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler

@@ -13,5 +13,3 @@ class TestFormatter(SimpleTestCase):
         self.assertEqual(EWSFormatter().format('LF10.0-mc20- 0'), 'lf 10.0 mc 20.0')
         self.assertEqual(EWSFormatter().format('LF10-3mc20 0'), 'lf 10.3 mc 20.0')
         self.assertEqual(EWSFormatter().format('LF10----3mc20.0'), 'lf 10.3 mc 20.0')
-
-

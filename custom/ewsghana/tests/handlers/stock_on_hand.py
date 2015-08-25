@@ -149,16 +149,23 @@ class StockOnHandTest(EWSScriptTest):
         self.run_script(a)
 
     def test_bad_code(self):
+        first_message = "You reported: lf, but there were errors: Unrecognized commodity codes: badcode. " \
+                        "Please contact your DHIO or RHIO for assistance."
+        second_message = "You reported: lf, but there were errors: Unrecognized commodity codes: m. " \
+                         "Please contact your DHIO or RHIO for assistance."
+        third_message = "You reported: ad, al, qu, rd, sp, but there were errors: " \
+                        "Unrecognized commodity codes: as. Please contact your DHIO or RHIO for assistance."
+
         a = """
            5551234 > lf 0.0 badcode 10.0
-           5551234 < You reported: lf, but there were errors: Unrecognized commodity codes: badcode. Please contact your DHIO or RHIO for assistance.
+           5551234 < %s
            5551234 > badcode 10.0
            5551234 < badcode is not a recognized commodity code. Please contact your DHIO or RHIO for help.
            5551234 > soh lf 10.10 m20
-           5551234 < You reported: lf, but there were errors: Unrecognized commodity codes: m. Please contact your DHIO or RHIO for assistance.
+           5551234 < %s
            5551234 > ad50 -0 as65-0 al25-0 qu0-0 sp0-0 rd0-0
-           5551234 < You reported: ad, al, qu, rd, sp, but there were errors: Unrecognized commodity codes: as. Please contact your DHIO or RHIO for assistance.
-           """
+           5551234 < %s
+           """ % (first_message, second_message, third_message)
         self.run_script(a)
 
     def test_incomplete_report(self):

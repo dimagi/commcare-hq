@@ -1,4 +1,3 @@
-from corehq.apps.commtrack.models import StockState
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE
 from collections import defaultdict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
@@ -29,8 +28,8 @@ class EWSFormatter(object):
         mylist = list(string)
         newstring = string[0]
         i = 1
-        while i < len(mylist)-1:
-            if mylist[i] == ' ' and mylist[i-1].isdigit() and mylist[i+1].isdigit():
+        while i < len(mylist) - 1:
+            if mylist[i] == ' ' and mylist[i - 1].isdigit() and mylist[i + 1].isdigit():
                 newstring += self.REC_SEPARATOR
             else:
                 newstring = newstring + mylist[i]
@@ -53,12 +52,12 @@ class EWSFormatter(object):
         i = 0
         while i < len(mylist):
             token = token + mylist[i]
-            if i+1 == len(mylist):
+            if i + 1 == len(mylist):
                 # you've reached the end
                 yield token
-            elif mylist[i].isdigit() and not mylist[i+1].isdigit() or \
-              mylist[i].isalpha() and not mylist[i+1].isalpha() or \
-              not mylist[i].isalnum() and mylist[i+1].isalnum():
+            elif (mylist[i].isdigit() and not mylist[i + 1].isdigit()
+                  or mylist[i].isalpha() and not mylist[i + 1].isalpha()
+                  or not mylist[i].isalnum() and mylist[i + 1].isalnum()):
                 yield token
                 token = ''
             i += 1
@@ -105,7 +104,7 @@ class EWSFormatter(object):
                 else:
                     commodity = token_a
                     valid = True
-            except ValueError, e:
+            except ValueError:
                 commodity = None
                 continue
             except StopIteration:

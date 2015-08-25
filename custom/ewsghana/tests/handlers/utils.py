@@ -1,6 +1,5 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.stock.consumption import ConsumptionConfiguration
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from couchforms.models import XFormInstance
 from corehq import Domain
