@@ -57,6 +57,17 @@ class SchemaTest(SimpleTestCase):
         self.assertEqual(subsets["village"]["related"], None)
         self.assertDictEqual(subsets["family"]["related"], {"parent": "village"})
 
+    def test_get_session_schema_for_user_registration_form(self):
+        app = self.make_app()
+        schema = util.get_session_schema(app.user_registration)
+        self.assert_has_kv_pairs(schema, {
+            "id": "commcaresession",
+            "uri": "jr://instance/session",
+            "name": "Session",
+            "path": "/session/data",
+        })
+        assert "case_id" not in schema["structure"], schema["structure"]
+
     def test_get_session_schema_for_module_with_no_case_type(self):
         app = self.make_app()
         form = self.add_form(app)

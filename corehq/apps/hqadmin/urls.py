@@ -34,6 +34,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
     (r'^api/', include(admin_api_urlpatterns)),
+    url(r'^download_malt/$', 'malt_as_csv', name='download_malt'),
 
     AdminReportDispatcher.url_pattern(),
 )
