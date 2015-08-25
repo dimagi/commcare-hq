@@ -317,12 +317,12 @@ In this example we take 3 case properties and save one row per property if it ex
     "test": {
         "type": "not",
         "filter": {
-            'type': 'boolean_expression',
-            'expression': {
-                'type': 'identity',
+            "type": "boolean_expression",
+            "expression": {
+                "type": "identity",
             },
-            'operator': 'in',
-            'property_value': ['', None],
+            "operator": "in",
+            "property_value": ["", null],
         }
     }
 }
