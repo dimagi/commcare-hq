@@ -378,8 +378,13 @@ _username_help = """
     <i class="fa fa-check"></i>
     {{ usernameStatusMessage }}
 </span>
+<span ng-if="usernameAvailabilityStatus === 'error'">
+    <i class="fa fa-exclamation-triangle"></i>
+    %(server_error)s
+</span>
 """ % {
     'checking': _('Checking Availability...'),
+    'server_error': _('Issue connecting to server. Check Internet connection.')
 }
 
 _password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
