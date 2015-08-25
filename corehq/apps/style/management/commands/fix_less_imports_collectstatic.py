@@ -6,11 +6,10 @@ from django.conf import settings
 
 
 class Command(LabelCommand):
-    help = ("Goes through the collected LESS files after collectstatic is run "
-            "and makes sure the relative paths in the imports that reference "
-            "../../../../../style/static/style/less/ are changed to "
-            "../../style/less/ in order to match the new directory structure of"
-            " the collected static files so that less compiles properly.")
+    help = ("check to see which files are using the b3 import variable"
+            " and replace the variable with the appropriate static file"
+            " path once collectstatic is run on production"
+            "the variable is necessary for less.js debug mode.")
     args = ""
 
     def handle(self, *args, **options):
@@ -28,13 +27,13 @@ class Command(LabelCommand):
                         path_def = p.group(0)
                         path_file = path_def.split('-')[-2]
                         new_path = settings.LESS_B3_PATHS.get(path_file)
-                        print ("[CORRECTING] %(f_name)s path in %(less_file)s: "
-                               "%(new_path)s" % {
-                                   'f_name': path_file,
-                                   'less_file': less_file,
-                                   'new_path': new_path,
-                               })
                         if new_path is not None:
+                            print ("[CORRECTING] %(f_name)s path in %(less_file)s: "
+                                   "%(new_path)s" % {
+                                       'f_name': path_file,
+                                       'less_file': less_file,
+                                       'new_path': new_path,
+                                   })
                             content = re.sub(B3_REGEX, new_path, content)
                         else:
                             content = None
