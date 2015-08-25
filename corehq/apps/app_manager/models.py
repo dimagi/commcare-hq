@@ -999,8 +999,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
             if old_media is not None and isinstance(old_media, dict):
-                for i, media in sorted(old_media.items()):
-                    new_media = media
+                new_media = old_media.get('default')
                 data[media_attr] = new_media
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
