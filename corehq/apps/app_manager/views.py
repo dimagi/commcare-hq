@@ -436,6 +436,11 @@ def get_schedule_context(form):
     schedule_context = {}
     module = form.get_module()
 
+    if not form.schedule:
+        # Forms created before the scheduler module existed don't have this property
+        # so we need to add it so everything works.
+        form.schedule = FormSchedule(enabled=False)
+
     schedule_context.update({
         'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
         'schedule_form_id': form.schedule_form_id,
@@ -551,9 +556,12 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': not isinstance(form, CareplanForm),
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not (
+            (isinstance(module, AdvancedModule) and module.has_schedule)),
+        'allow_form_workflow': not isinstance(form, CareplanForm) and not (
+            (isinstance(module, AdvancedModule) and module.has_schedule)),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if isinstance(form, CareplanForm):
@@ -2118,20 +2126,18 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_schedule_phases(request, domain, app_id, module_id):
-    NEW_ANCHORS = -1
+    NEW_PHASE_ID = -1
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     phases = json.loads(request.POST.get('phases'))
-    changed_anchors = []
-    all_anchors = []
-    for phase in phases:
-        if phase['id'] != NEW_ANCHORS:
-            changed_anchors.append((phase['id'], phase['anchor']))
-        all_anchors.append(phase['anchor'])
-
+    changed_anchors = [(phase['id'], phase['anchor'])
+                       for phase in phases if phase['id'] != NEW_PHASE_ID]
+    all_anchors = [phase['anchor'] for phase in phases]
+    enabled = json.loads(request.POST.get('has_schedule'))
     try:
         module.update_schedule_phase_anchors(changed_anchors)
         module.update_schedule_phases(all_anchors)
+        module.has_schedule = enabled
     except ScheduleError as e:
         return HttpResponseBadRequest(unicode(e))
 
@@ -2148,17 +2154,23 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     form = module.get_form(form_id)
 
     json_loads = json.loads(request.POST.get('schedule'))
+    enabled = json_loads.pop('enabled')
     anchor = json_loads.pop('anchor')
     schedule_form_id = json_loads.pop('schedule_form_id')
 
-    try:
-        phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
-    except ScheduleError as e:
-        return HttpResponseBadRequest(unicode(e))
-
-    form.schedule_form_id = schedule_form_id
-    form.schedule = FormSchedule.wrap(json_loads)
-    phase.add_form(form)
+    if enabled:
+        try:
+            phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+        except ScheduleError as e:
+            return HttpResponseBadRequest(unicode(e))
+        form.schedule_form_id = schedule_form_id
+        form.schedule = FormSchedule.wrap(json_loads)
+        phase.add_form(form)
+    else:
+        try:
+            form.disable_schedule()
+        except ScheduleError:
+            pass
 
     response_json = {}
     app.save(response_json)
@@ -2938,6 +2950,8 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_form_versions(None)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -2948,6 +2962,8 @@ def download_media_suite(request, domain, app_id):
     See Application.create_media_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_media_versions(None)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -2998,6 +3014,9 @@ def download_jad(request, domain, app_id):
 
     """
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -3024,6 +3043,9 @@ def download_jar(request, domain, app_id):
     """
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)

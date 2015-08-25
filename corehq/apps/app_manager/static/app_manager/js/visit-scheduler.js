@@ -29,12 +29,12 @@ var VisitScheduler = (function () {
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged schedule settings",
             save: function() {
-                var phases = JSON.stringify(self.serialize());
                 self.saveButton.ajax({
                     type: 'post',
                     url: params.saveUrl,
                     data: {
-                        phases: phases
+                        phases: JSON.stringify(self.serializePhases()),
+                        has_schedule: self.hasSchedule()
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -54,6 +54,11 @@ var VisitScheduler = (function () {
             });
             CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
+            self.form_abbreviations = ko.computed(function(){
+                return _.map(self.forms(), function(form){
+                    return form === '' ? '(no abbreviation)' : form;
+                }).join(', ');
+            });
         };
 
         self.hasSchedule = ko.observable(params.hasSchedule);
@@ -73,14 +78,15 @@ var VisitScheduler = (function () {
         };
 
         self.addPhase = function(){
-            self.phases.push(new Phase(-1, "", []));
+            var NEW_PHASE_ID = -1;
+            self.phases.push(new Phase(NEW_PHASE_ID, "", []));
         };
 
         self.removePhase = function(phase){
-            self.phases.destroy(phase);
+            self.phases.remove(phase);
         };
 
-        self.serialize = function(){
+        self.serializePhases = function(){
             return _.map(self.phases(), function(phase){
                 return {id: phase.id,
                         anchor: phase.anchor.val()};
@@ -247,6 +253,7 @@ var VisitScheduler = (function () {
                 }
             };
 
+            self.scheduleEnabled = ko.observable(data.schedule.enabled);
             self.transition = ko.computed(FormSchedule.conditionComputed(self.config, self.transition_condition));
             self.terminate = ko.computed(FormSchedule.conditionComputed(self.config, self.termination_condition));
 
@@ -312,6 +319,7 @@ var VisitScheduler = (function () {
             FormSchedule.cleanCondition(self.transition_condition);
             FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
+            schedule.enabled = self.scheduleEnabled();
             schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
             if (self.relevancy.enableFormExpiry() && self.allowExpiry()){
                 schedule.expires = self.relevancy.expires() * (self.relevancy.expires_type() === 'before' ? -1 : 1);
@@ -320,7 +328,7 @@ var VisitScheduler = (function () {
                 schedule.expires = null;
             }
 
-            schedule.anchor = self.phase.anchor();
+            schedule.anchor = self.phase.anchor() || '';
             schedule.schedule_form_id = self.schedule_form_id();
             schedule.visits = _.map(schedule.visits, function(visit) {
                 var due = visit.due * (visit.type === 'before' ? -1 : 1);

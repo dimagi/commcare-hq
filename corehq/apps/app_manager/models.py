@@ -86,6 +86,7 @@ from .exceptions import (
     ModuleIdMissingException,
     NoMatchingFilterException,
     RearrangeError,
+    SuiteValidationError,
     VersioningError,
     XFormException,
     XFormIdNotUnique,
@@ -620,6 +621,8 @@ class FormSchedule(DocumentSchema):
     transition_condition:       Condition under which we transition to the next phase
     termination_condition:      Condition under which we terminate the whole schedule
     """
+    enabled = BooleanProperty(default=True)
+
     starts = IntegerProperty()
     expires = IntegerProperty()
     allow_unscheduled = BooleanProperty(default=False)
@@ -1744,9 +1747,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return False
 
-    def is_usercaseonly(self):
-        return False
-
 
 class Module(ModuleBase):
     """
@@ -1991,24 +1991,6 @@ class Module(ModuleBase):
         """
         return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
 
-    def is_usercaseonly(self):
-        """
-        Return False if the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        def actions_use_another_case(actions):
-            empty_action = Mock(update={}, preload={})
-            update_case = actions.get('update_case', empty_action)
-            case_preload = actions.get('case_preload', empty_action)
-            return ((update_case.update and update_case.condition.type != 'never') or
-                    (case_preload.preload and case_preload.condition.type != 'never'))
-
-        return self.uses_usercase() and not any(
-            form for form in self.forms
-            if actions_use_another_case(form.active_actions())
-        )
-
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -2031,7 +2013,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def _pre_delete_hook(self):
         try:
             self.get_phase().remove_form(self)
-        except (ScheduleError, TypeError):
+        except (ScheduleError, TypeError, AttributeError):
             pass
 
     def add_stuff_to_xform(self, xform):
@@ -2112,12 +2094,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         module = self.get_module()
 
         if not module.has_schedule:
-            raise TypeError("The module this form is in has no schedule")
+            raise ScheduleError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
                      if form.unique_id == self.unique_id),
                     None)
+
+    def disable_schedule(self):
+        self.schedule.enabled = False
+        phase = self.get_phase()
+        if phase:
+            phase.remove_form(self)
 
     def check_actions(self):
         errors = []
@@ -2199,14 +2187,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if module.has_schedule and (not self.schedule or not self.get_phase()):
-            error = {
-                'type': 'validation error',
-                'validation_message': _("All forms in this module require a visit schedule.")
-            }
-            error.update(error_meta)
-            errors.append(error)
-
         if validate_module:
             errors.extend(module.get_case_errors(
                 needs_case_type=False,
@@ -2366,7 +2346,11 @@ class SchedulePhase(IndexedSchema):
     def change_anchor(self, new_anchor):
         if new_anchor is None or new_anchor.strip() == '':
             raise ScheduleError(_("You can't create a phase without an anchor property"))
+
         self.anchor = new_anchor
+
+        if self.get_module().phase_anchors.count(new_anchor) > 1:
+            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor))
 
 
 class AdvancedModule(ModuleBase):
@@ -2421,9 +2405,7 @@ class AdvancedModule(ModuleBase):
         form = AdvancedForm(
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
-        if self.has_schedule:
-            # TODO: verify that this is what we want to have happen here
-            form.schedule = FormSchedule()
+        form.schedule = FormSchedule(enabled=False)
 
         self.forms.append(form)
         form = self.get_form(-1)
@@ -2638,13 +2620,10 @@ class AdvancedModule(ModuleBase):
         """
         return self._uses_case_type(USERCASE_TYPE)
 
-    def is_usercaseonly(self):
-        """
-        Return False is the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
+
+    @property
+    def phase_anchors(self):
+        return [phase.anchor for phase in self.schedule_phases]
 
     def get_or_create_schedule_phase(self, anchor):
         """Returns a tuple of (phase, new?)"""
@@ -2666,7 +2645,7 @@ class AdvancedModule(ModuleBase):
         self.schedule_phases = []
 
     def update_schedule_phases(self, anchors):
-        """ Take a list of anchors, reorders, deletes and creates phases from it"""
+        """ Take a list of anchors, reorders, deletes and creates phases from it """
         old_phases = {phase.anchor: phase for phase in self.get_schedule_phases()}
         self._clear_schedule_phases()
 
@@ -2685,13 +2664,14 @@ class AdvancedModule(ModuleBase):
         return self.get_schedule_phases()
 
     def update_schedule_phase_anchors(self, new_anchors):
-        """ takes a list of tuples (id, new_anchor) and updates the phase anchors"""
+        """ takes a list of tuples (id, new_anchor) and updates the phase anchors """
         for anchor in new_anchors:
             id = anchor[0] - 1
+            new_anchor = anchor[1]
             try:
-                self.schedule_phases[id].anchor = anchor[1]
-            except KeyError:
-                raise ScheduleError(_("The phase with id {} was not found").format(anchor[0]))
+                list(self.get_schedule_phases())[id].change_anchor(new_anchor)
+            except IndexError:
+                pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3095,6 +3075,7 @@ class StaticDatespanFilter(ReportAppFilter):
             'last7',
             'last30',
             'lastmonth',
+            'lastyear',
         ],
         required=True,
     )
@@ -3876,7 +3857,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_jar_path()
             self.create_all_files()
         except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied) as e:
+                PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:
@@ -4195,9 +4176,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform().encode('utf-8')
 
     def set_form_versions(self, previous_version):
-        # this will make builds slower, but they're async now so hopefully
-        # that's fine.
-
+        """
+        Set the 'version' property on each form as follows to the current app version if the form is new
+        or has changed since the last build. Otherwise set it to the version from the last build.
+        """
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
@@ -4229,6 +4211,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     form.version = form_version
 
     def set_media_versions(self, previous_version):
+        """
+        Set the media version numbers for all media in the app to the current app version
+        if the media is new or has changed since the last build. Otherwise set it to the
+        version from the last build.
+        """
+
         # access to .multimedia_map is slow
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
