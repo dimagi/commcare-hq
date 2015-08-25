@@ -120,11 +120,16 @@
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
 
-            // clears select 2 widget from old data
-            $(".select2multiplechoicewidget").select2('data', null);
-
-            // initialize mobile worker model
-            $scope.mobileWorker = new MobileWorker(mobileWorker || {customFields: customFields});
+            if (!!mobileWorker) {
+                mobileWorker.creationStatus = USERNAME_STATUS.RETRIED;
+                $scope.mobileWorker = new MobileWorker({
+                    customFields: mobileWorker.customFields,
+                    username: mobileWorker.username
+                });
+            } else {
+                $(".select2multiplechoicewidget").select2('data', null);
+                $scope.mobileWorker = new MobileWorker({customFields: customFields});
+            }
         };
 
         $scope.submitNewMobileWorker = function () {
