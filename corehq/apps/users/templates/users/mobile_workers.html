@@ -313,9 +313,18 @@ $(function () {
                                 ng-show="showDeactivatedUsers">
                             {% trans 'Show Active Mobile Workers' %}
                         </button>
+                        <div class="pull-right" style="clear: right;">
+                            <pagination direction-links="true"
+                                        total-items="total"
+                                        items-per-page="limit"
+                                        previous-text="&laquo;"
+                                        next-text="&raquo;"
+                                        max-size="maxSize"
+                                        ng-model="currentPage"
+                                        ng-change="pageChanged()"></pagination>
+                        </div>
                     </div>
                 </div>
-                <hr />
                 <table class="table table-striped table-responsive"
                        style="margin-bottom: 0;">
                     <thead>
@@ -467,14 +476,16 @@ $(function () {
                            data-toggle="modal">file a bug report</a>.
                     {% endblocktrans %}
                 </div>
-                <pagination direction-links="true"
-                            total-items="total"
-                            items-per-page="limit"
-                            previous-text="&laquo;"
-                            next-text="&raquo;"
-                            max-size="maxSize"
-                            ng-model="currentPage"
-                            ng-change="pageChanged()"></pagination>
+                <div class="pull-right">
+                    <pagination direction-links="true"
+                                total-items="total"
+                                items-per-page="limit"
+                                previous-text="&laquo;"
+                                next-text="&raquo;"
+                                max-size="maxSize"
+                                ng-model="currentPage"
+                                ng-change="pageChanged()"></pagination>
+                </div>
             </div>
         </div>
     </div>
