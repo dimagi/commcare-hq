@@ -162,7 +162,8 @@ $(function () {
             </div>
             {% angularjs %}
 
-            <div class="panel panel-info">
+            <div class="panel panel-info"
+                 ng-show="hasPending">
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <i class="fa fa-circle-o-notch fa-spin"></i>
@@ -174,7 +175,7 @@ $(function () {
                         <thead workertable-header></thead>
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
-                                <td>{{ worker.username }}</td>
+                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
                                 <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
                                 <td>
                                     <i class="fa fa-circle-o-notch fa-spin"></i>
@@ -186,35 +187,42 @@ $(function () {
                 </div>
             </div>
 
-            <div class="panel panel-success" ng-show="hasSuccess">
+            <div class="panel panel-success"
+                 ng-show="hasSuccess">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{% trans 'New Mobile Workers' %}</h3>
+                    <h3 class="panel-title">
+                        <i class="fa fa-check"></i>
+                        {% trans 'New Mobile Workers' %}
+                    </h3>
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped">
                         <thead workertable-header></thead>
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
-                                <td><i class="fa fa-check"></i></td>
-                                <td>{{ worker.username }}</td>
+                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
                                 <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
-                                <td><a href="#" class="btn btn-primary">{% trans 'Edit' %}</a></td>
+                                <td><a href="{{ worker.editUrl }}"
+                                       class="btn btn-primary">{% trans 'Edit' %}</a></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="panel panel-success" ng-show="hasError">
+            <div class="panel panel-danger"
+                 ng-show="hasError">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{% trans 'Error Creating These Mobile Workers' %}</h3>
+                    <h3 class="panel-title">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        {% trans 'Errors Creating Workers' %}
+                    </h3>
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped">
                         <thead workertable-header></thead>
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
-                                <td><i class="fa fa-check"></i></td>
-                                <td>{{ worker.username }}</td>
+                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
                                 <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
                                 <td>
                                     <button type="button"
