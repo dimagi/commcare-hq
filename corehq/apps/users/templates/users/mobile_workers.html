@@ -28,7 +28,16 @@
     mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
     mobileWorkerApp.constant('customFieldNames', {{ custom_field_names|JSON }});
     mobileWorkerApp.constant('paginationCustomData', {
-        customFormFieldNames: {{ custom_field_names|JSON }}
+        customFormFieldNames: {{ custom_field_names|JSON }},
+        showDeactivatedUsers: false,
+        activateUser: function (user, djangoRMI) {
+            user.mark_activated = true;
+            $('#activate_' + user_id).modal('hide');
+        },
+        deactivateUser: function (user, djangoRMI) {
+            user.mark_deactivated = true;
+            $('#deactivate_' + user.user_id).modal('hide');
+        }
     });
     {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {
@@ -247,7 +256,22 @@
                             </span>
                         </div><!-- /input-group -->
                     </div>
+                    <div class="col-sm-4">
+                        <button type="button"
+                                class="btn btn-default pull-right"
+                                ng-click="showDeactivatedUsers = true; filterData();"
+                                ng-show="!showDeactivatedUsers">
+                            {% trans 'Show Deactivated Mobile Workers' %}
+                        </button>
+                        <button type="button"
+                                class="btn btn-default pull-right"
+                                ng-click="showDeactivatedUsers = false; filterData();"
+                                ng-show="showDeactivatedUsers">
+                            {% trans 'Show Active Mobile Workers' %}
+                        </button>
+                    </div>
                 </div>
+                <hr />
                 <table class="table table-striped table-responsive"
                        style="margin-bottom: 0;">
                     <thead>
@@ -267,49 +291,101 @@
                             <td ng-repeat="(slug, field_val) in user.customFields"
                                 custom-field-column></td>
                             <td>{{ user.dateRegistered }}</td>
-                            <td>
-                                <div ng-show="user.deactivateUrl">
-                                    <button type="button"
-                                            class="btn"
-                                            data-toggle="modal"
-                                            data-target="#deactivate_{{ user.id }}">
-                                        <i class="fa fa-deactivate"></i> {% trans "Deactivate" %}
-                                    </button>
-                                    <div id="deactivate_{{ user.id }}"
-                                         class="modal fade">
-                                        <div class="modal-dialog">
-                                            <form class="modal-content"
-                                                  action="{{ user.deactivateUrl }}"
-                                                  method="post">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                        <span class="sr-only">{% trans "Close" %}</span>
-                                                    </button>
-                                                    <h4 class="modal-title">{% trans "Deactivate Worker" %}: {{ user.name }}</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p class="lead">{% trans "Are you sure you want to deactivate this worker?" %}</p>
-                                                    <ul class="dl-horizontal">
-                                                        <dt>{% trans "E-mail" %}</dt>
-                                                        <dd>{{ user.email }}</dd>
-                                                        <dt>{% trans "Name" %}</dt>
-                                                        <dd>{{ user.name }}</dd>
-                                                    </ul>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button"
-                                                            class="btn btn-default"
-                                                            data-dismiss="modal">
-                                                        {% trans "Cancel" %}
-                                                    </button>
-                                                    <button type="submit"
-                                                            class="btn btn-inverse">
-                                                        {% trans "Deactivate" %}
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                            <td ng-if="user.action === 'activate'">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-toggle="modal"
+                                        ng-show="!user.mark_activated"
+                                        data-target="#activate_{{ user.user_id }}">
+                                        {% trans "Activate" %}
+                                </button>
+                                <span ng-show="user.mark_activated">
+                                    <i class="fa fa-check"></i> {% trans "ACTIVE" %}
+                                </span>
+                                <div id="activate_{{ user.user_id }}"
+                                     class="modal fade">
+                                    <div class="modal-dialog">
+                                        <form class="modal-content"
+                                              method="post"
+                                              ng-submit="activateUser(user, djangoRMI);">
+                                            <div class="modal-header">
+                                                <button type="button"
+                                                        class="close"
+                                                        data-dismiss="modal">
+                                                    <span aria-hidden="true">&times;</span>
+                                                    <span class="sr-only">{% trans "Close" %}</span>
+                                                </button>
+                                                <h4 class="modal-title">{% trans "Activate Mobile Worker" %}</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="lead well well-small">
+                                                    <i class="fa fa-user"></i>
+                                                    <strong>{{ user.username }}</strong>
+                                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                                </p>
+                                                <p class="lead">{% trans "Are you sure you want to ACTIVATE this worker?" %}</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button"
+                                                        class="btn btn-default"
+                                                        data-dismiss="modal">
+                                                    {% trans "Cancel" %}
+                                                </button>
+                                                <button type="submit"
+                                                        class="btn btn-success">
+                                                    {% trans 'Activate' %}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                            <td ng-if="user.action === 'deactivate'">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-toggle="modal"
+                                        data-target="#deactivate_{{ user.user_id }}"
+                                        ng-show="!user.mark_deactivated">
+                                        {% trans "Deactivate" %}
+                                </button>
+                                <span ng-show="user.mark_deactivated">
+                                    <i class="fa fa-check"></i> {% trans "INACTIVE" %}
+                                </span>
+                                <div id="deactivate_{{ user.user_id }}"
+                                     class="modal fade">
+                                    <div class="modal-dialog">
+                                        <form class="modal-content"
+                                              method="post"
+                                              ng-submit="deactivateUser(user, djangoRMI);">
+                                            <div class="modal-header">
+                                                <button type="button"
+                                                        class="close"
+                                                        data-dismiss="modal">
+                                                    <span aria-hidden="true">&times;</span>
+                                                    <span class="sr-only">{% trans "Close" %}</span>
+                                                </button>
+                                                <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="lead well well-small">
+                                                    <i class="fa fa-user"></i>
+                                                    <strong>{{ user.username }}</strong>
+                                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                                </p>
+                                                <p class="lead">{% trans "Are you sure you want to DEACTIVATE this worker?" %}</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button"
+                                                        class="btn btn-default"
+                                                        data-dismiss="modal">
+                                                    {% trans "Cancel" %}
+                                                </button>
+                                                <button type="submit"
+                                                        class="btn btn-default btn-danger">
+                                                    {% trans 'Deactivate' %}
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </td>
