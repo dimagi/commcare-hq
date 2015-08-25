@@ -789,15 +789,26 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     @allow_remote_invocation
-    def activate_user(self, user_id):
-        print "activate", user_id
-        return {
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def deactivate_user(self, user_id):
-        print "deactivate", user_id
+    def modify_user_status(self, in_data):
+        if not self.can_add_extra_users:
+            return {
+                'error': _("No Permission."),
+            }
+        try:
+            user_id = in_data['user_id']
+        except KeyError:
+            return {
+                'error': _("Please provide a user_id."),
+            }
+        try:
+            is_active = in_data['is_active']
+        except KeyError:
+            return {
+                'error': _("Please provide an is_active status."),
+            }
+        user = CommCareUser.get_by_user_id(user_id, self.domain)
+        user.is_active = is_active
+        user.save()
         return {
             'success': True,
         }
