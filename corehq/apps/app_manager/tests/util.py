@@ -102,7 +102,7 @@ def parse_normalize(xml, to_string=True, is_html=False):
 def _check_shared(expected, actual, checker, extension):
     # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
     if not checker.check_output(expected, actual, 0):
-        message = "{} mismatch\n\n".format(extension.upper())
+        original_message = message = "{} mismatch\n\n".format(extension.upper())
         diff = difflib.unified_diff(
             expected.splitlines(1),
             actual.splitlines(1),
@@ -111,7 +111,10 @@ def _check_shared(expected, actual, checker, extension):
         )
         for line in diff:
             message += line
-        raise AssertionError(message)
+        if message != original_message:
+            # check that there was actually a diff, because checker.check_output
+            # doesn't work with unicode characters in xml node names
+            raise AssertionError(message)
 
 
 def extract_xml_partial(xml, xpath):
