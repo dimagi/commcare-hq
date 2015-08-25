@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite version="1" descriptor="Media Suite File">
   <media path="../../commcare">
-    <resource id="media-adff3d5ce46324fa838827b9a7d0d005-case_list_audo.mp3">
-      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/456/case_list_audo.mp3</location>
+    <resource id="media-adff3d5ce46324fa838827b9a7d0d005-case_list_audo.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/456/case_list_audo.mp3</location>
     </resource>
   </media>
   <media path="../../commcare">
-    <resource id="media-630c2bba813951b7eb8e912ecb424c29-case_list_image.jpg">
+    <resource id="media-630c2bba813951b7eb8e912ecb424c29-case_list_image.jpg" version="1">
       <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/123/case_list_image.jpg</location>
     </resource>
   </media>

@@ -15,9 +15,9 @@
         <script>
             setTimeout(function() {
                 $('#tabular_filter').remove();
-                $(".dataTables_control").remove()
+                $(".dataTables_control").remove();
                 window.print();
-           }, 1000);
+           }, 3000);
 
         </script>
 
@@ -58,7 +58,7 @@
         </style>
     {% endif %}
     <style>
-        #legend, #extra-legend{
+        #legend, #extra-legend {
             max-height: 17em !important;
             overflow-y: auto;
         }
@@ -89,7 +89,14 @@ $(document).ready(function() {
             div += "<tr><td>" + awc_name + "</td></tr>"
         }
         div += '</tbody></table></div></div>';
-        $('#info').after(div)
+        $('#info').after(div);
+
+        $('.ticklabel').first().css('top', '143px');
+        $('.ticklabel').last().css('top', '7px');
+        $('#metrics').on('click', '.choice', function() {
+            $('.ticklabel').first().css('top', '143px');
+            $('.ticklabel').last().css('top', '7px');
+        })
     }
 });
 

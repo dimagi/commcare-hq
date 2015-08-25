@@ -560,6 +560,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_workflow': not isinstance(form, CareplanForm) and not (
             (isinstance(module, AdvancedModule) and module.has_schedule)),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if isinstance(form, CareplanForm):
@@ -1102,6 +1103,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
+        from corehq.apps.style.utils import set_bootstrap_version3
+        from crispy_forms.utils import set_template_pack
+        set_bootstrap_version3()
+        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 
@@ -2938,6 +2943,8 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_form_versions(None)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -2948,6 +2955,8 @@ def download_media_suite(request, domain, app_id):
     See Application.create_media_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_media_versions(None)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -2998,6 +3007,9 @@ def download_jad(request, domain, app_id):
 
     """
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -3024,6 +3036,9 @@ def download_jar(request, domain, app_id):
     """
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)

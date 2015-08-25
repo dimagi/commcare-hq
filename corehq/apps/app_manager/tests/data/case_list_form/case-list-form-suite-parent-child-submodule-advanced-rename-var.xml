@@ -1,25 +1,25 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource id="register_house_form" descriptor="Form: (Module register_house module) - register_house form">
+    <resource id="register_house_form_0" descriptor="Form: (Module register_house module) - register_house form 0">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="register_person_form" descriptor="Form: (Module register_person module) - register_person form">
+    <resource id="register_person_form_0" descriptor="Form: (Module register_person module) - register_person form 0">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="update_house_form" descriptor="Form: (Module update_house module) - update_house form">
+    <resource id="update_house_form_0" descriptor="Form: (Module update_house module) - update_house form 0">
       <location authority="local">./modules-2/forms-0.xml</location>
       <location authority="remote">./modules-2/forms-0.xml</location>
      </resource>
    </xform>
   <xform>
-    <resource id="update_person_form" descriptor="Form: (Module update_person module) - update_person form">
+    <resource id="update_person_form_0" descriptor="Form: (Module update_person module) - update_person form 0">
       <location authority="local">./modules-3/forms-0.xml</location>
       <location authority="remote">./modules-3/forms-0.xml</location>
     </resource>
@@ -187,7 +187,7 @@
         <stack>
             <push>
                 <command value="'m1-f0'"/>
-                <datum id="case_id_load_house" value="instance('commcaresession')/session/data/case_id_load_house_renamed"/>
+                <datum id="case_id_load_house_0" value="instance('commcaresession')/session/data/case_id_load_house_renamed"/>
                 <datum id="case_id_new_person_0" value="uuid()"/>
                 <datum id="return_to" value="'m3'"/>
             </push>
@@ -243,19 +243,19 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-        <datum id="case_id_load_house" nodeset="instance('casedb')/casedb/case[@case_type='house'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+        <datum id="case_id_load_house_0" nodeset="instance('casedb')/casedb/case[@case_type='house'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
         <datum id="case_id_new_person_0" function="uuid()"/>
     </session>
     <stack>
         <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm3' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) &gt; 0">
             <command value="'m2'"/>
-            <datum id="case_id_load_house_renamed" value="instance('commcaresession')/session/data/case_id_load_house"/>
+            <datum id="case_id_load_house_renamed" value="instance('commcaresession')/session/data/case_id_load_house_0"/>
             <command value="'m3'"/>
             <datum id="case_id_load_house_renamed_person" value="instance('commcaresession')/session/data/case_id_new_person_0"/>
         </create>
         <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm3' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_person_0]) = 0">
             <command value="'m2'"/>
-            <datum id="case_id_load_house_renamed" value="instance('commcaresession')/session/data/case_id_load_house"/>
+            <datum id="case_id_load_house_renamed" value="instance('commcaresession')/session/data/case_id_load_house_0"/>
             <command value="'m3'"/>
         </create>
     </stack>

@@ -623,7 +623,7 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 
 ### Expanded Columns
 
-Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. For example:
 
 If you have a data source like this:
 ```
@@ -666,6 +666,8 @@ Then you will get a report like this:
 | South    | 0                    | 1                    |
 +----------+----------------------+----------------------+
 ```
+
+Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
 ### Internationalization
 Report columns can be translated into multiple languages. To specify translations

@@ -1188,6 +1188,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
+            'today': datetime.date.today(),
         }
 
     @property
@@ -2172,14 +2173,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'sf_account_id',
             'services',
             'initiative',
-            'workshop_region',
+            'self_started',
             'area',
             'sub_area',
             'organization_name',
             'notes',
-            'self_started',
             'phone_model',
             'commtrack_domain',
+            'business_unit',
+            'workshop_region',
         ]
         if can_edit_eula:
             internal_attrs += [

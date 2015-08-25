@@ -7,23 +7,33 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
 )
-from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError
+from corehq.apps.app_manager.exceptions import LocationXpathValidationError, ScheduleError, CaseXPathValidationError
 from django.utils.translation import ugettext as _
+
+
+DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 
 def dot_interpolate(string, replacement):
     """
     Replaces non-decimal dots in `string` with `replacement`
     """
-    pattern = r'(\D|^)\.(\D|$)'
     repl = '\g<1>%s\g<2>' % replacement
-    return re.sub(pattern, repl, string)
+    return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
 def interpolate_xpath(string, case_xpath=None):
     """
     Replace xpath shortcuts with full value.
     """
+    if case_xpath is None and ('#case' in string or re.search(DOT_INTERPOLATE_PATTERN, string)):
+        # At the moment this function is only used by module and form filters.
+        # If that changes, amend the error message accordingly.
+        raise CaseXPathValidationError(_(
+            'Your filter refers to a case, but the case is not available. Either refer to the user case, or make '
+            'sure all the forms in this module update or close a case, which means registration forms must go in '
+            'a different module.'
+        ))
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

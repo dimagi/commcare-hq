@@ -32,11 +32,6 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
         self.form.source = self.get_xml('original_form', override_path=('data',))
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
 
     def test_no_actions(self):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
@@ -353,12 +348,6 @@ class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3
 
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
-
     def test_child_module_adjusted_datums_advanced_module(self):
         """
         Testing that the session variable name for the case_id is correct since
@@ -450,8 +439,6 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
 
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
-
-
 
     def test_subcase(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
