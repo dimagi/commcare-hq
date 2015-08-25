@@ -120,7 +120,7 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
             )
         )
 
-    def test_totaling_withOUT_aggregation(self):
+    def test_totaling_without_aggregation(self):
         config_agg = ReportConfiguration(
             columns=[
                 {
