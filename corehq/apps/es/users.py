@@ -1,6 +1,27 @@
 """
 UserES
 ------
+
+Here's an example adapted from the case list report - it gets a list of the ids
+of all unknown users, web users, and demo users on a domain.
+
+.. code-block:: python
+
+    from corehq.apps.es import users as user_es
+
+    user_filters = [
+        user_es.unknown_users(),
+        user_es.web_users(),
+        user_es.demo_users(),
+    ]
+
+    query = (user_es.UserES()
+             .domain(self.domain)
+             .OR(*user_filters)
+             .show_inactive()
+             .fields([]))
+
+    owner_ids = query.run().doc_ids
 """
 from .es_query import HQESQuery
 from . import filters
@@ -48,14 +69,23 @@ def mobile_users():
 
 
 def unknown_users():
+    """
+    Return only UnknownUsers.  Unknown users are mock users created from xform
+    submissions with unknown user ids.
+    """
     return filters.doc_type("UnknownUser")
 
 
 def admin_users():
+    """
+    Return only AdminUsers.  Admin users are mock users created from xform
+    submissions with unknown user ids whose username is "admin".
+    """
     return filters.doc_type("AdminUser")
 
 
 def demo_users():
+    """Matches users whose username is demo_user"""
     return username("demo_user")
 
 
