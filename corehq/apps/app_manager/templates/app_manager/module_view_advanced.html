@@ -3,8 +3,36 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block settings_fields %}{{ block.super }}
+{% block js %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
-    {% include "app_manager/partials/enable_schedule.html" %}
+        <script type="text/javascript" src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
+        <script type="text/javascript">
+         var visitScheduler = new VisitScheduler.ModuleScheduler({
+             home: $('#module-scheduler'),
+             saveUrl: "{% url 'corehq.apps.app_manager.views.edit_schedule_phases' app.domain app.id module.id %}",
+             hasSchedule: {{ module.has_schedule|JSON }},
+             schedulePhases: {{ schedule_phases|JSON }},
+             caseProperties: {{details|JSON}}[0].properties
+         });
+         visitScheduler.init();
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block tab-headers %}{{ block.super }}
+    {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+        <li>
+            <a href="#visit-scheduler-module-config-tab" data-toggle="tab">
+                {% trans "Visit Scheduler" %}
+            </a>
+        </li>
+    {% endif %}
+{% endblock %}
+
+{% block tab-content %}{{ block.super }}
+    {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+        <div class="tab-pane" id="visit-scheduler-module-config-tab">
+            {% include "app_manager/partials/enable_schedule.html" %}
+        </div>
     {% endif %}
 {% endblock %}
