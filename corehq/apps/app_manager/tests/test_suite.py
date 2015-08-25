@@ -524,6 +524,29 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
+    def test_fixture_to_case_selection_parent_child(self):
+        factory = AppFactory(build_version='2.9')
+
+        m0, m0f0 = factory.new_basic_module('parent', 'parent')
+        m0.fixture_select.active = True
+        m0.fixture_select.fixture_type = 'province'
+        m0.fixture_select.display_column = 'display_name'
+        m0.fixture_select.variable_column = 'var_name'
+        m0.fixture_select.xpath = 'province = $fixture_value'
+
+        factory.form_updates_case(m0f0)
+
+        m1, m1f0 = factory.new_basic_module('child', 'child')
+        m1.fixture_select.active = True
+        m1.fixture_select.fixture_type = 'city'
+        m1.fixture_select.display_column = 'display_name'
+        m1.fixture_select.variable_column = 'var_name'
+        m1.fixture_select.xpath = 'city = $fixture_value'
+
+        factory.form_updates_case(m1f0, parent_case_type='parent')
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection-parent-child'), factory.app.create_suite())
+
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
