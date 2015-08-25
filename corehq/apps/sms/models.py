@@ -1075,12 +1075,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             if len(recipient) == 1:
                 recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations
-                                  else RECIPIENT_LOCATION)
+                                  else cls.RECIPIENT_LOCATION)
                 recipient_id = recipient[0].location_id
             elif len(recipient) > 1:
                 recipient_type = (cls.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations
-                                  else RECIPIENT_VARIOUS_LOCATIONS)
+                                  else cls.RECIPIENT_VARIOUS_LOCATIONS)
                 recipient_id = None
             else:
                 # len(recipient) should never be 0 when we invoke this method,
@@ -1208,6 +1208,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
                     MessagingEvent.RECIPIENT_USER_GROUP,
                     MessagingEvent.RECIPIENT_CASE_GROUP,
                     MessagingEvent.RECIPIENT_VARIOUS,
+                    MessagingEvent.RECIPIENT_LOCATION,
+                    MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS,
+                    MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS,
+                    MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
                 ) and len(parent.subevents) > 1):
             parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
             parent.recipient_id = None

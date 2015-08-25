@@ -582,7 +582,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS,
             MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
         ):
-            return self._fmt(_(MessagingEvent.RECIPIENT_CHOICES[event.recipient_type]))
+            return self._fmt(_(dict(MessagingEvent.RECIPIENT_CHOICES)[event.recipient_type]))
         else:
             return self._fmt_contact_link(event.recipient_id, doc_info,
                 extra_text=_('(including child locations)')
