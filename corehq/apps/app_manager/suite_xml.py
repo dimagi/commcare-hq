@@ -1928,8 +1928,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datums.append({
                     'datum': SessionDatum(
                         id=FIXTURE_VALUE,
-                        nodeset="instance('item-list:{ft}')/{ft}_list/{ft}"
-                            .format(ft=datum['module'].fixture_select.fixture_type),
+                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
                         value=datum['module'].fixture_select.variable_column,
                         detail_select=id_strings.fixture_detail(datum['module'])
                     )
