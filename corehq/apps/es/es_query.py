@@ -143,10 +143,8 @@ class ESQuery(object):
     @property
     def builtin_filters(self):
         """
-        A list of callables that return filters
-        These will all be available as instance methods, so you can do
-        ``self.term(field, value)``
-        instead of
+        A list of callables that return filters. These will all be available as
+        instance methods, so you can do ``self.term(field, value)`` instead of
         ``self.filter(filters.term(field, value))``
         """
         return [
@@ -174,7 +172,7 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def run(self):
-        """Actually run the query.  Return an ESQuerySet object."""
+        """Actually run the query.  Returns an ESQuerySet object."""
         raw = run_query(self.url, self.raw_query)
         return ESQuerySet(raw, deepcopy(self))
 
@@ -296,6 +294,7 @@ class ESQuery(object):
         return query
 
     def remove_default_filter(self, default):
+        """Remove a specific default filter by passing in its name."""
         query = deepcopy(self)
         if default in query._default_filters:
             query._default_filters.pop(default)
@@ -327,10 +326,12 @@ class ESQuerySet(object):
 
     @property
     def doc_ids(self):
+        """Return just the docs ids from the response."""
         return [r['_id'] for r in self.raw_hits]
 
     @property
     def hits(self):
+        """Return the docs from the response."""
         if self.query._fields == []:
             return self.ids
         elif self.query._fields is not None:
@@ -340,6 +341,7 @@ class ESQuerySet(object):
 
     @property
     def total(self):
+        """Return the total number of docs matching the query."""
         return self.raw['hits']['total']
 
     @property
@@ -356,6 +358,10 @@ class ESQuerySet(object):
     @property
     @memoized
     def facets(self):
+        """
+        Namedtuple of the facets defined in the query.
+        See the facet docs for more specifics.
+        """
         facets = self.query._facets
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
