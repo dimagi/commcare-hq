@@ -1241,11 +1241,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         Return a list of each case type for which this Form opens a new subcase.
         :return:
         '''
-        subcase_types = set()
-        for subcase in self.actions.subcases:
-            if subcase.close_condition.type == "never":
-                subcase_types.add(subcase.case_type)
-        return subcase_types
+        return {subcase.case_type for subcase in self.actions.subcases if subcase.close_condition.type == "never"}
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
