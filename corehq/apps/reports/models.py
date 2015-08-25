@@ -35,7 +35,7 @@ from django.core.validators import validate_email
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 import json
 import calendar
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ungettext
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
@@ -665,6 +665,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def day_name(self):
         if self.interval == 'weekly':
             return calendar.day_name[self.day]
+        elif self.interval == 'n_weeks':
+            return ungettext(
+                "%(day_of_week)s",
+                "Every %(n_weeks)d %(day_of_week)ss",
+                self.n_weeks
+            ) % {
+                "n_weeks": self.n_weeks,
+                "day_of_week": calendar.day_name[self.day],
+            }
         return {
             "daily": _("Every day"),
             "monthly": _("Day %s of every month" % self.day),
