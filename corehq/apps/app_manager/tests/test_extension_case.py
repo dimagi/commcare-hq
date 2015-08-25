@@ -159,7 +159,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
     def add_subcase_block(self):
         ### messy messy messy
         parent_node = self.xform.data_node
-        case_id = session_var(self.form.session_var_for_action('subcases'))
+        case_id = session_var(self.form.session_var_for_action(self.subcase))
         #name = 'subcase_0'
         subcase_node = _make_elem('{x}subcase_0')
         parent_node.append(subcase_node)
