@@ -538,7 +538,7 @@ def mail_admins(subject, message):
 
 @roles(ROLES_DB_ONLY)
 def record_successful_deploy(url):
-    with cd(env.code_root):
+    with cd(env.code_current):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
