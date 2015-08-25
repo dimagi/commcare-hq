@@ -26,6 +26,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -836,10 +837,56 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
-        #  if not can_add_extra_mobile_workers(request):
-            #  raise PermissionDenied()
-        print in_data
-        return {'success': True}
+        if not self.can_add_extra_users:
+            return {
+                'error': _("No Permission."),
+            }
+        try:
+            user_data = in_data['mobileWorker']
+        except KeyError:
+            return {
+                'error': _("Please provide mobile worker data."),
+            }
+
+        try:
+            form_data = {}
+            for k, v in user_data.get('customFields', {}).items():
+                form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
+            for f in ['username', 'password', 'password_2']:
+                form_data[f] = user_data[f]
+            form_data['domain'] = self.domain
+            self.request.POST = form_data
+        except Exception as e:
+           return {
+               'error': _("Check your request: %s" % e)
+           }
+
+        if self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
+
+            # todo location_id ??
+
+            username = self.new_mobile_worker_form.cleaned_data['username']
+            password = self.new_mobile_worker_form.cleaned_data['password']
+
+            couch_user = CommCareUser.create(
+                self.domain,
+                format_username(username, self.domain),
+                password,
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
+            )
+
+            return {
+                'success': True,
+                'editUrl': reverse(
+                    EditCommCareUserView.urlname,
+                    args=[self.domain, couch_user.userID]
+                )
+            }
+
+        return {
+            'error': _("Forms did not validate"),
+        }
 
 
 # This is almost entirely a duplicate of CreateCommCareUserView. That view will
