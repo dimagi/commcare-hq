@@ -181,16 +181,134 @@ that you have a 32bit version of Python installed.
 
     ./manage.py ptop_es_manage --flip_all_aliases
 
+### Using LESS: 3 Options
 
-### Optional for using Django Compressor: Install lessc for compiling less files
+#### Option 1: Let Client Side Javascript (less.js) handle it for you
 
-    1. Install node and alongside it npm (eg, on a mac: `brew install node`)
-    2. Install less@1.3.1 with npm `npm install -g less@1.3.1`
-    3. Make sure `lessc --version` runs and outputs 1.3.1 as the current version
+Pros:
+- Don't need to install anything / manage different less versions.
 
-    If you don't do this, all the .less files should compile on the fly with
-    less.js in your browser (for development purposes ONLY).
+Cons:
+- Slowest option, as caching isn't great and for pages with a lot of imports,
+things get REAL slow. Plus if you want to use any javascript compilers like
+`coffeescript` in the future, this option won't take care of compiling that.
+- Is the furthest away from the production environment possible.
 
+##### How to enable?
+
+Make sure your `localsettings.py` file has the following set:
+```
+LESS_DEBUG = True
+LESS_WATCH = True  # if you want less.js to watch for changes and compile on the fly!
+COMPRESS_ENABLED = False
+COMPRESS_OFFLINE = False
+```
+
+#### Option 2: Let Django do it as changes are made, cache results in Redis
+
+Pros:
+- Faster than client-side compilation
+- Closer to production setup (so you find compressor errors as they happen)
+- Can use other features of django compressor (for javascript!)
+
+Cons:
+- Have to install less versions
+
+##### How to enable?
+
+Make sure your `localsettings.py` file has the following set:
+```
+LESS_DEBUG = False
+LESS_WATCH = False
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = False
+
+COMPRESS_MINT_DELAY = 30
+COMPRESS_MTIME_DELAY = 3  # set to higher or lower depending on how often you're editing static files
+COMPRESS_REBUILD_TIMEOUT = 6000
+```
+
+###### Install LESS
+
+*Note:* The reason why we have TWO versions, rather than one is that the newest
+LESS that Twitter Bootstrap 3.0 runs off of is not backwards compatible with
+LESS 1.3.1, which Twitter Bootstrap 2.3.2 needs. Since we're running BOTH
+simultaneously, we need to have two versions installed.
+
+For LESS 1.3.1 (the native less compiler):
+
+    1. Install [npm](https://www.npmjs.com/)
+    2. Install less@1.3.1 by running `npm install -g less@1.3.1`
+    3. Make sure `lessc --version` outputs something like 1.3.1 or 1.3.0 as the current version
+
+On production we're using LESS 1.7.3 as the alternate LESS, and this version
+for sure works with Bootstrap 3.
+
+Take note of this variable already in `settings.py`
+```
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+```
+
+You can change that to wherever you clone the git repo for 1.7.3, or leave it
+as is and follow this accordingly:
+
+    1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
+    2. In the `lessc` repo `git reset HEAD --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e`
+    to go straight to the 1.7.3 release. Experiment with newer releases at will.
+    3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
+
+###### Compressor and Caching
+
+If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
+and don't want to guess whether or not the cache picked up your changes, set the
+following in `localsettings.py`:
+```
+COMPRESS_MINT_DELAY = 0
+COMPRESS_MTIME_DELAY = 0
+COMPRESS_REBUILD_TIMEOUT = 0
+```
+
+If you deleted your STATIC files directory, and you're getting 404s on all the
+Compressed files, force compression by running:
+`manage.py compress --force`
+
+
+#### Option 3: Compress OFFLINE, just like production
+
+Pros:
+- Closest mirror to production's setup.
+- Easy to flip between Option 2 and Option 3
+
+Cons:
+- Sucks a lot if you're doing a lot of front end changes.
+
+##### How to enable?
+
+Do everything from Option 2 for LESS compilers setup.
+
+Have the following set in `localsettings.py`:
+```
+LESS_DEBUG = False
+LESS_WATCH = False
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True
+```
+
+Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
+`COMPRESS_REBUILD_TIMEOUT` are not set.
+
+For all STATICFILES changes, run:
+```
+manage.py collectstatic
+manage.py fix_less_imports_collectstatic
+manage.py compress
+```
+
+Option 3 is really only useful if you're trying to debug issues that mirror
+production that's related to staticfiles and compressor. For all practical uses
+please use Option 2 or Option 1 to save yourself the headache.
+
+#### CloudCare
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
