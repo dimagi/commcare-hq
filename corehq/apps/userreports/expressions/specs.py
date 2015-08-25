@@ -13,6 +13,13 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
 
+class IdentityExpressionSpec(JsonObject):
+    type = TypeProperty('identity')
+
+    def __call__(self, item, context=None):
+        return item
+
+
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
     constant = DefaultProperty(required=True)

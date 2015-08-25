@@ -26,6 +26,16 @@ class ExpressionPluginTest(SimpleTestCase):
             ExpressionFactory.register("foo", lambda x: x * 2)
 
 
+class IdentityExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        self.expression = ExpressionFactory.from_spec({'type': 'identity'})
+
+    def test_identity(self):
+        for obj in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
+            self.assertEqual(obj, self.expression(obj))
+
+
 class ConstantExpressionTest(SimpleTestCase):
 
     def test_constant_expression(self):
