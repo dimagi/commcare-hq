@@ -442,7 +442,7 @@ class NewMobileWorkerForm(forms.Form):
                     'password_2',
                     ng_required="true",
                     confirm_password="",
-                    ng_model='mobileWorker.password2'
+                    ng_model='mobileWorker.password_2'
                 ),
             )
         )
