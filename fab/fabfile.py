@@ -686,16 +686,18 @@ def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
 
-@task
 @roles(ROLES_ALL_SRC)
 def copy_localsettings():
     sudo('cp {}/localsettings.py {}/localsettings.py'.format(env.code_current, env.code_root))
 
 
-@task
 @roles(ROLES_TOUCHFORMS)
 def copy_tf_localsettings():
-    sudo('cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py {}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(env.code_current, env.code_root))
+    sudo(
+        'cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py '
+        '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
+            env.code_current, env.code_root
+        ))
 
 
 @task
