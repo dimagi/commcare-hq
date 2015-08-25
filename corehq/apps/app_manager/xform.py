@@ -1402,7 +1402,7 @@ class XForm(WrappedNode):
         for form in forms:
             form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
             name = u"next_{}".format(form.schedule_form_id)
-            forms_due.append("/data/{}".format(name))
+            forms_due.append(u"/data/{}".format(name))
 
             self.add_instance(
                 form_xpath.fixture_id,
