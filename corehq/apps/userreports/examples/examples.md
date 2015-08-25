@@ -160,7 +160,7 @@ If you want to include the time change the datatypes to `"datetime"`.
 This is the same type of indicator that should be used for typical Impact 123 indicators.
 In the example below, the indicator is inside a form group question called "impact123".
 
-```
+```json
 {
     "type": "expression",
     "expression": {
@@ -290,6 +290,44 @@ In the example below, the indicator is inside a form group question called "impa
     }
 }
 ```
+
+# Base Item Expressions
+
+## Emit multiple rows (one per non-empty case property)
+
+In this example we take 3 case properties and save one row per property if it exists.
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "property_name",
+            "property_name": "p1"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p2"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p3"
+        },
+    ],
+    "test": {
+        "type": "not",
+        "filter": {
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'identity',
+            },
+            'operator': 'in',
+            'property_value': ['', None],
+        }
+    }
+}
+```
+
 
 
 # Report examples
