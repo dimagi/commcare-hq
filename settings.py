@@ -687,6 +687,7 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'tastypie',
 ]
 
 # Don't use google analytics unless overridden in localsettings
