@@ -816,9 +816,17 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @allow_remote_invocation
     def check_username(self, in_data):
         try:
-            username = in_data['username']
+            username = in_data['username'].strip()
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
+        if username == 'admin' or username == 'demo_user':
+            return {'error': _('Username {} is reserved.'.format(username))}
+        if '@' in username:
+            return {'error':
+                        _('Username {} cannot contain "@".'.format(username))}
+        if ' ' in username:
+            return {'error':
+                        _('Username {} cannot contain spaces.'.format(username))}
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
             result = {'error': _('Username {} is already taken'.format(username))}
