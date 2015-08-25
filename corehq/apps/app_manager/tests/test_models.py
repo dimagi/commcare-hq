@@ -1,6 +1,13 @@
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import Application, Module, AdvancedModule, LoadUpdateAction, \
-    AdvancedOpenCaseAction, AutoSelectCase
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    AutoSelectCase,
+    CaseIndex,
+    LoadUpdateAction,
+    Module,
+)
 from django.test import SimpleTestCase
 
 
@@ -41,7 +48,7 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             )
         ]
 
@@ -80,7 +87,7 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             )
         ]
 
@@ -96,13 +103,13 @@ class AdvancedModuleTests(SimpleTestCase):
                 case_tag="child",
                 case_type="child",
                 name_path="/data/question1",
-                parent_tag="parent"
+                case_indices=[CaseIndex(tag="parent")]
             ),
             AdvancedOpenCaseAction(
                 case_tag="grandchild",
                 case_type="grandchild",
                 name_path="/data/children/question1",
-                parent_tag="child",
+                case_indices=[CaseIndex(tag="child")]
             )
         ]
 
@@ -112,4 +119,4 @@ class AdvancedModuleTests(SimpleTestCase):
         self.test_registration_form_subcase_multiple()
         self.form.actions.open_cases[-1].repeat_context = "/data/children"
 
-        self.assertFalse(self.form.is_registration_form())
+        self.assertTrue(self.form.is_registration_form())
