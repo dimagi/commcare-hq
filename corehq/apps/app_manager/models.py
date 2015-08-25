@@ -4023,9 +4023,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform().encode('utf-8')
 
     def set_form_versions(self, previous_version):
-        # this will make builds slower, but they're async now so hopefully
-        # that's fine.
-
+        """
+        Set the 'version' property on each form as follows to the current app version if the form is new
+        or has changed since the last build. Otherwise set it to the version from the last build.
+        """
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
@@ -4057,6 +4058,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     form.version = form_version
 
     def set_media_versions(self, previous_version):
+        """
+        Set the media version numbers for all media in the app to the current app version
+        if the media is new or has changed since the last build. Otherwise set it to the
+        version from the last build.
+        """
+
         # access to .multimedia_map is slow
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
