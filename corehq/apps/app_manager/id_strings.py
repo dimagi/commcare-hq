@@ -210,6 +210,10 @@ def fixture_detail(module):
     return detail(module, 'fixture_select')
 
 
+def fixture_session_var(module):
+    return u'fixture_value_m{module.id}'.format(module=module)
+
+
 def menu_id(module):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
