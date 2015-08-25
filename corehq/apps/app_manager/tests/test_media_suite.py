@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.hqmedia.models import CommCareImage
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 
 class MediaSuiteTest(SimpleTestCase, TestFileMixin):
@@ -21,7 +21,9 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(0).case_list_form.media_audio = audo_path
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
+        app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
+
+        app.set_media_versions(previous_version=None)
 
         self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
 

@@ -126,3 +126,7 @@ class ConfigurableReportException(AppManagerException):
 
 class NoMatchingFilterException(ConfigurableReportException):
     pass
+
+
+class CaseXPathValidationError(SuiteValidationError):
+    pass

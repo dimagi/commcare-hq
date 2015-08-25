@@ -532,6 +532,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if isinstance(form, CareplanForm):
@@ -2872,6 +2873,8 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_form_versions(None)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -2882,6 +2885,8 @@ def download_media_suite(request, domain, app_id):
     See Application.create_media_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_media_versions(None)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -2932,6 +2937,9 @@ def download_jad(request, domain, app_id):
 
     """
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -2958,6 +2966,9 @@ def download_jar(request, domain, app_id):
     """
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
