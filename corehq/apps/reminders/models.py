@@ -1456,7 +1456,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_CASE:
             return CommConnectCase.get(self.case_id)
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
-            return CommCareCaseGroup.get(self.sample_id)
+            return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
             return get_wrapped_owner(get_owner_id(self.case))
         elif handler.recipient == RECIPIENT_PARENT_CASE:
