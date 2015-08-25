@@ -301,7 +301,13 @@ $(function () {
                     <tbody>
                         <tr ng-repeat="user in paginatedItems">
                             {% angularjs %}
-                            <td><a href="{{ user.editUrl }}">{{ user.username }}</a></td>
+                            <td>
+                                <a href="{{ user.editUrl }}">
+                                    <i class="fa fa-user"></i>
+                                    <strong>{{ user.username }}</strong>
+                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                </a>
+                            </td>
                             <td ng-repeat="(slug, field_val) in user.customFields"
                                 custom-field-column></td>
                             <td>{{ user.dateRegistered }}</td>
