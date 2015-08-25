@@ -163,6 +163,58 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
             )
         )
 
+    def test_totaling_with_noninteger(self):
+        config_agg = ReportConfiguration(
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['', ''],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': '',
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns
+            )
+        )
+        self.assertEqual(
+            ['', ''],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': '',
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns
+            )
+        )
+
 
 class ReportConfigurationDbTest(TestCase):
 
