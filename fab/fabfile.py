@@ -540,11 +540,11 @@ def mail_admins(subject, message):
 def record_successful_deploy(url):
     with cd(env.code_current):
         sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
+            '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
             '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
-            'virtualenv_root': env.virtualenv_root,
+            'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
             'url': url,
