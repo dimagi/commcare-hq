@@ -1,10 +1,11 @@
 import uuid
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
+from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.restore import RestoreState, RestoreParams
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
@@ -232,6 +233,21 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )[0]
         flag = OwnershipCleanlinessFlag.objects.get(domain=self.domain, owner_id=new_owner)
         self.assertEqual(True, flag.is_clean)
+
+
+class SetCleanlinessFlagsTest(TestCase):
+
+    def test_set_bad_domains(self):
+        test_cases = [None, '', 'something-too-long' * 10]
+        for invalid_domain in test_cases:
+            with self.assertRaises(InvalidDomainError):
+                set_cleanliness_flags(invalid_domain, 'whatever')
+
+    def test_set_bad_owner_ids(self):
+        test_cases = [None, '', 'something-too-long' * 10]
+        for invalid_owner in test_cases:
+            with self.assertRaises(InvalidOwnerIdError):
+                set_cleanliness_flags('whatever', invalid_owner)
 
 
 class CleanlinessUtilitiesTest(SimpleTestCase):

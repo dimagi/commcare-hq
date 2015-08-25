@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
+from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 import xml.etree.ElementTree as ET
@@ -37,7 +37,7 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
         }
         for p_type, test_method in types.items():
             for key, value in app.profile.get(p_type, {}).items():
-                setting = SETTINGS_LOOKUP[p_type][key]
+                setting = get_commcare_settings_lookup()[p_type][key]
                 test_method(profile_xml, key, value, setting)
 
     def _get_node(self, profile, key, xpath_template):
@@ -81,7 +81,7 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
         )
 
     def test_profile_properties(self):
-        for setting in SETTINGS:
+        for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
                 continue
             for value in setting.get('values', []):

@@ -8,8 +8,9 @@
         var $links = [];
         {% for template in templates %}
             $links.push($('.dashboard-link[data-index="{{ forloop.counter0 }}"]'));
-            gaTrackLink($links[{{ forloop.counter0 }}], 'Dashboard', 'Welcome Tile', '{{ template.action }}')
-            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], '{{ template.description }}')
+            gaTrackLink($links[{{ forloop.counter0 }}], 'Dashboard', 'Welcome Tile', '{{ template.action }}');
+            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], '{{ template.description }}');
+            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], 'Clicked App Template Tile');
         {% endfor %}
     });
 </script>
