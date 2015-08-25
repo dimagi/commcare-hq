@@ -82,7 +82,7 @@
         self.editUrl = data.editUrl || '';
 
         self.password = '';
-        self.password2 = '';
+        self.password_2 = '';
 
         self.customFields = {};
 
@@ -138,12 +138,11 @@
                 .then(
                     // success
                     function (data) {
-                        console.log("worker complete");
-                        console.log("data");
+                        // do nothing, the list handles it
                     },
                     // error
                     function (data) {
-                        alert(data);
+                        // do nothing, the list handles it
                     }
                 );
         };
@@ -202,9 +201,10 @@
             .success(function (data) {
                 if (data.success) {
                     newWorker.creationStatus = STATUS.SUCCESS;
+                    newWorker.editUrl = data.editUrl;
                     deferred.resolve(data);
                 } else {
-                    newWorker.creationStatus = STATUS.ERROR;
+                    newWorker.creationStatus = STATUS.SUCCESS;
                     deferred.reject(data);
                 }
             })
