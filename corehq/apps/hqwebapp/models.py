@@ -1390,6 +1390,8 @@ class AdminReportsTab(UITab):
                  'url': reverse('system_info')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
+                {'title': _('Download Malt table'),
+                 'url': reverse('download_malt')},
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

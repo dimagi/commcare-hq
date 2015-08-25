@@ -1,3 +1,22 @@
+"""
+Available Filters
+-----------------
+
+The following filters are available on any ESQuery instance - you can chain
+any of these on your query.
+
+Note also that the ``term`` filter accepts either a list or a single element.
+Simple filters which match against a field are based on this filter, so those
+will also accept lists.
+That means you can do ``form_query.xmlns(XMLNS1)`` or
+``form_query.xmlns([XMLNS1, XMLNS2, ...])``.
+
+Contributing:
+Additions to this file should be added to the ``builtin_filters`` method on
+either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
+"""
+
+
 def match_all():
     return {"match_all": {}}
 
@@ -14,30 +33,24 @@ def term(field, value):
 
 
 def OR(*filters):
-    """
-    Filter docs to match any of the filters passed in
-    """
+    """Filter docs to match any of the filters passed in"""
     return {"or": filters}
 
 
 def AND(*filters):
-    """
-    Filter docs to match all of the filters passed in
-    """
+    """Filter docs to match all of the filters passed in"""
     return {"and": filters}
 
 
-def NOT(filter):
-    """
-    Exclude docs matching the filter passed in
-    """
-    return {"not": filter}
+def NOT(filter_):
+    """Exclude docs matching the filter passed in"""
+    return {"not": filter_}
 
 
 def range_filter(field, gt=None, gte=None, lt=None, lte=None):
     """
-    You must specify either gt (greater than) or gte (greater than or
-    equal to) and either lt or lte.
+    Filter ``field`` by a range.  Pass in some sensible combination of ``gt``
+    (greater than), ``gte`` (greater than or equal to), ``lt``, and ``lte``.
     """
     return {"range": {field: {
         k: v for k, v in {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}.items()
@@ -46,6 +59,7 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 
 
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
+    """Range filter that accepts datetime objects as arguments"""
     def format_date(date):
         # TODO This probably needs more sophistication...
         return date.isoformat()
@@ -53,19 +67,23 @@ def date_range(field, gt=None, gte=None, lt=None, lte=None):
     return range_filter(field, *params)
 
 
-def domain(domain):
-    return term('domain.exact', domain)
+def domain(domain_name):
+    """Filter by domain."""
+    return term('domain.exact', domain_name)
 
 
 def doc_type(doc_type):
+    """Filter by doc_type.  Also accepts a list"""
     return term('doc_type', doc_type)
 
 
 def doc_id(doc_id):
+    """Filter by doc_id.  Also accepts a list of doc ids"""
     return term("_id", doc_id)
 
 
 def missing(field, exist=True, null=True):
+    """Only return docs missing a value for ``field``"""
     return {
         "missing": {
             "field": field,
@@ -76,12 +94,11 @@ def missing(field, exist=True, null=True):
 
 
 def exists(field):
-    """
-    Only return docs which have 'field'
-    """
+    """Only return docs which have a value for ``field``"""
     return {"exists": {"field": field}}
 
 
 def empty(field):
-    return OR({'missing': {'field': field, "existence": True, "null_value": True}},
+    """Only return docs with a missing or null value for ``field``"""
+    return OR(missing(field, exist=True, null=True),
               term(field, ''))

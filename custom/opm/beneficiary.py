@@ -48,6 +48,12 @@ SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
+BONUS = {
+    0: EMPTY_FIELD,
+    2: TWO_YEAR_AMT,
+    3: THREE_YEAR_AMT,
+}
+
 
 class OPMCaseRow(object):
 
@@ -646,6 +652,10 @@ class OPMCaseRow(object):
         return self.raw_num_children
 
     @property
+    def num_children_disp(self):
+        return {'sort_key': self.num_children, 'html': self.num_children}
+
+    @property
     def raw_num_children(self):
         # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
@@ -890,7 +900,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('block_name', ugettext_lazy("Block Name"), True, None),
         ('village', ugettext_lazy("Village Name"), True, None),
-        ('num_children', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('num_children_disp', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
         ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
         ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
         ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
@@ -937,7 +947,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('bank_name', ugettext_lazy("Bank Name"), True, None),
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('bank_branch_name', ugettext_lazy("Bank Branch Name"), True, None),
-        ('bank_branch_code', ugettext_lazy("Bank Branch Code"), True, None),
+        ('brank_branch_code', ugettext_lazy("Brank Branch Code"), True, None),
         ('ifs_code', ugettext_lazy("IFS Code"), True, None),
         ('readable_status', ugettext_lazy("Current status"), True, None),
         ('lmp', ugettext_lazy("Lmp Date"), True, None),
@@ -965,9 +975,13 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('eight', ugettext_lazy("Condition 8 /child weight monitored this month"), True, None),
         ('nine', ugettext_lazy("Condition 9 /ORS administered if child had diarrhea"), True, None),
         ('ten', ugettext_lazy("Condition 10/ Measles vaccine given before child turns 1"), True, None),
-        ('year_end_bonus_cash', ugettext_lazy("Birth Spacing Bonus"), True, None),
-        ('weight_this_month', ugettext_lazy("Weight This Month"), True, None),
-        ('nutritional_status_this_month', ugettext_lazy("Nutritional Status This Month"), True, None),
+        ('birth_spacing_bonus', ugettext_lazy("Birth Spacing Bonus"), True, None),
+        ('weight_this_month_1', ugettext_lazy("Weight This Month - Child 1"), True, None),
+        ('weight_this_month_2', ugettext_lazy("Weight This Month - Child 2"), True, None),
+        ('weight_this_month_3', ugettext_lazy("Weight This Month - Child 3"), True, None),
+        ('interpret_grade', ugettext_lazy("Nutritional Status This Month - Child 1"), True, None),
+        ('interpret_grade_2', ugettext_lazy("Nutritional Status This Month - Child 2"), True, None),
+        ('interpret_grade_3', ugettext_lazy("Nutritional Status This Month - Child 3"), True, None),
         ('nutritional_status_bonus', ugettext_lazy("Nutritional Status Bonus"), True, None),
         ('payment_last_month', ugettext_lazy("Payment amount for the month"), True, None),
         ('cash_received_last_month', ugettext_lazy("Cash received last month"), True, None),
@@ -980,7 +994,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('leave_program', ugettext_lazy("Leave program"), True, None),
         ('close_mother_dead', ugettext_lazy("Close mother dead"), True, None),
         ('year', ugettext_lazy("Calendar year"), True, None),
-        ('month', ugettext_lazy("Calendar month"), True, None)
+        ('disp_month', ugettext_lazy("Calendar month"), True, None)
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
@@ -989,7 +1003,7 @@ class LongitudinalConditionsMet(ConditionsMet):
                                                         **kwargs)
         awc_data = user_sql_data().data_by_doc_id.get(self.owner_id, None)
         self.gp = awc_data[1] if awc_data else EMPTY_FIELD
-        self.bank_branch_code = self.case_property('bank_branch_code', EMPTY_FIELD)
+        self.brank_branch_code = self.case_property('brank_branch_code', EMPTY_FIELD)
         self.caste_tribe_status = self.get_value_from_form(PREG_REG_XMLNS, 'form/caste_tribe_status')
         self.prev_pregnancies = self.get_value_from_form(PREG_REG_XMLNS, 'form/prev_pregnancies')
         self.prev_live_births = self.get_value_from_form(PREG_REG_XMLNS, 'form/prev_live_births')
@@ -997,6 +1011,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.daughters_alive = self.get_value_from_form(PREG_REG_XMLNS, 'form/daughters_alive')
         self.sum_children = self.get_value_from_form(PREG_REG_XMLNS, 'form/sum_children')
         self.contact_phone_number = self.get_value_from_form(PREG_REG_XMLNS, 'form/contact_phone_number')
+        forms = self.filtered_forms(CHILDREN_FORMS, 3)
         for idx in range(1, 4):
             child_name = self.case_property('child%s_name' % str(idx), None)
             child_age = self.child_age
@@ -1007,6 +1022,19 @@ class LongitudinalConditionsMet(ConditionsMet):
             setattr(self, 'child%s_age' % str(idx), child_age)
             setattr(self, 'child%s_sex' % str(idx),
                     self.case_property('child%s_sex' % str(idx), EMPTY_FIELD))
+
+            if idx == 1:
+                form_prop = 'interpret_grade'
+            else:
+                form_prop = 'interpret_grade_{}'.format(idx)
+            if len(forms) == 0:
+                setattr(self, form_prop, EMPTY_FIELD)
+                setattr(self, "weight_this_month_%s" % str(idx), EMPTY_FIELD)
+            else:
+                form = sorted(forms, key=lambda form: form.received_on)[-1]
+                setattr(self, form_prop, form.form.get(form_prop, EMPTY_FIELD))
+                setattr(self, "weight_this_month_%s" % str(idx),
+                        form.form.get('child%s_child_growthmon' % str(idx), EMPTY_FIELD))
         self.one = format_bool(self.preg_attended_vhnd)
         self.two = format_bool(self.preg_weighed_trimestered(6))
         self.two_two = format_bool(self.preg_weighed_trimestered(9))
@@ -1024,10 +1052,8 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.close_mother_mo = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_mo')
         self.leave_program = self.get_value_from_form(CLOSE_FORM, 'form/leave_program')
         self.close_mother_dead = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_dead')
-        # TODO Add correct values
-        self.weight_this_month = EMPTY_FIELD
-        self.nutritional_status_this_month = EMPTY_FIELD
-        self.nutritional_status_bonus = EMPTY_FIELD
+        # set year 1900 and day 1 because we want only month name.
+        self.disp_month = datetime.date(year=1900, month=self.month, day=1).strftime("%B")
 
     def get_first_or_empty(self, list):
         return (list[0] or EMPTY_FIELD) if list else EMPTY_FIELD
@@ -1052,6 +1078,16 @@ class LongitudinalConditionsMet(ConditionsMet):
         else:
             path = 'form/age_unknown'
         return self.get_value_from_form(PREG_REG_XMLNS, path)
+
+    @property
+    def nutritional_status_bonus(self):
+        year_value = self.weight_grade_normal or 0
+        return BONUS.get(year_value, 0)
+
+    @property
+    def birth_spacing_bonus(self):
+        year_value = self.birth_spacing_years or 0
+        return BONUS.get(year_value, 0)
 
     def preg_weighed_trimestered(self, query_preg_month):
         def _from_case(property):

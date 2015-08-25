@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -562,7 +563,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         def _remove_case(to_remove):
             # uses closures for assertions
-            logger.debug('removing: {}'.format(case_id))
+            logger.debug('removing: {}'.format(to_remove))
             assert to_remove in self.dependent_case_ids_on_phone
             indices = self.index_tree.indices.pop(to_remove, {})
             if to_remove != case_id:
@@ -570,7 +571,20 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 for index in indices.values():
                     assert index in candidates_to_remove, \
                         "expected {} in {} but wasn't".format(index, candidates_to_remove)
-            self.case_ids_on_phone.remove(to_remove)
+            try:
+                self.case_ids_on_phone.remove(to_remove)
+            except KeyError:
+                # todo: this here to avoid having to manually clean up after
+                # http://manage.dimagi.com/default.asp?179664
+                # it should be removed when there are no longer any instances of the assertion
+                if self.date < datetime(2015, 8, 25):
+                    _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
+                        self._id, to_remove)
+                    )
+                else:
+                    raise
+
             self.dependent_case_ids_on_phone.remove(to_remove)
 
         if not dependencies_not_to_remove:
@@ -627,6 +641,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         to_prune.add(case._id)
                         made_changes = True
                     else:
+                        if phone_owns_case and not log_has_case:
+                            # this can happen if a create sets the owner id to something invalid
+                            # and an update in the same block/form sets it back to valid
+                            self._add_primary_case(case._id)
+                            made_changes = True
                         if case._id in self.dependent_case_ids_on_phone:
                             self.dependent_case_ids_on_phone.remove(case._id)
                             made_changes = True

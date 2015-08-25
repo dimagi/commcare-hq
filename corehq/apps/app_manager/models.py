@@ -70,8 +70,8 @@ from corehq.apps.app_manager.util import (
     save_xform,
     ParentCasePropertyBuilder,
     is_usercase_in_use,
-    actions_use_usercase
-)
+    actions_use_usercase,
+    update_unique_ids)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -86,6 +86,7 @@ from .exceptions import (
     ModuleIdMissingException,
     NoMatchingFilterException,
     RearrangeError,
+    SuiteValidationError,
     VersioningError,
     XFormException,
     XFormIdNotUnique,
@@ -1719,9 +1720,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return False
 
-    def is_usercaseonly(self):
-        return False
-
 
 class Module(ModuleBase):
     """
@@ -1965,24 +1963,6 @@ class Module(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
-
-    def is_usercaseonly(self):
-        """
-        Return False if the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        def actions_use_another_case(actions):
-            empty_action = Mock(update={}, preload={})
-            update_case = actions.get('update_case', empty_action)
-            case_preload = actions.get('case_preload', empty_action)
-            return ((update_case.update and update_case.condition.type != 'never') or
-                    (case_preload.preload and case_preload.condition.type != 'never'))
-
-        return self.uses_usercase() and not any(
-            form for form in self.forms
-            if actions_use_another_case(form.active_actions())
-        )
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2512,14 +2492,6 @@ class AdvancedModule(ModuleBase):
         """
         return self._uses_case_type(USERCASE_TYPE)
 
-    def is_usercaseonly(self):
-        """
-        Return False is the usercase is unused, or if any forms update a
-        different case type. If the only case type updated in the module is
-        the usercase, return True.
-        """
-        return self.uses_usercase() and not self._uses_case_type(USERCASE_TYPE, invert_match=True)
-
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'careplan_form'
@@ -2922,6 +2894,7 @@ class StaticDatespanFilter(ReportAppFilter):
             'last7',
             'last30',
             'lastmonth',
+            'lastyear',
         ],
         required=True,
     )
@@ -3263,7 +3236,7 @@ class VersionedDoc(LazyAttachmentDoc):
         application source, such as ids, etc.
 
         """
-        raise NotImplemented()
+        return source
 
     def export_json(self, dump_json=True):
         source = deepcopy(self.to_json())
@@ -3271,11 +3244,12 @@ class VersionedDoc(LazyAttachmentDoc):
             if field in source:
                 del source[field]
         _attachments = {}
-        for name in source.get('_attachments', {}):
+        for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
-                _attachments[name] = self.fetch_attachment(name)
+                _attachments[name] = self.lazy_fetch_attachment(name)
+
         source['_attachments'] = _attachments
-        self.scrub_source(source)
+        source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
 
@@ -3628,7 +3602,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_jar_path(self):
         build = self.get_build()
-        setting = commcare_settings.SETTINGS_LOOKUP['hq']['text_input']
+        setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
         value = self.text_input
         setting_version = setting['since'].get(value)
 
@@ -3702,7 +3676,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_jar_path()
             self.create_all_files()
         except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied) as e:
+                PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             if settings.DEBUG:
@@ -4021,9 +3995,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform().encode('utf-8')
 
     def set_form_versions(self, previous_version):
-        # this will make builds slower, but they're async now so hopefully
-        # that's fine.
-
+        """
+        Set the 'version' property on each form as follows to the current app version if the form is new
+        or has changed since the last build. Otherwise set it to the version from the last build.
+        """
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
@@ -4055,6 +4030,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     form.version = form_version
 
     def set_media_versions(self, previous_version):
+        """
+        Set the media version numbers for all media in the app to the current app version
+        if the media is new or has changed since the last build. Otherwise set it to the
+        version from the last build.
+        """
+
         # access to .multimedia_map is slow
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
@@ -4108,7 +4089,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
-        for setting in commcare_settings.SETTINGS:
+        for setting in commcare_settings.get_custom_commcare_settings():
             setting_type = setting['type']
             setting_id = setting['id']
 
@@ -4355,26 +4336,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
-        def change_unique_id(form):
-            unique_id = form['unique_id']
-            new_unique_id = FormBase.generate_id()
-            form['unique_id'] = new_unique_id
-            if ("%s.xml" % unique_id) in source['_attachments']:
-                source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
-            return new_unique_id
-
-        change_unique_id(source['user_registration'])
-        id_changes = {}
-        for m, module in enumerate(source['modules']):
-            for f, form in enumerate(module['forms']):
-                old_id = form['unique_id']
-                new_id = change_unique_id(source['modules'][m]['forms'][f])
-                id_changes[old_id] = new_id
-
-        for reference_path in form_id_references:
-            for reference in reference_path.find(source):
-                if reference.value in id_changes:
-                    jsonpath_update(reference, id_changes[reference.value])
+        return update_unique_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
@@ -4590,7 +4552,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         setting = self.profile.get(s_type, {}).get(s_id)
         if setting is not None:
             return setting
-        yaml_setting = commcare_settings.SETTINGS_LOOKUP[s_type][s_id]
+        yaml_setting = commcare_settings.get_commcare_settings_lookup()[s_type][s_id]
         for contingent in yaml_setting.get("contingent_default", []):
             if check_condition(self, contingent["condition"]):
                 setting = contingent["value"]
@@ -4743,9 +4705,6 @@ class RemoteApp(ApplicationBase):
                 files.update({location: data})
         return files
 
-    def scrub_source(self, source):
-        pass
-
     def make_questions_map(self):
         if self.copy_of:
             xmlns_map = {}
@@ -4797,7 +4756,8 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = json.loads(source)
     else:
         # Don't modify original app source
-        source = deepcopy(app_id_or_source)
+        app = Application.wrap(deepcopy(app_id_or_source))
+        source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:

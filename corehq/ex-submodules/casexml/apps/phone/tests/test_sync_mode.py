@@ -543,9 +543,42 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
     @run_with_all_restore_configs
+    def test_closed_case_not_in_next_sync(self):
+        # create a case
+        case_id = self.factory.create_case()._id
+        # sync
+        restore_config = RestoreConfig(
+            project=Domain(name=self.project.name),
+            user=self.user, params=RestoreParams(self.sync_log._id, version=V2)
+        )
+        next_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
+        self.assertTrue(next_sync.phone_is_holding_case(case_id))
+        # close the case on the second sync
+        self.factory.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}),
+                                           form_extras={'last_sync_token': next_sync._id})
+        # sync again
+        restore_config = RestoreConfig(
+            project=Domain(name=self.project.name),
+            user=self.user, params=RestoreParams(next_sync._id, version=V2)
+        )
+        last_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
+        self.assertFalse(last_sync.phone_is_holding_case(case_id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_relevant_owner_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': USER_ID}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        # todo: this bug isn't fixed on old sync. This check is a hack due to the inability to
+        # override the setting on a per-test level and should be removed when the new
+        # sync is fully rolled out.
+        if isinstance(sync_log, SimplifiedSyncLog):
+            self.assertTrue(sync_log.phone_is_holding_case(case._id))
 
     @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):

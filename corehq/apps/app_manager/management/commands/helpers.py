@@ -65,8 +65,11 @@ class AppMigrationCommandBase(BaseCommand):
                 bulk_save(to_save)
 
         logger.info('migrating applications')
-        _migrate_app_ids(get_all_app_ids(self.include_builds))
+        _migrate_app_ids(self.get_app_ids())
         logger.info('done')
+
+    def get_app_ids(self):
+        return get_all_app_ids(self.include_builds)
 
     def migrate_app(self, app):
         raise NotImplementedError()

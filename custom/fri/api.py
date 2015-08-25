@@ -19,6 +19,7 @@ from custom.fri.models import (
     FRIExtraMessage,
 )
 from corehq.util.timezones.utils import get_timezone_for_user
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
@@ -217,7 +218,7 @@ def get_randomized_message(case, order):
         lock.acquire(blocking=True)
         if not already_randomized(case):
             randomize_messages(case)
-        lock.release()
+        release_lock(lock, True)
 
         message = FRIRandomizedMessage.view(
             "fri/randomized_message",
