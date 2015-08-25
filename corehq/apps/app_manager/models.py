@@ -511,13 +511,13 @@ class AdvancedFormActions(DocumentSchema):
         return (a for a in self.get_all_actions() if a.case_indices)
 
     def get_open_subcase_actions(self, parent_case_type=None):
-        for action in [a for a in self.open_cases if a.case_indices]:
-            if not parent_case_type:
-                yield action
-            else:
-                for case_index in action.case_indices:
-                    parent = self.actions_meta_by_tag[case_index.tag]['action']
-                    if parent.case_type == parent_case_type:
+        for action in self.open_cases:
+            if action.case_indices:
+                if not parent_case_type:
+                    yield action
+                else:
+                    if any(self.actions_meta_by_tag[case_index.tag]['action'].case_type == parent_case_type
+                           for case_index in action.case_indices):
                         yield action
 
     def get_case_tags(self):
