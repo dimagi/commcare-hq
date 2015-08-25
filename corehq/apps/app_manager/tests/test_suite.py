@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
-from corehq.apps.app_manager.tests.app_factory import AppFactory
 import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
