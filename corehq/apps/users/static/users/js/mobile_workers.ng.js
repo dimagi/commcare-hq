@@ -183,7 +183,7 @@
                 return errorWorkers.length > 0;
             },
             function (newVal) {
-                $scope.hasSuccess = newVal;
+                $scope.hasError = newVal;
             }
         );
 
