@@ -38,9 +38,13 @@
 
                 {% if allow_form_filtering %}
                     {% include "app_manager/partials/form_filter.html" %}
+                {% else  %}
+                    <div class="label">{% trans 'Form filtering is disabled for this form' %}</div>
                 {% endif %}
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
+                {% else %}
+                    <div class="label">{% trans 'Form workflows are disabled for this form' %}</div>
                 {% endif %}
 
             </div>
