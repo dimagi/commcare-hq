@@ -64,7 +64,8 @@
     var USERNAME_STATUS = {
         PENDING: 'pending',
         TAKEN: 'taken',
-        AVAILABLE: 'available'
+        AVAILABLE: 'available',
+        ERROR: 'error'
     };
 
     mobileWorkers.constant('formStrings', {
@@ -242,6 +243,7 @@
                             }
                         })
                         .error(function () {
+                            $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
                             deferred.reject(
                                 "Sorry, there was an issue communicating with the server."
                             );
