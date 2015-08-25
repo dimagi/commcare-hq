@@ -22,7 +22,7 @@ from .exceptions import (
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE,\
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, FIXTURE_VALUE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
@@ -1927,7 +1927,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             if datum['module'].fixture_select.active:
                 datums.append({
                     'datum': SessionDatum(
-                        id='fixture_value',
+                        id=FIXTURE_VALUE,
                         nodeset="instance('item-list:{ft}')/{ft}_list/{ft}"
                             .format(ft=datum['module'].fixture_select.fixture_type),
                         value=datum['module'].fixture_select.variable_column,
@@ -1935,7 +1935,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 })
                 fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
-                                                      .replace('$fixture_value', "instance('commcaresession')/session/data/fixture_value"))
+                                                      .replace('$fixture_value', session_var(FIXTURE_VALUE)))
 
             datums.append({
                 'datum': SessionDatum(
