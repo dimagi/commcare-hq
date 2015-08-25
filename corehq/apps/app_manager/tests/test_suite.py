@@ -28,6 +28,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
@@ -467,23 +468,41 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
     def test_fixture_to_case_selection(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        app.build_spec.version = '2.9'
+        factory = AppFactory(build_version='2.9')
 
-        module = app.add_module(Module.new_module('my_module', None))
-        module.case_type = 'cases'
-
+        module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
         module.fixture_select.fixture_type = 'days'
         module.fixture_select.display_column = 'my_display_column'
         module.fixture_select.variable_column = 'my_variable_column'
-        module.fixture_select.xpath = '$fixture_value > 3'
+        module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
 
-        form = app.new_form(0, 'my_form', lang='en')
-        form.unique_id = 'form_1'
-        form.requires = 'case'
+        factory.form_updates_case(form)
 
-        self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), app.create_suite())
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
+
+    def test_fixture_to_case_selection_parent_child(self):
+        factory = AppFactory(build_version='2.9')
+
+        m0, m0f0 = factory.new_basic_module('parent', 'parent')
+        m0.fixture_select.active = True
+        m0.fixture_select.fixture_type = 'province'
+        m0.fixture_select.display_column = 'display_name'
+        m0.fixture_select.variable_column = 'var_name'
+        m0.fixture_select.xpath = 'province = $fixture_value'
+
+        factory.form_updates_case(m0f0)
+
+        m1, m1f0 = factory.new_basic_module('child', 'child')
+        m1.fixture_select.active = True
+        m1.fixture_select.fixture_type = 'city'
+        m1.fixture_select.display_column = 'display_name'
+        m1.fixture_select.variable_column = 'var_name'
+        m1.fixture_select.xpath = 'city = $fixture_value'
+
+        factory.form_updates_case(m1f0, parent_case_type='parent')
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection-parent-child'), factory.app.create_suite())
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')

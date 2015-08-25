@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource descriptor="Form: (Module my_module) - my_form" id="form_1">
+    <resource descriptor="Form: (Module my_module module) - my_module form" id="my_module_form">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
@@ -81,8 +81,8 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="item-list:days" src="jr://fixture/item-list:days"/>
     <session>
-      <datum detail-select="m0_fixture_select" id="fixture_value" nodeset="instance('item-list:days')/days_list/days" value="my_variable_column"/>
-      <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][instance('commcaresession')/session/data/fixture_value &gt; 3]" value="./@case_id"/>
+      <datum id="fixture_value_m0" nodeset="instance('item-list:days')/days_list/days" value="my_variable_column" detail-select="m0_fixture_select"/>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][date(scheduled_date) &lt;= date(today() + instance('commcaresession')/session/data/fixture_value_m0)]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
   </entry>
   <menu id="m0">
