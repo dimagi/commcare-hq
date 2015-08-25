@@ -613,6 +613,13 @@ MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+HSPH_HACK = StaticToggle(
+    'hsph_hack',
+    'Optmization hack for HSPH',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 DROPBOX_SYNC = StaticToggle(
     'dropbox_sync',
     'Allows users to sync their file downloads to Dropbox',

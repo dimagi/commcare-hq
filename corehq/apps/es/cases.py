@@ -1,3 +1,20 @@
+"""
+CaseES
+------
+
+Here's an example getting pregnancy cases that are either still open or were
+closed after May 1st.
+
+.. code-block:: python
+
+    from corehq.apps.es import cases as case_es
+
+    q = (case_es.CaseES()
+         .domain('testproject')
+         .case_type('pregnancy')
+         .OR(case_es.is_closed(False),
+             case_es.closed_range(gte=datetime.date(2015, 05, 01))))
+"""
 from .es_query import HQESQuery
 from . import filters
 
