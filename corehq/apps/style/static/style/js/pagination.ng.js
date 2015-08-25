@@ -29,7 +29,7 @@
             return {
                 value: l[0],
                 key: l[1]
-            }
+            };
         });
         $scope.limit = 10;
         $scope.total = 1;
