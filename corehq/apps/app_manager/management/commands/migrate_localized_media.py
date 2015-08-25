@@ -1,33 +1,81 @@
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.app_manager.models import Application
+from optparse import make_option
 
 
 class Command(AppMigrationCommandBase):
     help = "Migrate Forms and Modules to have icon/audio as a dict " \
-           "so that they can be localized to multiple languages"
+           "so that they can be localized to multiple languages. "\
+           "To reverse migrate use the option --backwards"
 
-    should_save = False
+    include_builds = True
+    option_list = AppMigrationCommandBase.option_list + (
+        make_option('--backwards',
+                    action='store_true',
+                    dest='backwards',
+                    default=False,
+                    help='Reverse this migration'),
+    )
 
     def migrate_app(self, app_doc):
         new_modules = []
-        for module in app_doc['modules']:
-            module = self.wrap_media(module)
-            if 'case_list_form' in module:
-                module['case_list_form'] = self.wrap_media(module['case_list_form'])
+        should_save = False
+        if not self.options['backwards']:
+            migrate_fn = self._localize_doc
+        else:
+            migrate_fn = self._reverse_localize_doc
 
+        for module in app_doc['modules']:
+            # update module media
+            module, _should_save = migrate_fn(module)
+            should_save = should_save or _should_save
+
+            nav_menu_media_attrs = [
+                'case_list',
+                'task_list',
+                'referral_list',
+                'case_list_form',
+            ]
+            # update other module menu media
+            for attr in nav_menu_media_attrs:
+                if attr in module:
+                    update, _should_save = migrate_fn(module[attr])
+                    should_save = should_save or _should_save
+                    module[attr] = update
+
+            # update form media
             new_forms = []
             for form in module['forms']:
-                new_forms.append(self.wrap_media(form))
+                update, _should_save = migrate_fn(form)
+                should_save = should_save or _should_save
+                new_forms.append(update)
+
             module['forms'] = new_forms
             new_modules.append(module)
         app_doc['modules'] = new_modules
 
-        return Application.wrap(app_doc) if self.should_save else None
+        return Application.wrap(app_doc) if should_save else False
 
-    def wrap_media(self, doc):
+    @staticmethod
+    def _localize_doc(doc):
+        should_save = False
         for media_attr in ('media_image', 'media_audio'):
             old_media = doc.get(media_attr, None)
             if old_media and isinstance(old_media, basestring):
                 doc[media_attr] = {'default': old_media}
-                self.should_save = True
-        return doc
+                should_save = True
+
+        return doc, should_save
+
+    @staticmethod
+    def _reverse_localize_doc(doc):
+        should_save = False
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = doc.get(media_attr, None)
+            if old_media is not None and isinstance(old_media, dict):
+                for i, media in sorted(old_media.items()):
+                    new_media = media
+                doc[media_attr] = new_media
+                should_save = True
+
+        return doc, should_save
