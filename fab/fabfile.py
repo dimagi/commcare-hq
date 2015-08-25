@@ -391,39 +391,6 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@task
-@roles(ROLES_ALL_SRC)
-def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)
-
-    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
-    """
-    _require_target()
-
-    create_code_dir()
-    update_code()
-    create_virtualenvs()
-    update_virtualenv()
-    setup_dirs()
-    update_current()
-
-    # copy localsettings if it doesn't already exist in case any management
-    # commands we want to run now would error otherwise
-    with cd(env.code_root):
-        sudo('cp -n localsettings.example.py localsettings.py',
-             user=env.sudo_user)
-
-
-@task
-def unbootstrap():
-    """Delete cloned repos and virtualenvs"""
-
-    require('code_root', 'virtualenv_root')
-
-    with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_current)s %(code_current)s') % env)
-
-
 @roles(ROLES_ALL_SRC)
 @parallel
 def create_virtualenvs():
