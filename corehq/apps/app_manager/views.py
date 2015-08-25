@@ -544,6 +544,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         form.get_unique_id()
         app.save()
 
+    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
         'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
@@ -555,10 +556,8 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': not isinstance(form, CareplanForm) and not (
-            (isinstance(module, AdvancedModule) and module.has_schedule)),
-        'allow_form_workflow': not isinstance(form, CareplanForm) and not (
-            (isinstance(module, AdvancedModule) and module.has_schedule)),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
+        'allow_form_workflow': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
