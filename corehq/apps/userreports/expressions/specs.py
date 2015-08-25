@@ -76,6 +76,29 @@ class ConditionalExpressionSpec(JsonObject):
             return self._false_expression(item, context)
 
 
+class IteratorExpressionSpec(JsonObject):
+    type = TypeProperty('iterator')
+    expressions = ListProperty(required=True)
+    # an optional filter to test the values on - if they don't match they won't be included in the iteration
+    test = DictProperty()
+
+    def configure(self, expressions, test):
+        self._expression_fns = expressions
+        if test:
+            self._test = test
+        else:
+            # if not defined then all values should be returned
+            self._test = lambda *args, **kwargs: True
+
+    def __call__(self, item, context=None):
+        values = []
+        for expression in self._expression_fns:
+            value = expression(item, context)
+            if self._test(value):
+                values.append(value)
+        return values
+
+
 class RootDocExpressionSpec(JsonObject):
     type = TypeProperty('root_doc')
     expression = DictProperty(required=True)

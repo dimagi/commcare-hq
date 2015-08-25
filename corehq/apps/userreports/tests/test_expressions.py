@@ -1,3 +1,4 @@
+import copy
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -205,6 +206,68 @@ class ConditionalExpressionTest(SimpleTestCase):
             'test': 'match',
             'false_value': 'incorrect',
         }))
+
+
+class IteratorExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            "type": "iterator",
+            "expressions": [
+                {
+                    "type": "property_name",
+                    "property_name": "p1"
+                },
+                {
+                    "type": "property_name",
+                    "property_name": "p2"
+                },
+                {
+                    "type": "property_name",
+                    "property_name": "p3"
+                },
+            ],
+            "test": {}
+        }
+        self.expression = ExpressionFactory.from_spec(self.spec)
+
+    def test_basic(self):
+        self.assertEqual([1, 2, 3], self.expression({'p1': 1, 'p2': 2, 'p3': 3}))
+
+    def test_missing_values_default(self):
+        self.assertEqual([1, 2, None], self.expression({'p1': 1, 'p2': 2}))
+
+    def test_missing_values_filtered(self):
+        spec = copy.copy(self.spec)
+        spec['test'] = {
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'identity',
+            },
+            'operator': 'not_eq',
+            'property_value': None,
+        }
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual([1, 2], expression({'p1': 1, 'p2': 2}))
+        self.assertEqual([1, 3], expression({'p1': 1, 'p3': 3}))
+        self.assertEqual([1], expression({'p1': 1}))
+        self.assertEqual([], expression({}))
+
+    def test_missing_and_filtered(self):
+        spec = copy.copy(self.spec)
+        spec['test'] = {
+            "type": "not",
+            "filter": {
+                'type': 'boolean_expression',
+                'expression': {
+                    'type': 'identity',
+                },
+                'operator': 'in',
+                'property_value': ['', None],
+            }
+        }
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual([1], expression({'p1': 1, 'p2': ''}))
 
 
 class RootDocExpressionTest(SimpleTestCase):

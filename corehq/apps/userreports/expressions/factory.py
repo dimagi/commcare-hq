@@ -5,7 +5,14 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
-    IdentityExpressionSpec
+    IdentityExpressionSpec, IteratorExpressionSpec
+
+
+def _make_filter(spec, context):
+    # just pulled out here to keep the inline imports to a minimum
+    # no way around this since the two factories inherently depend on each other
+    from corehq.apps.userreports.filters.factory import FilterFactory
+    return FilterFactory.from_spec(spec, context)
 
 
 def _simple_expression_generator(wrapper_class, spec, context):
@@ -19,11 +26,9 @@ _property_path_expression = functools.partial(_simple_expression_generator, Prop
 
 
 def _conditional_expression(spec, context):
-    # no way around this since the two factories inherently depend on each other
-    from corehq.apps.userreports.filters.factory import FilterFactory
     wrapped = ConditionalExpressionSpec.wrap(spec)
     wrapped.configure(
-        FilterFactory.from_spec(wrapped.test, context),
+        _make_filter(wrapped.test, context),
         ExpressionFactory.from_spec(wrapped.expression_if_true, context),
         ExpressionFactory.from_spec(wrapped.expression_if_false, context),
     )
@@ -46,6 +51,15 @@ def _related_doc_expression(spec, context):
     return wrapped
 
 
+def _iterator_expression(spec, context):
+    wrapped = IteratorExpressionSpec.wrap(spec)
+    wrapped.configure(
+        expressions=[ExpressionFactory.from_spec(e) for e in wrapped.expressions],
+        test=_make_filter(wrapped.test, context) if wrapped.test else None
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -55,6 +69,7 @@ class ExpressionFactory(object):
         'conditional': _conditional_expression,
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
+        'iterator': _iterator_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
