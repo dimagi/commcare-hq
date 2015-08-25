@@ -823,11 +823,14 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if username == 'admin' or username == 'demo_user':
             return {'error': _('Username {} is reserved.'.format(username))}
         if '@' in username:
-            return {'error':
-                        _('Username {} cannot contain "@".'.format(username))}
+            return {
+                'error': _('Username {} cannot contain "@".'.format(username))
+            }
         if ' ' in username:
-            return {'error':
-                        _('Username {} cannot contain spaces.'.format(username))}
+            return {
+                'error': _('Username {} cannot contain '
+                           'spaces.'.format(username))
+            }
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
             result = {'error': _('Username {} is already taken'.format(username))}
@@ -857,9 +860,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data['domain'] = self.domain
             self.request.POST = form_data
         except Exception as e:
-           return {
-               'error': _("Check your request: %s" % e)
-           }
+            return {
+                'error': _("Check your request: %s" % e)
+            }
 
         if self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
 
