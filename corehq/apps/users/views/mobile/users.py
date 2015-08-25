@@ -789,6 +789,20 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     @allow_remote_invocation
+    def activate_user(self, user_id):
+        print "activate", user_id
+        return {
+            'success': True,
+        }
+
+    @allow_remote_invocation
+    def deactivate_user(self, user_id):
+        print "deactivate", user_id
+        return {
+            'success': True,
+        }
+
+    @allow_remote_invocation
     def check_username(self, in_data):
         try:
             username = in_data['username']
