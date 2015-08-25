@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 from mock import patch
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import FormActionCondition, OpenSubCaseAction, UpdateCaseAction, ParentSelect, \
-    PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application
+    PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application, CaseIndex
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
@@ -123,7 +123,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     def _load_case(self, child_module_form, case_type, parent_module=None):
         action = LoadUpdateAction(case_tag=case_type, case_type=case_type)
         if parent_module:
-            action.parent_tag = parent_module.case_type
+            action.case_index = CaseIndex(tag=parent_module.case_type)
 
         child_module_form.actions.load_update_cases.append(action)
 
