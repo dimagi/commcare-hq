@@ -161,19 +161,6 @@ def _setup_path():
     env.db = '%s_%s' % (env.project, env.environment)
 
 
-@task
-def _set_apache_user():
-    if what_os() == 'ubuntu':
-        env.apache_user = 'www-data'
-    elif what_os() == 'redhat':
-        env.apache_user = 'apache'
-
-
-@roles('lb')
-def setup_apache_dirs():
-    sudo('mkdir -p %(services)s/apache' % env)
-
-
 @roles(ROLES_ALL_SRC)
 def setup_dirs():
     """
@@ -360,27 +347,6 @@ def webworkers():
 
 @task
 @roles(ROLES_ALL_SRC)
-def install_packages():
-    """Install packages, given a list of package names"""
-    _require_target()
-
-    if what_os() == 'ubuntu':
-        packages_list = 'apt-packages.txt'
-        installer_command = 'apt-get install -y'
-    else:
-        return
-
-    packages_file = posixpath.join(PROJECT_ROOT, 'requirements', packages_list)
-
-    with open(packages_file) as f:
-        packages = f.readlines()
-
-    sudo("%s %s" % (installer_command,
-                    " ".join(map(lambda x: x.strip('\n\r'), packages))), user='root')
-
-
-@task
-@roles(ROLES_ALL_SRC)
 def install_npm_packages():
     """Install required NPM packages for server"""
     with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
@@ -391,21 +357,6 @@ def install_npm_packages():
 @task
 @roles(ROLES_ALL_SRC)
 @parallel
-def upgrade_packages():
-    """
-    Bring all the installed packages up to date.
-    This is a bad idea in RedHat as it can lead to an
-    OS Upgrade (e.g RHEL 5.1 to RHEL 6).
-    Should be avoided.  Run install packages instead.
-    """
-    _require_target()
-    if what_os() == 'ubuntu':
-        sudo("apt-get update", shell=False, user='root')
-        sudo("apt-get upgrade -y", shell=False, user='root')
-    else:
-        return
-
-
 @task
 def what_os():
     with settings(warn_only=True):
@@ -430,37 +381,6 @@ def what_os():
                 exit()
             env.host_os_map[env.host_string] = remote_os
         return env.host_os_map[env.host_string]
-
-
-@roles(ROLES_ALL_SRC)
-@task
-def setup_server():
-    """Set up a server for the first time in preparation for deployments."""
-    _require_target()
-    # Install required system packages for deployment, plus some extras
-    # Install pip, and use it to install virtualenv
-    install_packages()
-    sudo("easy_install -U pip")
-    sudo("pip install -U virtualenv")
-    upgrade_packages()
-    execute(create_pg_user)
-    execute(create_pg_db)
-
-
-@roles(ROLES_DB_ONLY)
-@task
-def create_pg_user():
-    """Create the Postgres user"""
-    _require_target()
-    sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
-
-
-@roles(ROLES_DB_ONLY)
-@task
-def create_pg_db():
-    """Create the Postgres database"""
-    _require_target()
-    sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
 
 
 @task
@@ -881,36 +801,6 @@ def clear_services_dir():
         })
 
 
-@roles('lb')
-def configtest():
-    """test Apache configuration"""
-    _require_target()
-    sudo('apache2ctl configtest', user='root')
-
-
-@roles('lb')
-def apache_reload():
-    """reload Apache on remote host"""
-    _require_target()
-    if what_os() == 'redhat':
-        sudo('/etc/init.d/httpd reload')
-    elif what_os() == 'ubuntu':
-        sudo('/etc/init.d/apache2 reload', user='root')
-
-
-@roles('lb')
-def apache_restart():
-    """restart Apache on remote host"""
-    _require_target()
-    sudo('/etc/init.d/apache2 restart', user='root')
-
-@task
-def netstat_plnt():
-    """run netstat -plnt on a remote host"""
-    _require_target()
-    sudo('netstat -plnt', user='root')
-
-
 @task
 def supervisorctl(command):
     require('supervisor_roles',
@@ -1088,27 +978,6 @@ def reset_local_db():
     local('createdb %s' % local_db)
     host = '%s@%s' % (env.user, env.hosts[0])
     local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
-
-
-@task
-def fix_locale_perms():
-    """Fix the permissions on the locale directory"""
-    _require_target()
-    _set_apache_user()
-    locale_dir = '%s/locale/' % env.code_root
-    sudo('chown -R %s %s' % (env.sudo_user, locale_dir))
-    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir))
-    sudo('chmod -R g+w %s' % locale_dir)
-
-
-@task
-def commit_locale_changes():
-    """Commit locale changes on the remote server and pull them in locally"""
-    fix_locale_perms()
-    with cd(env.code_root):
-        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user)
-        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user)
-    local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
@@ -1309,16 +1178,3 @@ def _execute_with_timing(fn, *args, **kwargs):
         with open(env.timing_log, 'a') as timing_log:
             duration = datetime.datetime.utcnow() - start_time
             timing_log.write('{}: {}\n'.format(fn.__name__, duration.seconds))
-
-# tests
-@task
-def selenium_test():
-    _require_target()
-    prompt("Jenkins username:", key="jenkins_user", default="selenium")
-    prompt("Jenkins password:", key="jenkins_password")
-    url = env.selenium_url % {"token": "foobar", "environment": env.environment}
-    local("curl --user %(user)s:%(pass)s '%(url)s'" % {
-        'user': env.jenkins_user,
-        'pass': env.jenkins_password,
-        'url': url,
-    })
