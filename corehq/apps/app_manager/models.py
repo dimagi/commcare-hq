@@ -2928,15 +2928,15 @@ class ReportAppConfig(DocumentSchema):
 
     @property
     def select_detail_id(self):
-        return 'reports.{}.select'.format(self.report_id)
+        return 'reports.{}.select'.format(self.uuid)
 
     @property
     def summary_detail_id(self):
-        return 'reports.{}.summary'.format(self.report_id)
+        return 'reports.{}.summary'.format(self.uuid)
 
     @property
     def data_detail_id(self):
-        return 'reports.{}.data'.format(self.report_id)
+        return 'reports.{}.data'.format(self.uuid)
 
     def get_details(self):
         yield (self.select_detail_id, self.select_details(), True)
@@ -2945,7 +2945,7 @@ class ReportAppConfig(DocumentSchema):
 
     def select_details(self):
         return Detail(custom_xml=suite_xml.Detail(
-            id='reports.{}.select'.format(self.report_id),
+            id='reports.{}.select'.format(self.uuid),
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
@@ -2974,7 +2974,7 @@ class ReportAppConfig(DocumentSchema):
 
                     def _column_to_series(column):
                         return suite_xml.Series(
-                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
                             x_function="column[@id='{}']".format(chart_config.x_axis_column),
                             y_function="column[@id='{}']".format(column),
                             configuration=suite_xml.ConfigurationGroup(configs=[
@@ -2998,7 +2998,7 @@ class ReportAppConfig(DocumentSchema):
                     )
 
         return Detail(custom_xml=suite_xml.Detail(
-            id='reports.{}.summary'.format(self.report_id),
+            id='reports.{}.summary'.format(self.uuid),
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
@@ -3034,7 +3034,7 @@ class ReportAppConfig(DocumentSchema):
                 header=suite_xml.Header(
                     text=suite_xml.Text(
                         locale=suite_xml.Locale(
-                            id=id_strings.report_column_header(self.report_id, column.column_id)
+                            id=id_strings.report_column_header(self.uuid, column.column_id)
                         ),
                     )
                 ),
@@ -3045,9 +3045,9 @@ class ReportAppConfig(DocumentSchema):
             )
 
         return Detail(custom_xml=suite_xml.Detail(
-            id='reports.{}.data'.format(self.report_id),
+            id='reports.{}.data'.format(self.uuid),
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+                locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
         ).serialize())
@@ -3056,24 +3056,24 @@ class ReportAppConfig(DocumentSchema):
         return suite_xml.Entry(
             form='fixmeclayton',
             command=suite_xml.Command(
-                id='reports.{}'.format(self.report_id),
+                id='reports.{}'.format(self.uuid),
                 text=suite_xml.Text(
-                    locale=suite_xml.Locale(id=id_strings.report_name(self.report_id)),
+                    locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
                 ),
             ),
             datums=[
                 suite_xml.SessionDatum(
                     detail_confirm=self.summary_detail_id,
                     detail_select=self.select_detail_id,
-                    id='report_id_{}'.format(self.report_id),
-                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.report_id),
+                    id='report_id_{}'.format(self.uuid),
+                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
                     value='./@id',
                 ),
                 # you are required to select something - even if you don't use it
                 suite_xml.SessionDatum(
                     detail_select=self.data_detail_id,
-                    id='throwaway_{}'.format(self.report_id),
-                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.report_id),
+                    id='throwaway_{}'.format(self.uuid),
+                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
                     value="''",
                 )
 
@@ -3135,7 +3135,7 @@ class ReportModule(ModuleBase):
                 locale=suite_xml.Locale(id=id_strings.module_locale(self))
             ),
             commands=[
-                suite_xml.Command(id=id_strings.report_command(config.report_id))
+                suite_xml.Command(id=id_strings.report_command(config.uuid))
                 for config in self.report_configs
             ]
         )
