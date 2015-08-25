@@ -259,7 +259,7 @@
                         });
                     }
                     return deferred.promise;
-                }
+                };
             }
         };
     };
