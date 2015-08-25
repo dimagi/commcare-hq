@@ -75,6 +75,7 @@ class ScheduledReportTest(TestCase):
     def testDailyReportOtherTypesDontCount(self):
         ReportNotification(hour=12, minute=0, day=31, interval='daily').save()
         self._check('weekly', datetime(2014, 10, 31, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 0), 0)
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 0)
 
     def testDailyReportOtherHoursDontCount(self):
@@ -94,11 +95,36 @@ class ScheduledReportTest(TestCase):
     def testWeeklyReportOtherTypesDontCount(self):
         ReportNotification(hour=12, minute=0, day=4, interval='weekly').save()
         self._check('daily', datetime(2014, 10, 31, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 0), 0)
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 0)
 
     def testWeeklyReportOtherDaysDontCount(self):
         ReportNotification(hour=12, minute=0, day=4, interval='weekly').save()
         self._check('weekly', datetime(2014, 10, 30, 12, 0), 0)
+
+    def testNWeeksReportEmptyMinute(self):
+        ReportNotification(hour=12, minute=None, day=4, interval='n_weeks', n_weeks=3, offset_weeks=2).save()
+        self._check('n_weeks', datetime(2014, 10, 17, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 24, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('n_weeks', datetime(2014, 11, 1, 12, 0), 0)
+
+    def testNWeeksReportWithMinute(self):
+        ReportNotification(hour=12, minute=0, day=4, interval='n_weeks', n_weeks=3, offset_weeks=2).save()
+        self._check('n_weeks', datetime(2014, 10, 17, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 24, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('n_weeks', datetime(2014, 11, 1, 12, 0), 0)
+
+        self._check('n_weeks', datetime(2014, 10, 17, 12, 30), 0)
+        self._check('n_weeks', datetime(2014, 10, 24, 12, 30), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 30), 0)
+        self._check('n_weeks', datetime(2014, 11, 1, 12, 30), 0)
+
+    def testNWeeksReportOtherTypesDontCount(self):
+        ReportNotification(hour=12, minute=0, day=4, interval='n_weeks', n_weeks=3, offset_weeks=2).save()
+        for period in ['daily', 'weekly', 'monthly']:
+            self._check(period, datetime(2014, 10, 30, 12, 0), 0)
 
     def testMonthlyReportEmptyMinute(self):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
@@ -114,6 +140,7 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
         self._check('daily', datetime(2014, 10, 31, 12, 0), 0)
         self._check('weekly', datetime(2014, 10, 31, 12, 0), 0)
+        self._check('n_weeks', datetime(2014, 10, 31, 12, 0), 0)
 
     def testMonthlyReportOtherDaysDontCount(self):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
