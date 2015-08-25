@@ -1,6 +1,20 @@
 """
 DomainES
 --------
+
+Here's an example generating a histogram of domain creations (that's a type of
+faceted query), filtered by a provided list of domains and a report date range.
+
+.. code-block:: python
+
+    from corehq.apps.es import DomainES
+
+    domains_after_date = (DomainES()
+                          .in_domains(domains)
+                          .created(gte=datespan.startdate, lte=datespan.enddate)
+                          .date_histogram('date', 'date_created', interval)
+                          .size(0))
+    histo_data = domains_after_date.run().facet('date', 'entries')
 """
 from .es_query import HQESQuery
 from . import filters
