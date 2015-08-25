@@ -1374,7 +1374,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         r.append(d)
             if module.fixture_select.active:
                 d = Detail(
-                    id='m{}_fixture_select'.format(module.id),
+                    id=id_strings.fixture_detail(module),
                     title=Text(),
                 )
                 fields = [Field(header=Header(text=Text()),
@@ -1931,7 +1931,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                         nodeset="instance('item-list:{ft}')/{ft}_list/{ft}"
                             .format(ft=datum['module'].fixture_select.fixture_type),
                         value=datum['module'].fixture_select.variable_column,
-                        detail_select='m{}_fixture_select'.format(datum['module'].id)
+                        detail_select=id_strings.fixture_detail(datum['module'])
                     )
                 })
                 fixture_select_filter = "[{}]".format(datum['module'].fixture_select.xpath
