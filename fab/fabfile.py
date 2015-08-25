@@ -355,9 +355,6 @@ def install_npm_packages():
 
 
 @task
-@roles(ROLES_ALL_SRC)
-@parallel
-@task
 def what_os():
     with settings(warn_only=True):
         _require_target()
