@@ -20,6 +20,7 @@ class BaseReportFilter(object):
     css_class = "span4"
     help_text = None
     is_cacheable = False
+    help_style_bubble = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         if self.slug is None:
@@ -58,6 +59,7 @@ class BaseReportFilter(object):
             'css_id': 'report_filter_%s' % self.slug,
             'css_class': self.css_class,
             'help_text': self.help_text,
+            'help_style_bubble': self.help_style_bubble,
         })
         filter_context = self.filter_context
         if not (filter_context, dict):
