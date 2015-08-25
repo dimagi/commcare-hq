@@ -200,11 +200,16 @@
                 mobileWorker: newWorker
             })
             .success(function (data) {
-                newWorker.creationStatus = STATUS.SUCCESS;
-                deferred.resolve(data);
-                // remove newWorker from pending, add to successful
+                if (data.success) {
+                    newWorker.creationStatus = STATUS.SUCCESS;
+                    deferred.resolve(data);
+                } else {
+                    newWorker.creationStatus = STATUS.ERROR;
+                    deferred.reject(data);
+                }
             })
             .error(function () {
+                newWorker.creationStatus = STATUS.ERROR;
                 deferred.reject(
                     "Sorry, there was an issue communicating with the server."
                 );
