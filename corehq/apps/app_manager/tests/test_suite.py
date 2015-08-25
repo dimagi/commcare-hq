@@ -149,7 +149,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_parent_child_custom_ref(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         form = app.get_module(1).get_form(2)
-        form.actions.load_update_cases[1].parent_reference_id = 'custom-parent-ref'
+        form.actions.load_update_cases[1].case_index.reference_id = 'custom-parent-ref'
         self.assertXmlPartialEqual(self.get_xml('custom-parent-ref'), app.create_suite(), "./entry[4]")
 
     def test_advanced_suite_case_list_filter(self):
@@ -691,6 +691,8 @@ class RegexTest(SimpleTestCase):
             ('"jack" = #session/username', '"jack" = {session}/username'),
             ('./@case_id = #session/userid', '{case}/@case_id = {session}/userid'),
             ('#case/@case_id = #user/@case_id', '{case}/@case_id = {user}/@case_id'),
+            ('#host/foo = 42', "instance('casedb')/casedb/case[@case_id={case}/index/host]/foo = 42"),
+            ("'ham' = #parent/spam", "'ham' = instance('casedb')/casedb/case[@case_id={case}/index/parent]/spam"),
         ]
         for case in cases:
             self.assertEqual(

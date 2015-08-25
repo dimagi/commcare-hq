@@ -2170,6 +2170,21 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
+        def get_manual_datum(action_, parent_filter_=''):
+            target_module_ = get_target_module(action_.case_type, action_.details_module)
+            referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
+            return SessionDatum(
+                id=action_.case_session_var,
+                nodeset=(SuiteGenerator.get_nodeset_xpath(action_.case_type, target_module_, True) +
+                         parent_filter_),
+                value="./@case_id",
+                detail_select=self.get_detail_id_safe(target_module_, 'case_short'),
+                detail_confirm=(
+                    self.get_detail_id_safe(target_module_, 'case_long')
+                    if not referenced_by or referenced_by['type'] != 'load' else None
+                )
+            )
+
         datums = []
         assertions = []
         for action in form.actions.get_load_update_actions():
@@ -2183,29 +2198,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'action': action
                 })
             else:
-                if action.parent_tag:
-                    parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
+                if action.case_index.tag:
+                    parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
                     parent_filter = SuiteGenerator.get_parent_filter(
-                        action.parent_reference_id,
+                        action.case_index.reference_id,
                         parent_action.case_session_var
                     )
                 else:
                     parent_filter = ''
-
-                target_module = get_target_module(action.case_type, action.details_module)
-                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-                datum = SessionDatum(
-                    id=action.case_session_var,
-                    nodeset=(SuiteGenerator.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
-                    value="./@case_id",
-                    detail_select=self.get_detail_id_safe(target_module, 'case_short'),
-                    detail_confirm=(
-                        self.get_detail_id_safe(target_module, 'case_long')
-                        if not referenced_by or referenced_by['type'] != 'load' else None
-                    )
-                )
                 datums.append({
-                    'datum': datum,
+                    'datum': get_manual_datum(action, parent_filter),
                     'case_type': action.case_type,
                     'requires_selection': True,
                     'action': action
@@ -2266,13 +2268,19 @@ class SuiteGenerator(SuiteGeneratorBase):
             datum = datum_meta['datum']
             action = datum_meta['action']
             if action:
-                # Only advanced module actions have a parent_tag attribute.
-                parent_tag = getattr(action, 'parent_tag', '')
-                if parent_tag in changed_ids_:
-                    # update any reference to previously changed datums
-                    for change in changed_ids_[parent_tag]:
-                        _apply_change_to_datum_attr(datum, 'nodeset', change)
-                        _apply_change_to_datum_attr(datum, 'function', change)
+                if hasattr(action, 'case_indices'):
+                    # This is an advanced module
+                    for case_index in action.case_indices:
+                        if case_index.tag in changed_ids_:
+                            # update any reference to previously changed datums
+                            for change in changed_ids_[case_index.tag]:
+                                _apply_change_to_datum_attr(datum, 'nodeset', change)
+                                _apply_change_to_datum_attr(datum, 'function', change)
+                else:
+                    if 'basic' in changed_ids_:
+                        for change in changed_ids_['basic']:
+                            _apply_change_to_datum_attr(datum, 'nodeset', change)
+                            _apply_change_to_datum_attr(datum, 'function', change)
 
         def rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
             """
@@ -2292,7 +2300,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     datum = datum_ids_[parent_datum.id]
                     new_id = '_'.join((datum['datum'].id, datum['case_type']))
                     # Only advanced module actions have a case_tag attribute.
-                    case_tag = getattr(action, 'case_tag', '')
+                    case_tag = getattr(action, 'case_tag', 'basic')
                     changed_id = {
                         case_tag: {
                             'old_id': datum['datum'].id,
@@ -2312,7 +2320,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             changed_id = {}
             action = this_datum_meta_['action']
             if action:
-                case_tag = getattr(action, 'case_tag', '')
+                case_tag = getattr(action, 'case_tag', 'basic')
                 changed_id = {
                     case_tag: {
                         "old_id": this_datum_meta_['datum'].id,
