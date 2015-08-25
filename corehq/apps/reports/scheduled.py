@@ -1,11 +1,12 @@
 from calendar import monthrange
 from datetime import datetime
 from corehq.apps.reports.models import ReportNotification
+from corehq.apps.reports.util import weeks_since_epoch
 
 
 def get_scheduled_reports(period, as_of=None):
     as_of = as_of or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly')
+    assert period in ('daily', 'weekly', 'n_weeks', 'monthly')
 
     def _keys(period, as_of):
         minute = guess_reporting_minute(as_of)
@@ -21,7 +22,7 @@ def get_scheduled_reports(period, as_of=None):
                     'startkey': [period, as_of.hour, minute],
                     'endkey': [period, as_of.hour, minute, {}],
                 }
-        elif period == 'weekly':
+        elif period in ['weekly', 'n_weeks']:
             for minute in minutes:
                 yield {
                     'key': [period, as_of.hour, minute, as_of.weekday()],
@@ -45,7 +46,11 @@ def get_scheduled_reports(period, as_of=None):
             include_docs=True,
             **keys
         ).all():
-            yield report
+            if period == 'n_weeks':
+                if (weeks_since_epoch(as_of) - report.offset_weeks) % report.n_weeks == 0:
+                    yield report
+            else:
+                yield report
 
 
 def guess_reporting_minute(now=None):

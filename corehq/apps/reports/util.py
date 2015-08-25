@@ -469,3 +469,8 @@ def is_mobile_worker_with_report_access(couch_user, domain):
         and domain is not None
         and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
     )
+
+
+def weeks_since_epoch(as_of=None):
+    as_of = as_of or datetime.now()
+    return (as_of - datetime.utcfromtimestamp(0)).days / 7

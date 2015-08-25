@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext_lazy
 import langcodes
 
 from django import forms
@@ -99,7 +100,13 @@ class ScheduledReportForm(forms.Form):
 
     interval = forms.TypedChoiceField(
         label='Interval',
-        choices=[("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")])
+        choices=[
+            ("daily", "Daily"),
+            ("weekly", "Weekly"),
+            ("monthly", "Monthly"),
+            ("n_weeks", "Number of weeks"),
+        ],
+    )
 
     day = forms.TypedChoiceField(
         label="Day",
@@ -111,6 +118,15 @@ class ScheduledReportForm(forms.Form):
         label='Time',
         coerce=int,
         choices=ReportNotification.hour_choices())
+
+    n_weeks = forms.IntegerField(
+        label=ugettext_lazy('Number of weeks between reports'),
+    )
+
+    offset_weeks = forms.TypedChoiceField(
+        label=ugettext_lazy('Send first report'),
+        coerce=int,
+    )
 
     send_to_owner = forms.BooleanField(
         label='Send to me',
@@ -138,9 +154,18 @@ class ScheduledReportForm(forms.Form):
         self.helper.add_layout(
             crispy.Layout(
                 'config_ids',
-                'interval',
-                'day',
+                crispy.Field('interval', data_bind='value: interval'),
+                crispy.Field('day', data_bind='value: day'),
                 'hour',
+                crispy.Div(
+                    crispy.Field('n_weeks', data_bind='value: nWeeks'),
+                    crispy.Field('offset_weeks', data_bind=(
+                        "options: firstReportOptions, "
+                        "optionsText: 'text', "
+                        "optionsValue: 'value'"
+                    )),
+                    data_bind='visible: interval() == "n_weeks"',
+                ),
                 'send_to_owner',
                 'attach_excel',
                 'recipient_emails',
