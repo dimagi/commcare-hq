@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -383,19 +383,19 @@ _username_help = """
     %(server_error)s
 </span>
 """ % {
-    'checking': _('Checking Availability...'),
-    'server_error': _('Issue connecting to server. Check Internet connection.')
+    'checking': ugettext_noop('Checking Availability...'),
+    'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
 }
 
 _password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
-                  .format(_("The passwords do not match.")))
+                  .format(ugettext_noop("The passwords do not match.")))
 
 
 class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(max_length=80, required=True, help_text=_username_help)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(
-        label='Password (reenter)',
+        label=ugettext_noop('Password (reenter)'),
         widget=PasswordInput(),
         required=True,
         min_length=1,
