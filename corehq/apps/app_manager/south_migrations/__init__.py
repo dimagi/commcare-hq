@@ -15,33 +15,23 @@ import sys
 logger = logging.getLogger(__name__)
 
 
-class AppFilterMigrationMixIn(object):
-    """
-    This is the main data migration code for the filter changes.
+class AppMigrationMixin(object):
+    """Subclass this on a south-migration model to run data-migration on apps
     """
 
-    def get_app_ids(self):
-        # this is the only method that migration subclasses should override
+    @classmethod
+    def migrate_app(cls, app_doc):
+        """Modify app_doc and return True if app should be saved
+        """
         raise NotImplementedError()
 
-    def _get_main_app_ids(self):
-        return self._get_app_ids([None, None])
+    def get_app_ids(self):
+        """List of app_ids of apps that need to be migrated
+        """
+        raise NotImplementedError()
 
-    def _get_released_app_ids(self):
-        return self._get_app_ids(['^ReleasedApplications'])
-
-    def _get_all_app_ids(self):
-        return self._get_app_ids([None])
-
-    def _get_app_ids(self, startkey):
-        return {r['id'] for r in Application.get_db().view(
-            'app_manager/applications',
-            startkey=startkey,
-            endkey=startkey + [{}],
-            reduce=False,
-        ).all()}
-
-    def forwards(self, orm):
+    @staticmethod
+    def _check_or_create_couch_view():
         # if the view doesn't exist manually create it.
         # typically for initial load or tests.
         try:
@@ -51,6 +41,9 @@ class AppFilterMigrationMixIn(object):
             ).all()
         except ResourceNotFound:
             sync_docs.sync(app_models, verbosity=2)
+
+    def forwards(self, orm):
+        self._check_or_create_couch_view()
 
         errors = []
 
@@ -86,6 +79,39 @@ class AppFilterMigrationMixIn(object):
         Application.get_db().bulk_save(apps)
         for app in apps:
             logger.info("Filter migration on app {id} complete.".format(id=app.id))
+
+    def backwards(self, orm):
+        pass
+
+    models = {}
+    complete_apps = ['app_manager']
+
+
+class AppFilterMigrationMixIn(AppMigrationMixin):
+    """
+    This is the main data migration code for the filter changes.
+    """
+
+    def get_app_ids(self):
+        # this is the only method that migration subclasses should override
+        raise NotImplementedError()
+
+    def _get_main_app_ids(self):
+        return self._get_app_ids([None, None])
+
+    def _get_released_app_ids(self):
+        return self._get_app_ids(['^ReleasedApplications'])
+
+    def _get_all_app_ids(self):
+        return self._get_app_ids([None])
+
+    def _get_app_ids(self, startkey):
+        return {r['id'] for r in Application.get_db().view(
+            'app_manager/applications',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            reduce=False,
+        ).all()}
 
     @classmethod
     def migrate_app(cls, app):
@@ -195,9 +221,3 @@ class AppFilterMigrationMixIn(object):
         )
 
         return combined_filter
-
-    def backwards(self, orm):
-        pass
-
-    models = {}
-    complete_apps = ['app_manager']
