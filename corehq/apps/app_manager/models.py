@@ -1518,6 +1518,15 @@ class ParentSelect(DocumentSchema):
 
 
 class FixtureSelect(DocumentSchema):
+    """
+    Configuration for creating a details screen from a fixture which can be used to pre-filter
+    cases prior to displaying the case list.
+
+    fixture_type:       FixtureDataType.tag
+    display_column:     name of the column to display in the list
+    variable_column:    name of the column whose value should be saved when the user selects an item
+    xpath:              xpath expression to use as the case filter
+    """
     active = BooleanProperty(default=False)
     fixture_type = StringProperty()
     display_column = StringProperty()
