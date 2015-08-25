@@ -1372,17 +1372,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     )
                                     if d:
                                         r.append(d)
-            if module.fixture_select.active:
-                d = Detail(
-                    id=id_strings.fixture_detail(module),
-                    title=Text(),
-                )
-                fields = [Field(header=Header(text=Text()),
-                                template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
-                                sort_node='')]
+                if module.fixture_select.active:
+                    d = Detail(
+                        id=id_strings.fixture_detail(module),
+                        title=Text(),
+                    )
+                    fields = [Field(header=Header(text=Text()),
+                                    template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                    sort_node='')]
 
-                d.fields = fields
-                r.append(d)
+                    d.fields = fields
+                    r.append(d)
         return r
 
     @staticmethod
