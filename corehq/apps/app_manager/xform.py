@@ -5,7 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
-    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER
+    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
@@ -1390,6 +1391,36 @@ class XForm(WrappedNode):
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form."))
 
+    def _schedule_global_next_visit_date(self, case_tag, action, form, case):
+        """
+        Adds the necessary hidden properties, fixture references, and calculations to
+        get the global next visit date for schedule modules
+        """
+        forms = [f for f in form.get_module().get_forms()
+                 if getattr(f, 'schedule') and f.schedule.enabled]
+        forms_due = []
+        for form in forms:
+            form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
+            name = u"next_{}".format(form.schedule_form_id)
+            forms_due.append(u"/data/{}".format(name))
+
+            self.add_instance(
+                form_xpath.fixture_id,
+                u'jr://fixture/{}'.format(form_xpath.fixture_id)
+            )
+
+            self.add_bind(
+                nodeset=u'/data/{}'.format(name),
+                calculate=form_xpath.xpath_phase_set
+            )
+            self.data_node.append(_make_elem(name))
+
+        self.add_bind(
+            nodeset=u'/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+            calculate=u'date(min({}))'.format(','.join(forms_due))
+        )
+        self.data_node.append(_make_elem(SCHEDULE_GLOBAL_NEXT_VISIT_DATE))
+
     def create_casexml_2_advanced(self, form):
         from corehq.apps.app_manager.util import split_path
 
@@ -1445,6 +1476,8 @@ class XForm(WrappedNode):
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
+
+            self._schedule_global_next_visit_date(case_tag, action, form, case)
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = case_tag(action)
