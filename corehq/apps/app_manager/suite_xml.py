@@ -26,7 +26,7 @@ from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    actions_use_usercase
+    actions_use_usercase, is_usercase_in_use
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
@@ -2517,20 +2517,22 @@ class SuiteGenerator(SuiteGeneratorBase):
                 def get_commands():
                     for form in module.get_forms():
                         command = Command(id=id_strings.form_command(form))
-                        if module.all_forms_require_a_case() and \
-                                not module.put_in_root and \
-                                getattr(form, 'form_filter', None):
+                        if (
+                            getattr(form, 'form_filter', None) and
+                            not module.put_in_root and
+                            (is_usercase_in_use(self.app.domain) or module.all_forms_require_a_case())
+                        ):
                             if isinstance(form, AdvancedForm):
                                 try:
                                     action = next(a for a in form.actions.load_update_cases if not a.auto_select)
                                     case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
                                 except IndexError:
                                     case = None
-                            else:
+                            elif form.requires_case():
                                 case = SESSION_CASE_ID.case()
-
-                            if case:
-                                command.relevant = interpolate_xpath(form.form_filter, case)
+                            else:
+                                case = None
+                            command.relevant = interpolate_xpath(form.form_filter, case)
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:

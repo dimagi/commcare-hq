@@ -319,7 +319,7 @@ class CaseListFormFormTests(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+        self.is_usercase_in_use_patch.start()
 
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3

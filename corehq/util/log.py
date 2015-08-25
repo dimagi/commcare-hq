@@ -9,7 +9,7 @@ from pygments.formatters import HtmlFormatter
 from celery.utils.mail import ErrorMail
 from django.core import mail
 from django.utils.log import AdminEmailHandler
-from django.views.debug import get_exception_reporter_filter
+from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
 
 
@@ -86,7 +86,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if request:
             context.update({
                 'get': request.GET,
-                'post': request.POST,
+                'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
                 'url': request.build_absolute_uri(),
             })

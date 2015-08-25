@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import Application, Module, ReportModule, Re
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareImage
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 import commcare_translations
 
@@ -52,7 +52,9 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(0).case_list_form.set_audio('en', audo_path)
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.create_mapping(CommCareImage(_id='456'), audo_path, save=False)
+        app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
+
+        app.set_media_versions(previous_version=None)
 
         self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
 
