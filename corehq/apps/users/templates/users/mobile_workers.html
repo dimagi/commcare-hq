@@ -38,13 +38,16 @@ $(function () {
         showDeactivatedUsers: false,
         activateUser: function (user, djangoRMI) {
             $('#activate_' + user.user_id).modal('hide');
-            djangoRMI.activate_user(user.user_id)
+            djangoRMI.modify_user_status({
+                user_id: user.user_id,
+                is_active: true
+            })
                 .success(function (data) {
                     if (data.success) {
                         user.mark_activated = true;
                         user.action_error = '';
                     } else {
-                        user.action_error = '{% trans "Error activating user." %}';
+                        user.action_error = data.error;
                     }
                 })
                 .error(function () {
@@ -53,13 +56,16 @@ $(function () {
         },
         deactivateUser: function (user, djangoRMI) {
             $('#deactivate_' + user.user_id).modal('hide');
-            djangoRMI.deactivate_user(user.user_id)
+            djangoRMI.modify_user_status({
+                user_id: user.user_id,
+                is_active: false
+            })
                 .success(function (data) {
                     if (data.success) {
                         user.mark_deactivated = true;
                         user.action_error = '';
                     } else {
-                        user.action_error = '{% trans "Error deactivating user." %}';
+                        user.action_error = data.error;
                     }
                 })
                 .error(function () {
