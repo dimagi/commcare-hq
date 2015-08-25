@@ -159,6 +159,26 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
+    def filter_by_user_input(self, domain, user_input):
+        """
+        Accepts partial matches, matches against name and site_code.
+        """
+        return (self.filter(domain=domain)
+                    .filter(models.Q(name__icontains=user_input) |
+                            models.Q(site_code__icontains=user_input)))
+
+    def filter_path_by_user_input(self, domain, user_input):
+        """
+        Returns a queryset including all locations matching the user input
+        and their children. This means "Middlesex" will match:
+            Massachusetts/Middlesex
+            Massachusetts/Middlesex/Boston
+            Massachusetts/Middlesex/Cambridge
+        It matches by name or site-code
+        """
+        direct_matches = self.filter_by_user_input(domain, user_input)
+        return self.get_queryset_descendants(direct_matches, include_self=True)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
