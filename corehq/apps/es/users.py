@@ -23,6 +23,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.run().doc_ids
 """
+from copy import deepcopy
 from .es_query import HQESQuery
 from . import filters
 
@@ -47,6 +48,11 @@ class UserES(HQESQuery):
     def show_inactive(self):
         """Include inactive users, which would normally be filtered out."""
         return self.remove_default_filter('active')
+
+    def show_only_inactive(self):
+        query = deepcopy(self)
+        query._default_filters['active'] = {"term": {"is_active": False}}
+        return query
 
 
 def domain(domain):
