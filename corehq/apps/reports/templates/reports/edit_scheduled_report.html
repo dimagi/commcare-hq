@@ -1,5 +1,6 @@
 {% extends "reports/base_template.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% load crispy_forms_tags %}
 
 {% block head %}{{ block.super }}
@@ -79,6 +80,35 @@ $(function(){
         day_value: {{ day_value }}
     });
     scheduled_report_form_helper.init();
+
+    var scheduledReportFormModel = {
+        interval: ko.observable(),
+        day: ko.observable(0),
+        nWeeks: ko.observable(2)
+    };
+    scheduledReportFormModel.firstReportOptions = ko.computed(function () {
+        var day = scheduled_report_form_helper.weekly_options[scheduledReportFormModel.day()][1];
+        var nWeeks = scheduledReportFormModel.nWeeks();
+
+        var options = [{
+            text: "{% trans 'On the upcoming ' %}" + day,
+            value: 0
+        }];
+        if(nWeeks > 1) {
+            options.push({
+                text: "{% trans '1 week after the upcoming ' %}" + day,
+                value: 1
+            })
+        }
+        for(var i = 2; i < nWeeks; i++) {
+            options.push({
+                text: i + "{% trans ' weeks after the upcoming ' %}" + day,
+                value: i
+            });
+        }
+        return options;
+    });
+    ko.applyBindings(scheduledReportFormModel, $('#id-scheduledReportForm').get(0));
 </script>
 <script type="text/javascript">
     $('#id-scheduledReportForm').submit(function() {
