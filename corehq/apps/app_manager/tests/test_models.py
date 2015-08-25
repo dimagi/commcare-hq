@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import(
+from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
