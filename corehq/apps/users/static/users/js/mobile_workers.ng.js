@@ -79,12 +79,11 @@
         self.creationStatus = STATUS.NEW;
 
         self.username = data.username || '';
-        self.userId = data.user_id || '';
-        self.archiveStatus = data.status || '';
         self.editUrl = data.editUrl || '';
 
         self.password = '';
         self.password2 = '';
+
         self.customFields = {};
 
         self.isPending = function () {
