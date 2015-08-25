@@ -37,12 +37,34 @@ $(function () {
         customFormFieldNames: {{ custom_field_names|JSON }},
         showDeactivatedUsers: false,
         activateUser: function (user, djangoRMI) {
-            user.mark_activated = true;
-            $('#activate_' + user_id).modal('hide');
+            $('#activate_' + user.user_id).modal('hide');
+            djangoRMI.activate_user(user.user_id)
+                .success(function (data) {
+                    if (data.success) {
+                        user.mark_activated = true;
+                        user.action_error = '';
+                    } else {
+                        user.action_error = '{% trans "Error activating user." %}';
+                    }
+                })
+                .error(function () {
+                    user.action_error = '{% trans "Issue communicating with server. Try again." %}';
+                });
         },
         deactivateUser: function (user, djangoRMI) {
-            user.mark_deactivated = true;
             $('#deactivate_' + user.user_id).modal('hide');
+            djangoRMI.deactivate_user(user.user_id)
+                .success(function (data) {
+                    if (data.success) {
+                        user.mark_deactivated = true;
+                        user.action_error = '';
+                    } else {
+                        user.action_error = '{% trans "Error deactivating user." %}';
+                    }
+                })
+                .error(function () {
+                    user.action_error = '{% trans "Issue communicating with server. Try again." %}';
+                });
         }
     });
     {% angularjs %}
@@ -322,6 +344,10 @@ $(function () {
                                 <span ng-show="user.mark_activated">
                                     <i class="fa fa-check"></i> {% trans "ACTIVE" %}
                                 </span>
+                                <p ng-show="!!user.action_error">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    {{ user.action_error }}
+                                </p>
                                 <div id="activate_{{ user.user_id }}"
                                      class="modal fade">
                                     <div class="modal-dialog">
@@ -371,6 +397,10 @@ $(function () {
                                 <span ng-show="user.mark_deactivated">
                                     <i class="fa fa-check"></i> {% trans "INACTIVE" %}
                                 </span>
+                                <p ng-show="!!user.action_error">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    {{ user.action_error }}
+                                </p>
                                 <div id="deactivate_{{ user.user_id }}"
                                      class="modal fade">
                                     <div class="modal-dialog">
