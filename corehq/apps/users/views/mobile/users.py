@@ -741,10 +741,13 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'name': user.full_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
+            'mark_activated': False,
+            'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT),
             'editUrl': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
             'deactivateUrl': "#",
-            'status': "" if user.is_active else _("Deactivated"),
+            'actionText': _("Deactivate") if user.is_active else _("Activate"),
+            'action': 'deactivate' if user.is_active else 'activate',
         }
 
     def _user_query(self, search_string, page, limit):
@@ -767,10 +770,14 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             limit = int(in_data.get('limit', 10))
         except ValueError:
             limit = 10
+
         page = in_data.get('page', 1)
         query = in_data.get('query')
 
-        users_data = self._user_query(query, page, limit).run()
+        users_query = self._user_query(query, page, limit)
+        if in_data.get('showDeactivatedUsers', False):
+            users_query = users_query.show_only_inactive()
+        users_data = users_query.run()
         return {
             'response': {
                 'itemList': map(self._format_user, users_data.hits),
