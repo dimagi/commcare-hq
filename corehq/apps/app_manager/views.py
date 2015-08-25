@@ -2744,7 +2744,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()
