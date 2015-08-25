@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -363,6 +363,88 @@ if django.VERSION < (1, 6):
             ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
 else:
     validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+
+
+_username_help = """
+<span ng-if="usernameAvailabilityStatus === 'pending'">
+    <i class="fa fa-circle-o-notch fa-spin"></i>
+    %(checking)s
+</span>
+<span ng-if="usernameAvailabilityStatus === 'taken'">
+    <i class="fa fa-remove"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'available'">
+    <i class="fa fa-check"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'error'">
+    <i class="fa fa-exclamation-triangle"></i>
+    %(server_error)s
+</span>
+""" % {
+    'checking': ugettext_noop('Checking Availability...'),
+    'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
+}
+
+_password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
+                  .format(ugettext_noop("The passwords do not match.")))
+
+
+class NewMobileWorkerForm(forms.Form):
+    username = forms.CharField(max_length=80, required=True, help_text=_username_help)
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
+    password_2 = forms.CharField(
+        label=ugettext_noop('Password (reenter)'),
+        widget=PasswordInput(),
+        required=True,
+        min_length=1,
+        help_text=_password_help
+    )
+    domain = forms.CharField(widget=HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'username',
+                    ng_required="true",
+                    validate_username="",
+                    # What this says is, update as normal or when the element
+                    # loses focus. If the update is normal, wait 300 ms to
+                    # send the request again. If the update is on blur,
+                    # send the request.
+                    ng_model_options="{ "
+                                      " updateOn: 'default blur', "
+                                      " debounce: {'default': 300, 'blur': 0} "
+                                      "}",
+                    ng_model='mobileWorker.username'
+                ),
+                crispy.Field(
+                    'password',
+                    ng_required="true",
+                    ng_model='mobileWorker.password'
+                ),
+                crispy.Field(
+                    'password_2',
+                    ng_required="true",
+                    confirm_password="",
+                    ng_model='mobileWorker.password_2'
+                ),
+            )
+        )
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if username == 'admin' or username == 'demo_user':
+            raise forms.ValidationError("The username %s is reserved for CommCare." % username)
+        return username
 
 
 class MultipleSelectionForm(forms.Form):
