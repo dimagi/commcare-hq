@@ -63,6 +63,7 @@ branches:
   - knockout-js # Ben 8/17
   - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
   - reports-n-weeks # Nick P 8/24
+  - new-mobile-workers # Biyeun 8/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
