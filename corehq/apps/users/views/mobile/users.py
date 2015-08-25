@@ -674,10 +674,16 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return self.get(request, *args, **kwargs)
 
 
-class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
+
+    @method_decorator(use_bootstrap3())
+    @method_decorator(use_select2())
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, *args, **kwargs):
+        return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
     @property
     def can_bulk_edit_users(self):
@@ -718,12 +724,6 @@ class MobileWorkerView(JSONResponseMixin, BaseUserSettingsView):
             'can_add_extra_users': self.can_add_extra_users,
             'default_limit': 50,
         }
-
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_select2())
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, *args, **kwargs):
-        return super(MobileWorkerView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
