@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource descriptor="Form: (Module my_module module) - my_module form" id="my_module_form">
+    <resource descriptor="Form: (Module my_module module) - my_module form 0" id="my_module_form_0">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
