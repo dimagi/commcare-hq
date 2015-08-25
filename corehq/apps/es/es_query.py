@@ -38,7 +38,7 @@ but you can always add your own like so:
     q.set_query({"fancy_query": {...}})
 
 For debugging or more helpful error messages, you can use ``query.dumps()``
-and ``query.pprint()`,` both of which use ``json.dumps()`` and are suitable for
+and ``query.pprint()``, both of which use ``json.dumps()`` and are suitable for
 pasting in to ES Head or Marvel or whatever
 
 Filtering
