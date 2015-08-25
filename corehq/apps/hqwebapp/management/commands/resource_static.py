@@ -42,7 +42,10 @@ class Command(LabelCommand):
             for path, storage in finder.list(['.*', '*~', '* *']):
                 if not storage.location.startswith(prefix):
                     continue
-                url = os.path.join(storage.prefix, path) if storage.prefix else path
+                if not getattr(storage, 'prefix', None):
+                    url = path
+                else:
+                    url = os.path.join(storage.prefix, path)
                 filename = os.path.join(storage.location, path)
                 resources[url] = self.get_hash(filename)
         resource_str = json.dumps(resources, indent=2)
