@@ -2923,6 +2923,10 @@ class ReportAppConfig(DocumentSchema):
         return self._report
 
     @property
+    def uuid(self):
+        return str(hash(json.dumps(self.to_json(), sort_keys=True)))
+
+    @property
     def select_detail_id(self):
         return 'reports.{}.select'.format(self.report_id)
 
