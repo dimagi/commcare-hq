@@ -13,6 +13,10 @@ ESQuery
 .. automodule:: corehq.apps.es.facets
    :members:
 
+.. automodule:: corehq.apps.es.apps
+   :members:
+   :undoc-members:
+
 .. automodule:: corehq.apps.es.users
    :members:
    :undoc-members:
