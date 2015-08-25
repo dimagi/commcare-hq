@@ -65,6 +65,7 @@ class EWSFormatter(object):
     def format(self, string):
         """
         Old parse method, used in Ghana for more 'interesting' parsing.
+        Moved from: https://github.com/dimagi/rapidsms-logistics/blob/7a1433abbda4ec27dc8f4c5da14c0f5689abd202/logistics/models.py#L1430
         """
         if not string:
             return
