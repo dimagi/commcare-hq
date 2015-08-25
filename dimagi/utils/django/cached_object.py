@@ -177,8 +177,7 @@ class CachedObject(object):
         self.cache_key = cache_key
 
     def is_cached(self):
-        return (self.rcache.get(self.stream_key(OBJECT_ORIGINAL)) is not None and
-            self.rcache.get(self.meta_key(OBJECT_ORIGINAL)) is not None)
+        return self.rcache.get(self.meta_key(OBJECT_ORIGINAL)) is not None
 
     @property
     def key_prefix(self):
@@ -257,9 +256,6 @@ class CachedImage(CachedObject):
 
         rcache.set(self.stream_key(OBJECT_ORIGINAL), image_stream.read())
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(image_meta.to_json()))
-
-    def is_cached(self):
-        return self.rcache.get(self.meta_key(OBJECT_ORIGINAL)) is not None
 
     def get(self, size_key=OBJECT_ORIGINAL, **kwargs):
         """
