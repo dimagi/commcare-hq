@@ -269,14 +269,6 @@ $(function () {
             <div class="panel-body">
                 <div class="row">
                     <div class="col-sm-4">
-                        <select class="form-control"
-                                ng-change="pageChanged()"
-                                ng-model="limit"
-                                ng-init="limit = {{ default_limit }}"
-                                ng-options="pl.value as pl.key for pl in paginationLimits">
-                        </select>
-                    </div>
-                    <div class="col-sm-4">
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
@@ -290,7 +282,23 @@ $(function () {
                                     <i class="fa fa-search"></i>
                                 </button>
                             </span>
-                        </div><!-- /input-group -->
+                        </div>
+                        <p class="help-block">
+                            <i class="fa fa-info-circle"></i>
+                            {% blocktrans %}
+                            Search any text, or use a targeted query. For more info see the <a
+                                href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers'
+                                target='_blank'>Mobile Workers</a> help page
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                    <div class="col-sm-4">
+                        <select class="form-control"
+                                ng-change="pageChanged()"
+                                ng-model="limit"
+                                ng-init="limit = {{ default_limit }}"
+                                ng-options="pl.value as pl.key for pl in paginationLimits">
+                        </select>
                     </div>
                     <div class="col-sm-4">
                         <button type="button"
