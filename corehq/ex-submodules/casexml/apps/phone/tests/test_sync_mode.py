@@ -956,7 +956,13 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # original user syncs again
         # make sure close block appears
-        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log._id)
+
+        # make sure closed cases don't show up in the next sync log
+        next_synclog = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
+        )
+        self.assertFalse(next_synclog.phone_is_holding_case(case_id))
 
     @run_with_all_restore_configs
     def testOtherUserUpdatesUnowned(self):
