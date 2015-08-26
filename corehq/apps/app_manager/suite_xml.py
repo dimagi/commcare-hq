@@ -2397,7 +2397,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                         if isinstance(form, AdvancedForm):
                             try:
-                                action = next(a for a in form.actions.load_update_cases if not a.auto_select)
+                                action = next((a for a in form.actions.load_update_cases if not a.auto_select),
+                                              None)
                                 case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
                             except IndexError:
                                 case = None
