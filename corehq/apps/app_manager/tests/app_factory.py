@@ -85,6 +85,7 @@ class AppFactory(object):
             action = LoadUpdateAction(
                 case_type=case_type,
                 case_tag='load_{}_{}'.format(case_type, index),
+                case_properties={'question1': '/data/question1'},
             )
 
             if parent_case_type:
