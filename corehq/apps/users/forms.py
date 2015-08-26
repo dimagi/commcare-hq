@@ -387,21 +387,30 @@ _username_help = """
     'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
 }
 
-_password_help = ('<span ng-if="mobileWorkerForm.password_2.$error.confirmPassword">{}</span>'
-                  .format(ugettext_noop("The passwords do not match.")))
-
 
 class NewMobileWorkerForm(forms.Form):
-    username = forms.CharField(max_length=80, required=True, help_text=_username_help)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
-    password_2 = forms.CharField(
-        label=ugettext_noop('Password (reenter)'),
+    username = forms.CharField(
+        max_length=80,
+        required=True,
+        help_text=_username_help,
+        label=ugettext_noop("Username"),
+    )
+    first_name = forms.CharField(
+        max_length=50,
+        required=True,
+        label=ugettext_noop("First Name")
+    )
+    last_name = forms.CharField(
+        max_length=50,
+        required=False,
+        label=ugettext_noop("Last Name")
+    )
+    password = forms.CharField(
         widget=PasswordInput(),
         required=True,
         min_length=1,
-        help_text=_password_help
+        label=_("Password")
     )
-    domain = forms.CharField(widget=HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -427,15 +436,18 @@ class NewMobileWorkerForm(forms.Form):
                     ng_model='mobileWorker.username'
                 ),
                 crispy.Field(
+                    'first_name',
+                    ng_required="true",
+                    ng_model='mobileWorker.first_name'
+                ),
+                crispy.Field(
+                    'last_name',
+                    ng_model='mobileWorker.last_name'
+                ),
+                crispy.Field(
                     'password',
                     ng_required="true",
                     ng_model='mobileWorker.password'
-                ),
-                crispy.Field(
-                    'password_2',
-                    ng_required="true",
-                    confirm_password="",
-                    ng_model='mobileWorker.password_2'
                 ),
             )
         )

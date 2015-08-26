@@ -9,29 +9,12 @@
     ]);
 
     var $formElements = {
-        password: function () {
-            return $('#id_password_2').parent();
-        },
         username: function () {
             return $('#id_username').parent();
         }
     };
 
     var visualFormCtrl = {
-        passwordClear : function () {
-            $formElements.password()
-                .removeClass('has-error has-success');
-        },
-        passwordSuccess: function () {
-            $formElements.password()
-                .removeClass('has-error')
-                .addClass('has-success');
-        },
-        passwordError: function () {
-            $formElements.password()
-                .removeClass('has-success')
-                .addClass('has-error');
-        },
         usernameClear: function () {
             $formElements.username()
                 .removeClass('has-error has-pending has-success');
@@ -68,9 +51,6 @@
         ERROR: 'error'
     };
 
-    mobileWorkers.constant('formStrings', {
-        checkingUsername: 'Checking username'
-    });
     mobileWorkers.constant('customFields', []);
     mobileWorkers.constant('customFieldNames', []);
 
@@ -79,10 +59,11 @@
         self.creationStatus = STATUS.NEW;
 
         self.username = data.username || '';
+        self.first_name = data.first_name || '';
+        self.last_name = data.last_name || '';
         self.editUrl = data.editUrl || '';
 
         self.password = '';
-        self.password_2 = '';
 
         self.customFields = {};
 
@@ -102,7 +83,7 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.MobileWorkerCreationController = function (
-            $scope, workerCreationFactory, djangoRMI, formStrings, customFields,
+            $scope, workerCreationFactory, djangoRMI, customFields,
             customFieldNames
     ) {
         $scope._ = _;  // make underscore available
@@ -114,7 +95,6 @@
         $scope.customFormFieldNames = customFieldNames;
 
         $scope.initializeMobileWorker = function (mobileWorker) {
-            visualFormCtrl.passwordClear();
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
@@ -259,25 +239,6 @@
                         });
                     }
                     return deferred.promise;
-                };
-            }
-        };
-    };
-    mobileWorkerDirectives.confirmPassword = function ($q) {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $attr, $elem, ctrl) {
-                ctrl.$validators.confirmPassword = function (modelValue) {
-                    var isConfirmed = $scope.mobileWorker.password === modelValue;
-                    if (_.isUndefined(modelValue) || _.isEmpty(modelValue)) {
-                        visualFormCtrl.passwordClear();
-                    } else if (isConfirmed) {
-                        visualFormCtrl.passwordSuccess();
-                    } else {
-                        visualFormCtrl.passwordError();
-                    }
-                    return isConfirmed;
                 };
             }
         };
