@@ -1,7 +1,18 @@
+from corehq.apps.app_manager.tests import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import FormActionCondition, OpenSubCaseAction, UpdateCaseAction, ParentSelect, \
-    PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    FormActionCondition,
+    LoadUpdateAction,
+    Module,
+    OpenCaseAction,
+    OpenSubCaseAction,
+    ParentSelect,
+    PreloadAction,
+    UpdateCaseAction,
+)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
@@ -335,3 +346,39 @@ class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
             self.app.create_suite(),
             "./entry"
         )
+
+
+class AdvancedSubModuleTests(SimpleTestCase, TestFileMixin):
+    file_path = ('data', 'suite')
+
+    def test_form_rename_session_vars(self):
+        """
+        The session vars in the entries for the submodule should match the parent and avoid naming conflicts.
+        """
+        factory = AppFactory(build_version='2.9')
+        reg_goldfish_mod, reg_goldfish_form = factory.new_basic_module('reg_goldfish', 'gold-fish')
+        factory.form_opens_case(reg_goldfish_form)
+        reg_guppy_mod, reg_guppy_form = factory.new_advanced_module('reg_guppy', 'guppy')
+        factory.form_updates_case(reg_guppy_form, 'gold-fish')
+        factory.form_opens_case(reg_guppy_form, 'guppy', is_subcase=True)
+        upd_goldfish_mod, upd_goldfish_form = factory.new_advanced_module(
+            'upd_goldfish',
+            'gold-fish',
+        )
+        factory.form_updates_case(upd_goldfish_form)
+        # changing this case tag should result in the session var in the submodule entry being updated to match it
+        upd_goldfish_form.actions.load_update_cases[0].case_tag = 'load_goldfish_renamed'
+
+        upd_guppy_mod, upd_guppy_form = factory.new_advanced_module(
+            'upd_guppy',
+            'guppy',
+            parent_module=upd_goldfish_mod,
+        )
+        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',))
+        factory.form_updates_case(upd_guppy_form, 'gold-fish')
+        factory.form_updates_case(upd_guppy_form, 'guppy', parent_case_type='gold-fish')
+        # making this case tag the same as the one in the parent module should mean that it will also get changed
+        # to avoid conflicts
+        upd_guppy_form.actions.load_update_cases[1].case_tag = 'load_goldfish_renamed'
+
+        self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
