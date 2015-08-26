@@ -346,37 +346,6 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
-    def test_schedule(self):
-        self.form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        self.module.has_schedule = True
-        self.form.schedule = FormSchedule(anchor='edd')
-        xml = self.get_xml('schedule').format(
-            form_id=self.form.schedule_form_id,
-            form_index=1
-        )
-        self.assertXmlEqual(xml, self.form.render_xform())
-
-    def test_schedule_index(self):
-        self.module.has_schedule = True
-        form = self.app.new_form(0, 'New Form', lang='en')
-        form.source = self.get_xml('original_form', override_path=('data',))
-        form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        form.schedule = FormSchedule(anchor='edd')
-
-        xml = self.get_xml('schedule').format(
-            form_id=form.schedule_form_id,
-            form_index=2
-        )
-        self.assertXmlEqual(xml, form.render_xform())
-
 
 class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
