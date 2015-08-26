@@ -479,8 +479,6 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
                 form.add_stuff_to_xform(xform)
-                if settings.DEBUG and False:
-                    xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
         except XFormValidationError as e:
