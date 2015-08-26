@@ -1051,7 +1051,7 @@ class EditBroadcastView(CreateBroadcastView):
             'message': broadcast.events[0].message.get(broadcast.default_lang, None),
             'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
             'form_unique_id': broadcast.events[0].form_unique_id,
-            'location_ids': json.dumps(broadcast.location_ids),
+            'location_ids': ','.join(broadcast.location_ids),
             'include_child_locations': broadcast.include_child_locations,
         }
         return BroadcastForm(initial=initial, **self.form_kwargs)

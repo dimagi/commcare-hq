@@ -24,19 +24,18 @@ $("#{{ id }}").select2({
         }
     },
     initSelection: function(element, callback) {
-        var val = $(element).val();
-        {% if multiselect %}
-        $(element).val($.parseJSON(val).join());
-        {% endif %}
+        var val = $(element).val() || "";
+        var arr = val.split(",");
+        var payload = {};
+
+        if (arr.length === 0) {
+            payload.id = val;
+        } else {
+            payload.ids = JSON.stringify(arr);
+        }
 
         if (val !== "") {
-            $.get("{{ query_url }}", {
-                {% if multiselect %}
-                ids: val
-                {% else %}
-                id: val
-                {% endif %}
-            }).done(function(data) { callback(data); });
+            $.get("{{ query_url }}", payload).done(function(data) { callback(data); });
         }
     },
     formatResult: function(e) { return e.name; },
