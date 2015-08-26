@@ -13,7 +13,8 @@ function update_day_input(weekly_options, monthly_options, day_value) {
     var $interval = $interval || $('[name="interval"]');
     $('#div_id_day').remove();
     if ($interval.val() !== 'daily') {
-        var opts = $interval.val() === 'weekly' ? weekly_options : monthly_options
+        var opts = ($interval.val() === 'weekly' || $interval.val() === 'n_weeks'
+            ? weekly_options : monthly_options);
         var $day_select = $('<select id="id_day" class="select" name="day" />');
         $day_select = add_options_to_select($day_select, opts, day_value);
         var $day_control_group = $('<div id="div_id_day" class="control-group" />')
