@@ -24,7 +24,7 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type'))
     @property
     def midnights(self):
         """Returns a list containing a datetime for midnight in the domains timezone
-        on either side of the current date.
+        on either side of the current date for the domain.
         """
         tz = pytz.timezone(self.default_timezone)
         now = datetime.utcnow()
