@@ -7,6 +7,7 @@ class Command(AppMigrationCommandBase):
     help = "Migrate Forms and Modules to have icon/audio as a dict " \
            "so that they can be localized to multiple languages. "\
            "To reverse migrate use the option --backwards."
+    # Caution: backwards is not reversible, as some of multi-lang media references will be lost
 
     include_builds = True
     option_list = AppMigrationCommandBase.option_list + (
@@ -69,13 +70,18 @@ class Command(AppMigrationCommandBase):
 
     @staticmethod
     def _reverse_localize_doc(doc):
-        # Caution: this is not reversible, as some of multi-lang media references will be lost
         should_save = False
         for media_attr in ('media_image', 'media_audio'):
             old_media = doc.get(media_attr, None)
             if old_media is not None and isinstance(old_media, dict):
-                for i, media in sorted(old_media.items()):
-                    new_media = media
+                # media set by localized-migration
+                new_media = old_media.get('default')
+                if old_media and not new_media:
+                    # media set by user on localized branch
+                    new_media = sorted(old_media.items())[0][1]
+                    # non-localized media doesn't accept empty paths
+                    if new_media == '':
+                        new_media = None
                 doc[media_attr] = new_media
                 should_save = True
 
