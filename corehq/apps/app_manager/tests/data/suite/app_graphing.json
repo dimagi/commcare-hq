@@ -214,7 +214,6 @@
                                        "doc_type": "GraphSeries",
                                        "y_function": "6",
                                        "data_path": "instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']",
-                                       "radius_function": null,
                                        "x_function": "5",
                                        "config": {
                                        }

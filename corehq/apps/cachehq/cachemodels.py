@@ -12,7 +12,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/with_deployment",
         "domain/domains",
         "domain/fields_by_prefix",
-        "domain/by_status",
         "domain/by_organization",
     ]
 
@@ -102,9 +101,6 @@ class LocationGenerationCache(GenerationCache):
     generation_key = '#gen#location#'
     doc_types = ['Location']
     views = [
-        'locations/by_type',
-        'locations/hierarchy',
-        'locations/by_name',
         'commtrack/locations_by_code',
         '_all_docs',
     ]

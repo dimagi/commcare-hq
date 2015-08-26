@@ -3,9 +3,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
-from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
 from corehq.apps.domain.models import Domain
-from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
@@ -23,107 +21,6 @@ from .base import (
     BaseSingleOptionFilter,
     BaseSingleOptionTypeaheadFilter,
 )
-
-
-class LinkedUserFilter(BaseDrilldownOptionFilter):
-    """
-    Lets you define hierarchical user groups by adding semantics to the
-    following group metadata properties:
-
-    On the root user group containing the top-level users:
-        user_type:  name of user type
-
-    On each group defining an association between one level-N user and many
-    level-N+1 users:
-        owner_name:  username of the owning user
-        owner_type:  name of user type for the owner
-        child_type:  name of user type for the child
-
-    Then you define the user_types attribute of this class as a list of user
-    types.
-
-    """
-    slug = "user"
-    label = ugettext_noop("Select User(s)")
-
-    # (parent_type, child_type[, child_type...]) as defined in the
-    # user-editable group metadata
-    user_types = None
-    domain = None
-
-    # Whether to use group names for intermediate selectors instead of the
-    # username of the group's owner
-    use_group_names = False
-
-    @classmethod
-    def get_labels(cls):
-        for type in cls.user_types:
-            yield (
-                type,
-                _("Select %(child_type)s") % {'child_type': type}, 
-                type
-            )
-
-    @property
-    def drilldown_empty_text(self):
-        return _("An error occured while making this linked user "
-                 "filter. Make sure you have created a group containing "
-                 "all %(root_type)ss with the metadata property 'user_type' set "
-                 "to '%(root_type)s' and added owner_type and child_type "
-                 "metadata properties to all of the necessary other groups.") % {
-            "root_type": self.user_types[0]
-        }
-
-    @property
-    def drilldown_map(self):
-        try:
-            hierarchy = get_hierarchy(self.domain, self.user_types)
-        except Exception:
-            return []
-
-        def get_values(node, level):
-            ret = {
-                'val': node['user']._id
-            }
-            if node.get('child_group') and self.use_group_names:
-                ret['text'] = node['child_group'].name
-            else:
-                ret['text'] = node['user'].raw_username
-
-            if 'descendants' in node:
-                ret['next'] = [get_values(node, level + 1) 
-                               for node in node['descendants']]
-            elif node.get('child_users'):
-                ret['next'] = [{
-                    'val': c._id,
-                    'text': c.raw_username
-                } for c in node['child_users']]
-            else:
-                ret['next'] = [{
-                    'val': '',
-                    'text': _("No %(child_type)ss found for this %(parent_type)s.") % {
-                                'parent_type': self.user_types[level],
-                                'child_type': self.user_types[level + 1]}
-                }]
-
-            return ret
-
-        return [get_values(top_level_node, 0) for top_level_node in hierarchy]
-
-    @classmethod
-    def get_user_data(cls, request_params, domain=None):
-        domain = domain or cls.domain
-
-        selected_user_id = None
-
-        for user_type in reversed(cls.user_types):
-            user_id = request_params.get("%s_%s" % (cls.slug, user_type))
-            if user_id:
-                selected_user_id = user_id
-                break
-
-        return get_user_data_from_hierarchy(domain, cls.user_types,
-                root_user_id=selected_user_id)
 
 
 class UserTypeFilter(BaseReportFilter):
@@ -212,7 +109,9 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
         return options
 
 
-class EmwfMixin(object):
+class EmwfUtils(object):
+    def __init__(self, domain):
+        self.domain = domain
 
     def user_tuple(self, u):
         user = util._report_user_dict(u)
@@ -223,45 +122,29 @@ class EmwfMixin(object):
     def reporting_group_tuple(self, g):
         return ("g__%s" % g['_id'], '%s [group]' % g['name'])
 
-    def sharing_group_tuple(self, g):
-        return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
-
     def user_type_tuple(self, t):
         return (
             "t__%s" % (t),
             "[%s]" % HQUserType.human_readable[t]
         )
 
+    def location_tuple(self, location):
+        return ("l__%s" % location.location_id,
+                '%s [location]' % location.get_path_display())
+
     @property
     @memoized
-    def user_types(self):
+    def static_options(self):
+        static_options = [("t__0", _("[All mobile workers]"))]
+
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
-        user_types = [getattr(HQUserType, t) for t in types]
-        user_type_tuples = [("t__0", _("[All mobile workers]"))] + \
-            [self.user_type_tuple(t) for t in user_types]
-        if (getattr(self, "show_all_filter", False)
-            or (getattr(self, "kwargs", None)
-                and "all_data" in self.kwargs)):
-            user_type_tuples = [("all_data", "[All Data]")] + user_type_tuples
-        return user_type_tuples
+        for t in types:
+            user_type = getattr(HQUserType, t)
+            static_options.append(self.user_type_tuple(user_type))
 
-    def get_location_groups(self):
-        locations = SQLLocation.objects.filter(
-            name__icontains=self.q.lower(),
-            domain=self.domain,
-        )
-        for loc in locations:
-            group = loc.reporting_group_object()
-            yield (group._id, group.name + ' [group]')
-
-        if self.include_share_groups:
-            # filter out any non case share type locations for this part
-            locations = locations.filter(location_type__shares_cases=True)
-            for loc in locations:
-                group = loc.case_sharing_group_object()
-                yield (group._id, group.name + ' [case sharing]')
+        return static_options
 
 
 _UserData = namedtupledict('_UserData', (
@@ -273,7 +156,7 @@ _UserData = namedtupledict('_UserData', (
 ))
 
 
-class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
+class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
 
@@ -285,9 +168,14 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     label = ugettext_lazy("Groups or Users")
     default_options = None
     placeholder = ugettext_lazy(
-        "Start typing to specify the groups and users to include in the report."
-        " You can select multiple users and groups.")
+        "Specify groups and users to include in the report")
     is_cacheable = False
+    options_url = 'emwf_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return EmwfUtils(self.domain)
 
     @classmethod
     def selected_user_ids(cls, request):
@@ -305,8 +193,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
     @classmethod
     def selected_group_ids(cls, request):
-        return cls.selected_reporting_group_ids(request) +\
-               cls.selected_sharing_group_ids(request)
+        return cls.selected_reporting_group_ids(request)
 
     @classmethod
     def selected_reporting_group_ids(cls, request):
@@ -314,94 +201,28 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return [g[3:] for g in emws if g.startswith("g__")]
 
     @classmethod
-    def selected_sharing_group_ids(cls, request):
+    def selected_location_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [g[4:] for g in emws if g.startswith("sg__")]
+        return [l[3:] for l in emws if l.startswith("l__")]
 
-    @classmethod
-    def selected_location_sharing_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return SQLLocation.objects.filter(
-            location_id__in=emws,
-            is_archived=False
-        ).values_list('location_id', flat=True)
-
-    @classmethod
-    def selected_location_reporting_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [
-            g for g in emws if g.startswith(LOCATION_REPORTING_PREFIX)
-        ]
+    def get_default_selections(self):
+        defaults = [('t__0', _("[All mobile workers]"))]
+        if self.request.project.commtrack_enabled:
+            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
+        return defaults
 
     @property
     @memoized
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
-            defaults = [{
-                'id': 't__0',
-                'text': _("[All mobile workers]"),
-            }]
-            if self.request.project.commtrack_enabled:
-                commtrack_tuple = self.user_type_tuple(HQUserType.COMMTRACK)
-                defaults.append({
-                    'id': commtrack_tuple[0],
-                    'text': commtrack_tuple[1]
-                })
-            return defaults
+            return [{'id': url_id, 'text': text}
+                    for url_id, text in self.get_default_selections()]
 
-        user_ids = self.selected_user_ids(self.request)
-        user_types = self.selected_user_types(self.request)
-        group_ids = self.selected_group_ids(self.request)
-        location_sharing_ids = self.selected_location_sharing_group_ids(self.request)
-        location_reporting_ids = self.selected_location_reporting_group_ids(self.request)
-
-        selected = [t for t in self.user_types
-                    if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
-        if group_ids:
-            q = {"query": {"filtered": {"filter": {
-                "ids": {"values": group_ids}
-            }}}}
-            res = es_query(
-                es_url=ES_URLS["groups"],
-                q=q,
-                fields=['_id', 'name', "case_sharing", "reporting"],
-            )
-            for group in res['hits']['hits']:
-                if group['fields'].get("reporting", False):
-                    selected.append(self.reporting_group_tuple(group['fields']))
-                if group['fields'].get("case_sharing", False):
-                    selected.append(self.sharing_group_tuple(group['fields']))
-
-        if location_sharing_ids:
-            from corehq.apps.commtrack.models import SQLLocation
-            locs = SQLLocation.objects.filter(
-                location_id__in=location_sharing_ids
-            )
-            for loc in locs:
-                loc_group = loc.case_sharing_group_object()
-                selected.append((loc_group._id, loc_group.name + ' [case sharing]'))
-
-        if location_reporting_ids:
-            from corehq.apps.commtrack.models import SQLLocation
-            for loc_group_id in location_reporting_ids:
-                loc = SQLLocation.objects.get(
-                    location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
-                )
-                loc_group = loc.reporting_group_object()
-                selected.append((loc_group._id, loc_group.name + ' [group]'))
-
-        if user_ids:
-            q = {"query": {"filtered": {"filter": {
-                "ids": {"values": user_ids}
-            }}}}
-            res = es_query(
-                es_url=ES_URLS["users"],
-                q=q,
-                fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
-            )
-            selected += [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
-
+        selected = (self.selected_static_options(self.request) +
+                    self.selected_user_entries(self.request) +
+                    self.selected_group_entries(self.request) +
+                    self.selected_location_entries(self.request))
         known_ids = dict(selected)
         return [
             {'id': id, 'text': known_ids[id]}
@@ -409,10 +230,54 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             if id in known_ids
         ]
 
+    def selected_static_options(self, request):
+        selected_ids = self.request.GET.getlist(self.slug)
+        return [option for option in self.utils.static_options
+                if option[0] in selected_ids]
+
+    def selected_user_entries(self, request):
+        user_ids = self.selected_user_ids(request)
+        if not user_ids:
+            return []
+        q = {"query": {"filtered": {"filter": {
+            "ids": {"values": user_ids}
+        }}}}
+        res = es_query(
+            es_url=ES_URLS["users"],
+            q=q,
+            fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
+        )
+        return [self.utils.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+
+    def selected_groups_query(self, request):
+        group_ids = self.selected_group_ids(request)
+        if not group_ids:
+            return []
+        q = {"query": {"filtered": {"filter": {
+            "ids": {"values": group_ids}
+        }}}}
+        return es_query(
+            es_url=ES_URLS["groups"],
+            q=q,
+            fields=['_id', 'name', "case_sharing", "reporting"],
+        )['hits']['hits']
+
+    def selected_group_entries(self, request):
+        return [self.utils.reporting_group_tuple(group['fields'])
+                for group in self.selected_groups_query(request)
+                if group['fields'].get("reporting", False)]
+
+    def selected_location_entries(self, request):
+        location_ids = self.selected_location_ids(request)
+        if not location_ids:
+            return []
+        return map(self.utils.location_tuple,
+                   SQLLocation.objects.filter(location_id__in=location_ids))
+
     @property
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
-        url = reverse('emwf_options', args=[self.domain])
+        url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
         return context
 
@@ -515,30 +380,6 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
-
-
-class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
-    show_all_filter = True
-
-    @property
-    def filter_context(self):
-        context = super(ExpandedMobileWorkerFilterWithAllData, self).filter_context
-        url = reverse('emwf_options_with_all_data', args=[self.domain])
-        context.update({'endpoint': url})
-        return context
-
-    @classmethod
-    def show_all_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'all_data' in emws
-
-    @property
-    @memoized
-    def selected(self):
-        selected = super(ExpandedMobileWorkerFilterWithAllData, self).selected
-        if self.show_all_data(self.request):
-            selected = [{'id': 'all_data', 'text': "[All Data]"}] + selected
-        return selected
 
 
 def get_user_toggle(request):

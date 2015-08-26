@@ -1,4 +1,4 @@
-{% extends "reports/async/partials/maps.html" %}
+{% extends "reports/partials/maps.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -9,44 +9,35 @@
         <script src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+        {% include "imports/datatables.html" %}
         <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 
         <script>
             setTimeout(function() {
-                var reportTables = new HQReportDataTables({
-                    dataTableElem: '#report_table_{{ report.slug }}',
-                    autoWidth: false,
-                    show_pagination: false,
-                    defaultRows: 100000,
-                    ajaxSource: '{{ report_table.pagination.source }}',
-                    ajaxParams: {{ report_table.pagination.params|JSON }},
-                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}"
-                });
-                reportTables.render();
-                $('.media-heading').append('<br/><small>Selected indicator: -</small>');
-                $('#map').on('click', '.choice', function() {
-                    var text = $(this).text().trim();
-                    if (text !== 'Auto') {
-                        $('small:last-child').remove();
-                        $('.media-heading').append('<small>Selected indicator: ' + text + '</small>');
+                $('#tabular_filter').remove();
+                $(".dataTables_control").remove();
+                window.print();
+           }, 3000);
 
-                        var canvas = document.getElementsByTagName('canvas');
-                        var img    = canvas[0].toDataURL("image/png");
-                        $('#scalebar').innerHTML = "<img src='" + img + "'>";
-                    }
-                });
-           }, 500);
         </script>
 
         <style>
+            table {
+                border-collapse: collapse;
+            }
+            td {
+                border: 1px solid #000000;
+            }
+
+            th {
+                border: 1px solid #000000;
+            }
+
             body {
                 width: 297mm;
             }
-            #map {
-                height: 15cm !important;
-                page-break-after: always;
-            }
             tr {
+                border: 1px solid #000000;
                 page-break-inside: avoid;
             }
             small {
@@ -66,6 +57,59 @@
             }
         </style>
     {% endif %}
-
+    <style>
+        #legend, #extra-legend {
+            max-height: 17em !important;
+            overflow-y: auto;
+        }
+        #legend > div {
+            font: 10px/0.9 "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        #map {
+            height: 15cm !important;
+            page-break-after: always;
+        }
+    </style>
     {{ block.super }}
 {% endblock js-libs %}
+
+{% block js-script %}
+<script>
+
+CONTEXT = {{ context|JSON }};
+ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+MIN_HEIGHT = 300; //px
+
+$(document).ready(function() {
+    if (CONTEXT !== '') {
+        load(CONTEXT, ICON_PATH);
+        var div = '<div id="extra-legend" class="control-pane leaflet-control"><h4>AWC Name</h4><div>' +
+                '<table class="enumlegend"><tbody>';
+        for(var awc_name in CONTEXT.config.metrics[0].children[3].color.categories) {
+            div += "<tr><td>" + awc_name + "</td></tr>"
+        }
+        div += '</tbody></table></div></div>';
+        $('#info').after(div);
+
+        $('.ticklabel').first().css('top', '143px');
+        $('.ticklabel').last().css('top', '7px');
+        $('#metrics').on('click', '.choice', function() {
+            $('.ticklabel').first().css('top', '143px');
+            $('.ticklabel').last().css('top', '7px');
+        })
+    }
+});
+
+</script>
+{% endblock js-script %}
+
+{% block content %}
+    <h2 class="media-heading">{{ report.report_title }}</h2>
+    <h4 class="media-heading">
+        {% for subtitle in report.report_subtitles %}
+        <br/><small>{{ subtitle }}</small>
+        {% endfor %}
+    </h4>
+    <table class="table table-striped datatable dataTable" id="tabular"></table>
+    <div class="row-fluid dataTables_control" style="height: 20px"></div>
+{% endblock content %}

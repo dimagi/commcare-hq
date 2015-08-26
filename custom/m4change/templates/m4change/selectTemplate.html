@@ -65,8 +65,10 @@
         {{ block.super }}
     </div>
     <script type="text/javascript">
-        $("i[data-toggle='popover']").popover({
-            template: '<div class="popover popover-medium"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
         });
     </script>
 {% endblock %}
@@ -93,9 +95,11 @@
                         <option value="other">{% trans 'Other errors' %}</option>
                     </select>
                 {% endblock %}
-                <span>
-                    <a href="#" class="hq-help no-click"><i class="icon-question-sign" data-toggle="popover" data-placement="top" data-trigger="hover" data-title="{% trans 'Help' %}" data-content="{% block help_content %}{% endblock %}" data-html="true"></i></a>
-                </span>
+                <span class="hq-help-template"
+                    data-placement="top"
+                    data-title="{% trans 'Help' %}"
+                    data-content="{% block help_content %}{% endblock %}"
+                ></span>
             </form>
         </div>
         <div class="span3" id="logo-top-right">

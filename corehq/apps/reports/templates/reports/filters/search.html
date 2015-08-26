@@ -9,13 +9,10 @@
     </p>
     {% endif %}
     {% if search_help_title and search_help_content %}
-    <a href="#" class="hq-help no-click">
-        <i class="icon-question-sign"
+        <span class="hq-help-template"
            data-title="{{ search_help_title }}"
            data-content="{{ search_help_content }}"
-           data-trigger="click"
-           data-html="true"></i>
-    </a>
+        ></span>
     {% endif %}
 {% endblock %}
 
@@ -23,7 +20,9 @@
 {% block filter_js %} {{ block.super }}
 <script type="text/javascript">
     $(function () {
-        $('.hq-help').hqHelp();
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
     });
 </script>
 {% endblock filter_js %}

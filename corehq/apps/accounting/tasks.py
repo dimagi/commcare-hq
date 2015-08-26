@@ -11,13 +11,19 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
-from corehq.apps.accounting.exceptions import InvoiceError, CreditLineError, BillingContactInfoError
+from corehq.apps.accounting.exceptions import (
+    InvoiceError, CreditLineError,
+    BillingContactInfoError,
+    InvoiceAlreadyCreatedError
+)
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 
 from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
-    SubscriptionAdjustmentMethod)
+    SubscriptionAdjustmentMethod,
+    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
+)
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -122,6 +128,11 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                     "[BILLING] Could not create invoice for domain %s: %s" % (
                     domain.name, e
                 ))
+            except InvoiceAlreadyCreatedError as e:
+                logger.error(
+                    "[BILLING] Invoice already existed for domain %s: %s" % (
+                    domain.name, e
+                ))
             except Exception as e:
                 logger.error(
                     "[BILLING] Error occurred while creating invoice for "
@@ -192,27 +203,21 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days():
+def remind_subscription_ending():
     """
-    Sends reminder emails for subscriptions ending 30 days from now.
+    Sends reminder emails for subscriptions ending N days from now.
     """
-    send_subscription_reminder_emails(30)
+    send_subscription_reminder_emails(30, exclude_trials=True)
+    send_subscription_reminder_emails(10, exclude_trials=True)
+    send_subscription_reminder_emails(1, exclude_trials=True)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
+def remind_dimagi_contact_subscription_ending_40_days():
     """
-    Sends reminder emails for subscriptions ending 10 days from now.
+    Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
     """
-    send_subscription_reminder_emails(10, exclude_trials=False)
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_subscription_ending_30_days(based_on_date=None):
-    """
-    Sends reminder emails for subscriptions ending tomorrow.
-    """
-    send_subscription_reminder_emails(1, exclude_trials=False)
+    send_subscription_reminder_emails_dimagi_contact(40)
 
 
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
@@ -220,18 +225,61 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
     if exclude_trials:
-        ending_subscriptions.filter(is_trial=False)
+        ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_ending_reminder_email()
 
 
+def send_subscription_reminder_emails_dimagi_contact(num_days):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = (Subscription.objects
+                            .filter(is_active=True)
+                            .filter(date_end=date_in_n_days)
+                            .filter(account__dimagi_contact__isnull=False))
+    for subscription in ending_subscriptions:
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            subscription.send_dimagi_ending_reminder_email()
+
+
+@task(ignore_result=True)
+def create_wire_credits_invoice(domain_name,
+                                account_created_by,
+                                account_entry_point,
+                                amount,
+                                invoice_items,
+                                contact_emails):
+    account = BillingAccount.get_or_create_account_by_domain(
+        domain_name,
+        created_by=account_created_by,
+        created_by_invoicing=True,
+        entry_point=account_entry_point
+    )[0]
+    wire_invoice = WirePrepaymentInvoice.objects.create(
+        domain=domain_name,
+        date_start=datetime.datetime.utcnow(),
+        date_end=datetime.datetime.utcnow(),
+        date_due=None,
+        balance=amount,
+        account=account,
+    )
+    wire_invoice.items = invoice_items
+
+    record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
+    try:
+        record.send_email(contact_emails=contact_emails)
+    except Exception as e:
+        logger.error("[BILLING] %s" % e)
+
+
 @task(ignore_result=True)
 def send_purchase_receipt(payment_record, core_product,
                           template_html, template_plaintext,
                           additional_context):
-    email = payment_record.payment_method.billing_admin.web_user
+    email = payment_record.payment_method.web_user
 
     try:
         web_user = WebUser.get_by_username(email)
@@ -246,7 +294,7 @@ def send_purchase_receipt(payment_record, core_product,
     context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': payment_record.payment_method.billing_admin.domain,
+        'project': payment_record.creditadjustment_set.last().credit_line.account.created_by_domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
@@ -276,6 +324,7 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
+            account__dimagi_contact__isnull=True,
         ))
 
     if not ending_in_forty_days:
@@ -341,8 +390,11 @@ def weekly_digest():
         'file_obj': file_to_attach,
     }
     from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
+    env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+           if settings.SERVER_ENVIRONMENT != "production" else "")
+    email_subject = "{}Subscriptions ending in 40 Days from {}".format(env, today.isoformat())
     send_HTML_email(
-        "Subscriptions ending in 40 Days from %s" % today.isoformat(),
+        email_subject,
         settings.ACCOUNTS_EMAIL,
         email_content,
         email_from=from_email,

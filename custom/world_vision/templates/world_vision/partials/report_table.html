@@ -84,9 +84,8 @@
 {% if rendered_as != "print" %}
     <script type="text/javascript">
         $(function () {
-            $("[data-trigger='hover']").popover({
-                trigger: "hover",
-                template: '<div class="popover" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>'
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
             });
             $('#collapse_{{ report_table.slug }}').on('shown', function () {
                $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-down").addClass("icon-chevron-up");

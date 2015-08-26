@@ -1,54 +1,13 @@
 from custom.common import ALL_OPTION
 
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.columns import SimpleColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
                                               BaseDrilldownOptionFilter)
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-
-
-class HierarchySqlData(SqlData):
-    table_name = "fluff_OPMHierarchyFluff"
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def group_by(self):
-        return ['block', 'gp', 'awc']
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('Block', SimpleColumn('block')),
-            DatabaseColumn('Gram Panchayat', SimpleColumn('gp')),
-            DatabaseColumn('AWC', SimpleColumn('awc'))
-        ]
-
-
-def get_hierarchy():
-    """
-    Creates a location hierarchy structured as follows:
-    hierarchy = {"Atri": {
-                    "Sahora": {
-                        "Sohran Bigha": None}}}
-    """
-    hierarchy = {}
-    for location in HierarchySqlData().get_data():
-        block = location['block']
-        gp = location['gp']
-        awc = location['awc']
-        if not (awc and gp and block):
-            continue
-        hierarchy[block] = hierarchy.get(block, {})
-        hierarchy[block][gp] = hierarchy[block].get(gp, {})
-        hierarchy[block][gp][awc] = None
-    return hierarchy
+from .utils import user_sql_data
 
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
@@ -92,7 +51,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(get_hierarchy())
+        return make_drilldown(user_sql_data().data_as_hierarchy())
 
     @classmethod
     def get_labels(cls):
@@ -109,15 +68,16 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
 
 class HierarchyFilter(OpmBaseDrilldownOptionFilter):
+    single_option_select = 0
     label = ugettext_noop("Hierarchy")
     slug = "hierarchy"
 
     @property
-    def selected(self):
-        selected = super(OpmBaseDrilldownOptionFilter, self).selected
-        if selected:
-            return selected
-        return [[ALL_OPTION]]
+    def drilldown_map(self):
+        hierarchy = super(HierarchyFilter, self).drilldown_map
+        all_hierarchy = [x for x in hierarchy
+                         if x['val'].lower() != 'all']
+        return all_hierarchy
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):

@@ -17,19 +17,17 @@ class FeaturePreview(StaticToggle):
 
     e.g.
 
-    if feature_previews.BETA_FEATURE.enabled(domain):
-        try:
-            ensure_request_has_privilege(request, privileges.BETA_FEATURE)
-        except PermissionDenied:
-            pass
-        else:
-            # do cool thing for BETA_FEATURE
+    if feature_previews.BETA_FEATURE.enabled(domain) \
+            and has_privilege(request, privileges.BETA_FEATURE):
+        # do cool thing for BETA_FEATURE
     """
-    def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
+    def __init__(self, slug, label, description, help_link=None, privilege=None,
+                 save_fn=None):
         self.privilege = privilege
-        self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, TAG_PREVIEW, description=description, help_link=help_link,
-                                             namespaces=[NAMESPACE_DOMAIN])
+        super(FeaturePreview, self).__init__(
+            slug, label, TAG_PREVIEW, description=description,
+            help_link=help_link, save_fn=save_fn, namespaces=[NAMESPACE_DOMAIN]
+        )
 
     def has_privilege(self, request):
         if not self.privilege:
@@ -77,37 +75,6 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 )
 
 
-def enable_commtrack_previews(domain):
-    for toggle_class in [COMMTRACK, LOCATIONS]:
-        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
-
-
-def commtrackify(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.commtrack_enabled = checked
-    if checked:
-        # turning on commtrack should turn on locations, but not the other way around
-        domain.locations_enabled = True
-        enable_commtrack_previews(domain)
-
-    domain.save()
-
-COMMTRACK = FeaturePreview(
-    slug='commtrack',
-    label=_("CommCare Supply"),
-    description=_(
-        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
-        "is a logistics and supply chain management module. It is designed "
-        "to improve the management, transport, and resupply of a variety of "
-        "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommCare Supply on any CommCare Supply "
-        "application's settings page."),
-    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
-    save_fn=commtrackify,
-)
-
-
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
@@ -130,13 +97,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-def enable_locations(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.locations_enabled = checked
-    domain.save()
-
-
 LOCATIONS = FeaturePreview(
     slug='locations',
     label=_("Locations"),
@@ -145,7 +105,6 @@ LOCATIONS = FeaturePreview(
         'CommCare Supply to work properly'
     ),
     help_link='https://help.commcarehq.org/display/commtrack/Locations',
-    save_fn=enable_locations,
 )
 
 MODULE_FILTER = FeaturePreview(

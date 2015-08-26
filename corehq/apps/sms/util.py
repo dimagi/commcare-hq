@@ -211,3 +211,16 @@ def get_backend_by_class_name(class_name):
     if backend_path is not None:
         return to_function(backend_path)
     return None
+
+
+def touchforms_error_is_config_error(touchforms_error):
+    """
+    Returns True if the given TouchformsError is the result of a
+    form configuration error.
+    """
+    error_type = touchforms_error.response_data.get('error_type', '')
+    return any([s in error_type for s in (
+        'XPathTypeMismatchException',
+        'XPathUnhandledException',
+        'XFormParseException',
+    )])

@@ -5,7 +5,8 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime
 from django.db import models
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.app_manager.models import Form
+from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
@@ -16,6 +17,7 @@ from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseEx
 from corehq.apps.sms import util as smsutil
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
+from django.utils.translation import ugettext_noop
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -23,18 +25,13 @@ OUTGOING = "O"
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
+WORKFLOW_FORWARD = "FORWARD"
 WORKFLOW_BROADCAST = "BROADCAST"
 WORKFLOW_DEFAULT = 'default'
 
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
-
-
-ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
-ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
-ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
-ERROR_PHONE_NUMBER_OPTED_OUT = "PHONE_NUMBER_OPTED_OUT"
 
 
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
@@ -216,7 +213,9 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
     # True if this was an inbound message that was an
     # invalid response to a survey question
     invalid_survey_response = BooleanProperty(default=False)
-    
+
+    messaging_subevent_id = IntegerProperty()
+
     @property
     def outbound_backend(self):
         """appropriate outbound sms backend"""
@@ -250,6 +249,22 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
 
 
 class SMS(SyncSQLToCouchMixin, models.Model):
+    ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
+    ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
+    ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
+    ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
+
+    ERROR_MESSAGES = {
+        ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
+            ugettext_noop('Gateway error.'),
+        ERROR_MESSAGE_IS_STALE:
+            ugettext_noop('Message is stale and will not be processed.'),
+        ERROR_INVALID_DIRECTION:
+            ugettext_noop('Unknown message direction.'),
+        ERROR_PHONE_NUMBER_OPTED_OUT:
+            ugettext_noop('Phone number has opted out of receiving SMS.'),
+    }
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
     domain = models.CharField(max_length=126, null=True, db_index=True)
     date = models.DateTimeField(null=True, db_index=True)
@@ -310,6 +325,10 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     reminder_id = models.CharField(max_length=126, null=True)
     location_id = models.CharField(max_length=126, null=True)
 
+    # The MessagingSubEvent that this SMS is tied to. Only applies to
+    # SMS that are not part of a survey (i.e., xforms_session_couch_id is None)
+    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
     fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
@@ -340,6 +359,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             'ignore_opt_out',
             'invalid_survey_response',
             'location_id',
+            'messaging_subevent_id',
             'num_processing_attempts',
             'phone_number',
             'processed',
@@ -419,6 +439,7 @@ class CallLog(MessageLog):
     # The id of the case to submit the form against
     case_id = StringProperty()
     case_for_case_submission = BooleanProperty(default=False)
+    messaging_subevent_id = IntegerProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -449,6 +470,19 @@ class CallLog(MessageLog):
                 result = True
                 break
         return result
+
+    @classmethod
+    def get_call_by_gateway_session_id(cls, gateway_session_id):
+        """
+        Returns the CallLog object, or None if not found.
+        """
+        return CallLog.view('sms/call_by_session',
+            startkey=[gateway_session_id, {}],
+            endkey=[gateway_session_id],
+            descending=True,
+            include_docs=True,
+            limit=1).one()
+
 
 class EventLog(SafeSaveDocument):
     base_doc                    = "EventLog"
@@ -551,7 +585,10 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
     def get_language_code(self):
         return self.get_case_property("language_code")
-    
+
+    def get_email(self):
+        return self.get_case_property('commcare_email_address')
+
     @property
     def raw_username(self):
         return self.get_case_property("name")
@@ -656,3 +693,496 @@ class PhoneNumber(models.Model):
             phone_obj.save()
             return True
         return False
+
+
+class MessagingStatusMixin(object):
+
+    def refresh(self):
+        return self.__class__.objects.get(pk=self.pk)
+
+    def error(self, error_code, additional_error_text=None):
+        self.status = MessagingEvent.STATUS_ERROR
+        self.error_code = error_code
+        self.additional_error_text = additional_error_text
+        self.save()
+
+    def completed(self):
+        obj = self.refresh()
+        if obj.status != MessagingEvent.STATUS_ERROR:
+            obj.status = MessagingEvent.STATUS_COMPLETED
+            obj.save()
+        return obj
+
+
+class MessagingEvent(models.Model, MessagingStatusMixin):
+    """
+    Used to track the status of high-level events in the messaging
+    framework. Examples of such high-level events include the firing
+    of a reminder instance, the invoking of a keyword, or the sending
+    of a broadcast.
+    """
+    STATUS_IN_PROGRESS = 'PRG'
+    STATUS_COMPLETED = 'CMP'
+    STATUS_NOT_COMPLETED = 'NOT'
+    STATUS_ERROR = 'ERR'
+
+    STATUS_CHOICES = (
+        (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
+        (STATUS_COMPLETED, ugettext_noop('Completed')),
+        (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
+        (STATUS_ERROR, ugettext_noop('Error')),
+    )
+
+    SOURCE_BROADCAST = 'BRD'
+    SOURCE_KEYWORD = 'KWD'
+    SOURCE_REMINDER = 'RMD'
+    SOURCE_UNRECOGNIZED = 'UNR'
+    SOURCE_FORWARDED = 'FWD'
+    SOURCE_OTHER = 'OTH'
+
+    SOURCE_CHOICES = (
+        (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
+        (SOURCE_KEYWORD, ugettext_noop('Keyword')),
+        (SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
+        (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
+        (SOURCE_OTHER, ugettext_noop('Other')),
+    )
+
+    CONTENT_NONE = 'NOP'
+    CONTENT_SMS = 'SMS'
+    CONTENT_SMS_CALLBACK = 'CBK'
+    CONTENT_SMS_SURVEY = 'SVY'
+    CONTENT_IVR_SURVEY = 'IVR'
+    CONTENT_PHONE_VERIFICATION = 'VER'
+    CONTENT_ADHOC_SMS = 'ADH'
+    CONTENT_API_SMS = 'API'
+    CONTENT_CHAT_SMS = 'CHT'
+    CONTENT_EMAIL = 'EML'
+
+    CONTENT_CHOICES = (
+        (CONTENT_NONE, ugettext_noop('None')),
+        (CONTENT_SMS, ugettext_noop('SMS Message')),
+        (CONTENT_SMS_CALLBACK, ugettext_noop('SMS Expecting Callback')),
+        (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
+        (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
+        (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
+        (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
+        (CONTENT_API_SMS, ugettext_noop('Message Sent Via API')),
+        (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
+        (CONTENT_EMAIL, ugettext_noop('Email')),
+    )
+
+    RECIPIENT_CASE = 'CAS'
+    RECIPIENT_MOBILE_WORKER = 'MOB'
+    RECIPIENT_WEB_USER = 'WEB'
+    RECIPIENT_USER_GROUP = 'UGP'
+    RECIPIENT_CASE_GROUP = 'CGP'
+    RECIPIENT_VARIOUS = 'MUL'
+    RECIPIENT_UNKNOWN = 'UNK'
+
+    RECIPIENT_CHOICES = (
+        (RECIPIENT_CASE, ugettext_noop('Case')),
+        (RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
+        (RECIPIENT_WEB_USER, ugettext_noop('Web User')),
+        (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
+        (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
+        (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
+        (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
+    )
+
+    ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
+    ERROR_CANNOT_RENDER_MESSAGE = 'CANNOT_RENDER_MESSAGE'
+    ERROR_UNSUPPORTED_COUNTRY = 'UNSUPPORTED_COUNTRY'
+    ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
+    ERROR_NO_TWO_WAY_PHONE_NUMBER = 'NO_TWO_WAY_PHONE_NUMBER'
+    ERROR_INVALID_CUSTOM_CONTENT_HANDLER = 'INVALID_CUSTOM_CONTENT_HANDLER'
+    ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER = 'CANNOT_LOAD_CUSTOM_CONTENT_HANDLER'
+    ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
+    ERROR_FORM_HAS_NO_QUESTIONS = 'FORM_HAS_NO_QUESTIONS'
+    ERROR_CASE_EXTERNAL_ID_NOT_FOUND = 'CASE_EXTERNAL_ID_NOT_FOUND'
+    ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND = 'MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND'
+    ERROR_NO_CASE_GIVEN = 'NO_CASE_GIVEN'
+    ERROR_NO_EXTERNAL_ID_GIVEN = 'NO_EXTERNAL_ID_GIVEN'
+    ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS = 'COULD_NOT_PROCESS_STRUCTURED_SMS'
+    ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
+    ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
+    ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
+    ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
+    ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
+    ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
+
+    ERROR_MESSAGES = {
+        ERROR_NO_RECIPIENT:
+            ugettext_noop('No recipient'),
+        ERROR_CANNOT_RENDER_MESSAGE:
+            ugettext_noop('Error rendering message; please check syntax.'),
+        ERROR_UNSUPPORTED_COUNTRY:
+            ugettext_noop('Gateway does not support the destination country.'),
+        ERROR_NO_PHONE_NUMBER:
+            ugettext_noop('Contact has no phone number.'),
+        ERROR_NO_TWO_WAY_PHONE_NUMBER:
+            ugettext_noop('Contact has no two-way phone number.'),
+        ERROR_INVALID_CUSTOM_CONTENT_HANDLER:
+            ugettext_noop('Invalid custom content handler.'),
+        ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER:
+            ugettext_noop('Cannot load custom content handler.'),
+        ERROR_CANNOT_FIND_FORM:
+            ugettext_noop('Cannot find form.'),
+        ERROR_FORM_HAS_NO_QUESTIONS:
+            ugettext_noop('No questions were available in the form. Please '
+                'check that the form has questions and that display conditions '
+                'are not preventing questions from being asked.'),
+        ERROR_CASE_EXTERNAL_ID_NOT_FOUND:
+            ugettext_noop('The case with the given external ID was not found.'),
+        ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
+            ugettext_noop('Multiple cases were found with the given external ID.'),
+        ERROR_NO_CASE_GIVEN:
+            ugettext_noop('The form requires a case but no case was provided.'),
+        ERROR_NO_EXTERNAL_ID_GIVEN:
+            ugettext_noop('No external ID given; please include case external ID after keyword.'),
+        ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS:
+            ugettext_noop('Error processing structured SMS.'),
+        ERROR_SUBEVENT_ERROR:
+            ugettext_noop('View details for more information.'),
+        ERROR_TOUCHFORMS_ERROR:
+            ugettext_noop('An error occurred in the formplayer service.'),
+        ERROR_INTERNAL_SERVER_ERROR:
+            ugettext_noop('Internal Server Error'),
+        ERROR_GATEWAY_ERROR:
+            ugettext_noop('Gateway error.'),
+        ERROR_NO_SUITABLE_GATEWAY:
+            ugettext_noop('No suitable gateway could be found.'),
+        ERROR_NO_EMAIL_ADDRESS:
+            ugettext_noop('Recipient has no email address.'),
+    }
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    date = models.DateTimeField(null=False, db_index=True)
+    source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
+    source_id = models.CharField(max_length=126, null=True)
+    content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
+
+    # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    # This is redundantly stored here (as well as the subevent) so that it
+    # doesn't have to be looked up for reporting.
+    form_unique_id = models.CharField(max_length=126, null=True)
+    form_name = models.TextField(null=True)
+
+    # If any of the MessagingSubEvent status's are STATUS_ERROR, this is STATUS_ERROR
+    status = models.CharField(max_length=3, choices=STATUS_CHOICES, null=False)
+    error_code = models.CharField(max_length=126, null=True)
+    additional_error_text = models.TextField(null=True)
+    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
+    recipient_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    @classmethod
+    def get_recipient_type_from_doc_type(cls, recipient_doc_type):
+        return {
+            'CommCareUser': cls.RECIPIENT_MOBILE_WORKER,
+            'WebUser': cls.RECIPIENT_WEB_USER,
+            'CommCareCase': cls.RECIPIENT_CASE,
+            'Group': cls.RECIPIENT_USER_GROUP,
+            'CommCareCaseGroup': cls.RECIPIENT_CASE_GROUP,
+        }.get(recipient_doc_type, cls.RECIPIENT_UNKNOWN)
+
+    @classmethod
+    def get_recipient_type(cls, recipient):
+        return cls.get_recipient_type_from_doc_type(recipient.doc_type)
+
+    @classmethod
+    def _get_recipient_doc_type(cls, recipient_type):
+        return {
+            MessagingEvent.RECIPIENT_MOBILE_WORKER: 'CommCareUser',
+            MessagingEvent.RECIPIENT_WEB_USER: 'WebUser',
+            MessagingEvent.RECIPIENT_CASE: 'CommCareCase',
+            MessagingEvent.RECIPIENT_USER_GROUP: 'Group',
+            MessagingEvent.RECIPIENT_CASE_GROUP: 'CommCareCaseGroup',
+        }.get(recipient_type, None)
+
+    def get_recipient_doc_type(self):
+        return MessagingEvent._get_recipient_doc_type(self.recipient_type)
+
+    def create_subevent(self, reminder_definition, reminder, recipient):
+        recipient_type = MessagingEvent.get_recipient_type(recipient)
+        content_type, form_unique_id, form_name = self.get_content_info_from_reminder(
+            reminder_definition, reminder, parent=self)
+
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=recipient.get_id if recipient_type else None,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            case_id=reminder.case_id,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
+    def create_ivr_subevent(self, recipient, form_unique_id, case_id=None):
+        recipient_type = MessagingEvent.get_recipient_type(recipient)
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=recipient.get_id if recipient_type else None,
+            content_type=MessagingEvent.CONTENT_IVR_SURVEY,
+            form_unique_id=form_unique_id,
+            form_name=MessagingEvent.get_form_name_or_none(form_unique_id),
+            case_id=case_id,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
+    @classmethod
+    def create_event_for_adhoc_sms(cls, domain, recipient=None,
+            content_type=CONTENT_ADHOC_SMS, source=SOURCE_OTHER):
+        if recipient:
+            recipient_type = cls.get_recipient_type(recipient)
+            recipient_id = recipient.get_id
+        else:
+            recipient_type = cls.RECIPIENT_UNKNOWN
+            recipient_id = None
+
+        obj = cls.objects.create(
+            domain=domain,
+            date=datetime.utcnow(),
+            source=source,
+            content_type=content_type,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient_id,
+        )
+        return obj
+
+    def create_structured_sms_subevent(self, case_id):
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=self.recipient_type,
+            recipient_id=self.recipient_id,
+            content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+            form_unique_id=self.form_unique_id,
+            form_name=self.form_name,
+            case_id=case_id,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
+    def create_subevent_for_single_sms(self, recipient_doc_type=None, recipient_id=None, case=None):
+        obj = MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
+            recipient_id=recipient_id,
+            content_type=MessagingEvent.CONTENT_SMS,
+            case_id=case.get_id if case else None,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+        )
+        return obj
+
+    @property
+    def subevents(self):
+        return self.messagingsubevent_set.all()
+
+    @classmethod
+    def get_source_from_reminder(cls, reminder_definition):
+        from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
+            REMINDER_TYPE_DEFAULT)
+
+        default = (cls.SOURCE_OTHER, None)
+        return {
+            REMINDER_TYPE_ONE_TIME:
+                (cls.SOURCE_BROADCAST, reminder_definition.get_id),
+            REMINDER_TYPE_DEFAULT:
+                (cls.SOURCE_REMINDER, reminder_definition.get_id),
+        }.get(reminder_definition.reminder_type, default)
+
+    @classmethod
+    def get_form_name_or_none(cls, form_unique_id):
+        try:
+            form = Form.get_form(form_unique_id)
+            return form.full_path_name
+        except:
+            return None
+
+    @classmethod
+    def get_content_info_from_reminder(cls, reminder_definition, reminder, parent=None):
+        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
+            METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL)
+        content_type = {
+            METHOD_SMS: cls.CONTENT_SMS,
+            METHOD_SMS_CALLBACK: cls.CONTENT_SMS_CALLBACK,
+            METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
+            METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
+            METHOD_EMAIL: cls.CONTENT_EMAIL,
+        }.get(reminder_definition.method, cls.CONTENT_SMS)
+
+        form_unique_id = reminder.current_event.form_unique_id
+        if parent and parent.form_unique_id == form_unique_id:
+            form_name = parent.form_name
+        else:
+            form_name = (cls.get_form_name_or_none(form_unique_id)
+                if form_unique_id else None)
+
+        return (content_type, form_unique_id, form_name)
+
+    @classmethod
+    def get_content_info_from_keyword(cls, keyword):
+        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
+            METHOD_STRUCTURED_SMS, RECIPIENT_SENDER)
+
+        content_type = cls.CONTENT_NONE
+        form_unique_id = None
+        form_name = None
+
+        for action in keyword.actions:
+            if action.recipient == RECIPIENT_SENDER:
+                if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+                    content_type = cls.CONTENT_SMS_SURVEY
+                    form_unique_id = action.form_unique_id
+                    form_name = cls.get_form_name_or_none(action.form_unique_id)
+                elif action.action == METHOD_SMS:
+                    content_type = cls.CONTENT_SMS
+
+        return (content_type, form_unique_id, form_name)
+
+    @classmethod
+    def create_from_reminder(cls, reminder_definition, reminder, recipient=None):
+        if reminder_definition.messaging_event_id:
+            return cls.objects.get(pk=reminder_definition.messaging_event_id)
+
+        source, source_id = cls.get_source_from_reminder(reminder_definition)
+        content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
+            reminder_definition, reminder)
+
+        if isinstance(recipient, list):
+            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+        elif recipient is None:
+            recipient_type = cls.RECIPIENT_UNKNOWN
+            recipient_id = None
+        else:
+            recipient_type = cls.get_recipient_type(recipient)
+            recipient_id = recipient.get_id if recipient_type else None
+
+        return cls.objects.create(
+            domain=reminder_definition.domain,
+            date=datetime.utcnow(),
+            source=source,
+            source_id=source_id,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient_id
+        )
+
+    @classmethod
+    def create_from_keyword(cls, keyword, contact):
+        """
+        keyword - the keyword object
+        contact - the person who initiated the keyword
+        """
+        content_type, form_unique_id, form_name = cls.get_content_info_from_keyword(
+            keyword)
+        recipient_type = cls.get_recipient_type(contact)
+
+        return cls.objects.create(
+            domain=keyword.domain,
+            date=datetime.utcnow(),
+            source=cls.SOURCE_KEYWORD,
+            source_id=keyword.get_id,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None
+        )
+
+    @classmethod
+    def create_verification_event(cls, domain, contact):
+        recipient_type = cls.get_recipient_type(contact)
+        return cls.objects.create(
+            domain=domain,
+            date=datetime.utcnow(),
+            source=cls.SOURCE_OTHER,
+            content_type=cls.CONTENT_PHONE_VERIFICATION,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None
+        )
+
+    @classmethod
+    def get_current_verification_event(cls, domain, contact_id, phone_number):
+        """
+        Returns the latest phone verification event that is in progress
+        for the given contact and phone number, or None if one does not exist.
+        """
+        qs = cls.objects.filter(
+            domain=domain,
+            recipient_id=contact_id,
+            messagingsubevent__sms__phone_number=smsutil.clean_phone_number(phone_number),
+            content_type=cls.CONTENT_PHONE_VERIFICATION,
+            status=cls.STATUS_IN_PROGRESS
+        )
+        return qs.order_by('-date')[0] if qs.count() > 0 else None
+
+
+class MessagingSubEvent(models.Model, MessagingStatusMixin):
+    """
+    Used to track the status of a MessagingEvent for each of its recipients.
+    """
+    RECIPIENT_CHOICES = (
+        (MessagingEvent.RECIPIENT_CASE, ugettext_noop('Case')),
+        (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
+        (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
+    )
+
+    parent = models.ForeignKey('MessagingEvent')
+    date = models.DateTimeField(null=False, db_index=True)
+    recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
+    recipient_id = models.CharField(max_length=126, null=True)
+    content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
+
+    # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    form_unique_id = models.CharField(max_length=126, null=True)
+    form_name = models.TextField(null=True)
+    xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
+
+    # If this was a reminder that spawned off of a case, this is the case's id
+    case_id = models.CharField(max_length=126, null=True)
+    status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
+    error_code = models.CharField(max_length=126, null=True)
+    additional_error_text = models.TextField(null=True)
+
+    def save(self, *args, **kwargs):
+        super(MessagingSubEvent, self).save(*args, **kwargs)
+        parent = self.parent
+
+        # If this event is in an errored state, also set the parent
+        # event to an errored state.
+        if self.status == MessagingEvent.STATUS_ERROR:
+            parent.status = MessagingEvent.STATUS_ERROR
+            parent.save()
+
+        # If the parent event had various recipients, mark it as such,
+        # unless the source was a keyword in which case the recipient
+        # listed should always be the keyword initiator.
+        if (parent.source != MessagingEvent.SOURCE_KEYWORD and
+                (parent.recipient_id != self.recipient_id or self.recipient_id is None) and
+                parent.recipient_type not in (
+                    MessagingEvent.RECIPIENT_USER_GROUP,
+                    MessagingEvent.RECIPIENT_CASE_GROUP,
+                    MessagingEvent.RECIPIENT_VARIOUS,
+                ) and len(parent.subevents) > 1):
+            parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
+            parent.recipient_id = None
+            parent.save()
+
+    def get_recipient_doc_type(self):
+        return MessagingEvent._get_recipient_doc_type(self.recipient_type)

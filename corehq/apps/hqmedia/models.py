@@ -247,6 +247,7 @@ class CommCareMultimedia(SafeSaveDocument):
             'CommCareImage': CommCareImage,
             'CommCareAudio': CommCareAudio,
             'CommCareVideo': CommCareVideo,
+            'CommCareMultimedia': CommCareMultimedia,
         }[doc_type]
 
     @classmethod
@@ -529,14 +530,22 @@ class HQMediaMixin(Document):
                                                        media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
-
-        for m, module in enumerate(self.get_modules()):
+        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
+
+            for name, details, display in module.get_details():
+                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                    media.append(ApplicationMediaReference(
+                        details.lookup_image,
+                        media_class=CommCareImage,
+                        **media_kwargs)
+                    )
+
             if module.case_list_form.form_id:
                 media.append(ApplicationMediaReference(
                     module.case_list_form.media_audio,
@@ -549,7 +558,6 @@ class HQMediaMixin(Document):
                     **media_kwargs)
                 )
 
-            # Not all modules use case lists (e.g., reporting modules)
             if hasattr(module, 'case_list') and module.case_list.show:
                 media.append(ApplicationMediaReference(
                     module.case_list.media_audio,
@@ -581,6 +589,9 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
+                    for text in parsed.text_references:
+                        if text:
+                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
@@ -603,12 +614,28 @@ class HQMediaMixin(Document):
         return self._get_item_media(module.case_list_form, media_kwargs)
 
     def get_case_list_menu_item_media(self, module, module_index):
-        # Not all modules use case lists (e.g., reporting modules)
-        if not module or not hasattr(module, 'case_list'):
+        if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         return self._get_item_media(module.case_list, media_kwargs)
+
+    def get_case_list_lookup_image(self, module, module_index, type='case'):
+        if not module:
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        details_name = '{}_details'.format(type)
+        if not hasattr(module, details_name):
+            return {}
+
+        image = ApplicationMediaReference(
+            module[details_name].short.lookup_image,
+            media_class=CommCareImage,
+            **media_kwargs
+        ).as_dict()
+        return {
+            'image': image
+        }
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}

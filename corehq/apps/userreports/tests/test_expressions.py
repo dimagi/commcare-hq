@@ -46,10 +46,20 @@ class ConstantExpressionTest(SimpleTestCase):
 
 class PropertyExpressionTest(SimpleTestCase):
 
+    def test_boolean_to_string_conversion(self):
+        getter = ExpressionFactory.from_spec({
+            'type': 'property_name',
+            'property_name': 'my_bool',
+            'datatype': 'string'
+        })
+        self.assertEqual('True', getter({'my_bool': True}))
+        self.assertEqual('False', getter({'my_bool': False}))
+
     def test_datatype(self):
         for expected, datatype, original in [
             (5, "integer", "5"),
-            (None, "integer", "5.3"),
+            (5, "integer", "5.3"),
+            (None, "integer", "five"),
             (Decimal(5), "decimal", "5"),
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),

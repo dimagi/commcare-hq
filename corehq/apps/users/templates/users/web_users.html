@@ -82,7 +82,7 @@
                     var post_url = '{% url "delete_invitation" domain %}';
                     $.post(post_url, {invite: id},
                         function(data) {
-                            $("a[data-id]=" + id).parents("tr").remove();
+                            $("a[data-id=" + id + "]").parents("tr").remove();
                             $('#modal-dialog').data('id', id).modal('hide');
                              $(this).removeClass('disabled');
                         }
@@ -109,7 +109,7 @@
 
     {% include 'domain/partials/user_list.html' with users=web_users remove_included=1 %}
 
-    {% if domain_object.locations_enabled and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
+    {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
         <label class="checkbox">
             <input id="restrict_users" type="checkbox" name="restrict_users" value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}>
             {% trans "Restrict Web User access based on location" %}

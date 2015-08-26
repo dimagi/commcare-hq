@@ -4,10 +4,12 @@
 <label class="control-label">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
 <div class="controls">
   <div data-bind="foreach: selected_path" style="display: inline-block;">
-    <select data-bind="options: children,
-                       optionsText: 'display_name',
-                       value: selected_child,
-                       disable: !can_edit_children()"></select>
+      {% block location_select %}
+        <select data-bind="options: children,
+                           optionsText: 'display_name',
+                           value: selected_child,
+                           disable: !can_edit_children()"></select>
+      {% endblock %}
   </div>
   <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
 </div>

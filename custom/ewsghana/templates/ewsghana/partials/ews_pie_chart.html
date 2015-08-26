@@ -2,7 +2,7 @@
 <script type="text/javascript">
 
     var moveLegend = function (chart_id) {
-        var x = $(chart_id).width() / 2;
+        var x = ($(chart_id).width() / 2) - 20;
         d3.select(chart_id + ' svg').select('.nv-legendWrap').attr("transform", "translate(" + (-x) + ", -30)");
     };
 
@@ -42,7 +42,8 @@
         $(chart_id + ' svg .nv-slice').on('mouseenter', function() {
             var $element = $(this);
             $(this).parents('.row').find('.desc').each(function(idx, element) {
-                if (chart_id === '#chart_reporting_page_21' || chart_id === '#chart_reporting_page_31') {
+                if (chart_id === '#chart_reporting_page_21' || chart_id === '#chart_reporting_page_31' ||
+                    chart_id === '#chart_dashboard_report_21' || chart_id === '#chart_dashboard_report_31') {
                     var description = chart_data[0].values.filter(function(data) {
                         return data.color === $element.attr('fill');
                     })[0].description;

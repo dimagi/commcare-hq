@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block main_column %}
-    {% if not instance.initial_processing_complete and request|toggle_enabled:'CASE_REBUILD'%}
+    {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-error">
         {% trans "This form's case changes were not processed because of errors that occurred during case processing." %}
     </div>

@@ -1,9 +1,9 @@
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.dbaccessors import get_total_case_count
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.xform import process_cases
 

@@ -1,0 +1,121 @@
+<a href='https://github.com/angular/angular.js/edit/v1.4.x/src/ng/directive/select.js?message=docs(select)%3A%20describe%20your%20change...#L103' class='improve-docs btn btn-primary'><i class="glyphicon glyphicon-edit">&nbsp;</i>Improve this Doc</a>
+
+
+
+<a href='https://github.com/angular/angular.js/tree/v1.4.4/src/ng/directive/select.js#L103' class='view-source pull-right btn btn-primary'>
+  <i class="glyphicon glyphicon-zoom-in">&nbsp;</i>View Source
+</a>
+
+
+<header class="api-profile-header">
+  <h1 class="api-profile-header-heading">select</h1>
+  <ol class="api-profile-header-structure naked-list step-list">
+    
+    <li>
+      - directive in module <a href="api/ng">ng</a>
+    </li>
+  </ol>
+</header>
+
+
+
+<div class="api-profile-description">
+  <p>HTML <code>SELECT</code> element with angular data-binding.</p>
+<p>In many cases, <code>ngRepeat</code> can be used on <code>&lt;option&gt;</code> elements instead of <a href="api/ng/directive/ngOptions">ngOptions</a> to achieve a similar result. However, <code>ngOptions</code> provides some benefits such as reducing
+memory and increasing speed by not creating a new scope for each repeated instance, as well as providing
+more flexibility in how the <code>&lt;select&gt;</code>&#39;s model is assigned via the <code>select</code> <strong><code>as</code></strong> part of the
+comprehension expression.</p>
+<p>When an item in the <code>&lt;select&gt;</code> menu is selected, the array element or object property
+represented by the selected option will be bound to the model identified by the <code>ngModel</code>
+directive.</p>
+<p>If the viewValue contains a value that doesn&#39;t match any of the options then the control
+will automatically add an &quot;unknown&quot; option, which it then removes when this is resolved.</p>
+<p>Optionally, a single hard-coded <code>&lt;option&gt;</code> element, with the value set to an empty string, can
+be nested into the <code>&lt;select&gt;</code> element. This element will then represent the <code>null</code> or &quot;not selected&quot;
+option. See example below for demonstration.</p>
+<div class="alert alert-info">
+The value of a <code>select</code> directive used without <code>ngOptions</code> is always a string.
+When the model needs to be bound to a non-string value, you must either explictly convert it
+using a directive (see example below) or use <code>ngOptions</code> to specify the set of options.
+This is because an option element can only be bound to string values at present.
+</div>
+
+<h3 id="example-binding-select-to-a-non-string-value-">Example (binding <code>select</code> to a non-string value)</h3>
+<p>
+
+<div>
+  <a ng-click="openPlunkr('examples/example-select-with-non-string-options', $event)" class="btn pull-right">
+    <i class="glyphicon glyphicon-edit">&nbsp;</i>
+    Edit in Plunker</a>
+
+  <div class="runnable-example"
+      path="examples/example-select-with-non-string-options"
+      name="select-with-non-string-options"
+      module="nonStringSelect">
+
+  
+    <div class="runnable-example-file" 
+      name="index.html"
+      language="html"
+      type="html">
+      <pre><code>&lt;select ng-model=&quot;model.id&quot; convert-to-number&gt;&#10;  &lt;option value=&quot;0&quot;&gt;Zero&lt;/option&gt;&#10;  &lt;option value=&quot;1&quot;&gt;One&lt;/option&gt;&#10;  &lt;option value=&quot;2&quot;&gt;Two&lt;/option&gt;&#10;&lt;/select&gt;&#10;{{ model }}</code></pre>
+    </div>
+  
+    <div class="runnable-example-file" 
+      name="app.js"
+      language="js"
+      type="js">
+      <pre><code>angular.module(&#39;nonStringSelect&#39;, [])&#10;.run(function($rootScope) {&#10;  $rootScope.model = { id: 2 };&#10;})&#10;.directive(&#39;convertToNumber&#39;, function() {&#10;  return {&#10;    require: &#39;ngModel&#39;,&#10;    link: function(scope, element, attrs, ngModel) {&#10;      ngModel.$parsers.push(function(val) {&#10;        return parseInt(val, 10);&#10;      });&#10;      ngModel.$formatters.push(function(val) {&#10;        return &#39;&#39; + val;&#10;      });&#10;    }&#10;  };&#10;});</code></pre>
+    </div>
+  
+    <div class="runnable-example-file" 
+      name="protractor.js"
+      type="protractor"
+      language="js">
+      <pre><code>it(&#39;should initialize to model&#39;, function() {&#10;  var select = element(by.css(&#39;select&#39;));&#10;  expect(element(by.model(&#39;model.id&#39;)).$(&#39;option:checked&#39;).getText()).toEqual(&#39;Two&#39;);&#10;});</code></pre>
+    </div>
+  
+
+    <iframe class="runnable-example-frame" src="examples/example-select-with-non-string-options/index.html" name="example-select-with-non-string-options"></iframe>
+  </div>
+</div>
+
+
+</p>
+
+</div>
+
+
+
+
+<div>
+  
+
+  
+  <h2>Directive Info</h2>
+  <ul>
+    
+    <li>This directive executes at priority level 0.</li>
+    
+  </ul>
+
+  
+  <h2 id="usage">Usage</h2>
+  <div class="usage">
+  
+    <ul>
+    
+      <li>as element:
+      
+      <pre><code>&lt;select&gt;&#10;...&#10;&lt;/select&gt;</code></pre>
+      </li>
+    
+  </div>
+  
+  
+
+
+  
+</div>
+
+

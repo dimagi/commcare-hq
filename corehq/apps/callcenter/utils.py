@@ -22,10 +22,16 @@ from dimagi.utils.couch import CriticalSection
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
     @property
-    def midnight(self):
+    def midnights(self):
+        """Returns a list containing a datetime for midnight in the domains timezone
+        on either side of the current date.
+        """
         tz = pytz.timezone(self.default_timezone)
-        midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        return UserTime(midnight, tz).server_time().done()
+        now = datetime.utcnow()
+        midnight_utc = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_tz1 = UserTime(midnight_utc, tz).server_time().done()
+        midnight_tz2 = midnight_tz1 + timedelta(days=(1 if midnight_tz1 < now else -1))
+        return sorted([midnight_tz1, midnight_tz2])
 
 
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')

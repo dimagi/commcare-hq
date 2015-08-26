@@ -27,6 +27,7 @@ from corehq.apps.fixtures.exceptions import (
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
 from corehq.apps.fixtures.upload import run_upload, validate_file_format, get_workbook
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.utils import is_field_name_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
@@ -105,6 +106,30 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
     if request.method == 'POST' or request.method == "PUT":
         fields_update = test_patch or _to_kwargs(request)
+
+        # validate fields
+        validation_errors = []
+        for field_name, options in fields_update['fields'].items():
+            method = options.keys()
+            if 'update' in method:
+                field_name = options['update']
+            if field_name.startswith('xml') and 'remove' not in method:
+                validation_errors.append(
+                    _("Field name \"%s\" cannot begin with 'xml'.") % field_name
+                )
+            if is_field_name_invalid(field_name) and 'remove' not in method:
+                validation_errors.append(
+                    _("Field name \"%s\" cannot include /, "
+                      "\\, <, >, or spaces.") % field_name
+                )
+        if validation_errors:
+            return json_response({
+                'validation_errors': validation_errors,
+                'error_msg': _(
+                    "Could not update table because field names were not "
+                    "correctly formatted"),
+            })
+
         fields_patches = fields_update["fields"]
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
@@ -322,8 +347,10 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'title': _(self.page_title),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse('edit_lookup_tables', args=[self.domain]),
+            'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -367,7 +394,7 @@ def upload_fixture_api(request, domain, **kwargs):
         resp_json = {}
         resp_json["code"] = code
         resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+        return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
     try:
         upload_file = request.FILES["file-to-upload"]
@@ -422,7 +449,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_users:
         resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
-    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+    return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
 
 @login_and_domain_required

@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "style/bootstrap2/base_section.html" %}
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
@@ -11,11 +11,7 @@
             var path = '{{ request.path }}';
             COMMCAREHQ.initBlock($('.hq-content'));
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp({
-                    content: $(this).data('content'),
-                    title: $(this).data('title')
-                }, false).insertAfter(this);
-                $(this).remove();
+                COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('.hq-help').hqHelp();
         });

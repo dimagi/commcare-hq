@@ -71,12 +71,10 @@ $(function () {
 <label class="checkbox">
     <input type="checkbox" class="showSkippedToggle"/>
     {% trans "Show questions in form that were not shown to the user" %}
-    <a href="#" class="hq-help no-click">
-        <i class="icon-question-sign"
-           data-title="{% trans "Questions not shown to the user" %}"
-           data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
-           data-trigger="hover"></i>
-    </a>
+    <span class="hq-help-template"
+        data-title="{% trans "Questions not shown to the user" %}"
+        data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
+    ></span>
 </label>
 {% endif %}
 <table class="table table-bordered form-data-table">

@@ -20,6 +20,9 @@ def post_xform_to_couch(instance, attachments=None, process=None,
 
     """
     assert getattr(settings, 'UNIT_TESTING', False)
+    if not process:
+        def process(xform):
+            xform.domain = domain
     xform_lock = process_xform(instance, attachments=attachments,
                                process=process, domain=domain)
     with xform_lock as xforms:

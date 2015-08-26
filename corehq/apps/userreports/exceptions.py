@@ -1,6 +1,20 @@
-
-
 class UserReportsError(Exception):
+    pass
+
+
+class UserReportsWarning(Warning):
+    pass
+
+
+class TableNotFoundWarning(UserReportsWarning):
+    pass
+
+
+class BadBuilderConfigError(UserReportsError):
+    pass
+
+
+class ColumnNotFoundError(UserReportsError):
     pass
 
 
@@ -13,4 +27,12 @@ class UserQueryError(UserReportsError):
 
 
 class TableRebuildError(UserReportsError):
+    pass
+
+
+class UserReportsFilterError(UserReportsError):
+    pass
+
+
+class SortConfigurationError(UserReportsError):
     pass

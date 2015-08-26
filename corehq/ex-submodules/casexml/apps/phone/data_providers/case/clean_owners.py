@@ -2,13 +2,13 @@ from collections import defaultdict
 from copy import copy
 from functools import partial
 from datetime import datetime
-from casexml.apps.case.dbaccessors import get_open_case_ids
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
+from corehq.apps.hqcase.dbaccessors import get_open_case_ids
 from corehq.apps.users.cases import get_owner_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -62,7 +62,8 @@ class CleanOwnerCaseSyncOperation(object):
                 self.restore_state.domain, list(other_ids_to_check), self.restore_state.last_sync_log.date
             ))
 
-        all_syncing = copy(case_ids_to_sync)
+        all_maybe_syncing = copy(case_ids_to_sync)
+        all_synced = set()
         all_indices = defaultdict(set)
         all_dependencies_syncing = set()
         while case_ids_to_sync:
@@ -77,6 +78,7 @@ class CleanOwnerCaseSyncOperation(object):
             )
             for update in updates:
                 case = update.case
+                all_synced.add(case._id)
                 append_update_to_response(response, update, self.restore_state)
 
                 # update the indices in the new sync log
@@ -84,7 +86,7 @@ class CleanOwnerCaseSyncOperation(object):
                     all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
-                        if index.referenced_id not in all_syncing:
+                        if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
                 if not _is_live(case, self.restore_state):
@@ -98,7 +100,7 @@ class CleanOwnerCaseSyncOperation(object):
             response.extend(commtrack_elements)
 
             # add any new values to all_syncing
-            all_syncing = all_syncing | case_ids_to_sync
+            all_maybe_syncing = all_maybe_syncing | case_ids_to_sync
 
         # update sync token - marking it as the new format
         self.restore_state.current_sync_log = SimplifiedSyncLog.wrap(
@@ -106,8 +108,8 @@ class CleanOwnerCaseSyncOperation(object):
         )
         self.restore_state.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
         index_tree = IndexTree(indices=all_indices)
-        case_ids_on_phone = all_syncing
-        primary_cases_syncing = all_syncing - all_dependencies_syncing
+        case_ids_on_phone = all_synced
+        primary_cases_syncing = all_synced - all_dependencies_syncing
         if not self.restore_state.is_initial:
             case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
             # subtract primary cases from dependencies since they must be newly primary
@@ -127,7 +129,7 @@ class CleanOwnerCaseSyncOperation(object):
         if self.is_clean(owner_id):
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
-                return set(get_open_case_ids(owner_id))
+                return set(get_open_case_ids(self.restore_state.domain, owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
                 return set(get_case_ids_modified_with_owner_since(

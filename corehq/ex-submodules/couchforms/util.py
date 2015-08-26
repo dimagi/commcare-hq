@@ -15,9 +15,11 @@ from django.http import (
     HttpResponseForbidden,
 )
 import iso8601
-from redis import ConnectionError
+from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -26,7 +28,8 @@ import xml2json
 
 import couchforms
 from . import const
-from .exceptions import DuplicateError
+from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
+    PhoneDateValueError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
@@ -99,7 +102,7 @@ def acquire_lock_for_xform(xform_id):
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
-    except ConnectionError:
+    except RedisError:
         lock = None
     return lock
 
@@ -121,16 +124,19 @@ def adjust_datetimes(data, parent=None, key=None):
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, basestring):
-        if re_loose_datetime.match(data):
+    if isinstance(data, basestring) and re_loose_datetime.match(data):
+        try:
+            matching_datetime = iso8601.parse_date(data)
+        except iso8601.ParseError:
+            pass
+        else:
             if phone_timezones_should_be_processed():
                 parent[key] = json_format_datetime(
-                    iso8601.parse_date(data).astimezone(pytz.utc)
-                    .replace(tzinfo=None)
+                    matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
                 )
             else:
                 parent[key] = json_format_datetime(
-                    iso8601.parse_date(data).replace(tzinfo=None))
+                    matching_datetime.replace(tzinfo=None))
 
     elif isinstance(data, dict):
         for key, value in data.items():
@@ -476,10 +482,13 @@ class SubmissionPost(object):
             from casexml.apps.case.signals import case_post_save
             from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
             from corehq.apps.commtrack.processing import process_stock
+            from corehq.apps.commtrack.exceptions import MissingProductId
 
             cases = []
             responses = []
             errors = []
+            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
                 if instance.doc_type == 'XFormInstance':
@@ -490,18 +499,27 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
-                            process_stock(instance, case_db)
-                        except (IllegalCaseId, UsesReferrals) as e:
+                            stock_result = process_stock(instance, case_db)
+                        except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form
                             instance = _handle_known_error(e, instance)
+                            xforms[0] = instance
+                            # this is usually just one document, but if an edit errored we want
+                            # to save the deprecated form as well
+                            XFormInstance.get_db().bulk_save(xforms)
                             response = self._get_open_rosa_response(instance,
                                                                     None, None)
                             return response, instance, cases
                         except Exception as e:
                             # handle / log the error and reraise so the phone knows to resubmit
-                            _handle_unexpected_error(e, instance)
+                            # note that in the case of edit submissions this won't flag the previous
+                            # submission as having been edited. this is intentional, since we should treat
+                            # this use case as if the edit "failed"
+                            error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
+                            instance = _handle_unexpected_error(instance, error_message)
+                            instance.save()
                             raise
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub(
@@ -540,12 +558,22 @@ class SubmissionPost(object):
                             logging.error('BulkSaveError saving forms', exc_info=1,
                                           extra={'details': {'errors': e.errors}})
                             raise
+                        except Exception as e:
+                            docs_being_saved = [doc['_id'] for doc in docs]
+                            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                                type(e).__name__,
+                                unicode(e),
+                                ', '.join(docs_being_saved)
+                            )
+                            instance = _handle_unexpected_error(instance, error_message)
+                            instance.save()
+                            raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
+                        case_result.commit_dirtiness_flags()
+                        stock_result.commit()
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
-
-                        case_result.commit_dirtiness_flags()
 
                     responses, errors = self.process_signals(instance)
                     if errors:
@@ -648,32 +676,33 @@ def _handle_known_error(e, instance):
         u"for form {}: {}."
     ).format(instance._id, error_message))
     instance.__class__ = XFormError
+    instance.doc_type = 'XFormError'
     instance.problem = error_message
-    instance.save()
     return instance
 
 
-def _handle_unexpected_error(e, instance):
-    # Some things to consider here
+def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    error_message = '{}: {}'.format(
-        type(e).__name__, unicode(e))
     new_id = XFormError.get_db().server.next_uuid()
-    logging.exception((
+    notify_exception(None, (
         u"Error in case or stock processing "
-        u"for form {}: {}.\n"
+        u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance._id, error_message, new_id))
     instance.__class__ = XFormError
     instance.orig_id = instance._id
     instance._id = new_id
+    if '_rev' in instance:
+        # clear the rev since we want to make a new doc
+        # this is necessary for errors that come from editing submissions
+        del instance['_rev']
     instance.problem = error_message
-    instance.save()
+    return instance
 
 
 def fetch_and_wrap_form(doc_id):
@@ -684,6 +713,8 @@ def fetch_and_wrap_form(doc_id):
     doc = db.get(doc_id)
     if doc['doc_type'] in doc_types():
         return doc_types()[doc['doc_type']].wrap(doc)
+    if doc['doc_type'] == "%s%s" % (XFormInstance.__name__, DELETED_SUFFIX):
+        raise UnexpectedDeletedXForm(doc_id)
     raise ResourceNotFound(doc_id)
 
 

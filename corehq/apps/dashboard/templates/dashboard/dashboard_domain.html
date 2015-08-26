@@ -8,7 +8,7 @@
         src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
 
-{% block uncompressed-js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
 (function (angular, undefined) {
     'use strict';

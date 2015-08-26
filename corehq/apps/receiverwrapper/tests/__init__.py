@@ -7,7 +7,6 @@ try:
     from .test_submit_errors import *
     from .test_auth import *
     from .test_app_id import *
-    from .test_guess_phone_type import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

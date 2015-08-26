@@ -16,24 +16,6 @@
     {% endif %}
 {% endblock %}
 
-{% block breadcrumbs %}
-    {% if is_new %}
-        <ul class="breadcrumb breadcrumb-steps">
-            <li class="past">
-                {% blocktrans %}Account Created for <strong>{{ request.couch_user.first_name }}</strong>{% endblocktrans %}
-                <span class="divider">></span>
-            </li>
-            <li class="active">
-                {% blocktrans %}Create a Project Space{% endblocktrans %}
-                <span class="divider">></span>
-            </li>
-            <li>
-                {% blocktrans %}Confirm Account{% endblocktrans %}
-            </li>
-        </ul>
-    {% endif %}
-{% endblock %}
-
 {% block registration-content %}
 <div>
     {% if is_new %}

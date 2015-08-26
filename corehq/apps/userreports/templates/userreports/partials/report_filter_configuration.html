@@ -13,16 +13,37 @@ TODO:
 {% endcomment%}
 
 
-{# Is it bad to inline this style? #}
 <table class="table table-condensed" style="display: inline-block">
 
     <thead data-bind="visible: columns().length > 0">
         <tr>
             <th></th>
-            <th>{% trans "Property" %}</th>
-            <th>{% trans "Display Text" %}</th>
+            <th>
+                {% trans "Property" %}
+                <!--ko if: $data.propertyHelpText -->
+                <span class="hq-help-template" data-bind="
+                    attr: {'data-content': propertyHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
+            <th>
+                {% trans "Display Text" %}
+                <!--ko if: $data.displayHelpText -->
+                <span class="hq-help-template" data-bind="
+                    attr: {'data-content': displayHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
             <!--ko if: $data.hasFormatCol -->
-            <th>{% trans "Format" %}</th>
+            <th>
+                {% trans "Format" %}
+                <!--ko if: $data.formatHelpText -->
+                <span class="hq-help-template" data-bind="
+                    if: formatHelpText,
+                    attr: {'data-content': formatHelpText}
+                "></span>
+                <!--/ko-->
+            </th>
             <!--/ko-->
             <th></th>
         </tr>
@@ -42,23 +63,44 @@ TODO:
             "></i>
         </td>
 
-        <td class="control-group" data-bind="css:{'error': $parent.showWarnings() && !isValid()}">
+        <td class="control-group" data-bind="css:{'error': !isValid()}">
+
+            <!-- ko ifnot: $parent.optionsContainQuestions -->
             <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
-            <label class="help-block" data-bind="if: $parent.showWarnings() && !isValid()">Property may not be blank!</label>
+            <!-- /ko -->
+            <!-- ko if: $parent.optionsContainQuestions -->
+            <input class="input-large" type="hidden" data-bind="
+                questionsSelect: $parent.propertyOptions().concat(
+                    existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
+                ),
+                value: existsInCurrentVersion() ? property : dataSourceField,
+                attr: {disabled: !existsInCurrentVersion()}
+            "/>
+            <!-- /ko -->
+            <label class="help-block" data-bind="if: $parent.showWarnings() && !isNotBlank()">Property may not be blank!</label>
+            {# This is gross and I hate it #}
+            <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">This property or question no longer exists in your app.
+You must delete this property to update this report.</label>
         </td>
         <td class="control-group">
-            <input type="text" data-bind="value: displayText">
+            <input type="text" data-bind="
+                value: displayText,
+                attr: {disabled: !existsInCurrentVersion()},
+                event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
+            ">
         </td>
         <!--ko if: $parent.hasFormatCol -->
         <td>
-            <select data-bind="options: $parent.formatOptions, value: format"></select>
+            <select data-bind="
+                options: $parent.formatOptions,
+                value: format,
+                attr: {disabled: !existsInCurrentVersion()}
+            "></select>
         </td>
         <!--/ko-->
 
         <td class="span1">
-            <i style="cursor: pointer;"
-               title="Delete"
-               data-bind="
+            <i style="cursor: pointer;" title="Delete" data-bind="
                 click: function(){$parent.columns.remove($data)},
                 css: COMMCAREHQ.icons.DELETE
             "></i>

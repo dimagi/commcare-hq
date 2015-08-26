@@ -8,7 +8,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -92,6 +92,8 @@ class ConventureData(BaseSqlData):
         #Filtering is done directly in columns method(CountUniqueColumn).
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
         return filters[1:]
 
     @property
@@ -242,6 +244,8 @@ class TauxDeRuptures(BaseSqlData):
     def filters(self):
         filter = super(TauxDeRuptures, self).filters
         filter.append("total_stock_total = 0")
+        if 'archived_locations' in self.config:
+            filter.append(NOT(IN('location_id', 'archived_locations')))
         return filter
 
     @property
@@ -291,6 +295,13 @@ class FicheData(BaseSqlData):
     have_groups = True
 
     @property
+    def filters(self):
+        filters = super(FicheData, self).filters
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
+        return filters
+
+    @property
     def group_by(self):
         return ['product_code', 'PPS_name']
 
@@ -318,6 +329,8 @@ class PPSAvecDonnees(BaseSqlData):
     def filters(self):
         filters = super(PPSAvecDonnees, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
         return filters[1:]
 
     @property
@@ -352,7 +365,7 @@ class PPSAvecDonnees(BaseSqlData):
             return rows
         all_locations = SQLLocation.objects.get(
             location_id=self.config['district_id']
-        ).get_children().values_list('name', flat=True)
+        ).get_children().exclude(is_archived=True).values_list('name', flat=True)
         locations_not_included = set(all_locations) - set(locations_included)
         return rows + [[location, {'sort_key': 0L, 'html': 0L}] for location in locations_not_included]
 
@@ -366,6 +379,7 @@ class DateSource(BaseSqlData):
         filters = super(DateSource, self).filters
         if 'location_id' in self.config:
             filters.append(EQ('location_id', 'location_id'))
+        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
         return filters
 
     @property
@@ -400,6 +414,7 @@ class RecapPassageData(BaseSqlData):
         filters = super(RecapPassageData, self).filters
         if 'location_id' in self.config:
             filters.append(EQ("location_id", "location_id"))
+        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
         return filters
 
     @property
@@ -442,6 +457,13 @@ class ConsommationData(BaseSqlData):
     have_groups = False
 
     @property
+    def filters(self):
+        filters = super(ConsommationData, self).filters
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
+        return filters
+
+    @property
     def group_by(self):
         group_by = ['product_code']
         if 'region_id' in self.config:
@@ -473,6 +495,13 @@ class TauxConsommationData(BaseSqlData):
     col_names = ['consumption', 'stock', 'taux-consommation']
     sum_cols = ['consumption', 'stock']
     have_groups = True
+
+    @property
+    def filters(self):
+        filters = super(TauxConsommationData, self).filters
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
+        return filters
 
     @property
     def group_by(self):
@@ -531,6 +560,13 @@ class NombreData(BaseSqlData):
     col_names = ['quantity', 'cmm', 'nombre-mois-stock-disponible-et-utilisable']
     sum_cols = ['quantity', 'cmm']
     have_groups = True
+
+    @property
+    def filters(self):
+        filters = super(NombreData, self).filters
+        if 'archived_locations' in self.config:
+            filters.append(NOT(IN('location_id', 'archived_locations')))
+        return filters
 
     @property
     def group_by(self):

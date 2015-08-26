@@ -1,12 +1,12 @@
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.style.decorators import check_preview_bootstrap3, use_select2
+from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.http import require_POST
 import langcodes
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import MySettingsTab
@@ -17,8 +17,11 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from dimagi.utils.couch import CriticalSection
 
 import corehq.apps.style.utils as style_utils
+
+from tastypie.models import ApiKey
 
 
 @login_and_domain_required
@@ -88,32 +91,31 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
+    api_key = None
+    template_name = 'settings/edit_my_account.b2.html'
 
-    @method_decorator(check_preview_bootstrap3())
-    @method_decorator(use_select2())
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def template_name(self):
-        template = {
-            style_utils.BOOTSTRAP_2: 'settings/edit_my_account.b2.html',
-            style_utils.BOOTSTRAP_3: 'settings/edit_my_account.html',
-        }[style_utils.bootstrap_version(self.request)]
-        return template
+    def get_or_create_api_key(self):
+        if not self.api_key:
+            with CriticalSection(['get-or-create-api-key-for-%d' % self.request.user.id]):
+                api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
+            self.api_key = api_key.key
+        return self.api_key
 
     @property
     @memoized
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
+        api_key = self.get_or_create_api_key()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
-                self.request.POST, username=self.request.couch_user.username
+                self.request.POST, username=self.request.couch_user.username,
+                api_key=api_key
             )
         else:
             form = UpdateMyAccountInfoForm(
-                username=self.request.couch_user.username
+                username=self.request.couch_user.username,
+                api_key=api_key
             )
         try:
             domain = self.request.domain
@@ -127,6 +129,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.settings_form,
+            'api_key': self.get_or_create_api_key(),
         }
 
     def post(self, request, *args, **kwargs):
@@ -221,3 +224,12 @@ def keyboard_config(request):
     request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
     request.couch_user.save()
     return HttpResponseRedirect(request.GET.get('next'))
+
+
+@require_POST
+@login_required
+def new_api_key(request):
+    api_key = ApiKey.objects.get(user=request.user)
+    api_key.key = api_key.generate_key()
+    api_key.save()
+    return HttpResponse(api_key.key)

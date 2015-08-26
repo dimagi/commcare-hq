@@ -6,6 +6,7 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from tastypie.models import ApiKey
 from tastypie.resources import Resource
 from tastypie import fields
 from corehq.apps.groups.models import Group
@@ -391,7 +392,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.language, "en")
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
-        self.assertEqual(user_back.default_phone_number, "+50253311399")
+        self.assertEqual(user_back.default_phone_number, "50253311399")
         user_back.delete()
         group.delete()
 
@@ -433,7 +434,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.language, "pol")
         self.assertEqual(modified.get_group_ids()[0], group._id)
         self.assertEqual(modified.user_data["chw_id"], "13/43/DFA")
-        self.assertEqual(modified.default_phone_number, "+50253311399")
+        self.assertEqual(modified.default_phone_number, "50253311399")
         modified.delete()
         group.delete()
 
@@ -1233,3 +1234,60 @@ class TestBulkUserAPI(APIResourceTest):
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+
+class TestApiKey(APIResourceTest):
+    """
+    Only tests access (200 vs 401). Correctness should be tested elsewhere
+    """
+    resource = v0_5.WebUserResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestApiKey, cls).setUpClass()
+        django_user = WebUser.get_django_user(cls.user)
+        cls.api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.api_key.delete()
+        super(TestApiKey, cls).tearDownClass()
+
+    def test_get_user(self):
+        endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
+                              urlencode({
+                                  "username": self.user.username,
+                                  "api_key": self.api_key.key
+                              }))
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, 200)
+
+    def test_wrong_api_key(self):
+        endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
+                              urlencode({
+                                  "username": self.user.username,
+                                  "api_key": 'blah'
+                              }))
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, 401)
+
+    def test_wrong_user_api_key(self):
+        username = 'blah@qwerty.commcarehq.org'
+        password = '***'
+        other_user = WebUser.create(self.domain.name, username, password)
+        other_user.set_role(self.domain.name, 'admin')
+        other_user.save()
+        django_user = WebUser.get_django_user(other_user)
+        other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+
+        endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
+                              urlencode({
+                                  "username": self.user.username,
+                                  "api_key": other_api_key.key
+                              }))
+        response = self.client.get(endpoint)
+        self.assertEqual(response.status_code, 401)
+
+        other_api_key.delete()
+        other_user.delete()

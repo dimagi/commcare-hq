@@ -5,7 +5,6 @@ from corehq.fluff.calculators.case import CasePropertyFilter
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
-from .constants import *
 import fluff
 
 from . import case_calcs, user_calcs
@@ -44,6 +43,7 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     block = case_property('block_name')
     village = case_property('village_name')
     edd = case_property('edd')
+    dod = case_property('dod')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
@@ -87,6 +87,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
     block = user_data('block')
     gp = user_data('gp')
     village = user_data('village')
+    gps = user_data('gps')
 
 
 def _get_user_id(form):
@@ -114,68 +115,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
     growth_monitoring = user_calcs.GrowthMonitoring()
 
 
-class OpmHealthStatusAllInfoFluff(fluff.IndicatorDocument):
-
-    document_class = CommCareCase
-    domains = ('opm',)
-    group_by = ('domain', 'user_id')
-    save_direct_to_sql = True
-
-    opened_on = flat_field(lambda case: case.opened_on)
-    closed_on = flat_field(lambda case: case.closed_on)
-
-    beneficiaries_registered = user_calcs.WomenRegistered()
-    lmp = case_calcs.Lmp()
-    lactating = case_calcs.Lactating()
-    children = case_calcs.LiveChildren()
-
-    #aggregated field
-    vhnd_monthly = case_calcs.VhndMonthly()
-    ifa_tablets = case_calcs.IfaTablets()
-    weight_once = case_calcs.Weight()
-    weight_twice = case_calcs.Weight(count=1)
-    children_monitored_at_birth = case_calcs.ChildrenInfo(prop='child%s_child_weight', num_in_condition='exist', forms=[CFU1_XMLNS])
-    children_registered = case_calcs.ChildrenInfo(prop='child%s_child_register', num_in_condition='exist', forms=[CFU1_XMLNS])
-    growth_monitoring_session_1 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon')
-    growth_monitoring_session_2 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=1)
-    growth_monitoring_session_3 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=2)
-    growth_monitoring_session_4 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=3)
-    growth_monitoring_session_5 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=4)
-    growth_monitoring_session_6 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=5)
-    growth_monitoring_session_7 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=6)
-    growth_monitoring_session_8 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=7)
-    growth_monitoring_session_9 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=8)
-    growth_monitoring_session_10 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=9)
-    growth_monitoring_session_11 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=10)
-    growth_monitoring_session_12 = case_calcs.ChildrenInfo(prop='child%s_child_growthmon', num_in_condition=11)
-    nutritional_status_normal = case_calcs.Status(status='NORMAL')
-    nutritional_status_mam = case_calcs.Status(status='MAM')
-    nutritional_status_sam = case_calcs.Status(status='SAM')
-    treated = case_calcs.ChildrenInfo(prop='child%s_child_orszntreat')
-    suffering = case_calcs.ChildrenInfo(prop='child%s_suffer_diarrhea')
-    excbreastfed = case_calcs.BreastFed()
-    measlesvacc = case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
-    account_number = flat_field(lambda case: case.get_case_property('bank_account_number'))
-
-
-class OPMHierarchyFluff(fluff.IndicatorDocument):
-    def user_data(property):
-        """
-        returns a flat field with a callable looking for `property` on the user
-        """
-        return flat_field(lambda user: user.user_data.get(property))
-
-    document_class = CommCareUser
-    domains = ('opm',)
-    group_by = ('domain',)
-
-    save_direct_to_sql = True
-    numerator = Numerator()
-    block = user_data('block')
-    gp = user_data('gp')
-    awc = user_data('awc')
-
-
 class VhndAvailabilityFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
@@ -191,6 +130,4 @@ class VhndAvailabilityFluff(fluff.IndicatorDocument):
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
-OpmHealthStatusAllInfoFluffPillow = OpmHealthStatusAllInfoFluff.pillow()
 VhndAvailabilityFluffPillow = VhndAvailabilityFluff.pillow()
-OPMHierarchyFluffPillow = OPMHierarchyFluff.pillow()

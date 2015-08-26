@@ -34,16 +34,24 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     'use strict';
     wrap = wrap === undefined ? true : wrap;
     var el = $(
-        '<a href="#" class="hq-help no-click">' +
-            '<i class="icon-question-sign" data-trigger="hover"></i></a>'
+        '<div class="hq-help">' + 
+            '<a href="#">' +
+                '<i class="icon-question-sign"></i></a></div>'
     );
-    for (var attr in {content: 0, title: 0, html: 0}) {
-        $('i', el).data(attr, opts[attr]);
+    for (var attr in ['content', 'title', 'html']) {
+        $('a', el).data(attr, opts[attr]);
     }
     if (wrap) {
         el.hqHelp();
     }
     return el;
+};
+
+COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
+    'use strict';
+    var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+    $help.insertAfter($template);
+    $template.remove();
 };
 
 COMMCAREHQ.initBlock = function ($elem) {

@@ -2,21 +2,21 @@ import logging
 import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
 )
 from corehq.apps.registration.models import RegistrationRequest
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from corehq.feature_previews import enable_commtrack_previews
+from corehq.apps.hqwebapp.tasks import send_mail_async
 
 
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
@@ -176,11 +176,10 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
+
 def request_new_domain(request, form, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
-
-    commtrack_enabled = domain_type == 'commtrack'
 
     dom_req = RegistrationRequest()
     if new_user:
@@ -188,31 +187,33 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    new_domain = Domain(
-        name=form.cleaned_data['domain_name'],
-        is_active=False,
-        date_created=datetime.utcnow(),
-        commtrack_enabled=commtrack_enabled,
-        locations_enabled=commtrack_enabled,
-        creating_user=current_user.username,
-        secure_submissions=True,
-    )
+    name = form.cleaned_data['hr_name']
+    with CriticalSection(['request_domain_name_{}'.format(name)]):
+        name = Domain.generate_name(name)
+        new_domain = Domain(
+            name=name,
+            hr_name=form.cleaned_data['hr_name'],
+            is_active=False,
+            date_created=datetime.utcnow(),
+            creating_user=current_user.username,
+            secure_submissions=True,
+        )
 
-    if commtrack_enabled:
-        enable_commtrack_previews(new_domain)
+        if form.cleaned_data.get('domain_timezone'):
+            new_domain.default_timezone = form.cleaned_data['domain_timezone']
 
-    if form.cleaned_data.get('domain_timezone'):
-        new_domain.default_timezone = form.cleaned_data['domain_timezone']
+        if org:
+            new_domain.organization = org
+            new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
 
-    if org:
-        new_domain.organization = org
-        new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
+        if not new_user:
+            new_domain.is_active = True
 
-    if not new_user:
-        new_domain.is_active = True
+        # ensure no duplicate domain documents get created on cloudant
+        new_domain.save(**get_safe_write_kwargs())
 
-    # ensure no duplicate domain documents get created on cloudant
-    new_domain.save(**get_safe_write_kwargs())
+    if domain_type == 'commtrack':
+        new_domain.convert_to_commtrack()
 
     if not new_domain.name:
         new_domain.name = new_domain._id
@@ -240,6 +241,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+
+    return new_domain.name
 
 
 REGISTRATION_EMAIL_BODY_HTML = u"""
@@ -285,7 +288,7 @@ The CommCareHQ Team
 
 WIKI_LINK = 'http://help.commcarehq.org'
 USERS_LINK = 'http://groups.google.com/group/commcare-users'
-PRICING_LINK = 'http://www.commcarehq.org/software-plans'
+PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
 def send_domain_registration_email(recipient, domain_name, guid):
@@ -326,8 +329,9 @@ Username:  "{username}"
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_html, text_content=message_plaintext,
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, recipient, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -366,8 +370,9 @@ You may access your project by following this link: {registration_link}
     subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
-        send_HTML_email(subject, requesting_user.email, message_html,
-                        text_content=message_plaintext, email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(subject, requesting_user.email, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -395,7 +400,10 @@ You can view the %s here: %s""" % (
         get_url_base() + "/%s/%s/" % ("o" if entity_type == "org" else "a", entity_name))
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail(u"New %s: %s" % (entity_texts[0], entity_name), message, settings.SERVER_EMAIL, recipients)
+        send_mail_async.delay(
+            u"New %s: %s" % (entity_texts[0], entity_name),
+            message, settings.SERVER_EMAIL, recipients
+        )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 

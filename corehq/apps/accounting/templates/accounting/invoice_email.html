@@ -59,6 +59,7 @@
             {{ total_balance }}
         </td>
     </tr>
+    {% if total_balance > 0 %}
     <tr>
         <th align="right">
             {% trans 'Payment Due Date' %}:
@@ -67,6 +68,7 @@
             {{ date_due }}
         </td>
     </tr>
+    {% endif  %}
 </table>
 
 {% if is_total_balance_due %}
@@ -75,6 +77,11 @@
         Please note that the due date for this {{ month_name }} payment has been
         postponed, as the amount due this month is less than $100. However as
         your total balance is now beyond $100, please note that you have to pay
+        your balance within the next 30 days.
+        {% endblocktrans %}
+    {% else  %}
+        {% blocktrans %}
+        Your total balance is now beyond $100, please note that you have to pay
         your balance within the next 30 days.
         {% endblocktrans %}
     {% endif %}
@@ -118,11 +125,13 @@
     </p>
 {% else %}
     <p>
+        {% if total_balance > 0 %}
         {% blocktrans %}
-        Please note that the due date for this payment has been postponed, as
-        the amount due this month is less than $100.  You will start receiving
-        reminder emails for payments once your total balance reaches $100.
+            Please note that the due date for this payment has been postponed, as
+            the amount due this month is less than $100.  You will start receiving
+            reminder emails for payments once your total balance reaches $100.
         {% endblocktrans %}
+        {% endif %}
 
         {% if can_view_statement %}
             {% blocktrans %}

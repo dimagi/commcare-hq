@@ -13,7 +13,7 @@ from django.conf import settings
 
 # Tastypie imports
 from tastypie import fields
-from tastypie.authentication import Authentication
+from tastypie.authentication import Authentication, ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
@@ -28,7 +28,11 @@ from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
-from corehq.apps.domain.decorators import login_or_digest, login_or_basic
+from corehq.apps.domain.decorators import (
+    login_or_digest,
+    login_or_basic,
+    login_or_api_key
+)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -48,6 +52,8 @@ def determine_authtype(request):
         return 'basic'
     elif auth_header.startswith('digest '):
         return 'digest'
+    elif all(ApiKeyAuthentication().extract_credentials(request)):
+        return 'api_key'
 
     # the initial digest request doesn't have any authorization, so default to
     # digest in order to send back
@@ -79,6 +85,7 @@ class LoginAndDomainAuthentication(Authentication):
         decorator_map = {
             'digest': login_or_digest,
             'basic': login_or_basic,
+            'api_key': login_or_api_key,
         }
         return decorator_map[determine_authtype(request)]
 
@@ -355,6 +362,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = []
         detail_allowed_methods = ['get']
         resource_name = 'form'
+        ordering = ['received_on']
         serializer = XFormInstanceSerializer()
 
 def _safe_bool(bundle, param, default=False):

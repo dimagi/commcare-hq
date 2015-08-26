@@ -1,13 +1,14 @@
-Hi!
+{% load i18n %}
+{% blocktrans %}Hi!{% endblocktrans %}
 
-{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s)
+{% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}
 
-CommCareHQ is a tool that helps manage frontline workers around the world.
+{% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}
 
-To accept this invitation go to: {{ url }}
+{% blocktrans %}To accept this invitation go to: {{ url }}{% endblocktrans %}
 
-If you think this is a mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.
+{% blocktrans %}If you think this is a mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.{% endblocktrans %}
 
-Thanks for using our site!
+{% blocktrans %}Thanks for using our site!{% endblocktrans %}
 
--The CommCareHQ team
+{% blocktrans %}-The CommCareHQ team{% endblocktrans %}

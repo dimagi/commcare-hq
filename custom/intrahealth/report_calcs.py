@@ -28,15 +28,15 @@ def get_product_code(product_name, domain):
     try:
         return SQLProduct.objects.get(name=product_name, domain=domain).code
     except SQLProduct.DoesNotExist:
-        for k, v in PRODUCT_NAMES.iteritems():
-            if product_name.lower() in v:
-                return SQLProduct.objects.get(name__iexact=k,
-                                              domain=domain).code
+        k = PRODUCT_NAMES.get(product_name.lower())
+        if k:
+            return SQLProduct.objects.get(name__iexact=k,
+                                          domain=domain).code
 
 
 def _locations_per_type(domain, loc_type, location):
     return (location.sql_location.get_descendants(include_self=True)
-            .filter(domain=domain, location_type__name=loc_type).count())
+            .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
 
 
 class PPSRegistered(fluff.Calculator):

@@ -1,0 +1,17 @@
+{# note for bootstrap3 migration, inherit from bootstrap3/base.html and wrap #}
+{# your content in <div class="container"></div> in the content block. #}
+{% extends base_template %}
+
+{# stuff to override old styles -- remove when everything is migrated over #}
+{% block oldstyle_tag %}{% endblock %}
+{% block oldstyle_imports %}{% endblock %}
+{% block oldstyle_hack_start %}{% endblock %}
+{% block oldstyle_hack_end %}{% endblock %}
+
+{% block layout_style %}hq-centered-content{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% block centered-content %}{% endblock %}
+    </div>
+{% endblock content %}

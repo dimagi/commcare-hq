@@ -1,7 +1,7 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "style/bootstrap2/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block uncompressed-stylesheets %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
     <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
@@ -71,9 +71,14 @@
                         updateCharts(data);
                         $('#report-error').addClass('hide');
                     }
+                    if (data.warning) {
+                        $('#warning-message').html(data.warning);
+                        $('#report-warning').removeClass('hide');
+                    } else {
+                        $('#report-warning').addClass('hide');
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log("wah waaaah");
                     $('#error-message').html(errorThrown);
                     $('#report-error').removeClass('hide');
                 }
@@ -115,13 +120,21 @@
 {% endblock %}
 
 {% block main_column %}
+{% block report_alerts %}
 <div id="report-error" class="alert alert-error hide">
     {% blocktrans %}
     There was an error rendering your report.
     {% endblocktrans %}
     <div id="error-message"></div>
 </div>
-
+<div id="report-warning" class="alert alert-warn hide">
+    {% blocktrans %}
+    Warning:
+    {% endblocktrans %}
+    <div id="warning-message"></div>
+</div>
+{% endblock report_alerts %}
+{% block main_column_content %}
 <div class="report-controls">
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
@@ -173,12 +186,15 @@
 </section>
 {% endblock %}
 {% block reporttable %}
-<table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-    <thead>
-    {{ headers.render_html|safe }}
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+<div>
+    <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+        <thead>
+        {{ headers.render_html|safe }}
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
 {% endblock reporttable %}
-{% endblock %}
+{% endblock main_column_content %}
+{% endblock main_column %}

@@ -1,4 +1,6 @@
 from django.core.management.base import BaseCommand
+from corehq.apps.commtrack.dbaccessors import \
+    get_supply_points_json_in_domain_by_location
 from corehq.apps.locations.models import Location
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.loosechange import map_reduce
@@ -19,17 +21,8 @@ class Command(BaseCommand):
 
         self.println('Migrating...')
 
-        supply_point_cases = CommCareCase.get_db().view(
-            'commtrack/supply_point_by_loc',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        )
-
-        for result in supply_point_cases:
-            loc_id = result['key'][-1]
+        for loc_id, case in get_supply_points_json_in_domain_by_location(domain):
             loc = Location.get(loc_id)
-            case = result['doc']
 
             old_code = case.get('site_code', '')
             new_code = getattr(loc, 'site_code', '')

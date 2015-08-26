@@ -12,12 +12,10 @@
                id="{{ css_id }}_{{ unknown.slug }}_hide"
                value="">
         {% trans 'Known Forms' %}
-        <a href="#" class="hq-help no-click">
-            <i class="icon-question-sign"
-               data-title="{% trans "What are Known Forms?" %}"
-               data-content="{% trans "Known Forms are forms that have IDs which can be matched to existing or deleted CommCare Applications in your Project." %}"
-               data-trigger="hover"></i>
-        </a>
+        <span class="hq-help-template"
+            data-title="{% trans "What are Known Forms?" %}"
+            data-content="{% trans "Known Forms are forms that have IDs which can be matched to existing or deleted CommCare Applications in your Project." %}"
+        ></span>
     </label>
     <label class="radio">
         <input type="radio"
@@ -27,12 +25,10 @@
                id="{{ css_id }}_{{ unknown.slug }}_show"
                value="yes">
         {% trans 'Unknown Forms (Possibly Deleted)' %}
-        <a href="#" class="hq-help no-click">
-            <i class="icon-question-sign"
-               data-title="{% trans "What are Unknown Forms?" %}"
-               data-content="{% trans "We tried and tried, but these form IDs did not belong to any CommCare Applications (existing or deleted) in your Project. It might mean that these forms once belonged to an application, were deleted from it, and then replaced by a different form." %}"
-               data-trigger="hover"></i>
-        </a>
+        <span class="hq-help-template"
+            data-title="{% trans "What are Unknown Forms?" %}"
+            data-content="{% trans "We tried and tried, but these form IDs did not belong to any CommCare Applications (existing or deleted) in your Project. It might mean that these forms once belonged to an application, were deleted from it, and then replaced by a different form." %}"
+        ></span>
     </label>
 </div>
 <div class="well {{ css_id }}-unknown_controls" style="padding-bottom: 0px;" data-bind="visible: is_unknown_shown">
@@ -84,7 +80,9 @@
            css_id: '{{ css_id }}',
            css_class: '{{ css_id }}-unknown_controls'
        });
-        $('.hq-help').hqHelp();
+       $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
     });
 </script>
 {% endif %}

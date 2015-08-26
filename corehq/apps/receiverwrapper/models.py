@@ -414,8 +414,8 @@ class RepeatRecord(Document, LockableMixIn):
     def update_failure(self):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
-        assert(self.succeeded == False)
-        assert(self.next_check is not None)
+        assert self.succeeded is False
+        assert self.next_check is not None
         now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:

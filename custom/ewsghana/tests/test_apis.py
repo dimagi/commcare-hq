@@ -57,20 +57,9 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.name, "Test1")
         self.assertEqual(smsuser.role, "Other")
         self.assertEqual(smsuser.supply_point.id, 456)
-        self.assertEqual(smsuser.supply_point.location_id, 591)
+        self.assertEqual(smsuser.supply_point.location_id, 620)
         self.assertEqual(smsuser.supply_point.name, "aa55")
         self.assertEqual(smsuser.supply_point.active, True)
         self.assertEqual(smsuser.email, None)
         self.assertEqual(smsuser.is_active, "True")
         self.assertEqual(smsuser.phone_numbers, ["+2222222222"])
-
-    def test_parse_stocktransaction_json(self):
-        with open(os.path.join(self.datapath, 'sample_stocktransactions.json')) as f:
-            stock_transaction = StockTransaction(json.loads(f.read())[0])
-        self.assertEqual(Decimal(0), stock_transaction.beginning_balance)
-        self.assertEqual("2010-12-03T07:45:59.139272", stock_transaction.date)
-        self.assertEqual(Decimal(63), stock_transaction.ending_balance)
-        self.assertEqual("pp", stock_transaction.product)
-        self.assertEqual(Decimal(63), stock_transaction.quantity)
-        self.assertEqual(39, stock_transaction.supply_point)
-        self.assertEqual("stock on hand", stock_transaction.report_type)

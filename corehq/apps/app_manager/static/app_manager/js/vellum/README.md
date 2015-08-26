@@ -32,12 +32,9 @@ an existing jQuery instance:
 <link rel="stylesheet" href="path/to/vellum/global-deps.css"></link>
 
 <!-- 
-Optionally reuse existing jQuery instance with jQuery UI and Bootstrap.  
-If not present, bundled versions will be loaded.  
-If Bootstrap is already loaded but not jQuery UI, you'll get conflicts between
-multiple Bootstrap versions due to the way the bundled version is loaded. -->
+Optionally reuse existing jQuery instance with Bootstrap.  
+If not present, bundled versions will be loaded.  -->
 <script src="jquery.js"></script>
-<script src="jquery-ui.js"></script>
 <script src="bootstrap.js"></script>
 
 <script src="require.js"></script>

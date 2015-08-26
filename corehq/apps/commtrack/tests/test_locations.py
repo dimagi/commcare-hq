@@ -2,7 +2,6 @@ from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
-from dimagi.utils.parsing import json_format_datetime
 from mock import patch
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
@@ -110,7 +109,7 @@ class MultiLocationsTest(CommTrackTest):
             create=False,
             case_id=sp,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         check_user_has_case(
             self,
             user.to_casexml_user(),

@@ -1,4 +1,5 @@
-from corehq.apps.groups.tests import WrapGroupTest
+from mock import patch
+from corehq.apps.groups.tests import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
@@ -6,10 +7,8 @@ from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
-from django.test import TestCase
-from couchdbkit import ResourceNotFound
+from django.test import TestCase, SimpleTestCase
 from corehq import toggles
-from corehq.apps.groups.models import Group
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
@@ -18,7 +17,6 @@ from corehq.apps.domain.shortcuts import create_domain
 class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         self.domain.save()
 
         LocationType.objects.get_or_create(
@@ -80,7 +78,7 @@ class LocationProducts(TestCase):
 class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
+        self.domain.convert_to_commtrack()
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
@@ -213,17 +211,10 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        def _all_locations(domain):
-            return Location.view(
-                'locations/hierarchy',
-                startkey=[domain],
-                endkey=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ).all()
-        compare(
-            [self.user.location, test_state1, test_state2, test_village1],
-            _all_locations(self.domain.name)
+        self.assertEqual(
+            {loc._id for loc in [self.user.location, test_state1, test_state2,
+                                 test_village1]},
+            set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
         # Location.by_site_code
@@ -372,6 +363,7 @@ class LocationGroupTest(LocationTestBase):
             self.loc.sql_location.reporting_group_object().metadata
         )
 
+    @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
     def test_location_fixture_generator(self):
         """
         This tests the location XML fixture generator. It specifically ensures that no duplicate XML
@@ -433,5 +425,5 @@ class LocationGroupTest(LocationTestBase):
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
 
 
-class WrapLocationTest(WrapGroupTest):
+class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
     document_class = Location

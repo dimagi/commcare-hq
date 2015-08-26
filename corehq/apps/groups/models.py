@@ -45,6 +45,16 @@ class Group(UndoableDocument):
         self.last_modified = datetime.utcnow()
         return super(Group, self).save(*args, **kwargs)
 
+    @classmethod
+    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+
+    bulk_save = save_docs
+
+
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id

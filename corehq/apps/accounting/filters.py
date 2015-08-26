@@ -130,8 +130,8 @@ class TrialStatusFilter(BaseSingleOptionFilter):
     TRIAL = "trial"
     NON_TRIAL = "non_trial"
     options = [
-        (TRIAL, _("Show Non-Trial Subscriptions")),
-        (NON_TRIAL, _("Show Only Trial Subscriptions")),
+        (NON_TRIAL, _("Show Non-Trial Subscriptions")),
+        (TRIAL, _("Show Only Trial Subscriptions")),
     ]
 
 
@@ -173,6 +173,8 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
         (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.TRIAL_INTERNAL, "Custom Trial"),
+        (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
     )
 
 

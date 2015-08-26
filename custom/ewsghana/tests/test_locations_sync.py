@@ -1,13 +1,16 @@
 import json
 import os
 from django.test import TestCase
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.dbaccessors import \
+    get_supply_point_case_by_location_id
 from corehq.apps.commtrack.tests.util import (bootstrap_products,
                                               bootstrap_domain as initial_bootstrap)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.api import Location, EWSApi, Product
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.tests import MockEndpoint
 
 TEST_DOMAIN = 'ewsghana-commtrack-locations-test'
@@ -69,7 +72,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual(int(sql_location.parent.external_id), location.parent_id)
         self.assertIsNotNone(sql_location.id)
         self.assertIsNotNone(sql_location.supply_point_id)
-        supply_point = SupplyPointCase.get_by_location_id(TEST_DOMAIN, sql_location.location_id)
+        supply_point = get_supply_point_case_by_location_id(
+            TEST_DOMAIN, sql_location.location_id)
         self.assertIsNotNone(supply_point)
         self.assertEqual(supply_point.location, ewsghana_location)
         self.assertEqual(location.supply_points[0].id, int(supply_point.external_id))
@@ -190,3 +194,13 @@ class LocationSyncTest(TestCase):
 
         self.assertEqual(ewsghana_location.name, "edited")
         self.assertEqual(ewsghana_location.site_code, "edited")
+
+    def test_facility_in_charge(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[1])
+
+        ewsghana_location = self.api_object.location_sync(location)
+        in_charges = FacilityInCharge.objects.filter(location=ewsghana_location.sql_location)
+        self.assertEqual(in_charges.count(), 1)
+        user = CommCareUser.get_by_user_id(in_charges[0].user_id)
+        self.assertIsNotNone(user)

@@ -35,16 +35,20 @@ namespaces = dict(
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
     v="{http://commcarehq.org/xforms/vellum}",
+    odk="{http://opendatakit.org/xforms}",
 )
 
 
 def _make_elem(tag, attr=None):
     attr = attr or {}
-    return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
+    return ET.Element(
+        tag.format(**namespaces),
+        {key.format(**namespaces): val for key, val in attr.items()}
+    )
 
 
 def make_case_elem(tag, attr=None):
-        return _make_elem(case_elem_tag(tag), attr)
+    return _make_elem(case_elem_tag(tag), attr)
 
 
 def case_elem_tag(tag):
@@ -52,24 +56,24 @@ def case_elem_tag(tag):
 
 
 def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
-        xpath = case_id_xpath or SESSION_CASE_ID
-        if parent_path:
-            for parent_name in parent_path.split('/'):
-                xpath = xpath.case().index_id(parent_name)
-        return xpath
+    xpath = case_id_xpath or SESSION_CASE_ID
+    if parent_path:
+        for parent_name in parent_path.split('/'):
+            xpath = xpath.case().index_id(parent_name)
+    return xpath
 
 
 def relative_path(from_path, to_path):
-            from_nodes = from_path.split('/')
-            to_nodes = to_path.split('/')
-            while True:
-                if to_nodes[0] == from_nodes[0]:
-                    from_nodes.pop(0)
-                    to_nodes.pop(0)
-                else:
-                    break
+    from_nodes = from_path.split('/')
+    to_nodes = to_path.split('/')
+    while True:
+        if to_nodes[0] == from_nodes[0]:
+            from_nodes.pop(0)
+            to_nodes.pop(0)
+        else:
+            break
 
-            return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
+    return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
 def requires_itext(on_fail_return=None):
@@ -548,6 +552,11 @@ class XForm(WrappedNode):
     def media_references(self, form):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
+
+    @property
+    def text_references(self):
+        nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
+        return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     @property
     def image_references(self):
@@ -1087,7 +1096,7 @@ class XForm(WrappedNode):
         # never add pollsensor to a pre-2.14 app
         if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
-                self.add_pollsensor(ref="/data/meta/location")
+                self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 
@@ -1276,6 +1285,15 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
+            elif module.root_module_id and module.parent_select.active:
+                # This is a submodule. case_id will have changed to avoid a clash with the parent case.
+                # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
+                case_id = '_'.join((CASE_ID, form.get_case_type()))
+                session_case_id = CaseIDXPath(session_var(case_id))
+                self.add_bind(
+                    nodeset="case/@case_id",
+                    calculate=session_case_id,
+                )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
@@ -1315,7 +1333,7 @@ class XForm(WrappedNode):
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
-                    case_id = session_var(form.session_var_for_action('subcase', i))
+                    case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -2066,7 +2084,7 @@ VELLUM_TYPES = {
     },
     "DateTime": {
         'tag': 'input',
-        'type': 'xsd:datetime',
+        'type': 'xsd:dateTime',
         'icon': 'icon-vellum-datetime',
         'icon_bs3': 'fcc fcc-fd-datetime',
     },

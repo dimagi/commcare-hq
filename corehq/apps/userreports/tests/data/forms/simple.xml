@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Untitled Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/8C8E527C-C0DE-470A-A8A9-8348FFB0B904" uiVersion="1" version="1" name="Untitled Form">
+					<first_name />
+					<last_name />
+					<children />
+					<dob />
+				</data>
+			</instance>
+			<bind nodeset="/data/first_name" type="xsd:string" />
+			<bind nodeset="/data/last_name" type="xsd:string" />
+			<bind nodeset="/data/children" type="xsd:int" />
+			<bind nodeset="/data/dob" type="xsd:date" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="first_name-label">
+						<value>First Name</value>
+					</text>
+					<text id="last_name-label">
+						<value>Last Name</value>
+					</text>
+					<text id="children-label">
+						<value>Children</value>
+					</text>
+					<text id="dob-label">
+						<value>Date of Birth</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/first_name">
+			<label ref="jr:itext('first_name-label')" />
+		</input>
+		<input ref="/data/last_name">
+			<label ref="jr:itext('last_name-label')" />
+		</input>
+		<input ref="/data/children">
+			<label ref="jr:itext('children-label')" />
+		</input>
+		<input ref="/data/dob">
+			<label ref="jr:itext('dob-label')" />
+		</input>
+	</h:body>
+</h:html>

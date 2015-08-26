@@ -1,0 +1,56 @@
+{% extends 'style/bootstrap2/base.html' %}
+{% load hq_shared_tags %}
+{% block js-inline %}
+<script>
+$(function () {
+    var alerts = {{ alerts|JSON }};
+    ko.applyBindings({
+        alerts: alerts
+    }, $('#main_container').get(0));
+});
+</script>
+{% endblock %}
+{% block content %}
+<div id="main_container">
+    <div class="well">
+        <p>Enter alert text below and preview in the table below.  Alerts will not be public until the
+            "activate alert" button is pressed. Links will be properly wrapped with anchor tags. Only one alert will be
+            shown at a time, and the most recently modified alert will be displayed.
+        </p>
+        <form method="post" action="{% url 'create_alert' %}" id="alertForm">
+            <textarea name="alert_text" placeholder="Alert text..." form="alertForm"></textarea>
+            <button type="submit" class="btn btn-primary">Preview Alert</button>
+        </form>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Created</th>
+                <th>Message</th>
+                <th>Is Active</th>
+                <th>Activate</th>
+                <th>De-activate</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: alerts">
+            <tr>
+                <td data-bind="text: created"></td>
+                <td class="alert alert-warning" data-bind="html: html"></td>
+                <td data-bind="text: active"></td>
+                <td>
+                    <form method="post" action="{% url 'activate_alert' %}">
+                        <input name="alert_id" type="hidden" data-bind="value: id">
+                        <button type="submit" class="btn btn-primary">Activate Alert</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" action="{% url 'deactivate_alert' %}">
+                        <input name="alert_id" type="hidden" data-bind="value: id">
+                        <button type="submit" class="btn btn-error">De-activate Alert</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

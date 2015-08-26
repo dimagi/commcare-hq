@@ -366,11 +366,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         startkey = json.dumps([self.domain.name, ""])[:-3]
         endkey = "%s{" % startkey
-        num_deid_reports = SavedExportSchema.view("couchexport/saved_export_schemas",
+        reports = SavedExportSchema.view(
+            "couchexport/saved_export_schemas",
             startkey=startkey,
             endkey=endkey,
-            include_docs=False,
-        ).count()
+            include_docs=True,
+        )
+        num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:
             return self._fmt_alert(
                 ungettext(

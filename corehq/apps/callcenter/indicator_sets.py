@@ -8,7 +8,7 @@ from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 import pytz
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.sofabed.models import FormData, CaseData
+from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
 from dimagi.utils.decorators.memoized import memoized
 import logging
 
@@ -304,27 +304,13 @@ class CallCenterIndicators(object):
         for case_type in unseen_cases:
             self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
-    def _base_case_query_coalesce_owner(self):
-        return CaseData.objects \
-            .extra(
-                select={"case_owner": "COALESCE(owner_id, sofabed_casedata.user_id)"},
-                where={"COALESCE(owner_id, sofabed_casedata.user_id) in %s"},
-                params=[tuple(self.owners_needing_data)]
-            ) \
-            .values('case_owner', 'type') \
-            .exclude(type=self.cc_case_type) \
-            .filter(
-                domain=self.domain,
-                doc_type='CommCareCase')
-
     def _case_query_opened_closed(self, opened_or_closed, lower, upper):
         return CaseData.objects \
             .extra(select={'case_owner': '{}_by'.format(opened_or_closed)}) \
             .values('case_owner', 'type') \
             .exclude(type=self.cc_case_type) \
             .filter(
-                domain=self.domain,
-                doc_type='CommCareCase') \
+                domain=self.domain) \
             .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
             .filter(**{
                 '{}_by__in'.format(opened_or_closed): self.users_needing_data
@@ -339,7 +325,6 @@ class CallCenterIndicators(object):
             .exclude(type=self.cc_case_type) \
             .filter(
                 domain=self.domain,
-                doc_type='CommCareCase',
                 closed=False,
                 user_id__in=self.users_needing_data) \
             .annotate(count=Count('case_id'))
@@ -353,8 +338,13 @@ class CallCenterIndicators(object):
         cases_total_{period}
         cases_total_{case_type}_{period}
         """
-        results = self._base_case_query_coalesce_owner() \
-            .filter(opened_on__lt=upper) \
+        results = CaseData.objects \
+            .values('case_owner', 'type') \
+            .exclude(type=self.cc_case_type) \
+            .filter(
+                case_owner__in=self.owners_needing_data,
+                domain=self.domain,
+                opened_on__lt=upper) \
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
 
@@ -381,11 +371,16 @@ class CallCenterIndicators(object):
         cases_active_{period}
         cases_active_{case_type}_{period}
         """
-        results = self._base_case_query_coalesce_owner() \
+        results = CaseActionData.objects \
+            .extra(select={'type': 'case_type'}) \
+            .values('case_owner', 'type') \
+            .exclude(case_type=self.cc_case_type) \
             .filter(
-                actions__date__gte=lower,
-                actions__date__lt=upper
-            ).annotate(count=Count('case_id', distinct=True))
+                domain=self.domain,
+                case_owner__in=self.owners_needing_data,
+                date__gte=lower,
+                date__lt=upper
+            ).annotate(count=Count('case', distinct=True))
 
         self._add_case_data(results, 'cases_active', range_name, legacy_prefix='casesUpdated')
 
@@ -406,7 +401,6 @@ class CallCenterIndicators(object):
             .filter(
                 xmlns=xmlns,
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data) \
             .filter(**self._date_filters('time_end', lower, upper)) \
             .annotate(count=aggregation)
@@ -425,7 +419,6 @@ class CallCenterIndicators(object):
             .filter(**self._date_filters('time_end', lower, upper)) \
             .filter(
                 domain=self.domain,
-                doc_type='XFormInstance',
                 user_id__in=self.users_needing_data
             )\
             .annotate(count=Count('instance_id'))

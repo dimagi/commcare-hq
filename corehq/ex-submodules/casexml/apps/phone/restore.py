@@ -9,7 +9,7 @@ from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_fac
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
-    IncompatibleSyncLogType)
+)
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -43,7 +43,7 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 def stream_response(payload, headers=None):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml")
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -224,13 +224,16 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
+    :param force_restore_mode:  Set to `clean` or `legacy` to force a particular restore type.
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False,
+                 force_restore_mode=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
+        self.force_restore_mode = force_restore_mode
 
 
 class RestoreCacheSettings(object):
@@ -275,18 +278,30 @@ class RestoreState(object):
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if not isinstance(self.last_sync_log, self.sync_log_class):
-                raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
-                    type(self.last_sync_log), self.sync_log_class,
-                ))
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
                 if computed_hash != parsed_hash:
-                    raise BadStateException(expected=computed_hash,
-                                            actual=parsed_hash,
-                                            case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
+                    # log state error on the sync log
+                    self.last_sync_log.had_state_error = True
+                    self.last_sync_log.error_date = datetime.utcnow()
+                    self.last_sync_log.error_hash = str(parsed_hash)
+                    self.last_sync_log.save()
 
+                    exception = BadStateException(
+                        server_hash=computed_hash,
+                        phone_hash=parsed_hash,
+                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
+                    )
+                    if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
+                        sync_history_url = '{}?individual={}'.format(
+                            SyncHistoryReport.get_url(self.domain),
+                            self.user.user_id
+                        )
+                        _assert(False, '{}, sync history report: {}'.format(exception, sync_history_url))
+                    raise exception
 
     @property
     @memoized
@@ -305,6 +320,10 @@ class RestoreState(object):
                     self.params.sync_log_id, self.user.user_id, sync_log.user_id
                 ))
 
+            # convert to the right type if necessary
+            if not isinstance(sync_log, self.sync_log_class):
+                # this call can fail with an IncompatibleSyncLogType error
+                sync_log = self.sync_log_class.from_other_format(sync_log)
             return sync_log
         else:
             return None
@@ -326,6 +345,12 @@ class RestoreState(object):
                 if override is not None:
                     return override
             return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
+
+        # this can be overridden explicitly in the params but will default to the domain setting
+        if self.params.force_restore_mode == 'clean':
+            return True
+        elif self.params.force_restore_mode == 'legacy':
+            return False
 
         return should_use_clean_restore(self.domain)
 
@@ -460,7 +485,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, mimetype="text/xml",
+            return HttpResponse(response, content_type="text/xml",
                                 status=412)  # precondition failed
 
     def _initial_cache_key(self):
@@ -486,6 +511,9 @@ class RestoreConfig(object):
             # if there is a sync token, always cache
             try:
                 data = cache_payload['data']
+                self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
+                self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
                     data.close()

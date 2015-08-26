@@ -3,7 +3,7 @@ import dateutil
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import operator
-from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
@@ -28,10 +28,6 @@ class ProjectReport(GenericReportView):
     @property
     def default_report_url(self):
         return reverse('reports_home', args=[self.request.project])
-
-    def set_announcements(self):
-        if self.request.couch_user:
-            util.set_report_announcements_for_user(self.request, self.request.couch_user)
 
 
 class CustomProjectReport(ProjectReport):

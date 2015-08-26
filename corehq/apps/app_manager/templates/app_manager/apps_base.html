@@ -1,9 +1,10 @@
-{% extends 'hqwebapp/two_column.html' %}
+{% extends 'style/bootstrap2/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 {% load i18n %}
+{% load compress %}
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
@@ -18,7 +19,9 @@
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
+    {% compress css %}
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+    {% endcompress %}
 {% endblock %}
 
 {% block head %}{{ block.super }}

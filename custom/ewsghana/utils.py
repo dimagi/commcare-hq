@@ -19,19 +19,10 @@ from custom.ewsghana.models import EWSGhanaConfig
 TEST_DOMAIN = 'ewsghana-receipts-test'
 
 
-def get_supply_points(location_id, domain):
-    loc = SQLLocation.objects.get(location_id=location_id)
-    if loc.location_type.name == 'district':
-        locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type.name == 'region':
-        locations = SQLLocation.objects.filter(
-            Q(parent__parent=loc) | Q(parent=loc, location_type__administrative=False)
-        )
-    elif not loc.location_type.administrative:
-        locations = SQLLocation.objects.filter(id=loc.id)
-    else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
-    return locations.exclude(supply_point_id__isnull=True).exclude(is_archived=True)
+def get_descendants(location_id):
+    return SQLLocation.objects.get(
+        location_id=location_id
+    ).get_descendants().exclude(supply_point_id__isnull=True).exclude(is_archived=True)
 
 
 def get_second_week(start_date, end_date):
@@ -343,3 +334,43 @@ def drange(start, stop, step):
     while r < stop:
         yield r
         r += step
+
+
+def get_products_for_locations(locations):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+    ).exclude(is_archived=True)
+
+
+def get_products_for_locations_by_program(locations, program):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+        program_id=program
+    ).exclude(is_archived=True)
+
+
+def get_products_for_locations_by_products(locations, products):
+    return SQLProduct.objects.filter(
+        pk__in=locations.values_list('_products', flat=True),
+    ).filter(pk__in=products).exclude(is_archived=True)
+
+
+def get_supply_points(domain, location_id):
+    supply_points = []
+    if location_id:
+        location = SQLLocation.objects.get(
+            domain=domain,
+            location_id=location_id
+        )
+        if location.location_type.name == 'country':
+            supply_points = SQLLocation.objects.filter(
+                Q(parent__location_id=location_id, is_archived=False) |
+                Q(location_type__name='Regional Medical Store', domain=domain) |
+                Q(location_type__name='Teaching Hospital', domain=domain)
+            ).order_by('name').exclude(supply_point_id__isnull=True)
+        else:
+            supply_points = SQLLocation.objects.filter(
+                parent__location_id=location_id, is_archived=False,
+                location_type__administrative=False,
+            ).order_by('name').exclude(supply_point_id__isnull=True)
+    return supply_points

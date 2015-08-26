@@ -1,4 +1,4 @@
-from corehq.apps.importer.util import get_case_properties
+from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase
 

@@ -7,12 +7,14 @@ from celery.canvas import chain
 from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import SupplyPointCase, update_stock_state_for_transaction
+from casexml.apps.stock.signals import update_stock_state_for_transaction
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
-from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_datetime
 
@@ -22,7 +24,6 @@ def stock_data_task(api_object):
     # checkpoint logic
     start_date = datetime.today()
     default_api = api_object.apis[0][0]
-
     checkpoint, _ = StockDataCheckpoint.objects.get_or_create(domain=api_object.domain, defaults={
         'api': default_api,
         'date': None,
@@ -32,6 +33,9 @@ def stock_data_task(api_object):
         'start_date': start_date
     })
 
+    if not checkpoint.api:
+        checkpoint.api = default_api
+
     if not checkpoint.start_date:
         checkpoint.start_date = start_date
         checkpoint.save()
@@ -40,7 +44,6 @@ def stock_data_task(api_object):
         facilities = api_object.test_facilities
     else:
         facilities = api_object.get_ids()
-
     if checkpoint.location:
         external_id = api_object.get_last_processed_location(checkpoint)
         if external_id:
@@ -48,20 +51,30 @@ def stock_data_task(api_object):
             process_facility_task(api_object, facilities[0], start_from=checkpoint.api)
             facilities = facilities[1:]
 
-    if not checkpoint.date:
+    if not checkpoint.date or checkpoint.location:
         # use subtasks only during initial migration
         facilities_chunked_list = chunked(facilities, 5)
-
         for chunk in facilities_chunked_list:
-            res = chain(process_facility_task.si(api_object, fac) for fac in chunk)()
-            res.get()
-
+            api_object.process_data(process_facility_task, chunk)
     else:
-        for facility in facilities:
-            process_facility_task(api_object, facility)
+        offset = checkpoint.offset
+        for stock_api in itertools.dropwhile(
+            lambda x: x.name != checkpoint.api, api_object.get_stock_apis_objects()
+        ):
+            stock_api.add_date_filter(checkpoint.date, checkpoint.start_date)
+            synchronization(
+                stock_api,
+                checkpoint,
+                checkpoint.date,
+                1000,
+                offset,
+                params={'domain': api_object.domain},
+                domain=api_object.domain
+            )
+            offset = 0
 
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
-    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, start_date, None, False)
+    save_stock_data_checkpoint(checkpoint, default_api, 1000, 0, checkpoint.start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
 
@@ -132,6 +145,75 @@ def add_products_to_loc(api):
                     filters={"is_active": True})
 
 
+def sync_stock_transaction(stocktransaction, domain, case=None, bulk=False):
+    case = case or get_supply_point_case_in_domain_by_id(domain, stocktransaction.supply_point)
+    if not case:
+        return
+    transactions = []
+    section_id = 'stock'
+    params = dict(
+        form_id='logistics-xform',
+        date=force_to_datetime(stocktransaction.date),
+        type='balance',
+        domain=domain
+    )
+    try:
+        report, _ = StockReport.objects.get_or_create(**params)
+    except StockReport.MultipleObjectsReturned:
+        # legacy
+        report = StockReport.objects.filter(**params)[0]
+
+    sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
+    if stocktransaction.report_type.lower() == 'stock received':
+        transactions.append(StockTransaction(
+            case_id=case.get_id,
+            product_id=sql_product.product_id,
+            sql_product=sql_product,
+            section_id=section_id,
+            type='receipts',
+            stock_on_hand=Decimal(stocktransaction.ending_balance),
+            quantity=Decimal(stocktransaction.quantity),
+            report=report
+        ))
+    elif stocktransaction.report_type.lower() == 'stock on hand':
+        if stocktransaction.quantity < 0 and bulk:
+            transactions.append(StockTransaction(
+                case_id=case.get_id,
+                product_id=sql_product.product_id,
+                sql_product=sql_product,
+                section_id=section_id,
+                type='consumption',
+                stock_on_hand=Decimal(stocktransaction.ending_balance),
+                quantity=Decimal(stocktransaction.quantity),
+                report=report,
+                subtype='inferred'
+            ))
+        transactions.append(StockTransaction(
+            case_id=case.get_id,
+            product_id=sql_product.product_id,
+            sql_product=sql_product,
+            section_id=section_id,
+            type='stockonhand',
+            stock_on_hand=Decimal(stocktransaction.ending_balance),
+            report=report
+        ))
+    elif stocktransaction.report_type.lower() == 'loss or adjustment':
+        transactions.append(StockTransaction(
+            case_id=case.get_id,
+            product_id=sql_product.product_id,
+            sql_product=sql_product,
+            section_id=section_id,
+            type=TRANSACTION_TYPE_LA,
+            stock_on_hand=Decimal(stocktransaction.ending_balance),
+            quantity=stocktransaction.quantity,
+            report=report
+        ))
+    if not bulk:
+        for tx in transactions:
+            tx.save()
+    return transactions
+
+
 def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
                                          date, limit=1000, offset=0):
     """
@@ -141,22 +223,24 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
     next_url = ""
     section_id = 'stock'
     supply_point = facility
-    case = get_supply_point_by_external_id(domain, supply_point)
+    case = get_supply_point_case_in_domain_by_id(domain, supply_point)
     if not case:
         return
-
     location_id = case.location_id
     save_stock_data_checkpoint(checkpoint, 'stock_transaction', limit, offset, date, location_id, True)
 
     products_saved = set()
     while has_next:
-        meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
-                                                                 limit=limit,
-                                                                 start_date=date,
-                                                                 end_date=checkpoint.start_date,
-                                                                 offset=offset,
-                                                                 filters=(dict(supply_point=supply_point)))
-
+        meta, stocktransactions = endpoint.get_stocktransactions(
+            next_url_params=next_url,
+            limit=limit,
+            offset=offset,
+            filters={
+                'supply_point': supply_point,
+                'date__gte': date,
+                'date__lte': checkpoint.start_date
+            }
+        )
         # set the checkpoint right before the data we are about to process
         meta_limit = meta.get('limit') or limit
         meta_offset = meta.get('offset') or offset
@@ -166,66 +250,9 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
         transactions_to_add = []
         with transaction.atomic():
             for stocktransaction in stocktransactions:
-                params = dict(
-                    form_id='logistics-xform',
-                    date=force_to_datetime(stocktransaction.date),
-                    type='balance',
-                    domain=domain,
-                )
-                try:
-                    report, _ = StockReport.objects.get_or_create(**params)
-                except StockReport.MultipleObjectsReturned:
-                    # legacy
-                    report = StockReport.objects.filter(**params)[0]
-
-                sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                if stocktransaction.report_type.lower() == 'stock received':
-                    transactions_to_add.append(StockTransaction(
-                        case_id=case._id,
-                        product_id=sql_product.product_id,
-                        sql_product=sql_product,
-                        section_id=section_id,
-                        type='receipts',
-                        stock_on_hand=Decimal(stocktransaction.ending_balance),
-                        quantity=Decimal(stocktransaction.quantity),
-                        report=report
-                    ))
-                    products_saved.add(sql_product.product_id)
-                elif stocktransaction.report_type.lower() == 'stock on hand':
-                    if stocktransaction.quantity < 0:
-                        transactions_to_add.append(StockTransaction(
-                            case_id=case._id,
-                            product_id=sql_product.product_id,
-                            sql_product=sql_product,
-                            section_id=section_id,
-                            type='consumption',
-                            stock_on_hand=Decimal(stocktransaction.ending_balance),
-                            quantity=Decimal(stocktransaction.quantity),
-                            report=report,
-                            subtype='inferred'
-                        ))
-                    transactions_to_add.append(StockTransaction(
-                        case_id=case._id,
-                        product_id=sql_product.product_id,
-                        sql_product=sql_product,
-                        section_id=section_id,
-                        type='stockonhand',
-                        stock_on_hand=Decimal(stocktransaction.ending_balance),
-                        report=report
-                    ))
-                    products_saved.add(sql_product.product_id)
-                elif stocktransaction.report_type.lower() == 'loss or adjustment':
-                    transactions_to_add.append(StockTransaction(
-                        case_id=case._id,
-                        product_id=sql_product.product_id,
-                        sql_product=sql_product,
-                        section_id=section_id,
-                        type=TRANSACTION_TYPE_LA,
-                        stock_on_hand=Decimal(stocktransaction.ending_balance),
-                        quantity=stocktransaction.quantity,
-                        report=report
-                    ))
-                    products_saved.add(sql_product.product_id)
+                transactions = sync_stock_transaction(stocktransaction, domain, case, bulk=True)
+                transactions_to_add.extend(transactions)
+                products_saved.update(map(lambda x: x.product_id, transactions))
 
         if transactions_to_add:
             # Doesn't send signal
@@ -235,9 +262,8 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, checkpoint,
             has_next = False
         else:
             next_url = meta['next'].split('?')[1]
-
     for product in products_saved:
         # if we saved anything rebuild the stock state object by firing the signal
         # on the last transaction for each product
-        last_st = StockTransaction.latest(case._id, section_id, product)
+        last_st = StockTransaction.latest(case.get_id, section_id, product)
         update_stock_state_for_transaction(last_st)

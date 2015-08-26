@@ -1,8 +1,6 @@
-from xml.etree import ElementTree
 import datetime
 from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
-from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -12,7 +10,6 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
 from couchforms.models import XFormError
-from dimagi.utils.parsing import json_format_datetime
 
 USER_ID = 'test-index-user'
 
@@ -88,7 +85,7 @@ class IndexTest(TestCase):
             owner_id=USER_ID,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             version=V2
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([create_index])
         check_user_has_case(self, user, create_index, version=V2)
@@ -102,7 +99,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
@@ -112,7 +109,7 @@ class IndexTest(TestCase):
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([update_index])
 
@@ -127,7 +124,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
@@ -138,7 +135,7 @@ class IndexTest(TestCase):
                    'dad': ('father-case', self.FATHER_CASE_ID)},
             version=V2,
             date_modified=now,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         post_case_blocks([update_index])
 
@@ -157,8 +154,8 @@ class IndexTest(TestCase):
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        xform = post_case_blocks([block.as_xml()],
-                                 form_extras={'domain': child_domain})
+        xform, _ = post_case_blocks([block.as_xml()],
+                                    form_extras={'domain': child_domain})
 
         self.assertIsInstance(xform, XFormError)
         self.assertEqual(xform.doc_type, 'XFormError')

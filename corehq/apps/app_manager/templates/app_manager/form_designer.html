@@ -19,7 +19,9 @@
             plugins: {{ plugins|JSON }},
             features: {{ features|JSON }},
             core: {
+                dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
                 dataSources: [
+                    {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
                     {
                         key: 'fixture',
                         name: 'Fixtures',
@@ -56,6 +58,16 @@
                 {% endif %}
                 sessionid: {{ sessionid|JSON }}
             },
+            intents: {
+                templates: {{ app_callout_templates|JSON }}
+            },
+            itemset: {
+                dataSourcesFilter: function (sources) {
+                    return _.filter(sources, function (source) {
+                        return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
+                    });
+                }
+            },
             javaRosa: {
                 langs: {{ app.langs|JSON }},
                 displayLanguage: {{ lang|JSON }},
@@ -64,7 +76,8 @@
                 uploadUrls: {
                     image: '{% url "hqmedia_uploader_image" domain app.id %}',
                     audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
-                    video: '{% url "hqmedia_uploader_video" domain app.id %}'
+                    video: '{% url "hqmedia_uploader_video" domain app.id %}',
+                    text: '{% url "hqmedia_uploader_text" domain app.id %}',
                 },
                 objectMap: {{ multimedia_object_map|JSON }},
                 sessionid: {{ sessionid|JSON }}

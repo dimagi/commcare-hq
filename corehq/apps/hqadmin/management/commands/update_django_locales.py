@@ -23,7 +23,8 @@ class Command(BaseCommand):
         def _get_django_locale_directories():
             return [
                 os.path.join(_get_django_home(), 'conf', 'locale'),
-                os.path.join(_get_django_home(), 'contrib', 'auth', 'locale')
+                os.path.join(_get_django_home(), 'contrib', 'auth', 'locale'),
+                os.path.join(_get_django_home(), 'contrib', 'humanize', 'locale'),
             ]
 
         print 'updating django locale files for local languages'

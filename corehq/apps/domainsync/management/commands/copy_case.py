@@ -1,9 +1,10 @@
 from optparse import make_option
 from couchdbkit import Database
 from django.core.management.base import LabelCommand, CommandError
+from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import reverse_indices
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
+from corehq.util.couch_helpers import OverrideDB
 from couchforms.models import XFormInstance
 
 
@@ -46,7 +47,8 @@ class Command(LabelCommand):
 
         # hack, set the domain back to make sure we get the reverse indices correctly
         case.domain = orig_domain
-        child_indices = reverse_indices(sourcedb, case)
+        with OverrideDB(CommCareCase, sourcedb):
+            child_indices = get_reverse_indices(case)
         print 'copying %s child cases' % len(child_indices)
         for index in child_indices:
             _migrate_case(index.referenced_id)

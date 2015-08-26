@@ -32,11 +32,11 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
-from casexml.apps.case.dbaccessors import get_total_case_count
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound, Database
+from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
@@ -45,6 +45,8 @@ from pillowtop import get_all_pillows_json, get_pillow_by_name
 
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -79,10 +81,11 @@ from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
@@ -295,7 +298,7 @@ def mass_email(request):
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
 
-                send_HTML_email(subject, recipient.email, html_content, text_content,
+                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')
@@ -410,8 +413,8 @@ def system_ajax(request):
                     traw['name'] = None
                 ret.append(traw)
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
-            return HttpResponse(json.dumps(ret), mimetype = 'application/json')
-    return HttpResponse('{}', mimetype='application/json')
+            return HttpResponse(json.dumps(ret), content_type='application/json')
+    return HttpResponse('{}', content_type='application/json')
 
 
 @require_superuser_or_developer
@@ -464,13 +467,13 @@ def db_comparisons(request):
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
-            'sql_rows': FormData.objects.count(),
+            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
             'couch_docs': get_total_case_count(),
             'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.count(),
+            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
         }
     ]
 
@@ -838,3 +841,25 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
+
+
+@require_superuser
+def malt_as_csv(request):
+    from django.core.exceptions import ValidationError
+
+    if 'year_month' in request.GET:
+        try:
+            year, month = request.GET['year_month'].split('-')
+            year, month = int(year), int(month)
+            return _malt_csv_response(month, year)
+        except (ValueError, ValidationError):
+            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+            return render(request, "hqadmin/malt_downloader.html")
+    else:
+        return render(request, "hqadmin/malt_downloader.html")
+
+
+def _malt_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = MALTRow.objects.filter(month=query_month)
+    return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)

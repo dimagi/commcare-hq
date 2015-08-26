@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.db import DatabaseError
 from django.test import TestCase
 from django.test.client import Client
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.unicel.api import InboundParams
@@ -12,21 +13,23 @@ class IncomingPostTest(TestCase):
     INDIA_TZ_OFFSET = timedelta(hours=5.5)
 
     def setUp(self):
-        self.domain = 'mockdomain'
-        all_logs = SMSLog.by_domain_asc(self.domain).all()
+        self.domain = Domain(name='mockdomain')
+        self.domain.save()
+        all_logs = SMSLog.by_domain_asc(self.domain.name).all()
         for log in all_logs:
             log.delete()
         self.user = 'username-unicel'
         self.password = 'password'
         self.number = 5555551234
-        try:
-            self.couch_user = WebUser.create(self.domain, self.user, self.password)
-        except WebUser.Inconsistent:
-            self.couch_user = WebUser.get_by_username(self.user)
+        self.couch_user = WebUser.create(self.domain.name, self.user, self.password)
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
         self.message_ascii = 'It Works'
         self.message_utf_hex = '0939093F0928094D092609400020091509300924093E00200939094800200907093800200938092E092F00200915093E092E002009390948003F'
+
+    def tearDown(self):
+        self.couch_user.delete()
+        self.domain.delete()
 
     def testPostToIncomingAscii(self):
         fake_post = {InboundParams.SENDER: str(self.number),

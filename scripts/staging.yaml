@@ -3,12 +3,14 @@
 ########################
 
 # GENERAL PROCESS
-# From your commcare-hq directory with the virtualenv turned on
-# to safely push your changes to scripts/staging.yaml
+# From your commcare-hq directory with the virtualenv turned on and master
+# checked out to safely push your changes to scripts/staging.yaml
 #     $ scripts/commit-staging --push
+# to check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging --deploy
-# Both commands commands can be run without the flag as well.
+# Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
 # First, determine where the conflict lies.
@@ -21,7 +23,7 @@
 #     you can't just merge foo into bar or vice versa, otherwise the PR
 #     for foo will contain commits from bar.  Instead make a third,
 #     conflict-resolution branch:
-#       $ git checkout -b foo+bar origin/foo
+#       $ git checkout -b foo+bar --no-track origin/foo
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
@@ -43,27 +45,46 @@
 trunk: master
 name: autostaging
 branches:
-  - subscription-no-contact-info # bb 8/4
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-  - locations-for-robber-barons  # Ethan 5/7
-  - form-context-simple # Ben 5/13
-  - languageMedia # Sravan 6/10
-  - renew-plan # Farid 6/4
-  - index-phonelog-reportentry # Ben 6/8
-  - add-proxy4 # ts 6/9
-  - debug-sync # Nick P 6/9
-  - case-list-filter  # Ethan 6/10
+#  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
+  - reverseLanguageMedia # Sravan 6/10
+  - web-user-requests # Jenny, July 16
+  - FormArchive # Sravan 7/22
+  - due-list+icds/scheduler # Farid 8/20
+  - icds/scheduler # Farid 8/6
+  - ckeditor # J$ 7/24
+  - due-list # TS 7/30
+  - django17 # J$ 8/5
+  - extension_cases  # Norman 8/8
+  - quickcache-user-roles  # Ethan 8/13
+  - optmize-deploy+knockout-js2 # Ben 8/24
+  - knockout-js # Ben 8/17
+  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
+  - reports-n-weeks # Nick P 8/24
+  - new-mobile-workers # Biyeun 8/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - tf-persistence  # wsp 5/7
-      - use-classes # ben 5/7
-      - 221-jars # wsp 5/20
+      - knockout-js # Ben 8/17
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/ctable-src:
+    branches: []
+  submodules/django-digest-src:
+    branches: []
+  submodules/pillowtop-src:
+    branches: []
+  submodules/dimagi-utils-src:
+    branches: []
+  submodules/django-soil-src:
+    branches: []
+  submodules/django-prbac-src:
+    branches: 
+      - django18
+

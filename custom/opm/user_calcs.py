@@ -4,9 +4,7 @@ These are used in the Incentive Payment Report
 """
 import fluff
 from couchforms.models import XFormInstance
-from corehq.apps.users.models import CommCareUser, CommCareCase
 from dimagi.utils.parsing import json_format_date
-
 from .constants import *
 
 
@@ -31,6 +29,7 @@ class WomenRegistered(fluff.Calculator):
     def total(self, case):
         if case.type == "Pregnancy":
             yield case.opened_on
+
 
 class ChildrenRegistered(fluff.Calculator):
     """
@@ -93,7 +92,6 @@ class GrowthMonitoring(fluff.Calculator):
                         form.metadata.userID,
                     ],
                 }
-
 
     def get_result(self, key, date_range=None, reduce=True):
         # This block is pretty much a stripped copy-paste from fluff

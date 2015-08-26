@@ -10,8 +10,8 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script type="text/javascript" src="{% static 'locations/ko/location.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
@@ -20,13 +20,8 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var LOAD_LOCS_URL = '{{ api_root }}';
-
-        // for product and user per location selection
-        $(function () {
-            $("#id_users-selected_ids").width(800).height(400).multiselect();
-            $("#id_products-selected_ids").width(800).height(400).multiselect();
-        });
     </script>
+
 {% endblock %}
 
 {% block main_column %}
@@ -101,6 +96,15 @@
       </a>
     </li>
     {% endif %}
+
+    {% if request|toggle_enabled:'LINK_SUPPLY_POINT' and location.sql_location.supply_point_id %}
+    <li>
+      <a href="{% url "case_details" domain location.sql_location.supply_point_id %}">
+        {% trans "View Location Case" %}
+      </a>
+    </li>
+    {% endif %}
+
   </ul>
   {% endif %}
 
@@ -145,6 +149,13 @@
         <div class="row-fluid">
           <form class="form disable-on-submit" id="edit_users" action="" method='post'>
             <legend>{% trans 'Specify Users At This Location' %}</legend>
+            {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
+            <div class="btn-toolbar">
+              <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
+                {% trans "Create new user at this location" %}
+              </a>
+            </div>
+            {% endif %}
             {% crispy users_per_location_form %}
             <input type="hidden" name="form_type" value="location-users" />
           </form>
@@ -189,5 +200,16 @@
   </form>
 </div>
 
-{% endblock %}
+<div id="new_user" class="modal hide fade">
+  <div class="modal-header">
+    <h3>{% trans "New User" %}</h3>
+  </div>
+  <div class="modal-body">
+    <form class="form form-horizontal" method="post" id="add_commcare_account_form"
+          action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
+      <i class="icon-refresh icon-spin"></i>
+    </form>
+  </div>
+</div>
 
+{% endblock %}

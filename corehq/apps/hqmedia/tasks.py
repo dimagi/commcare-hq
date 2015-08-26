@@ -5,7 +5,7 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 import zipfile
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from soil import DownloadBase

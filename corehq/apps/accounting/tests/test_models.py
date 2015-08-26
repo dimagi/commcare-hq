@@ -1,10 +1,20 @@
 import datetime
+from decimal import Decimal
 from django.db import models
 from corehq import Domain
 
 from corehq.apps.accounting import generator, tasks
-from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    Currency,
+    Subscription,
+    SubscriptionType,
+    BillingRecord,
+    Invoice,
+    SMALL_INVOICE_THRESHOLD,
+)
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import get_previous_month_date_range
 
 
 class TestBillingAccount(BaseAccountingTest):
@@ -27,6 +37,7 @@ class TestBillingAccount(BaseAccountingTest):
         self.dimagi_user.delete()
         BillingAccount.objects.all().delete()
         Currency.objects.all().delete()
+        super(TestBillingAccount, self).tearDown()
 
 
 class TestSubscription(BaseAccountingTest):
@@ -79,3 +90,53 @@ class TestSubscription(BaseAccountingTest):
 
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(TestSubscription, self).tearDown()
+
+
+class TestBillingRecord(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestBillingRecord, self).setUp()
+        self.billing_contact = generator.arbitrary_web_user()
+        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.domain = Domain(name='test')
+        self.domain.save()
+        self.invoice_start, self.invoice_end = get_previous_month_date_range()
+        self.currency = generator.init_default_currency()
+        self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
+        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
+            datetime.date.today(), self.account, self.domain.name
+        )
+        self.invoice = Invoice(
+            subscription=self.subscription,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end,
+            is_hidden=False,
+        )
+        self.billing_record = BillingRecord(invoice=self.invoice)
+
+    def test_should_send_email(self):
+        self.assertTrue(self.billing_record.should_send_email)
+
+    def test_should_send_email_contracted(self):
+        self.subscription.service_type = SubscriptionType.CONTRACTED
+        self.assertFalse(self.billing_record.should_send_email)
+
+        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD - 1)
+        self.assertFalse(self.billing_record.should_send_email)
+
+        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
+        self.assertTrue(self.billing_record.should_send_email)
+
+    def test_should_send_email_autogenerate_credits(self):
+        self.subscription.auto_generate_credits = True
+        self.assertFalse(self.billing_record.should_send_email)
+
+        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
+        self.assertTrue(self.billing_record.should_send_email)
+
+    def test_should_send_email_hidden(self):
+        self.assertTrue(self.billing_record.should_send_email)
+
+        self.invoice.is_hidden = True
+        self.assertFalse(self.billing_record.should_send_email)

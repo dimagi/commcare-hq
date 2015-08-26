@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
     <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
 {% endblock %}
@@ -11,25 +10,15 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
-            var help_text = {
-                "Archive Product": "{{ archive_help_text }}",
-            };
-
-            $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('#product-list').asyncProgramProductList({
                 total: {{ data_list.total }},
                 start_page: {{ data_list.page }},
                 limit: {{ data_list.limit }},
                 show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}',
+                list_url: '{% url "commtrack_product_fetch" domain %}'
             });
         });
     </script>
@@ -122,8 +111,13 @@
                             <th>{% trans "Program" %}</th>
                             <th>{% trans "Description" %}</th>
                             <th>{% trans "Units" %}</th>
-                            <th class="help_popover" data-help-key="Archive Product">
-                                <a href="#">{% trans "Archive" %} <i class="icon icon-question-sign"></i></a>
+                            <th>
+                                {% trans "Archive" %}
+                                <span class="hq-help-template"
+                                    data-title="{% trans "Archive Product" %}"
+                                    data-content="{{ archive_help_text }}"
+                                    data-placement="left"
+                                ></span>
                             </th>
                         </tr>
                     </thead>
@@ -150,6 +144,7 @@
                                     </div>
                                     <div class="modal-body">
                                         <p data-bind="text: archive_action_desc"></p>
+                                        <div class="hide alert" data-bind="attr: {id: 'alert_' + product_id}"></div>
                                     </div>
                                     <div class="modal-footer">
                                         <a href="#" class="btn btn-warning"

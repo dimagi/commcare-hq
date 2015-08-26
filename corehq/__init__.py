@@ -11,7 +11,7 @@ from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, CustomReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
@@ -21,7 +21,7 @@ from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInte
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
-
+import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 
 def REPORTS(project):
@@ -52,7 +52,7 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
         )),
-        (ugettext_lazy("Demos for Previewers"), (
+        (ugettext_lazy("Demos"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])
@@ -65,7 +65,6 @@ def REPORTS(project):
             commtrack_maps.StockStatusMapReport,
             commtrack_reports.ReportingRatesReport,
             commtrack_maps.ReportingStatusMapReport,
-            # commtrack_reports.RequisitionReport,
         )))
 
     if project.has_careplan:
@@ -83,6 +82,14 @@ def REPORTS(project):
         messaging_reports.extend([
             sms.MessagesReport,
         ])
+
+    if toggles.MESSAGING_STATUS_AND_ERROR_REPORTS.enabled(project.name):
+        messaging_reports.extend([
+            sms.MessagingEventsReport,
+            sms.MessageEventDetailReport,
+            sms.SurveyDetailReport,
+        ])
+
     # always have these historical reports visible
     messaging_reports.extend([
         sms.MessageLogReport,
@@ -145,7 +152,7 @@ def _get_configurable_reports(project):
     """
     User configurable reports
     """
-    configs = ReportConfiguration.by_domain(project.name)
+    configs = ReportConfiguration.by_domain(project.name) + CustomReportConfiguration.by_domain(project.name)
     if configs:
         def _make_report_class(config):
             from corehq.apps.reports.generic import GenericReportView
@@ -167,7 +174,7 @@ def _get_configurable_reports(project):
                 'show_in_navigation': show_in_navigation,
             })
 
-        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Reports'), [_make_report_class(config) for config in configs])
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
@@ -194,27 +201,24 @@ FIXTURE_INTERFACES = (
     )),
 )
 
-
-from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-
-ADM_SECTIONS = (
-    (_('Supervisor Report'), (
-        SupervisorReportsADMSection,
+from corehq.apps.reports.standard.export import (
+    FormExportInterface,
+    CaseExportInterface,
+)
+EXPORT_DATA_INTERFACES = (
+    (_('Export Data'), (
+        FormExportInterface,
+        CaseExportInterface,
     )),
 )
 
-from corehq.apps.adm.admin import columns, reports
-
-ADM_ADMIN_INTERFACES = (
-    (_("ADM Default Columns"), (
-        columns.ReducedADMColumnInterface,
-        columns.DaysSinceADMColumnInterface,
-        columns.ConfigurableADMColumnInterface
+DATA_DOWNLOAD_INTERFACES = (
+    ('', (
+        export.FormExportReport,
+        export.NewCaseExportReport,
     )),
-    (_("ADM Default Reports"), (
-        reports.ADMReportAdminInterface,
-    ))
 )
+
 
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 
@@ -238,17 +242,6 @@ INDICATOR_ADMIN_INTERFACES = (
     )),
 )
 
-from corehq.apps.announcements.interface import (
-    ManageGlobalHQAnnouncementsInterface,
-    ManageReportAnnouncementsInterface,
-)
-
-ANNOUNCEMENTS_ADMIN_INTERFACES = (
-    (_("Manage Announcements"), (
-        ManageGlobalHQAnnouncementsInterface,
-        ManageReportAnnouncementsInterface,
-    )),
-)
 
 from corehq.apps.accounting.interface import (
     AccountingInterface,

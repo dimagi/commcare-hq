@@ -1,4 +1,5 @@
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs, get_db
 from casexml.apps.case.models import CommCareCase
 
 
@@ -11,6 +12,17 @@ def get_number_of_cases_in_domain(domain, type=None):
         reduce=True,
     ).one()
     return row["value"] if row else 0
+
+
+def get_number_of_cases_per_domain():
+    return {
+        row["key"][0]: row["value"]
+        for row in CommCareCase.get_db().view(
+            "hqcase/types_by_domain",
+            group=True,
+            group_level=1,
+        ).all()
+    }
 
 
 def get_case_ids_in_domain(domain, type=None):
@@ -90,3 +102,155 @@ def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
         include_docs=False,
         reduce=False,
     )]
+
+
+def get_open_case_ids(domain, owner_id):
+    """
+    Get all open case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=False)
+
+
+def get_closed_case_ids(domain, owner_id):
+    """
+    Get all closed case ids for a given owner
+    """
+    return _get_case_ids(domain, owner_id, is_closed=True)
+
+
+def _get_case_ids(domain, owner_id, is_closed):
+    from casexml.apps.case.models import CommCareCase
+    if is_closed is None:
+        key = [domain, owner_id]
+    else:
+        key = [domain, owner_id, is_closed]
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=False,
+        key=key,
+    )]
+
+
+def get_total_case_count():
+    """
+    Total count of all cases in the database.
+    """
+    from casexml.apps.case.models import CommCareCase
+    results = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        reduce=True,
+    ).one()
+    return results['value'] if results else 0
+
+
+def get_number_of_cases_in_domain_by_owner(domain, owner_id):
+    res = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        startkey=[domain, owner_id],
+        endkey=[domain, owner_id, {}],
+        reduce=True,
+    ).one()
+    return res['value'] if res else 0
+
+
+def get_n_case_ids_in_domain_by_owner(domain, owner_id, n,
+                                      start_after_case_id=None):
+    view_kwargs = {}
+    if start_after_case_id:
+        view_kwargs['startkey_docid'] = start_after_case_id
+        view_kwargs['skip'] = 1
+
+    return [row['id'] for row in CommCareCase.get_db().view(
+        "hqcase/by_owner",
+        reduce=False,
+        startkey=[domain, owner_id, False],
+        endkey=[domain, owner_id, False],
+        limit=n,
+        **view_kwargs
+    )]
+
+
+def iter_lite_cases_json(case_ids, chunksize=100):
+    for case_id_chunk in chunked(case_ids, chunksize):
+        rows = CommCareCase.get_db().view(
+            'case/get_lite',
+            keys=case_id_chunk,
+            reduce=False,
+        )
+        for row in rows:
+            yield row['value']
+
+
+def get_lite_case_json(case_id):
+    return CommCareCase.get_db().view(
+        "case/get_lite",
+        key=case_id,
+        include_docs=False,
+    ).one()
+
+
+def get_case_properties(domain, case_type=None):
+    """
+    For a given case type and domain, get all unique existing case properties,
+    known and unknown
+    """
+    key = [domain]
+    if case_type:
+        key.append(case_type)
+    keys = [row['key'] for row in get_db().view(
+        'hqcase/all_case_properties',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=True,
+        group=True,
+        group_level=3,
+    )]
+    return sorted(set([property_name for _, _, property_name in keys]))
+
+
+def get_cases_in_domain_by_external_id(domain, external_id):
+    return CommCareCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, external_id],
+        reduce=False,
+        include_docs=True,
+    ).all()
+
+
+def get_one_case_in_domain_by_external_id(domain, external_id):
+    return CommCareCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, external_id],
+        reduce=False,
+        include_docs=True,
+        # limit for efficiency, 2 instead of 1 so it raises if multiple found
+        limit=2,
+    ).one()
+
+
+def get_supply_point_case_in_domain_by_id(
+        domain, supply_point_integer_id):
+    from corehq.apps.commtrack.models import SupplyPointCase
+    return SupplyPointCase.view(
+        'hqcase/by_domain_external_id',
+        key=[domain, str(supply_point_integer_id)],
+        reduce=False,
+        include_docs=True,
+        limit=1,
+    ).first()
+
+
+def get_all_case_owner_ids(domain):
+    """
+    Get all owner ids that are assigned to cases in a domain.
+    """
+    from casexml.apps.case.models import CommCareCase
+    key = [domain]
+    submitted = CommCareCase.get_db().view(
+        'hqcase/by_owner',
+        group_level=2,
+        startkey=key,
+        endkey=key + [{}],
+    ).all()
+    return set([row['key'][1] for row in submitted])

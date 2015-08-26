@@ -11,10 +11,10 @@
     <session>
       <datum id="case_id_new_suite_test_0" function="uuid()"/>
       <datum id="supply_point_id"
-             function="instance('commcaresession')/session/user/data/commtrack-supply-point"/>
+             function="if(count(instance('commcaresession')/session/user/data) = 1 and count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1, instance('commcaresession')/session/user/data/commtrack-supply-point, '')"/>
     </session>
     <assertions>
-      <assert test="count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
+      <assert test="count(instance('commcaresession')/session/user/data) = 1 and count(instance('commcaresession')/session/user/data/commtrack-supply-point) = 1">
         <text>
           <locale id="case_autoload.location.property_missing">
             <argument>commtrack-supply-point</argument>

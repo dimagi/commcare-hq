@@ -13,18 +13,24 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var el = $(
-                '<a href="#" class="hq-help no-click">' +
-                    '<i class="icon-question-sign"></i></a>'
+                '<div class="hq-help">' +
+                    '<a href="#">' +
+                        '<i class="icon-question-sign" data-trigger="focus"></i></a></div>'
                 ),
-                attrs = ['content', 'title', 'placement', 'trigger'];
+                attrs = ['content', 'title', 'placement'];
 
             attrs.map(function (attr) {
-                $('i', el).data(attr, opts[attr]);
+                $('a', el).data(attr, opts[attr]);
             });
             if (wrap) {
                 el.hqHelp();
             }
             return el;
+        },
+        transformHelpTemplate: function ($template, wrap) {
+            var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+            $help.insertAfter($template);
+            $template.remove();
         },
         updateDOM: function (update) {
             var key;

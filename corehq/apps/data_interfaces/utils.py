@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.models import CommCareCaseGroup
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs

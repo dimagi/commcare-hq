@@ -102,14 +102,7 @@ cloudCare.Details = Backbone.Model.extend({
 
 cloudCare.caseViewMixin = {
     lookupField: function (field) {
-        var self = this;
-        if (self.options.delegation) {
-            // casedb maps case_ids to unwrapped case json
-            var parent = self.options.casedb[self.model.get('indices').parent.case_id];
-            return parent[field];
-        } else {
-            return self.model.getProperty(field);
-        }
+        return this.model.getProperty(field);
     },
     delegationFormName: function () {
         var self = this;
@@ -173,12 +166,10 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
     }
 });
 
-        
 cloudCare.CaseList = Backbone.Collection.extend({
     initialize: function () {
         var self = this;
         _.bindAll(self, 'url', 'setUrl');
-        self.casedb = {};
     },
     model: cloudCare.Case,
     url: function () {
@@ -187,25 +178,6 @@ cloudCare.CaseList = Backbone.Collection.extend({
     setUrl: function (url) {
         this.caseUrl = url;
     },
-    parse: function (resp) {
-        var self = this;
-        if (resp.cases) {
-            // object: {cases: [...], parents: [...]}
-            for (var key in resp) {
-                if (resp.hasOwnProperty(key)) {
-                    var cases = resp[key];
-                    for (var i = 0; i < cases.length; i++) {
-                        self.casedb[cases[i]._id] = cases[i];
-                    }
-                }
-            }
-            return resp.cases;
-        } else {
-            // just the array: [...]
-            return resp;
-        }
-
-    }
 });
 
 cloudCare.CaseListView = Backbone.View.extend({
@@ -257,7 +229,6 @@ cloudCare.CaseListView = Backbone.View.extend({
             model: item,
             columns: self.detailsShort.get("columns"),
             delegation: self.options.delegation,
-            casedb: self.caseList.casedb,
             appConfig: self.options.appConfig,
             language: self.options.language
         });
@@ -367,7 +338,6 @@ cloudCare.CaseMainView = Backbone.View.extend({
             details: self.options.summaryDetails,
             language: self.options.language,
             appConfig: self.options.appConfig,
-            casedb: self.listView.caseList.casedb,
             delegation: self.delegation
         });
         $(self.detailsView.render().el).appendTo($(self.section));

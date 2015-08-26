@@ -1,9 +1,8 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import (user_can_edit_location,
-                                               user_can_view_location)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -17,7 +16,7 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
-        user=None):
+        user=None, only_administrative=False):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -26,7 +25,11 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     * all top level locs
     * if a 'selected' loc is provided, that loc and its complete
       ancestry
+
+    only_administrative - if False get all locations
+                          if True get only administrative locations
     """
+    from .permissions import user_can_edit_location, user_can_view_location
     def loc_to_json(loc, project):
         ret = {
             'name': loc.name,
@@ -41,11 +44,15 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
     project = Domain.get_by_name(domain)
 
+    locations = SQLLocation.root_locations(
+        domain, include_archive_ancestors=include_archived
+    )
+
+    if only_administrative:
+        locations = locations.filter(location_type__administrative=True)
+
     loc_json = [
-        loc_to_json(loc, project) for loc in
-        SQLLocation.root_locations(
-            domain, include_archive_ancestors=include_archived
-        )
+        loc_to_json(loc, project) for loc in locations
         if user is None or user_can_view_location(user, loc, project)
     ]
 
@@ -61,11 +68,13 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
         parent = {'children': loc_json}
         for loc in lineage:
+            children = loc.child_locations(include_archive_ancestors=include_archived)
+            if only_administrative:
+                children = children.filter(location_type__administrative=True)
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
-                loc_to_json(loc, project) for loc in
-                loc.child_locations(include_archive_ancestors=include_archived)
+                loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)
             ]
             parent = this_loc
@@ -91,32 +100,6 @@ def parent_child(domain):
 def allowed_child_types(domain, parent):
     parent_type = parent.location_type if parent else None
     return parent_child(domain).get(parent_type, [])
-
-
-def lookup_by_property(domain, prop_name, val, scope, root=None):
-    if root and not isinstance(root, basestring):
-        root = root._id
-
-    if prop_name == 'site_code':
-        index_view = 'locations/prop_index_site_code'
-    else:
-        # this was to be backwards compatible with the api
-        # if this ever comes up, please take a moment to decide whether it's
-        # worth changing the API to raise a less nonsensical error
-        # (or change this function to not sound so general!)
-        raise ResourceNotFound('missing prop_index_%s' % prop_name)
-
-    startkey = [domain, val]
-    if scope == 'global':
-        startkey.append(None)
-    elif scope == 'descendant':
-        startkey.append(root)
-    elif scope == 'child':
-        startkey.extend([root, 1])
-    else:
-        raise ValueError('invalid scope type')
-
-    return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
 
 
 @quickcache(['domain'], timeout=60)
@@ -152,7 +135,8 @@ class LocationExporter(object):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
             self.product_codes = [p.code for p in self.products]
-            self.supply_point_map = SupplyPointCase.get_location_map_by_domain(self.domain)
+            self.supply_point_map = get_supply_point_ids_in_domain_by_location(
+                self.domain)
             self.administrative_types = {
                 lt.name for lt in self.domain_obj.location_types
                 if lt.administrative
@@ -260,3 +244,31 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
+
+
+def get_xform_location(xform):
+    """
+    Returns the sql location associated with the user who submitted an xform
+    """
+    from corehq.apps.users.models import CouchUser
+    user_id = getattr(xform.metadata, 'userID', None)
+    if not user_id:
+        return None
+
+    user = CouchUser.get_by_user_id(user_id)
+    if hasattr(user, 'get_sql_location'):
+        return user.get_sql_location(xform.domain)
+    elif hasattr(user, 'sql_location'):
+        return user.sql_location
+    return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )

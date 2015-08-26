@@ -17,7 +17,6 @@ urlpatterns = patterns(
     (r'^reports/$', 'redirect_to_default'),
     url(r'^bug_report/$', 'bug_report', name='bug_report'),
     url(r'^debug/notify/$', 'debug_notify', name='debug_notify'),
-    url(r'^notifications/dismiss/$', 'dismiss_notification', name="dismiss_notification"),
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
@@ -26,6 +25,8 @@ urlpatterns = patterns(
     url(r'^activate_alert/$', 'activate_alert', name='activate_alert'),
     url(r'^deactivate_alert/$', 'deactivate_alert', name='deactivate_alert'),
     url(r'^jserror/$', 'jserror', name='jserror'),
+    url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'dropbox_upload',
+        name='dropbox_upload'),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
@@ -36,6 +37,6 @@ domain_specific = patterns('corehq.apps.hqwebapp.views',
     url(r'^login/mobile/$', 'domain_login', name='domain_mobile_login', 
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 
-        'retrieve_download', {'template': 'hqwebapp/file_download.html' },
+        'retrieve_download', {'template': 'style/includes/file_download.html' },
         name='hq_soil_download')
 )

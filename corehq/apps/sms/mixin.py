@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -342,7 +343,7 @@ class SMSLoadBalancingInfo(object):
                     dumpable[k] = [json_format_datetime(t) for t in v]
                 self.redis_client.set(self.stats_key, json.dumps(dumpable))
             if self.lock:
-                self.lock.release()
+                release_lock(self.lock, True)
         except:
             if raise_exc:
                 raise
@@ -455,7 +456,7 @@ class SMSLoadBalancingMixin(Document):
             # However, if no exception occurs, we don't release the lock since
             # it must be released by calling the .finish() method on the return
             # value.
-            lock.release()
+            release_lock(lock, True)
             raise
 
     def get_next_phone_number(self, redis_client, raise_exc=False):
@@ -566,6 +567,14 @@ class CommCareMobileContactMixin(object):
         and must return the preferred language code of the contact. For example, "en".
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
+
+    def get_email(self):
+        """
+        This method should be implemented by all subclasses of
+        CommCareMobileContactMixin and should return the contact's
+        email address or None if it doesn't have one.
+        """
+        raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
         v = VerifiedNumber.view("sms/verified_number_by_owner_id",

@@ -86,7 +86,10 @@ def transform_int(item):
     try:
         return int(item)
     except (ValueError, TypeError):
-        return None
+        try:
+            return int(float(item))
+        except (ValueError, TypeError):
+            return None
 
 
 def transform_decimal(item):

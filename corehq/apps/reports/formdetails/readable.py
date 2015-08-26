@@ -1,9 +1,12 @@
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
+from corehq.util.timezones.conversions import PhoneTime
+from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
 from jsonobject.base import DefaultProperty
-from corehq.apps.app_manager.models import get_app, Application, FormActionCondition
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
@@ -50,6 +53,15 @@ class FormQuestion(JsonObject):
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
     children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
+
+    def get_formatted_response(self):
+        timezone = get_timezone_for_request()
+        if self.type == 'DateTime' and timezone \
+                and isinstance(self.response, datetime.datetime):
+            return (PhoneTime(self.response, timezone).user_time(timezone)
+                    .ui_string())
+        else:
+            return self.response
 
 
 class ConditionalFormQuestionResponse(JsonObject):
@@ -287,7 +299,12 @@ def strip_form_data(data):
     data = data.copy()
     # remove all case, meta, attribute nodes from the top level
     for key in data.keys():
-        if not form_key_filter(key) or key in ('meta', 'case'):
+        if (
+            not form_key_filter(key) or
+            key in ('meta', 'case', 'commcare_usercase') or
+            key.startswith('case_autoload_') or
+            key.startswith('case_load_')
+        ):
             data.pop(key)
     return data
 
@@ -306,8 +323,10 @@ def pop_from_form_data(relative_data, absolute_data, path):
         try:
             if path:
                 data = data[key]
-            else:
+            elif hasattr(data, 'pop'):
                 return data.pop(key)
+            else:
+                return None
         except KeyError:
             return None
 
