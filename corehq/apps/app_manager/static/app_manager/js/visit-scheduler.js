@@ -163,7 +163,6 @@ var VisitScheduler = (function () {
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
         self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
 
-
         self.init = function () {
             _.defer(function () {
                 ko.applyBindings(self, self.home.get(0));
@@ -173,9 +172,13 @@ var VisitScheduler = (function () {
                      .on('click', 'a:not(.header)', self.change)
                      .on('change', 'input[type="checkbox"]', self.change);
 
-                // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#visit-scheduler input').on('textchange', self.change);
+                self.applyGlobalEventHandlers();
             });
+        };
+
+        self.applyGlobalEventHandlers = function(){
+            // https://gist.github.com/mkelly12/424774/#comment-92080
+            $('#visit-scheduler input').on('textchange', self.change);
         };
     };
 
