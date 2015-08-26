@@ -7,9 +7,14 @@ _set_source_root_parent('submodules')
 _set_source_root(os.path.join('corehq', 'ex-submodules'))
 _set_source_root(os.path.join('custom', '_legacy'))
 
-from restkit.session import set_session; set_session("gevent")
-from gevent.monkey import patch_all; patch_all(subprocess=True)
-from psycogreen.gevent import patch_psycopg; patch_psycopg()
+# patch gevent
+from restkit.session import set_session
+from gevent.monkey import patch_all
+from psycogreen.gevent import patch_psycopg
+
+set_session("gevent")
+patch_all(subprocess=True)
+patch_psycopg()
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
