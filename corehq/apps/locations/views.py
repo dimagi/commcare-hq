@@ -841,5 +841,7 @@ def unassign_users(request, domain):
         elif user.is_commcare_user():
             user.unset_location()
 
+    messages.success(request,
+                     _("All users have been unassigned from their locations"))
     fallback_url = reverse('users_default', args=[domain])
     return HttpResponseRedirect(request.POST.get('redirect', fallback_url))
