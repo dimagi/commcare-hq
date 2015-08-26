@@ -5,6 +5,7 @@
         'ui.bootstrap',
         'ngResource',
         'ngRoute',
+        'ngCookies',
         'ng.django.rmi'
     ]);
 
@@ -37,7 +38,7 @@
         var storedLimit = $cookies.get(paginationLimitCookieName);
         if (_.isString(storedLimit)) {
             try {
-                storedLimit = storedLimit.parseInt();
+                storedLimit = parseInt(storedLimit);
             } catch (e) {
                 // do nothing
             }
