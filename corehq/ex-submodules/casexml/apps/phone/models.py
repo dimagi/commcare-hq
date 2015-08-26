@@ -693,6 +693,16 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 ))
                 raise
 
+    def prune_dependent_cases(self):
+        """
+        Attempt to prune any dependent cases from the sync log.
+        """
+        # this is done when migrating from old formats or during initial sync
+        # to prune non-relevant dependencies
+        for dependent_case_id in list(self.dependent_case_ids_on_phone):
+            # this will be a no-op if the case cannot be pruned due to dependencies
+            self.prune_case(dependent_case_id)
+
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -715,12 +725,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 _add_state_contributions(ret, case_state, is_dependent=True)
                 dependent_case_ids.add(case_state.case_id)
 
-            for dependent_case_id in dependent_case_ids:
-                # try to prune any dependent cases - the old format does this on
-                # access, but the new format does it ahead of time and always assumes
-                # its current state is accurate.
-                # this will be a no-op if the case cannot be pruned due to dependencies
-                ret.prune_case(dependent_case_id)
+            # try to prune any dependent cases - the old format does this on
+            # access, but the new format does it ahead of time and always assumes
+            # its current state is accurate.
+            ret.prune_dependent_cases()
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
