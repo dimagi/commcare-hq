@@ -479,11 +479,9 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
                 form.add_stuff_to_xform(xform)
-                if settings.DEBUG and False:
-                    xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormValidationError as e:
+        except XFormException as e:
             messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
@@ -531,6 +529,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if isinstance(form, CareplanForm):
@@ -2743,7 +2742,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()
@@ -2865,6 +2864,8 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_form_versions(None)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -2875,6 +2876,8 @@ def download_media_suite(request, domain, app_id):
     See Application.create_media_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_media_versions(None)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -2925,6 +2928,9 @@ def download_jad(request, domain, app_id):
 
     """
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -2951,6 +2957,9 @@ def download_jar(request, domain, app_id):
     """
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
