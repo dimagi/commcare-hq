@@ -3,6 +3,7 @@ from django.utils.html import escape
 from lxml import etree
 import copy
 import re
+from lxml.etree import XMLSyntaxError, Element
 from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
@@ -43,7 +44,11 @@ def process_bulk_app_translation_upload(app, f):
         workbook = WorkbookJSONReader(f)
     except (HeaderValueError, InvalidFileException) as e:
         msgs.append(
-            (messages.error, _("App Translation Failed! " + str(e)))
+            (messages.error, _(
+                "App Translation Failed! "
+                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+                "Error details: {}."
+            ).format(e))
         )
         return msgs
 
@@ -526,21 +531,26 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         "./{f}value[@form='%s']" % trans_type
                     )
 
-                col_key = get_col_key(trans_type, lang)
-                new_translation = row[col_key]
+                try:
+                    col_key = get_col_key(trans_type, lang)
+                    new_translation = row[col_key]
+                except KeyError:
+                    # error has already been logged as unrecoginzed column
+                    continue
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
-                        fallback = row[get_col_key(trans_type, l)]
+                        key = get_col_key(trans_type, l)
+                        if key in missing_cols:
+                            continue
+                        fallback = row[key]
                         if fallback:
                             new_translation = fallback
                             break
 
                 if new_translation:
                     # Create the node if it does not already exist
-                    complex_node = re.search('<.*>', new_translation)
-
                     if not value_node.exists():
                         e = etree.Element(
                             "{f}value".format(**namespaces), attributes
@@ -551,13 +561,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     value_node.xml.tail = ''
                     for node in value_node.findall("./*"):
                         node.xml.getparent().remove(node.xml)
-                    if not complex_node:
-                        value_node.xml.text = new_translation
-                    else:
-                        escaped_trans = _escape_output_value(new_translation)
-                        value_node.xml.text = escaped_trans.text
-                        for n in escaped_trans.getchildren():
-                            value_node.xml.append(n)
+                    escaped_trans = escape_output_value(new_translation)
+                    value_node.xml.text = escaped_trans.text
+                    for n in escaped_trans.getchildren():
+                        value_node.xml.append(n)
                 else:
                     # Remove the node if it already exists
                     if value_node.exists():
@@ -567,11 +574,16 @@ def update_form_translations(sheet, rows, missing_cols, app):
     return msgs
 
 
-def _escape_output_value(value):
-    return etree.fromstring("<value>" +
-        re.sub("(?<!/)>", "&gt;", re.sub("<\s*(?!output)", "&lt;", value)) +
-        "</value>")
-
+def escape_output_value(value):
+    try:
+        return etree.fromstring(u"<value>{}</value>".format(
+            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
+        ))
+    except XMLSyntaxError:
+        # if something went horribly wrong just don't bother with escaping
+        element = Element('value')
+        element.text = value
+        return element
 
 
 def update_case_list_translations(sheet, rows, app):

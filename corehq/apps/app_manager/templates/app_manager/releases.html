@@ -376,7 +376,10 @@
                                                 <div data-bind="ifnot: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0')">
                                                     Upgrade to CommCare 2.13 to use this feature
                                                 </div>
-                                                <div data-bind="if: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0')">
+                                                <div data-bind="ifnot: allow_media_install">
+                                                    Offline install is unavailable for Remote Apps.
+                                                </div>
+                                                <div data-bind="if: COMMCAREHQ.app_manager.versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}

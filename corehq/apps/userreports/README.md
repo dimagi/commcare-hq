@@ -108,7 +108,7 @@ An optional `"datatype"` attribute may be specified, which will attempt to cast 
 This expression returns `doc["child"]["age"]`:
 ```
 {
-    "type": "property_name",
+    "type": "property_path",
     "property_path": ["child", "age"]
 }
 ```
@@ -281,34 +281,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 
@@ -633,11 +607,14 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 
 The following percentage formats are supported.
 
-Format    | Description                                    | example
---------- | -----------------------------------------------| --------
-percent   | A whole number percentage (the default format) | 33%
-fraction  | A fraction                                     | 1/3
-both      | Percentage and fraction                        | 33% (1/3)
+Format          | Description                                    | example
+--------------- | -----------------------------------------------| --------
+percent         | A whole number percentage (the default format) | 33%
+fraction        | A fraction                                     | 1/3
+both            | Percentage and fraction                        | 33% (1/3)
+numeric_percent | Percentage as a number                         | 33
+decimal         | Fraction as a decimal number                   | .333
+
 
 #### Column IDs
 
@@ -646,7 +623,7 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 
 ### Expanded Columns
 
-Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. For example:
 
 If you have a data source like this:
 ```
@@ -689,6 +666,8 @@ Then you will get a report like this:
 | South    | 0                    | 1                    |
 +----------+----------------------+----------------------+
 ```
+
+Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
 ### Internationalization
 Report columns can be translated into multiple languages. To specify translations
@@ -774,6 +753,16 @@ Rounds decimal and floating point numbers to two decimal places.
 }
 ```
 
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
+}
+```
+
 ## Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
@@ -823,7 +812,7 @@ Here's a sample spec:
 
 ### Multibar charts
 
-A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
 Field          | Description
 ---------------| -----------------------------------------------
@@ -847,6 +836,9 @@ Here's a sample spec:
 ## Sort Expression
 
 A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
+
+Field should refer to report column IDs, not database fields.
+
 ```
 [
   {

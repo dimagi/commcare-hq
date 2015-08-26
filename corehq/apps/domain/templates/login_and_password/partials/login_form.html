@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="page-header">
-    <h1>{% trans "Welcome back to " %}{% if domain %}{{ domain }}{% else %}{{ SITE_NAME }}{% endif %}!<br />
+    <h1>{% trans "Welcome back to " %}{% if hr_name %}{{ hr_name }}{% elif domain %}{{ domain }}{% else %}{{ SITE_NAME }}{% endif %}!<br />
         <small>
         {% if next %}
             {% trans "Looks like your CommCare session has expired. Please log-in again to continue working." %}

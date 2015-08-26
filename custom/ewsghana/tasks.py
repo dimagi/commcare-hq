@@ -1,6 +1,7 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.api import EWSApi
 
 from corehq.apps.commtrack.models import StockState, Product
@@ -71,3 +72,11 @@ def delete_last_migrated_stock_data(domain):
     checkpoint.api = 'stock_transaction'
     checkpoint.start_date = None
     checkpoint.save()
+
+
+@task(queue='background_queue', ignore_result=True)
+def convert_user_data_fields_task(domain):
+    for user in CommCareUser.by_domain(domain):
+        if isinstance(user.user_data.get('role'), basestring):
+            user.user_data['role'] = [user.user_data['role']]
+            user.save()

@@ -1,24 +1,3 @@
-def get_open_requisition_case_ids_for_supply_point_id(domain, supply_point_id):
-    from corehq.apps.commtrack.models import RequisitionCase
-    return [r['id'] for r in RequisitionCase.get_db().view(
-        'commtrack/requisitions',
-        endkey=[domain, supply_point_id, 'open'],
-        startkey=[domain, supply_point_id, 'open', {}],
-        reduce=False,
-        descending=True,
-    )]
-
-
-def get_open_requisition_case_ids_for_location(location):
-    """
-    For a given location, return the IDs of all open requisitions
-    at that location.
-
-    """
-    supply_point_id = get_supply_point_case_by_location(location)._id
-
-    return get_open_requisition_case_ids_for_supply_point_id(
-        location.domain, supply_point_id)
 
 
 def get_supply_point_ids_in_domain_by_location(domain):

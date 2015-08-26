@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -45,10 +46,9 @@ from .models import (
     METHOD_SMS_CALLBACK,
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
+    METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
-    FORM_TYPE_ONE_BY_ONE,
-    FORM_TYPE_ALL_AT_ONCE,
     SurveyKeyword,
     RECIPIENT_PARENT_CASE,
     RECIPIENT_SUBCASE,
@@ -74,7 +74,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -82,89 +82,50 @@ from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
+NO_RESPONSE = "none"
+
 YES_OR_NO = (
-    ("Y","Yes"),
-    ("N","No"),
+    ("Y", ugettext_lazy("Yes")),
+    ("N", ugettext_lazy("No")),
 )
 
 NOW_OR_LATER = (
-    (SEND_NOW, _("Now")),
-    (SEND_LATER ,_("Later")),
+    (SEND_NOW, ugettext_lazy("Now")),
+    (SEND_LATER, ugettext_lazy("Later")),
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
+    (NO_RESPONSE, ugettext_lazy("No Response")),
 )
 
-NO_RESPONSE = "none"
-
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-    (RECIPIENT_OWNER, _("The case's owner")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
-    ("", _("---choose---")),
-    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-)
-
-METHOD_CHOICES = (
-    ('sms', 'SMS'),
-    #('email', 'Email'),
-    #('test', 'Test'),
-    ('survey', 'SMS survey'),
-    ('callback', 'SMS expecting callback'),
-    ('ivr_survey', 'IVR survey'),
-)
-
-RECIPIENT_CHOICES = (
-    (RECIPIENT_OWNER, "The case's owner(s)"),
-    (RECIPIENT_USER, "The case's last submitting user"),
-    (RECIPIENT_CASE, "The case"),
-    (RECIPIENT_PARENT_CASE, "The case's parent case"),
-    (RECIPIENT_SUBCASE, "The case's child case(s)"),
-    (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
-    (RECIPIENT_USER_GROUP, _("User Group")),
-)
-
-MATCH_TYPE_DISPLAY_CHOICES = (
-    (MATCH_EXACT, "equals"),
-    (MATCH_ANY_VALUE, "exists"),
-    (MATCH_REGEX, "matches the regular expression")
-)
-
-START_IMMEDIATELY = "IMMEDIATELY"
-START_ON_DATE = "DATE"
-
-START_CHOICES = (
-    (START_ON_DATE, "defined by case property"),
-    (START_IMMEDIATELY, "immediately")
-)
-
-ITERATE_INDEFINITELY = "INDEFINITE"
-ITERATE_FIXED_NUMBER = "FIXED"
-
-ITERATION_CHOICES = (
-    (ITERATE_INDEFINITELY, "using the following case property"),
-    (ITERATE_FIXED_NUMBER, "after repeating the schedule the following number of times")
+    ("", ugettext_lazy("---choose---")),
+    (RECIPIENT_SURVEY_SAMPLE, ugettext_lazy("Case Group")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
 )
 
 EVENT_CHOICES = (
-    (EVENT_AS_OFFSET, "Offset-based"),
-    (EVENT_AS_SCHEDULE, "Schedule-based")
+    (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
+    (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
 
-FORM_TYPE_CHOICES = (
-    (FORM_TYPE_ONE_BY_ONE, "One sms per question"),
-    (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
-)
+
+def add_field_choices(form, field_name, choice_tuples):
+    choices = copy.copy(form.fields[field_name].choices)
+    choices.extend(choice_tuples)
+    form.fields[field_name].choices = choices
 
 
 def validate_integer(value, error_msg, nonnegative=False):
@@ -417,10 +378,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     event_interpretation = forms.ChoiceField(
         label=ugettext_noop("Schedule Type"),
         initial=EVENT_AS_OFFSET,
-        choices=(
-            (EVENT_AS_OFFSET, ugettext_noop("Offset-based")),
-            (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
-        ),
+        choices=EVENT_CHOICES,
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
     )
 
@@ -506,6 +464,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.initial_event = {
             'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
+            'subject': dict([(l, '') for l in available_languages]),
             'message': dict([(l, '') for l in available_languages]),
         }
 
@@ -536,17 +495,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
-            self.fields['method'].choices = method_choices
+            add_field_choices(self, 'method', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
 
         if is_previewer and can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.extend([
-                (METHOD_IVR_SURVEY, _("IVR Survey")),
-                (METHOD_SMS_CALLBACK, _("SMS Expecting Callback")),
+            add_field_choices(self, 'method', [
+                (METHOD_IVR_SURVEY, _('IVR Survey')),
+                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
-            self.fields['method'].choices = method_choices
+
+        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
+            add_field_choices(self, 'method', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -930,6 +892,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
             'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'METHOD_EMAIL': METHOD_EMAIL,
             'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
             'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
             'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
@@ -1108,6 +1071,23 @@ class BaseScheduleCaseReminderForm(forms.Form):
         else:
             return []
 
+    def clean_translated_field(self, translations, default_lang):
+        for lang, msg in translations.items():
+            if msg:
+                msg = msg.strip()
+            if not msg:
+                del translations[lang]
+            else:
+                translations[lang] = msg
+        if default_lang not in translations:
+            default_lang_name = (get_language_name(default_lang) or
+                default_lang)
+            raise ValidationError(_("Please provide messages for the "
+                "default language (%(language)s) or change the default "
+                "language at the bottom of the page.") %
+                {"language": default_lang_name})
+        return translations
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1133,28 +1113,22 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # the reason why we clean the following fields here instead of eventForm is so that
             # we can utilize the ValidationErrors for this field.
 
+            # clean subject:
+            if method == METHOD_EMAIL:
+                event['subject'] = self.clean_translated_field(
+                    event.get('subject', {}), default_lang)
+            else:
+                event['subject'] = {}
+
             # clean message:
-            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-                translations = event.get('message', {})
-                for lang, msg in translations.items():
-                    if msg:
-                        msg = msg.strip()
-                    if not msg:
-                        del translations[lang]
-                    else:
-                        translations[lang] = msg
-                if default_lang not in translations:
-                    default_lang_name = (get_language_name(default_lang) or
-                        default_lang)
-                    raise ValidationError(_("Please provide messages for the "
-                        "default language (%(language)s) or change the default "
-                        "language at the bottom of the page.") %
-                        {"language": default_lang_name})
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+                event['message'] = self.clean_translated_field(
+                    event.get('message', {}), default_lang)
             else:
                 event['message'] = {}
 
             # clean form_unique_id:
-            if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
                 event['form_unique_id'] = None
             else:
                 form_unique_id = event.get('form_unique_id')
@@ -1217,6 +1191,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
+            del event['subject_data']
             del event['is_immediate']
 
         event_interpretation = self.cleaned_data["event_interpretation"]
@@ -1394,9 +1369,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
                         if not event_json.get("message", None):
                             event_json["message"] = {}
+
+                        if not event_json.get("subject", None):
+                            event_json["subject"] = {}
+
                         for langcode in available_languages:
                             if langcode not in event_json["message"]:
                                 event_json["message"][langcode] = ""
+                            if langcode not in event_json["subject"]:
+                                event_json["subject"][langcode] = ""
 
                         timeouts = [str(i) for i in
                             event_json["callback_timeout_intervals"]]
@@ -1616,7 +1597,14 @@ class CaseReminderEventForm(forms.Form):
         required=False
     )
 
-    # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
+    # subject is visible when the method of the reminder is METHOD_EMAIL
+    # value will be a dict of {langcode: message}
+    subject_data = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    # message is visible when the method of the reminder is (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL)
     # value will be a dict of {langcode: message}
     message_data = forms.CharField(
         required=False,
@@ -1660,6 +1648,7 @@ class CaseReminderEventForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
+            crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
             crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
@@ -1693,6 +1682,10 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.HiddenInput
     )
+    subject = forms.CharField(
+        required=False,
+        widget=forms.Textarea
+    )
     message = forms.CharField(
         required=False,
         widget=forms.Textarea
@@ -1710,14 +1703,22 @@ class CaseReminderEventMessageForm(forms.Form):
                 '(<span data-bind="text:languageLabel"></span>)</span>' %
                 _("Message"),
                 InlineField(
+                    'subject',
+                    data_bind="value: subject, valueUpdate: 'keyup',"
+                              "visible: $parent.isEmailSelected()",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
+                InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
                     css_class="input-xlarge",
                     rows="2",
                 ),
                 crispy.Div(
-                    style="padding-top: 10px",
-                    data_bind="template: { name: 'event-message-length-template' }"
+                    style="padding-top: 10px; padding-left: 5px;",
+                    data_bind="template: { name: 'event-message-length-template' },"
+                              "visible: !$parent.isEmailSelected()"
                 )
             ),
         )
@@ -1740,16 +1741,24 @@ class OneTimeReminderForm(Form):
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
     content_type = ChoiceField(choices=(
-        (METHOD_SMS, _("SMS Message")),
+        (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
+    subject = TrimmedCharField(required=False)
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
+        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
-            self.fields['content_type'].choices = CONTENT_CHOICES
+            add_field_choices(self, 'content_type', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
+        if can_use_email:
+            add_field_choices(self, 'content_type', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -1784,9 +1793,19 @@ class OneTimeReminderForm(Form):
             validate_time(value)
             return parse(value).time()
 
+    def clean_subject(self):
+        value = self.cleaned_data.get("subject")
+        if self.cleaned_data.get("content_type") == METHOD_EMAIL:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
+
     def clean_message(self):
         value = self.cleaned_data.get("message")
-        if self.cleaned_data.get("content_type") == METHOD_SMS:
+        if self.cleaned_data.get("content_type") in (METHOD_SMS, METHOD_EMAIL):
             if value:
                 return value
             else:
@@ -2300,11 +2319,7 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
-        choices.append(
-            (NO_RESPONSE, _("No Response"))
-        )
-        return choices
+        return KEYWORD_CONTENT_CHOICES
 
     @property
     @memoized

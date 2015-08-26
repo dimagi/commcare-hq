@@ -37,6 +37,7 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
     choices = StringListProperty()
+    is_multiple_choice = BooleanProperty(default=False)
 
 
 class CustomDataFieldsDefinition(Document):

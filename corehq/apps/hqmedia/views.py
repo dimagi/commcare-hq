@@ -24,7 +24,7 @@ from soil import DownloadBase
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -347,9 +347,9 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
-        data = self.uploaded_file.file.read()
-        multimedia = self.media_class.get_by_data(data)
-        multimedia.attach_data(data,
+        self.data = self.uploaded_file.file.read()
+        multimedia = self.media_class.get_by_data(self.data)
+        multimedia.attach_data(self.data,
                                original_filename=self.uploaded_file.name,
                                username=self.username)
         multimedia.add_domain(self.domain, owner=True)
@@ -420,6 +420,15 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
     @classmethod
     def valid_base_types(cls):
         return ['video']
+
+
+class ProcessTextFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareMultimedia
+    name = "hqmedia_uploader_text"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['text']
 
 
 class RemoveLogoView(BaseMultimediaView):
@@ -622,4 +631,4 @@ class ViewMultimediaFile(View):
             metadata, buffer = obj.get()
             data = buffer.getvalue()
             content_type = metadata['content_type']
-        return HttpResponse(data, mimetype=content_type)
+        return HttpResponse(data, content_type=content_type)

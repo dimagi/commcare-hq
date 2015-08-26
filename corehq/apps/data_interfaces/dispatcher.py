@@ -5,7 +5,7 @@ from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispat
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -29,9 +29,7 @@ class DataInterfaceDispatcher(ProjectReportDispatcher):
         if is_navigation_check:
             from corehq.apps.reports.standard.export import DeidExportReport
             if report.split('.')[-1] in [DeidExportReport.__name__]:
-                try:
-                    ensure_request_has_privilege(request, privileges.DEIDENTIFIED_DATA)
-                except PermissionDenied:
+                if not has_privilege(request, privileges.DEIDENTIFIED_DATA):
                     return False
         return super(DataInterfaceDispatcher, self).permissions_check(report, request, domain)
 
@@ -56,8 +54,6 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
         if is_navigation_check:
             from corehq.apps.importer.base import ImportCases
             if report.split('.')[-1] in [ImportCases.__name__]:
-                try:
-                    ensure_request_has_privilege(request, privileges.BULK_CASE_MANAGEMENT)
-                except PermissionDenied:
+                if not has_privilege(request, privileges.BULK_CASE_MANAGEMENT):
                     return False
         return request.couch_user.can_edit_data(domain)

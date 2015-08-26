@@ -30,7 +30,6 @@ handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
-from corehq.apps.adm.urls import adm_admin_interface_urls
 from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
@@ -48,11 +47,9 @@ domain_specific = patterns('',
     (r'^phone/', include('corehq.apps.ota.urls')),
     (r'^phone/', include('corehq.apps.mobile_auth.urls')),
     (r'^sms/', include('corehq.apps.sms.urls')),
-    (r'^commtrack/', include('corehq.apps.commtrack.urls')),
     (r'^reminders/', include('corehq.apps.reminders.urls')),
     (r'^indicators/mvp/', include('mvp.urls')),
     (r'^indicators/', include('corehq.apps.indicators.urls')),
-    (r'^reports/adm/', include('corehq.apps.adm.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
@@ -88,7 +85,6 @@ urlpatterns = patterns('',
     (r'^webforms/', include('touchforms.formplayer.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
-    (r'^adm/', include(adm_admin_interface_urls)),
     (r'^hq/accounting/', include('corehq.apps.accounting.urls')),
     (r'^hq/sms/', include(sms_admin_interface_urls)),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
@@ -101,6 +97,7 @@ urlpatterns = patterns('',
     (r'^unicel/', include('corehq.apps.unicel.urls')),
     (r'^tropo/', include('corehq.apps.tropo.urls')),
     (r'^twilio/', include('corehq.apps.twilio.urls')),
+    (r'^dropbox/', include('corehq.apps.dropbox.urls')),
     (r'^megamobile/', include('corehq.apps.megamobile.urls')),
     (r'^telerivet/', include('corehq.apps.telerivet.urls')),
     (r'^kookoo/', include('corehq.apps.kookoo.urls')),

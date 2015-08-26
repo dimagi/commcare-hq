@@ -17,6 +17,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
@@ -536,7 +537,6 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     def users_by_range(self, start, end, order):
         results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
             .filter(**self.date_filter(start, end)) \
             .values('user_id') \
             .annotate(Count('user_id'))
@@ -600,9 +600,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         If no user is passed, assemble a totals row.
         """
         values = ['date']
-        results = FormData.objects \
-            .filter(doc_type='XFormInstance') \
-            .filter(**self.date_filter(self.startdate, self.enddate))
+        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
 
         if user:
             results = results.filter(user_id=user.user_id)
@@ -697,9 +695,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         def get_data(users, group_by_user=True):
-            query = FormData.objects \
-                .filter(doc_type='XFormInstance') \
-                .filter(xmlns=self.selected_xmlns['xmlns'])
+            query = FormData.objects.filter(xmlns=self.selected_xmlns['xmlns'])
 
             date_field = 'received_on' if self.by_submission_time else 'time_end'
             date_filter = {
@@ -771,8 +767,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     @property
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_("User")),
-            DataTablesColumn(_("Completion Time")),
-            DataTablesColumn(_("Submission Time")),
+            DataTablesColumn(_("Completion Time"), sort_type=DTSortType.DATE),
+            DataTablesColumn(_("Submission Time"), sort_type=DTSortType.DATE),
             DataTablesColumn(_("Form Name")),
             DataTablesColumn(_("View"), sortable=False),
             DataTablesColumn(_("Difference"), sort_type=DTSortType.NUMERIC)
@@ -799,7 +795,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
             where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
             results = FormData.objects \
-                .filter(doc_type='XFormInstance') \
                 .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
                 .filter(user_id__in=user_map.keys()) \
                 .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
@@ -837,8 +832,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         """
 
         return self.table_cell(
-            date,
-            ServerTime(date).user_time(self.timezone).ui_string()
+            ServerTime(date).user_time(self.timezone).ui_string(fmt=SERVER_DATETIME_FORMAT),
+            ServerTime(date).user_time(self.timezone).ui_string(),
         )
 
     def _format_td_status(self, td, use_label=True):

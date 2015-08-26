@@ -4,7 +4,7 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
+from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from couchforms.const import ATTACHMENT_NAME
@@ -16,7 +16,7 @@ from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -24,7 +24,9 @@ from corehq.apps.users.views import BaseUserSettingsView
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
-from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
+from django.template.loader import render_to_string
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
@@ -44,7 +46,6 @@ from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 import requests
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.reports.formdetails.readable import get_readable_form_data
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
 from django.shortcuts import get_object_or_404
 
@@ -206,8 +207,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
-    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    session_extras.update(get_cloudcare_session_data(suite_gen, domain, form, request.couch_user))
+    session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
@@ -228,7 +228,6 @@ def get_cases_vary_on(request, domain):
         request.REQUEST.get('ids_only', 'false'),
         request.REQUEST.get('case_id', ''),
         request.REQUEST.get('footprint', 'false'),
-        request.REQUEST.get('include_children', 'false'),
         request.REQUEST.get('closed', 'false'),
         json.dumps(get_filters_from_request(request)),
         domain,
@@ -251,7 +250,7 @@ def get_cases_skip_arg(request, domain):
 
 
 @cloudcare_api
-@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=50 * 60)
+@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -264,8 +263,19 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
-    include_children = string_to_boolean(request.REQUEST.get("include_children", "false"))
-    if case_id and not footprint and not include_children:
+
+    if toggles.HSPH_HACK.enabled(domain):
+        hsph_case_id = request.REQUEST.get('hsph_hack', None)
+        if hsph_case_id != 'None' and hsph_case_id:
+            case = CommCareCase.get(hsph_case_id)
+            usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
+            usercase = CommCareCase.get(usercase_id) if usercase_id else None
+            return json_response(map(
+                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
+                filter(None, [case, case.parent, usercase])
+            ))
+
+    if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given
         # they know its ID, which is slightly different from the previous
@@ -282,7 +292,7 @@ def get_cases(request, domain):
         cases = get_filtered_cases(domain, status=status, case_type=case_type,
                                    user_id=user_id, filters=filters,
                                    footprint=footprint, ids_only=ids_only,
-                                   strip_history=True, include_children=include_children)
+                                   strip_history=True)
     return json_response(cases)
 
 @cloudcare_api
@@ -291,8 +301,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
 
-    suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-    xpath = suite_gen.get_filter_xpath(module)
+    suite_gen = SuiteGenerator(app)
+    xpath = SuiteGenerator.get_filter_xpath(module)
     extra_instances = [{'id': inst.id, 'src': inst.src}
                        for inst in suite_gen.get_instances_for_module(module, additional_xpaths=[xpath])]
 
@@ -375,12 +385,9 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixtures = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
-        try:
-            fixture = next(fixtures)
-        except StopIteration:
+        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        if not fixture:
             raise Http404
-
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
             fixture_id, len(fixture.getchildren())
         )
@@ -455,44 +462,33 @@ def render_form(request, domain):
 
     session = get_object_or_404(EntrySession, session_id=session_id)
 
-    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
-                                                                               session_id=session_id))
+    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(
+        base_url=get_url_base(),
+        session_id=session_id)
+    )
 
     if response.status_code is not 200:
         err = "Session XML could not be found"
         return HttpResponse(err, status=500, content_type="text/plain")
 
-    json_response = json.loads(response.text)
-    xmlns = json_response["xmlns"]
-    form_data_xml = json_response["output"]
+    response_json = json.loads(response.text)
+    xmlns = response_json["xmlns"]
+    form_data_xml = response_json["output"]
 
     _, form_data_json = xml2json(form_data_xml)
     pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
 
-    readable_form = get_readable_form_data(form_data_json, pretty_questions)
+    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
-    rendered_readable_form = render(request, 'reports/form/partials/readable_form.html',
-                                    {'questions': readable_form})
+    rendered_readable_form = render_to_string(
+        'reports/form/partials/readable_form.html',
+        {'questions': readable_form}
+    )
 
-    return rendered_readable_form
-
-
-def render_xml(request, domain):
-
-    session_id = request.GET.get('session_id')
-
-    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(base_url=get_url_base(),
-                                                                               session_id=session_id))
-
-    if response.status_code is not 200:
-        err = "Session XML could not be found"
-        return HttpResponse(err, status=500, content_type="text/plain")
-
-    json_response = json.loads(response.text)
-    form_data_xml = json_response["output"]
-
-    return HttpResponse(render_pretty_xml(form_data_xml))
-
+    return json_response({
+        'form_data': rendered_readable_form,
+        'instance_xml': render_pretty_xml(form_data_xml)
+    })
 
 
 class HttpResponseConflict(HttpResponse):

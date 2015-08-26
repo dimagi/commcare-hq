@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-from xml.etree import ElementTree
-from casexml.apps.phone.xml import get_data_element
 
 """
 This module is used to generate xml responses for user registrations.
@@ -24,33 +22,3 @@ def get_response(user, created):
     response = couchforms_xml.get_response_element(text, nature=nature)
     response.append(phone_xml.get_registration_element(user.to_casexml_user()))
     return phone_xml.tostring(response)
-
-
-def group_fixture(groups, user):
-    """
-    <fixture id="user-groups" user_id="TXPLAKJDFLIKSDFLMSDLFKJ">
-        <groups>
-            <group id="IUOWERJLKSFDAMAJLK">
-                <name>Team Inferno</name>
-            </group>
-            <group id="OUPIZXCVHKAJSDFEWL">
-                <name>Team Disaster</name>
-                <group_data>
-                    <data key="leader">colonel panic</data>
-                    <data key="skills">hatin</data>
-                </group_data>
-            </group>
-        </groups>
-    </fixture>
-    """
-    xFixture = ElementTree.Element('fixture', attrib={'id': 'user-groups', 'user_id': user.user_id})
-    xGroups = ElementTree.SubElement(xFixture, 'groups')
-
-    for group in groups:
-        xGroup = ElementTree.SubElement(xGroups, 'group', attrib={'id': group.get_id})
-        xName = ElementTree.SubElement(xGroup, 'name')
-        xName.text = group.name
-        if group.metadata:
-            xGroup.append(get_data_element('group_data', group.metadata))
-
-    return xFixture

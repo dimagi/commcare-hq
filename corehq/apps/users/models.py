@@ -2,7 +2,9 @@
 couch models go here
 """
 from __future__ import absolute_import
+import copy
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import re
 
 from restkit.errors import NoMoreData
@@ -10,6 +12,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -24,6 +28,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
+from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -38,8 +43,8 @@ from corehq.apps.users.util import (
     user_data_from_registration_form,
     user_display_string,
 )
-from corehq.apps.users.xml import group_fixture
-from corehq.apps.users.tasks import tag_docs_as_deleted, tag_forms_as_deleted_rebuild_associated_cases
+from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
+    tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
@@ -49,14 +54,13 @@ from corehq.apps.sms.mixin import (
 )
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-from dimagi.utils.parsing import json_format_datetime
 from xml.etree import ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -674,27 +678,26 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
 
 class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
-    def _adjust_value(self, value):
-        if value is not None:
-            return value.lower()
+    def __init__(self, validators=None, *args, **kwargs):
+        if validators is None:
+            validators = ()
 
-#    def __set__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
+        def check_lowercase(value):
+            if value and any(char.isupper() for char in value):
+                raise BadValueError('uppercase characters not allowed')
 
-#    def __property_init__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__property_init__(instance, self._adjust_value(value))
-
-    def to_json(self, value):
-        return super(LowercaseStringProperty, self).to_json(self._adjust_value(value))
-
+        validators += (check_lowercase,)
+        super(LowercaseStringProperty, self).__init__(validators=validators, *args, **kwargs)
 
 
 class DjangoUserMixin(DocumentSchema):
@@ -873,7 +876,23 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
+        # Do not change the name of this method because this ends up implementing
+        # get_email() from the CommCareMobileContactMixin for the CommCareUser
         return self.email
+
+    def is_commcare_user(self):
+        return self._get_user_type() == 'commcare'
+
+    def is_web_user(self):
+        return self._get_user_type() == 'web'
+
+    def _get_user_type(self):
+        if self.doc_type == 'WebUser':
+            return 'web'
+        elif self.doc_type == 'CommCareUser':
+            return 'commcare'
+        else:
+            raise NotImplementedError()
 
     @property
     def projects(self):
@@ -899,6 +918,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         data = full_name.split()
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
+
+    @property
+    def user_session_data(self):
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+
+        session_data = copy.copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def delete(self):
         try:
@@ -1111,29 +1142,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def wrap_correctly(cls, source):
-        if source['doc_type'] == 'CouchUser' and \
-                source.has_key('commcare_accounts') and \
-                source.has_key('web_accounts'):
-            from . import old_couch_user_models
-            # todo: remove this functionality and the old user models module
-            logging.error('still accessing old user models')
-            user_id = old_couch_user_models.CouchUser.wrap(source).default_account.login_id
-            return cls.get_by_user_id(user_id)
-        else:
-            return {
-                'WebUser': WebUser,
-                'CommCareUser': CommCareUser,
-                'FakeUser': FakeUser,
-            }[source['doc_type']].wrap(source)
+        return {
+            'WebUser': WebUser,
+            'CommCareUser': CommCareUser,
+            'FakeUser': FakeUser,
+        }[source['doc_type']].wrap(source)
 
     @classmethod
-    def get_by_username(cls, username):
+    @skippable_quickcache(['username'], skip_arg='strict')
+    def get_by_username(cls, username, strict=True):
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
                 include_docs=True,
                 reduce=False,
-                #stale=stale,
+                stale=stale if not strict else None,
             )
             return result.one(except_all=raise_if_none)
         try:
@@ -1150,6 +1173,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.wrap_correctly(result['doc'])
         else:
             return None
+
+    def clear_quickcache_for_user(self):
+        self.get_by_username.clear(self.__class__, self.username)
+        Domain.active_for_couch_user.clear(self)
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
@@ -1223,6 +1250,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.save()
 
     def save(self, **params):
+        self.clear_quickcache_for_user()
         # test no username conflict
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
@@ -1352,6 +1380,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.domain_membership.role_id = role_id
 
         return self
+
+    def clear_quickcache_for_user(self):
+        self.get_usercase_id.clear(self)
+        super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
         super(CommCareUser, self).save(**params)
@@ -1525,6 +1557,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_data=self.user_data,
             domain=self.domain,
             loadtest_factor=self.loadtest_factor,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            phone_number=self.phone_number,
         )
 
         def get_owner_ids():
@@ -1598,18 +1633,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups used to send location data in the restore
         payload.
         """
-        location_type = self.location.location_type_object
-        if location_type.shares_cases:
-            if location_type.view_descendants:
-                return [
-                    loc.case_sharing_group_object(self._id)._id
-                    for loc in self.sql_location.get_descendants(include_self=True).filter(
-                        location_type__shares_cases=True,
-                    )]
+        def get_sharing_id(loc):
+            return loc.case_sharing_group_object(self._id)._id
 
-            else:
-                return [self.sql_location.case_sharing_group_object(self._id)._id]
-
+        if self.sql_location.location_type.view_descendants:
+            locs = (self.sql_location.get_descendants(include_self=True)
+                                     .filter(location_type__shares_cases=True))
+            return map(get_sharing_id, locs)
+        elif self.sql_location.location_type.shares_cases:
+            return [get_sharing_id(self.sql_location)]
         else:
             return []
 
@@ -1619,7 +1651,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids = [self.user_id]
         owner_ids.extend(Group.by_user(self, wrap=False))
 
-        if self.project.locations_enabled and self.location:
+        if self.project.uses_locations and self.location:
             owner_ids.extend(self.location_group_ids())
         return owner_ids
 
@@ -1633,12 +1665,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_docs_as_deleted.delay(CommCareCase, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
-        for formlist in chunked(self.get_forms(wrap=False, include_docs=True), 50):
-            tag_forms_as_deleted_rebuild_associated_cases.delay(formlist, deletion_id, deleted_cases=deleted_cases)
+        for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
+            tag_forms_as_deleted_rebuild_associated_cases.delay(
+                form_id_list, deletion_id, deleted_cases=deleted_cases)
 
         for phone_number in self.get_verified_numbers(True).values():
             phone_number.retire(deletion_id)
@@ -1665,29 +1698,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             case.doc_type = chop_suffix(case.doc_type)
             case.save()
         self.save()
-
-    def get_group_fixture(self, last_sync=None):
-        def _should_sync_groups(groups, last_sync):
-            """
-            Determine if we need to sync the groups fixture by checking
-            the modified date on all groups compared to the
-            last sync.
-            """
-            if not last_sync or not last_sync.date:
-                return True
-
-            for group in groups:
-                if not group.last_modified or group.last_modified >= last_sync.date:
-                    return True
-
-            return False
-
-        groups = self.get_case_sharing_groups()
-
-        if _should_sync_groups(groups, last_sync):
-            return group_fixture(groups, self)
-        else:
-            return None
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
@@ -1764,17 +1774,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def location(self):
         from corehq.apps.locations.models import Location
         if self.location_id:
-            return Location.get(self.location_id)
-        else:
-            return None
+            try:
+                return Location.get(self.location_id)
+            except ResourceNotFound:
+                pass
+        return None
 
     @property
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            return SQLLocation.objects.get(location_id=self.location_id)
-        else:
-            return None
+            try:
+                return SQLLocation.objects.get(location_id=self.location_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     def set_location(self, location):
         """
@@ -1782,6 +1796,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         the user.
         """
         from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.fixtures.models import UserFixtureType
 
         self.user_data['commcare_location_id'] = location._id
 
@@ -1811,17 +1826,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         })
 
         self.location_id = location._id
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     def unset_location(self):
         """
         Unset the location and remove all associated user data and cases
         """
+        from corehq.apps.fixtures.models import UserFixtureType
+
         self.user_data.pop('commcare_location_id', None)
         self.user_data.pop('commtrack-supply-point', None)
         self.user_data.pop('commcare_primary_case_sharing_id', None)
         self.location_id = None
         self.clear_location_delegates()
+        self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
     @property
@@ -1908,7 +1927,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
+                caseblock.as_xml()
             ),
             self.domain,
             self.username,
@@ -1997,11 +2016,50 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         except ResourceNotFound:
             return None
 
+    @property
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def fixture_statuses(self):
+        """Returns all of the last modified times for each fixture type"""
+        return self.get_fixture_statuses()
+
+    def get_fixture_statuses(self):
+        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                          for choice in UserFixtureType.CHOICES}
+        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
+            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+        return last_modifieds
+
+    def fixture_status(self, fixture_type):
+        try:
+            return self.fixture_statuses[fixture_type]
+        except KeyError:
+            from corehq.apps.fixtures.models import UserFixtureStatus
+            return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+    def update_fixture_status(self, fixture_type):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+        now = datetime.utcnow()
+        user_fixture_sync, new = UserFixtureStatus.objects.get_or_create(
+            user_id=self._id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': now},
+        )
+        if not new:
+            user_fixture_sync.last_modified = now
+            user_fixture_sync.save()
+
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
             class_name=self.__class__.__name__,
             self=self
         ))
+
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def get_usercase_id(self):
+        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        return usercase.case_id if usercase else None
 
 
 class OrgMembershipMixin(DocumentSchema):
@@ -2091,6 +2149,7 @@ class OrgMembershipMixin(DocumentSchema):
                                      (self.username, org))
         om.is_admin = True
 
+
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
@@ -2133,6 +2192,8 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return True
 
     def get_email(self):
+        # Do not change the name of this method because this is implementing
+        # get_email() from the CommCareMobileContactMixin
         return self.email or self.username
 
     def get_time_zone(self):
@@ -2265,14 +2326,42 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def set_location(self, domain, location_object_or_id):
+        if isinstance(location_object_or_id, basestring):
+            location_id = location_object_or_id
+        else:
+            location_id = location_object_or_id._id
+        self.get_domain_membership(domain).location_id = location_id
+        self.save()
+
+    def unset_location(self, domain):
+        self.get_domain_membership(domain).location_id = None
+        self.save()
+
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
+
+    @memoized
+    def get_sql_location(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        loc_id = self.get_location_id(domain)
+        if loc_id:
+            try:
+                return SQLLocation.objects.get(loc_id)
+            except SQLLocation.DoesNotExist:
+                pass
+        return None
 
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
         loc_id = self.get_location_id(domain)
-        return Location.get(loc_id) if loc_id else None
+        if loc_id:
+            try:
+                return Location.get(loc_id)
+            except ResourceNotFound:
+                pass
+        return None
 
 
 class FakeUser(WebUser):
@@ -2342,6 +2431,10 @@ class Invitation(Document):
     def send_activation_email(self):
         raise NotImplementedError
 
+    @property
+    def is_expired(self):
+        return False
+
 
 class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     """
@@ -2350,6 +2443,8 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
+    program = None
+    supply_point = None
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
@@ -2358,10 +2453,11 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                   "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content,
-                        cc=[self.get_inviter().get_email()],
-                        email_from=settings.DEFAULT_FROM_EMAIL)
+        subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+        send_html_email_async.delay(subject, self.email, html_content,
+                                    text_content=text_content,
+                                    cc=[self.get_inviter().get_email()],
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
@@ -2382,6 +2478,11 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                         include_docs=True,
                         stale=settings.COUCH_STALE_QUERY,
                         ).all()
+
+    @property
+    def is_expired(self):
+        return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+
 
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()

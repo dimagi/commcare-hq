@@ -1,12 +1,13 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.standard.export import ExcelExportReport
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -18,35 +19,27 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.style.decorators import use_bootstrap3
 from django_prbac.utils import has_privilege
 
 
 @login_and_domain_required
 def dashboard_default(request, domain):
-    key = [domain]
-    apps = Application.get_db().view(
-        'app_manager/applications_brief',
-        reduce=False,
-        startkey=key,
-        endkey=key+[{}],
-        limit=1,
-    ).all()
-
     couch_user = getattr(request, 'couch_user', None)
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return HttpResponseRedirect(reverse('saved_reports', args=[domain]))
 
-    if len(apps) < 1:
+    if not domain_has_apps(domain):
         return HttpResponseRedirect(
-            reverse(NewUserDashboardView.urlname, args=[domain]))
+            reverse('default_app', args=[domain]))
     return HttpResponseRedirect(
         reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
+    @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
-        request.preview_bootstrap3 = True
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -66,6 +59,41 @@ class NewUserDashboardView(BaseDashboardView):
     urlname = 'dashboard_new_user'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_new_user.html'
+
+    @property
+    def page_context(self):
+        return {'templates': self.templates(self.domain)}
+
+    @classmethod
+    def templates(cls, domain):
+        templates = [{
+            'heading': _('Blank Application'),
+            'url': reverse('default_new_app', args=[domain]),
+            'icon': 'fcc-blankapp',
+            'lead': _('Start from scratch'),
+            'action': 'Blank',
+            'description': 'Clicked Blank App Template Tile',
+        }]
+
+        templates = [{
+            'heading': _('Case Management'),
+            'url': reverse('app_from_template', args=[domain, 'case_management']),
+            'icon': 'fcc-casemgt',
+            'lead': _('Track information over time'),
+            'action': 'Case Management',
+            'description': 'Clicked Case Management App Template Tile',
+        }] + templates
+
+        templates = [{
+            'heading': _('Survey'),
+            'url': reverse('app_from_template', args=[domain, 'survey']),
+            'icon': 'fcc-survey',
+            'lead': _('One-time data collection'),
+            'action': 'Survey',
+            'description': 'Clicked Survey App Template Tile',
+        }] + templates
+
+        return templates
 
 
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
@@ -142,8 +170,6 @@ def _get_default_tile_configurations():
     )
 
     is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
-    data_url_generator = lambda urlname, request: reverse(urlname,
-        args=[request.domain, ExcelExportReport.slug])
 
     return [
         TileConfiguration(
@@ -179,8 +205,7 @@ def _get_default_tile_configurations():
             slug='data',
             icon='fcc fcc-data',
             context_processor_class=IconContext,
-            urlname=DataInterfaceDispatcher.name(),
-            url_generator=data_url_generator,
+            urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),
         ),

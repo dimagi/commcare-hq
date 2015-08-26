@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
@@ -32,8 +33,6 @@ from corehq.apps.reminders.forms import (
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
-    KEYWORD_CONTENT_CHOICES,
-    KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
     KeywordForm,
     NO_RESPONSE,
@@ -60,6 +59,7 @@ from corehq.apps.reminders.models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
     METHOD_STRUCTURED_SMS,
+    METHOD_EMAIL,
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
@@ -154,7 +154,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
-    return render(request, "reminders/partial/list_reminders.html", {
+    return render(request, "reminders/list_broadcasts.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
@@ -193,7 +193,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
     timezone = get_timezone_for_user(None, domain) # Use project timezone only
 
     if request.method == "POST":
-        form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(request.POST,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -212,11 +214,15 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.start_datetime = form.cleaned_data.get("datetime")
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
-                day_num = 0,
-                fire_time = time(0,0),
-                form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = {handler.default_lang : form.cleaned_data.get("message")} if content_type == METHOD_SMS else {},
-                callback_timeout_intervals = [],
+                day_num=0,
+                fire_time=time(0, 0),
+                form_unique_id=(form.cleaned_data.get("form_unique_id")
+                                if content_type == METHOD_SMS_SURVEY else None),
+                message=({handler.default_lang: form.cleaned_data.get("message")}
+                         if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
+                subject=({handler.default_lang: form.cleaned_data.get("subject")}
+                         if content_type == METHOD_EMAIL else {}),
+                callback_timeout_intervals=[],
             )]
             handler.schedule_length = 1
             handler.event_interpretation = EVENT_AS_OFFSET
@@ -242,6 +248,11 @@ def add_one_time_reminder(request, domain, handler_id=None):
                     if handler.default_lang in handler.events[0].message
                     else None
                 ),
+                "subject": (
+                    handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject
+                    else None
+                ),
                 "form_unique_id": (
                     handler.events[0].form_unique_id
                     if handler.events[0].form_unique_id is not None
@@ -251,7 +262,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
         else:
             initial = {}
 
-        form = OneTimeReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(initial=initial,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
@@ -259,16 +272,21 @@ def add_one_time_reminder(request, domain, handler_id=None):
 def copy_one_time_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     initial = {
-        "send_type" : SEND_NOW,
-        "recipient_type" : handler.recipient,
-        "case_group_id" : handler.sample_id,
-        "user_group_id" : handler.user_group_id,
-        "content_type" : handler.method,
-        "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
-        "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+        "send_type": SEND_NOW,
+        "recipient_type": handler.recipient,
+        "case_group_id": handler.sample_id,
+        "user_group_id": handler.user_group_id,
+        "content_type": handler.method,
+        "message": (handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message else None),
+        "subject": (handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject else None),
+        "form_unique_id": (handler.events[0].form_unique_id
+                           if handler.events[0].form_unique_id is not None else None),
     }
     form = OneTimeReminderForm(initial=initial,
-        can_use_survey=can_use_survey_reminders(request))
+        can_use_survey=can_use_survey_reminders(request),
+        can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
     return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
@@ -1466,8 +1484,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1475,7 +1491,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),
@@ -1509,35 +1525,29 @@ def int_or_none(i):
 
 @reminders_framework_permission
 def rule_progress(request, domain):
-    handler_id = request.GET.get("handler_id", None)
-    response = {
-        "success": False,
-    }
+    client = get_redis_client()
+    handlers = CaseReminderHandler.get_handlers(domain,
+        reminder_type_filter=REMINDER_TYPE_DEFAULT)
 
-    try:
-        assert isinstance(handler_id, basestring)
-        handler = CaseReminderHandler.get(handler_id)
-        assert handler.doc_type == "CaseReminderHandler"
-        assert handler.domain == domain
+    response = {}
+    for handler in handlers:
+        info = {}
         if handler.locked:
-            response["complete"] = False
+            info['complete'] = False
             current = None
             total = None
-            # It shouldn't be necessary to lock this out, but a deadlock can
-            # happen in rare cases without it
-            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-                client = get_redis_client()
-                current = client.get("reminder-rule-processing-current-%s" % handler_id)
-                total = client.get("reminder-rule-processing-total-%s" % handler_id)
-            response["current"] = int_or_none(current)
-            response["total"] = int_or_none(total)
-            response["success"] = True
+
+            try:
+                current = client.get('reminder-rule-processing-current-%s' % handler._id)
+                total = client.get('reminder-rule-processing-total-%s' % handler._id)
+            except:
+                continue
+
+            info['current'] = int_or_none(current)
+            info['total'] = int_or_none(total)
         else:
-            response["complete"] = True
-            response["success"] = True
-    except:
-        pass
+            info['complete'] = True
+
+        response[handler._id] = info
 
     return HttpResponse(json.dumps(response))
-
-

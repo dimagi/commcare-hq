@@ -4,7 +4,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required
+from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required, \
+    login_or_digest_or_basic
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -23,7 +24,7 @@ from soil import DownloadBase
 
 
 @json_error
-@httpdigest
+@login_or_digest_or_basic
 def restore(request, domain):
     """
     We override restore because we have to supply our own 
@@ -43,13 +44,15 @@ def get_restore_params(request):
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
-        'items': request.GET.get('items') == 'true'
+        'items': request.GET.get('items') == 'true',
+        'force_restore_mode': request.GET.get('mode', None)
     }
 
 
 def get_restore_response(domain, couch_user, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
-                         cache_timeout=None, overwrite_cache=False):
+                         cache_timeout=None, overwrite_cache=False,
+                         force_restore_mode=None):
     # not a view just a view util
     if not couch_user.is_commcare_user():
         return HttpResponse("No linked chw found for %s" % couch_user.username,
@@ -67,6 +70,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
             version=version,
             state_hash=state,
             include_item_count=items,
+            force_restore_mode=force_restore_mode,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache,

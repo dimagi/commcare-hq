@@ -2,7 +2,7 @@ from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.reports_core.exceptions import MissingParamException, FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, CHOICE_DELIMITER
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date
 
@@ -178,20 +178,22 @@ class ChoiceListFilter(BaseFilter):
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
 
-    def __init__(self, name, required=True, label='Choice List Filter',
+    def __init__(self, name, datatype, required=True, label='Choice List Filter',
                  template='reports_core/filters/choice_list_filter.html',
                  css_id=None, choices=None):
         params = [
             FilterParam(name, True),
         ]
         super(ChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.datatype = datatype
         self.label = label
         self.template = template
         self.css_id = css_id or self.name
         self.choices = choices or []
 
     def value(self, **kwargs):
-        choice = unicode(kwargs[self.name])
+        raw_value = kwargs[self.name]
+        choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = map(lambda c: c.value, self.choices)
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
@@ -229,11 +231,12 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
 
     def value(self, **kwargs):
-        choice = kwargs[self.name]
-        if choice:
-            typed_choice = transform_from_datatype(self.datatype)(choice)
-            return Choice(typed_choice, choice)
-        return Choice(SHOW_ALL_CHOICE, '')
+        selection = unicode(kwargs.get(self.name, ""))
+        if selection:
+            choices = selection.split(CHOICE_DELIMITER)
+            typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
+            return [Choice(tc, c) for (tc, c) in zip(typed_choices, choices)]
+        return self.default_value()
 
     def default_value(self):
-        return None
+        return [Choice(SHOW_ALL_CHOICE, '')]

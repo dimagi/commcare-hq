@@ -13,25 +13,26 @@ class RandRSubmissionData(ILSData):
 
     @property
     def rows(self):
-        rr_data = []
         if self.config['org_summary']:
-            try:
-                rr = GroupSummary.objects.filter(
-                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                    org_summary__in=self.config['org_summary']
-                ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+            rr = GroupSummary.objects.filter(
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                org_summary__in=self.config['org_summary']
+            ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
-                rr_data.append(GroupSummary(
-                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                    responded=rr['responded__avg'],
-                    on_time=rr['on_time__avg'],
-                    complete=rr['complete__avg'],
-                    total=rr['total__max']
-                ))
-
-            except GroupSummary.DoesNotExist:
-                return rr_data
-        return rr_data
+            return [GroupSummary(
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                responded=rr['responded__avg'],
+                on_time=rr['on_time__avg'],
+                complete=rr['complete__avg'],
+                total=rr['total__max']
+            )]
+        return [GroupSummary(
+            title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+            responded=0,
+            on_time=0,
+            complete=0,
+            total=0
+        )]
 
 
 class DistrictSummaryData(ILSData):
@@ -79,9 +80,9 @@ class DistrictSummaryData(ILSData):
                 "processing_total": processing_numbers['total'],
                 "processing_complete": processing_numbers['complete'],
                 "submitting_total": rr_total,
-                "submitting_complete": rr_complete,
+                "submitting_complete": int(rr_complete),
                 "delivery_total": delivery_total,
-                "delivery_complete": delivery_complete,
+                "delivery_complete": int(delivery_complete),
                 "delivery_group": delivery_group,
                 "submitting_group": submitting_group,
                 "processing_group": processing_group,
@@ -192,10 +193,12 @@ class ProductAvailabilitySummary(ILSData):
                 ret_data.append({'color': chart_config.label_color[k], 'label': k, 'data': datalist})
             return ret_data
 
-        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', format='d'))
+        chart.tooltipFormat = ' on '
         chart.rotateLabels = -45
-        chart.marginBottom = 120
-        chart.marginRight = 10
+        chart.marginBottom = 60
+        chart.marginRight = 20
+        chart.marginLeft = 50
         chart.height = 350
         chart.stacked = self.chart_stacked
         for row in convert_product_data_to_stack_chart(product_availability, product_dashboard):

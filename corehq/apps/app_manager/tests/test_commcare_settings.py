@@ -1,8 +1,8 @@
 from collections import defaultdict
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import (
-    SETTINGS,
-    SETTINGS_LOOKUP,
+    get_custom_commcare_settings,
+    get_commcare_settings_lookup,
     check_condition,
     circular_dependencies,
     parse_condition_string,
@@ -74,7 +74,7 @@ class CommCareSettingsTest(SimpleTestCase):
         ]
 
         self.assertTrue(circular_dependencies(settings1, generate_lookup(settings1)))
-        self.assertFalse(circular_dependencies(SETTINGS, SETTINGS_LOOKUP))
+        self.assertFalse(circular_dependencies(get_custom_commcare_settings(), get_commcare_settings_lookup()))
 
     def test_get_profile_setting(self):
         test_app1, test_app2, test_app3 = self.set_up_apps(3)

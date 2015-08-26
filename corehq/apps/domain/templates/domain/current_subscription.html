@@ -17,7 +17,10 @@
             "add-credit-form",
             {
                 submitBtnText: "{% trans "Buy Credits" %}",
-                errorMessages: {{ payment_error_messages|JSON }}
+                errorMessages: {{ payment_error_messages|JSON }},
+                credit_card_url: "{{ credit_card_url }}",
+                wire_url: "{{ wire_url }}",
+                wire_email: "{{ user_email }}",
             }
         );
         {% if plan.cards %}
@@ -118,21 +121,6 @@
                                 <span class="help-inline"
                                       style="margin-right: 10px;"
                                       data-bind="text: amount"></span>
-                                {% if not is_ops_user_but_not_admin %}
-                                <button type="button"
-                                        class="btn add-credit-button"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment, visible: canPurchaseCredits">
-                                    <i class="icon-plus"></i>
-                                    {% trans 'Add Credit' %}
-                                </button>
-                                {% else %}
-                                    <span class="label">
-                                        <i class="icon-info-sign"></i>
-                                        {% trans "Not Billing Admin, Can't Add Credit" %}
-                                    </span>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -184,6 +172,35 @@
                             </div>
                         </div>
                     {% endif %}
+                    <div data-bind="with: prepayments">
+                        <div class="control-group">
+                            <div class="controls">
+                                {% if can_purchase_credits and not plan.is_trial %}
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: function(){triggerPayment(paymentHandler.CREDIT_CARD)}"
+                                >
+                                {% trans 'Prepay by Credit Card' %}
+                                </button>
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: function(){triggerPayment(paymentHandler.WIRE)}"
+                                >
+                                {% trans 'Prepay by Wire' %}
+                                </button>
+                                {% else %}
+                                <span class="label">
+                                    <i class="icon-info-sign"></i>
+                                    {% trans "Not Billing Admin, Can't Add Credit" %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
             <h2>{% trans 'Usage Summary' %}</h2>
@@ -196,9 +213,6 @@
                         {% if not plan.is_trial %}
                         <th>{% trans "Credits Available" %}</th>
                         {% endif %}
-                        {% if can_purchase_credits and not plan.is_trial %}
-                        <th>{% trans "Add Credit" %}</th>
-                        {% endif %}
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: features">
@@ -208,25 +222,6 @@
                         <td data-bind="text: remaining"></td>
                         {% if not plan.is_trial %}
                         <td data-bind="text: amount"></td>
-                        {% endif %}
-                        {% if can_purchase_credits and not plan.is_trial %}
-                        <td data-bind="visible: canPurchaseCredits">
-                            {% if not is_ops_user_but_not_admin %}
-                                <button type="button"
-                                        class="btn"
-                                        data-toggle="modal"
-                                        data-target="#paymentModal"
-                                        data-bind="click: triggerPayment">
-                                    <i class="icon-plus"></i>
-                                    {% trans 'Add Credit' %}
-                                </button>
-                            {% else %}
-                                <span class="label">
-                                    <i class="icon-info-sign"></i>
-                                    {% trans "Not Billing Admin, Can't Add Credit" %}
-                                </span>
-                            {% endif %}
-                        </td>
                         {% endif %}
                     </tr>
                 </tbody>
@@ -238,63 +233,110 @@
     {% include 'accounting/partials/stripe_card_ko_template.html' %}
 
     <script type="text/html" id="cost-item-template">
-        <p data-bind="visible: isPlanCredit">
-            {% blocktrans %}
-            <strong>Plan Credits</strong> are only applied toward the monthly
-            fee of your plan, and are not used toward charges related to SMS or
-            User usage fees. One credit is equivalent to one USD.
-            {% endblocktrans %}
-        </p>
-        <p data-bind="visible: isSMSCredit">
-            {% blocktrans %}
-            <strong>SMS Credits</strong> are applied to SMS fees for messages
-            that exceed your plan's monthly limit. One credit is equivalent
-            to one USD. SMS fees vary depending on country,
-            cellular network, and whether you are using a Dimagi gateway.
-            <a href="{{ sms_rate_calc_url }}" target="_blank">Learn more about our SMS charges.</a>
-            {% endblocktrans %}
-        </p>
-        <p data-bind="visible: isUserCredit">
-            {% blocktrans %}
-            One <strong>Mobile Worker Credit</strong> is equivalent to one USD,
-            which is the monthly cost of a CommCare Mobile Worker. For example,
-            if you purchase 50 Mobile Worker Credits, you will cover an additional
-            50 users for one month, or 25 users for two months, etc.
-            {% endblocktrans %}
-        </p>
-        <div class="control-group">
-            <input type="hidden"
-                   data-bind="attr: {name: category}, value: creditType" />
-            <label class="control-label">
-                {% trans 'Credit Amount' %}
-            </label>
-            <div class="controls">
-                <div class="input-prepend">
-                    <span class="add-on">$</span>
-                    <input type="text"
-                           class="input-small"
-                           name="amount"
-                           data-bind="value: amount" />
+        <fieldset>
+            <legend>
+                {% trans 'Prepayment Amount' %}
+            </legend>
+
+            <div class="control-group">
+                One credit is equivalent to one USD.
+            </div>
+            <div data-bind="foreach: products">
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans 'Software Plan' %}
+                    </label>
+                    <div class="controls">
+                        <div class="input-prepend">
+                            <span class="add-on">$</span>
+                            <input type="text"
+                                   class="input-small"
+                                   name="product_credits"
+                                   data-bind="
+                                   attr:{name: creditType},
+                                   value: addAmount" />
+                        </div>
+                        <div class="alert alert-error"
+                        data-bind="visible: !addAmountValid()">
+                           <i class="icon-warning-sign"></i>
+                           <span>
+                               {% blocktrans %}
+                               Please enter an amount that's either $0 or  greater than $0.5
+                              {% endblocktrans %}
+                          </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <div data-bind="foreach: features">
+                <div class="control-group">
+                    <label class="control-label">
+                        <span data-bind="text: name"></span>
+                    </label>
+                    <div class="controls">
+                        <div class="input-prepend">
+                            <span class="add-on">$</span>
+                            <input type="text"
+                                   class="input-small"
+                                   data-bind="
+                                   attr:{name: creditType},
+                                   value: addAmount" />
+                        </div>
+                        <div class="alert alert-error"
+                        data-bind="visible: !addAmountValid()">
+                           <i class="icon-warning-sign"></i>
+                           <span>
+                               {% blocktrans %}
+                               Please enter an amount that's either $0 or  greater than $0.5
+                              {% endblocktrans %}
+                          </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    {% trans 'Total Credits' %}
+                </label>
+                <div class="controls">
+                    <div>
+                        <span class="add-on">$</span>
+                        <span data-bind="text: amount()"></span>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="amount" data-bind="value: amount" />
+        </fieldset>
     </script>
 
     <script type="text/html" id="payment-method-modal-title">
         <h3>
-            <span data-bind="visible: isPlanCredit">
-                {% trans 'Add Plan Credit' %}
-            </span>
-            <span data-bind="visible: isSMSCredit">
-                {% trans 'Add SMS Credit' %}
-            </span>
-            <span data-bind="visible: isUserCredit">
-                {% trans 'Add Mobile Worker Credit' %}
+            <span>
+                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
+                {% trans 'Prepay by Credit Card' %}
+                <!-- /ko -->
+                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+                {% trans 'Prepay by Wire' %}
+                <!-- /ko -->
             </span>
         </h3>
+    </script>
+
+    <script type="text/html" id="payment-complete-template">
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
+        {% trans "Thank you for your payment!" %}
+        <!-- /ko -->
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+        {% blocktrans %}
+        Thank you! You will receive an invoice via email with instructions for wire payment.
+        Please include the invoice ID in the wire payment details.
+        {% endblocktrans %}
+        <!-- /ko -->
     </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" %}
+    {% include 'domain/partials/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
 {% endblock %}

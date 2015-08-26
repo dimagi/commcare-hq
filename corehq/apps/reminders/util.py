@@ -1,6 +1,7 @@
 from datetime import datetime, time
 from corehq import privileges
-from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
@@ -48,6 +49,7 @@ class DotExpandedDict(dict):
             except TypeError: # Special-case if current isn't a dict.
                 current = {bits[-1]: v}
 
+
 def get_form_list(domain):
     form_list = []
     for app in ApplicationBase.view("app_manager/applications_brief", startkey=[domain], endkey=[domain, {}]):
@@ -94,6 +96,7 @@ def get_form_name(form_unique_id):
         form_name = form.name.items()[0][1]
     return app.name + "/" + module_name + "/" + form_name
 
+
 def get_recipient_name(recipient, include_desc=True):
     if recipient == None:
         return "(no recipient)"
@@ -123,12 +126,15 @@ def get_recipient_name(recipient, include_desc=True):
     else:
         return name
 
+
 def enqueue_reminder_directly(reminder):
     from corehq.apps.reminders.management.commands.run_reminder_queue import (
         ReminderEnqueuingOperation)
     ReminderEnqueuingOperation().enqueue_directly(reminder)
 
-def create_immediate_reminder(contact, content_type, reminder_type=None, message=None, form_unique_id=None, case=None):
+
+def create_immediate_reminder(contact, content_type, reminder_type=None,
+        message=None, form_unique_id=None, case=None, logged_event=None):
     """
     contact - the contact to send to
     content_type - METHOD_SMS or METHOD_SMS_SURVEY (see corehq.apps.reminders.models)
@@ -136,6 +142,8 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
     message - the message to send if content_type == METHOD_SMS
     form_unique_id - the form_unique_id of the form to send if content_type == METHOD_SMS_SURVEY
     case - the case that is associated with this reminder (so that you can embed case properties into the message)
+    logged_event - if this reminder is being created as a subevent of a
+        MessagingEvent, this is the MessagingEvent
     """
     from corehq.apps.reminders.models import (
         CaseReminderHandler,
@@ -143,6 +151,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
         ON_DATETIME,
         EVENT_AS_OFFSET,
         REMINDER_TYPE_DEFAULT,
+        REMINDER_TYPE_KEYWORD_INITIATED,
         METHOD_SMS,
         METHOD_SMS_SURVEY,
         RECIPIENT_CASE,
@@ -193,6 +202,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
         user_id = contact._id if recipient == RECIPIENT_USER else None,
         sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
         user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
+        messaging_event_id=logged_event.pk if logged_event else None,
     )
     handler.save(send_immediately=True)
 

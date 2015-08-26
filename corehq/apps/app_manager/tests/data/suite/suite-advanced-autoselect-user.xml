@@ -9,10 +9,10 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-      <datum id="case_id_case_clinic" function="instance('commcaresession')/session/user/data/case_id"/>
+      <datum id="case_id_case_clinic" function="if(count(instance('commcaresession')/session/user/data) = 1 and count(instance('commcaresession')/session/user/data/case_id) = 1, instance('commcaresession')/session/user/data/case_id, '')"/>
     </session>
     <assertions>
-      <assert test="count(instance('commcaresession')/session/user/data/case_id) = 1">
+      <assert test="count(instance('commcaresession')/session/user/data) = 1 and count(instance('commcaresession')/session/user/data/case_id) = 1">
         <text>
           <locale id="case_autoload.user.property_missing">
             <argument>case_id</argument>

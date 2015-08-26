@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from custom.ilsgateway.views import GlobalStats, SupervisionDocumentListView, SupervisionDocumentDeleteView, \
-    SupervisionDocumentView, RemindersTester
+    SupervisionDocumentView, RemindersTester, ReportRunListView, ReportRunDeleteView, ProductAvailabilityDeleteView
 from custom.ilsgateway.views import ILSConfigView
 
 urlpatterns = patterns('custom.ilsgateway.views',
@@ -21,6 +21,14 @@ urlpatterns = patterns('custom.ilsgateway.views',
         name='delete_supervision_document'),
     url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document'),
     url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='ils_reminders_tester'),
-    url(r'save_ils_note', 'save_ils_note', name='save_ils_note'),
-    url(r'fix_groups_in_location', 'fix_groups_in_location', name='fix_groups_in_location')
+    url(r'^save_ils_note/$', 'save_ils_note', name='save_ils_note'),
+    url(r'^fix_groups_in_location/$', 'fix_groups_in_location', name='fix_groups_in_location'),
+    url(r'^change_date/$', 'change_runner_date_to_last_migration', name='change_runner_date_to_last_migration'),
+    url(r'^report_runs/(?P<pk>\d+)/delete/$', ReportRunDeleteView.as_view(), name='delete_report_run'),
+    url(r'^report_runs/$', ReportRunListView.as_view(), name='report_run_list'),
+    url(
+        r'^product_availability/(?P<pk>\d+)/delete/$',
+        ProductAvailabilityDeleteView.as_view(),
+        name='product_availability_delete'
+    ),
 )

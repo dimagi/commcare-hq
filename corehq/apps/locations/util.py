@@ -3,8 +3,6 @@ from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import (user_can_edit_location,
-                                               user_can_view_location)
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -18,7 +16,7 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
-        user=None):
+        user=None, only_administrative=False):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -27,7 +25,11 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     * all top level locs
     * if a 'selected' loc is provided, that loc and its complete
       ancestry
+
+    only_administrative - if False get all locations
+                          if True get only administrative locations
     """
+    from .permissions import user_can_edit_location, user_can_view_location
     def loc_to_json(loc, project):
         ret = {
             'name': loc.name,
@@ -42,11 +44,15 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
     project = Domain.get_by_name(domain)
 
+    locations = SQLLocation.root_locations(
+        domain, include_archive_ancestors=include_archived
+    )
+
+    if only_administrative:
+        locations = locations.filter(location_type__administrative=True)
+
     loc_json = [
-        loc_to_json(loc, project) for loc in
-        SQLLocation.root_locations(
-            domain, include_archive_ancestors=include_archived
-        )
+        loc_to_json(loc, project) for loc in locations
         if user is None or user_can_view_location(user, loc, project)
     ]
 
@@ -62,11 +68,13 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 
         parent = {'children': loc_json}
         for loc in lineage:
+            children = loc.child_locations(include_archive_ancestors=include_archived)
+            if only_administrative:
+                children = children.filter(location_type__administrative=True)
             # find existing entry in the json tree that corresponds to this loc
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
-                loc_to_json(loc, project) for loc in
-                loc.child_locations(include_archive_ancestors=include_archived)
+                loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)
             ]
             parent = this_loc
@@ -236,3 +244,31 @@ def write_to_file(locations):
         writer.write([(loc_type, tab_rows)])
     writer.close()
     return outfile.getvalue()
+
+
+def get_xform_location(xform):
+    """
+    Returns the sql location associated with the user who submitted an xform
+    """
+    from corehq.apps.users.models import CouchUser
+    user_id = getattr(xform.metadata, 'userID', None)
+    if not user_id:
+        return None
+
+    user = CouchUser.get_by_user_id(user_id)
+    if hasattr(user, 'get_sql_location'):
+        return user.get_sql_location(xform.domain)
+    elif hasattr(user, 'sql_location'):
+        return user.sql_location
+    return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )

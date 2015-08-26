@@ -25,7 +25,7 @@ class CaseBlock(dict):
     ...     date_opened=NOW,
     ...     date_modified=NOW,
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     # Doesn't let you specify a keyword twice (here 'case_name')
     >>> try:
@@ -47,7 +47,7 @@ class CaseBlock(dict):
     ...         'date_opened': FIVE_DAYS_FROM_NOW,
     ...     },
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     """
     undefined = object()
@@ -67,6 +67,7 @@ class CaseBlock(dict):
             index=None,
             version=V1,
             compatibility_mode=False,
+            strict=True,
         ):
         """
         From https://bitbucket.org/javarosa/javarosa/wiki/casexml
@@ -186,9 +187,10 @@ class CaseBlock(dict):
 
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
-        for key in create_or_update:
-            if create_or_update[key] is not CaseBlock.undefined and self['update'].has_key(key):
-                raise CaseBlockError("Key %r specified twice" % key)
+        if strict:
+            for key in create_or_update:
+                if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
+                    raise CaseBlockError("Key %r specified twice" % key)
 
         if create:
             self['create'].update(create_or_update)
@@ -211,7 +213,7 @@ class CaseBlock(dict):
                     '_text': case_id
                 }
 
-    def as_xml(self, format_datetime=date_to_xml_string):
+    def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
@@ -232,7 +234,7 @@ class CaseBlock(dict):
             elif isinstance(value, (basestring, int)):
                 return unicode(value)
             else:
-                raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
+                raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(type(value), value))
 
         def dict_to_xml(block, dct):
             if dct.has_key('_attrib'):
@@ -253,7 +255,7 @@ class CaseBlock(dict):
         dict_to_xml(case, self)
         return case
 
-    def as_string(self, format_datetime=date_to_xml_string):
+    def as_string(self, format_datetime=None):
         return ElementTree.tostring(self.as_xml(format_datetime))
 
 

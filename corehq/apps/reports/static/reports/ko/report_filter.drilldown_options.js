@@ -32,7 +32,9 @@ var DrilldownOptionFilterControl = function (options) {
                     .selected(null)
                     .control_options(next_options);
             } else {
-                self.controls()[l].control_options([]);
+                if (self.controls()[l-1].selected() === void(0)) {
+                    self.controls()[l].control_options([]);
+                }
             }
         }
     };
@@ -65,11 +67,11 @@ var DrilldownOption = function (select, drilldown_map) {
     self.selected = ko.observable();
 
     self.is_visible = ko.computed(function () {
-        return !!(self.control_options().length);
+        return !!(self.control_options().length) || self.selected() !== void(0);
     });
 
     self.show_next_drilldown = ko.computed(function () {
-        return !(self.control_options().length);
+        return !(self.control_options().length) && self.selected() !== void(0);
     });
 };
 

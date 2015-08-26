@@ -1,0 +1,614 @@
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+    <head>
+        <meta charset="utf-8"/>
+        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+        <title>
+            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+        </title>
+        <meta name="application-name" content="{{ SITE_NAME }}">
+        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+        <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
+        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
+
+        {% compress css %}
+            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+        {% endcompress %}
+        {% compress css %}
+            <link type="text/less"
+                      rel="stylesheet"
+                      media="all"
+                      href="{% static 'style/less/font-commcare.less' %}" />
+        {% endcompress %}
+        {% block stylesheets %}{% endblock %}
+
+        {# this should eventually be moved to the end of the page #}
+        {% if formdesigner %}
+        <script src="{% static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% else %}
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        {% endif %}
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
+
+        {% block oldstyle_imports %}
+            <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+            {% compress css %}
+            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/core.less' %}"/>
+            {% endcompress %}
+            {% include "imports/hq-oldstyle-js.html" %}
+        {% endblock %}
+
+        {% block head %}
+        {% endblock %}
+
+        {% include 'style/includes/analytics_all.html' %}
+        {% if less_debug %}
+            <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+            {% if less_watch %}<script>less.watch();</script>{% endif %}
+        {% endif %}
+    </head>
+    <body>
+        {% maintenance_alert %}
+        <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+            {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
+            <header>
+                <div class="navbar">
+                    <div class="navbar-inner">
+                        <hgroup class="brand">
+                            <h1><a href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
+                        </hgroup>
+                    {% if request.user.is_authenticated %}
+                        <nav id="hq-navigation-bar">
+                            {% block tabs %}
+                                {% format_main_menu %}
+                            {% endblock %}
+                            {% include 'style/includes/global_navigation_bar.html' %}
+                        </nav>
+                    {% else %}
+                        <nav>
+                            <div class="btn-toolbar pull-right">
+                                <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                            </div>
+                        </nav>
+                    {% endif %}
+                    </div>
+                </div>
+                {% format_subtab_menu %}
+            </header>
+            {% endwith %}
+            {% if request.project.is_snapshot %}
+                <div class="alert alert-info snapshot-alert">
+                    {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
+                    {% if request.project.copied_from.organization %}
+                        by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if not no_header %}
+            <div class="hq-page-header-container">
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
+                    <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
+                    <p>We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
+                    </p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                            <a class="close" data-dismiss="alert" href="#">&times;</a>
+                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div id="message-alerts" data-bind="foreach: alerts">
+                    <div data-bind="attr: {'class': alert_class}">
+                        <a class="close" data-dismiss="alert" href="#">&times;</a>
+                        <span data-bind="text: message"></span>
+                    </div>
+                </div>
+
+                <h1 class="page-header">
+                    {% block page-title %}
+                    {% endblock %}
+                </h1>
+            </div>
+            {% endif %}
+            {% block oldstyle_hack_start %}<div class="hq-oldstyle">{% endblock %}
+            {% block content %}
+            {% endblock %}
+            {% block oldstyle_hack_end %}</div>{% endblock %}
+        </div>
+
+        <footer>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="pull-left" style="margin-right: 20px;">
+                        <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
+                        <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
+                    </div>
+                    {% if request.user.is_authenticated %}
+                    <div class="btn-toolbar pull-right">
+                        <a id="uvSubmitIdea"
+                            data-user-email="{{ user.email }}"
+                            data-user-name="{{ user.name }}"
+                            data-domain="{{ domain }}"
+                            data-uv-locale="{{ LANGUAGE_CODE }}"
+                            class="btn btn-footer-highlight">
+                            <i class="icon-lightbulb"></i>
+                            {% trans 'Submit an Idea' %}
+                        </a>
+                        <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
+                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
+                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p style="padding-top: 7px;">
+                            <a href="http://www.commcarehq.org/">CommCare HQ</a> {% trans 'is copyright' %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                            {% if request.user.is_authenticated %}
+                                &nbsp;|&nbsp;
+                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                            {% endif %}
+                            <br />
+                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <div id="hq-modal-home">
+            {% if request.user.is_authenticated %}
+            <div class="modal hide fade" id="reportIssueModal">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
+                </div>
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" id="bug-report-url" name="url"/>
+                    <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                    <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                    <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+                    <div class="modal-body">
+                        <fieldset>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-subject">{% trans "Short Description" %}</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
+                                    <p class="help-block">{% trans "Please summarize the issue in one sentence&mdash;the message field below should contain more detail." %}</p>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-message">{% trans "Full Description" %}</label>
+                                <div class="controls">
+                                    <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
+                                    <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
+                                    <div class="alert fade in page-level-alert alert-error" id="empty-issue-alert">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter some description about the issue" %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if request.couch_user.is_commcare_user %}
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-email">{% trans "Email" %}</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="email" id="bug-report-email">
+                                    <p class="help-block">{% trans "Please enter your email here so that we can follow up with you regarding this issue" %}
+                                    </p>
+                                    <div class="alert fade in page-level-alert alert-error" id="invalid-email-alert">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter a valid email" %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="cc" id="bug-report-cc" rows="1">
+                                    <p class="help-block">{% trans "Comma-separated email addresses of others you want to notify about this issue" %}
+                                    </p>
+                                    <div class="alert fade in page-level-alert alert-error" id="invalid-cc-alert">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter valid comma-separated email-list." %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label for="file" class="control-label">{% trans 'Upload file' %}</label>
+                                <div class="controls">
+                                    <input type="file" name="report_issue"/>
+                                    <p class="help-block"><i class="icon-warning-sign"></i> {% trans "Do not upload a file containing individually identifiable data." %}
+                                    </p>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary"
+                                data-loading-text="{% trans "Submitting Report..." %}"
+                                data-complete-text="{% trans "Report Submitted, Close Window" %}">
+                            {% trans "Submit Report" %}
+                        </button>
+                        <button id="bug-report-cancel" class="btn" data-dismiss="modal"
+                                data-loading-text="{% trans "Cancel" %}">
+                            {% trans "Cancel" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        {% block modals %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
+                <div class="modal hide fade" id="eulaModal">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h4>{% trans "CommCare HQ End User License Agreement" %}</h4>
+                    </div>
+                    <div class="modal-body" style="max-height: 20em;">
+                        {% trans "Loading Terms of Service..." %}
+                    </div>
+                    <div class="modal-footer">
+                        <div style="text-align: left; line-height: 2em;">
+                            {% trans "To continue using Commcare HQ, please agree to our new End User License Agreement" %}
+                        </div>
+                        <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
+                            <input name="next" type="hidden" value="{{ request.path }}" />
+                            <button type="submit" class="btn btn-primary">Agree</button>
+                            <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="modal hide fade" id="keyboard-shortcuts-config">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h4>{% trans "Keyboard Shortcuts Configuration" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                        <div class="control-group">
+                            <div class="controls">
+                                <label class="checkbox">
+                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> {% trans "Enable Keyboard Shortcuts" %}
+                                </label>
+                            </div>
+                        </div>
+                        <div data-bind="visible: $data.enabled" class="control-group">
+                            <label class="control-label" for="main-key">{% trans "Choose Shortcut Key" %}</label>
+                            <div class="controls">
+                                <select name="main-key">
+                                    <option value="option" {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option / alt</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'ctrl' %} selected{% endif %}>ctrl</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'command' %} selected{% endif %}>command</option>
+                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'shift' %} selected{% endif %}>shift</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="controls"><button class="btn btn-primary" type="submit">Update</button></div>
+                        </div>
+                    </form>
+                    <hr />
+                    <div>
+                        {% trans "For more information visit: " %}
+                        <a href="https://help.commcarehq.org/display/commcarepublic/CommCareHQ+Keyboard+Shortcuts">{% trans "CommCare HQ Keyboard Shortcuts Wiki" %}</a>
+                    </div>
+                    <hr />
+                    <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
+                    <strong>{% trans "While navigating menus or the sidebar" %}:</strong>
+                    <ul class="unstyled">
+                        <li>{% trans "Move up" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+k</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+up</code></li>
+                        <li>{% trans "Move down" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+j</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+down</code></li>
+                        <li>{% trans "Do action (e.g. browsing to a page)" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+enter</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+spacebar</code></li>
+                    </ul>
+                </div>
+            </div>
+            {% if request.show_trial_notice %}
+            <div class="modal hide fade" id="trial-notice">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans 'Important Message' %}</h3>
+                </div>
+                <div class="modal-body">
+                    {% with request.trial_info.feature_name as feat_name %}
+                    {% with request.trial_info.required_plan as req_plan %}
+                    {% with request.trial_info.current_plan as current_plan %}
+                    {% with request.trial_info.date_end as date_end %}
+                        <p class="lead">
+                        {% blocktrans %}
+                            <strong>{{ feat_name }}</strong> is only available for the {{ req_plan }}
+                            Plan and higher. You are currently on a trial version
+                            of the {{ current_plan }} Plan.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            We want you to have a chance to use and evaluate our
+                            pay-only features before deciding which plan to subscribe to.
+                            You will have access to <strong>{{ feat_name }}</strong> during
+                            this trial period, ending on {{ date_end }}.
+                            After {{ date_end }}, you will no longer have access to {{ feat_name }}.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            To continue accessing {{ feat_name }} after the trial period,
+                            subscribe to the {{ req_plan }} Plan.
+                        {% endblocktrans %}
+                        </p>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% if request.is_domain_admin %}
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'domain_select_plan' request.domain %}">
+                                {% blocktrans %}
+                                    Change my project's plan
+                                {% endblocktrans %}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn"
+                            data-dismiss="modal">
+                        {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% endblock %}
+        </div>
+        <!--Begin javascript -->
+        <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
+
+        {% block js %}
+        <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+
+        <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+        <script src="{% new_static 'style/js/uv.widget.js' %}"></script>
+        <script>
+            var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
+                                         // and to avoid conflicts in other places where "key" is used as variable name
+        </script>
+        {% if request.couch_user.keyboard_shortcuts.enabled %}
+            <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
+        {% endif %}
+        {% endblock %}
+
+        {% block js-inline %}
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
+
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
+                {% url "eula_basic" as eula_url %}
+                {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+                <script type="text/javascript">
+                    $(window).load(function(){
+                        $('#eulaModal').modal('show');
+                    });
+                </script>
+            {% endif %}
+
+        <script>
+            var KS = {
+                gen_click_fn: function(selector) {
+                    return function() {
+                        $(selector).click();
+                        return false;
+                    };
+                }
+            };
+
+            function configure_keyboard_shortcuts() {
+                $('#keyboard-shortcuts-config').modal('toggle');
+            }
+
+            var KEYBOARD_SHORTCUTS = [
+                {
+                    shortcut: "option+space, ctrl+space, command+space",
+                    handler: configure_keyboard_shortcuts,
+                    desc: "Open Keyboard Configuration"
+                }
+            ];
+
+            function KBConfigFormModel() {
+                this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
+            }
+
+            $(function() {
+                var $lookup = $('#keyboard-shortcuts-lookup');
+                _(KEYBOARD_SHORTCUTS).each(function(s) {
+                    KEY(s.shortcut, s.handler);
+                    var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
+                    $lookup.append($shortcut);
+                });
+                var element = $('#keyboard-shortcuts-config-form').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new KBConfigFormModel(), element);
+            });
+        </script>
+
+        {% if request.couch_user.keyboard_shortcuts.enabled %}
+        <script>
+            var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+
+            function gen_apps_menu_elements() {
+                return $("#mainmenu-ApplicationsTab li a[data-id]");
+            }
+            var apps_menu_navigator = new KeyboardNavigator();
+            apps_menu_navigator.init({
+                name: 'apps menu',
+                ready_scope: 'am-ready',
+                nav_key: nav_key,
+                action_key: 'enter',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
+                element_list_generator: gen_apps_menu_elements,
+                focus_in_fn: function($ele) {
+                    $("#mainmenu-ApplicationsTab").addClass('open');
+                    keyboard_navigator_utils.focus_in_fn($ele);
+                },
+                stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
+                reset_index: true,
+                regen_list_on_leave: true
+            });
+
+            function gen_admin_menu_elements() {
+                return $("#mainmenu-AdminTab li a");
+            }
+            var admin_menu_navigator = new KeyboardNavigator();
+            admin_menu_navigator.init({
+                name: 'admin menu',
+                ready_scope: 'adm-ready',
+                nav_key: nav_key,
+                action_key: 'enter',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
+                element_list_generator: gen_admin_menu_elements,
+                focus_in_fn: function($ele) {
+                    $("#mainmenu-AdminTab").addClass('open');
+                    keyboard_navigator_utils.focus_in_fn($ele);
+                },
+                stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
+                reset_index: true,
+                regen_list_on_leave: true
+            });
+
+            function gen_projects_menu_elements() {
+                return $("#nav-projects-menu li a");
+            }
+            var projects_menu_navigator = new KeyboardNavigator();
+            projects_menu_navigator.init({
+                name: 'projects menu',
+                ready_scope: 'pm-ready',
+                nav_key: nav_key,
+                action_key: 'enter',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
+                element_list_generator: gen_projects_menu_elements,
+                start_fn: function() { $('#nav-projects-menu').addClass('open') },
+                stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
+                reset_index: true,
+                regen_list_on_leave: true
+            });
+
+            function gen_user_menu_elements() {
+                return $("#nav-user-menu li a");
+            }
+            var user_menu_navigator = new KeyboardNavigator();
+            user_menu_navigator.init({
+                name: 'user menu',
+                ready_scope: 'um-ready',
+                nav_key: nav_key,
+                action_key: 'enter',
+                forward_keys: ['j', 'down'],
+                back_keys: ['k', 'up'],
+                element_list_generator: gen_user_menu_elements,
+                start_fn: function() { $('#nav-user-menu').addClass('open') },
+                stop_fn: function() { $('#nav-user-menu').removeClass('open') },
+                reset_index: true,
+                regen_list_on_leave: true
+            });
+
+            KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
+                {
+                    shortcut: nav_key + "+a",
+                    handler: apps_menu_navigator.activate,
+                    desc: "Access Applications Menu"
+                },
+                {
+                    shortcut: nav_key + "+p",
+                    handler: projects_menu_navigator.activate,
+                    desc: "Access Projects Menu"
+                },
+                {
+                    shortcut: nav_key + "+u",
+                    handler: user_menu_navigator.activate,
+                    desc: "Access Web User Settings Menu"
+                }
+            ]);
+            {% if request.couch_user.is_superuser %}
+                KEYBOARD_SHORTCUTS.push({
+                    shortcut: nav_key + "+o",
+                    handler: admin_menu_navigator.activate,
+                    desc: "Access Admin Menu"
+                });
+            {% endif %}
+        </script>
+        {% block keyboard_shortcuts %}
+        {% endblock %}
+        {% endif %}
+        {% endblock %}
+
+        {% if request.show_trial_notice %}
+        <script>
+            $(function () {
+                $('#trial-notice').modal('show');
+            });
+        </script>
+        {% endif %}
+
+        <script>
+            $(function () {
+                if ($.browser.msie) {
+                    $('#unsupported-browser').show();
+                }
+            });
+        </script>
+
+        <script>
+            {% comment %}
+            This is the javascript analog of messages in Django
+
+            Use the function `alert_user` to make a message appear on the page.
+            This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+            styling, and can be "success", "error", "info", or "warning"
+
+                alert_user("Awesome job!", "success");
+            {% endcomment %}
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
+                if (tags) {
+                    alert_obj.alert_class += " " + tags;
+                };
+                return alert_obj;
+            }
+            var message_alerts = ko.observableArray();
+
+            function alert_user (message, emphasis) {
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            }
+
+            var message_element = $("#message-alerts").get(0);
+            ko.cleanNode(message_element);
+            ko.applyBindings(
+                {alerts: message_alerts},
+                message_element
+            );
+
+        </script>
+    </body>
+</html>

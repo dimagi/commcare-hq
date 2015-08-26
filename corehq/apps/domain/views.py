@@ -4,21 +4,23 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from django.db import transaction
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
+from django.db.models import Sum
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.decorators import (
-    require_billing_admin, requires_privilege_with_fallback,
+    requires_privilege_with_fallback,
 )
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -54,9 +56,9 @@ from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType, BillingAccountAdmin,
+    BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -84,7 +86,6 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
@@ -97,17 +98,18 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
-    400: _('Your request was not formatted properly.'),
-    403: _('Forbidden.'),
-    404: _('Page not found.'),
-    500: _("There was an error processing your request."
+    400: ugettext_lazy('Your request was not formatted properly.'),
+    403: ugettext_lazy('Forbidden.'),
+    404: ugettext_lazy('Page not found.'),
+    500: ugettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
@@ -121,7 +123,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = DomainInvitation.by_email(email)
+    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
@@ -141,7 +143,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
                 return dashboard_default(request, last_visited_domain)
             except Http404:
                 pass
-            
+
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
 
@@ -206,12 +208,10 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         }
 
     @property
-    def is_billing_admin(self):
+    def is_domain_admin(self):
         if not hasattr(self.request, 'couch_user'):
             return False
-        return BillingAccountAdmin.get_admin_status_and_account(
-            self.request.couch_user, self.domain
-        )[0]
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def page_context(self):
@@ -221,7 +221,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
             'plan_name': self.required_plan_name,
             'change_subscription_url': reverse(SelectPlanView.urlname,
                                                args=[self.domain]),
-            'is_billing_admin': self.is_billing_admin,
+            'is_domain_admin': self.is_domain_admin,
         }
 
     @property
@@ -546,41 +546,14 @@ def logo(request, domain):
     if logo is None:
         raise Http404()
 
-    return HttpResponse(logo[0], mimetype=logo[1])
+    return HttpResponse(logo[0], content_type=logo[1])
 
 
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def main_context(self):
-        context = super(DomainAccountingSettings, self).main_context
-        if (hasattr(self.request, 'is_billing_admin')
-            and not self.request.is_billing_admin
-            and self.request.couch_user.is_superuser
-        ):
-            # check to see if superuser is accounting admin
-            # If not, notify that they should change it.
-            from corehq.apps.accounting.utils import is_accounting_admin
-            has_privs = is_accounting_admin(self.request.user)
-            if has_privs:
-                context.update(is_ops_user_but_not_admin=True)
-                messages.info(
-                    self.request, mark_safe(_(
-                        "Hi there, Operations User. You are currently not "
-                        "a Billing Admin for this account.<br />"
-                        "<a href='%(url)s' class='btn btn-primary'>"
-                        "Change This</a>"
-                    ) % {
-                        'url': reverse(AddOpsUserAsDomainAdminView.urlname,
-                                       args=[self.domain]),
-                    })
-                )
-        return context
 
     @property
     @memoized
@@ -597,34 +570,6 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
 
 
-class AddOpsUserAsDomainAdminView(BaseAdminProjectSettingsView):
-    urlname = 'domain_ops_billing_admin'
-    template_name = 'domain/new_ops_billing_admin.html'
-    page_title = ugettext_noop("Join Billing Account Admins")
-
-    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    def dispatch(self, request, *args, **kwargs):
-        is_domain_admin, self.account = BillingAccountAdmin.get_admin_status_and_account(
-            request.couch_user, self.domain
-        )
-        if is_domain_admin:
-            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-        return super(AddOpsUserAsDomainAdminView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        admin = BillingAccountAdmin.objects.get_or_create(
-            web_user=request.user.username,
-            domain=self.domain,
-        )[0]
-        self.account.billing_admins.add(admin)
-        self.account.save()
-        messages.success(
-            request,
-            _("Successfully added as Billing Admin for project %s" % self.domain)
-        )
-        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-
-
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
     template_name = 'domain/current_subscription.html'
@@ -632,9 +577,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def plan(self):
@@ -656,24 +599,15 @@ class DomainSubscriptionView(DomainAccountingSettings):
             if subscription.date_end is not None:
                 if subscription.is_renewed:
 
-                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                    next_product = self.get_product_summary(subscription.next_subscription.plan_version,
                                                              self.account,
                                                              subscription)
-
-                    if len(next_products) > 1:
-                        accounting_logger.error(
-                            "[BILLING] "
-                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
-                            "subscriber %s. Odd, right? The latest one by "
-                            "date_created was used, but consider this an issue."
-                            % self.account
-                        )
 
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
-                        'price': next_products[0]['monthly_fee'],
+                        'price': next_product['monthly_fee'],
                     })
 
                 else:
@@ -688,10 +622,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         if general_credits:
             general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
-        products = self.get_product_summary(plan_version, self.account, subscription)
         info = {
-            'products': products,
-            'is_multiproduct': len(products) > 1,
+            'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
             'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
@@ -721,27 +653,35 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_summary = []
-        for product_rate in plan_version.product_rates.all():
-            product_info = {
-                'name': product_rate.product.product_type,
-                'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-                'credit': None,
-                'type': product_rate.product.product_type,
-            }
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, product_type=product_rate.product.product_type
-                )
-            if credit_lines:
-                product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-            product_summary.append(product_info)
-        return product_summary
+        product_rates = plan_version.product_rates.all()
+        if len(product_rates) > 1:
+            # Models and UI are both written to support multiple products,
+            # but for now, each subscription can only have one product.
+            accounting_logger.error(
+                "[BILLING] "
+                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
+                "Odd, right? The latest one by date_created was used, but consider this an issue."
+                % self.account
+            )
+        product_rate = product_rates[0]
+        product_info = {
+            'name': product_rate.product.product_type,
+            'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
+            'credit': None,
+            'type': product_rate.product.product_type,
+        }
+        credit_lines = None
+        if subscription is not None:
+            credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                subscription, product_type=product_rate.product.product_type
+            )
+        elif account is not None:
+            credit_lines = CreditLine.get_credits_for_account(
+                account, product_type=product_rate.product.product_type
+            )
+        if credit_lines:
+            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []
@@ -779,12 +719,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'process_payment_url': reverse(CreditsStripePaymentView.urlname,
-                                           args=[self.domain]),
+            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
+            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
-                                         args=[self.domain])
+                                         args=[self.domain]),
+            'user_email': self.request.couch_user.username,
         }
 
 
@@ -883,6 +824,20 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
         return Paginator(self.invoices, self.limit)
 
     @property
+    def total_balance(self):
+        """
+        Returns the total balance of unpaid, unhidden invoices.
+        Doesn't take into account the view settings on the page.
+        """
+        invoices = (Invoice.objects
+                    .filter(subscription__subscriber__domain=self.domain)
+                    .filter(date_paid__exact=None)
+                    .filter(is_hidden=False))
+        return invoices.aggregate(
+            total_balance=Sum('balance')
+        ).get('total_balance') or 0.00
+
+    @property
     def column_names(self):
         return [
             _("Statement No."),
@@ -912,14 +867,13 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 args=[self.domain],
             ),
             'stripe_cards': self.stripe_cards,
+            'total_balance': self.total_balance,
         })
         return pagination_context
 
     @property
     def can_pay_invoices(self):
-        return BillingAccountAdmin.objects.filter(
-            web_user=self.request.user.username, domain=self.domain
-        ).exists()
+        return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
     def paginated_list(self):
@@ -989,30 +943,17 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     @memoized
-    def billing_admin(self):
-        try:
-            admin = BillingAccountAdmin.objects.get(
-                web_user=self.request.user.username, domain=self.domain
-            )
-            # verify that this admin is still tied to the account for
-            # the invoice
-            if not self.account.billing_admins.filter(
-                    pk=admin.pk).exists():
-                raise PaymentRequestError(
-                    "The billing admin provided is not an account admin for "
-                    "the account this invoice is tied to."
-                )
-            return admin
-        except BillingAccountAdmin.DoesNotExist:
+    def domain_admin(self):
+        if self.request.couch_user.is_domain_admin(self.domain):
+            return self.request.couch_user.username
+        else:
             raise PaymentRequestError(
-                "Could not find an appropriate billing admin for the "
-                "logged in user."
+                "The logged in user was not a domain admin."
             )
 
     def get_or_create_payment_method(self):
         return PaymentMethod.objects.get_or_create(
-            account=self.account,
-            billing_admin=self.billing_admin,
+            web_user=self.domain_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1064,11 +1005,45 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     def get_payment_handler(self):
         return CreditStripePaymentHandler(
             self.get_or_create_payment_method(),
+            self.domain,
             self.account,
             subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
-            product_type=self.request.POST.get('product'),
-            feature_type=self.request.POST.get('feature'),
+            post_data=self.request.POST.copy(),
         )
+
+
+class CreditsWireInvoiceView(DomainAccountingSettings):
+    http_method_names = ['post']
+    urlname = 'domain_wire_payment'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        emails = request.POST.get('emails', []).split()
+        amount = Decimal(request.POST.get('amount', 0))
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        try:
+            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+        except Exception as e:
+            return json_response({'error': {'message': str(e)}})
+
+        return json_response({'success': True})
+
+    def _get_items(self, request):
+        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
+
+        features = [{'type': get_feature_name(feature_type[0], product_type),
+                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
+                    for feature_type in FeatureType.CHOICES
+                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
+        products = [{'type': pt[0],
+                     'amount': Decimal(request.POST.get(pt[0], 0))}
+                    for pt in SoftwareProductType.CHOICES
+                    if Decimal(request.POST.get(pt[0], 0)) > 0]
+
+        return products + features
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1095,7 +1070,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
-            self.get_or_create_payment_method(), self.invoice
+            self.get_or_create_payment_method(), self.domain, self.invoice
         )
 
 
@@ -1117,7 +1092,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1137,7 +1112,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1152,13 +1127,17 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         try:
-            invoice = Invoice.objects.get(pk=invoice_pdf.invoice_id)
-        except Invoice.DoesNotExist:
-            try:
-                invoice = WireInvoice.objects.get(pk=invoice_pdf.invoice_id)
-            except WireInvoice.DoesNotExist:
-                raise Http404()
-        if invoice.get_domain() != domain:
+            if invoice_pdf.is_wire:
+                invoice = WireInvoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    domain=domain
+                )
+            else:
+                invoice = Invoice.objects.get(
+                    pk=invoice_pdf.invoice_id,
+                    subscription__subscriber__domain=domain
+                )
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist):
             raise Http404()
 
         if invoice.is_wire:
@@ -1209,19 +1188,18 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
+            'today': datetime.date.today(),
         }
 
     @property
     def get_post_form(self):
-        for form_slug in self.slug_to_form:
-            if form_slug in self.request.POST:
-                return self.slug_to_form[form_slug]
+        return self.slug_to_form[self.request.POST.get('slug')]
 
     @property
     @memoized
     def slug_to_form(self):
         def create_form(form_class):
-            if self.request.method == 'POST' and form_class.slug in self.request.POST:
+            if self.request.method == 'POST' and form_class.slug == self.request.POST.get('slug'):
                 return form_class(self.domain, self.request.couch_user.username, self.request.POST)
             return form_class(self.domain, self.request.couch_user.username)
         return {form_class.slug: create_form(form_class) for form_class in self.form_classes}
@@ -1238,14 +1216,17 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
         subscription_type = None
         subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
-        plan = subscription.plan_version.plan
-
-        if subscription.service_type == SubscriptionType.CONTRACTED:
-            subscription_type = "contracted_partner"
-        elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-            subscription_type = "dimagi_only_enterprise"
-        elif plan.edition == SoftwarePlanEdition.ADVANCED and plan.visibility == SoftwarePlanVisibility.TRIAL:
-            subscription_type = "advanced_extended_trial"
+        if subscription is None:
+            subscription_type = None
+        else:
+            plan = subscription.plan_version.plan
+            if subscription.service_type == SubscriptionType.CONTRACTED:
+                subscription_type = "contracted_partner"
+            elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                subscription_type = "dimagi_only_enterprise"
+            elif (plan.edition == SoftwarePlanEdition.ADVANCED
+                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
+                subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
 
@@ -1483,7 +1464,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def is_form_post(self):
-        return 'billing_admins' in self.request.POST
+        return 'company_name' in self.request.POST
 
     @property
     @memoized
@@ -2192,14 +2173,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'sf_account_id',
             'services',
             'initiative',
-            'workshop_region',
+            'self_started',
             'area',
             'sub_area',
             'organization_name',
             'notes',
-            'self_started',
             'phone_model',
             'commtrack_domain',
+            'business_unit',
+            'workshop_region',
         ]
         if can_edit_eula:
             internal_attrs += [
@@ -2243,8 +2225,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                     can_use_data_old=old_attrs.can_use_data,
                     can_use_data_new=self.domain_object.internal.can_use_data,
                 )
-                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
-                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+                send_mail_async.delay(
+                    'Custom EULA or data use flags changed for {}'.format(self.domain),
+                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                )
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
@@ -2318,9 +2302,9 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)
@@ -2462,9 +2446,10 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     @memoized
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
         return sorted(
-            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
+                for toggle in all_toggles()],
             key=_sort_key,
         )
 
@@ -2699,9 +2684,9 @@ def _send_request_notification_email(request, org, dom):
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content,
-                            text_content=text_content,
-                            email_from=settings.DEFAULT_FROM_EMAIL)
+            send_html_email_async.delay(subject, recipient, html_content,
+                                        text_content=text_content,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)

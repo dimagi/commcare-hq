@@ -150,7 +150,6 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     slug = 'select2_billing'
     allowed_actions = [
         'country',
-        'billing_admins',
         'active_accounts',
         'domain',
         'account',
@@ -160,21 +159,11 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
 
     @property
     def country_response(self):
-        from django_countries.countries import COUNTRIES
+        from django_countries.data import COUNTRIES
+        countries = sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8'))
         if self.search_string:
-            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), COUNTRIES)
-        return COUNTRIES
-
-    @property
-    def billing_admins_response(self):
-        all_web_users = WebUser.by_domain(domain=self.request.domain)
-        admins = filter(lambda x: x.is_domain_admin and x.username != self.request.couch_user.username,
-                        all_web_users)
-        admins = filter(lambda x: x.username not in self.existing, admins)
-        if self.search_string:
-            admins = filter(lambda x: (x.username.lower().startswith(self.search_string.lower())
-                                       or self.search_string in x.full_name), admins)
-        return [(a.username, "%s (%s)" % (a.full_name, a.username)) for a in admins]
+            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), countries)
+        return countries
 
     @property
     def active_accounts_response(self):

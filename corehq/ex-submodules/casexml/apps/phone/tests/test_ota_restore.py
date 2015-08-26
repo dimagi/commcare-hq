@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 import os
 import time
 from django.test.utils import override_settings
@@ -16,7 +16,40 @@ from casexml.apps.phone.tests import const
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user,\
     dummy_user_xml
+from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
+
+
+class SimpleOtaRestoreTest(SimpleTestCase):
+
+    def testRegistrationXML(self):
+        check_xml_line_by_line(self, dummy_user_xml(),
+                               xml.get_registration_xml(dummy_user()))
+
+    def testNameAndNumber(self):
+        user = User(
+            user_id="12345",
+            username="mclovin",
+            password="guest",
+            date_joined=datetime(2011, 6, 9),
+            first_name="mclovin",
+            phone_number="0019042411080",
+        )
+        payload = xml.get_registration_xml(user)
+
+        def assertRegistrationData(key, val):
+            if val is None:
+                template = '<data key="{prefix}_{key}" />'
+            else:
+                template = '<data key="{prefix}_{key}">{val}</data>'
+            self.assertIn(
+                template.format(prefix=SYSTEM_PREFIX, key=key, val=val),
+                payload,
+            )
+
+        assertRegistrationData("first_name", "mclovin")
+        assertRegistrationData("last_name", None)
+        assertRegistrationData("phone_number", "0019042411080")
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -44,10 +77,6 @@ class OtaRestoreTest(TestCase):
         self.assertEqual("secret", user.password)
         self.assertEqual(datetime(2011, 6, 9), user.date_joined)
         self.assertFalse(bool(user.user_data))
-
-    def testRegistrationXML(self):
-        check_xml_line_by_line(self, dummy_user_xml(),
-                               xml.get_registration_xml(dummy_user()))
 
     def testUserRestore(self):
         self.assertEqual(0, SyncLog.view(

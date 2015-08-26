@@ -1,11 +1,16 @@
 from decimal import Decimal
+from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from django.db import models
+from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
+from corehq.apps.fixtures.utils import clean_fixture_field_name
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
@@ -32,7 +37,7 @@ class FixtureDataType(Document):
         # Migrate fixtures without attributes on item-fields to fields with attributes
         if obj["fields"] and isinstance(obj['fields'][0], basestring):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
-        
+
         # Migrate fixtures without attributes on items to items with attributes
         if 'item_attributes' not in obj:
             obj['item_attributes'] = []
@@ -49,16 +54,15 @@ class FixtureDataType(Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        num_fixtures = FixtureDataType.get_db().view(
-            'fixtures/data_types_by_domain',
-            reduce=True,
-            key=domain,
-        ).first()
-        return num_fixtures['value'] if num_fixtures is not None else 0
+        from corehq.apps.fixtures.dbaccessors import \
+            get_number_of_fixture_data_types_in_domain
+        return get_number_of_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True, descending=True)
+        from corehq.apps.fixtures.dbaccessors import \
+            get_fixture_data_types_in_domain
+        return get_fixture_data_types_in_domain(domain)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -89,7 +93,7 @@ class FixtureDataType(Document):
 class FixtureItemField(DocumentSchema):
     """
         "field_value": "Delhi_IN_HIN",
-        "properties": {"lang": "hin"} 
+        "properties": {"lang": "hin"}
     """
     field_value = StringProperty()
     properties = DictProperty()
@@ -129,7 +133,7 @@ class FixtureDataItem(Document):
             ]},
             "state_name": {"field_list": [
                 {"field_value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
-                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},                
+                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
             ]},
             "state_id": {"field_list": [
                 {"field_value": "DEL", "properties": {}}
@@ -149,7 +153,7 @@ class FixtureDataItem(Document):
             raise ResourceNotFound
         if not obj["fields"]:
             return super(FixtureDataItem, cls).wrap(obj)
-        
+
         # Migrate old basic fields to fields with attributes
 
         is_of_new_type = False
@@ -247,6 +251,12 @@ class FixtureDataItem(Document):
     def remove_group(self, group):
         return self.remove_owner(group, 'group')
 
+    def add_location(self, location, transaction=None):
+        return self.add_owner(location, 'location', transaction=transaction)
+
+    def remove_location(self, location):
+        return self.remove_owner(location, 'location')
+
     def type_check(self):
         fields = set(self.fields.keys())
         for field in self.data_type.fields:
@@ -276,12 +286,13 @@ class FixtureDataItem(Document):
                     % (self.data_type.tag, self.get_id)
                 )
         for field in self.data_type.fields:
+            escaped_field_name = clean_fixture_field_name(field.field_name)
             if not self.fields.has_key(field.field_name):
-                xField = ElementTree.SubElement(xData, field.field_name)
+                xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
-                    xField = ElementTree.SubElement(xData, field.field_name)
+                    xField = ElementTree.SubElement(xData, escaped_field_name)
                     xField.text = _serialize(field_with_attr.field_value)
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]
@@ -289,67 +300,16 @@ class FixtureDataItem(Document):
 
         return xData
 
-    def _get_reporting_groups(self, group_ids):
-        groups = []
-
-        reporting_group_ids = set([
-            gid for gid in group_ids
-            if gid.startswith(LOCATION_REPORTING_PREFIX)
-        ])
-        reporting_location_ids = [
-            group_id[group_id.index('-') + 1:]
-            for group_id in reporting_group_ids
-        ]
-        reporting_locations = SQLLocation.objects.filter(
-            location_id__in=reporting_location_ids
-        )
-
-        for reporting_location in reporting_locations:
-            groups.append(reporting_location.reporting_group_object())
-
-        return groups
-
-    def _get_case_sharing_groups(self, group_ids):
-        groups = []
-
-        case_sharing_locations = SQLLocation.objects.filter(
-            location_id__in=group_ids
-        ).values_list('location_id', flat=True).distinct()
-
-        for case_sharing_location in case_sharing_locations:
-            groups.append(case_sharing_location.case_sharing_group_object())
-
-        return groups
-
     def get_groups(self, wrap=True):
-        group_ids = set(
-            FixtureOwnership.get_db().view(
-                'fixtures/ownership',
-                key=[self.domain, 'group by data_item', self.get_id],
-                reduce=False,
-                wrapper=lambda r: r['value']
-            )
-        )
-
+        group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
         if wrap:
-            # if any fixtures are referencing location group IDs,
-            # make sure that those get wrapped properly as group-looking
-            # things
-
-            groups = []
-            groups += self._get_reporting_groups(group_ids)
-            groups += self._get_case_sharing_groups(group_ids)
-
-            return set(
-                list(Group.view(
-                    '_all_docs',
-                    keys=list(group_ids),
-                    include_docs=True
-                )) +
-                groups
-            )
+            return set(Group.view(
+                '_all_docs',
+                keys=list(group_ids),
+                include_docs=True,
+            ))
         else:
-            return group_ids
+            return set(group_ids)
 
     @property
     @memoized
@@ -357,13 +317,7 @@ class FixtureDataItem(Document):
         return self.get_groups()
 
     def get_users(self, wrap=True, include_groups=False):
-        user_ids = set(
-            self.get_db().view('fixtures/ownership',
-                key=[self.domain, 'user by data_item', self.get_id],
-                reduce=False,
-                wrapper=lambda r: r['value']
-            )
-        )
+        user_ids = set(get_owner_ids_by_type(self.domain, 'user', self.get_id))
         if include_groups:
             group_ids = self.get_groups(wrap=False)
         else:
@@ -385,20 +339,40 @@ class FixtureDataItem(Document):
     def users(self):
         return self.get_users()
 
+    @property
+    @memoized
+    def locations(self):
+        loc_ids = get_owner_ids_by_type(self.domain, 'location', self.get_id)
+        return SQLLocation.objects.filter(location_id__in=loc_ids)
+
     @classmethod
     def by_user(cls, user, wrap=True, domain=None):
         group_ids = Group.by_user(user, wrap=False)
 
         if isinstance(user, dict):
+            # Added 2015-07-31, feel free to remove eventually.
+            _assert = soft_assert('@'.join(['esoergel', 'dimagi.com']))
+            _assert(False, "This apparently IS called with a user dict. How?")
+
             user_id = user.get('user_id')
             user_domain = domain
+            location = CommCareUser.get(user_id).sql_location
         else:
             user_id = user.user_id
             user_domain = user.domain
+            location = user.sql_location
+
+        loc_ids = location.path if location else []
+
+        def make_keys(owner_type, ids):
+            return [[user_domain, 'data_item by {}'.format(owner_type), id_]
+                    for id_ in ids]
 
         fixture_ids = set(
             FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=[[user_domain, 'data_item by user', user_id]] + [[user_domain, 'data_item by group', group_id] for group_id in group_ids],
+                keys=(make_keys('user', [user_id]) +
+                      make_keys('group', group_ids) +
+                      make_keys('location', loc_ids)),
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )
@@ -502,7 +476,7 @@ class FixtureOwnership(Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
-    owner_type = StringProperty(choices=['user', 'group'])
+    owner_type = StringProperty(choices=['user', 'group', 'location'])
 
     @classmethod
     def by_item_id(cls, item_id, domain):
@@ -523,3 +497,22 @@ class FixtureOwnership(Document):
         ).all()
 
         return ownerships
+
+
+class UserFixtureType(object):
+    LOCATION = 1
+    CHOICES = (
+        (LOCATION, "Location"),
+    )
+
+
+class UserFixtureStatus(models.Model):
+    """Keeps track of when a user needs to re-sync a fixture"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
+    last_modified = models.DateTimeField()
+
+    DEFAULT_LAST_MODIFIED = datetime.min
+
+    class Meta(object):
+        unique_together = ("user_id", "fixture_type")

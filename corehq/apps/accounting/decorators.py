@@ -5,36 +5,12 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from corehq import privileges
-from corehq.apps.accounting.models import (
-    BillingAccountAdmin, DefaultProductPlan,
-)
+from corehq.apps.accounting.models import DefaultProductPlan, \
+    SoftwarePlanVisibility
 from django.http import Http404, HttpResponse
 from corehq.const import USER_DATE_FORMAT
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
-
-
-def require_billing_admin():
-    def decorate(fn):
-        """
-        Decorator to require the current logged in user to be a billing
-        admin to access the decorated view.
-        """
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (not hasattr(request, 'couch_user')
-                    or not hasattr(request, 'domain')):
-                raise Http404()
-            is_billing_admin = BillingAccountAdmin.get_admin_status_and_account(
-                request.couch_user, request.domain)[0]
-            request.is_billing_admin = is_billing_admin
-            if not (is_billing_admin or request.couch_user.is_superuser):
-                raise Http404()
-            return fn(request, *args, **kwargs)
-
-        return wrapped
-
-    return decorate
 
 
 def requires_privilege_with_fallback(slug, **assignment):
@@ -49,7 +25,7 @@ def requires_privilege_with_fallback(slug, **assignment):
             try:
                 if (hasattr(request, 'subscription')
                     and request.subscription is not None
-                    and request.subscription.is_trial
+                    and (request.subscription.is_trial or request.subscription.plan_version.plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL)
                     and request.subscription.date_end is not None
                 ):
                     edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
@@ -64,10 +40,8 @@ def requires_privilege_with_fallback(slug, **assignment):
                         'required_plan': edition_req,
                         'date_end': request.subscription.date_end.strftime(USER_DATE_FORMAT)
                     }
-                    request.is_billing_admin = (hasattr(request, 'couch_user')
-                                                and BillingAccountAdmin.get_admin_status_and_account(
-                                                    request.couch_user, request.domain
-                                                )[0])
+                    request.is_domain_admin = (hasattr(request, 'couch_user') and
+                                               request.couch_user.is_domain_admin(request.domain))
 
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs

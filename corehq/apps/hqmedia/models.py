@@ -247,6 +247,7 @@ class CommCareMultimedia(SafeSaveDocument):
             'CommCareImage': CommCareImage,
             'CommCareAudio': CommCareAudio,
             'CommCareVideo': CommCareVideo,
+            'CommCareMultimedia': CommCareMultimedia,
         }[doc_type]
 
     @classmethod
@@ -588,6 +589,9 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
+                    for text in parsed.text_references:
+                        if text:
+                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media

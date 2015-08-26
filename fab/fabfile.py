@@ -21,6 +21,7 @@ import datetime
 import json
 import os
 import posixpath
+import sh
 import sys
 import time
 from collections import defaultdict
@@ -126,10 +127,13 @@ def format_env(current_env, extra=None):
     host = current_env.get('host_string')
     if host in current_env.get('new_relic_enabled', []):
         ret['new_relic_command'] = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-        ret['supervisor_env_vars'] = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=%(environment)s' % env
+        ret['supervisor_env_vars'] = {
+            'NEW_RELIC_CONFIG_FILE': '%(root)s/newrelic.ini' % env,
+            'NEW_RELIC_ENVIRONMENT': '%(environment)s' % env
+        }
     else:
         ret['new_relic_command'] = ''
-        ret['supervisor_env_vars'] = ''
+        ret['supervisor_env_vars'] = []
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
@@ -209,7 +213,7 @@ def india():
 def zambia():
     """Our production server in wv zambia."""
     load_env('zambia')
-    env.hosts = ['41.222.19.153']
+    env.hosts = ['41.72.118.18']
 
     _setup_path()
 
@@ -228,7 +232,7 @@ def zambia():
         'lb': [],
         'deploy': [],
 
-        'django_monolith': ['41.222.19.153'],
+        'django_monolith': ['41.72.118.18'],
     }
     env.roles = ['django_monolith']
 
@@ -346,6 +350,12 @@ def env_common():
     }
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
+    env.supervisor_roles = ROLES_ALL_SRC
+
+
+@task
+def webworkers():
+    env.supervisor_roles = ROLES_DJANGO
 
 
 @task
@@ -609,16 +619,17 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy():
+def record_successful_deploy(url):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
-            '"%(environment)s" --mail_admins'
+            '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
             'virtualenv_root': env.virtualenv_root,
             'user': env.user,
             'environment': env.environment,
+            'url': url,
         })
 
 
@@ -647,7 +658,8 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        execute(record_successful_deploy)
+        url = _tag_commit()
+        execute(record_successful_deploy, url)
 
 
 def _confirm_translated():
@@ -716,7 +728,8 @@ def _deploy_without_asking():
         raise
     else:
         _execute_with_timing(services_restart)
-        _execute_with_timing(record_successful_deploy)
+        url = _tag_commit()
+        _execute_with_timing(record_successful_deploy, url)
 
 
 @task
@@ -726,6 +739,25 @@ def force_update_static():
     execute(_do_compress)
     execute(update_manifest)
     execute(services_restart)
+
+
+def _tag_commit():
+    sh.git.fetch("origin", env.code_branch)
+    deploy_time = datetime.datetime.utcnow()
+    tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
+    pattern = "*{}*".format(env.environment)
+    last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
+    branch = "origin/{}".format(env.code_branch)
+    msg = getattr(env, "message", "")
+    msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
+    sh.git.tag(tag_name, "-m", msg, branch)
+    sh.git.push("origin", tag_name)
+    diff_url = "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
+        last_tag,
+        tag_name
+    )
+    print "Here's a link to the changes you just deployed:\n{}".format(diff_url)
+    return diff_url
 
 
 @task
@@ -877,6 +909,18 @@ def netstat_plnt():
     """run netstat -plnt on a remote host"""
     _require_target()
     sudo('netstat -plnt', user='root')
+
+
+@task
+def supervisorctl(command):
+    require('supervisor_roles',
+            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+
+    @roles(env.supervisor_roles)
+    def _inner():
+        _supervisor_command(command)
+
+    execute(_inner)
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -1107,6 +1151,8 @@ def set_celery_supervisorconf():
         'pillow_retry_queue':           ['supervisor_celery_pillow_retry_queue.conf'],
         'background_queue':             ['supervisor_celery_background_queue.conf'],
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
+        'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
+        'email_queue':                  ['supervisor_celery_email_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
         }
 

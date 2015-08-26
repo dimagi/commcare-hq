@@ -10,6 +10,7 @@ try:
     from corehq.apps.reports.tests.test_time_and_date_manipulations import *
     from corehq.apps.reports.tests.test_generic import *
     from corehq.apps.reports.tests.test_util import *
+    from .test_filters import *
     from .test_pillows_xforms import *
     from .test_pillows_cases import *
     from .test_scheduled_reports import *

@@ -6,6 +6,10 @@ import KISSmetrics
 
 from settings import ANALYTICS_IDS
 
+HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
+HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
+HUBSPOT_COOKIE = 'hubspotutk'
+
 
 def _track_on_hubspot(webuser, properties):
     """
@@ -59,25 +63,27 @@ def _get_client_ip(meta):
     return ip
 
 
-def _link_account_with_cookie(webuser, cookies, meta):
+def _link_account_with_cookie(form_id, webuser, cookies, meta):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
     hubspot_id = ANALYTICS_IDS.get('HUBSPOT_ID')
-    hubspot_cookie = cookies.get('hubspotutk')
-    if hubspot_id:
+    hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
+    if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
             hubspot_id=hubspot_id,
-            form_id=HUBSPOT_SIGNUP_FORM_ID
+            form_id=form_id
         )
         data = {
             'email': webuser.username,
             'firstname': webuser.first_name,
             'lastname': webuser.last_name,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)})
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if 'opt_into_emails' in meta:
+            data['opt_into_emails'] = meta['opt_into_emails']
+
         req = requests.post(
             url,
             data=data
@@ -91,7 +97,12 @@ def track_created_hq_account_on_hubspot(webuser, cookies, meta):
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
     })
-    _link_account_with_cookie(webuser, cookies, meta)
+    _link_account_with_cookie(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def track_user_sign_in_on_hubspot(webuser, cookies, meta):
+    _link_account_with_cookie(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -131,4 +142,19 @@ def track_workflow(email, event, properties=None):
     if api_key:
         km = KISSmetrics.Client(key=api_key)
         km.record(email, event, properties if properties else {})
+        # TODO: Consider adding some error handling for bad/failed requests.
+
+
+@task(queue='background_queue', ignore_result=True)
+def identify(email, properties):
+    """
+    Set the given properties on a KISSmetrics user.
+    :param email: The email address by which to identify the user.
+    :param properties: A dictionary or properties to set on the user.
+    :return:
+    """
+    api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    if api_key:
+        km = KISSmetrics.Client(key=api_key)
+        km.set(email, properties)
         # TODO: Consider adding some error handling for bad/failed requests.

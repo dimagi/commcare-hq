@@ -23,7 +23,6 @@ $(function() {
         $(this).daterangepicker({
             format: 'YYYY-MM-DD',
             showDropdowns: true,
-            maxDate: now,
             ranges: ranges,
             separator: separator
         });

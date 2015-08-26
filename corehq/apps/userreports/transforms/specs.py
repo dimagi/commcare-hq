@@ -41,3 +41,18 @@ class CustomTransform(JsonObject):
 
     def transform(self, value):
         return self.get_transform_function()(value)
+
+
+class DateFormatTransform(Transform):
+    type = TypeProperty('date_format')
+    format = StringProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform_function(value):
+            try:
+                return value.strftime(self.format)
+            except:
+                return value
+
+        return transform_function

@@ -1,6 +1,7 @@
 import itertools
 import logging
 import traceback
+from django.db import transaction
 
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.logistics.models import MigrationCheckpoint
@@ -33,9 +34,10 @@ def retry(retry_max):
     return wrap
 
 
-def synchronization(api_sync_object, checkpoint, date, limit, offset, **kwargs):
+def synchronization(api_sync_object, checkpoint, date, limit, offset, params=None, **kwargs):
     has_next = True
     next_url = ""
+    params = params or {}
     while has_next:
         meta, objects = api_sync_object.get_objects_function(
             next_url_params=next_url,
@@ -48,8 +50,10 @@ def synchronization(api_sync_object, checkpoint, date, limit, offset, **kwargs):
             save_checkpoint(checkpoint, api_sync_object.name,
                             meta.get('limit') or limit, meta.get('offset') or offset,
                             date)
-        for obj in objects:
-            api_sync_object.sync_function(obj)
+        with transaction.atomic():
+            for obj in objects:
+                api_sync_object.sync_function(obj, **params)
+
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
@@ -129,7 +133,7 @@ def bootstrap_domain(api_object, **kwargs):
             limit = 100
             offset = 0
 
-        save_checkpoint(checkpoint, 'product', 100, 0, start_date, False)
+        save_checkpoint(checkpoint, 'product', 100, 0, checkpoint.start_date, False)
         checkpoint.start_date = None
         checkpoint.save()
     except ConnectionError as e:

@@ -1,5 +1,4 @@
 {% extends "registration/base.html" %}
-{% load field_tags %}
 {% load i18n %}
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
@@ -18,31 +17,12 @@
             </div>
         {% endfor %}
         <fieldset>
-            {% for field in form.visible_fields %}
-                <div class="control-group{% if field.errors %} error{% endif %}">
-                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                    <div class="controls">
-                        {% if field|is_checkbox %}
-                            <label class="checkbox">
-                                {{ field }} {{ field.help_text }}
-                            </label>
-                            {% for error in field.errors %}
-                                <span class="help-inline">{{ error }}</span>
-                            {% endfor %}
-                        {% else %}
-                            {{ field }}
-                            {% for error in field.errors %}
-                                <span class="help-inline">{{ error }}</span>
-                            {% endfor %}
-                            {% if field.help_text %}
-                                <p class="help-block">
-                                    {{ field.help_text }}
-                                </p>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
+            {% include "registration/partials/field.html" with field=form.full_name %}
+            {% include "registration/partials/field.html" with field=form.email %}
+            {% include "registration/partials/field.html" with field=form.password %}
+            {% include "registration/partials/field.html" with field=form.hr_name %}
+            {% include "registration/partials/field.html" with field=form.email_opt_in %}
+            {% include "registration/partials/field.html" with field=form.eula_confirmed %}
             {% for hidden in form.hidden_fields %}
                 {{ hidden }}
             {% endfor %}

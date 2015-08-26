@@ -22,7 +22,10 @@ def dummy_user_xml():
         <uuid>foo</uuid>
         <date>2011-06-09</date>
         <user_data>
+            <data key="commcare_first_name"/>
+            <data key="commcare_last_name"/>
             <data key="something">arbitrary</data>
+            <data key="commcare_phone_number"/>
         </user_data>
     </Registration>"""
 

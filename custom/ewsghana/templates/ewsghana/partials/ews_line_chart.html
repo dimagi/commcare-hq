@@ -94,7 +94,9 @@
             });
         {% endif %}
 
-        show_hide_line_chart_data();
+        {% if not chart.is_rendered_as_email %}
+            show_hide_line_chart_data();
+        {% endif %}
         $('.nv-legend').find('.nv-series').slice(-2).hide();
         return line_chart;
     };
@@ -117,7 +119,6 @@
                     .style('text-anchor', 'end')
                     .style('stroke', 'none')
                     .style('fill-opacity', 1);
-
             d3.selectAll('.nv-groups .nv-series-' + series +' path')
                     .style("stroke-dasharray", ("3, 10"));
         });
@@ -125,79 +126,84 @@
 
     function addGraph() {
         nv.addGraph(graphGenerator, function(chart) {
-            if (line_chart_id === '#chart_stock_status_51') {
+            if (line_chart_id.slice(-2) === '51') {
                 addUnderstockOverstockLabels(line_chart_id, line_chart_data);
             }
+            {% if chart.is_rendered_as_email %}
+                var $chart = $(line_chart_id + ' svg');
+                $chart.get(0).setAttribute('viewBox', '0, 0,' + $chart.width() + ',' + $chart.height());
+                $chart.get(0).setAttribute('preserveAspectRatio', 'xMidYMid');
+            {% endif %}
         });
     }
+    {% if not chart.is_rendered_as_email %}
+        $inventory_filter = $('#inventory_filter');
+        $inventory_filter.createDefaultDateRangePicker();
+        $('#inventory_filter_btn').on('click', function(e) {
+            e.preventDefault();
+            $('.hq-loading').fadeIn();
 
-    $inventory_filter = $('#inventory_filter');
-    $inventory_filter.createDefaultDateRangePicker();
-    $('#inventory_filter_btn').on('click', function(e) {
-        e.preventDefault();
-        $('.hq-loading').fadeIn();
-
-        $(this).prop('disabled', true);
-        var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
-        $.ajax({
-            type: 'GET',
-            datatype: 'json',
-            url: '{% url 'inventory_managment' domain %}',
-            data: {
-                startdate: dates[0],
-                enddate: dates[1],
-                location_id: '{{ location_id }}'
-            },
-            success: function(response) {
-                $(line_chart_id + ' svg').empty();
-                line_chart_data = response;
-                $('#inventory_filter_btn').removeAttr('disabled');
-                $('.hq-loading').fadeOut();
-                addGraph();
-            },
-            error: function() {
-            }
+            $(this).prop('disabled', true);
+            var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
+            $.ajax({
+                type: 'GET',
+                datatype: 'json',
+                url: '{% url 'inventory_managment' domain %}',
+                data: {
+                    startdate: dates[0],
+                    enddate: dates[1],
+                    location_id: '{{ location_id }}'
+                },
+                success: function(response) {
+                    $(line_chart_id + ' svg').empty();
+                    line_chart_data = response;
+                    $('#inventory_filter_btn').removeAttr('disabled');
+                    $('.hq-loading').fadeOut();
+                    addGraph();
+                },
+                error: function() {
+                }
+            });
         });
-    });
 
-    $stockout_filter = $('#stockouts_filter');
-    $stockout_filter.createDefaultDateRangePicker();
-    $('#stockouts_filter_btn').on('click', function(e) {
-        e.preventDefault();
-        $('.hq-loading').fadeIn();
+        $stockout_filter = $('#stockouts_filter');
+        $stockout_filter.createDefaultDateRangePicker();
+        $('#stockouts_filter_btn').on('click', function(e) {
+            e.preventDefault();
+            $('.hq-loading').fadeIn();
 
-        $(this).prop('disabled', true);
-        var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
-        $.ajax({
-            type: 'GET',
-            datatype: 'json',
-            url: '{% url 'stockouts_product' domain %}',
-            data: {
-                startdate: dates[0],
-                enddate: dates[1],
-                location_id: '{{ location_id }}'
-            },
-            success: function(response) {
+            $(this).prop('disabled', true);
+            var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
+            $.ajax({
+                type: 'GET',
+                datatype: 'json',
+                url: '{% url 'stockouts_product' domain %}',
+                data: {
+                    startdate: dates[0],
+                    enddate: dates[1],
+                    location_id: '{{ location_id }}'
+                },
+                success: function(response) {
 
-                $(line_chart_id + ' svg').empty();
-                $.each(response, function( index, value ) {
-                    $.each(value.values, function( id, v ) {
-                        v.x = Date.parse(v.x);
+                    $(line_chart_id + ' svg').empty();
+                    $.each(response, function( index, value ) {
+                        $.each(value.values, function( id, v ) {
+                            v.x = Date.parse(v.x);
+                        });
                     });
-                });
 
-                line_chart_data = response;
-                $('#stockouts_filter_btn').removeAttr('disabled');
-                $('.hq-loading').fadeOut();
+                    line_chart_data = response;
+                    $('#stockouts_filter_btn').removeAttr('disabled');
+                    $('.hq-loading').fadeOut();
 
-                addGraph();
+                    addGraph();
 
-            },
-            error: function() {
-            }
+                },
+                error: function() {
+                }
+            });
         });
-    });
-
+    {% endif %}
     addGraph();
 
 </script>

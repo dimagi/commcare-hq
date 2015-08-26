@@ -7,14 +7,42 @@ import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
+from corehq.apps.domain.utils import new_org_re, website_re
 from corehq.apps.orgs.models import Organization
-from corehq.apps.style.forms.widgets import Select2Widget
+from corehq.apps.style.forms.widgets import BootstrapDisabledInput
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-class NewWebUserRegistrationForm(forms.Form):
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.utils.functional import lazy
+import six
+mark_safe_lazy = lazy(mark_safe, six.text_type)
+
+
+class DomainRegistrationForm(forms.Form):
+    """
+    Form for creating a domain for the first time
+    """
+    max_name_length = 25
+
+    org = forms.CharField(widget=forms.HiddenInput(), required=False)
+    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length)
+    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
+                                  initial='commcare')
+
+    def clean_domain_type(self):
+        data = self.cleaned_data.get('domain_type', '').strip().lower()
+        return data if data else 'commcare'
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
+
+
+class NewWebUserRegistrationForm(DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -31,19 +59,26 @@ class NewWebUserRegistrationForm(forms.Form):
                                       initial=True,
                                       label="",
                                       help_text=_("Opt into emails about new features and other CommCare updates."))
+    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
-                                        help_text=mark_safe(_(
+                                        help_text=mark_safe_lazy(_(
                                             """I have read and agree to the
                                                <a data-toggle='modal'
                                                   data-target='#eulaModal'
                                                   href='#eulaModal'>
                                                   CommCare HQ End User License Agreement
                                                </a>.""")))
-    # not required for when a user accepts an invitation
-    domain_type = forms.CharField(
-        required=False, widget=forms.HiddenInput(), initial='commcare')
+
+    def __init__(self, *args, **kwargs):
+        super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+        if not kwargs.get('initial', {}).get('create_domain', True):
+            self.fields['hr_name'].required = False
+            if kwargs.get('initial', {}).get('hr_name'):
+                self.fields['hr_name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
+            else:
+                self.fields['hr_name'].widget = forms.HiddenInput()
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -127,35 +162,6 @@ class OrganizationRegistrationForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
-class DomainRegistrationForm(forms.Form):
-    """
-    Form for creating a domain for the first time
-    """
-    org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    domain_name = forms.CharField(label=_('Project Name:'), max_length=25,
-                                  help_text=_("Project name cannot contain spaces."))
-    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
-                                  initial='commcare')
-
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip().lower()
-        if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-
-        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
-        if conflict:
-            raise forms.ValidationError('Project name already taken---please try another')
-        return data
-
-    def clean_domain_type(self):
-        data = self.cleaned_data.get('domain_type', '').strip().lower()
-        return data if data else 'commcare'
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
 #

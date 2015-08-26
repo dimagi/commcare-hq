@@ -11,5 +11,3 @@ keytool -genkey \
   -keystore InsecureTestingKeyStore \
   -storepass onetwothreefourfive \
   -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
-
-bash -ex install.sh

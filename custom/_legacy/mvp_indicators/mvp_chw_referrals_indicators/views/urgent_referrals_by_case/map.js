@@ -15,9 +15,9 @@ function(doc) {
                         var difference = (normal_date.getTime() - flagged_date.getTime()) / MS_IN_DAY;
 
                         emit_special(doc, flagged_date, {urgent_referral_followup_days: difference}, [doc._id]);
-                        if (difference <= 2) {
+                        if (difference < 3) {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup"], [doc._id]);
-                        } else if (difference <= 7) {
+                        } else if (difference < 8) {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup_late"], [doc._id]);
                         } else {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);

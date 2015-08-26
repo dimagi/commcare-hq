@@ -1,5 +1,4 @@
 import uuid
-from dimagi.utils.parsing import json_format_datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
@@ -36,7 +35,7 @@ class OtaRestoreBugTest(TestCase):
                 user_id=user._id,
                 owner_id=user._id,
                 version=V2,
-            ).as_xml(format_datetime=json_format_datetime)
+            ).as_xml()
             post_case_blocks([case_block], {'domain': domain})
             return CommCareCase.get(case_id)
 

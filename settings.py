@@ -185,7 +185,6 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -197,7 +196,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
-    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
@@ -214,6 +212,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -224,6 +223,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -236,7 +236,6 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
-    'corehq.apps.adm',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
@@ -259,6 +258,7 @@ HQ_APPS = (
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.twilio',
+    'corehq.apps.dropbox',
     'corehq.apps.megamobile',
     'corehq.apps.kookoo',
     'corehq.apps.sislog',
@@ -335,7 +335,6 @@ HQ_APPS = (
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
 )
@@ -356,7 +355,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.megamobile',
     'corehq.apps.yo',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
@@ -429,7 +427,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -457,13 +455,14 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
+INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
@@ -479,32 +478,24 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-# Fixture ID's used by cloudcare API
-# {
-#     'group': [
-#          ('fixture_id (can be just prefix)', 'fixture generator fn'),
-#          ...
-#      ],
-#      ...
-# }
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
     'standalone': [
         # core
-        ('user-groups', "corehq.apps.users.fixturegenerators.user_groups"),
-        ('item-list', "corehq.apps.fixtures.fixturegenerators.item_lists"),
-        ('indicators', "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator"),
-        ('commtrack:products', "corehq.apps.products.fixtures.product_fixture_generator"),
-        ('commtrack:programs', "corehq.apps.programs.fixtures.program_fixture_generator"),
-        ('commcare:reports', "corehq.apps.userreports.fixtures.report_fixture_generator"),
+        "corehq.apps.users.fixturegenerators.user_groups",
+        "corehq.apps.fixtures.fixturegenerators.item_lists",
+        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+        "corehq.apps.products.fixtures.product_fixture_generator",
+        "corehq.apps.programs.fixtures.program_fixture_generator",
+        "corehq.apps.userreports.fixtures.report_fixture_generator",
         # custom
-        ('indicators:bihar-supervisor', "custom.bihar.reports.indicators.fixtures.generator"),
-        ('reports:m4change-mobile', "custom.m4change.fixtures.report_fixtures.generator"),
-        ('user-locations', "custom.m4change.fixtures.location_fixtures.generator"),
+        "custom.bihar.reports.indicators.fixtures.generator",
+        "custom.m4change.fixtures.report_fixtures.generator",
+        "custom.m4change.fixtures.location_fixtures.generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
-        ('commtrack:locations', "corehq.apps.locations.fixtures.location_fixture_generator"),
+        "corehq.apps.locations.fixtures.location_fixture_generator",
     ]
 }
 
@@ -839,6 +830,11 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
+        'notify_exception': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -863,7 +859,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['mail_admins'],
+            'handlers': ['notify_exception'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -940,6 +936,11 @@ DEFAULT_PROTOCOL = 'http'
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = False
 
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -955,11 +956,18 @@ try:
             # is a syntax error in any module imported by corehq/__init__.py
             # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
             # localsettings.py will reveal the real error.
+            # Note that changing this means you will not be able to use/test anything
+            # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-    pass
+   # fallback in case nothing else is found - used for readthedocs
+   from dev_settings import *
 
 if DEBUG:
     try:
@@ -1159,8 +1167,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error',
-    messages.ERROR: 'alert-error',
+    messages.WARNING: 'alert-error alert-danger',
+    messages.ERROR: 'alert-error alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1260,8 +1268,6 @@ PILLOWTOPS = {
         'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.models.OPMHierarchyFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1290,7 +1296,7 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow'
+        'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1299,13 +1305,20 @@ PILLOWTOPS = {
 }
 
 
+CUSTOM_UCR_REPORTS = [
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
+]
+
+
 CUSTOM_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
 ]
 
 
@@ -1360,6 +1373,12 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
+    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
+    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
+    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
+    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
+    ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
 ]
 
 CUSTOM_MODULES = [

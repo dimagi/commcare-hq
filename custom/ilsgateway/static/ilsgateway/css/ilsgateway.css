@@ -1,10 +1,12 @@
 .row_chart {
+    border: 1px solid lightslategray;
     width: 45%;
     float: left;
     margin: 20px;
 }
 
 .row_chart_all {
+    border: 1px solid lightslategray;
     float: left;
     width: 90%;
     margin: 20px;
@@ -45,7 +47,7 @@ tr:nth-child(n+2) {
 }
 
 .module li div.report {
-    font-size: 3em;
+    font-size: 2.6em;
     line-height: 1.2;
     border-bottom: 1px dotted #eee;
     margin-bottom: 0.25em;
@@ -64,4 +66,43 @@ tr:nth-child(n+2) {
 
 #report_table_product_selection_pane td {
     padding: 0;
+}
+
+.nv-pieChart .nv-legendWrap {
+    display: none;
+}
+
+h4.media-heading {
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 0.3125em;
+    margin-bottom: 0 !important;
+    text-align: center;
+}
+
+
+.row_chart > div, .row_chart_all > div {
+    background-color: #EFEDED;
+    margin-left: 0 !important;
+}
+
+#report_table_rr_status {
+    width: 100% !important;
+}
+
+.dataTables_scrollHeadInner, .dataTable {
+    width: 100% !important;
+}
+
+.dataTables_filter {
+    display: none;
+}
+
+.searchable {
+    height: 60px;
+    line-height: 3;
+}
+
+.searchable input {
+    margin-top: 10px;
 }

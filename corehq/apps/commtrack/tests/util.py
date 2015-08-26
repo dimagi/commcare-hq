@@ -19,9 +19,8 @@ from corehq.apps.products.models import Product
 from corehq.apps.sms.backend import test
 from corehq.apps.users.models import CommCareUser
 
-from .. import const
 from ..helpers import make_supply_point
-from ..models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import StockReportParser, process
 from ..util import get_default_requisition_config, get_or_create_default_program
 
@@ -38,10 +37,7 @@ ROAMING_USER = {
     'phone_number': TEST_NUMBER,
     'first_name': 'roaming',
     'last_name': 'reporter',
-    'user_data': {
-        const.UserRequisitionRoles.REQUESTER: True,
-        const.UserRequisitionRoles.RECEIVER: True,
-    },
+    'user_data': {},
 }
 
 FIXED_USER = {
@@ -49,31 +45,8 @@ FIXED_USER = {
     'phone_number': str(int(TEST_NUMBER) + 1),
     'first_name': 'fixed',
     'last_name': 'reporter',
-    'user_data': {
-        const.UserRequisitionRoles.REQUESTER: True,
-        const.UserRequisitionRoles.RECEIVER: True,
-    },
+    'user_data': {},
     'home_loc': 'loc1',
-}
-
-APPROVER_USER = {
-    'username': 'test-approver',
-    'phone_number': '5550000',
-    'first_name': 'approver',
-    'last_name': 'user',
-    'user_data': {
-        const.UserRequisitionRoles.APPROVER: True,
-    },
-}
-
-PACKER_USER = {
-    'username': 'test-packer',
-    'phone_number': '5550001',
-    'first_name': 'packer',
-    'last_name': 'user',
-    'user_data': {
-        const.UserRequisitionRoles.SUPPLIER: True,
-    },
 }
 
 
@@ -81,8 +54,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
-    domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
+    domain_obj.convert_to_commtrack()
     return domain_obj
 
 
@@ -190,13 +163,6 @@ class CommTrackTest(TestCase):
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
         self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
-
-        if False:
-            # bootstrap additional users for requisitions
-            # needs to get reinserted for requisition stuff later
-            self.approver = bootstrap_user(self, **APPROVER_USER)
-            self.packer = bootstrap_user(self, **PACKER_USER)
-            self.users += [self.approver, self.packer]
 
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',

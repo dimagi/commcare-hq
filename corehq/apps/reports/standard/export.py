@@ -4,11 +4,12 @@ import logging
 from datetime import timedelta, datetime
 from django.conf import settings
 
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from corehq.apps.reports.dbaccessors import get_form_exports
+from corehq.apps.reports.dbaccessors import stale_get_exports
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -16,13 +17,18 @@ from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 from corehq.apps.data_interfaces.interfaces import DataInterface
-from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
+from corehq.apps.reports.dispatcher import (
+    DataDownloadInterfaceDispatcher,
+    DataExportInterfaceDispatcher,
+)
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.models import HQGroupExportConfiguration
+from corehq.apps.reports.models import HQGroupExportConfiguration, \
+    FormExportSchema, CaseExportSchema
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
-from corehq.apps.app_manager.models import get_app, Application
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
@@ -57,7 +63,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_form_exports(self.domain)
+        exports = stale_get_exports(self.domain)
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
@@ -310,11 +316,7 @@ class CaseExportReport(ExportReport):
         return self.request.GET.copy()
 
     def get_saved_exports(self):
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True).all()
+        exports = stale_get_exports(self.domain).all()
         exports = filter(lambda x: x.type == "case", exports)
         return sorted(exports, key=lambda x: x.name)
 
@@ -354,14 +356,7 @@ class DeidExportReport(FormExportReportBase):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        startkey = json.dumps([domain, ""])[:-3]
-        return SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey,
-            limit=1,
-            include_docs=False,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).count() > 0
-
+        return stale_get_exports(domain, include_docs=False, limit=1).count() > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
@@ -388,14 +383,17 @@ class DeidExportReport(FormExportReportBase):
 class DataExportInterface(GenericReportView):
     base_template = 'reports/reportdata/data_export.html'
     dispatcher = DataExportInterfaceDispatcher
-    name = ugettext_noop('Export Forms')
     section_name = "Export Data"
-    slug = 'export_forms'
 
     @property
     def template_context(self):
         context = super(DataExportInterface, self).template_context
         context.update({
+            'bulk_download_notice_text': self.bulk_download_notice_text,
+            'bulk_export_format': self.bulk_export_format,
+            'create_export_view_name': self.create_export_view_name,
+            'download_page_url_root': self.download_page_url_root,
+            'edit_export_view_name': self.edit_export_view_name,
             'saved_exports': self.saved_exports,
         })
         return context
@@ -403,9 +401,161 @@ class DataExportInterface(GenericReportView):
     @property
     @memoized
     def saved_exports(self):
-        exports = get_form_exports(self.domain)
-        exports = filter(lambda x: x.type == "form", exports)
-        # TODO - implement or remove
-        # if not self.can_view_deid:
-        #     exports = filter(lambda x: not x.is_safe, exports)
+        exports = [
+            self.export_schema.wrap(doc.to_json())
+            for doc in filter(lambda x: x.type == self.export_type, stale_get_exports(self.domain))
+        ]
+        for export in exports:
+            export.download_url = (
+                self.download_page_url_root + '?export_id=' + export._id
+            )
         return sorted(exports, key=lambda x: x.name)
+
+    @property
+    def bulk_export_format(self):
+        return Format.XLS_2007
+
+    @property
+    def bulk_download_notice_text(self):
+        raise NotImplementedError
+
+    @property
+    def create_export_view_name(self):
+        raise NotImplementedError
+
+    @property
+    def download_page_url_root(self):
+        raise NotImplementedError
+
+    @property
+    def edit_export_view_name(self):
+        raise NotImplementedError
+
+    @property
+    def export_schema(self):
+        raise NotImplementedError
+
+    @property
+    def export_type(self):
+        raise NotImplementedError
+
+
+class FormExportInterface(DataExportInterface):
+    name = ugettext_noop('Export Forms')
+    slug = 'forms'
+
+    bulk_download_notice_text = ugettext_noop('Form Export')
+    create_export_view_name = 'create_form_export'
+    edit_export_view_name = 'edit_custom_export_form'
+    export_schema = FormExportSchema
+    export_type = 'form'
+
+    @property
+    def download_page_url_root(self):
+        return FormExportReport.get_url(domain=self.domain)
+
+
+class CaseExportInterface(DataExportInterface):
+    name = ugettext_noop('Export Cases')
+    slug = 'cases'
+
+    bulk_download_notice_text = ugettext_noop('Case Export')
+    create_export_view_name = 'create_case_export'
+    edit_export_view_name = 'edit_custom_export_case'
+    export_schema = CaseExportSchema
+    export_type = 'case'
+
+    @property
+    def download_page_url_root(self):
+        return NewCaseExportReport.get_url(domain=self.domain)
+
+
+class FormExportReport(FormExportReportBase):
+    base_template = 'reports/standard/export_download.html'
+    report_template_path = 'reports/partials/download_form_export.html'
+    name = ugettext_noop('Download Forms')
+    section_name = ugettext_noop("Export Data")
+    slug = 'form_export'
+
+    dispatcher = DataDownloadInterfaceDispatcher
+
+    @property
+    def template_context(self):
+        context = super(FormExportReport, self).template_context
+        # TODO - seems redundant, cleanup at some point
+        context.update({
+            'export': self.exports[0],
+            'exports': self.exports,
+            "use_bulk": len(self.export_ids) > 1,
+            'additional_params': mark_safe(
+                '&'.join('export_id=%(export_id)s' % {
+                    'export_id': export_id,
+                } for export_id in self.export_ids)
+            ),
+            'selected_exports_data': self.selected_exports_data,
+            'bulk_download_notice_text': ugettext_noop('Form Exports'),
+        })
+        return context
+
+    @property
+    def export_ids(self):
+        return self.request.GET.getlist('export_id')
+
+    @property
+    def exports(self):
+        return [
+            SavedExportSchema.get(export_id) for export_id in self.export_ids
+        ]
+
+    @property
+    def selected_exports_data(self):
+        return {
+            export._id: {
+                'formname': export.name,
+                'modulename': export.name,
+                'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+                'exporttype': 'form',
+            } for export in self.exports
+        }
+
+
+class NewCaseExportReport(CaseExportReport):
+    base_template = 'reports/standard/export_download.html'
+    report_template_path = 'reports/partials/download_case_export.html'
+    name = ugettext_noop('Download Cases')
+    section_name = ugettext_noop('Export Data')
+    slug = 'case_export'
+
+    dispatcher = DataDownloadInterfaceDispatcher
+
+    @property
+    def template_context(self):
+        context = super(NewCaseExportReport, self).template_context
+        # TODO - seems redundant, cleanup at some point
+        context.update({
+            'export': self.exports[0],
+            # 'exports': self.exports,
+            # "use_bulk": len(self.export_ids) > 1,
+            'additional_params': mark_safe(
+                '&'.join('export_id=%(export_id)s' % {
+                    'export_id': export_id,
+                } for export_id in self.export_ids)
+            ),
+            # 'selected_exports_data': self.selected_exports_data,
+            # 'bulk_download_notice_text': ugettext_noop('Case Exports'),
+        })
+        return context
+
+    @property
+    def export_ids(self):
+        return self.request.GET.getlist('export_id')
+
+    @property
+    def exports(self):
+        return [
+            SavedExportSchema.get(export_id) for export_id in self.export_ids
+        ]
+
+    @property
+    def selected_exports_data(self):
+        return {}

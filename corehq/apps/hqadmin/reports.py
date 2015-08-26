@@ -1,6 +1,7 @@
 import copy
 from datetime import datetime
 import json
+from dimagi.utils.decorators.memoized import memoized
 from corehq import Domain
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -16,7 +17,7 @@ from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
+from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.toggles import IS_DEVELOPER
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from django.utils.safestring import mark_safe
@@ -701,6 +702,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 help_text=_("The time when these indicators were last calculated")),
             DataTablesColumn(_("Sector"), prop_name="internal.area.exact"),
             DataTablesColumn(_("Sub-Sector"), prop_name="internal.sub_area.exact"),
+            DataTablesColumn(_("Business Unit"), prop_name="internal.business_unit.exact"),
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
@@ -790,6 +792,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_date(dom.get("cp_last_updated"), _("No Info")),
                     dom.get('internal', {}).get('area') or _('No info'),
                     dom.get('internal', {}).get('sub_area') or _('No info'),
+                    dom.get('internal', {}).get('business_unit') or _('No info'),
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
                     format_bool(dom.get('cp_is_active') or _('No info')),
@@ -879,7 +882,14 @@ class AdminAppReport(AdminFacetedReport):
 
     excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
                            "admin_password", "built_on", ]
-    profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
+
+    @property
+    @memoized
+    def profile_list(self):
+        return [
+            "profile.%s.%s" % (c['type'], c['id'])
+            for c in get_custom_commcare_settings() if c['type'] != 'hq'
+        ]
     calculated_properties_mapping = ("Calculations", True,
                                      [{"facet": "cp_is_active", "name": "Active", "expanded": True}])
 

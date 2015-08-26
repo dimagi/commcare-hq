@@ -3,6 +3,8 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -13,27 +15,45 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
-
 logger = logging.getLogger('phone.models')
 
 
 class User(object):
-    """ 
+    """
     This is a basic user model that's used for OTA restore to properly
     find cases and generate the user XML.
     """
-    
-    def __init__(self, user_id, username, password, date_joined,
-                 user_data=None, additional_owner_ids=None, domain=None,
-                 loadtest_factor=1):
+    # todo: this model is now useless since casexml and HQ are no longer separate repos.
+    # we should remove this abstraction layer and switch all the restore code to just
+    # work off CouchUser objects
+
+    def __init__(self, user_id, username, password, date_joined, first_name=None,
+                 last_name=None, phone_number=None, user_data=None,
+                 additional_owner_ids=None, domain=None, loadtest_factor=1):
         self.user_id = user_id
         self.username = username
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number = phone_number
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
         self.loadtest_factor = loadtest_factor
+
+    @property
+    def user_session_data(self):
+        # todo: this is redundant with the implementation in CouchUser.
+        # this will go away when the two are reconciled
+        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        session_data = copy(self.user_data)
+        session_data.update({
+            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
+            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+        })
+        return session_data
 
     def get_owner_ids(self):
         ret = [self.user_id]
@@ -45,7 +65,7 @@ class User(object):
         return cls(user_id=str(django_user.pk), username=django_user.username,
                    password=django_user.password, date_joined=django_user.date_joined,
                    user_data={})
-    
+
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
@@ -99,6 +119,16 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # as well as all groups that that user is a member of.
     owner_ids_on_phone = StringListProperty()
 
+    # for debugging / logging
+    last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
+    last_cached = DateTimeProperty()  # last time this generated a cached response
+    hash_at_last_cached = StringProperty()  # the state hash of this when it was last cached
+
+    # save state errors and hashes here
+    had_state_error = BooleanProperty(default=False)
+    error_date = DateTimeProperty()
+    error_hash = StringProperty()
+
     strict = True  # for asserts
 
     def _assert(self, conditional, msg="", case_id=None):
@@ -115,6 +145,12 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    def case_count(self):
+        """
+        How many cases are associated with this. Used in reports.
+        """
+        raise NotImplementedError()
 
     def phone_is_holding_case(self, case_id):
         raise NotImplementedError()
@@ -156,6 +192,16 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         for name in copy(self._doc.get('_attachments', {})):
             self.delete_attachment(name)
 
+    @classmethod
+    def from_other_format(cls, other_sync_log):
+        """
+        Convert to an instance of a subclass from another subclass. Subclasses can
+        override this to provide conversion functions.
+        """
+        raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+            type(other_sync_log), cls,
+        ))
+
     # anything prefixed with 'tests_only' is only used in tests
     def tests_only_get_cases_on_phone(self):
         raise NotImplementedError()
@@ -194,6 +240,9 @@ class SyncLog(AbstractSyncLog):
     def last_for_user(cls, user_id):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
         return get_last_synclog_for_user(user_id)
+
+    def case_count(self):
+        return len(self.cases_on_phone)
 
     def get_previous_log(self):
         """
@@ -303,7 +352,7 @@ class SyncLog(AbstractSyncLog):
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
-                        self.phone_has_case(case._id),
+                        self.phone_is_holding_case(case._id),
                         "phone doesn't have case being updated: %s" % case._id,
                         case._id,
                     )
@@ -385,27 +434,6 @@ class SyncLog(AbstractSyncLog):
                 return True
             return False
 
-    def reconcile_cases(self):
-        """
-        Goes through the cases expected to be on the phone and reconciles
-        any duplicate records.
-
-        Return True if any duplicates were found.
-        """
-        num_cases_on_phone_before = len(self.cases_on_phone)
-        num_dependent_cases_before = len(self.dependent_cases_on_phone)
-
-        self.cases_on_phone = list(set(self.cases_on_phone))
-        self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
-
-        if num_cases_on_phone_before != len(self.cases_on_phone) \
-                or num_dependent_cases_before != len(self.dependent_cases_on_phone):
-            self._case_state_map.reset_cache(self)
-            self._dependent_case_state_map.reset_cache(self)
-            return True
-
-        return False
-
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
@@ -423,7 +451,8 @@ class IndexTree(DocumentSchema):
     """
     Document type representing a case dependency tree (which is flattened to a single dict)
     """
-    # a flat mapping of cases to lists of cases that they depend on
+    # a flat mapping of cases to dicts of their indices. The keys in each dict are the index identifiers
+    # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
     def __repr__(self):
@@ -507,6 +536,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.doc_type = "SyncLog"
         super(SimplifiedSyncLog, self).save(*args, **kwargs)
 
+    def case_count(self):
+        return len(self.case_ids_on_phone)
+
     def phone_is_holding_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
@@ -531,7 +563,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         def _remove_case(to_remove):
             # uses closures for assertions
-            logger.debug('removing: {}'.format(case_id))
+            logger.debug('removing: {}'.format(to_remove))
             assert to_remove in self.dependent_case_ids_on_phone
             indices = self.index_tree.indices.pop(to_remove, {})
             if to_remove != case_id:
@@ -539,7 +571,20 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 for index in indices.values():
                     assert index in candidates_to_remove, \
                         "expected {} in {} but wasn't".format(index, candidates_to_remove)
-            self.case_ids_on_phone.remove(to_remove)
+            try:
+                self.case_ids_on_phone.remove(to_remove)
+            except KeyError:
+                # todo: this here to avoid having to manually clean up after
+                # http://manage.dimagi.com/default.asp?179664
+                # it should be removed when there are no longer any instances of the assertion
+                if self.date < datetime(2015, 8, 25):
+                    _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
+                        self._id, to_remove)
+                    )
+                else:
+                    raise
+
             self.dependent_case_ids_on_phone.remove(to_remove)
 
         if not dependencies_not_to_remove:
@@ -570,27 +615,37 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
-        logger.debug('syncing {}'.format(self.user_id))
+        logger.debug('updating sync log for {}'.format(self.user_id))
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree before update: {}'.format(self.index_tree))
+        skipped = set()
+        to_prune = set()
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = action.updated_known_properties.get("owner_id")
                 phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
-
+                log_has_case = case._id not in skipped
                 if action.action_type == const.CASE_ACTION_CREATE:
                     if phone_owns_case:
                         self._add_primary_case(case._id)
                         made_changes = True
+                    else:
+                        skipped.add(case._id)
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    if not phone_owns_case:
+                    if not phone_owns_case and log_has_case:
                         # we must have just changed the owner_id to something we didn't own
                         # we can try pruning this case since it's no longer relevant
-                        self.prune_case(case._id)
+                        to_prune.add(case._id)
                         made_changes = True
                     else:
+                        if phone_owns_case and not log_has_case:
+                            # this can happen if a create sets the owner id to something invalid
+                            # and an update in the same block/form sets it back to valid
+                            self._add_primary_case(case._id)
+                            made_changes = True
                         if case._id in self.dependent_case_ids_on_phone:
                             self.dependent_case_ids_on_phone.remove(case._id)
                             made_changes = True
@@ -608,24 +663,74 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             self.index_tree.delete_index(case._id, index.identifier)
                         made_changes = True
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    # this case is being closed.
-                    # we can try pruning this case since it's no longer relevant
-                    self.prune_case(case._id)
-                    made_changes = True
+                    if log_has_case:
+                        # this case is being closed. we can try pruning this case since it's no longer relevant
+                        to_prune.add(case._id)
+                        made_changes = True
+
+        for case_to_prune in to_prune:
+            self.prune_case(case_to_prune)
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        logger.debug('index tree after update: {}'.format(self.index_tree))
         if made_changes or case_list:
             try:
                 if made_changes:
+                    logger.debug('made changes, saving.')
+                    self.last_submitted = datetime.utcnow()
                     self.save()
-                if case_list:
-                    self.invalidate_cached_payloads()
+                    if case_list:
+                        try:
+                            self.invalidate_cached_payloads()
+                        except ResourceConflict:
+                            # this operation is harmless so just blindly retry and don't
+                            # reraise if it goes through the second time
+                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
                 ))
                 raise
+
+    @classmethod
+    def from_other_format(cls, other_sync_log):
+        """
+        Migrate from the old SyncLog format to this one.
+        """
+        if isinstance(other_sync_log, SyncLog):
+            def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
+                new_sync_log.case_ids_on_phone.add(case_state.case_id)
+                for index in case_state.indices:
+                    new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                if is_dependent:
+                    new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+
+            ret = cls.wrap(other_sync_log.to_json())
+            for case_state in other_sync_log.cases_on_phone:
+                _add_state_contributions(ret, case_state)
+
+            dependent_case_ids = set()
+            for case_state in other_sync_log.dependent_cases_on_phone:
+                _add_state_contributions(ret, case_state, is_dependent=True)
+                dependent_case_ids.add(case_state.case_id)
+
+            for dependent_case_id in dependent_case_ids:
+                # try to prune any dependent cases - the old format does this on
+                # access, but the new format does it ahead of time and always assumes
+                # its current state is accurate.
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                ret.prune_case(dependent_case_id)
+
+            # set and cleanup other properties
+            ret.log_format = LOG_FORMAT_SIMPLIFIED
+            del ret['last_seq']
+            del ret['cases_on_phone']
+            del ret['dependent_cases_on_phone']
+
+            return ret
+        else:
+            return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
@@ -640,7 +745,10 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    doc = SyncLog.get_db().get(doc_id)
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+
+
+def properly_wrap_sync_log(doc):
     return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
 
 

@@ -53,15 +53,6 @@ def get_domain_module_map():
     return hardcoded
 
 
-@quickcache([], timeout=60)
-def get_adm_enabled_domains():
-    try:
-        domains = get_db().open_doc('ADM_ENABLED_DOMAINS').get('domains', {})
-    except ResourceNotFound:
-        domains = []
-    return domains
-
-
 def domain_restricts_superusers(domain):
     domain = Domain.get_by_name(domain)
     if not domain:

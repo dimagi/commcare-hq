@@ -1,25 +1,29 @@
 # coding=utf-8
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
-from corehq.apps.app_manager.models import get_app
+from couchexport.export import SCALAR_NEVER_WAS
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
+from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import safe_strftime
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -138,13 +142,37 @@ class ApplicationStatusReport(DeploymentsReport):
             )
         return rows
 
+    @property
+    def export_table(self):
+        def _fmt_ordinal(ordinal):
+            if ordinal is not None and ordinal >= 0:
+                return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
+            return SCALAR_NEVER_WAS
+
+        result = super(ApplicationStatusReport, self).export_table
+        table = result[0][1]
+        for row in table[1:]:
+            # Last submission
+            row[1] = _fmt_ordinal(row[1])
+            # Last sync
+            row[2] = _fmt_ordinal(row[2])
+        return result
+
 
 class SyncHistoryReport(DeploymentsReport):
+    DEFAULT_LIMIT = 10
+    MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
-    report_subtitles = [ugettext_noop('Shows the last (up to) 10 times a user has synced.')]
-    disable_pagination = True
+
+    @property
+    def report_subtitles(self):
+        return [_('Shows the last (up to) {} times a user has synced.').format(self.limit)]
+
+    @property
+    def disable_pagination(self):
+        return self.limit == self.DEFAULT_LIMIT
 
     @property
     def headers(self):
@@ -155,6 +183,12 @@ class SyncHistoryReport(DeploymentsReport):
         )
         if self.show_extra_columns:
             headers.add_column(DataTablesColumn(_("Sync Log")))
+            headers.add_column(DataTablesColumn(_("Sync Log Type")))
+            headers.add_column(DataTablesColumn(_("Previous Sync Log")))
+            headers.add_column(DataTablesColumn(_("Error Info")))
+            headers.add_column(DataTablesColumn(_("State Hash")))
+            headers.add_column(DataTablesColumn(_("Last Submitted")))
+            headers.add_column(DataTablesColumn(_("Last Cached")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -176,7 +210,7 @@ class SyncHistoryReport(DeploymentsReport):
             endkey=[user_id],
             descending=True,
             reduce=False,
-            limit=10
+            limit=self.limit,
         )]
 
         def _sync_log_to_row(sync_log):
@@ -204,7 +238,17 @@ class SyncHistoryReport(DeploymentsReport):
                     id=sync_log_id
                 )
 
-            num_cases = len(sync_log.cases_on_phone)
+            def _fmt_error_info(sync_log):
+                if not sync_log.had_state_error:
+                    return u'<span class="label label-success">&#10003;</span>'
+                else:
+                    return (u'<span class="label label-important">X</span>'
+                            u'State error {}<br>Expected hash: {:.10}...').format(
+                        _naturaltime_with_hover(sync_log.error_date),
+                        sync_log.error_hash,
+                    )
+
+            num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
                 format_datatables_data(num_cases, num_cases),
@@ -212,17 +256,32 @@ class SyncHistoryReport(DeploymentsReport):
             ]
             if self.show_extra_columns:
                 columns.append(_fmt_id(sync_log.get_id))
+                columns.append(sync_log.log_format)
+                columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
+                columns.append(_fmt_error_info(sync_log))
+                columns.append('{:.10}...'.format(sync_log.get_state_hash()))
+                columns.append(_naturaltime_with_hover(sync_log.last_submitted))
+                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
+                                                     sync_log.hash_at_last_cached))
 
             return columns
 
         return [
-            _sync_log_to_row(SyncLog.wrap(sync_log_json))
+            _sync_log_to_row(properly_wrap_sync_log(sync_log_json))
             for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
         ]
 
     @property
     def show_extra_columns(self):
-        return self.request.user and self.request.user.is_superuser
+        return self.request.user and toggles.SUPPORT.enabled(self.request.user.username)
+
+    @property
+    def limit(self):
+        try:
+            return min(self.MAX_LIMIT, int(self.request.GET.get('limit', self.DEFAULT_LIMIT)))
+        except ValueError:
+            return self.DEFAULT_LIMIT
+
 
 def _fmt_date(date):
     def _timedelta_class(delta):
@@ -234,10 +293,14 @@ def _fmt_date(date):
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
-                text=_(naturaltime(date)),
+                text=_(_naturaltime_with_hover(date)),
             ),
             date.toordinal(),
         )
+
+
+def _naturaltime_with_hover(date):
+    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):

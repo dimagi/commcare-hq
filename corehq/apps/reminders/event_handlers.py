@@ -1,23 +1,24 @@
-from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK, 
-    METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    CaseReminderHandler)
+from corehq.apps.reminders.models import (Message, METHOD_SMS,
+    METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
+    METHOD_EMAIL, CaseReminderHandler)
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
     CommCareMobileContactMixin, InvalidFormatException)
-from touchforms.formplayer.api import current_question
+from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input
-from corehq.apps.sms.util import format_message_list
+from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
     CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
-    WORKFLOW_CALLBACK,
+    WORKFLOW_CALLBACK, MessagingEvent,
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
@@ -57,9 +58,6 @@ Each method accepts the following parameters:
 
 Any changes to the reminder object made by the event handler method will be saved
 after the method returns.
-
-Each method should return True to move the reminder forward to the next event, or False
-to not move the reminder forward to the next event. 
 
 """
 
@@ -130,74 +128,76 @@ def get_message_template_params(case):
     return result
 
 
-def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
-    metadata = MessageMetadata(
-        workflow=workflow or get_workflow(handler),
-        reminder_id=reminder._id,
-    )
+def get_custom_content_handler(handler, logged_event):
+    content_handler = None
+    if handler.custom_content_handler:
+        if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
+            try:
+                content_handler = to_function(
+                    settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
+            except Exception:
+                logged_event.error(MessagingEvent.ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER)
+        else:
+            logged_event.error(MessagingEvent.ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
+
+    return (handler.custom_content_handler is not None, content_handler)
+
+
+def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event, workflow=None):
     current_event = reminder.current_event
     case = reminder.case
     template_params = get_message_template_params(case)
+
+    uses_custom_content_handler, content_handler = get_custom_content_handler(handler, logged_event)
+    if uses_custom_content_handler and not content_handler:
+        return
+
+    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
+        logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
+
         try:
             lang = recipient.get_language_code()
         except Exception:
             lang = None
 
-        if handler.custom_content_handler is not None:
-            if handler.custom_content_handler in settings.ALLOWED_CUSTOM_CONTENT_HANDLERS:
-                try:
-                    content_handler = to_function(settings.ALLOWED_CUSTOM_CONTENT_HANDLERS[handler.custom_content_handler])
-                except Exception:
-                    raise_error(reminder, ERROR_FINDING_CUSTOM_CONTENT_HANDLER)
-                    return False
-                message = content_handler(reminder, handler, recipient)
-                # If the content handler returns None or empty string,
-                # don't send anything
-                if not message:
-                    return True
-            else:
-                raise_error(reminder, ERROR_INVALID_CUSTOM_CONTENT_HANDLER)
-                return False
+        if content_handler:
+            message = content_handler(reminder, handler, recipient)
         else:
             message = current_event.message.get(lang, current_event.message[handler.default_lang])
             try:
                 message = Message.render(message, **template_params)
             except Exception:
-                if len(recipients) == 1:
-                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
-                    return False
-                else:
-                    raise_warning() # ERROR_RENDERING_MESSAGE
-                    continue
+                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+                continue
 
         verified_number, unverified_number = get_recipient_phone_number(
             reminder, recipient, verified_numbers)
 
-        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
-        if verified_number is not None:
-            result = send_sms_to_verified_number(verified_number,
-                message, metadata)
-        elif isinstance(recipient, CouchUser) and unverified_number:
-            result = send_sms(reminder.domain, recipient, unverified_number,
-                message, metadata)
-        elif (isinstance(recipient, CommCareCase) and unverified_number and
-            domain_obj.send_to_duplicated_case_numbers):
-            result = send_sms(reminder.domain, recipient, unverified_number,
-                message, metadata)
-        else:
-            if len(recipients) == 1:
-                raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-            result = False
+        if message:
+            metadata = MessageMetadata(
+                workflow=workflow or get_workflow(handler),
+                reminder_id=reminder._id,
+                messaging_subevent_id=logged_subevent.pk,
+            )
+            if verified_number is not None:
+                send_sms_to_verified_number(verified_number,
+                    message, metadata)
+            elif isinstance(recipient, CouchUser) and unverified_number:
+                send_sms(reminder.domain, recipient, unverified_number,
+                    message, metadata)
+            elif (isinstance(recipient, CommCareCase) and unverified_number and
+                    domain_obj.send_to_duplicated_case_numbers):
+                send_sms(reminder.domain, recipient, unverified_number,
+                    message, metadata)
+            else:
+                logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+                continue
 
-        if len(recipients) == 1:
-            return result
-
-    # For multiple recipients, always move to the next event
-    return True
+        logged_subevent.completed()
 
 
-def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
+def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, logged_event):
     current_event = reminder.current_event
 
     for recipient in recipients:
@@ -246,12 +246,10 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
 
         if send_message:
             fire_sms_event(reminder, handler, [recipient], verified_numbers,
-                workflow=WORKFLOW_CALLBACK)
-
-    return True
+                logged_event, workflow=WORKFLOW_CALLBACK)
 
 
-def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
+def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
     if reminder.callback_try_count > 0:
         # Handle timeouts
         if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
@@ -274,9 +272,9 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                         )
                         resp = current_question(session_id)
                         send_sms_to_verified_number(vn, resp.event.text_prompt, metadata)
-        return True
     else:
         reminder.xforms_session_ids = []
+        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
 
         # Get the app, module, and form
         try:
@@ -285,47 +283,70 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             app = form.get_app()
             module = form.get_module()
         except Exception:
-            raise_error(reminder, ERROR_FORM)
-            return False
+            logged_event.error(MessagingEvent.ERROR_CANNOT_FIND_FORM)
+            return
 
         # Start a touchforms session for each recipient
         for recipient in recipients:
+            logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
             verified_number, unverified_number = get_recipient_phone_number(
                 reminder, recipient, verified_numbers)
 
-            domain_obj = Domain.get_by_name(reminder.domain, strict=True)
             no_verified_number = verified_number is None
             cant_use_unverified_number = (unverified_number is None or
                 not domain_obj.send_to_duplicated_case_numbers or
                 form_requires_input(form))
             if no_verified_number and cant_use_unverified_number:
-                if len(recipients) == 1:
-                    raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
-                    return False
-                else:
-                    continue
+                logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
+                continue
 
             key = "start-sms-survey-for-contact-%s" % recipient.get_id
             with CriticalSection([key], timeout=60):
-                # Close all currently open sessions
-                SQLXFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
-
-                # Start the new session
+                # Get the case to submit the form against, if any
                 if (isinstance(recipient, CommCareCase) and
                     not handler.force_surveys_to_use_triggered_case):
                     case_id = recipient.get_id
                 else:
                     case_id = reminder.case_id
-                session, responses = start_session(reminder.domain, recipient,
-                    app, module, form, case_id, case_for_case_submission=
-                    handler.force_surveys_to_use_triggered_case)
+
+                if form.requires_case() and not case_id:
+                    logged_subevent.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
+                    continue
+
+                # Close all currently open sessions
+                SQLXFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
+
+                # Start the new session
+                try:
+                    session, responses = start_session(reminder.domain, recipient,
+                        app, module, form, case_id,
+                        case_for_case_submission=handler.force_surveys_to_use_triggered_case)
+                except TouchformsError as e:
+                    human_readable_message = e.response_data.get('human_readable_message', None)
+
+                    logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+                        additional_error_text=human_readable_message)
+
+                    if touchforms_error_is_config_error(e):
+                        # Don't reraise the exception because this means there are configuration
+                        # issues with the form that need to be fixed
+                        continue
+                    else:
+                        # Reraise the exception so that the framework retries it again later
+                        raise
+                except Exception as e:
+                    logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
+                    # Reraise the exception so that the framework retries it again later
+                    raise
                 session.survey_incentive = handler.survey_incentive
                 session.workflow = get_workflow(handler)
                 session.reminder_id = reminder._id
                 session.save()
 
             reminder.xforms_session_ids.append(session.session_id)
+            logged_subevent.xforms_session = session
+            logged_subevent.save()
 
             # Send out first message
             if len(responses) > 0:
@@ -336,17 +357,15 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                     xforms_session_couch_id=session._id,
                 )
                 if verified_number:
-                    result = send_sms_to_verified_number(verified_number, message, metadata)
+                    send_sms_to_verified_number(verified_number, message, metadata)
                 else:
-                    result = send_sms(reminder.domain, recipient, unverified_number,
+                    send_sms(reminder.domain, recipient, unverified_number,
                         message, metadata)
 
-                if len(recipients) == 1:
-                    return result
+            logged_subevent.completed()
 
-        return True
 
-def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
+def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
     domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
         initiate_call = True
@@ -371,6 +390,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     handler.submit_partial_forms,
                     handler.include_case_side_effects,
                     handler.max_question_retries,
+                    logged_event.pk,
                     verified_number=verified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
@@ -383,45 +403,70 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     handler.submit_partial_forms,
                     handler.include_case_side_effects,
                     handler.max_question_retries,
+                    logged_event.pk,
                     unverified_number=unverified_number,
                     case_id=case_id,
                     case_for_case_submission=handler.force_surveys_to_use_triggered_case,
                     timestamp=CaseReminderHandler.get_now(),
                 )
             else:
-                #No phone number to send to
-                pass
-
-    return True
-
-
-def raise_warning():
-    """
-    This method is meant to report runtime warnings which are caused by
-    configuration errors to a project contact.
-    """
-    # For now, just a stub.
-    pass
+                # initiate_outbound_call will create the subevent automatically,
+                # so since we're not initiating the call here, we have to create
+                # the subevent explicitly in order to log the error.
+                logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
+                logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
 
 
-def raise_error(reminder, error_msg):
-    """
-    Put the reminder in an error state, which filters it out of the reminders
-    queue.
-    """
-    reminder.error = True
-    reminder.error_msg = error_msg
-    reminder.save()
+def fire_email_event(reminder, handler, recipients, verified_numbers, logged_event):
+    current_event = reminder.current_event
+    case = reminder.case
+    template_params = get_message_template_params(case)
+
+    uses_custom_content_handler, content_handler = get_custom_content_handler(handler, logged_event)
+    if uses_custom_content_handler and not content_handler:
+        return
+
+    for recipient in recipients:
+        logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
+
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
+
+        if content_handler:
+            subject, message = content_handler(reminder, handler, recipient)
+        else:
+            subject = current_event.subject.get(lang, current_event.subject[handler.default_lang])
+            message = current_event.message.get(lang, current_event.message[handler.default_lang])
+            try:
+                subject = Message.render(subject, **template_params)
+                message = Message.render(message, **template_params)
+            except Exception:
+                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+                continue
+
+        subject = subject or '(No Subject)'
+        if message:
+            try:
+                email_address = recipient.get_email()
+            except:
+                email_address = None
+
+            if email_address:
+                send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+            else:
+                logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+                continue
+
+        logged_subevent.completed()
+
 
 # The dictionary which maps an event type to its event handling method
-
 EVENT_HANDLER_MAP = {
     METHOD_SMS: fire_sms_event,
     METHOD_SMS_CALLBACK: fire_sms_callback_event,
     METHOD_SMS_SURVEY: fire_sms_survey_event,
     METHOD_IVR_SURVEY: fire_ivr_survey_event,
-    # METHOD_EMAIL is a placeholder at the moment; it's not implemented yet anywhere in the framework
+    METHOD_EMAIL: fire_email_event,
 }
-
-
-

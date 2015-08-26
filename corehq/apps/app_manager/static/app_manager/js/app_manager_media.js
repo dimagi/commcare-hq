@@ -125,6 +125,11 @@ var AppMenuMediaManager = function (o) {
             self.ref(new MenuMediaReference(ref));
             self.objectMap(obj_map);
             self.updateResource();
+            if (self.currentPath() !== data.ref.path){
+                //CurrentPath has a different filetype to the
+                //uploaded file
+                self.customPath(data.ref.path);
+            }
         }
     };
 

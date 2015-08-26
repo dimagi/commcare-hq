@@ -32,6 +32,12 @@ class DashboardReport(MultiReport):
         return fields
 
     @property
+    def report_context(self):
+        report_context = super(DashboardReport, self).report_context
+        report_context.update({'with_supervision_url': True})
+        return report_context
+
+    @property
     @memoized
     def data_providers(self):
         config = self.report_config

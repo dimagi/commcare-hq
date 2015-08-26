@@ -17,6 +17,8 @@ from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
+from .dbaccessors import get_all_users_by_location
+
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
@@ -77,6 +79,7 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -146,6 +149,16 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
 
+    def get_from_user_input(self, domain, user_input):
+        """
+        First check by site-code, if that fails, fall back to name.
+        Note that name lookup may raise MultipleObjectsReturned.
+        """
+        try:
+            return self.get(domain=domain, site_code=user_input)
+        except self.model.DoesNotExist:
+            return self.get(domain=domain, name__iexact=user_input)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -172,6 +185,10 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+
+    @property
+    def get_id(self):
+        return self.location_id
 
     @property
     def products(self):
@@ -227,13 +244,11 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def _make_group_object(self, user_id, case_sharing):
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
+    def get_path_display(self):
+        return '/'.join(self.get_ancestors(include_self=True)
+                            .values_list('name', flat=True))
 
+    def _make_group_object(self, user_id, case_sharing):
         from corehq.apps.groups.models import UnsavableGroup
 
         g = UnsavableGroup()
@@ -242,13 +257,13 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.utcnow()
 
         if case_sharing:
-            g.name = group_name() + '-Cases'
+            g.name = self.get_path_display() + '-Cases'
             g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
             # reporting groups
-            g.name = group_name()
+            g.name = self.get_path_display()
             g._id = LOCATION_REPORTING_PREFIX + self.location_id
             g.case_sharing = False
             g.reporting = True
@@ -330,7 +345,6 @@ def _filter_for_archived(locations, include_archive_ancestors):
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
-    location_type = StringProperty()
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
@@ -351,6 +365,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @classmethod
     def wrap(cls, data):
         last_modified = data.get('last_modified')
+        data.pop('location_type', None)  # Only store location type in SQL
         # if it's missing a Z because of the Aug. 2014 migration
         # that added this in iso_format() without Z, then add a Z
         # (See also Group class)
@@ -372,7 +387,10 @@ class Location(CachedCouchDocumentMixin, Document):
             kwargs['lineage'] = lineage
             del kwargs['parent']
 
+        location_type = kwargs.pop('location_type', None)
         super(Document, self).__init__(*args, **kwargs)
+        if location_type:
+            self.location_type = location_type
 
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
@@ -406,16 +424,6 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        # The location type must already exist
-        try:
-            location_type = LocationType.objects.get(
-                domain=self.domain,
-                name=self.location_type,
-            )
-        except LocationType.DoesNotExist:
-            msg = "You can't create a location without a real location type"
-            raise LocationType.DoesNotExist(msg)
-
         try:
             sql_location = SQLLocation.objects.get(location_id=self._id)
         except SQLLocation.DoesNotExist:
@@ -423,6 +431,8 @@ class Location(CachedCouchDocumentMixin, Document):
                 domain=self.domain,
             )
 
+        # One of these will fail if you try to save a location without a type
+        location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
 
         for prop in properties_to_sync:
@@ -448,7 +458,26 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def sql_location(self):
-        return SQLLocation.objects.get(location_id=self._id)
+        return (SQLLocation.objects.prefetch_related('location_type')
+                                   .get(location_id=self._id))
+
+    @property
+    def location_type(self):
+        return self.location_type_object.name
+
+    _sql_location_type = None
+    @location_type.setter
+    def location_type(self, value):
+        msg = "You can't create a location without a real location type"
+        if not value:
+            raise LocationType.DoesNotExist(msg)
+        try:
+            self._sql_location_type = LocationType.objects.get(
+                domain=self.domain,
+                name=value,
+            )
+        except LocationType.DoesNotExist:
+            raise LocationType.DoesNotExist(msg)
 
     def _archive_single_location(self):
         """
@@ -468,11 +497,13 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and not sp.closed:
             close_case(sp._id, self.domain, COMMTRACK_USERNAME)
 
+        _unassign_users_from_location(self.domain, self._id)
+
     def archive(self):
         """
         Mark a location and its dependants as archived.
-        This will cause it (and its data) to not show up in default
-        Couch and SQL views.
+        This will cause it (and its data) to not show up in default Couch and
+        SQL views.  This also unassigns users assigned to the location.
         """
         for loc in [self] + self.descendants:
             loc._archive_single_location()
@@ -649,4 +680,15 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        return self.sql_location.location_type
+        return self._sql_location_type or self.sql_location.location_type
+
+
+def _unassign_users_from_location(domain, location_id):
+    """
+    Unset location for all users assigned to that location.
+    """
+    for user in get_all_users_by_location(domain, location_id):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()

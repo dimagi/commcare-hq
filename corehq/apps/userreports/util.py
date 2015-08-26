@@ -14,7 +14,11 @@ def localize(value, lang):
     if isinstance(value, collections.Mapping) and len(value):
         return (
             value.get(lang, None) or
-            value.get("en", None) or
+            value.get(default_language(), None) or
             value[sorted(value.keys())[0]]
         )
     return value
+
+
+def default_language():
+    return "en"

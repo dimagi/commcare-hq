@@ -1,12 +1,16 @@
 import uuid
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
+from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from casexml.apps.phone.restore import RestoreState, RestoreParams
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
@@ -48,7 +52,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         is_clean = self.owner_cleanliness.is_clean
         hint = self.owner_cleanliness.hint
         self.owner_cleanliness.delete()
-        set_cleanliness_flags(self.domain, self.owner_id)
+        set_cleanliness_flags(self.domain, self.owner_id, force_full=True)
         new_cleanliness = OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id)
         self.assertEqual(is_clean, new_cleanliness.is_clean)
         self.assertEqual(hint, new_cleanliness.hint)
@@ -231,6 +235,21 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(True, flag.is_clean)
 
 
+class SetCleanlinessFlagsTest(TestCase):
+
+    def test_set_bad_domains(self):
+        test_cases = [None, '', 'something-too-long' * 10]
+        for invalid_domain in test_cases:
+            with self.assertRaises(InvalidDomainError):
+                set_cleanliness_flags(invalid_domain, 'whatever')
+
+    def test_set_bad_owner_ids(self):
+        test_cases = [None, '', 'something-too-long' * 10]
+        for invalid_owner in test_cases:
+            with self.assertRaises(InvalidOwnerIdError):
+                set_cleanliness_flags('whatever', invalid_owner)
+
+
 class CleanlinessUtilitiesTest(SimpleTestCase):
 
     def test_pop_ids(self):
@@ -246,3 +265,26 @@ class CleanlinessUtilitiesTest(SimpleTestCase):
         self.assertEqual(5, len(back))
         self.assertEqual(0, len(five))
         self.assertEqual(set(back), set(range(5)))
+
+
+class OverrideSyncModeTest(SimpleTestCase):
+
+    @override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=True)
+    def test_override_settings_clean(self):
+        self.assertEqual(True, _dummy_restore_state(force_restore_mode=None).use_clean_restore)
+        self.assertEqual(True, _dummy_restore_state(force_restore_mode='clean').use_clean_restore)
+        self.assertEqual(False, _dummy_restore_state(force_restore_mode='legacy').use_clean_restore)
+
+    @override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=False)
+    def test_override_settings_legacy(self):
+        self.assertEqual(False, _dummy_restore_state(force_restore_mode=None).use_clean_restore)
+        self.assertEqual(True, _dummy_restore_state(force_restore_mode='clean').use_clean_restore)
+        self.assertEqual(False, _dummy_restore_state(force_restore_mode='legacy').use_clean_restore)
+
+
+def _dummy_restore_state(force_restore_mode=None):
+    return RestoreState(
+        project=Domain(name='clean'),
+        user=CommCareUser(username='testing'),
+        params=RestoreParams(force_restore_mode=force_restore_mode)
+    )

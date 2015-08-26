@@ -5,7 +5,7 @@ from datetime import date
 import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from xlrd import xldate_as_tuple
+from xlrd import xldate_as_tuple, XL_CELL_NUMBER
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
@@ -121,6 +121,18 @@ class ExcelFile(object):
         except Exception:
             self.has_errors = True
 
+    def _col_values(self, sheet, index):
+        return [self._fmt_value(cell) for cell in sheet.col(index)]
+
+    def _row_values(self, sheet, index):
+        return [self._fmt_value(cell) for cell in sheet.row(index)]
+
+    def _fmt_value(self, cell):
+        # Explicitly format integers, since xlrd treats all numbers as decimals (adds ".0")
+        if cell.ctype == XL_CELL_NUMBER and int(cell.value) == cell.value:
+            return int(cell.value)
+        return cell.value
+
     def get_first_sheet(self):
         if self.workbook:
             return self.workbook.sheet_by_index(0)
@@ -135,7 +147,7 @@ class ExcelFile(object):
 
             # get columns
             if self.column_headers:
-                columns = sheet.row_values(0)
+                columns = self._row_values(sheet, 0)
             else:
                 for colnum in range(sheet.ncols):
                     columns.append("Column %i" % (colnum,))
@@ -149,9 +161,9 @@ class ExcelFile(object):
 
         if sheet:
             if self.column_headers:
-                return sheet.col_values(column_index)[1:]
+                return self._col_values(sheet, column_index)[1:]
             else:
-                return sheet.col_values(column_index)
+                return self._col_values(sheet, column_index)
         else:
             return []
 
@@ -168,7 +180,7 @@ class ExcelFile(object):
         sheet = self.get_first_sheet()
 
         if sheet:
-            return sheet.row_values(index)
+            return self._row_values(sheet, index)
 
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
@@ -198,26 +210,36 @@ class InvalidDateException(Exception):
 class ImportErrorDetail(object):
 
     ERROR_MSG = {
-        ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
-                                       "when uploading because of these values. Make sure "
-                                       "the values in this column are ID's for users or "
-                                       "case sharing groups."),
-
-        ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
-                                         "when uploading because of these values."),
-
-        ImportErrors.InvalidDate: _("Date fields were specified that caused an error during"
-                                    "conversion. This is likely caused by a value from "
-                                    "excel having the wrong type or not being formatted "
-                                    "properly."),
-
-        ImportErrors.BlankExternalId: _("Blank external ids were found in these rows causing as "
-                                        "error when importing cases."),
-
-        ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
-
-        ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
-                                        "uploaded case.")
+        ImportErrors.InvalidOwnerId: _(
+            "Owner ID was used in the mapping but there were errors when "
+            "uploading because of these values. Make sure the values in this "
+            "column are ID's for users or case sharing groups or locations."
+        ),
+        ImportErrors.InvalidOwnerName: _(
+            "Owner name was used in the mapping but there were errors when "
+            "uploading because of these values."
+        ),
+        ImportErrors.InvalidDate: _(
+            "Date fields were specified that caused an error during"
+            "conversion. This is likely caused by a value from excel having "
+            "the wrong type or not being formatted properly."
+        ),
+        ImportErrors.BlankExternalId: _(
+            "Blank external ids were found in these rows causing as error "
+            "when importing cases."
+        ),
+        ImportErrors.CaseGeneration: _(
+            "These rows failed to generate cases for unknown reasons"
+        ),
+        ImportErrors.InvalidParentId: _(
+            "An invalid or unknown parent case was specified for the "
+            "uploaded case."
+        ),
+        ImportErrors.DuplicateLocationName: _(
+            "Owner ID was used in the mapping, but there were errors when "
+            "uploading because of these values. There are multiple locations "
+            "with this same name, try using site-code instead."
+        ),
     }
 
     def __init__(self, *args, **kwargs):
@@ -380,14 +402,11 @@ def get_spreadsheet(download_ref, column_headers=True):
     return ExcelFile(download_ref.get_filename(), column_headers)
 
 
-def is_location_group(owner_id, domain):
-    """
-    Return yes if the specified owner_id is one of the
-    faked location groups.
-    """
+def is_valid_location_owner(owner_id, domain):
     results = SQLLocation.objects.filter(
         domain=domain,
-        location_id=owner_id
+        location_id=owner_id,
+        location_type__shares_cases=True,
     )
     return results.exists()
 
@@ -407,32 +426,42 @@ def is_valid_id(uploaded_id, domain, cache):
             is_user_or_case_sharing_group(owner) and
             owner.is_member_of(domain)
         ) or
-        is_location_group(uploaded_id, domain)
+        is_valid_location_owner(uploaded_id, domain)
     )
 
 
-def get_id_from_name(uploaded_name, domain, cache):
+def get_id_from_name(name, domain, cache):
     '''
-    :param uploaded_name: A username or group name
+    :param name: A username, group name, or location name/site_code
     :param domain:
     :param cache:
     :return: Looks for the given name and returns the corresponding id if the
     user or group exists and None otherwise. Searches for user first, then
-    group.
+    group, then location
     '''
-    if uploaded_name in cache:
-        return cache[uploaded_name]
-    try:
-        name_as_address = uploaded_name
-        if '@' not in name_as_address:
-            name_as_address = format_username(uploaded_name, domain)
-        user = CouchUser.get_by_username(name_as_address)
-        id = getattr(user, 'couch_id', None)
-    except NoResultFound:
-        id = None
-    if not id:
-        group = Group.by_name(domain, uploaded_name, one=True)
-        id = getattr(group, 'get_id', None)
+    if name in cache:
+        return cache[name]
 
-    cache[uploaded_name] = id
+    def get_from_user(name):
+        try:
+            name_as_address = name
+            if '@' not in name_as_address:
+                name_as_address = format_username(name, domain)
+            user = CouchUser.get_by_username(name_as_address)
+            return getattr(user, 'couch_id', None)
+        except NoResultFound:
+            return None
+
+    def get_from_group(name):
+        group = Group.by_name(domain, name, one=True)
+        return getattr(group, 'get_id', None)
+
+    def get_from_location(name):
+        try:
+            return SQLLocation.objects.get_from_user_input(domain, name).location_id
+        except SQLLocation.DoesNotExist:
+            return None
+
+    id = get_from_user(name) or get_from_group(name) or get_from_location(name)
+    cache[name] = id
     return id

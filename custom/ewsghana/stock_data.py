@@ -5,8 +5,9 @@ from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.models import EWSGhanaConfig
+from custom.logistics.api import ApiSyncObject
 from custom.logistics.stock_data import StockDataSynchronization
-from custom.logistics.tasks import sync_stock_transactions_for_facility
+from custom.logistics.tasks import sync_stock_transactions_for_facility, sync_stock_transaction
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -55,3 +56,14 @@ class EWSStockDataSynchronization(StockDataSynchronization):
             self.domain, checkpoint.location.location_id)
         external_id = supply_point.external_id if supply_point else None
         return external_id
+
+    def get_stock_apis_objects(self):
+        return [
+            ApiSyncObject(
+                'stock_transaction',
+                get_objects_function=self.endpoint.get_stocktransactions,
+                sync_function=sync_stock_transaction,
+                date_filter_name='date',
+                is_date_range=True
+            )
+        ]

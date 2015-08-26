@@ -10,9 +10,9 @@ from corehq.apps.builds.models import BuildSpec
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
-from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, Module, \
-    ReportModule, CareplanModule
+    ReportModule
 from .test_form_versioning import BLANK_TEMPLATE
 
 
@@ -22,16 +22,17 @@ class TestViews(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'app-manager-testviews-domain'
+        cls.domain = Domain(name='app-manager-testviews-domain', is_active=True)
+        cls.domain.save()
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.app = Application.new_app(cls.domain, "TestApp", application_version=APP_V1)
+        cls.app = Application.new_app(cls.domain.name, "TestApp", application_version=APP_V1)
         cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain), True)
+        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
@@ -42,6 +43,7 @@ class TestViews(TestCase):
         cls.build.delete()
         if cls.app:
             cls.app.delete()
+        cls.domain.delete()
 
     def test_download_file_bad_xform_404(self):
         '''
@@ -64,13 +66,13 @@ class TestViews(TestCase):
         self.app.new_form(module.id, name="Form0-0", attachment=xform_str, lang="en")
         self.app.save()
 
-        response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.domain,
+        response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.domain.name,
                                                                             app_id=self.app.get_id,
                                                                             path='modules-0/forms-0.xml')))
         self.assertEqual(response.status_code, 404)
 
     def test_edit_commcare_profile(self):
-        app = Application.new_app(self.domain, "TestApp", application_version=APP_V2)
+        app = Application.new_app(self.domain.name, "TestApp", application_version=APP_V2)
         app.save()
         data = {
             "custom_properties": {
@@ -79,7 +81,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain.name, app._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -95,7 +97,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain.name, app._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -120,7 +122,7 @@ class TestViews(TestCase):
         self.app.save()
 
         kwargs = {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
         }
         self._test_status_codes([
@@ -132,13 +134,13 @@ class TestViews(TestCase):
         self.build = self.app.make_build()
         self.build.save()
         content = self._json_content_from_get('current_app_version', {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
         })
         self.assertEqual(content['currentVersion'], 2)
 
         content = self._json_content_from_get('paginate_releases', {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
         }, {'limit': 5})
         self.assertEqual(len(content), 1)
@@ -158,7 +160,7 @@ class TestViews(TestCase):
             'view_user_registration',
             'user_registration_source',
         ], {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
         })
 
@@ -166,7 +168,7 @@ class TestViews(TestCase):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
             'module_id': module.id,
         })
@@ -175,7 +177,7 @@ class TestViews(TestCase):
         module = self.app.add_module(ReportModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
             'module_id': module.id,
         })
@@ -188,7 +190,7 @@ class TestViews(TestCase):
 
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'app_id': self.app.id,
             'module_id': module.id,
         })

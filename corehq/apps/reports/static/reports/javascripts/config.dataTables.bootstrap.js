@@ -206,6 +206,10 @@ function HQReportDataTables(options) {
                 if (self.showAllRowsOption)
                     $selectField.append($('<option value="-1" />').text("All Rows"));
                 $selectField.addClass("input-medium");
+                $selectField.on("change", function(){
+                    var selected_value = $selectField.find('option:selected').val();
+                    window.analytics.usage("Reports", "Changed number of items shown", selected_value);
+                });
             }
             $(".dataTables_length select").change(function () {
                 $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
@@ -247,7 +251,7 @@ function convertNum(k) {
 
 function convertDate(k) {
     var m = k.match(/title="*(.+)"/);
-    return new Date(m);
+    return new Date(m[1]);
 }
 
 jQuery.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };

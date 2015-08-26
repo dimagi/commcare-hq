@@ -9,13 +9,14 @@ from corehq import privileges
 
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 
+DEMO_USER_ID = 'demo_user'
+JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
-    'demo_user',           # demo mode
+    DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
 ]
 
@@ -60,8 +61,8 @@ def user_id_to_username(user_id):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return user_id
-    elif user_id == "demo_user":
-        return "demo_user"
+    elif user_id == DEMO_USER_ID:
+        return DEMO_USER_ID
     try:
         login = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
@@ -152,29 +153,11 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    try:
-        ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
-    except PermissionDenied:
+    if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
-
-
-def smart_query_string(query):
-    """
-    If query does not use the ES query string syntax,
-    default to doing an infix search for each term.
-    returns (is_simple, query)
-    """
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in query:
-            return False, query
-    r = re.compile(r'\w+')
-    tokens = r.findall(query)
-    return True, "*{}*".format("* *".join(tokens))
 
 
 def user_display_string(username, first_name="", last_name=""):

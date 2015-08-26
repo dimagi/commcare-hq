@@ -3,9 +3,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
-from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
 from corehq.apps.domain.models import Domain
-from corehq.apps.groups.hierarchy import get_user_data_from_hierarchy
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
@@ -23,107 +21,6 @@ from .base import (
     BaseSingleOptionFilter,
     BaseSingleOptionTypeaheadFilter,
 )
-
-
-class LinkedUserFilter(BaseDrilldownOptionFilter):
-    """
-    Lets you define hierarchical user groups by adding semantics to the
-    following group metadata properties:
-
-    On the root user group containing the top-level users:
-        user_type:  name of user type
-
-    On each group defining an association between one level-N user and many
-    level-N+1 users:
-        owner_name:  username of the owning user
-        owner_type:  name of user type for the owner
-        child_type:  name of user type for the child
-
-    Then you define the user_types attribute of this class as a list of user
-    types.
-
-    """
-    slug = "user"
-    label = ugettext_noop("Select User(s)")
-
-    # (parent_type, child_type[, child_type...]) as defined in the
-    # user-editable group metadata
-    user_types = None
-    domain = None
-
-    # Whether to use group names for intermediate selectors instead of the
-    # username of the group's owner
-    use_group_names = False
-
-    @classmethod
-    def get_labels(cls):
-        for type in cls.user_types:
-            yield (
-                type,
-                _("Select %(child_type)s") % {'child_type': type},
-                type
-            )
-
-    @property
-    def drilldown_empty_text(self):
-        return _("An error occured while making this linked user "
-                 "filter. Make sure you have created a group containing "
-                 "all %(root_type)ss with the metadata property 'user_type' set "
-                 "to '%(root_type)s' and added owner_type and child_type "
-                 "metadata properties to all of the necessary other groups.") % {
-            "root_type": self.user_types[0]
-        }
-
-    @property
-    def drilldown_map(self):
-        try:
-            hierarchy = get_hierarchy(self.domain, self.user_types)
-        except Exception:
-            return []
-
-        def get_values(node, level):
-            ret = {
-                'val': node['user']._id
-            }
-            if node.get('child_group') and self.use_group_names:
-                ret['text'] = node['child_group'].name
-            else:
-                ret['text'] = node['user'].raw_username
-
-            if 'descendants' in node:
-                ret['next'] = [get_values(node, level + 1)
-                               for node in node['descendants']]
-            elif node.get('child_users'):
-                ret['next'] = [{
-                    'val': c._id,
-                    'text': c.raw_username
-                } for c in node['child_users']]
-            else:
-                ret['next'] = [{
-                    'val': '',
-                    'text': _("No %(child_type)ss found for this %(parent_type)s.") % {
-                                'parent_type': self.user_types[level],
-                                'child_type': self.user_types[level + 1]}
-                }]
-
-            return ret
-
-        return [get_values(top_level_node, 0) for top_level_node in hierarchy]
-
-    @classmethod
-    def get_user_data(cls, request_params, domain=None):
-        domain = domain or cls.domain
-
-        selected_user_id = None
-
-        for user_type in reversed(cls.user_types):
-            user_id = request_params.get("%s_%s" % (cls.slug, user_type))
-            if user_id:
-                selected_user_id = user_id
-                break
-
-        return get_user_data_from_hierarchy(domain, cls.user_types,
-                root_user_id=selected_user_id)
 
 
 class UserTypeFilter(BaseReportFilter):
@@ -231,8 +128,9 @@ class EmwfUtils(object):
             "[%s]" % HQUserType.human_readable[t]
         )
 
-    def location_group_tuple(self, loc_group):
-        return (loc_group._id, loc_group.name + ' [group]')
+    def location_tuple(self, location):
+        return ("l__%s" % location.location_id,
+                '%s [location]' % location.get_path_display())
 
     @property
     @memoized
@@ -270,8 +168,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     label = ugettext_lazy("Groups or Users")
     default_options = None
     placeholder = ugettext_lazy(
-        "Start typing to specify the groups and users to include in the report."
-        " You can select multiple users and groups.")
+        "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
 
@@ -304,11 +201,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return [g[3:] for g in emws if g.startswith("g__")]
 
     @classmethod
-    def selected_location_reporting_group_ids(cls, request):
+    def selected_location_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
-        return [
-            g for g in emws if g.startswith(LOCATION_REPORTING_PREFIX)
-        ]
+        return [l[3:] for l in emws if l.startswith("l__")]
 
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
@@ -373,18 +268,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 if group['fields'].get("reporting", False)]
 
     def selected_location_entries(self, request):
-        location_reporting_ids = self.selected_location_reporting_group_ids(request)
-        if not location_reporting_ids:
+        location_ids = self.selected_location_ids(request)
+        if not location_ids:
             return []
-
-        selected = []
-        for loc_group_id in location_reporting_ids:
-            loc = SQLLocation.objects.get(
-                location_id=loc_group_id.replace(LOCATION_REPORTING_PREFIX, '')
-            )
-            loc_group = loc.reporting_group_object()
-            selected.append(self.utils.location_group_tuple(loc_group))
-        return selected
+        return map(self.utils.location_tuple,
+                   SQLLocation.objects.filter(location_id__in=location_ids))
 
     @property
     def filter_context(self):

@@ -21,6 +21,8 @@ from casexml.apps.case.exceptions import (
 )
 from django.conf import settings
 from couchforms.util import is_deprecation
+from couchforms.validators import validate_phone_datetime
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -132,10 +134,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    if config.reconcile:
-        for c in cases:
-            c.reconcile_actions(rebuild=True)
-
     # attach domain and export tag
     domain = xform.domain
 
@@ -163,9 +161,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
-
-        if config.reconcile and relevant_log.reconcile_cases():
-            relevant_log.save()
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -200,14 +195,12 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 
 class CaseProcessingConfig(object):
-    def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
-        self.reconcile = reconcile
+    def __init__(self, strict_asserts=True, case_id_blacklist=None):
         self.strict_asserts = strict_asserts
         self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
 
     def __repr__(self):
-        return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
-            reconcile=self.reconcile,
+        return 'strict: {strict}, ids: {ids}'.format(
             strict=self.strict_asserts,
             ids=", ".join(self.case_id_blacklist)
         )
@@ -243,10 +236,7 @@ class CaseDbCache(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock in self.locks:
             if lock:
-                try:
-                    lock.release()
-                except redis.ConnectionError:
-                    pass
+                release_lock(lock, True)
 
     def validate_doc(self, doc):
         if self.domain and doc['domain'] != self.domain:
@@ -273,7 +263,7 @@ class CaseDbCache(object):
             elif self.lock:
                 try:
                     case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.ConnectionError:
+                except redis.RedisError:
                     case_doc = CommCareCase.get(case_id)
                 else:
                     self.locks.append(lock)
@@ -345,24 +335,21 @@ def _get_or_update_cases(xforms, case_db):
     """
     # have to apply the deprecations before the updates
     sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
             case_doc = _get_or_update_model(case_update, xform, case_db)
+            touched_cases[case_doc['_id']] = case_doc
             if case_doc:
                 # todo: legacy behavior, should remove after new case processing
                 # is fully enabled.
                 if xform._id not in case_doc.xform_ids:
                     case_doc.xform_ids.append(xform.get_id)
-                case_db.set(case_doc.case_id, case_doc)
             else:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id
                 )
-
-    # at this point we know which cases we want to update so copy this away
-    # this prevents indices that end up in the cache from being added to the return value
-    touched_cases = copy.copy(case_db.cache)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
@@ -397,13 +384,14 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case._id, child_case.owner_id)
 
-    dirtiness_flags = [flag for case in case_db.cache.values() for flag in _validate_indices(case)]
+    dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
     track_cleanliness = should_track_cleanliness(domain)
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
         dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
 
 
@@ -413,9 +401,9 @@ def _get_or_update_model(case_update, xform, case_db):
     submitted form.  Doesn't save anything.
     """
     case = case_db.get(case_update.id)
-
     if case is None:
         case = CommCareCase.from_case_update(case_update, xform)
+        case_db.set(case['_id'], case)
         return case
     else:
         case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
@@ -437,7 +425,10 @@ def has_case_id(case_block):
     return const.CASE_TAG_ID in case_block or const.CASE_ATTR_ID in case_block
 
 
-def extract_case_blocks(doc):
+CaseBlockWithPath = namedtuple('CaseBlockWithPath', ['caseblock', 'path'])
+
+
+def extract_case_blocks(doc, include_path=False):
     """
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case.
@@ -445,26 +436,36 @@ def extract_case_blocks(doc):
     The json returned is not normalized for casexml version;
     for that get_case_updates is better.
 
+    if `include_path` is True then instead of returning just the case block it will
+    return a dict with the following structure:
+
+    {
+       "caseblock": caseblock
+       "path": ["form", "path", "to", "block"]
+    }
+
+    Repeat nodes will all share the same path.
     """
-
     if isinstance(doc, XFormInstance):
-        doc = doc.form
-    return list(_extract_case_blocks(doc))
+        doc = doc.to_json()['form']
+
+    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
 
 
-def _extract_case_blocks(data):
+def _extract_case_blocks(data, path=None):
     """
     helper for extract_case_blocks
 
     data must be json representing a node in an xform submission
-
     """
+    path = path or []
     if isinstance(data, list):
         for item in data:
-            for case_block in _extract_case_blocks(item):
+            for case_block in _extract_case_blocks(item, path=path):
                 yield case_block
     elif isinstance(data, dict) and not is_device_report(data):
         for key, value in data.items():
+            new_path = path + [key]
             if const.CASE_TAG == key:
                 # it's a case block! Stop recursion and add to this value
                 if isinstance(value, list):
@@ -474,12 +475,12 @@ def _extract_case_blocks(data):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
-                        yield case_block
+                        validate_phone_datetime(
+                            case_block.get('@date_modified'), none_ok=True)
+                        yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
-                for case_block in _extract_case_blocks(value):
+                for case_block in _extract_case_blocks(value, path=new_path):
                     yield case_block
-    else:
-        return
 
 
 def get_case_updates(xform):

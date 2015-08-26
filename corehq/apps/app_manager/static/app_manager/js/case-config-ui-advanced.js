@@ -26,7 +26,6 @@ var AdvancedCase = (function () {
         self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
         self.programs = params.commtrack_programs;
-        self.usercaseEnabled = params.usercaseEnabled;
 
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -78,18 +77,16 @@ var AdvancedCase = (function () {
                 {
                     label: 'Lookup Table',
                     value: 'fixture'
+                },
+                {
+                    label: 'User Case',
+                    value: 'usercase'
                 }
             ];
             if (index > 0) {
                 modes.push({
                     label: 'Case Index',
                     value: 'case'
-                });
-            }
-            if (self.usercaseEnabled) {
-                modes.push({
-                    label: 'User Case',
-                    value: 'usercase'
                 });
             }
             return modes;

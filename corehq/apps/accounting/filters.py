@@ -173,6 +173,8 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
         (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.TRIAL_INTERNAL, "Custom Trial"),
+        (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
     )
 
 

@@ -2,7 +2,7 @@ from __future__ import print_function
 import logging
 from custom.dhis2.models import Dhis2Settings
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 
 logger = logging.getLogger(__name__)

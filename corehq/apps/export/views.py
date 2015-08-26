@@ -6,10 +6,21 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from corehq import toggle_enabled, toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
+from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
+from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
+from corehq.apps.reports.standard.export import (
+    CaseExportInterface,
+    CaseExportReport,
+    FormExportInterface,
+    ExcelExportReport,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -48,6 +59,18 @@ class BaseExportView(BaseProjectDataView):
     def export_helper(self):
         raise NotImplementedError("You must implement export_helper!")
 
+    def redirect_url(self, export_id):
+        if self.request.body:
+            preview = json.loads(self.request.body).get('preview')
+            if preview:
+                return reverse(
+                    'export_custom_data',
+                    args=[self.domain, export_id],
+                ) + '?format=html&limit=50&type=%(type)s' % {
+                    'type': self.export_type,
+                }
+        return self.export_home_url
+
     @property
     def export_home_url(self):
         return self.report_class.get_url(domain=self.domain)
@@ -56,6 +79,11 @@ class BaseExportView(BaseProjectDataView):
     @memoized
     def report_class(self):
         try:
+            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+                return {
+                    'form': FormExportInterface,
+                    'case': CaseExportInterface,
+                }[self.export_type]
             return {
                 'form': ExcelExportReport,
                 'case': CaseExportReport
@@ -72,7 +100,7 @@ class BaseExportView(BaseProjectDataView):
 
     def post(self, request, *args, **kwargs):
         try:
-            self.commit(request)
+            export_id = self.commit(request)
         except Exception, e:
             if self.is_async:
                 # todo: this can probably be removed as soon as
@@ -90,9 +118,9 @@ class BaseExportView(BaseProjectDataView):
         else:
             if self.is_async:
                 return json_response({
-                    'redirect': self.export_home_url,
+                    'redirect': self.redirect_url(export_id),
                 })
-            return HttpResponseRedirect(self.export_home_url)
+            return HttpResponseRedirect(self.redirect_url(export_id))
 
 
 class BaseCreateCustomExportView(BaseExportView):
@@ -104,8 +132,9 @@ class BaseCreateCustomExportView(BaseExportView):
         return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export created!"))
+        return export_id
 
     def get(self, request, *args, **kwargs):
         # just copying what was in the old django view here. don't want to mess too much with exports just yet.
@@ -184,8 +213,9 @@ class BaseModifyCustomExportView(BaseExportView):
 class BaseEditCustomExportView(BaseModifyCustomExportView):
 
     def commit(self, request):
-        self.export_helper.update_custom_export()
+        export_id = self.export_helper.update_custom_export()
         messages.success(request, _("Custom export saved!"))
+        return export_id
 
 
 class EditCustomFormExportView(BaseEditCustomExportView):
@@ -212,6 +242,7 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
             raise ExportNotFound()
         self.export_type = saved_export.type
         saved_export.delete()
+        touch_exports(self.domain)
         messages.success(request, _("Custom export was deleted."))
 
 
@@ -270,3 +301,115 @@ def create_basic_form_checkpoint(index):
     )
     checkpoint.save()
     return checkpoint
+
+
+class CreateFormExportView(BaseProjectDataView):
+    urlname = 'create_form_export'
+    page_title = ugettext_noop("Create Form Export")
+    template_name = 'export/create_form_export.html'
+
+    @property
+    def main_context(self):
+        context = super(CreateFormExportView, self).main_context
+        context.update({
+            'create_export_form': self.create_export_form,
+            'app_to_module_options': self.app_to_module_options,
+            'module_to_form_options': self.module_to_form_options,
+            'module_prompt': _('Select Module...'),
+            'form_prompt': _('Select Form...'),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.create_export_form.is_valid():
+            app_id = self.create_export_form.cleaned_data['application']
+            form_unique_id = self.create_export_form.cleaned_data['form']
+            return HttpResponseRedirect(
+                reverse(
+                    CreateCustomFormExportView.urlname,
+                    args=[self.domain],
+                ) + ('?export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
+                    'app_id': app_id,
+                    'export_tag': [
+                        form for form in Application.get(app_id).get_forms()
+                        if form.get_unique_id() == form_unique_id
+                    ][0].xmlns,
+                })
+            )
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        if self.request.method == 'POST':
+            return CreateFormExportForm(self.domain, self.request.POST)
+        return CreateFormExportForm(self.domain)
+
+    @property
+    def app_to_module_options(self):
+        return {
+            app._id: [{
+                'text': trans(module.name, app.langs),
+                'value': module.unique_id,
+            } for module in app.modules]
+            for app in get_apps_in_domain(self.domain)
+        }
+
+    @property
+    def module_to_form_options(self):
+        return {
+            module.unique_id: [{
+                'text': trans(form.name, app.langs),
+                'value': form.unique_id,
+            } for form in module.get_forms()]
+            for app in get_apps_in_domain(self.domain)
+            for module in app.modules
+        }
+
+
+class CreateCaseExportView(BaseProjectDataView):
+    urlname = 'create_case_export'
+    page_title = ugettext_noop('Create Case Export')
+    template_name = 'export/create_case_export.html'
+
+    @property
+    def main_context(self):
+        context = super(CreateCaseExportView, self).main_context
+        context.update({
+            'create_export_form': self.create_export_form,
+            'app_to_case_type_options': self.app_to_case_type_options,
+            'case_type_prompt': _('Select Case Type...'),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.create_export_form.is_valid():
+            case_type = self.create_export_form.cleaned_data['case_type']
+            return HttpResponseRedirect(
+                reverse(
+                    CreateCustomCaseExportView.urlname,
+                    args=[self.domain],
+                ) + ('?export_tag="%(export_tag)s"' % {
+                    'export_tag': case_type,
+                })
+            )
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        if self.request.method == 'POST':
+            return CreateCaseExportForm(self.domain, self.request.POST)
+        return CreateCaseExportForm(self.domain)
+
+    @property
+    def app_to_case_type_options(self):
+        return {
+            app._id: [{
+                'text': case_type,
+                'value': case_type,
+            } for case_type in set(
+                module.case_type for module in app.modules if module.case_type
+            )]
+            for app in get_apps_in_domain(self.domain)
+        }

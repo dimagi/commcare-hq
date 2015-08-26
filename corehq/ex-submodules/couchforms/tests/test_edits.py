@@ -12,7 +12,6 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormDeprecated, XFormInstance, \
     UnfinishedSubmissionStub
 from couchforms.tests.testutils import post_xform_to_couch
-from dimagi.utils.parsing import json_format_datetime
 
 
 def access_edits(**kwargs):
@@ -156,7 +155,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'original value'
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
@@ -178,7 +177,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'edited value'
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         case = CommCareCase.get(case_id)
@@ -188,6 +187,32 @@ class EditFormTest(TestCase):
         self.assertEqual(2, len(case.actions))
         for a in case.actions:
             self.assertEqual(form_id, a.xform_id)
+
+    def test_second_edit_fails(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            version=V2,
+        ).as_string()
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        # submit an edit form with a bad case update (for example a bad ID)
+        case_block = CaseBlock(
+            create=True,
+            case_id='',
+            case_type='person',
+            version=V2,
+        ).as_string()
+        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+
+        form = XFormInstance.get(form_id)
+        self.assertEqual('XFormError', form.doc_type)
+
+        deprecated_form = XFormInstance.get(form.deprecated_form_id)
+        self.assertEqual('XFormDeprecated', deprecated_form.doc_type)
 
     def test_case_management_ordering(self):
         case_id = uuid.uuid4().hex
@@ -200,7 +225,7 @@ class EditFormTest(TestCase):
             case_type='person',
             owner_id=owner_id,
             version=V2,
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         create_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -220,7 +245,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'first value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -237,7 +262,7 @@ class EditFormTest(TestCase):
             update={
                 'property': 'final value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
@@ -256,7 +281,7 @@ class EditFormTest(TestCase):
                 'property': 'edited value',
                 'added_property': 'added value',
             }
-        ).as_string(format_datetime=json_format_datetime)
+        ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
 
         # ensure that the middle edit stays in the right place and is applied

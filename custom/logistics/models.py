@@ -1,4 +1,6 @@
 from django.db import models
+from django.dispatch import receiver
+from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -20,3 +22,9 @@ class MigrationCheckpoint(Checkpoint):
 
 class StockDataCheckpoint(Checkpoint):
     location = models.ForeignKey(SQLLocation, null=True, blank=True)
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    StockDataCheckpoint.objects.filter(domain=domain.name).delete()
+    MigrationCheckpoint.objects.filter(domain=domain.name).delete()

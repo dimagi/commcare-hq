@@ -275,7 +275,8 @@ class OrgInvitationView(InvitationView):
         user.add_org_membership(self.organization)
         user.save()
 
-@transaction.commit_on_success
+
+@transaction.atomic
 def accept_invitation(request, org, invitation_id):
     # todo, why wasn't this a TemplateView?
     return OrgInvitationView()(request, invitation_id, organization=org)

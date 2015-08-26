@@ -13,6 +13,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
+from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
 from corehq.util.timezones.conversions import ServerTime
@@ -168,19 +169,43 @@ def render_form(form, domain, options):
         request and user and request.domain
         and (user.can_edit_data() or user.is_commcare_user())
     )
+    show_edit_options = (
+        user_can_edit
+        and can_edit_form_location(domain, user, form)
+    )
     show_edit_submission = (
         user_can_edit
-        and has_privilege(request, privileges.CLOUDCARE)
-        and toggle_enabled(request, toggles.EDIT_SUBMISSIONS)
+        and has_privilege(request, privileges.DATA_CLEANUP)
+        and form.doc_type != 'XFormDeprecated'
     )
-    # stuffing this in the same flag as case rebuild
+
     show_resave = (
-        user_can_edit and toggle_enabled(request, toggles.CASE_REBUILD)
+        user_can_edit and toggle_enabled(request, toggles.SUPPORT)
     )
+
+    def _get_edit_info(instance):
+        info = {
+            'was_edited': False,
+            'is_edit': False,
+        }
+        if instance.doc_type == "XFormDeprecated":
+            info.update({
+                'was_edited': True,
+                'latest_version': instance.orig_id,
+            })
+        if getattr(instance, 'edited_on', None):
+            info.update({
+                'is_edit': True,
+                'edited_on': instance.edited_on,
+                'previous_version': instance.deprecated_form_id
+            })
+        return info
+
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
         "is_archived": form.doc_type == "XFormArchived",
+        "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
@@ -194,7 +219,7 @@ def render_form(form, domain, options):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
         "side_pane": side_pane,
-        "user": user,
+        "show_edit_options": show_edit_options,
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
     })

@@ -9,11 +9,11 @@
             if: hasCostItem
         }"></div>
     </div>
-    <form action="{{ process_payment_url }}"
-          method="POST"
+    <form method="POST"
           class="form form-horizontal"
           data-bind="attr: {
-              id: formId
+              id: formId,
+              action: submitURL,
           }">
         <div class="modal-body">
             <div data-bind="template: {
@@ -28,7 +28,7 @@
                 <span data-bind="text: serverErrorMsg"></span>
             </p>
 
-            <!-- ko if: isWire -->
+            <!-- ko if: paymentMethod() === WIRE -->
             <fieldset data-bind="visible: paymentIsNotComplete">
                 <legend>{% trans 'Wire Payment Information' %}</legend>
                 <p>
@@ -50,8 +50,8 @@
                 </div>
             </fieldset>
             <!-- /ko -->
-            <!-- ko ifnot: isWire -->
 
+            <!-- ko if: paymentMethod() === CREDIT_CARD -->
             <div data-bind="template: {
                 data: newCard,
                 name: 'select-new-stripe-card-template',
