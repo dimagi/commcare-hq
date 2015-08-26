@@ -40,3 +40,13 @@ def get_all_users_by_location(domain, location_id):
         reduce=False,
     )
     return (CouchUser.wrap_correctly(res['doc']) for res in results)
+
+
+def users_have_locations(domain):
+    from corehq.apps.users.models import CouchUser
+    return bool(CouchUser.get_db().view(
+        'locations/users_by_location_id',
+        startkey=[domain],
+        endkey=[domain, {}],
+        reduce=True,
+    ).one())

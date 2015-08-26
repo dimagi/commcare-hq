@@ -4,7 +4,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
-                           get_all_users_by_location)
+                           get_all_users_by_location, users_have_locations)
 from .util import make_loc, delete_all_locations
 
 
@@ -63,3 +63,8 @@ class TestUsersByLocation(TestCase):
             [u._id for u in users],
             [self.tyrion._id, self.daenerys._id, self.george._id]
         )
+
+    def test_users_have_locations(self):
+        self.assertTrue(users_have_locations(self.domain))
+        domain2 = create_domain('no-locations')
+        self.assertFalse(users_have_locations('no-locations'))

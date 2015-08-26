@@ -811,3 +811,12 @@ def child_locations_for_select2(request, domain):
             locs = locs.filter(name__icontains=query)
 
         return json_response(map(loc_to_payload, locs[:10]))
+
+
+class DowngradeLocationsView(BaseDomainView):
+    template_name = 'locations/downgrade_locations.html'
+    urlname = 'downgrade_locations'
+
+    @property
+    def section_url(self):
+        return self.page_url
