@@ -179,6 +179,9 @@ class WrappedNode(object):
     def __nonzero__(self):
         return self.xml is not None
 
+    def __len__(self):
+        return len(self.xml) if self.exists() else 0
+
     @property
     def tag_xmlns(self):
         return self.tag.split('}')[0][1:]
@@ -694,6 +697,9 @@ class XForm(WrappedNode):
             if lang not in whitelist:
                 self.itext_node.remove(trans_node.xml)
                 changes = True
+
+        if changes and not len(self.itext_node):
+            raise XFormException(_(u"Form does not contain any translations for any of the build languages"))
 
         if changes:
             self._reset_translations_cache()
