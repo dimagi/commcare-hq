@@ -28,7 +28,7 @@ $("#{{ id }}").select2({
         var arr = val.split(",");
         var payload = {};
 
-        if (arr.length === 0) {
+        if (arr.length === 1) {
             payload.id = val;
         } else {
             payload.ids = JSON.stringify(arr);
