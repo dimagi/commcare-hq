@@ -10,3 +10,4 @@ from .handlers.handler import *
 from .test_input_stock_view import *
 from .test_stock_data_sync import *
 from .test_delete_domain import *
+from .test_reminders import *
