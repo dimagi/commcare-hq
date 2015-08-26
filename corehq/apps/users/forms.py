@@ -409,7 +409,7 @@ class NewMobileWorkerForm(forms.Form):
         widget=PasswordInput(),
         required=True,
         min_length=1,
-        label=_("Password")
+        label=ugettext_noop("Password")
     )
 
     def __init__(self, *args, **kwargs):
