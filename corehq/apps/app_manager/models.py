@@ -1004,6 +1004,24 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_image = JRResourceProperty(required=False)
     media_audio = JRResourceProperty(required=False)
 
+    @classmethod
+    def wrap(cls, data):
+        # This is a band-aid for apps that are created by languageMedia branch
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = data.get(media_attr, None)
+            if old_media is not None and isinstance(old_media, dict):
+                # media set by localized-migration
+                new_media = old_media.get('default')
+                if old_media and not new_media:
+                    # media set by user on localized branch
+                    new_media = sorted(old_media.items())[0][1]
+                    # non-localized media doesn't accept empty paths
+                    if new_media == '':
+                        new_media = None
+                data[media_attr] = new_media
+
+        return super(NavMenuItemMediaMixin, cls).wrap(data)
+
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
