@@ -28,11 +28,7 @@ $(function () {
     mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
-    mobileWorkerApp.constant('formStrings', {
-        checkingUsername: "{% trans "Checking username" %}"
-    });
     mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
-    mobileWorkerApp.constant('customFieldNames', {{ custom_field_names|JSON }});
     mobileWorkerApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
     mobileWorkerApp.constant('paginationCustomData', {
         customFormFieldNames: {{ custom_field_names|JSON }},
@@ -78,19 +74,12 @@ $(function () {
     mobileWorkerApp.directive('workertableHeader', function () {
         return {
             restrict: 'A',
-            template: '<tr><th class="col-xs-3">' +
-                    '{% trans "Username" %}</th><th ng-repeat="field_name in ' +
-                    'customFormFieldNames">{{ field_name }}</th><th ' +
-                    'class="col-xs-2">{% trans 'Action' %}</th></tr>'
-        }
-    });
-    mobileWorkerApp.directive('customFieldColumn', function () {
-        return {
-            restrict: 'A',
-            template: '<span ng-show="_.isArray(field_val)">' +
-                      '<ul class="list-table"><li ng-repeat="d in field_val">{{ d }}</li></ul>' +
-                      '</span>' +
-                      '<span ng-show="!_.isArray(field_val)">{{ field_val }}</span>'
+            template: '<tr>'
+                        + '<th class="col-xs-3">{% trans "Username" %}</th>'
+                        + '<th class="col-xs-3">{% trans "First Name" %}</th>'
+                        + '<th class="col-xs-4">{% trans "Last Name" %}</th>'
+                        + '<th class="col-xs-2">{% trans "Action" %}</th>'
+                    + '</tr>'
         }
     });
     mobileWorkerApp.constant('paginationLimits', [
@@ -200,7 +189,8 @@ $(function () {
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
                                 <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
-                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
+                                <td>{{ worker.first_name }}</td>
+                                <td>{{ worker.last_name }}</td>
                                 <td>
                                     <i class="fa fa-circle-o-notch fa-spin"></i>
                                     {% trans 'Pending...' %}
@@ -224,10 +214,10 @@ $(function () {
                         <thead workertable-header></thead>
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
-                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
-                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
-                                <td><a href="{{ worker.editUrl }}"
-                                       class="btn btn-primary">{% trans 'Edit' %}</a></td>
+                                <td><a href="{{ worker.editUrl }}"><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></a></td>
+                                <td>{{ worker.first_name }}</td>
+                                <td>{{ worker.last_name }}</td>
+                                <td><i class="fa fa-check"></i> {% trans 'NEW' %}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -247,7 +237,8 @@ $(function () {
                         <tbody>
                             <tr ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
                                 <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
-                                <td ng-repeat="(slug, field_val) in worker.customFields" custom-field-column></td>
+                                <td>{{ worker.first_name }}</td>
+                                <td>{{ worker.last_name }}</td>
                                 <td>
                                     <button type="button"
                                             class="btn btn-default"
@@ -331,9 +322,8 @@ $(function () {
                     <thead>
                         <tr>
                             <th class="col-xs-3">{% trans "Username" %}</th>
-                            {% angularjs %}
-                            <th ng-repeat="field_name in customFormFieldNames">{{ field_name }}</th>
-                            {% endangularjs %}
+                            <th class="col-xs-3">{% trans "First Name" %}</th>
+                            <th class="col-xs-2">{% trans "Last Name" %}</th>
                             <th class="col-xs-2">{% trans 'Date Registered' %}</th>
                             <th class="col-xs-2">{% trans 'Action' %}</th>
                         </tr>
@@ -348,8 +338,8 @@ $(function () {
                                     <span ng-if="!!user.name">({{ user.name }})</span>
                                 </a>
                             </td>
-                            <td ng-repeat="(slug, field_val) in user.customFields"
-                                custom-field-column></td>
+                            <td>{{ user.first_name }}</td>
+                            <td>{{ user.last_name }}</td>
                             <td>{{ user.dateRegistered }}</td>
                             <td ng-if="user.action === 'activate'">
                                 <button type="button"
