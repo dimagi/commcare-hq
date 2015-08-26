@@ -643,17 +643,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
             app.create_suite(),
-            "./detail[@id='reports.-1044519270389493083.select']",
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008-None.select']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail'),
             app.create_suite(),
-            "./detail[@id='reports.-1044519270389493083.summary']",
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008-None.summary']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
             app.create_suite(),
-            "./detail[@id='reports.-1044519270389493083.data']",
+            "./detail[@id='reports.d3ff18cd83adf4550b35db8d391f6008-None.data']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
@@ -661,7 +661,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./entry",
         )
         self.assertIn(
-            'reports.-1044519270389493083=CommBugz',
+            'reports.d3ff18cd83adf4550b35db8d391f6008-None=CommBugz',
             app.create_app_strings('default'),
         )
 
