@@ -5,6 +5,12 @@
     {% if form.source %}
         <form class="form-horizontal">
             <div data-bind="saveButton: saveButton"></div>
+            <div class="control-group error pull-right">
+                <span class="help-inline error-text" style="display:none" id="form-errors">
+                        {% trans 'There were errors saving. Please fix the errors below  '%}
+                </span>
+                &nbsp; &nbsp;
+            </div>
             <!--ko with: formSchedule -->
             <fieldset>
                 <legend>{% trans "Form Settings" %}</legend>
@@ -20,21 +26,34 @@
                                   data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
                         </span>
                     </div>
+                </div>
+                <div class="control-group">
                     <div class="controls" data-bind="visible: scheduleEnabled">
                         <label>
                             {% trans "Form abbreviation" %}
                             <input type="text" id="schedule_form_id"
+                                   required
                                    placeholder="Form Abbreviation"
                                    data-bind="value: schedule_form_id">
+                            <span class="help-inline error-text" style="display:none">
+                                {% trans 'This field is required'%}
+                            </span>
                         </label>
+
                     </div>
+                </div>
+                <div class="control-group">
                     <div class="controls" data-bind="visible: scheduleEnabled">
                         <label>
                             {% trans "Schedule Phase" %}
                             <select id="achor"
+                                    required
                                     data-bind="options: all_schedule_phase_anchors,
                                                optionsCaption: '{% trans "Please select a phase..." %}',
                                                value: phase.anchor"></select>
+                            <span class="help-inline error-text" style="display:none">
+                                {% trans 'This field is required'%}
+                            </span>
                             <span class="hq-help-template"
                                   data-title="{% trans 'Schedule Phase' %}"
                                   data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
@@ -49,7 +68,10 @@
                     <div class="control-group">
                         <div class="controls">
                             {% trans "Show this form " %}
-                            <input type="text" class="input-mini" data-bind="numericValue: relevancy.starts"/>
+                            <input type="number" min="0" required class="input-mini" data-bind="numericValue: relevancy.starts"/>
+                            <span class="help-inline error-text" style="display:none">
+                                {% trans 'This field is required'%}
+                            </span>
                             {% trans "days" %}
                             <select data-bind="value: relevancy.starts_type">
                                 <option value="before">{% trans "before the anchor date" %}</option>
@@ -65,9 +87,12 @@
                                                   enable: allowExpiry">
                                 {% trans "Hide this form " %}
                             </label>
-                            <input type="text" class="input-mini"
+                            <input type="number" required class="input-mini"
                                    data-bind="numericValue: relevancy.expires,
                                               enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
+                            <span class="help-inline error-text" style="display:none">
+                                {% trans 'This field is required'%}
+                            </span>
                             {% trans "days" %}
                             <select data-bind="value: relevancy.expires_type,
                                                enable: (relevancy.enableFormExpiry() && allowExpiry())">
@@ -129,7 +154,10 @@
                             <div class="control-group">
                                 <div class="controls">
                                     {% trans "Due" %}
-                                    <input type="text" class="input-mini" data-bind="numericValue: due"/>
+                                    <input type="number" required class="input-mini" data-bind="numericValue: due"/>
+                                    <span class="help-inline error-text" style="display:none">
+                                        {% trans 'This field is required'%}
+                                    </span>
                                     {% trans "days" %}
                                     <select data-bind="value: type">
                                         <option value="before">{% trans "before the anchor date" %}</option>
@@ -144,9 +172,13 @@
                             <div class="control-group">
                                 <div class="controls">
                                     {% trans "Visit can be made up to" %}
-                                    <input type="text" class="input-mini" data-bind="numericValue: starts"/>
+                                    <input type="number" required class="input-mini"
+                                           data-bind="numericValue: starts"/>
+                                    <span class="help-inline error-text" style="display:none">
+                                        {% trans 'This field is required'%}
+                                    </span>
                                     {% trans "days early and" %}
-                                    <input type="text" class="input-mini" data-bind="numericValue: expires"/>
+                                    <input type="number" class="input-mini" data-bind="numericValue: expires"/>
                                     {% trans "days late" %}
                                 </div>
                             </div>
