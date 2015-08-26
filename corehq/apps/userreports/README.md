@@ -73,10 +73,12 @@ In user configurable reports the following expression types are currently suppor
 
 Expression Type | Description  | Example
 --------------- | ------------ | ------
+identity        | Just returns whatever is passed in | `doc`
 constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 
@@ -113,6 +115,7 @@ This expression returns `doc["child"]["age"]`:
 }
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
+
 ##### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
@@ -142,6 +145,34 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
 Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
+
+##### Iterator Expression
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "property_name",
+            "property_name": "p1"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p2"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p3"
+        },
+    ],
+    "test": {}
+}
+```
+
+This will emit `[doc.p1, doc.p2, doc.p3]`.
+You can add a `test` attribute to filter rows from what is emitted - if you don't specify this then the iterator will include one row per expression it contains regardless of what is passed in.
+This can be used/combined with the `base_item_expression` to emit multiple rows per document.
+
 
 #### Related document expressions
 
@@ -393,9 +424,13 @@ These are some practical notes for how to choose what indicators to create.
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
-## Saving Repeat Data
+## Saving Multiple Rows per Case/Form
 
-You can save data from a repeatable or child element in a form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document. You can also use the `root_doc` expression type to reference parent properties. This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide):
+You can save multiple rows per case/form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document.
+You can also use the `root_doc` expression type to reference parent properties.
+This can be combined with the `iterator` expression type to do complex data source transforms.
+This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
+There are also additional examples in the [examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md):
 
 ```
 {

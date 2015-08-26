@@ -479,11 +479,9 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
                 form.add_stuff_to_xform(xform)
-                if settings.DEBUG and False:
-                    xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormValidationError as e:
+        except XFormException as e:
             messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
@@ -2744,7 +2742,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()

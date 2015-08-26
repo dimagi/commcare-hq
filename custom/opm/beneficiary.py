@@ -1034,7 +1034,7 @@ class LongitudinalConditionsMet(ConditionsMet):
                 form = sorted(forms, key=lambda form: form.received_on)[-1]
                 setattr(self, form_prop, form.form.get(form_prop, EMPTY_FIELD))
                 setattr(self, "weight_this_month_%s" % str(idx),
-                        form.form.get('child%s_child_growthmon' % str(idx), EMPTY_FIELD))
+                        form.form.get('child%s_weight' % str(idx), EMPTY_FIELD))
         self.one = format_bool(self.preg_attended_vhnd)
         self.two = format_bool(self.preg_weighed_trimestered(6))
         self.two_two = format_bool(self.preg_weighed_trimestered(9))
