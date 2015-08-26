@@ -245,15 +245,47 @@ In the example below, the indicator is inside a form group question called "impa
                 }
             },
             "expression_if_false":{
-                "value_expression":{
-                    "type":"property_name",
-                    "property_name":"name"
+                "type":"conditional",
+                "test":{
+                    "operator":"eq",
+                    "expression":{
+                        "type":"related_doc",
+                        "value_expression":{
+                            "type":"property_name",
+                            "property_name":"doc_type"
+                        },
+                        "related_doc_type":"CouchUser",
+                        "doc_id_expression":{
+                            "type":"property_name",
+                            "property_name":"owner_id"
+                        }
+                    },
+                    "type":"boolean_expression",
+                    "property_value":"CouchUser",
                 },
-                "type":"related_doc",
-                "related_doc_type":"Location",
-                "doc_id_expression":{
-                    "type":"property_name",
-                    "property_name":"owner_id"
+                "expression_if_true":{
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"username"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"CouchUser",
+                    "doc_id_expression":{
+                        "type":"property_name",
+                        "property_name":"owner_id"
+                    }
+                },
+                "expression_if_false":{
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"name"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"Location",
+                    "doc_id_expression":{
+                        "type":"property_name",
+                        "property_name":"owner_id"
+                    }
                 }
             }
         }
