@@ -33,7 +33,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .dbaccessors import users_have_locations
+from .dbaccessors import users_have_locations, get_all_users_with_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -835,5 +835,11 @@ def unassign_users(request, domain):
     """
     Unassign all users from their locations.  This is for downgraded domains.
     """
+    for user in get_all_users_with_locations(domain):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()
+
     fallback_url = reverse('users_default', args=[domain])
     return HttpResponseRedirect(request.POST.get('redirect', fallback_url))

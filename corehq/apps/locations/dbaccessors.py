@@ -50,3 +50,15 @@ def users_have_locations(domain):
         endkey=[domain, {}],
         reduce=True,
     ).one())
+
+
+def get_all_users_with_locations(domain):
+    from corehq.apps.users.models import CouchUser
+    results = CouchUser.get_db().view(
+        'locations/users_by_location_id',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+        reduce=False,
+    )
+    return (CouchUser.wrap_correctly(res['doc']) for res in results)
