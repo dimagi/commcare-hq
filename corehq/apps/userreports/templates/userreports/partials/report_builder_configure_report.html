@@ -106,7 +106,7 @@
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
-            this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
+            this.formatOptions = ko.observableArray(["Choice", "Date"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
