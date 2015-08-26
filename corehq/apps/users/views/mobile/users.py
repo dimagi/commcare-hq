@@ -741,7 +741,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'username': user.raw_username,
             'customFields': user_data,
-            'name': user.full_name,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
             'mark_activated': False,
@@ -857,7 +858,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = {}
             for k, v in user_data.get('customFields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in ['username', 'password', 'password_2']:
+            for f in ['username', 'password', 'first_name', 'last_name']:
                 form_data[f] = user_data[f]
             form_data['domain'] = self.domain
             self.request.POST = form_data
@@ -868,16 +869,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         if self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
 
-            # todo location_id ??
-
             username = self.new_mobile_worker_form.cleaned_data['username']
             password = self.new_mobile_worker_form.cleaned_data['password']
+            first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+            last_name = self.new_mobile_worker_form.cleaned_data['last_name']
 
             couch_user = CommCareUser.create(
                 self.domain,
                 format_username(username, self.domain),
                 password,
                 device_id="Generated from HQ",
+                first_name=first_name,
+                last_name=last_name,
                 user_data=self.custom_data.get_data_to_save(),
             )
 
