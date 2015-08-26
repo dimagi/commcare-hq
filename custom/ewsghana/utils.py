@@ -13,7 +13,7 @@ from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
@@ -182,6 +182,20 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
+
+
+def bootstrap_web_user(domain, username, password, email, location, user_data, phone_number):
+    web_user = WebUser.create(
+        domain=domain,
+        username=username,
+        password=password,
+        email=email
+    )
+    web_user.user_data = user_data
+    web_user.set_location(domain, location)
+    web_user.save_verified_number(domain, phone_number, verified=True, backend_id=TEST_BACKEND)
+    web_user.save()
+    return web_user
 
 REORDER_LEVEL = Decimal("1.5")
 

@@ -22,8 +22,6 @@ from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stocko
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
-from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
-    third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
@@ -59,12 +57,6 @@ class RemindersTester(BaseRemindersTester):
     post_url = 'reminders_tester'
 
     reminders = {
-        'first_soh': first_soh_process_user,
-        'second_soh': second_soh_process_user,
-        'third_soh': third_soh_process_users_and_facilities,
-        'stockout': stockout_process_user,
-        'rrirv': rrirv_process_user,
-        'visit_website': visit_website_process_user,
         'alert_on_going_reporting': on_going_process_user,
         'alert_on_going_stockouts': on_going_stockout_process_user,
         'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
