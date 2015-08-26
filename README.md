@@ -253,7 +253,7 @@ You can change that to wherever you clone the git repo for 1.7.3, or leave it
 as is and follow this accordingly:
 
     1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
-    2. In the `lessc` repo `git reset HEAD --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e`
+    2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e`
     to go straight to the 1.7.3 release. Experiment with newer releases at will.
     3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
 
