@@ -483,7 +483,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
                     xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormValidationError as e:
+        except XFormException as e:
             messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:

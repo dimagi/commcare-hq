@@ -1,5 +1,6 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -95,6 +96,11 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         xform = XForm(before)
         xform.strip_vellum_ns_attributes()
         self.assertXmlEqual(xform.render(), after)
+
+    def test_empty_itext(self):
+        self.app.build_langs = ['fra']  # lang that's not in the form
+        with self.assertRaises(XFormException):
+            self.form.render_xform()
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
