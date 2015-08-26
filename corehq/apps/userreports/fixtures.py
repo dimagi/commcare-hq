@@ -66,7 +66,7 @@ class ReportFixturesProvider(object):
         return [root]
 
     def _report_config_to_fixture(self, report_config, user):
-        report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
+        report_elem = ElementTree.Element('report', attrib={'id': report_config.config_id})
         report = ReportConfiguration.get(report_config.report_id)
         report_elem.append(self._element('name', report.title))
         report_elem.append(self._element('description', report.description))
