@@ -689,8 +689,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
-            return False
         return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
 
     @property
