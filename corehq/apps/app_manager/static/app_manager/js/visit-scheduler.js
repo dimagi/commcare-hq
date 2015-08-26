@@ -104,18 +104,21 @@ var VisitScheduler = (function () {
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved schedule settings",
             save: function () {
-                var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
-                self.saveButton.ajax({
-                    type: 'post',
-                    url: self.save_url,
-                    data: {
-                        schedule: schedule
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
-                    }
-                });
+                var isValid = self.validate();
+                if (isValid){
+                    var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
+                    self.saveButton.ajax({
+                        type: 'post',
+                        url: self.save_url,
+                        data: {
+                            schedule: schedule
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                        }
+                    });
+                }
             }
         });
 
@@ -130,9 +133,35 @@ var VisitScheduler = (function () {
             self.saveButton.fire('change');
         };
 
+        self.validate = function(){
+            var errors = 0;
+            var required = self.home.find(":required").not(":disabled");
+            required.each(function(i, req){
+                var $req = $(req);
+                if ($req.val().trim().length === 0){
+                    $req.closest(".control-group").addClass("error");
+                    $req.siblings(".error-text").show();
+                    errors += 1;
+                }
+                else{
+                    $req.closest(".control-group").removeClass("error");
+                    $req.siblings(".error-text").hide();
+                }
+            });
+
+            if (errors || !self.formSchedule.scheduleEnabled()){
+                self.home.find("#form-errors").show();
+                return false;
+            }
+            else{
+                self.home.find("#form-errors").hide();
+                return true;
+            }
+
+        };
+
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
         self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
-
 
         self.init = function () {
             _.defer(function () {
@@ -143,9 +172,13 @@ var VisitScheduler = (function () {
                      .on('click', 'a:not(.header)', self.change)
                      .on('change', 'input[type="checkbox"]', self.change);
 
-                // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#visit-scheduler input').on('textchange', self.change);
+                self.applyGlobalEventHandlers();
             });
+        };
+
+        self.applyGlobalEventHandlers = function(){
+            // https://gist.github.com/mkelly12/424774/#comment-92080
+            $('#visit-scheduler input').on('textchange', self.change);
         };
     };
 
