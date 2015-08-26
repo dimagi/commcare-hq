@@ -5,6 +5,7 @@ import datetime
 
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.django.email import send_HTML_email
 
 
 logger = get_task_logger(__name__)
@@ -18,5 +19,18 @@ def build_las_month_MALT():
         last_month = first_of_this_month - datetime.timedelta(days=1)
         return DateSpan.from_month(last_month.month, last_month.year)
 
-    generator = MALTTableGenerator([_last_month_datespan()])
+    last_month = _last_month_datespan()
+    generator = MALTTableGenerator([last_month])
     generator.build_table()
+
+    data_team_email = 'jwackman@dimagi.com'
+    message = 'MALT generation for month {} is now ready. To download go to'\
+              ' http://www.commcarehq.org/hq/admin/download_malt/'.format(
+                  last_month
+              )
+    send_HTML_email(
+        'MALT is ready',
+        data_team_email,
+        message,
+        text_content=message
+    )
