@@ -1,7 +1,18 @@
+from corehq.apps.app_manager.tests import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import FormActionCondition, OpenSubCaseAction, UpdateCaseAction, ParentSelect, \
-    PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application, CaseIndex
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    CaseIndex,
+    FormActionCondition,
+    LoadUpdateAction,
+    Module,
+    OpenSubCaseAction,
+    ParentSelect,
+    PreloadAction,
+    UpdateCaseAction,
+)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
@@ -139,6 +150,37 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self._load_case(m1f0, 'guppy')
         self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums'), self.app.create_suite(), "./entry")
 
+    def test_form_case_id(self):
+        """
+        case_id should be renamed in an advanced submodule form
+        """
+        self.module_0.case_type = 'gold-fish'
+        self.module_0.new_form('Form', None)
+        self.module_1.case_type = 'guppy'
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_1.new_form('Form', None)
+
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m0f0.actions.update_case.condition.type = 'always'
+
+        m1f0 = self.module_1.get_form(0)
+        m1f0.source = self.get_xml('original_form', override_path=('data',))
+        self._load_case(m1f0, 'gold-fish')
+        self._load_case(m1f0, 'guppy')
+
+        m1f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.module_1.case_type,
+            case_tag='load_1',
+            case_properties={
+                'question1': '/data/question1',
+                'parent/question1': '/data/question1'
+            }
+        ))
+
+        self.assertXmlEqual(self.get_xml('advanced_submodule_xform'), m1f0.render_xform())
+
 
 class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     child_module_class = Module
@@ -230,6 +272,41 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             "./entry"
         )
 
+    def test_form_case_id(self):
+        """
+        case_id should be renamed in a basic submodule form
+        """
+        self.module_0.case_type = 'gold-fish'
+        self.module_0.new_form('Form', None)
+        self.module_1.case_type = 'guppy'
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_1.new_form('Form', None)
+
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m0f0.actions.update_case.condition.type = 'always'
+
+        m0f0.actions.subcases.append(OpenSubCaseAction(
+            case_type='guppy',
+            case_name="/data/question1",
+            condition=FormActionCondition(type='always')
+        ))
+
+        m1f0 = self.module_1.get_form(0)
+        m1f0.source = self.get_xml('original_form', override_path=('data',))
+        self._load_case(m1f0, 'gold-fish')
+        self._load_case(m1f0, 'guppy', parent_module=self.module_0)
+
+        m1f0.requires = 'case'
+        m1f0.actions.update_case = UpdateCaseAction(update={
+            'question1': '/data/question1',
+            'parent/question1': '/data/question1',
+        })
+        m1f0.actions.update_case.condition.type = 'always'
+
+        self.assertXmlEqual(self.get_xml('basic_submodule_xform'), m1f0.render_xform())
+
 
 class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
     """
@@ -269,3 +346,39 @@ class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
             self.app.create_suite(),
             "./entry"
         )
+
+
+class AdvancedSubModuleTests(SimpleTestCase, TestFileMixin):
+    file_path = ('data', 'suite')
+
+    def test_form_rename_session_vars(self):
+        """
+        The session vars in the entries for the submodule should match the parent and avoid naming conflicts.
+        """
+        factory = AppFactory(build_version='2.9')
+        reg_goldfish_mod, reg_goldfish_form = factory.new_basic_module('reg_goldfish', 'gold-fish')
+        factory.form_opens_case(reg_goldfish_form)
+        reg_guppy_mod, reg_guppy_form = factory.new_advanced_module('reg_guppy', 'guppy')
+        factory.form_updates_case(reg_guppy_form, 'gold-fish')
+        factory.form_opens_case(reg_guppy_form, 'guppy', is_subcase=True)
+        upd_goldfish_mod, upd_goldfish_form = factory.new_advanced_module(
+            'upd_goldfish',
+            'gold-fish',
+        )
+        factory.form_updates_case(upd_goldfish_form)
+        # changing this case tag should result in the session var in the submodule entry being updated to match it
+        upd_goldfish_form.actions.load_update_cases[0].case_tag = 'load_goldfish_renamed'
+
+        upd_guppy_mod, upd_guppy_form = factory.new_advanced_module(
+            'upd_guppy',
+            'guppy',
+            parent_module=upd_goldfish_mod,
+        )
+        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',))
+        factory.form_updates_case(upd_guppy_form, 'gold-fish')
+        factory.form_updates_case(upd_guppy_form, 'guppy', parent_case_type='gold-fish')
+        # making this case tag the same as the one in the parent module should mean that it will also get changed
+        # to avoid conflicts
+        upd_guppy_form.actions.load_update_cases[1].case_tag = 'load_goldfish_renamed'
+
+        self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())

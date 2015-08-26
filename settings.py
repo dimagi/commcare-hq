@@ -687,6 +687,7 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'tastypie',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -901,6 +902,11 @@ COMPRESS_PRECOMPILERS = (
    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+
+LESS_B3_PATHS = {
+    'variables': '../../../style/less/bootstrap3/includes/variables',
+    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+}
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
