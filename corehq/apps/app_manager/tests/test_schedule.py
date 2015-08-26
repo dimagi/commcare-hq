@@ -466,3 +466,31 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
                                      .format(form_id)).render()),
             '.'
         )
+
+    def test_next_visit_date(self):
+        """ add next_visit_date to each form """
+        next_visit_date_partial = u"""
+        <partial>
+            <bind nodeset="/data/next_visit_date"
+                  calculate="date(min({form_names}))"
+            {xmlns}/>
+        </partial>
+        """
+        self._fetch_sources()
+        self._apply_schedule_phases()
+        all_forms = [self.form_1, self.form_2, self.form_3]
+        xform_1 = self.form_1.wrapped_xform()
+        self.form_1.add_stuff_to_xform(xform_1)
+        form_names = [u"/data/next_{}".format(f.schedule_form_id) for f in all_forms]
+
+        self.assertXmlPartialEqual(
+            next_visit_date_partial.format(form_names=",".join(form_names), xmlns=self.xmlns),
+            xform_1.model_node.find(u'./bind[@nodeset="/data/next_visit_date"]').render(),
+            '.'
+        )
+
+        for form in all_forms:
+            self.assertTrue(
+                len(xform_1.model_node.find(u"./bind[@nodeset='/data/next_{}']"
+                                            .format(form.schedule_form_id)).render())
+                > 0)

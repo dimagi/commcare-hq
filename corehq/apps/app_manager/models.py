@@ -2647,7 +2647,6 @@ class AdvancedModule(ModuleBase):
         """
         return self._uses_case_type(USERCASE_TYPE)
 
-
     @property
     def phase_anchors(self):
         return [phase.anchor for phase in self.schedule_phases]
