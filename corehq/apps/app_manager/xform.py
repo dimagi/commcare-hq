@@ -1461,7 +1461,7 @@ class XForm(WrappedNode):
         has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
 
         adjusted_datums = {}
-        if module.root_module and module.root_module.module_type == 'basic':
+        if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
             from corehq.apps.app_manager.suite_xml import SuiteGenerator
