@@ -117,26 +117,34 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
-            if key == 'phone_numbers' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.phone_numbers = []
-                for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
+            if getattr(bundle.obj, key, None) != value:
+                if key == 'phone_numbers':
+                    bundle.obj.phone_numbers = []
+                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
 
-                    bundle.obj.add_phone_number(strip_plus(phone_number))
-                    if idx == 0:
-                        bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        if idx == 0:
+                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        should_save = True
+                elif key == 'groups':
+                    bundle.obj.set_groups(bundle.data.get("groups", []))
                     should_save = True
-            if key == 'groups' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.set_groups(bundle.data.get("groups", []))
-                should_save = True
-            elif getattr(bundle.obj, key, None) != value:
-                setattr(bundle.obj, key, value)
-                should_save = True
+                elif key in ['email', 'username']:
+                    setattr(bundle.obj, key, value.lower())
+                    should_save = True
+                else:
+                    setattr(bundle.obj, key, value)
+                    should_save = True
         return should_save
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
-            bundle.obj = CommCareUser.create(domain=kwargs['domain'], username=bundle.data['username'],
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = CommCareUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()
@@ -180,23 +188,31 @@ class WebUserResource(v0_1.WebUserResource):
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
-            if key == 'phone_numbers' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.phone_numbers = []
-                for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                    bundle.obj.add_phone_number(strip_plus(phone_number))
-                    if idx == 0:
-                        bundle.obj.set_default_phone_number(strip_plus(phone_number))
+            if getattr(bundle.obj, key, None) != value:
+                if key == 'phone_numbers':
+                    bundle.obj.phone_numbers = []
+                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
+                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        if idx == 0:
+                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        should_save = True
+                elif key in ['email', 'username']:
+                    setattr(bundle.obj, key, value.lower())
                     should_save = True
-            elif getattr(bundle.obj, key, None) != value:
-                setattr(bundle.obj, key, value)
-                should_save = True
+                else:
+                    setattr(bundle.obj, key, value)
+                    should_save = True
         return should_save
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
             self._meta.domain = kwargs['domain']
-            bundle.obj = WebUser.create(domain=kwargs['domain'], username=bundle.data['username'],
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = WebUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()

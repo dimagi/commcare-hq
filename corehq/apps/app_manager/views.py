@@ -531,6 +531,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_form_filtering': not isinstance(form, CareplanForm),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if isinstance(form, CareplanForm):
@@ -888,6 +889,10 @@ def get_module_view_context_and_template(app, module):
 
     # make sure all modules have unique ids
     app.ensure_module_unique_ids(should_save=True)
+
+    def case_list_form_allowed(allow=True):
+        return allow and module.all_forms_require_a_case() and not module.put_in_root
+
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
@@ -924,7 +929,7 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': module.all_forms_require_a_case(),
+            'case_list_form_allowed': case_list_form_allowed(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -957,12 +962,15 @@ def get_module_view_context_and_template(app, module):
     else:
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
+        # don't allow this for modules with parent selection until this mobile bug is fixed:
+        # http://manage.dimagi.com/default.asp?178635
+        allow_case_list_form = case_list_form_allowed(not module.parent_select.active)
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': module.all_forms_require_a_case() and not module.parent_select.active,
+            'case_list_form_allowed': allow_case_list_form,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and
@@ -1060,6 +1068,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
+        from corehq.apps.style.utils import set_bootstrap_version3
+        from crispy_forms.utils import set_template_pack
+        set_bootstrap_version3()
+        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 
@@ -2732,7 +2744,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()
@@ -2854,6 +2866,8 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_form_versions(None)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -2864,6 +2878,8 @@ def download_media_suite(request, domain, app_id):
     See Application.create_media_suite
 
     """
+    if not request.app.copy_of:
+        request.app.set_media_versions(None)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -2914,6 +2930,9 @@ def download_jad(request, domain, app_id):
 
     """
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -2940,6 +2959,9 @@ def download_jar(request, domain, app_id):
     """
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
+    if not app.copy_of:
+        app.set_form_versions(None)
+        app.set_media_versions(None)
     _, jar = app.create_jadjar()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)

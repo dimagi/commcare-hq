@@ -1,9 +1,18 @@
 import json
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
+from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from dimagi.ext.jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    IntegerProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    StringProperty,
+)
 from jsonobject.base import DefaultProperty
-from sqlagg import CountUniqueColumn, SumColumn
+from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
 from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
@@ -20,7 +29,11 @@ from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
+    'avg': MeanColumn,
     'count_unique': CountUniqueColumn,
+    'count': CountColumn,
+    'min': MinColumn,
+    'max': MaxColumn,
     'month': MonthColumn,
     'sum': SumColumn,
     'simple': SimpleColumn,
@@ -136,6 +149,7 @@ class FieldColumn(ReportColumn):
 class ExpandedColumn(ReportColumn):
     type = TypeProperty('expanded')
     field = StringProperty(required=True)
+    max_expansion = IntegerProperty(default=DEFAULT_MAXIMUM_EXPANSION)
 
     @classmethod
     def wrap(cls, obj):

@@ -48,18 +48,22 @@ branches:
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-  - languageMedia # Sravan 6/10
+#  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
+  - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
-#  - icds/scheduler # Farid 8/6
+  - due-list+icds/scheduler # Farid 8/20
+  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - due-list # TS 7/30
   - django17 # J$ 8/5
   - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
-#  - optmize-deploy+knockout-js # Ben 8/18
+  - optmize-deploy+knockout-js2 # Ben 8/24
   - knockout-js # Ben 8/17
-#  - optmize-deploy # Ben 8/18
+  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
+  - reports-n-weeks # Nick P 8/24
+  - new-mobile-workers # Biyeun 8/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

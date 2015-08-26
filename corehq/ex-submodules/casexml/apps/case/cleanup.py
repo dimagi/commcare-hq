@@ -41,6 +41,36 @@ def close_case(case_id, domain, user):
     return submit_case_blocks([case_block], domain, username, user_id)
 
 
+def _get_actions_from_forms(sorted_forms, case_id):
+    case_actions = []
+    domain = None
+    for form in sorted_forms:
+        if domain is None:
+            domain = form.domain
+        assert form.domain == domain
+
+        case_updates = get_case_updates(form)
+        filtered_updates = [u for u in case_updates if u.id == case_id]
+        for u in filtered_updates:
+            case_actions.extend(u.get_case_actions(form))
+    return case_actions, domain
+
+
+def rebuild_case_from_actions(case, actions, all_form_ids):
+    reset_state(case)
+    # in addition to resetting the state, also manually clear xform_ids and actions
+    # since we're going to rebuild these from the forms
+    case.xform_ids = []
+
+    case.actions = actions
+    # call "rebuild" on the case, which should populate xform_ids
+    # and re-sort actions if necessary
+    case.rebuild(strict=False)
+    # don't swallow stock-only xform_ids during case rebuilds
+    case.xform_ids = case.xform_ids + [form_id for form_id in all_form_ids
+                                       if form_id not in case.xform_ids]
+
+
 def rebuild_case(case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
@@ -56,30 +86,16 @@ def rebuild_case(case_id):
         case._id = case_id
         found = False
 
-    reset_state(case)
-    # in addition to resetting the state, also manually clear xform_ids and actions
-    # since we're going to rebuild these from the forms
-    case.xform_ids = []
-    case.actions = []
-
     forms = get_case_forms(case_id)
     filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
     sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
-    for form in sorted_forms:
-        if not found and case.domain is None:
-            case.domain = form.domain
-        assert form.domain == case.domain
 
-        case_updates = get_case_updates(form)
-        filtered_updates = [u for u in case_updates if u.id == case_id]
-        for u in filtered_updates:
-            case.actions.extend(u.get_case_actions(form))
+    actions, domain = _get_actions_from_forms(sorted_forms, case_id)
 
-    # call "rebuild" on the case, which should populate xform_ids
-    # and re-sort actions if necessary
-    case.rebuild(strict=False, xforms={f._id: f for f in sorted_forms})
-    case.xform_ids = case.xform_ids + [f._id for f in sorted_forms if f._id not in case.xform_ids]
+    if not found and case.domain is None:
+        case.domain = domain
 
+    rebuild_case_from_actions(case, actions, [f.get_id for f in sorted_forms])
     # todo: should this move to case.rebuild?
     if not case.xform_ids:
         if not found:

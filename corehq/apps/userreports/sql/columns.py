@@ -35,9 +35,9 @@ def column_to_sql(column):
 
 def get_expanded_column_config(data_source_configuration, column_config, lang):
     """
-    Given a ReportColumn, return a list of DatabaseColumn objects. Each DatabaseColumn
+    Given an ExpandedColumn, return a list of DatabaseColumn objects. Each DatabaseColumn
     is configured to show the number of occurrences of one of the values present for
-    the ReportColumn's field.
+    the ExpandedColumn's field.
 
     This function also adds warnings to the column_warnings parameter.
 
@@ -46,11 +46,10 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
     :param column_warnings:
     :return:
     """
-    MAXIMUM_EXPANSION = 10
     column_warnings = []
     try:
         vals, over_expansion_limit = _get_distinct_values(
-            data_source_configuration, column_config, MAXIMUM_EXPANSION
+            data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
         return SqlColumnConfig([], warnings=[unicode(e)])
@@ -61,15 +60,18 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
                 u'Expansion limited to {max} distinct values.'
             ).format(
                 header=column_config.get_header(lang),
-                max=MAXIMUM_EXPANSION
+                max=column_config.max_expansion,
             ))
         return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
-def _get_distinct_values(data_source_configuration, column_config, expansion_limit=10):
+DEFAULT_MAXIMUM_EXPANSION = 10
+
+
+def _get_distinct_values(data_source_configuration, column_config, expansion_limit=DEFAULT_MAXIMUM_EXPANSION):
     """
     Return a tuple. The first item is a list of distinct values in the given
-    ReportColumn no longer than expansion_limit. The second is a boolean which
+    ExpandedColumn no longer than expansion_limit. The second is a boolean which
     is True if the number of distinct values in the column is greater than the
     limit.
 
@@ -113,7 +115,7 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
 
 def _expand_column(report_column, distinct_values, lang):
     """
-    Given a ReportColumn, return a list of DatabaseColumn objects. Each column
+    Given an ExpandedColumn, return a list of DatabaseColumn objects. Each column
     is configured to show the number of occurrences of one of the given distinct_values.
 
     :param report_column:
@@ -121,17 +123,17 @@ def _expand_column(report_column, distinct_values, lang):
     :return:
     """
     columns = []
-    for val in distinct_values:
+    for index, val in enumerate(distinct_values):
         columns.append(DatabaseColumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             SumWhen(
                 report_column.field,
                 whens={val: 1},
                 else_=0,
-                alias=u"{}-{}".format(report_column.column_id, val),
+                alias=u"{}-{}".format(report_column.column_id, index),
             ),
             sortable=False,
-            data_slug=u"{}-{}".format(report_column.column_id, val),
+            data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),
             help_text=report_column.description
         ))

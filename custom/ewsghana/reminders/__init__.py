@@ -29,3 +29,6 @@ RRIRV_REMINDER = "Dear %(name)s, have you submitted your RRIRV forms this month?
 WEB_REMINDER = "Dear %(name)s, you have not visited commcarehq.org in a long time. " \
                "Please log in to find up-to-date info about stock availability and bottlenecks in Ghana."
 RECEIPT_CONFIRM = 'Thank you, you reported receipts for %(products)s.'
+
+ERROR_MESSAGE = 'Error! You submitted increases in stock levels of {products_list}' \
+                ' without corresponding receipts. Please contact your DHIO or RHIO for assistance.'

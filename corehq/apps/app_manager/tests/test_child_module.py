@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase
-from mock import patch
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import FormActionCondition, OpenSubCaseAction, UpdateCaseAction, ParentSelect, \
     PreloadAction, Module, LoadUpdateAction, AdvancedModule, Application
@@ -24,11 +23,7 @@ class ModuleAsChildTestBase(TestFileMixin):
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
 
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-
     def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, self.app.domain, NAMESPACE_DOMAIN)
 
     def _load_case(self, child_module_form, case_type, parent_module=None):
@@ -315,7 +310,6 @@ class UserCaseOnlyModuleAsChildTest(BasicModuleAsChildTest):
 
     def setUp(self):
         super(UserCaseOnlyModuleAsChildTest, self).setUp()
-        self.is_usercase_in_use_mock.return_value = True
 
     def test_child_module_session_datums_added(self):
         self.module_1.root_module_id = self.module_0.unique_id
