@@ -33,6 +33,7 @@ $(function () {
     });
     mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
     mobileWorkerApp.constant('customFieldNames', {{ custom_field_names|JSON }});
+    mobileWorkerApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
     mobileWorkerApp.constant('paginationCustomData', {
         customFormFieldNames: {{ custom_field_names|JSON }},
         showDeactivatedUsers: false,
@@ -297,7 +298,6 @@ $(function () {
                         <select class="form-control"
                                 ng-change="pageChanged()"
                                 ng-model="limit"
-                                ng-init="limit = {{ default_limit }}"
                                 ng-options="pl.value as pl.key for pl in paginationLimits">
                         </select>
                     </div>
