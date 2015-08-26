@@ -816,6 +816,10 @@ def child_locations_for_select2(request, domain):
 
 
 class DowngradeLocationsView(BaseDomainView):
+    """
+    This page takes the place of the location pages if a domain gets
+    downgraded, but still has users assigned to locations.
+    """
     template_name = 'locations/downgrade_locations.html'
     urlname = 'downgrade_locations'
 
