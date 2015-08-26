@@ -140,7 +140,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         bad_strings = ["\r", "\n", "%0a", "%0d", "Content-Type:", "bcc:", "to:", "cc:"]
         replacement = "-"
         for i in bad_strings:
-            subject.replace(i, replacement)
+            subject = subject.replace(i, replacement)
         return subject
 
 
