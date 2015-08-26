@@ -24,6 +24,7 @@ from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -32,6 +33,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .dbaccessors import users_have_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -817,6 +819,21 @@ class DowngradeLocationsView(BaseDomainView):
     template_name = 'locations/downgrade_locations.html'
     urlname = 'downgrade_locations'
 
+    def dispatch(self, *args, **kwargs):
+        if not users_have_locations(self.domain):  # irrelevant, redirect
+            redirect_url = reverse('users_default', args=[self.domain])
+            return HttpResponseRedirect(redirect_url)
+        return super(DowngradeLocationsView, self).dispatch(*args, **kwargs)
+
     @property
     def section_url(self):
         return self.page_url
+
+
+@domain_admin_required
+def unassign_users(request, domain):
+    """
+    Unassign all users from their locations.  This is for downgraded domains.
+    """
+    fallback_url = reverse('users_default', args=[domain])
+    return HttpResponseRedirect(request.POST.get('redirect', fallback_url))

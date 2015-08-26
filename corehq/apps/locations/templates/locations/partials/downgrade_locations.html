@@ -2,3 +2,9 @@
 {% load hq_shared_tags %}
 
 <h1>Locations have been downgraded.</h1>
+
+<form action="{% url "unassign_users" request.domain %}" method="POST">
+   <input type="hidden" name="redirect" value="{{ request.path }}">
+   <input value="{% trans "Unassign all users from locations" %}"
+          type="submit" class="btn btn-danger"></input>
+</form>
