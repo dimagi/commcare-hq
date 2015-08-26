@@ -270,12 +270,15 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
         raise ValueError('You can only use timeout '
                          'when not overriding the cache')
 
-    timeout = timeout or 5 * 60
+    timeout = timeout if timeout is not None else 5 * 60
     memoize_timeout = memoize_timeout or 10
 
     if cache is None:
-        cache = TieredCache([get_cache('django.core.cache.backends.locmem.LocMemCache', timeout=memoize_timeout),
-                             get_cache('default', timeout=timeout)])
+        caches = [get_cache('django.core.cache.backends.locmem.LocMemCache',
+                            timeout=memoize_timeout)]
+        if timeout != 0:
+            caches.append(get_cache('default', timeout=timeout))
+        cache = TieredCache(caches)
 
     def decorator(fn):
         helper = helper_class(fn, vary_on=vary_on, cache=cache)
