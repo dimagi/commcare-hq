@@ -2914,6 +2914,7 @@ class ReportAppConfig(DocumentSchema):
     filters = SchemaDictProperty(ReportAppFilter)
 
     _report = None
+    _index = None
 
     @property
     def report(self):
@@ -2924,7 +2925,7 @@ class ReportAppConfig(DocumentSchema):
 
     @property
     def uuid(self):
-        return str(hash(json.dumps(self.to_json(), sort_keys=True)))
+        return "{}-{}".format(self.report_id, str(self._index))
 
     @property
     def select_detail_id(self):
