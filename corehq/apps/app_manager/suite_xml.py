@@ -645,7 +645,7 @@ class DatumMeta(object):
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
-    type_regex = re.compile("\[@case_type='([\w_-]+)'\]")
+    type_regex = re.compile("\[@case_type='([\w-]+)'\]")
 
     def __init__(self, datum_id, nodeset, function):
         self.id = datum_id
