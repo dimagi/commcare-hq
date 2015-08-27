@@ -1,3 +1,5 @@
+from django.db import models
+
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
 
@@ -31,3 +33,9 @@ class HqDeploy(Document):
             limit=limit,
             include_docs=False
         ).all()
+
+
+class PillowCheckpointSeqStore(models.Model):
+    seq = models.TextField()
+    checkpoint_id = models.CharField(max_length=255, db_index=True)
+    date_updated = models.DateTimeField(auto_now=True)
