@@ -3,6 +3,8 @@ from pillowtop.utils import get_all_pillows
 
 from .models import PillowCheckpointSeqStore
 
+EPSILON = 100000
+
 
 def pillow_seq_store():
     for pillow in get_all_pillows():
