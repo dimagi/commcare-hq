@@ -77,7 +77,6 @@ from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download, absolute_reverse, json_error
-from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject, FileObject
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
