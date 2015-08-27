@@ -1280,6 +1280,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                 # only yield the Detail if it has Fields
                 return d
 
+    def get_datums_meta_for_form_generic(self, form):
+            if form.form_type == 'module_form':
+                datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            elif form.form_type == 'advanced_form':
+                datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+            else:
+                raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+                    form.form_type, form.unique_id
+                ))
+            return datums_meta
+
     def _add_action_to_detail(self, detail, module):
         # add form action to detail
         form = self.app.get_form(module.case_list_form.form_id)
@@ -1295,20 +1307,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
-        def get_datums_meta_for_form(form):
-            if form.form_type == 'module_form':
-                datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
-            elif form.form_type == 'advanced_form':
-                datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
-                datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
-            else:
-                raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
-                    form.form_type, form.unique_id
-                ))
-            return datums_meta
-
-        target_form_dm = get_datums_meta_for_form(form)
-        source_form_dm = get_datums_meta_for_form(module.get_form(0))
+        target_form_dm = self.get_datums_meta_for_form_generic(form)
+        source_form_dm = self.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta['requires_selection']:
                 # This is true for registration forms where the case being created is a subcase
@@ -2236,11 +2236,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 except FormNotFoundException:
                     pass
                 else:
-                    if form.form_type == 'module_form':
-                        datums_.extend(self.get_case_datums_basic_module(module_, form))
-                    elif form.form_type == 'advanced_form':
-                        datums_adv, _ = self.get_datum_meta_assertions_advanced(module_, form)
-                        datums_.extend(datums_adv)
+                    datums_.extend(self.get_datums_meta_for_form_generic(form))
 
             return datums_
 
