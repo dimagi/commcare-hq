@@ -116,21 +116,25 @@ def forms(domain, *args):
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
-def sms(domain, direction):
-    key = [domain, "SMSLog", direction]
-    row = get_db().view("sms/direction_by_domain",
-                        startkey=key,
-                        endkey=key + [{}]).one()
-    return row["value"] if row else 0
 
-
-def sms_in_last(domain, days=None):
+def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
+
+    if direction:
+        query = query.direction(direction)
 
     if days:
         query = query.received(date.today() - relativedelta(days=30))
 
     return query.run().total
+
+
+def sms(domain, direction):
+    return _sms_helper(domain, direction=direction)
+
+
+def sms_in_last(domain, days=None):
+    return _sms_helper(domain, days=days)
 
 
 def sms_in_last_bool(domain, days=None):
