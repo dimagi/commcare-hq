@@ -174,7 +174,8 @@ from corehq.apps.app_manager.models import (
     load_app_template,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    FixtureSelect,)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -479,11 +480,9 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
                 form.add_stuff_to_xform(xform)
-                if settings.DEBUG and False:
-                    xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormValidationError as e:
+        except XFormException as e:
             messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
@@ -820,12 +819,9 @@ def get_module_view_context_and_template(app, module):
     if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
-    child_case_types = set()
-    for m in app.get_modules():
-        if m.case_type == module.case_type:
-            child_case_types.update(m.get_child_case_types())
-    child_case_types = list(child_case_types)
+    subcase_types = list(app.get_subcase_types(module.case_type))
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
+    fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
 
     def get_parent_modules(case_type_):
         parent_types = builder.get_parent_types(case_type_)
@@ -859,7 +855,7 @@ def get_module_view_context_and_template(app, module):
             'sort_elements': module.case_details.short.sort_elements,
             'short': module.case_details.short,
             'long': module.case_details.long,
-            'child_case_types': child_case_types,
+            'subcase_types': subcase_types,
         }
         case_properties = builder.get_properties(case_type_)
         if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
@@ -879,10 +875,11 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 })
         else:
             item['parent_select'] = module.parent_select
+            item['fixture_select'] = module.fixture_select
             details = [item]
 
         return details
@@ -907,7 +904,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
                 {
                     'label': _('Task List'),
@@ -918,7 +915,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
             ],
         }
@@ -968,6 +965,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
+            'fixture_columns': fixture_columns,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': allow_case_list_form,
@@ -1818,7 +1816,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
-    and sort_elements.
+    fixture_select and sort_elements.
     """
     params = json_request(request.POST)
     detail_type = params.get('type')
@@ -1828,6 +1826,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
+    fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
@@ -1880,6 +1879,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+    if fixture_select is not None:
+        module.fixture_select = FixtureSelect.wrap(fixture_select)
 
     resp = {}
     app.save(resp)
@@ -2744,7 +2745,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()

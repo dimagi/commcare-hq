@@ -7,6 +7,7 @@ this more general and subclass for montly reports , but I'm holding off on
 that until we actually have another use case for it.
 """
 from collections import defaultdict, OrderedDict
+from itertools import chain
 import datetime
 import logging
 import pickle
@@ -23,6 +24,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
+from couchforms.models import XFormInstance
 from custom.common import ALL_OPTION
 from custom.opm.utils import numeric_fn
 
@@ -249,6 +251,9 @@ class SharedDataProvider(object):
         'stock_zntab',
     ]
 
+    def __init__(self, cases=None):
+        self.cases = cases
+
     def get_all_vhnd_forms(self):
         key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
         return get_db().view(
@@ -308,6 +313,19 @@ class SharedDataProvider(object):
             lambda vhnd_date: vhnd_date >= startdate and vhnd_date < enddate,
             [date for date in self._service_dates[owner_id][prop]],
         )
+
+    @property
+    @memoized
+    def forms_by_case(self):
+        assert self.cases is not None, \
+            "SharedDataProvider was not instantiated with cases"
+        all_form_ids = chain(*(case.xform_ids for case in self.cases))
+        forms_by_case = defaultdict(list)
+        for form in iter_docs(XFormInstance.get_db(), all_form_ids):
+            if form['xmlns'] in OPM_XMLNSs:
+                case_id = form['form']['case']['@case_id']
+                forms_by_case[case_id].append(XFormInstance.wrap(form))
+        return forms_by_case
 
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
@@ -556,6 +574,11 @@ class CaseReportMixin(object):
         return get_matching_users(self.awcs, self.gp, self.block)
 
     def get_rows(self):
+        return self.cases
+
+    @property
+    @memoized
+    def cases(self):
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -639,6 +662,12 @@ class CaseReportMixin(object):
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
+
+    @property
+    @memoized
+    def data_provider(self):
+        return SharedDataProvider(self.cases)
+
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):

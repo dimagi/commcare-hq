@@ -22,6 +22,7 @@
     window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
     window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
     window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
+    window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
@@ -79,9 +80,10 @@
                     langs: langs,
                     saveUrl: saveUrl,
                     parentModules: parentModules,
-                    childCaseTypes: detail.child_case_types,
+                    childCaseTypes: detail.subcase_types,
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
+                    fixtureSelect: detail.fixture_select,
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -263,7 +265,7 @@
                     <div class="controls">
                         <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
                         <span class="help-inline" id="case_type_error" style="display: none;">
-                            {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
                         </span>
                     </div>
                 </div>
