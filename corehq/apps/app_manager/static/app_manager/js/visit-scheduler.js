@@ -161,15 +161,13 @@ var VisitScheduler = (function () {
                 }
             });
 
-            if (errors || !self.formSchedule.scheduleEnabled()){
+            if (!self.formSchedule.scheduleEnabled() || !errors ){
+                self.home.find("#form-errors").hide();
+                return true;
+            }else{
                 self.home.find("#form-errors").show();
                 return false;
             }
-            else{
-                self.home.find("#form-errors").hide();
-                return true;
-            }
-
         };
 
         self.schedulePhase = SchedulePhase.wrap(params.phase, self);
