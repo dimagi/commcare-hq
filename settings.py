@@ -1304,6 +1304,9 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPFormIndicatorPillow',
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
+    'migrations': [
+        'corehq.apps.cleanup.pillows.DevicelogMigrationPillow',
+    ]
 }
 
 
