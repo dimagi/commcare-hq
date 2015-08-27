@@ -1000,9 +1000,119 @@ class JRResourceProperty(StringProperty):
 
 
 class NavMenuItemMediaMixin(DocumentSchema):
+    """
+        Language-specific icon and audio.
+        Properties are map of lang-code to filepath
+    """
+    media_image = SchemaDictProperty(JRResourceProperty)
+    media_audio = SchemaDictProperty(JRResourceProperty)
 
-    media_image = JRResourceProperty(required=False)
-    media_audio = JRResourceProperty(required=False)
+    @classmethod
+    def wrap(cls, data):
+        # ToDo - Remove after migration
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = data.get(media_attr, None)
+            if old_media and isinstance(old_media, basestring):
+                new_media = {'default': old_media}
+                data[media_attr] = new_media
+
+        return super(NavMenuItemMediaMixin, cls).wrap(data)
+
+    def _get_media_by_language(self, media_attr, lang, strict=False):
+        """
+        Return media-path for given language if one exists, else 1st path in the
+        sorted lang->media-path list
+
+        *args:
+            media_attr: one of 'media_image' or 'media_audio'
+            lang: language code
+        **kwargs:
+            strict: whether to return None if media-path is not set for lang or
+            to return first path in sorted lang->media-path list
+        """
+        assert media_attr in ('media_image', 'media_audio')
+
+        media_dict = getattr(self, media_attr)
+        if not media_dict:
+            return None
+        if lang in media_dict:
+            return media_dict[lang]
+        elif not strict:
+            # if the queried lang key doesn't exist,
+            # return the first in the sorted list
+            for lang, item in sorted(media_dict.items()):
+                return item
+
+    @property
+    def default_media_image(self):
+        # For older apps that were migrated
+        return self.icon_by_language('default')
+
+    @property
+    def default_media_audio(self):
+        # For older apps that were migrated
+        return self.audio_by_language('default')
+
+    def icon_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_image', lang, strict=strict)
+
+    def audio_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def _set_media(self, media_attr, lang, media_path):
+        """
+            Caller's responsibility to save doc.
+            Currently only called from the view which saves after all Edits
+        """
+        assert media_attr in ('media_image', 'media_audio')
+
+        media_dict = getattr(self, media_attr) or {}
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
+
+    def set_icon(self, lang, icon_path):
+        self._set_media('media_image', lang, icon_path)
+
+    def set_audio(self, lang, audio_path):
+        self._set_media('media_audio', lang, audio_path)
+
+    def _all_media_paths(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media_dict = getattr(self, media_attr) or {}
+        valid_media_paths = {media for media in media_dict.values() if media}
+        return list(valid_media_paths)
+
+    def all_image_paths(self):
+        return self._all_media_paths('media_image')
+
+    def all_audio_paths(self):
+        return self._all_media_paths('media_audio')
+
+    def icon_app_string(self, lang, for_default=False):
+        """
+        Return lang/app_strings.txt translation for given lang
+        if a path exists for the lang
+
+        **kwargs:
+            for_default: whether app_string is for default/app_strings.txt
+        """
+
+        if not for_default and self.icon_by_language(lang, strict=True):
+            return self.icon_by_language(lang, strict=True)
+
+        if for_default:
+            return self.icon_by_language(lang, strict=False)
+
+    def audio_app_string(self, lang, for_default=False):
+        """
+            see note on self.icon_app_string
+        """
+
+        if not for_default and self.audio_by_language(lang, strict=True):
+            return self.audio_by_language(lang, strict=True)
+
+        if for_default:
+            return self.audio_by_language(lang, strict=False)
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
@@ -1796,6 +1906,7 @@ class Module(ModuleBase):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
+            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module

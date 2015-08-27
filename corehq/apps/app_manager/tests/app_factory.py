@@ -119,6 +119,22 @@ class AppFactory(object):
 
             form.actions.open_cases.append(action)
 
+    @classmethod
+    def case_list_form_app_factory(cls):
+        factory = cls(build_version='2.9')
+
+        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
+        factory.form_updates_case(update_case_form)
+
+        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+        factory.form_opens_case(register_form)
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'New Case'
+        }
+        return factory
+
     @staticmethod
     def advanced_form_autoloads(form, mode, value_key, value_source=None):
         """See corehq.apps.app_manager.models.AutoSelectCase
