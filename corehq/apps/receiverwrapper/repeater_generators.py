@@ -38,7 +38,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
 
 @RegisterGenerator(CaseRepeater, 'case_json', 'JSON', is_default=False)
-class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         del payload_doc['actions']
         return json.dumps(payload_doc.to_json())
