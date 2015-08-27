@@ -13,7 +13,6 @@ try:
     from .test_errors import *
     from .test_adjust_datetimes import *
     from .test_dbaccessors import *
-    from .test_devicelog_pillow import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
