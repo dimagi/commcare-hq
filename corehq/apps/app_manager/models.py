@@ -755,7 +755,11 @@ class FormBase(DocumentSchema):
         else:
             return form
 
-    def _pre_delete_hook(self):
+    def pre_delete_hook(self):
+        raise NotImplementedError()
+
+    def pre_move_hook(self, from_module, to_module):
+        """ Called before a form is moved between modules or to a different position """
         raise NotImplementedError()
 
     def wrapped_xform(self):
@@ -2174,11 +2178,24 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return super(AdvancedForm, cls).wrap(data)
 
-    def _pre_delete_hook(self):
+    def pre_delete_hook(self):
         try:
-            self.get_phase().remove_form(self)
-        except (ScheduleError, TypeError, AttributeError):
+            self.disable_schedule()
+        except (ScheduleError, TypeError, AttributeError) as e:
+            logging.error("There was a {error} while running the pre_delete_hook on {form_id}. "
+                          "There is probably nothing to worry about, but you could check to make sure "
+                          "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
+
+    def pre_move_hook(self, from_module, to_module):
+        if from_module != to_module:
+            try:
+                self.disable_schedule()
+            except (ScheduleError, TypeError, AttributeError) as e:
+                logging.error("There was a {error} while running the pre_move_hook on {form_id}. "
+                              "There is probably nothing to worry about, but you could check to make sure "
+                              "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
+                pass
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -2255,9 +2272,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_phase(self):
         module = self.get_module()
-
-        if not module.has_schedule:
-            raise ScheduleError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
@@ -2791,7 +2805,6 @@ class AdvancedModule(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return self._uses_case_type(USERCASE_TYPE)
-
 
     @property
     def phase_anchors(self):
@@ -4655,7 +4668,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         record.save()
 
         try:
-            form._pre_delete_hook()
+            form.pre_delete_hook()
         except NotImplementedError:
             pass
 
@@ -4693,6 +4706,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         to_module = self.get_module(to_module_id)
         from_module = self.get_module(from_module_id)
+        try:
+            from_module.forms[j].pre_move_hook(from_module, to_module)
+        except NotImplementedError:
+            pass
         try:
             form = from_module.forms.pop(j)
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
