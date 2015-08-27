@@ -705,7 +705,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.default"
+    view = "corehq.apps.sms.views.compose_message"
 
     @property
     def is_viewable(self):
