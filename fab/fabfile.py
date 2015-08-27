@@ -624,9 +624,6 @@ def _deploy_without_asking():
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
-        # initial update of manifest to make sure we have no
-        # Offline Compression Issues as services restart
-        _execute_with_timing(update_manifest, soft=True)
 
         _execute_with_timing(clear_services_dir)
         set_supervisor_config()
