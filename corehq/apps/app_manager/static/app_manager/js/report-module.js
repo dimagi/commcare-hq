@@ -2,8 +2,16 @@
 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
 var select2Separator = "\u001F";
 
-var ReportModule = (function () {
+var makeUUID = function () {
+    var str = '';
+    // Composed of two 16-char strings
+    for(var i = 0; i < 2; i++) {
+        str += Math.random().toString(36).substring(2);
+    }
+    return str;
+};
 
+var ReportModule = (function () {
     function Config(dict) {
         var self = this;
 
@@ -207,7 +215,7 @@ var ReportModule = (function () {
         this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
     }
 
-    function ReportConfig(report_id, display, availableReportIds,
+    function ReportConfig(report_id, display, uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
@@ -216,6 +224,7 @@ var ReportModule = (function () {
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.uuid = uuid || makeUUID();
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
@@ -226,7 +235,8 @@ var ReportModule = (function () {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
-                header: self.fullDisplay
+                header: self.fullDisplay,
+                uuid: self.uuid
             };
         };
     }
@@ -291,6 +301,7 @@ var ReportModule = (function () {
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
+                options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
                 options.graph_configs,
