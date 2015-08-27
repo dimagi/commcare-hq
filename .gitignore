@@ -40,7 +40,6 @@ submodules/vellum/Vellum
 
 ptop*.txt
 ptop*.json
-couch_migrate*.txt
 
 /.coverage
 /coverage-report

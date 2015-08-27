@@ -91,8 +91,8 @@ class DevicelogMigrationPillowIntegrationTest(TestCase):
 
             1. Run copy_migrate to initially seed database. Pillow will be running but won't process until
             migration is finished
-            2. copy_migrate finishes. MigrationPillow updates its seq to the migration_seq and begins to
-            process new changes.
+            2. copy_migrate finishes. MigrationPillow updates its seq to the seq at the beginning of the
+            migrate and begins to process new changes.
         """
 
         to_add = 5
