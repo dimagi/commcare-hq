@@ -25,6 +25,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -111,6 +112,8 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
+
+_soft_assert_uuid = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
 
 
 def jsonpath_update(datum_context, value):
@@ -2982,8 +2985,15 @@ class ReportAppConfig(DocumentSchema):
     header = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
+    uuid = StringProperty(default='')
 
     _report = None
+
+    @classmethod
+    def wrap(cls, obj):
+        # todo: can remove once existing ReportAppConfig have been migrated
+        _soft_assert_uuid(obj.get('uuid'), 'Check uuids for apps containing UCR %s' % obj.report_id)
+        return super(ReportAppConfig, cls).wrap(obj)
 
     @property
     def report(self):
@@ -2991,10 +3001,6 @@ class ReportAppConfig(DocumentSchema):
         if self._report is None:
             self._report = ReportConfiguration.get(self.report_id)
         return self._report
-
-    @property
-    def uuid(self):
-        return str(hash(json.dumps(self.to_json(), sort_keys=True)))
 
     @property
     def select_detail_id(self):
