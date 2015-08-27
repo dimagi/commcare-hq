@@ -305,13 +305,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PAGINATE_WEB_USERS = StaticToggle(
-    'paginate_web_users',
-    'Paginate Web Users',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
