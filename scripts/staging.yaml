@@ -48,16 +48,13 @@ branches:
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-#  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
-  - reverseLanguageMedia # Sravan 6/10
+  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
+#  - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
   - due-list+icds/scheduler # Farid 8/20
   - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
-  - due-list # TS 7/30
-  - django17 # J$ 8/5
-  - extension_cases  # Norman 8/8
   - quickcache-user-roles  # Ethan 8/13
   - optmize-deploy+knockout-js2 # Ben 8/24
   - knockout-js # Ben 8/17
@@ -85,6 +82,5 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: 
-      - django18
+    branches: []
 
