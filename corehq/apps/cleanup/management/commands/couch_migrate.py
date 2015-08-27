@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from optparse import make_option
 
 from django.core.management.base import LabelCommand, CommandError
