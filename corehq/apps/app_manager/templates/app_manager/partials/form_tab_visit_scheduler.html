@@ -141,7 +141,7 @@
                             {% trans "Allow unscheduled visits" %}
                         </label>
                     </div>
-                    <div data-bind="foreach: {data: visits, afterRender: $parent.applyEventHandlers}">
+                    <div data-bind="foreach: {data: visits, afterRender: $parent.applyGlobalEventHandlers}">
                         <fieldset class="nested-fieldset">
                             <legend>
                                 <a href="#" data-bind="click: $parent.removeVisit">
