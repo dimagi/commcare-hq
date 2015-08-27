@@ -452,8 +452,8 @@ def update_code(use_current_release=False):
     # If not updating current release,  we are making a new release and thus have to do cloning
     # we should only ever not make a new release when doing a hotfix deploy
     if not use_current_release:
-        with cd(env.code_current):
-            if files.exists(env.code_current):
+        if files.exists(env.code_current):
+            with cd(env.code_current):
                 submodules = sudo("git submodule | awk '{ print $2 }'").split()
         with cd(env.code_root):
             if files.exists(env.code_current):
