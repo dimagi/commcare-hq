@@ -82,6 +82,5 @@ submodules:
   submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
-    branches: 
-      - django18
+    branches: []
 
