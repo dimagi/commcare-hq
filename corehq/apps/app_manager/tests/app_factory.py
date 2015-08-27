@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase
+    AutoSelectCase, CaseIndex
 
 
 class AppFactory(object):
@@ -91,7 +91,7 @@ class AppFactory(object):
             if parent_case_type:
                 parent_action = form.actions.load_update_cases[-1]
                 assert parent_action.case_type == parent_case_type
-                action.parent_tag = parent_action.case_tag
+                action.case_index = CaseIndex(tag=parent_action.case_tag)
 
             form.actions.load_update_cases.append(action)
 
@@ -115,7 +115,7 @@ class AppFactory(object):
                 name_path='/data/name'
             )
             if is_subcase:
-                action.parent_tag = form.actions.load_update_cases[-1].case_tag
+                action.case_indices = [CaseIndex(tag=form.actions.load_update_cases[-1].case_tag)]
 
             form.actions.open_cases.append(action)
 
