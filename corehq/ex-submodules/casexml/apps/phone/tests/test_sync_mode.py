@@ -1141,7 +1141,10 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        # both cases should sync to original user with updated ownership / edits
+
+        # at this point both cases are assigned to the other user so the original user
+        # should not have them. however, the first sync should send them down (with new ownership)
+        # so that they can be purged.
         assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
@@ -1159,7 +1162,6 @@ class MultiUserSyncTest(SyncBaseTest):
             update={"other_greeting": "something different"}, 
             version=V2).as_xml()
         self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
-        
         
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
