@@ -182,6 +182,9 @@ class WrappedNode(object):
     def __nonzero__(self):
         return self.xml is not None
 
+    def __len__(self):
+        return len(self.xml) if self.exists() else 0
+
     @property
     def tag_xmlns(self):
         return self.tag.split('}')[0][1:]
@@ -557,6 +560,11 @@ class XForm(WrappedNode):
         return list(set([n.text for n in nodes]))
 
     @property
+    def odk_intents(self):
+        nodes = self.findall('{h}head/{odk}intent')
+        return list(set(n.attrib.get('class') for n in nodes))
+
+    @property
     def text_references(self):
         nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
@@ -692,6 +700,9 @@ class XForm(WrappedNode):
             if lang not in whitelist:
                 self.itext_node.remove(trans_node.xml)
                 changes = True
+
+        if changes and not len(self.itext_node):
+            raise XFormException(_(u"Form does not contain any translations for any of the build languages"))
 
         if changes:
             self._reset_translations_cache()
@@ -1277,14 +1288,14 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = session_var(form.session_var_for_action('open_case'))
+                case_id_xpath = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
-                    case_id=case_id
+                    case_id=case_id_xpath
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
@@ -1292,22 +1303,27 @@ class XForm(WrappedNode):
                 # This is a submodule. case_id will have changed to avoid a clash with the parent case.
                 # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
                 case_id = '_'.join((CASE_ID, form.get_case_type()))
-                session_case_id = CaseIDXPath(session_var(case_id))
+                case_id_xpath = CaseIDXPath(session_var(case_id))
                 self.add_bind(
                     nodeset="case/@case_id",
-                    calculate=session_case_id,
+                    calculate=case_id_xpath,
                 )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=SESSION_CASE_ID,
                 )
+                case_id_xpath = SESSION_CASE_ID
 
             if 'update_case' in actions or extra_updates:
                 self.add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
-                    extra_updates=extra_updates)
+                    extra_updates=extra_updates,
+                    # case_id_xpath is set based on an assumption about the way suite_xml.py determines the
+                    # case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
+                    case_id_xpath=case_id_xpath
+                )
 
             if 'close_case' in actions:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
@@ -1511,7 +1527,7 @@ class XForm(WrappedNode):
         has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled and
                         getattr(form.get_phase(), 'anchor', False))
         adjusted_datums = {}
-        if module.root_module and module.root_module.module_type == 'basic':
+        if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
             from corehq.apps.app_manager.suite_xml import SuiteGenerator

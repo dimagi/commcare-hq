@@ -87,5 +87,4 @@ blow away the index and start over.
 Querying Elasticsearch
 ----------------------
 
-.. TODO Figure out how to link properly:
-Check out `es_query <es_query.html>`_
+Check out :doc:`/es_query`
