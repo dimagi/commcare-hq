@@ -188,12 +188,15 @@
                         </fieldset>
                     </div>
                     <div class="control-group">
-                        <button class="btn"
+                        <button id="add-visit" class="btn"
                                 data-bind="click: addVisit,
                                            disable: hasRepeatVisit()">
                             <i class="icon-plus"></i>
                             {% trans "Add Visit" %}
                         </button>
+                        <span class="help-inline error-text" style="display:none">
+                            {% trans 'Please add at least one visit' %}
+                        </span>
                     </div>
                 </fieldset>
             </div>

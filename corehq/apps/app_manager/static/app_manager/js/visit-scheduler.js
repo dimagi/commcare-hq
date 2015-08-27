@@ -136,6 +136,17 @@ var VisitScheduler = (function () {
 
         self.validate = function(){
             var errors = 0;
+            var $add_visit_button = self.home.find("#add-visit");
+
+            if (self.formSchedule.visits().length === 0){
+                $add_visit_button.closest(".control-group").addClass("error");
+                $add_visit_button.siblings(".error-text").show();
+                errors += 1;
+            } else {
+                $add_visit_button.closest(".control-group").removeClass("error");
+                $add_visit_button.siblings(".error-text").hide();
+            }
+
             var required = self.home.find(":required").not(":disabled");
             required.each(function(i, req){
                 var $req = $(req);
