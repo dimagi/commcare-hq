@@ -18,6 +18,7 @@ var VisitScheduler = (function () {
                     .on('change', 'input[type="checkbox"]', self.change);
 
                 // https://gist.github.com/mkelly12/424774/#comment-92080
+                // textchange doesn't work with live event binding
                 $('#module-scheduler input').on('textchange', self.change);
             });
         };
@@ -178,6 +179,7 @@ var VisitScheduler = (function () {
 
         self.applyGlobalEventHandlers = function(){
             // https://gist.github.com/mkelly12/424774/#comment-92080
+            // textchange doesn't work with live event binding
             $('#visit-scheduler input').on('textchange', self.change);
         };
     };
