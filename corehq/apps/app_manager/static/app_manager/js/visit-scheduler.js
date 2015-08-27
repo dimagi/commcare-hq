@@ -386,6 +386,7 @@ var VisitScheduler = (function () {
     };
 }());
 
+// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //connect items with observableArrays
 ko.bindingHandlers.sortableList = {
     init: function(element, valueAccessor) {
@@ -407,14 +408,15 @@ ko.bindingHandlers.sortableList = {
     }
 };
 
+// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //control visibility, give element focus, and select the contents (in order)
 ko.bindingHandlers.visibleAndSelect = {
     update: function(element, valueAccessor) {
         ko.bindingHandlers.visible.update(element, valueAccessor);
         if (valueAccessor()) {
-            setTimeout(function() {
+            _.defer(function() {
                 $(element).focus().select();
-            }, 0); //new tasks are not in DOM yet
+            });
         }
     }
 };
