@@ -154,8 +154,8 @@ def make_form_question_indicator(question, column_id=None):
         "column_id": column_id or question['value'],
         'property_path': ['form'] + path[2:],
         "display_name": path[-1],
+        "datatype": get_form_indicator_data_type(data_type),
     }
-    ret.update(_get_form_indicator_data_type(data_type))
     return ret
 
 
@@ -172,12 +172,19 @@ def make_form_meta_block_indicator(spec, column_id=None):
         "column_id": column_id,
         "property_path": ['form', 'meta'] + [field_name],
         "display_name": field_name,
+        "datatype": get_form_indicator_data_type(data_type),
     }
-    ret.update(_get_form_indicator_data_type(data_type))
     return ret
 
 
-def _get_form_indicator_data_type(data_type):
-    if data_type in ["date", "datetime"]:
-        return {"datatype": data_type}
-    return {"datatype": "string"}
+def get_form_indicator_data_type(question_type):
+    return {
+        "date": "date",
+        "datetime": "datetime",
+        "Date": "date",
+        "DateTime": "datetime",
+        "Int": "integer",
+        "Double": "decimal",
+        "Text": "string",
+        "string": "string",
+    }.get(question_type, "string")
