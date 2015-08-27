@@ -14,7 +14,7 @@ def pillow_seq_store():
             notify_exception(
                 None,
                 message='Found seq number lower than previous for {}. '
-                        'This could mean we are in a rewid state'.format(store.checkpoint_id)
+                        'This could mean we are in a rewind state'.format(store.checkpoint_id)
             )
         else:
             store.seq = checkpoint['seq']
