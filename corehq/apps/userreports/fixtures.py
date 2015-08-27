@@ -51,16 +51,22 @@ class ReportFixturesProvider(object):
 
         root = ElementTree.Element('fixture', attrib={'id': self.id})
         reports_elem = ElementTree.Element('reports')
+        used_report_configs = []
         for report_config in report_configs:
             try:
+                report_config._index = len(filter(
+                    lambda used_report_config: report_config.report_id == used_report_config.report_id,
+                    used_report_configs
+                ))
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
+                used_report_configs.append(report_config)
             except UserReportsError:
                 pass
         root.append(reports_elem)
         return [root]
 
     def _report_config_to_fixture(self, report_config, user):
-        report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
+        report_elem = ElementTree.Element('report', attrib={'id': report_config.config_id})
         report = ReportConfiguration.get(report_config.report_id)
         report_elem.append(self._element('name', report.title))
         report_elem.append(self._element('description', report.description))
