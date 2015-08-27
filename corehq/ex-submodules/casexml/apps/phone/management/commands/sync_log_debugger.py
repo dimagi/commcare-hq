@@ -68,5 +68,22 @@ class Command(BaseCommand):
             pdb.set_trace()
 
 
+def _brute_force_search(case_id_set, expected_hash, diff=None, depth=1):
+    # utility for brute force searching for a hash
+    diff = diff or set()
+    if _get_hash(case_id_set) == expected_hash:
+        return diff
+    else:
+        if depth > 0:
+            for id in case_id_set:
+                list_to_check = case_id_set - set([id])
+                newdiff = diff | set([id])
+                result = _brute_force_search(list_to_check, expected_hash, newdiff, depth-1)
+                if result:
+                    return result
+        else:
+            return None
+
+
 def _get_hash(ids):
     return Checksum(list(ids)).hexdigest()
