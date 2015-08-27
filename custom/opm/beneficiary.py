@@ -674,7 +674,7 @@ class OPMCaseRow(object):
     @property
     @memoized
     def forms(self):
-        return self.case.get_forms()
+        return self.data_provider.forms_by_case[self.case_id]
 
     @property
     def all_conditions_met(self):
