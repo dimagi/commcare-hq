@@ -44,7 +44,10 @@
                 <tbody data-bind="template: { name: 'phase-template', foreach: phases},
                                   sortableList: phases"></tbody>
             </table>
-            <button class="btn" data-bind="click: addPhase">{% trans "Add Phase" %}</button>
+            <button class="btn" data-bind="click: addPhase">
+                <i class="icon-plus"></i>
+                {% trans "Add Phase" %}
+            </button>
         </fieldset>
     </div>
     <script id="phase-template" type="text/html">
