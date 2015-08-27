@@ -136,6 +136,39 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.assertXmlEqual(self.get_xml('advanced_submodule_xform'), m1f0.render_xform())
 
+    def test_form_display_condition(self):
+        """
+        case_id should be renamed in a basic submodule form
+        """
+        factory = AppFactory(domain=DOMAIN)
+        m0, m0f0 = factory.new_advanced_module('parent', 'gold-fish')
+        factory.form_updates_case(m0f0)
+
+        # changing this case tag should result in the session var in the submodule entry being updated to match it
+        m0f0.actions.load_update_cases[0].case_tag = 'load_goldfish_renamed'
+
+        m1, m1f0 = factory.new_advanced_module('child', 'guppy', parent_module=m0)
+        factory.form_updates_case(m1f0, 'gold-fish', update={'question1': '/data/question1'})
+        factory.form_updates_case(m1f0, 'guppy', parent_case_type='gold-fish')
+
+        # making this case tag the same as the one in the parent module should mean that it will also get changed
+        # to avoid conflicts
+        m1f0.actions.load_update_cases[1].case_tag = 'load_goldfish_renamed'
+
+        m1f0.form_filter = "#case/age > 33"
+
+        XML = """
+        <partial>
+          <menu id="m1" root="m0">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_goldfish_renamed_guppy]/age &gt; 33"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, factory.app.create_suite(), "./menu[@id='m1']")
+
 
 class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     child_module_class = Module
@@ -216,6 +249,34 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         })
 
         self.assertXmlEqual(self.get_xml('basic_submodule_xform'), m1f0.render_xform())
+
+    def test_form_display_condition(self):
+        """
+        case_id should be renamed in a basic submodule form
+        """
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_updates_case(m0f0)
+        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_updates_case(m1f0, 'guppy', parent_case_type='gold-fish', update={
+            'question1': '/data/question1',
+            'parent/question1': '/data/question1',
+        })
+
+        m1f0.form_filter = "#case/age > 33"
+
+        XML = """
+        <partial>
+          <menu id="m1" root="m0">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_guppy]/age &gt; 33"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m1']")
 
 
 class UserCaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
