@@ -1,5 +1,6 @@
 import os
 
+from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.test import TestCase
 from django.core import management
@@ -65,16 +66,23 @@ class DevicelogMigrationPillowIntegrationTest(TestCase):
 
     def setUp(self):
         self.pillow = DevicelogMigrationPillow()
+        self.domain = Domain(
+            name="test-domain-sub",
+            is_active=True,
+        )
+        self.domain.save()
 
     def tearDown(self):
-        XFormInstance.get_db().delete_docs()
-        XFormInstanceDevicelog.get_db().delete_docs()
+        XFormInstance.get_db().delete_docs(XFormInstance.get_db().all_docs().all())
+        XFormInstanceDevicelog.get_db().delete_docs(XFormInstanceDevicelog.get_db().all_docs().all())
 
-    def _add_xforms(n=5):
+    def _add_xforms(self, n=5):
+        docs = []
         for i in xrange(n):
-            doc = XFormInstance.wrap({'xmlns': DEVICELOG_XMLNS, 'domain': 'domain-{}'.format(i)})
+            doc = XFormInstance.wrap({'xmlns': DEVICELOG_XMLNS, 'domain': self.domain.name})
             doc.save()
-        return n
+            docs.append(doc)
+        return docs
 
     def test_migration_integration(self):
         """
@@ -88,10 +96,14 @@ class DevicelogMigrationPillowIntegrationTest(TestCase):
         """
 
         to_add = 5
-        self._add_xforms(to_add)
+        docs = self._add_xforms(to_add)
 
-        self.assertEqual(XFormInstance.get_db().info()['doc_count'], to_add)
-        self.assertEqual(XFormInstanceDevicelog.get_db().info()['doc_count'], 0)
+        for doc in docs:
+            self.assertIsNotNone(XFormInstance.get(doc['_id']))
+            with self.assertRaises(ResourceNotFound):
+                XFormInstanceDevicelog.get(doc['_id'])
+
+        doc = self.pillow.get_checkpoint()
 
         management.call_command(
             'couch_migrate_devicelogs',
@@ -99,16 +111,13 @@ class DevicelogMigrationPillowIntegrationTest(TestCase):
                 settings.FILEPATH,
                 'corehq/apps/cleanup/management/commands/couch_migrations/devicelogs.json',
             ),
-            '--copy'
+            copy=True
         )
-        self.assertEqual(XFormInstance.get_db().info()['doc_count'], to_add)
-        self.assertEqual(XFormInstanceDevicelog.get_db().info()['doc_count'], to_add)
+        for doc in docs:
+            self.assertIsNotNone(XFormInstance.get(doc['_id']))
+            self.assertIsNotNone(XFormInstanceDevicelog.get(doc['_id']))
 
         doc = self.pillow.get_checkpoint()
-        migration_seq = doc['migration_seq']
 
         # After copy completion should be able to successfully set checkpoint to migration seq
-        self.pillow.set_checkpoint({'seq': 'random_seq'})
-
         self.assertFalse(self.pillow.get_checkpoint()['is_migrating'])
-        self.assertEqual(migration_seq, self.pillow.get_checkpoint()['seq'])

@@ -30,7 +30,6 @@ class MigrationPillow(PythonPillow):
         with open(self.config_file) as f:
             self.config = MigrationConfig.wrap(json.loads(f.read()))
 
-        print 'initializing'
         self.couch_db = self.config.source_db
         self.dest_db = self.config.dest_db
         if self.config.filters:
@@ -43,32 +42,27 @@ class MigrationPillow(PythonPillow):
         else:
             self.filter_ = None
         super(MigrationPillow, self).__init__(couch_db=self.couch_db)
-        self.is_migrating = self.get_checkpoint().get('is_migrating', True)
-        print self.is_migrating
+        doc = self.get_checkpoint()
+        self.is_migrating = doc.get('is_migrating', True)
+        self.process_deletions = not doc.get('switched_dbs', False)
 
-    def set_checkpoint(self, change):
-        if self.is_migrating:
+    def new_changes(self):
+        checkpoint_doc = self.get_checkpoint()
+        while checkpoint_doc.get('is_migrating', True):
+            time.sleep(60)
             checkpoint_doc = self.get_checkpoint()
-            while checkpoint_doc.get('is_migrating', True):
-                print 'migrating'
-                time.sleep(60)
-            self.is_migrating = False
-        else:
-            super(MigrationPillow, self).set_checkpoint(change)
+        self.is_migrating = False
+        super(MigrationPillow, self).new_changes()
 
     def change_trigger(self, changes_dict):
-        print 'Changing trigger'
         if not self.is_migrating:
             if changes_dict.get('deleted', False):
-                print 'deleting'
                 self.dest_db.delete_doc(changes_dict['id'])
                 return None
         return super(MigrationPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
-        print 'Changing transport'
         if not self.is_migrating:
-            print 'Saving'
             dt = DocumentTransform(doc, self.couch_db)
             save(dt, self.dest_db)
 
