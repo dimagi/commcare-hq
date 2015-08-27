@@ -5,22 +5,13 @@
       <instance>
         <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="None" name="New Form">
           <question1/>
-          <case_load_1>
+          <case_load_gold-fish_0>
             <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
               <update>
                 <question1/>
               </update>
             </case>
-            <parents>
-              <parent>
-                <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
-                  <update>
-                    <question1/>
-                  </update>
-                </case>
-              </parent>
-            </parents>
-          </case_load_1>
+          </case_load_gold-fish_0>
           <orx:meta xmlns:cc="http://commcarehq.org/xforms">
             <orx:deviceID/>
             <orx:timeStart/>
@@ -33,7 +24,6 @@
         </data>
       </instance>
       <instance id="commcaresession" src="jr://instance/session"/>
-      <instance id="casedb" src="jr://instance/casedb"/>
       <bind nodeset="/data/question1" type="xsd:string"/>
       <itext>
         <translation lang="en" default="">
@@ -42,14 +32,10 @@
           </text>
         </translation>
       </itext>
-      <bind calculate="/data/meta/timeEnd" nodeset="/data/case_load_1/case/@date_modified" type="xsd:dateTime"/>
-      <bind calculate="/data/meta/userID" nodeset="/data/case_load_1/case/@user_id"/>
-      <bind calculate="instance('commcaresession')/session/data/case_id_load_1" nodeset="/data/case_load_1/case/@case_id"/>
-      <bind calculate="/data/question1" nodeset="/data/case_load_1/case/update/question1" relevant="count(/data/question1) &gt; 0"/>
-      <bind calculate="/data/meta/timeEnd" nodeset="/data/case_load_1/parents/parent/case/@date_modified" type="xsd:dateTime"/>
-      <bind calculate="/data/meta/userID" nodeset="/data/case_load_1/parents/parent/case/@user_id"/>
-      <bind calculate="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_1]/index/parent" nodeset="/data/case_load_1/parents/parent/case/@case_id"/>
-      <bind calculate="/data/question1" nodeset="/data/case_load_1/parents/parent/case/update/question1" relevant="count(/data/question1) &gt; 0"/>
+      <bind calculate="/data/meta/timeEnd" nodeset="/data/case_load_gold-fish_0/case/@date_modified" type="xsd:dateTime"/>
+      <bind calculate="/data/meta/userID" nodeset="/data/case_load_gold-fish_0/case/@user_id"/>
+      <bind calculate="instance('commcaresession')/session/data/case_id" nodeset="/data/case_load_gold-fish_0/case/@case_id"/>
+      <bind calculate="/data/question1" nodeset="/data/case_load_gold-fish_0/case/update/question1" relevant="count(/data/question1) &gt; 0"/>
       <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
       <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()"/>
       <bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
