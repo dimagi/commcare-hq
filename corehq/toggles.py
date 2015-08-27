@@ -634,13 +634,13 @@ EMAIL_IN_REMINDERS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-<<<<<<< HEAD
 FILE_OBJECT = StaticToggle(
     'file_object',
     'Use FileObject when caching',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-=======
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -660,5 +660,4 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     'Send broadcasts to locations',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
->>>>>>> master
 )
