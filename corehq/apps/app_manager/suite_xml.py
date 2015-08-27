@@ -27,7 +27,7 @@ from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleErr
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
     actions_use_usercase, is_usercase_in_use
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
+from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
     CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
@@ -2406,14 +2406,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                             not module.put_in_root and
                             (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
                         ):
-                            if isinstance(form, AdvancedForm):
-                                try:
-                                    action = next(a for a in reversed(form.actions.load_update_cases) if not a.auto_select)
-                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
-                                except IndexError:
-                                    case = None
-                            elif form.requires_case():
-                                case = SESSION_CASE_ID.case()
+                            if form.requires_case():
+                                form_datums = self.get_datums_meta_for_form_generic(form)
+                                var_name = next(
+                                    meta['datum'].id for meta in reversed(form_datums)
+                                    if meta['action'] and meta['requires_selection']
+                                )
+                                case = CaseIDXPath(session_var(var_name)).case()
                             else:
                                 case = None
                             command.relevant = interpolate_xpath(form.form_filter, case)
