@@ -174,7 +174,8 @@ from corehq.apps.app_manager.models import (
     load_app_template,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    FixtureSelect,)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -824,6 +825,7 @@ def get_module_view_context_and_template(app, module):
             child_case_types.update(m.get_child_case_types())
     child_case_types = list(child_case_types)
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
+    fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
 
     def get_parent_modules(case_type_):
         parent_types = builder.get_parent_types(case_type_)
@@ -881,6 +883,7 @@ def get_module_view_context_and_template(app, module):
                 })
         else:
             item['parent_select'] = module.parent_select
+            item['fixture_select'] = module.fixture_select
             details = [item]
 
         return details
@@ -966,6 +969,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
+            'fixture_columns': fixture_columns,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_allowed': allow_case_list_form,
@@ -1816,7 +1820,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
-    and sort_elements.
+    fixture_select and sort_elements.
     """
     params = json_request(request.POST)
     detail_type = params.get('type')
@@ -1826,6 +1830,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
+    fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
@@ -1878,6 +1883,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+    if fixture_select is not None:
+        module.fixture_select = FixtureSelect.wrap(fixture_select)
 
     resp = {}
     app.save(resp)

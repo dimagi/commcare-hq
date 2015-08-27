@@ -779,24 +779,6 @@ class SuiteGeneratorBase(object):
         pass
 
 
-GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
-REPORT_INSTANCE = Instance(id='reports', src='jr://fixture/commcare:reports')
-LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
-CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
-SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
-
-INSTANCE_BY_ID = {
-    instance.id: instance
-    for instance in (
-        GROUP_INSTANCE,
-        REPORT_INSTANCE,
-        LEDGER_INSTANCE,
-        CASE_INSTANCE,
-        SESSION_INSTANCE,
-    )
-}
-
-
 def get_instance_factory(scheme):
     return get_instance_factory._factory_map.get(scheme, preset_instances)
 get_instance_factory._factory_map = {}
@@ -811,6 +793,14 @@ class register_factory(object):
             get_instance_factory._factory_map[scheme] = fn
         return fn
 
+
+INSTANCE_BY_ID = {
+    'groups': Instance(id='groups', src='jr://fixture/user-groups'),
+    'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
+    'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
+    'casedb': Instance(id='casedb', src='jr://instance/casedb'),
+    'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
+}
 
 @register_factory(*INSTANCE_BY_ID.keys())
 def preset_instances(instance_name):
@@ -1382,6 +1372,17 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     )
                                     if d:
                                         r.append(d)
+                if module.fixture_select.active:
+                    d = Detail(
+                        id=id_strings.fixture_detail(module),
+                        title=Text(),
+                    )
+                    fields = [Field(header=Header(text=Text()),
+                                    template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                    sort_node='')]
+
+                    d.fields = fields
+                    r.append(d)
         return r
 
     @staticmethod
@@ -1922,11 +1923,27 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
+            fixture_select_filter = ''
+            if datum['module'].fixture_select.active:
+                datums.append({
+                    'datum': SessionDatum(
+                        id=id_strings.fixture_session_var(datum['module']),
+                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
+                        value=datum['module'].fixture_select.variable_column,
+                        detail_select=id_strings.fixture_detail(datum['module'])
+                    )
+                })
+                filter_xpath_template = datum['module'].fixture_select.xpath
+                fixture_value = session_var(id_strings.fixture_session_var(datum['module']))
+                fixture_select_filter = "[{}]".format(
+                    filter_xpath_template.replace('$fixture_value', fixture_value)
+                )
+
             datums.append({
                 'datum': SessionDatum(
                     id=datum['session_var'],
                     nodeset=(SuiteGenerator.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                             + parent_filter),
+                             + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                     detail_confirm=(
