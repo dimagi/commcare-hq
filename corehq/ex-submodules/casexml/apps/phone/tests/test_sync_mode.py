@@ -1152,6 +1152,10 @@ class MultiUserSyncTest(SyncBaseTest):
         payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
+        # also check that the latest sync log knows those cases are no longer relevant to the phone
+        log = synclog_from_restore_payload(payload)
+        self.assertFalse(log.phone_is_holding_case(case_id))
+        self.assertFalse(log.phone_is_holding_case(parent_id))
         
         # change the parent again from the second user
         other_parent_update = CaseBlock(
