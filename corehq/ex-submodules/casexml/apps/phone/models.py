@@ -700,8 +700,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
         # this is done when migrating from old formats or during initial sync
         # to prune non-relevant dependencies
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
-            # this will be a no-op if the case cannot be pruned due to dependencies
-            self.prune_case(dependent_case_id)
+            # need this additional check since the case might have already been pruned/remove
+            # as a result of pruning the child case
+            if dependent_case_id in self.dependent_case_ids_on_phone:
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                self.prune_case(dependent_case_id)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
