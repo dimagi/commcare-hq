@@ -15,11 +15,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
-from corehq.apps.app_manager.models import(
-    Application,
-    Form,
-    get_apps_in_domain
-)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, Form
 
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError

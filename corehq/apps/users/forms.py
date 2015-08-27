@@ -66,6 +66,9 @@ class BaseUpdateUserForm(forms.Form):
     def direct_properties(self):
         return []
 
+    def clean_email(self):
+        return self.cleaned_data['email'].lower()
+
     def update_user(self, existing_user=None, save=True, **kwargs):
         is_update_successful = False
         if not existing_user and 'email' in self.cleaned_data:
@@ -282,7 +285,7 @@ class CommCareAccountForm(forms.Form):
     max_len_username = 80
 
     username = forms.CharField(max_length=max_len_username, required=True)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
@@ -296,14 +299,6 @@ class CommCareAccountForm(forms.Form):
                 'Create new Mobile Worker account',
                 'username',
                 'password',
-                HTML("{% if only_numeric %}"
-                     "<div class=\"control-group\"><div class=\"controls\">"
-                     "To enable alphanumeric passwords, go to the "
-                     "applications this user will use, go to CommCare "
-                     "Settings, and change Password Format to Alphanumeric."
-                     "</div></div>"
-                     "{% endif %}"
-                ),
                 'password_2',
                 'phone_number',
                 Div(
@@ -338,8 +333,6 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
-            if self.password_format == 'n' and not password.isnumeric():
-                raise forms.ValidationError("Password is not numeric")
 
         try:
             username = self.cleaned_data['username']
@@ -423,10 +416,11 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
-    def __init__(self, attrs=None, domain=None, id='supply-point'):
+    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
+        self.multiselect = multiselect
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
@@ -434,6 +428,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'name': name,
             'value': value or '',
             'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'multiselect': self.multiselect,
         }))
 
 

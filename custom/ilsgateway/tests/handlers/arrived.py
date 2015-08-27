@@ -27,3 +27,10 @@ class ILSArrivedTest(ILSTestScript):
            5551234 < {0}
         """.format(unicode(ARRIVED_KNOWN) % {'facility': self.loc1.name})
         self.run_script(msg)
+
+    def test_arrived_with_time(self):
+        msg = """
+            5551234 > arrived loc1 10:00
+            5551234 < {0}
+        """.format(unicode(ARRIVED_KNOWN % {'facility': self.loc1.name}))
+        self.run_script(msg)

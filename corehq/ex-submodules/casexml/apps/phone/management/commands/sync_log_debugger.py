@@ -1,7 +1,9 @@
 import json
+from optparse import make_option
 import os
 from django.core.management import BaseCommand
 import sys
+from casexml.apps.phone.checksum import Checksum
 
 
 class Command(BaseCommand):
@@ -9,6 +11,13 @@ class Command(BaseCommand):
     lets you download sync logs as json and then compare them.
     useful for checking state issues.
     """
+    option_list = BaseCommand.option_list + (
+        make_option('--debugger',
+                    action='store_true',
+                    dest='debugger',
+                    default=False,
+                    help="Drop into a debugger at the end of running the command for manual queries"),
+    )
 
     def handle(self, *args, **options):
         from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
@@ -51,3 +60,30 @@ class Command(BaseCommand):
                             log_names[j],
                             ', '.join(case_diff)
                         )
+
+        if options['debugger']:
+            union_of_ids = set().union(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
+            intersection_of_ids = set().intersection(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
+            import pdb
+            pdb.set_trace()
+
+
+def _brute_force_search(case_id_set, expected_hash, diff=None, depth=1):
+    # utility for brute force searching for a hash
+    diff = diff or set()
+    if _get_hash(case_id_set) == expected_hash:
+        return diff
+    else:
+        if depth > 0:
+            for id in case_id_set:
+                list_to_check = case_id_set - set([id])
+                newdiff = diff | set([id])
+                result = _brute_force_search(list_to_check, expected_hash, newdiff, depth-1)
+                if result:
+                    return result
+        else:
+            return None
+
+
+def _get_hash(ids):
+    return Checksum(list(ids)).hexdigest()

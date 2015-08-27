@@ -41,13 +41,33 @@
             }
         }
 
-        function RefreshableViewModel(url, model, sort_by) {
+        function RefreshableViewModel(url, model, interval, sort_by) {
             var self = this;
             self.error = ko.observable();
             self.models = ko.observableArray();
-            self.autoRefreshModel = null;
+            self.autoRefresh = ko.observable(false);
+            self.loading = ko.observable(false);
+            self.timer = null;
+            self.interval = interval;
+
+            self.autoRefresh.subscribe(function (newVal) {
+                if (newVal) {
+                    self.refresh();
+                } else {
+                    self.clearTimer();
+                }
+            });
+
+            self.clearTimer = function () {
+                if (self.timer) {
+                    clearTimeout(self.timer);
+                    self.timer = null;
+                }
+            };
 
             self.refresh = function () {
+                self.clearTimer();
+                self.loading(true);
                 $.getJSON(url, function (data) {
                     var objects = _(data).map(function (item) {
                         return new model(item);
@@ -56,6 +76,9 @@
                         objects = _(objects).sortBy(function (x) { return x[sort_by]; })
                     }
                     self.models(objects);
+                    if (self.autoRefresh) {
+                        self.timer = setTimeout(self.refresh, self.interval);
+                    }
                 })
                 .fail(function (jqxhr, textStatus, error) {
                     var err = 'Unknown server error';
@@ -63,15 +86,12 @@
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
                     self.error("Error: " + err);
-                    if (self.autoRefreshModel) {
-                        self.autoRefreshModel.removeModel(self);
-                    }
+                    self.autoRefresh = false;
+                    self.timer = null;
+                })
+                .always(function (){
+                    self.loading(false);
                 });
-            };
-            self.refresh();
-
-            self.setAutoRefreshModel = function(autoRefreshModel) {
-                 self.autoRefreshModel = autoRefreshModel;
             };
         }
 
@@ -154,55 +174,31 @@
             self.sql_rows = data.sql_rows;
         }
 
-        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel, {{ celery_update }});
         {% if is_bigcouch %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, 'design_document');
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, {{ couch_update }}, 'design_document');
         {% else %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel, {{ couch_update }});
         {% endif %}
-        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
-        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
+        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, {{ couch_update }}, 'name');
+        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, {{ db_update }}, 'description');
 
         var AutoRefreshModel = function () {
             var self = this;
             self.refreshStatus = ko.observable(false);
             self.refreshStatusText = ko.observable('off');
             self.models = [];
-            self.timers = [];
 
-            self.addModel = function (model, refreshInterval) {
-                model.setAutoRefreshModel(self);
-                self.models.push({
-                    'model': model,
-                    'interval': refreshInterval,
-                    'timer': null
-                });
-            };
-
-            self.removeModel = function (to_remove) {
-                var model = _.findWhere(self.models, {'model': to_remove});
-                if (model.timer) {
-                    clearInterval(model.timer);
-                }
-                self.models = _.without(self.models, model);
+            self.addModel = function (model) {
+                self.models.push(model);
             };
 
             self.toggleRefresh = function () {
                 self.refreshStatus(!self.refreshStatus());
                 self.refreshStatusText(self.refreshStatus() ? 'on' : 'off');
-                if (self.refreshStatus()) {
-                    $.each(self.models, function (index, model) {
-                        if (!model.timer) {
-                            model.timer = setInterval(function () { model.model.refresh(); }, model.interval);
-                        }
-                    });
-                } else {
-                    $.each(self.models, function (index, model) {
-                        if (model.timer) {
-                            clearInterval(model.timer);
-                        }
-                    });
-                }
+                $.each(self.models, function (index, model) {
+                    model.autoRefresh(self.refreshStatus());
+                });
             };
         };
 
@@ -212,10 +208,10 @@
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
             ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
             ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
-            autoRefresh.addModel(celeryViewModel, {{ celery_update }});
-            autoRefresh.addModel(couchViewModel, {{ couch_update }});
-            autoRefresh.addModel(pillowtopViewModel, {{ couch_update }});
-            autoRefresh.addModel(dbComparisonsViewModel, {{ db_update }});
+            autoRefresh.addModel(celeryViewModel);
+            autoRefresh.addModel(couchViewModel);
+            autoRefresh.addModel(pillowtopViewModel);
+            autoRefresh.addModel(dbComparisonsViewModel);
 
             autoRefresh.toggleRefresh();
             ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
@@ -323,7 +319,12 @@
         </table>
     </div>
     <div class="row-fluid" id="pillowtop-status">
-        <h3>Pillowtop Status</h3>
+        <h3>
+            Pillowtop Status
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>
@@ -366,7 +367,12 @@
     </div>
 
     <div class="row-fluid" id="elastic-vs-couch">
-        <h3>Elasticsearch/Couch/Postgres comparison</h3>
+        <h3>
+            Elasticsearch/Couch/Postgres comparison
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thread>
@@ -389,7 +395,12 @@
     </div>
     {% if is_bigcouch %}
     <div class="row-fluid" id="couchblock">
-        <h3>Couch Tasks</h3>
+        <h3>
+            Couch Tasks
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <div class="row" data-bind="visible: !error(), foreach: models">
             <strong data-bind="text: design_document"></strong>
@@ -423,7 +434,12 @@
     </div>
     {% else %}
     <div class="row-fluid" id="couchblock">
-        <h3>Couch Tasks</h3>
+        <h3>
+            Couch Tasks
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>
@@ -461,7 +477,12 @@
     {% endif %}
 
     <div class="row-fluid" id="celeryblock">
-        <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
+        <h3>
+            Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>

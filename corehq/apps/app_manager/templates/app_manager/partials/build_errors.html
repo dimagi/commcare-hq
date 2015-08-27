@@ -27,7 +27,12 @@
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no form links" %}
                             {% blocktrans %}
-                            Link to other form is selected, but no form links have been provided
+                            Link to other form is selected, but no form links have been provided.
+                            {% endblocktrans %}
+                            {% include "app_manager/partials/form_error_message.html" %}
+                        {% case "bad form link" %}
+                            {% blocktrans %}
+                            Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
@@ -88,13 +93,13 @@
                             The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
                             module must update a case. All forms in a module that has a case registration form selected must update a case.
                             {% endblocktrans %}
-                        {% case "case list module form must require only one case" %}
+                        {% case "case list module form can only load parent cases" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
                             The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
-                            module can only load or update a single case. All forms in a module that has a case registration form
-                            selected can only update a single case.
+                            module can only load or update a single case and its parents. All forms in a module that has a case registration form
+                            selected can only update a single case and its parents.
                             {% endblocktrans %}
                         {% case "case list module form must match module case type" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
@@ -197,10 +202,7 @@
                             A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "subcase repeat context" %}
-                            The subcase "{{ error.case_tag }}" is in a different repeat context to its parent
-                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
-                        {% case "circular ref" %}
-                            A circular reference was detected in the hierarchy of subcase "{{ error.case_tag }}"
+                            The subcase "{{ error.case_tag }}" is in a different repeat context to its parent "{{ error.parent_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "auto select key" %}
                             The auto-select case action is missing the "{{ error.key_name }}" value

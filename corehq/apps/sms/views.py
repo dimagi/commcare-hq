@@ -69,6 +69,7 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
@@ -960,7 +961,7 @@ def api_history(request, domain):
                 entry.message_id = last_sms._id
                 entry.message_timestamp = last_sms.date
                 entry.save()
-            lock.release()
+            release_lock(lock, True)
         except:
             logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
             # Don't let this block returning of the data

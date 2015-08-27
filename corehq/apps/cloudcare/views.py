@@ -25,7 +25,8 @@ from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from corehq.apps.app_manager.models import Application, ApplicationBase, get_app
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
@@ -262,6 +263,18 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     case_id = request.REQUEST.get("case_id", "")
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+
+    if toggles.HSPH_HACK.enabled(domain):
+        hsph_case_id = request.REQUEST.get('hsph_hack', None)
+        if hsph_case_id != 'None' and hsph_case_id:
+            case = CommCareCase.get(hsph_case_id)
+            usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
+            usercase = CommCareCase.get(usercase_id) if usercase_id else None
+            return json_response(map(
+                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
+                filter(None, [case, case.parent, usercase])
+            ))
+
     if case_id and not footprint:
         # short circuit everything else and just return the case
         # NOTE: this allows any user in the domain to access any case given

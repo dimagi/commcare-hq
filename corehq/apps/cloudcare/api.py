@@ -8,10 +8,8 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from corehq.apps.app_manager.models import (
-    ApplicationBase,
-    get_app,
-)
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
@@ -343,7 +341,7 @@ def get_filters_from_request(request, limit_top_level=None):
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
     for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only', 'use_cache']:
+                            'ids_only', 'use_cache', 'hsph_hack']:
         if system_property in filters:
             del filters[system_property]
     return filters

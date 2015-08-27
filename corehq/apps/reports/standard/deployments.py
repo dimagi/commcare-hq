@@ -10,7 +10,7 @@ from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build
     BuildVersionSource
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -261,7 +261,8 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(_fmt_error_info(sync_log))
                 columns.append('{:.10}...'.format(sync_log.get_state_hash()))
                 columns.append(_naturaltime_with_hover(sync_log.last_submitted))
-                columns.append(_naturaltime_with_hover(sync_log.last_cached))
+                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
+                                                     sync_log.hash_at_last_cached))
 
             return columns
 

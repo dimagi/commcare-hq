@@ -5,6 +5,7 @@ from django.http import Http404
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -32,7 +33,8 @@ from django.conf import settings
 # and that ends up mattering.
 # todo: figure out what that circular dependency is
 from corehq.apps.users.views import mobile
-from corehq.apps.hqwebapp.doc_info import get_doc_info, get_doc_info_by_id
+from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
+    get_object_info)
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -151,7 +153,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 
-    def _fmt_contact_link(self, recipient_id, doc_info):
+    def _fmt_contact_link(self, recipient_id, doc_info, extra_text=None):
         if doc_info:
             username, contact_type, url = (doc_info.display,
                 doc_info.type_display, doc_info.link)
@@ -160,6 +162,10 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 username = '%s (%s %s)' % (username, _('Deleted'), _(doc_info.type_display))
         else:
             username, contact_type, url = (None, None, None)
+
+        if username and extra_text:
+            username = '%s %s' % (username, extra_text)
+
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
@@ -170,7 +176,30 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             recipient_id or ""])
         return ret
 
+    def get_orm_recipient_info(self, recipient_type, recipient_id, contact_cache):
+        cache_key = "%s-%s" % (recipient_type, recipient_id)
+        if cache_key in contact_cache:
+            return contact_cache[cache_key]
+
+        obj = None
+        try:
+            if recipient_type == 'SQLLocation':
+                obj = SQLLocation.objects.get(location_id=recipient_id)
+        except Exception:
+            pass
+
+        if obj:
+            obj_info = get_object_info(obj)
+        else:
+            obj_info = None
+
+        contact_cache[cache_key] = obj_info
+        return obj_info
+
     def get_recipient_info(self, recipient_doc_type, recipient_id, contact_cache):
+        if recipient_doc_type in ['SQLLocation']:
+            return self.get_orm_recipient_info(recipient_doc_type, recipient_id, contact_cache)
+
         if recipient_id in contact_cache:
             return contact_cache[recipient_id]
 
@@ -288,7 +317,8 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     @memoized
     def uses_locations(self):
-        return Domain.get_by_name(self.domain).uses_locations
+        return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
+                and Domain.get_by_name(self.domain).uses_locations)
 
     @property
     def rows(self):
@@ -546,6 +576,19 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
         return (source_filter, content_type_filter)
 
+    def _fmt_recipient(self, event, doc_info):
+        if event.recipient_type in (
+            MessagingEvent.RECIPIENT_VARIOUS,
+            MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS,
+            MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
+        ):
+            return self._fmt(_(dict(MessagingEvent.RECIPIENT_CHOICES)[event.recipient_type]))
+        else:
+            return self._fmt_contact_link(event.recipient_id, doc_info,
+                extra_text=_('(including child locations)')
+                if event.recipient_type == MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+                else None)
+
     @property
     def rows(self):
         source_filter, content_type_filter = self.get_filters()
@@ -576,9 +619,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 self._fmt_timestamp(timestamp),
                 self.get_content_display(event, content_cache),
                 self.get_source_display(event),
-                (self._fmt(_('Multiple Recipients'))
-                    if event.recipient_type == MessagingEvent.RECIPIENT_VARIOUS
-                    else self._fmt_contact_link(event.recipient_id, doc_info)),
+                self._fmt_recipient(event, doc_info),
                 self._fmt(status),
                 self.get_event_detail_link(event),
             ])

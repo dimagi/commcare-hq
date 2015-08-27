@@ -9,10 +9,11 @@
 ├── chai#3.2.0
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
-├── jsdiff#1.4.0
-├─┬ jstree#3.1.1
+├── jsdiff#1.4.0 (latest is 2.1.0)
+├─┬ jstree#3.1.1 (latest is 3.2.1)
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
 ├── langcodes#27dcfc401e
+├── lodash#2.4.2 extraneous (latest is 3.10.1)
 ├── markdown-it#4.2.2 (latest is 4.4.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5

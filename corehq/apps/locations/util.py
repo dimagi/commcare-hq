@@ -261,3 +261,34 @@ def get_xform_location(xform):
     elif hasattr(user, 'sql_location'):
         return user.sql_location
     return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )
+
+
+def get_locations_from_ids(location_ids, domain):
+    """
+    Returns the SQLLocations with the given location_ids, ensuring
+    that they belong to the given domain. Raises SQLLocation.DoesNotExist
+    if any of the locations do not match the given domain or are not
+    found.
+    """
+    location_ids = list(set(location_ids))
+    expected_count = len(location_ids)
+
+    locations = SQLLocation.objects.filter(
+        domain=domain,
+        is_archived=False,
+        location_id__in=location_ids,
+    )
+    if len(locations) != expected_count:
+        raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
+    return locations

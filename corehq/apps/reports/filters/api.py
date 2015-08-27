@@ -7,6 +7,7 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
+from corehq import toggles
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.elastic import es_wrapper, ESError
@@ -55,27 +56,30 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
     def get_locations_query(self, query):
-        return SQLLocation.objects.filter(
-            name__icontains=query.lower(),
-            domain=self.domain,
-        )
+        return SQLLocation.objects.filter_path_by_user_input(self.domain, query)
 
     def get_locations(self, query, start, size):
-        for loc in self.get_locations_query(query)[start:size]:
-            group = loc.reporting_group_object()
-            yield self.utils.location_group_tuple(group)
+        return map(self.utils.location_tuple,
+                   self.get_locations_query(query)[start:size])
 
     def get_locations_size(self, query):
         return self.get_locations_query(query).count()
 
     @property
     def data_sources(self):
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
-        ]
+        if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
+        else:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_users_size, self.get_users),
+            ]
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))

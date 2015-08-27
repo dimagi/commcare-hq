@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 import functools
 import json
 import itertools
@@ -135,7 +136,7 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.models import get_apps_in_domain
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
@@ -164,7 +165,6 @@ class ParentCasePropertyBuilder(object):
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
-            from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
@@ -284,7 +284,11 @@ def get_session_schema(form):
     """
     structure = {}
     # TODO handle advanced modules with more than one case
-    case_type = form.get_module().case_type
+    if hasattr(form, 'get_module'):
+        case_type = form.get_module().case_type
+    else:
+        case_type = None
+
     if case_type:
         structure["case_id"] = {
             "reference": {
@@ -516,3 +520,32 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
                 if usercase:
                     session_data[USERCASE_ID] = usercase.get_id
     return session_data
+
+
+def update_unique_ids(app_source):
+    from corehq.apps.app_manager.models import FormBase, form_id_references, jsonpath_update
+
+    app_source = deepcopy(app_source)
+
+    def change_unique_id(form):
+        unique_id = form['unique_id']
+        new_unique_id = FormBase.generate_id()
+        form['unique_id'] = new_unique_id
+        if ("%s.xml" % unique_id) in app_source['_attachments']:
+            app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
+        return new_unique_id
+
+    change_unique_id(app_source['user_registration'])
+    id_changes = {}
+    for m, module in enumerate(app_source['modules']):
+        for f, form in enumerate(module['forms']):
+            old_id = form['unique_id']
+            new_id = change_unique_id(app_source['modules'][m]['forms'][f])
+            id_changes[old_id] = new_id
+
+    for reference_path in form_id_references:
+        for reference in reference_path.find(app_source):
+            if reference.value in id_changes:
+                jsonpath_update(reference, id_changes[reference.value])
+
+    return app_source

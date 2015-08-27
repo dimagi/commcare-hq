@@ -19,7 +19,7 @@
     <script type="text/javascript" src="{% new_static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock js %}
 
-{% block uncompressed-js %} {{ block.super }}
+{% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         (function (angular, undefined) {
             'use strict';
