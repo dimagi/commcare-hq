@@ -34,6 +34,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
+    ScheduleError,
 )
 
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -175,7 +176,9 @@ from corehq.apps.app_manager.models import (
     load_case_reserved_words,
     str_to_cls,
     ReportAppConfig,
-    FixtureSelect,)
+    SchedulePhaseForm,
+    FixtureSelect,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -428,6 +431,30 @@ def default(request, domain):
     return view_app(request, domain)
 
 
+def get_schedule_context(form):
+    from corehq.apps.app_manager.models import SchedulePhase
+    schedule_context = {}
+    module = form.get_module()
+
+    if not form.schedule:
+        # Forms created before the scheduler module existed don't have this property
+        # so we need to add it so everything works.
+        form.schedule = FormSchedule(enabled=False)
+
+    schedule_context.update({
+        'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
+        'schedule_form_id': form.schedule_form_id,
+    })
+
+    if module.has_schedule:
+        phase = form.get_phase()
+        if phase is not None:
+            schedule_context.update({'schedule_phase': phase})
+        else:
+            schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+    return schedule_context
+
+
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
@@ -516,6 +543,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         form.get_unique_id()
         app.save()
 
+    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
         'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
@@ -527,8 +555,8 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': not isinstance(form, CareplanForm),
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
+        'allow_form_workflow': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
@@ -554,6 +582,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
+        context.update(get_schedule_context(form))
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
@@ -931,7 +960,12 @@ def get_module_view_context_and_template(app, module):
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
             ],
-            'child_module_enabled': True
+            'child_module_enabled': True,
+            'schedule_phases': [{
+                'id': schedule.id,
+                'anchor': schedule.anchor,
+                'forms': [form.schedule_form_id for form in schedule.get_forms()],
+            } for schedule in module.get_schedule_phases()],
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
@@ -2084,11 +2118,53 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def edit_schedule_phases(request, domain, app_id, module_id):
+    NEW_PHASE_ID = -1
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    phases = json.loads(request.POST.get('phases'))
+    changed_anchors = [(phase['id'], phase['anchor'])
+                       for phase in phases if phase['id'] != NEW_PHASE_ID]
+    all_anchors = [phase['anchor'] for phase in phases]
+    enabled = json.loads(request.POST.get('has_schedule'))
+    try:
+        module.update_schedule_phase_anchors(changed_anchors)
+        module.update_schedule_phases(all_anchors)
+        module.has_schedule = enabled
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
+
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+
     json_loads = json.loads(request.POST.get('schedule'))
-    form.schedule = FormSchedule.wrap(json_loads)
+    enabled = json_loads.pop('enabled')
+    anchor = json_loads.pop('anchor')
+    schedule_form_id = json_loads.pop('schedule_form_id')
+
+    if enabled:
+        try:
+            phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+        except ScheduleError as e:
+            return HttpResponseBadRequest(unicode(e))
+        form.schedule_form_id = schedule_form_id
+        form.schedule = FormSchedule.wrap(json_loads)
+        phase.add_form(form)
+    else:
+        try:
+            form.disable_schedule()
+        except ScheduleError:
+            pass
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
