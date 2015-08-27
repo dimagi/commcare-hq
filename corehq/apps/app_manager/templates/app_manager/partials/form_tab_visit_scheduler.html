@@ -54,9 +54,12 @@
                             <span class="help-inline error-text" style="display:none">
                                 {% trans 'This field is required'%}
                             </span>
+                            {% url "view_module" domain app.id module.id as module_url%}
                             <span class="hq-help-template"
                                   data-title="{% trans 'Schedule Phase' %}"
-                                  data-content="{% trans 'The phase this form is part of. Make phases on the module settings page' %}">
+                                  data-content={% blocktrans %}
+                                      "The phase this form is part of. Make phases on the <a href= '{{ module_url }}'>module settings page</a>"
+                                  {% endblocktrans %}>
                             </span>
                         </label>
                     </div>
