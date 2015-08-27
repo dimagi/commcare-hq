@@ -706,7 +706,7 @@ class FormBase(DocumentSchema):
         else:
             return form
 
-    def _pre_delete_hook(self):
+    def pre_delete_hook(self):
         raise NotImplementedError()
 
     def pre_move_hook(self, from_module, to_module):
@@ -2023,7 +2023,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return super(AdvancedForm, cls).wrap(data)
 
-    def _pre_delete_hook(self):
+    def pre_delete_hook(self):
         try:
             self.disable_schedule()
         except (ScheduleError, TypeError, AttributeError):
@@ -4496,7 +4496,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         record.save()
 
         try:
-            form._pre_delete_hook()
+            form.pre_delete_hook()
         except NotImplementedError:
             pass
 
