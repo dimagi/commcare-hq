@@ -154,7 +154,7 @@
             });
             // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
-                hasFormatCol: true,
+                hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
                 propertyHelpText: '{{ filter_property_help_text|escapejs}}',

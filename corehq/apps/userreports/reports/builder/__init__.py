@@ -188,3 +188,15 @@ def get_form_indicator_data_type(question_type):
         "Text": "string",
         "string": "string",
     }.get(question_type, "string")
+
+
+def get_filter_format_from_question_type(question_type):
+    return {
+        "Date": 'date',
+        "DateTime": "date",
+        "date": "date",  # Actually a meta property type
+        "dateime": "date",  # Actually a meta property type
+        "Text": "dynamic_choice_list",
+        "Int": "numeric",
+        "Double": "numeric",
+    }.get(question_type, "dynamic_choice_list")
