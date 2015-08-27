@@ -709,6 +709,10 @@ class FormBase(DocumentSchema):
     def _pre_delete_hook(self):
         raise NotImplementedError()
 
+    def pre_move_hook(self, from_module, to_module):
+        """ Called before a form is moved between modules or to a different position """
+        raise NotImplementedError()
+
     def wrapped_xform(self):
         return XForm(self.source)
 
@@ -2132,9 +2136,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def _pre_delete_hook(self):
         try:
-            self.get_phase().remove_form(self)
+            self.disable_schedule()
         except (ScheduleError, TypeError, AttributeError):
             pass
+
+    def pre_move_hook(self, from_module, to_module):
+        if from_module != to_module:
+            try:
+                self.disable_schedule()
+            except (ScheduleError, TypeError, AttributeError):
+                pass
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -2212,9 +2223,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_phase(self):
         module = self.get_module()
-
-        if not module.has_schedule:
-            raise ScheduleError("The module this form is in has no schedule")
 
         return next((phase for phase in module.get_schedule_phases()
                      for form in phase.get_forms()
@@ -2739,7 +2747,6 @@ class AdvancedModule(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return self._uses_case_type(USERCASE_TYPE)
-
 
     @property
     def phase_anchors(self):
@@ -4638,6 +4645,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
         to_module = self.get_module(to_module_id)
         from_module = self.get_module(from_module_id)
+        try:
+            from_module.forms[j].pre_move_hook(from_module, to_module)
+        except NotImplementedError:
+            pass
         try:
             form = from_module.forms.pop(j)
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
