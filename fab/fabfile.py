@@ -382,39 +382,6 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 
-@task
-@roles(ROLES_ALL_SRC)
-def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)
-
-    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
-    """
-    _require_target()
-
-    create_code_dir()
-    update_code()
-    create_virtualenvs()
-    update_virtualenv()
-    setup_dirs()
-    update_current()
-
-    # copy localsettings if it doesn't already exist in case any management
-    # commands we want to run now would error otherwise
-    with cd(env.code_root):
-        sudo('cp -n localsettings.example.py localsettings.py',
-             user=env.sudo_user)
-
-
-@task
-def unbootstrap():
-    """Delete cloned repos and virtualenvs"""
-
-    require('code_root', 'virtualenv_root')
-
-    with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_current)s %(code_current)s') % env)
-
-
 @roles(ROLES_ALL_SRC)
 @parallel
 def create_virtualenvs():
@@ -529,13 +496,13 @@ def mail_admins(subject, message):
 
 @roles(ROLES_DB_ONLY)
 def record_successful_deploy(url):
-    with cd(env.code_root):
+    with cd(env.code_current):
         sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
+            '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
             '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
-            'virtualenv_root': env.virtualenv_root,
+            'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
             'url': url,
@@ -645,9 +612,6 @@ def _deploy_without_asking():
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
-        # initial update of manifest to make sure we have no
-        # Offline Compression Issues as services restart
-        _execute_with_timing(update_manifest, soft=True)
 
         _execute_with_timing(clear_services_dir)
         set_supervisor_config()
@@ -707,16 +671,18 @@ def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
 
-@task
 @roles(ROLES_ALL_SRC)
 def copy_localsettings():
     sudo('cp {}/localsettings.py {}/localsettings.py'.format(env.code_current, env.code_root))
 
 
-@task
 @roles(ROLES_TOUCHFORMS)
 def copy_tf_localsettings():
-    sudo('cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py {}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(env.code_current, env.code_root))
+    sudo(
+        'cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py '
+        '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
+            env.code_current, env.code_root
+        ))
 
 
 @task
@@ -912,27 +878,6 @@ def _migrate():
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
-
-
-@task
-@roles(ROLES_DB_ONLY)
-def migrate():
-    """run south migration on remote environment"""
-    if not console.confirm(
-            'Are you sure you want to run south migrations on '
-            '{env.environment}? '
-            'You must preindex beforehand. '.format(env=env), default=False):
-        utils.abort('Task aborted.')
-    _require_target()
-    execute(stop_pillows)
-    execute(stop_celery_tasks)
-    with cd(env.code_root_preindex):
-        sudo(
-            '%(virtualenv_root_preindex)s/bin/python manage.py migrate --noinput ' % env
-            + env.get('app', ''),
-            user=env.sudo_user
-        )
-    _supervisor_command('start all')
 
 
 @roles(ROLES_DB_ONLY)
