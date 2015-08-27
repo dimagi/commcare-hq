@@ -219,6 +219,8 @@
                         {% case "filtering without case" %}
                             The form has filtering enabled but no cases are being loaded (excluding auto-loaded cases)
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}.
+                        {% case "error" %}
+                            <p>Details: {{ error.message }}</p>
                         {% else %}
                             Unknown error: {{ error.type }}
                             <p>Details: {{ error }}</p>

@@ -4262,7 +4262,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for form_stuff in self.get_forms(bare=False):
             filename = self.get_form_filename(**form_stuff)
             form = form_stuff['form']
-            files[filename] = self.fetch_xform(form=form)
+            try:
+                files[filename] = self.fetch_xform(form=form)
+            except XFormException as e:
+                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
