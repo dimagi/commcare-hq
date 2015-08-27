@@ -12,11 +12,11 @@ FORM_QUESTION_DATATYPE_MAP = {
 }
 
 FORM_METADATA_PROPERTIES = [
-    ('username', 'string'),
-    ('userID', 'string'),
-    ('timeStart', 'datetime'),
-    ('timeEnd', 'datetime'),
-    ('deviceID', 'string'),
+    ('username', 'Text'),
+    ('userID', 'Text'),
+    ('timeStart', 'DateTime'),
+    ('timeEnd', 'DateTime'),
+    ('deviceID', 'Text'),
 ]
 
 
@@ -194,8 +194,6 @@ def get_filter_format_from_question_type(question_type):
     return {
         "Date": 'date',
         "DateTime": "date",
-        "date": "date",  # Actually a meta property type
-        "dateime": "date",  # Actually a meta property type
         "Text": "dynamic_choice_list",
         "Int": "numeric",
         "Double": "numeric",
