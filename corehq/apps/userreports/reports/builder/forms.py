@@ -740,7 +740,8 @@ class ConfigureNewReportBase(forms.Form):
                     filter_format = get_filter_format_from_question_type(
                         property['source']['type']
                     )
-                else:  #property['type'] == 'meta':
+                else:
+                    assert property['type'] == 'meta'
                     filter_format = get_filter_format_from_question_type(
                         property['source'][1]
                     )
