@@ -33,7 +33,7 @@ class PlanningDB(object):
         """)
         cursor.execute("""
           CREATE TABLE commcare_form_diff(
-            commcare_form INTEGER,
+            commcare_form text,
             diff_type text,
             path text,
             old_value text,
@@ -48,8 +48,8 @@ class PlanningDB(object):
         """)
         cursor.execute("""
           CREATE TABLE commcare_case_action(
-            commcare_form INTEGER,
-            commcare_case INTEGER,
+            commcare_form text,
+            commcare_case text,
             action text,
             FOREIGN KEY(commcare_form) REFERENCES commcare_form(uuid),
             FOREIGN KEY(commcare_case) REFERENCES commcare_case(uuid)
