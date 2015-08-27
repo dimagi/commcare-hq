@@ -1445,8 +1445,8 @@ class XForm(WrappedNode):
 
         case_tag = lambda a: "case_{0}".format(a.case_tag)
 
-        def configure_visit_schedule_updates(update_block, action):
-            case = CaseIDXPath(session_var(action.case_session_var)).case()
+        def configure_visit_schedule_updates(update_block, action, session_case_id):
+            case = session_case_id.case()
             schedule_form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
 
             self.add_instance(
@@ -1572,7 +1572,7 @@ class XForm(WrappedNode):
 
                 if has_schedule:
                     self.add_casedb()
-                    configure_visit_schedule_updates(update_case_block.update_block, action)
+                    configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
         repeat_contexts = defaultdict(int)
         for action in form.actions.open_cases:
