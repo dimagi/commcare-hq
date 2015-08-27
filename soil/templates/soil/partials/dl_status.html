@@ -7,11 +7,11 @@
 {% elif is_ready %}
     <div id="ready_{{ download_id }}">
     {% if has_file %}
-        <p class="alert alert-success">
+        <p class="lead">
         {% blocktrans %}
-        Your export is ready.
-        <br />
-        <br />
+        <i class="icon icon-ok"></i>&nbsp;Your export is ready.
+        </p>
+        <p class="alert alert-info">
         <small>
             <i class="icon icon-info-sign"></i>&nbsp;If you are downloading a large file over a slow or unstable connection, we recommend syncing to Dropbox. Learn more about
         {% endblocktrans %}
