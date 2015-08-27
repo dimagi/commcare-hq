@@ -647,3 +647,10 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+EWS_BROADCAST_BY_ROLE = StaticToggle(
+    'ews_broadcast_by_role',
+    'EWS: Filter broadcast recipients by role',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
