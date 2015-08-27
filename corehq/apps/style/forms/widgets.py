@@ -1,7 +1,7 @@
 from django import forms
 from django.forms.fields import MultiValueField, CharField
-from django.forms.utils import flatatt
-from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioInput, TextInput, MultiWidget
+from django.forms.util import flatatt
+from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioChoiceInput, TextInput, MultiWidget
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -31,7 +31,7 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class BootstrapRadioInput(RadioInput):
+class BootstrapRadioInput(RadioChoiceInput):
 
     def __unicode__(self):
         if 'id' in self.attrs:
