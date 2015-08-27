@@ -144,6 +144,7 @@ def sms_in_last_bool(domain, days=None):
 def sms_in_in_last(domain, days=None):
     return _sms_helper(domain, direction="I", days=days)
 
+
 def sms_out_in_last(domain, days=None):
     return _sms_helper(domain, direction="O", days=days)
 
