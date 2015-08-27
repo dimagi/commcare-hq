@@ -96,7 +96,8 @@ class PlanningDB(object):
         cursor = self.connection.cursor()
         cursor.executemany(
             'INSERT INTO commcare_case_action(commcare_form, commcare_case, action) VALUES (?, ?, ?)',
-            [(xform_id, case_id, json.dumps(case_actions)) for xform_id, case_actions in case_actions]
+            [(xform_id, case_id, json.dumps(case_action))
+             for xform_id, case_action in case_actions]
         )
         self.connection.commit()
 
