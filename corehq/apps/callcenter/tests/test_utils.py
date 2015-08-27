@@ -138,33 +138,49 @@ class CallCenterUtilsTests(TestCase):
 
 
 class DomainTimezoneTests(SimpleTestCase):
-    @skip("Confirm intended functionality of midnights")
-    def test_midnight_for_domain(self):
+    def _test_midnights(self, utcnow, test_cases):
+        for tz, offset, expected in test_cases:
+            dom = DomainLite('', tz, '')
+            self.assertEqual(dom.midnights(utcnow), expected, (tz, offset))
+
+    def test_midnight_for_domain_general(self):
+        utcnow = datetime(2015, 1, 1, 12, 0, 0)
         timezones = [
-            ('Asia/Kolkata', 5.5),
-            ('UTC', 0),
-            ('Africa/Lagos', 1),
-            ('America/New_York', -5),
-            ('US/Eastern', -5),
-            ('Europe/London', 0),
-            ('Asia/Baghdad', 3),
-            ('America/Port-au-Prince', -5),
-            ('Africa/Porto-Novo', 1),
-            ('Africa/Nairobi', 3),
+            ('Asia/Kolkata', 5.5, [datetime(2014, 12, 31, 18, 30), datetime(2015, 1, 1, 18, 30)]),
+            ('UTC', 0, [datetime(2015, 1, 1, 0, 0), datetime(2015, 1, 2, 0, 0)]),
+            ('Africa/Lagos', 1, [datetime(2014, 12, 31, 23, 0), datetime(2015, 1, 1, 23, 0)]),
+            ('America/New_York', -5, [datetime(2015, 1, 1, 5, 0), datetime(2015, 1, 2, 5, 0)]),
+            ('US/Eastern', -5, [datetime(2015, 1, 1, 5, 0), datetime(2015, 1, 2, 5, 0)]),
+            ('Europe/London', 0, [datetime(2015, 1, 1, 0, 0), datetime(2015, 1, 2, 0, 0)]),
+            ('Asia/Baghdad', 3, [datetime(2014, 12, 31, 21, 0), datetime(2015, 1, 1, 21, 0)]),
+            ('America/Port-au-Prince', -5, [datetime(2015, 1, 1, 5, 0), datetime(2015, 1, 2, 5, 0)]),
+            ('Africa/Porto-Novo', 1, [datetime(2014, 12, 31, 23, 0), datetime(2015, 1, 1, 23, 0)]),
+            ('Africa/Nairobi', 3, [datetime(2014, 12, 31, 21, 0), datetime(2015, 1, 1, 21, 0)]),
+            ('Asia/Anadyr', 12, [datetime(2014, 12, 31, 12, 0), datetime(2015, 1, 1, 12, 0)]),
+            ('Pacific/Samoa', -11, [datetime(2015, 1, 1, 11, 0), datetime(2015, 1, 2, 11, 0)]),
         ]
-        for tz, offset in timezones:
-            py_timezone = pytz.timezone(tz)
-            midnight_past = datetime.now(py_timezone).replace(
-                hour=0, minute=0, second=0, microsecond=0, tzinfo=None
-            )
-            midnight_future = midnight_past + timedelta(days=1)
+        self._test_midnights(utcnow, timezones)
 
-            # account for DST
-            offset += datetime.now(py_timezone).dst().total_seconds() / 3600
+    def test_midnight_for_domain_cross_boundry(self):
+        # Test crossing day boundry
+        self._test_midnights(datetime(2015, 8, 27, 18, 30), [
+            ('Asia/Kolkata', 5.5, [datetime(2015, 8, 26, 18, 30), datetime(2015, 8, 27, 18, 30)]),
+        ])
 
-            dom = DomainLite(name='', default_timezone=tz, cc_case_type='')
-            self.assertEqual(dom.midnights[0], midnight_past - timedelta(hours=offset), tz)
-            self.assertEqual(dom.midnights[1], midnight_future - timedelta(hours=offset), tz)
+        self._test_midnights(datetime(2015, 8, 27, 18, 31), [
+            ('Asia/Kolkata', 5.5, [datetime(2015, 8, 27, 18, 30), datetime(2015, 8, 28, 18, 30)]),
+        ])
+
+    def test_midnight_for_domain_dst(self):
+        # without DST
+        self._test_midnights(datetime(2015, 1, 27, 11, 36), [
+            ('US/Eastern', -5, [datetime(2015, 1, 27, 5, 0), datetime(2015, 1, 28, 5, 0)]),
+        ])
+
+        # with DST
+        self._test_midnights(datetime(2015, 8, 27, 11, 36), [
+            ('US/Eastern', -4, [datetime(2015, 8, 27, 4, 0), datetime(2015, 8, 28, 4, 0)]),
+        ])
 
     def test_is_midnight_for_domain(self):
         midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
