@@ -406,7 +406,7 @@ class ScheduleFormXPath(object):
     @property
     def is_unscheduled_visit(self):
         """count(visit[within_window][@id != coalesce(last_visit_number_{form_id},0)]) = 0"""
-        last_visit_id = XPath(u'@id != {}'.format("coalesce({}, {})".format(self.last_visit, 0)))
+        last_visit_id = XPath(u'@id != {}'.format(u"coalesce({}, {})".format(self.last_visit, 0)))
         count = XPath.count(
             self.fixture.visit().select_raw(self.within_window()).
             select_raw(last_visit_id)
