@@ -2026,14 +2026,20 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def pre_delete_hook(self):
         try:
             self.disable_schedule()
-        except (ScheduleError, TypeError, AttributeError):
+        except (ScheduleError, TypeError, AttributeError) as e:
+            logging.error("There was a {error} while running the pre_delete_hook on {form_id}. "
+                          "There is probably nothing to worry about, but you could check to make sure "
+                          "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
 
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:
             try:
                 self.disable_schedule()
-            except (ScheduleError, TypeError, AttributeError):
+            except (ScheduleError, TypeError, AttributeError) as e:
+                logging.error("There was a {error} while running the pre_move_hook on {form_id}. "
+                              "There is probably nothing to worry about, but you could check to make sure "
+                              "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
                 pass
 
     def add_stuff_to_xform(self, xform):
