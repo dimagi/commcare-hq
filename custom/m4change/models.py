@@ -335,6 +335,9 @@ class McctStatus(models.Model):
     modified_on = models.DateTimeField(auto_now=True)
     user = models.CharField(max_length=255, null=True)
 
+    class Meta:
+        app_label = 'm4change'
+
     def update_status(self, new_status, reason, user):
         self.status = new_status
         self.reason = reason
