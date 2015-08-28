@@ -1,3 +1,4 @@
+from corehq.apps.ivr.api import log_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.twilio.models import TwilioBackend
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -5,6 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 
 EMPTY_RESPONSE = """<?xml version="1.0" encoding="UTF-8" ?>
 <Response></Response>"""
+
+IVR_RESPONSE = """<?xml version="1.0" encoding="UTF-8" ?>
+<Response>
+    <Pause length="30" />
+    <Reject />
+</Response>"""
+
+API_ID = TwilioBackend.get_api_id()
+
 
 @csrf_exempt
 def sms_in(request):
@@ -24,3 +34,12 @@ def sms_in(request):
     else:
         return HttpResponseBadRequest("POST Expected")
 
+@csrf_exempt
+def ivr_in(request):
+    if request.method == 'POST':
+        from_number = request.POST.get('From')
+        call_sid = request.POST.get('CallSid')
+        log_call(from_number, '%s-%s' % (API_ID, call_sid), backend_api=API_ID)
+        return HttpResponse(IVR_RESPONSE)
+    else:
+        return HttpResponseBadRequest("POST Expected")
