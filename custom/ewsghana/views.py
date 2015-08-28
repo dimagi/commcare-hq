@@ -13,8 +13,6 @@ from corehq.apps.commtrack.sms import process
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.products.models import Product
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.locations.models import SQLLocation
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
