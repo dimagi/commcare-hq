@@ -249,6 +249,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     """
     name = ugettext_noop('Message Log')
     slug = 'message_log'
+    ajax_pagination = True
 
     exportable = True
 
@@ -322,8 +323,8 @@ class MessageLogReport(BaseCommConnectLogReport):
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
-
-        data = SMSLog.by_domain_date(self.domain, startdate, enddate)
+        data = SMSLog.by_domain_date(self.domain, startdate, enddate,
+                                     limit=self.pagination.count, skip=self.pagination.start)
         result = []
 
         reporting_locations_id = self.get_location_filter() if self.uses_locations else []
@@ -364,6 +365,29 @@ class MessageLogReport(BaseCommConnectLogReport):
             ])
 
         return result
+
+    @property
+    def total_records(self):
+        startdate = json_format_datetime(self.datespan.startdate_utc)
+        enddate = json_format_datetime(self.datespan.enddate_utc)
+        result = SMSLog.view(
+            "sms/by_domain",
+            reduce=True,
+            startkey=[self.domain, 'SMSLog', startdate],
+            endkey=[self.domain, 'SMSLog', enddate],
+            include_docs=False
+        ).first()
+        return result['value'] if result else 0
+
+    @property
+    def shared_pagination_GET_params(self):
+        start_date = self.datespan.startdate_utc.strftime('%Y-%m-%d')
+        end_date = self.datespan.enddate_utc.strftime('%Y-%m-%d')
+        return [
+            {'name': 'startdate', 'value': start_date},
+            {'name': 'enddate', 'value': end_date},
+            {'name': 'log_type', 'value': MessageTypeFilter.get_value(self.request, self.domain)},
+        ]
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
