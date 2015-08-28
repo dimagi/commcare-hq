@@ -209,6 +209,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def test_only_clear_cases_on_phone(self):
         raise NotImplementedError()
 
+    def test_only_get_dependent_cases_on_phone(self):
+        raise NotImplementedError()
+
 
 class SyncLog(AbstractSyncLog):
     """
@@ -442,6 +445,9 @@ class SyncLog(AbstractSyncLog):
 
     def test_only_clear_cases_on_phone(self):
         self.cases_on_phone = []
+
+    def test_only_get_dependent_cases_on_phone(self):
+        return self.dependent_cases_on_phone
 
 
 PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
@@ -749,6 +755,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def test_only_clear_cases_on_phone(self):
         self. case_ids_on_phone = set()
+
+    def test_only_get_dependent_cases_on_phone(self):
+        # hack - just for tests
+        return [CaseState(case_id=id) for id in self.dependent_case_ids_on_phone]
 
 
 def get_properly_wrapped_sync_log(doc_id):
