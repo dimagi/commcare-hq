@@ -1,10 +1,12 @@
 from django.utils.translation import ugettext_noop
+from corehq import toggles
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
+    WORKFLOW_PERFORMANCE,
     WORKFLOW_DEFAULT,
     MessagingEvent,
 )
@@ -16,15 +18,21 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
     slug = 'log_type'
     OPTION_SURVEY = 'survey'
     OPTION_OTHER = 'other'
-    options = (
-        (WORKFLOW_REMINDER, ugettext_noop('Reminder')),
-        (WORKFLOW_KEYWORD, ugettext_noop('Keyword')),
-        (WORKFLOW_BROADCAST, ugettext_noop('Broadcast')),
-        (WORKFLOW_CALLBACK, ugettext_noop('Callback')),
-        (OPTION_SURVEY, ugettext_noop('Survey')),
-        (WORKFLOW_DEFAULT, ugettext_noop('Default')),
-        (OPTION_OTHER, ugettext_noop('Other')),
-    )
+
+    @property
+    def options(self):
+        options_var = [
+            (WORKFLOW_REMINDER, ugettext_noop('Reminder')),
+            (WORKFLOW_KEYWORD, ugettext_noop('Keyword')),
+            (WORKFLOW_BROADCAST, ugettext_noop('Broadcast')),
+            (WORKFLOW_CALLBACK, ugettext_noop('Callback')),
+            (self.OPTION_SURVEY, ugettext_noop('Survey')),
+            (WORKFLOW_DEFAULT, ugettext_noop('Default')),
+            (self.OPTION_OTHER, ugettext_noop('Other')),
+        ]
+        if toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
+            options_var.insert(4, (WORKFLOW_PERFORMANCE, ugettext_noop('Performance messages'))),
+        return options_var
 
 
 class EventTypeFilter(BaseMultipleOptionFilter):

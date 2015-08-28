@@ -42,6 +42,7 @@ from corehq.apps.sms.models import (
     WORKFLOW_CALLBACK,
     WORKFLOW_DEFAULT,
     WORKFLOW_FORWARD,
+    WORKFLOW_PERFORMANCE,
     INCOMING,
     OUTGOING,
     SMSLog,
@@ -283,6 +284,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             WORKFLOW_KEYWORD,
             WORKFLOW_BROADCAST,
             WORKFLOW_CALLBACK,
+            WORKFLOW_PERFORMANCE,
             WORKFLOW_DEFAULT,
         ]
         types = []
