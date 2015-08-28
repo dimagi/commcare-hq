@@ -651,6 +651,23 @@ numeric_percent | Percentage as a number                         | 33
 decimal         | Fraction as a decimal number                   | .333
 
 
+### The "aggregation" column property
+
+The aggregation column property defines how the column should be aggregated.
+If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+
+The following table documents the other aggregation options, which can be used in aggregate reports.
+
+Format          | Description
+--------------- | -----------------------------------------------
+simple          | No aggregation
+avg             | Average (statistical mean) of the values
+count_unique    | Count the unique values found
+count           | Count all rows
+min             | Choose the minimum value
+max             | Choose the maximum value
+sum             | Sum the values
+
 #### Column IDs
 
 Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
@@ -704,6 +721,10 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Calculating Column Totals
+
+To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
+
 ### Internationalization
 Report columns can be translated into multiple languages. To specify translations
 for a column header, use an object as the `display` value in the configuration
@@ -736,7 +757,27 @@ Valid `display` languages are any of the two or three letter language codes avai
 
 ## Aggregation
 
-TODO: finish aggregation docs
+Aggregation in reports is done using a list of columns to aggregate on.
+The columns represent what will be grouped in the report, and should be the `column_id`s of valid report columns.
+In most simple reports you will only have one level of aggregation. See examples below.
+
+### No aggregation
+
+```json
+["doc_id"]
+```
+
+### Aggregate by 'username' column
+
+```json
+["username"]
+```
+
+### Aggregate by two columns
+
+```json
+["column1", "column2"]
+```
 
 ## Transforms
 
