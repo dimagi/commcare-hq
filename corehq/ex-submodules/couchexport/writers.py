@@ -510,4 +510,6 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
                 self.context['subjects'].append(dict(zip(self.subject_keys, row)))
 
     def _close(self):
+        # TODO: Instead of writing to a file, write to the OpenClinica web service
+        #       cf. custom.openclinica.models.OpenClinicaAPI
         self.file.write(render_to_string('couchexport/odm_export.xml', self.context))
