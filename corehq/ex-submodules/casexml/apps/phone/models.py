@@ -317,14 +317,24 @@ class SyncLog(AbstractSyncLog):
 
     def archive_case(self, case_id):
         state = self.get_case_state(case_id)
-        self.cases_on_phone.remove(state)
-        self._case_state_map.reset_cache(self)
-        all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
-                       for i in case_state.indices]
-        if any([i.referenced_id == case_id for i in all_indices]):
-            self.dependent_cases_on_phone.append(state)
-            self._dependent_case_state_map.reset_cache(self)
-        return state
+        if state:
+            self.cases_on_phone.remove(state)
+            self._case_state_map.reset_cache(self)
+            all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
+                           for i in case_state.indices]
+            if any([i.referenced_id == case_id for i in all_indices]):
+                self.dependent_cases_on_phone.append(state)
+                self._dependent_case_state_map.reset_cache(self)
+            return state
+        else:
+            state = self.get_dependent_case_state(case_id)
+            if state:
+                all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
+                               for i in case_state.indices]
+                if not any([i.referenced_id == case_id for i in all_indices]):
+                    self.dependent_cases_on_phone.remove(state)
+                    self._dependent_case_state_map.reset_cache(self)
+                    return state
 
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
