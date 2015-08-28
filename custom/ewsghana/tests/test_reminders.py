@@ -6,6 +6,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.locations.tests import make_loc
 from corehq.apps.products.models import SQLProduct, Product
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
@@ -142,6 +143,14 @@ class TestReminders(TestCase):
         SMS.objects.all().delete()
         StockState.objects.all().delete()
         StockReport.objects.all().delete()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user1.delete()
+        cls.user2.delete()
+        cls.user3.delete()
+        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
+            vn.delete()
 
     def test_first_soh_reminder(self):
         FirstSOHReminder(TEST_DOMAIN).send()

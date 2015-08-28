@@ -4,6 +4,7 @@ from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
@@ -97,3 +98,9 @@ class TestUrgentAlerts(TestCase):
         create_stock_report(self.loc2, {'tp2': 0})
         now = datetime.utcnow()
         self.assertEqual(SMS.objects.filter(date__gte=now).count(), 0)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user1.delete()
+        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
+            vn.delete()

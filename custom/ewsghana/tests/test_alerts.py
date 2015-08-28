@@ -4,6 +4,7 @@ from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
@@ -68,6 +69,14 @@ class TestAlerts(TestCase):
         assign_products_to_location(cls.loc1, [cls.product])
         assign_products_to_location(cls.loc2, [cls.product, cls.product2])
         assign_products_to_location(cls.rms, [cls.product, cls.product2])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user1.delete()
+        cls.national_user.delete()
+        cls.regional_user.delete()
+        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
+            vn.delete()
 
     def tearDown(self):
         SMS.objects.all().delete()
