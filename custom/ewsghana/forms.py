@@ -1,4 +1,3 @@
-from corehq import toggles
 from corehq.apps.reminders.forms import BroadcastForm
 from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP,
     RECIPIENT_LOCATION)
