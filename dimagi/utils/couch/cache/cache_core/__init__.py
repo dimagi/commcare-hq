@@ -11,7 +11,7 @@ COUCH_CACHE_TIMEOUT = 60 * 60 * 12
 MOCK_REDIS_CACHE = None
 
 try:
-    REDIS_CACHE = cache.get_cache('redis')
+    REDIS_CACHE = cache.caches['redis']
 except:
     REDIS_CACHE = None
 
@@ -39,7 +39,7 @@ def get_redis_default_cache():
     Get the redis cache, or just the default if it doesn't exist
     """
     try:
-        return cache.get_cache('redis')
+        return cache.caches['redis']
     except (InvalidCacheBackendError, ValueError):
         return cache.cache
 

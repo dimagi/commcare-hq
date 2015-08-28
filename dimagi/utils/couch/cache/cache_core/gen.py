@@ -1,4 +1,5 @@
-from django.utils import http, importlib
+import importlib
+from django.utils import http
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
 from django.conf import settings
 from django_redis.exceptions import ConnectionInterrupted
