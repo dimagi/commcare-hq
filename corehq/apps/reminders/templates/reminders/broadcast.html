@@ -1,0 +1,29 @@
+{% extends 'reminders/base_template.html' %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super}}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reminders/ko/reminders.broadcast.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        var bvm = new BroadcastViewModel({{ form.current_values|JSON }});
+        ko.applyBindings(bvm, $('#broadcast-form').get(0));
+        bvm.init();
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <div id="broadcast-form">
+        {% crispy form %}
+    </div>
+{% endblock %}

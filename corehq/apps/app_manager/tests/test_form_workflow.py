@@ -1,8 +1,12 @@
-import copy
 from django.test import SimpleTestCase
-from mock import patch
+from corehq.apps.app_manager.models import (
+    FormLink,
+    WORKFLOW_FORM,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_ROOT,
+)
 from corehq.apps.app_manager.const import AUTO_SELECT_RAW
-from corehq.apps.app_manager.models import WORKFLOW_FORM, FormLink, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.feature_previews import MODULE_FILTER
@@ -15,11 +19,8 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_basic(self):

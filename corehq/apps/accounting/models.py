@@ -2039,7 +2039,7 @@ class InvoicePdf(SafeSaveDocument):
             data = self.fetch_attachment(self.get_filename(invoice), True).read()
             metadata = {'content_type': 'application/pdf'}
             buff = StringIO(data)
-            obj.cache_put(buff, metadata, timeout=0)
+            obj.cache_put(buff, metadata, timeout=None)
         else:
             buff = obj.get()[1]
             data = buff.getvalue()
