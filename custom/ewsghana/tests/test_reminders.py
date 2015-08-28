@@ -23,14 +23,11 @@ from corehq.apps.sms.backend import test
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
 
-def create_stock_report(user, products_quantities):
-    sql_location = user.sql_location
-    if not sql_location:
-        return
-
+def create_stock_report(location, products_quantities):
+    sql_location = location.sql_location
     report = StockReport.objects.create(
         form_id='ews-reminders-test',
-        domain=TEST_DOMAIN,
+        domain=sql_location.domain,
         type='balance',
         date=datetime.utcnow()
     )
@@ -41,7 +38,7 @@ def create_stock_report(user, products_quantities):
             type='stockonhand',
             section_id='stock',
             case_id=sql_location.supply_point_id,
-            product_id=SQLProduct.objects.get(domain=TEST_DOMAIN, code=product_code).product_id
+            product_id=SQLProduct.objects.get(domain=sql_location.domain, code=product_code).product_id
         ).save()
 
 
@@ -176,7 +173,7 @@ class TestReminders(TestCase):
             SECOND_STOCK_ON_HAND_REMINDER % {'name': self.user2.full_name}
         )
 
-        create_stock_report(self.user2, {
+        create_stock_report(self.loc1, {
             'tp': 100
         })
 
@@ -190,7 +187,7 @@ class TestReminders(TestCase):
             SECOND_STOCK_ON_HAND_REMINDER % {'name': self.user3.full_name}
         )
 
-        create_stock_report(self.user3, {
+        create_stock_report(self.loc2, {
             'tp': 100
         })
         now = datetime.utcnow()
@@ -202,7 +199,7 @@ class TestReminders(TestCase):
             SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.user3.full_name, 'products': 'Test Product2'}
         )
 
-        create_stock_report(self.user3, {
+        create_stock_report(self.loc2, {
             'tp2': 100
         })
         now = datetime.utcnow()
@@ -217,7 +214,7 @@ class TestReminders(TestCase):
 
         self.assertEqual(smses[0].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.in_charge.full_name})
 
-        create_stock_report(self.in_charge, {
+        create_stock_report(self.loc2, {
             'tp': 100
         })
         now = datetime.utcnow()
@@ -229,7 +226,7 @@ class TestReminders(TestCase):
             SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.in_charge.full_name, 'products': 'Test Product2'}
         )
 
-        create_stock_report(self.in_charge, {
+        create_stock_report(self.loc2, {
             'tp2': 100
         })
         now = datetime.utcnow()
@@ -243,7 +240,7 @@ class TestReminders(TestCase):
         self.assertEqual(smses.count(), 0)
 
         create_stock_report(
-            self.in_charge, {
+            self.loc2, {
                 'tp': 0
             }
         )
