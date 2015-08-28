@@ -339,6 +339,7 @@ class PythonPillow(BasicPillow):
     Subclasses should override the python_filter function to perform python
     filtering.
     """
+    process_deletions = False
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
@@ -373,7 +374,7 @@ class PythonPillow(BasicPillow):
         while len(self.change_queue) > 0:
             change = self.change_queue.pop()
             doc = self.couch_db.open_doc(change['id'], check_main=False)
-            if doc and self.python_filter(doc):
+            if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
                     self.process_change(change)
                 except Exception:
@@ -385,7 +386,7 @@ class PythonPillow(BasicPillow):
             self.change_queue.append(change)
             if len(self.change_queue) > self.chunk_size:
                 self.process_chunk()
-        elif self.python_filter(change['doc']):
+        elif self.python_filter(change['doc']) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
         if self.changes_seen % self.checkpoint_frequency == 0 and do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
