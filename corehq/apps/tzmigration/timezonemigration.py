@@ -4,8 +4,11 @@ import os
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from casexml.apps.case.cleanup import rebuild_case_from_actions
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.commtrack.processing import get_stock_actions
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete, get_migration_status
@@ -119,16 +122,20 @@ def prepare_planning_db(domain):
     for i, xform in enumerate(iter_docs(XFormInstance.get_db(), xform_ids)):
         xform_id = xform['_id']
         case_actions_by_case_id = collections.defaultdict(list)
-        xml = _get_submission_xml(xform_id)
+        try:
+            xml = _get_submission_xml(xform_id)
+        except ResourceNotFound:
+            continue
         form_json = _get_new_form_json(xml, xform_id)
         planning_db.add_form(xform_id, form_json)
-        planning_db.add_form_diffs(xform_id,
-                                   json_diff(xform['form'], form_json))
+        planning_db.add_diffs('form', xform_id,
+                              json_diff(xform['form'], form_json))
 
         case_updates = get_case_updates(form_json)
         xform_copy = deepcopy(xform)
         xform_copy['form'] = form_json
         xformdoc = XFormInstance.wrap(xform_copy)
+        xformdoc.save = lambda: None
 
         case_actions = [
             (case_update.id, action.xform_id, action.to_json())
@@ -136,10 +143,33 @@ def prepare_planning_db(domain):
             for action in case_update.get_case_actions(xformdoc)
         ]
 
+        stock_report_helpers, stock_case_actions = get_stock_actions(xformdoc)
+        case_actions.extend(stock_case_actions)
+
         for case_id, xform_id, case_action in case_actions:
             case_actions_by_case_id[case_id].append((xform_id, case_action))
 
         for case_id, case_actions in case_actions_by_case_id.items():
             planning_db.ensure_case(case_id)
             planning_db.add_case_actions(case_id, case_actions)
+        planning_db.add_stock_report_helpers([
+            stock_report_helper.to_json()
+            for stock_report_helper in stock_report_helpers
+        ])
+    prepare_case_json(planning_db)
+
+
+def prepare_case_json(planning_db):
+    case_ids = planning_db.get_all_case_ids()
+    for case_json in iter_docs(CommCareCase.get_db(), case_ids):
+        case = CommCareCase.wrap(case_json)
+        # to normalize for any new fields added
+        case_json = deepcopy(case.to_json())
+        case.save = lambda: None
+        actions = [CommCareCaseAction.wrap(action)
+                   for action in planning_db.get_actions_by_case(case.case_id)]
+        rebuild_case_from_actions(case, actions)
+        planning_db.update_case_json(case.case_id, case.to_json())
+        planning_db.add_diffs('case', case.case_id, json_diff(case.to_json(), case_json))
+
     return planning_db

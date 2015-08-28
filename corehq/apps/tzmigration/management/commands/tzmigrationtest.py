@@ -2,7 +2,8 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
-    get_planning_db, get_planning_db_filepath, delete_planning_db
+    get_planning_db, get_planning_db_filepath, delete_planning_db, \
+    prepare_case_json
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 
@@ -21,9 +22,11 @@ def _is_datetime(string):
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--prepare', action='store_true', default=False),
+        make_option('--prepare-case-json', action='store_true', default=False),
         make_option('--blow-away', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
+        make_option('--play', action='store_true', default=False),
     )
 
     def handle(self, domain, **options):
@@ -37,30 +40,16 @@ class Command(BaseCommand):
             self.stdout.write('Created and loaded file {}\n'.format(filepath))
         else:
             self.planning_db = get_planning_db(domain)
+        if options['prepare_case_json']:
+            prepare_case_json(self.planning_db)
         if options['stats']:
             self.valiate_forms_and_cases(domain)
         if options['show_diffs']:
             self.show_diffs()
-        if False:
-            self.group_forms_and_cases()
-
-    def group_forms_and_cases(self):
-        all_form_ids = self.planning_db.get_all_form_ids()
-        all_case_ids = self.planning_db.get_all_case_ids()
-        groups = []
-        i = 0
-        while all_form_ids:
-            i += 1
-            form_id = all_form_ids.pop()
-            form_ids, case_ids = self.planning_db.span_form_id(form_id)
-            all_form_ids -= form_ids
-            all_case_ids -= case_ids
-            groups.append((form_ids, case_ids))
-
-            print 'Group {}'.format(i)
-            print 'Forms ({}): {}'.format(len(form_ids), form_ids)
-            print 'Cases ({}): {}'.format(len(case_ids), case_ids)
-        print "Left over cases: {}".format(all_case_ids)
+        if options['play']:
+            from corehq.apps.tzmigration.planning import *
+            session = self.planning_db.Session()
+            import ipdb; ipdb.set_trace()
 
     def valiate_forms_and_cases(self, domain):
         form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
@@ -84,7 +73,7 @@ class Command(BaseCommand):
                 list(case_ids_in_sqlite - case_ids_in_couch))
 
     def show_diffs(self):
-        for form_id, json_diff in self.planning_db.get_form_diffs():
+        for form_id, json_diff in self.planning_db.get_diffs():
             if json_diff.diff_type == 'diff':
                 if _is_datetime(json_diff.old_value) and _is_datetime(json_diff.new_value):
                     continue
