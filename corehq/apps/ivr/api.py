@@ -282,7 +282,7 @@ def handle_known_call_session(call_log_entry, backend_module, ivr_event,
             input_length=input_length))
 
 
-def log_call(phone_number, gateway_session_id, backend_module=None):
+def log_call(phone_number, gateway_session_id, backend_api=None):
     cleaned_number = strip_plus(phone_number)
     v = VerifiedNumber.by_extensive_search(cleaned_number)
 
@@ -290,7 +290,7 @@ def log_call(phone_number, gateway_session_id, backend_module=None):
         phone_number=cleaned_number,
         direction=INCOMING,
         date=datetime.utcnow(),
-        backend_api=backend_module.API_ID if backend_module else None,
+        backend_api=backend_api,
         gateway_session_id=gateway_session_id,
     )
     if v:
@@ -324,7 +324,8 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             input_data=input_data, logged_subevent=logged_subevent)
     else:
         if not call_log_entry:
-            log_call(phone_number, gateway_session_id, backend_module=backend_module)
+            log_call(phone_number, gateway_session_id,
+                backend_api=(backend_module.API_ID if backend_module else None))
         return hang_up_response(gateway_session_id, backend_module=backend_module)
 
 

@@ -37,6 +37,13 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
 
+@RegisterGenerator(CaseRepeater, 'case_json', 'JSON', is_default=False)
+class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+    def get_payload(self, repeat_record, payload_doc):
+        del payload_doc['actions']
+        return json.dumps(payload_doc.get_json(lite=True))
+
+
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
