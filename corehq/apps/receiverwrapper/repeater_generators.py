@@ -41,7 +41,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         del payload_doc['actions']
-        return json.dumps(payload_doc.get_json())
+        return json.dumps(payload_doc.get_json(lite=True))
 
 
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
