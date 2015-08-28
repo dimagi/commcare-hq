@@ -386,9 +386,9 @@ stripe_generic_errors = (stripe.error.AuthenticationError,
 
 
 class AutoPayInvoicePaymentHandler(object):
-    def pay_autopayable_invoices(self, date_start):
-        """ Pays the full balance of all autopayable invoices for the month of date_start """
-        autopayable_invoices = Invoice.autopayable_invoices(date_start)
+    def pay_autopayable_invoices(self, date_due):
+        """ Pays the full balance of all autopayable invoices on date_due """
+        autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
             amount = invoice.balance.quantize(Decimal(10) ** -2)
 

@@ -1,5 +1,6 @@
 import random
 import mock
+
 from stripe import Charge
 from django.core import mail
 
@@ -42,10 +43,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         tasks.generate_invoices(self.invoice_date)
 
     def test_get_autopayable_invoices(self):
-        start_date, _ = utils.get_previous_month_date_range(self.invoice_date)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
+        date_due = autopayable_invoice.first().date_due
 
-        autopayable_invoices = Invoice.autopayable_invoices(start_date)
+        autopayable_invoices = Invoice.autopayable_invoices(date_due)
 
         self.assertItemsEqual(autopayable_invoices, autopayable_invoice)
 
@@ -55,10 +56,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         original_outbox_length = len(mail.outbox)
 
-        start_date, _ = utils.get_previous_month_date_range(self.invoice_date)
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
+        date_due = autopayable_invoice.first().date_due
 
-        AutoPayInvoicePaymentHandler().pay_autopayable_invoices(start_date)
+        AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
         self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)

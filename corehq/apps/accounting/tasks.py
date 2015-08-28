@@ -141,8 +141,9 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                 )
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='3'))
+@periodic_task(run_every=crontab(hour=01, minute=0,))
 def pay_autopay_invoices():
+    """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices()
 
 

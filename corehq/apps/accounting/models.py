@@ -1741,12 +1741,12 @@ class Invoice(InvoiceBase):
         return self.subscription.subscriber.domain
 
     @classmethod
-    def autopayable_invoices(cls, date_start):
-        """ Invoices that can be auto paid starting on date_start """
+    def autopayable_invoices(cls, date_due):
+        """ Invoices that can be auto paid on date_due """
         invoices = (cls.objects.
                     select_related('subscription__account').
                     filter(subscription__account__auto_pay_user__isnull=False).
-                    filter(date_start=date_start))
+                    filter(date_due=date_due))
         return invoices
 
     def pay_invoice(self, amount, payment_record):
