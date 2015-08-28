@@ -43,6 +43,7 @@ class PillowError(models.Model):
         return json.loads(self.change) if self.change else {'id': self.doc_id}
 
     class Meta:
+        app_label = 'pillow_retry'
         unique_together = ('doc_id', 'pillow',)
 
     def add_attempt(self, exception, traceb, date=None):
