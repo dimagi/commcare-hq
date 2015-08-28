@@ -173,3 +173,41 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         cache[doc_id] = doc_info
 
     return doc_info
+
+
+def get_object_info(obj, cache=None):
+    """
+    This function is intended to behave just like get_doc_info, only
+    you call it with objects other than Couch docs (such as objects
+    that use the Django ORM).
+    """
+    class_name = obj.__class__.__name__
+    cache_key = '%s-%s' % (class_name, obj.pk)
+    if cache and cache_key in cache:
+        return cache[cache_key]
+
+    from corehq.apps.locations.models import SQLLocation
+    if isinstance(obj, SQLLocation):
+        from corehq.apps.locations.views import EditLocationView
+        doc_info = DocInfo(
+            type_display=_('Location'),
+            display=obj.name,
+            link=reverse(
+                EditLocationView.urlname,
+                args=[obj.domain, obj.location_id],
+            ),
+            is_deleted=False,
+        )
+    else:
+        doc_info = DocInfo(
+            is_deleted=False,
+        )
+
+    doc_info.id = str(obj.pk)
+    doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
+    doc_info.type = class_name
+
+    if cache:
+        cache[cache_key] = doc_info
+
+    return doc_info

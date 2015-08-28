@@ -1,6 +1,6 @@
 import multiprocessing
 preload_app = True
-workers = multiprocessing.cpu_count() * 2 + 1
+workers = multiprocessing.cpu_count() + 1
 worker_class = 'gevent'
 keepalive = 60
 timeout = 900

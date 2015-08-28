@@ -119,7 +119,7 @@ These can be copied directly into data sources or modified to suit specific apps
 This saves the submission date as a `date` object.
 If you want to include the time change the datatypes to `"datetime"`.
 
-```
+```json
 {
     "type": "expression",
     "expression": {
@@ -133,12 +133,34 @@ If you want to include the time change the datatypes to `"datetime"`.
 }
 ```
 
+### User ID
+
+```json
+{
+    "display_name": "User ID",
+    "datatype": "string",
+    "expression": {
+        "type": "property_path",
+        "property_path": [
+            "form",
+            "meta",
+            "userID"
+        ]
+    },
+    "is_primary_key": false,
+    "transform": {},
+    "is_nullable": true,
+    "type": "expression",
+    "column_id": "user_id"
+}
+```
+
 ### A text or choice property
 
 This is the same type of indicator that should be used for typical Impact 123 indicators.
 In the example below, the indicator is inside a form group question called "impact123".
 
-```
+```json
 {
     "type": "expression",
     "expression": {
@@ -238,6 +260,74 @@ In the example below, the indicator is inside a form group question called "impa
     }
 }
 ```
+
+
+### Get a custom user data property from a form submission
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "column_id":"confirmed_referral_target",
+    "expression":{
+        "type":"related_doc",
+        "related_doc_type":"CommCareUser",
+        "doc_id_expression":{
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "userID"
+            ]
+        },
+        "value_expression":{
+            "type":"property_path",
+            "property_path": [
+                "user_data",
+                "confirmed_referral_target"
+            ]
+        }
+    }
+}
+```
+
+# Base Item Expressions
+
+## Emit multiple rows (one per non-empty case property)
+
+In this example we take 3 case properties and save one row per property if it exists.
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "property_name",
+            "property_name": "p1"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p2"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p3"
+        },
+    ],
+    "test": {
+        "type": "not",
+        "filter": {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "identity",
+            },
+            "operator": "in",
+            "property_value": ["", null],
+        }
+    }
+}
+```
+
 
 
 # Report examples

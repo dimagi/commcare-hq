@@ -828,6 +828,8 @@ class HQPasswordResetForm(forms.Form):
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None):
         """
@@ -1290,13 +1292,17 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def form_actions(self):
-        return FormActions(
-            crispy.ButtonHolder(
-                crispy.Submit(
-                    self.slug,
-                    ugettext_noop('Update')
+        return (
+            crispy.Hidden('slug', self.slug),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        self.slug,
+                        ugettext_noop('Update'),
+                        css_class='disable-on-submit',
+                    )
                 )
-            )
+            ),
         )
 
 
@@ -1316,7 +1322,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
                 'sure this is an internal Dimagi test space, not in use by a '
                 'partner.'
             )),
-            self.form_actions
+            *self.form_actions
         )
 
     def process_subscription_management(self):
@@ -1353,7 +1359,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('3 Month Trial')
+    subscription_type = ugettext_noop('Extended Trial')
 
     organization_name = forms.CharField(
         label=ugettext_noop('Organization Name'),
@@ -1365,16 +1371,12 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
-    end_date = forms.DateField(
-        widget=forms.HiddenInput,
+    trial_length = forms.ChoiceField(
+        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        label="Trial Length",
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
-        end_date = datetime.date.today() + relativedelta(months=3)
-        kwargs['initial'] = {
-            'end_date': end_date,
-        }
-
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
         self.fields['organization_name'].initial = self.autocomplete_account_name
@@ -1385,22 +1387,21 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
-            crispy.Field('end_date'),
+            crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.HTML(_(
-                '<p><i class="icon-info-sign"></i> The 3 month trial includes '
+                '<p><i class="icon-info-sign"></i> The trial includes '
                 'access to all features, 5 mobile workers, and 25 SMS.  Fees '
                 'apply for users or SMS in excess of these limits (1 '
                 'USD/user/month, regular SMS fees).</p>'
             )),
             crispy.HTML(_(
                 '<p><i class="icon-info-sign"></i> The trial will begin as soon '
-                'as you hit "Update" and end on %(end_date)s.  On %(end_date)s '
-                ' the project space will automatically be subscribed to the '
+                'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
+                'On <span data-bind="text: end_date"></span> '
+                'the project space will automatically be subscribed to the '
                 'Community plan.</p>'
-            ) % {
-                'end_date': end_date,
-            }),
-            self.form_actions
+            )),
+            *self.form_actions
         )
 
     def process_subscription_management(self):
@@ -1427,7 +1428,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
         fields.update({
             'auto_generate_credits': False,
-            'date_end': self.cleaned_data['end_date'],
+            'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
         })
@@ -1521,7 +1522,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                         'accounts_email': settings.ACCOUNTS_EMAIL,
                     }
                 ),
-                self.form_actions
+                *self.form_actions
             )
         else:
             self.fields['end_date'].initial = self.current_subscription.date_end
@@ -1543,7 +1544,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     'Please use this page only to extend the existing services contract.</p>'
                     '</div>'
                 )),
-                self.form_actions
+                *self.form_actions
             )
 
     def process_subscription_management(self):

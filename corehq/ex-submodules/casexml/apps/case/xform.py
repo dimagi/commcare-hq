@@ -22,6 +22,7 @@ from casexml.apps.case.exceptions import (
 from django.conf import settings
 from couchforms.util import is_deprecation
 from couchforms.validators import validate_phone_datetime
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -235,10 +236,7 @@ class CaseDbCache(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock in self.locks:
             if lock:
-                try:
-                    lock.release()
-                except redis.RedisError:
-                    pass
+                release_lock(lock, True)
 
     def validate_doc(self, doc):
         if self.domain and doc['domain'] != self.domain:

@@ -33,11 +33,11 @@
                 <a class="btn btn-project{% if is_project_settings %} btn-project-active{% endif %}"
                    href="{% url "domain_settings_default" domain %}">
                     {% if request|tzmigration_status == 'complete' %}
-                    <i class="icon-globe" title="New timezone behavior enabled"></i>
+                    <i class="icon-globe fa fa-globe" title="New timezone behavior enabled"></i>
                     {% elif request|tzmigration_status == 'in_progress' %}
-                    <i class="icon-globe" title="Timezone migration started but not complete"></i>
+                    <i class="icon-globe fa fa-globe" title="Timezone migration started but not complete"></i>
                     {% else %}
-                    <i class="icon-cog"></i>
+                    <i class="icon-cog fa fa-cog"></i>
                     {% endif %}
                     {% if request.project.is_snapshot %}
                         {% blocktrans with request.project.copied_from.display_name as snap_name %}

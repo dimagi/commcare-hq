@@ -284,7 +284,11 @@ def get_session_schema(form):
     """
     structure = {}
     # TODO handle advanced modules with more than one case
-    case_type = form.get_module().case_type
+    if hasattr(form, 'get_module'):
+        case_type = form.get_module().case_type
+    else:
+        case_type = None
+
     if case_type:
         structure["case_id"] = {
             "reference": {
