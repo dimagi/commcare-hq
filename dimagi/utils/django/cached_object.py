@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import simplejson
+from dimagi.utils.decorators.memoized import memoized
 
 try:
     import cStringIO as StringIO
@@ -177,7 +178,7 @@ class CachedObject(object):
         self.cache_key = cache_key
 
     def is_cached(self):
-        return self.rcache.get(self.meta_key(OBJECT_ORIGINAL)) is not None
+        return None not in self.get()
 
     @property
     def key_prefix(self):
@@ -212,6 +213,7 @@ class CachedObject(object):
             return {}
 
     #retrieval methods
+    @memoized
     def get(self, **kwargs):
         return self._do_get_size(OBJECT_ORIGINAL)
 
@@ -233,6 +235,7 @@ class CachedObject(object):
                    timeout=timeout)
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(object_meta.to_json()),
                    timeout=timeout)
+        self.get.reset_cache(self)
 
     @property
     def rcache(self):
@@ -256,7 +259,9 @@ class CachedImage(CachedObject):
 
         rcache.set(self.stream_key(OBJECT_ORIGINAL), image_stream.read())
         rcache.set(self.meta_key(OBJECT_ORIGINAL), simplejson.dumps(image_meta.to_json()))
+        self.get.reset_cache(self)
 
+    @memoized
     def get(self, size_key=OBJECT_ORIGINAL, **kwargs):
         """
         override get to allow for differing sizes
