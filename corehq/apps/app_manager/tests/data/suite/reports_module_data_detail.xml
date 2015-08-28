@@ -1,14 +1,14 @@
 <partial>
-  <detail id="reports.-1044519270389493083.data">
+  <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data">
     <title>
       <text>
-        <locale id="cchq.reports.-1044519270389493083.name"/>
+        <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
       </text>
     </title>
     <field>
       <header>
         <text>
-          <locale id="cchq.reports.-1044519270389493083.headers.owner"/>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.owner"/>
         </text>
       </header>
       <template>
@@ -20,7 +20,7 @@
     <field>
       <header>
         <text>
-          <locale id="cchq.reports.-1044519270389493083.headers.count"/>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.count"/>
         </text>
       </header>
       <template>
@@ -32,7 +32,7 @@
     <field>
       <header>
         <text>
-          <locale id="cchq.reports.-1044519270389493083.headers.is_starred"/>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.is_starred"/>
         </text>
       </header>
       <template>
