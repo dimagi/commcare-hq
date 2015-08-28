@@ -17,8 +17,6 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.locations.models import SQLLocation
 from custom.common import ALL_OPTION
-from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
-    urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
@@ -51,40 +49,6 @@ class EWSConfigView(BaseConfigView):
     page_title = ugettext_noop("EWS Ghana")
     template_name = 'ewsghana/ewsconfig.html'
     source = 'ewsghana'
-
-
-class RemindersTester(BaseRemindersTester):
-    post_url = 'reminders_tester'
-
-    reminders = {
-        'alert_on_going_reporting': on_going_process_user,
-        'alert_on_going_stockouts': on_going_stockout_process_user,
-        'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
-        'alert_urgent_stockout': urgent_stockout_process_user,
-        'alert_report_reminder': report_reminder_process_user
-    }
-
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-
-        reminder = request.POST.get('reminder')
-        phone_number = context.get('phone_number')
-
-        if reminder and phone_number:
-            phone_number = clean_phone_number(phone_number)
-            v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-            if v and v.verified:
-                user = v.owner
-                if not user:
-                    return self.get(request, *args, **kwargs)
-                reminder_function = self.reminders.get(reminder)
-                if reminder_function:
-                    if reminder == 'third_soh':
-                        reminder_function([user], [user.sql_location], test=True)
-                    else:
-                        reminder_function(user, test=True)
-        messages.success(request, "Reminder was sent successfully")
-        return self.get(request, *args, **kwargs)
 
 
 class InputStockView(BaseDomainView):
