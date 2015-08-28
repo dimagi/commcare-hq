@@ -52,8 +52,6 @@ branches:
 #  - reverseLanguageMedia # Sravan 6/10
   - web-user-requests # Jenny, July 16
   - FormArchive # Sravan 7/22
-  - due-list+icds/scheduler # Farid 8/20
-  - icds/scheduler # Farid 8/6
   - ckeditor # J$ 7/24
   - quickcache-user-roles  # Ethan 8/13
   - optmize-deploy+knockout-js2 # Ben 8/24
