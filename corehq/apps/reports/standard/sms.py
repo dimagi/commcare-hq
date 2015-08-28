@@ -10,11 +10,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
-    ProjectReportParametersMixin
+from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
-    DTSortType
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -27,14 +25,7 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
-# This import is not used, but there's some sort circular dependency
-# that is exposed if you remove this. That's not something I've seen before
-# but presumably having this here changes the order in which files are imported
-# and that ends up mattering.
-# todo: figure out what that circular dependency is
-from corehq.apps.users.views import mobile
-from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
-    get_object_info)
+from corehq.apps.hqwebapp.doc_info import get_doc_info, get_doc_info_by_id, get_object_info
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -51,10 +42,12 @@ from corehq.apps.sms.models import (
     SMS,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.reminders.models import (SurveyKeyword,
-    CaseReminderHandler)
-from corehq.apps.reminders.views import (EditStructuredKeywordView,
-    EditNormalKeywordView, EditScheduledReminderView)
+from corehq.apps.reminders.models import SurveyKeyword, CaseReminderHandler
+from corehq.apps.reminders.views import (
+    EditStructuredKeywordView,
+    EditNormalKeywordView,
+    EditScheduledReminderView
+)
 from couchforms.models import XFormInstance
 
 
@@ -113,6 +106,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
             )
         ]
 
+
 def _sms_count(user, startdate, enddate, message_type='SMSLog'):
     """
     Returns a dictionary of messages seen for a given type, user, and date
@@ -134,6 +128,7 @@ def _sms_count(user, startdate, enddate, message_type='SMSLog'):
         ret[direction] = results[0]['value'] if results else 0
 
     return ret
+
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     def _fmt(self, val):
@@ -240,17 +235,18 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             row.append(contact_info[2])
         return result
 
-"""
-Displays all sms for the given domain and date range.
 
-Some projects only want the beginning digits in the phone number and not the entire phone number.
-Since this isn't a common request, the decision was made to not have a field which lets you abbreviate
-the phone number, but rather a settings parameter.
-
-So, to have this report abbreviate the phone number to only the first four digits for a certain domain, add 
-the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number_domains"]
-"""
 class MessageLogReport(BaseCommConnectLogReport):
+    """
+    Displays all sms for the given domain and date range.
+
+    Some projects only want the beginning digits in the phone number and not the entire phone number.
+    Since this isn't a common request, the decision was made to not have a field which lets you abbreviate
+    the phone number, but rather a settings parameter.
+
+    So, to have this report abbreviate the phone number to only the first four digits for a certain domain, add
+    the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number_domains"]
+    """
     name = ugettext_noop('Message Log')
     slug = 'message_log'
 
@@ -326,6 +322,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
+
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
 
@@ -586,10 +583,13 @@ class MessagingEventsReport(BaseMessagingEventReport):
         ):
             return self._fmt(_(dict(MessagingEvent.RECIPIENT_CHOICES)[event.recipient_type]))
         else:
-            return self._fmt_contact_link(event.recipient_id, doc_info,
-                extra_text=_('(including child locations)')
-                if event.recipient_type == MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS
-                else None)
+            return self._fmt_contact_link(
+                event.recipient_id,
+                doc_info,
+                extra_text=(_('(including child locations)')
+                            if event.recipient_type == MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+                            else None)
+            )
 
     @property
     def rows(self):
