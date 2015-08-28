@@ -470,4 +470,3 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
-
