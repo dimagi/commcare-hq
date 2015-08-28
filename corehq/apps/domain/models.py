@@ -38,7 +38,7 @@ from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
-from django.utils.importlib import import_module
+from importlib import import_module
 from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
