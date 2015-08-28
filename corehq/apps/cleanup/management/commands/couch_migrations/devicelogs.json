@@ -1,0 +1,15 @@
+{
+    "from_db_postfix": "",
+    "to_db_postfix": "devicelogs",
+    "doc_types": [
+        "XFormInstance"
+    ],
+    "filters": [
+        {
+            "type": "property_match",
+            "property_name": "xmlns",
+            "property_value": "http://code.javarosa.org/devicereport"
+        }
+    ],
+    "couch_views": []
+}

@@ -418,6 +418,12 @@ class XFormArchived(XFormError):
         XFormInstance.save(self, *args, **kwargs)
 
 
+class XFormInstanceDevicelog(XFormInstance):
+
+    class Meta:
+        app_label = 'devicelogs'
+
+
 class SubmissionErrorLog(XFormError):
     """
     When a hard submission error (typically bad XML) is received we save it 

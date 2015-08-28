@@ -1104,6 +1104,7 @@ COUCHDB_APPS = [
     'succeed',
     'ilsgateway',
     'ewsghana',
+    ('devicelogs', 'devicelogs'),
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -1305,6 +1306,9 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPFormIndicatorPillow',
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
+    'migrations': [
+        'corehq.apps.cleanup.pillows.DevicelogMigrationPillow',
+    ]
 }
 
 
