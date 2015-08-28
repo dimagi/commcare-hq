@@ -1734,7 +1734,7 @@ class SubscriptionAdjustment(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'accoutning'
+        app_label = 'accounting'
 
     @classmethod
     def record_adjustment(cls, subscription, **kwargs):
