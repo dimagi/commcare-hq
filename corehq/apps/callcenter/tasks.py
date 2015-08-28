@@ -17,7 +17,7 @@ def calculate_indicators():
     domains = [
         domain
         for domain in get_call_center_domains()
-        for midnight in domain.midnights
+        for midnight in domain.midnights()
         if is_midnight_for_domain(midnight, error_margin=20)
     ]
     logger.info("Calculating callcenter indicators for domains:\n{}".format(domains))

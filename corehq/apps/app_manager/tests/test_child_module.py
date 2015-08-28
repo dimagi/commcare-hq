@@ -4,10 +4,10 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    CaseIndex,
     FormActionCondition,
     LoadUpdateAction,
     Module,
-    OpenCaseAction,
     OpenSubCaseAction,
     ParentSelect,
     PreloadAction,
