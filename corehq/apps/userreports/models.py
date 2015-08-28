@@ -68,6 +68,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     meta = SchemaProperty(DataSourceMeta)
 
     class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
     def __unicode__(self):
