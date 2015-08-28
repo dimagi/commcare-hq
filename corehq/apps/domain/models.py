@@ -1235,6 +1235,9 @@ class TransferDomainRequest(models.Model):
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
+    class Meta:
+        app_label = 'domain'
+
     @property
     @memoized
     def to_user(self):

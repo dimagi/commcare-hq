@@ -122,6 +122,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
+    class Meta:
+        app_label = 'couchforms'
+
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
         # copied and tweaked from the superclass's method
@@ -464,3 +467,7 @@ class UnfinishedSubmissionStub(models.Model):
     timestamp = models.DateTimeField()
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+
+    class Meta:
+        app_label = 'couchforms'
+

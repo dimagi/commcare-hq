@@ -1632,6 +1632,9 @@ class MaintenanceAlert(models.Model):
 
     text = models.TextField()
 
+    class Meta:
+        app_label = 'hqwebapp'
+
     @property
     def html(self):
         return mark_up_urls(self.text)

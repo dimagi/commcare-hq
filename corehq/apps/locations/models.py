@@ -87,6 +87,9 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
+    class Meta:
+        app_label = 'locations'
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
@@ -231,6 +234,7 @@ class SQLLocation(MPTTModel):
         self._products = value
 
     class Meta:
+        app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
     def __unicode__(self):
