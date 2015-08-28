@@ -1,4 +1,4 @@
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.sms.api import send_sms_to_verified_number
 
 
@@ -15,7 +15,7 @@ class Alert(object):
     def get_users(self, sql_location):
         return [
             user
-            for user in get_all_users_by_location(self.domain, sql_location.location_id)
+            for user in get_users_by_location_id(self.domain, sql_location.location_id)
             if user.get_verified_number()
         ]
 

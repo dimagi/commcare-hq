@@ -1,5 +1,3 @@
-from celery.schedules import crontab
-from celery.task import periodic_task
 import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
@@ -8,50 +6,8 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ewsghana.alerts import COMPLETE_REPORT, INCOMPLETE_REPORT, \
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
-from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
-from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts
-from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
 from custom.ewsghana.utils import ProductsReportHelper
-import settings
-from custom.ewsghana.models import EWSGhanaConfig
 from django.utils.translation import ugettext as _
-
-
-# Alert when facilities have not been reported continuously for 3 weeks
-@periodic_task(run_every=crontab(hour=10, minute=00),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def on_going_non_reporting():
-    domains = EWSGhanaConfig.get_all_enabled_domains()
-    for domain in domains:
-        OnGoingNonReporting(domain).send()
-
-
-# Ongoing STOCKOUTS at SDP and RMS
-@periodic_task(run_every=crontab(hour=10, minute=25),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def on_going_stockout():
-    domains = EWSGhanaConfig.get_all_enabled_domains()
-    for domain in domains:
-        OnGoingStockouts(domain).send()
-        OnGoingNonReporting(domain).send()
-
-
-# Urgent Non-Reporting
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def urgent_non_reporting():
-    domains = EWSGhanaConfig.get_all_enabled_domains()
-    for domain in domains:
-        UrgentNonReporting(domain)
-
-
-# Urgent Stockout
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def urgent_stockout():
-    domains = EWSGhanaConfig.get_all_enabled_domains()
-    for domain in domains:
-        UrgentStockoutAlert(domain)
 
 
 # Checking if report was complete or not
