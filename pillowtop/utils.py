@@ -2,7 +2,7 @@ from __future__ import division
 import warnings
 from datetime import datetime
 from dateutil.parser import parse
-from django.utils import importlib
+import importlib
 import pytz
 
 
