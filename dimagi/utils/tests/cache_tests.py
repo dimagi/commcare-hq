@@ -22,6 +22,9 @@ class FakeCache(object):
     def set(self, key, value, timeout=None):
         self.cache_dict[key] = value
 
+    def delete(self, key):
+        self.cache_dict.pop(key, None)
+
 
 fake_cache = FakeCache()
 
@@ -52,6 +55,30 @@ class CachedObjectTests(TestCase):
         im.save(buf, "png")
         buf.seek(0)
         return (im, buf)
+
+    def test_is_cached_lost_meta_key(self):
+        text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        filename = "something"
+        buffer = StringIO.StringIO(text)
+        metadata = {'content_type': 'text/plain'}
+
+        obj = CachedObject(filename)
+        obj.cache_put(buffer, metadata)
+        obj.rcache.delete(obj.meta_key(OBJECT_ORIGINAL))
+
+        self.assertFalse(obj.is_cached())
+
+    def test_is_cached_lost_stream_key(self):
+        text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        filename = "something"
+        buffer = StringIO.StringIO(text)
+        metadata = {'content_type': 'text/plain'}
+
+        obj = CachedObject(filename)
+        obj.cache_put(buffer, metadata)
+        obj.rcache.delete(obj.stream_key(OBJECT_ORIGINAL))
+
+        self.assertFalse(obj.is_cached())
 
     def testHugeImageObject(self):
         image, buffer = self._make_image()

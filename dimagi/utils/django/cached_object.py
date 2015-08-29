@@ -178,7 +178,7 @@ class CachedObject(object):
         self.cache_key = cache_key
 
     def is_cached(self):
-        return None not in self.get()
+        return all(self.get())
 
     @property
     def key_prefix(self):
