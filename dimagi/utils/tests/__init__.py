@@ -18,3 +18,4 @@ from .name_to_url import *
 from .dates import *
 from .test_json_handler import *
 from .test_modules import *
+from .cache_tests import *
