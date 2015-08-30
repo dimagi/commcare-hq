@@ -407,16 +407,21 @@ class CustomReportConfiguration(JsonObject):
         return '{}{}-{}'.format(CUSTOM_PREFIX, domain, report_id)
 
     @classmethod
-    def all(cls):
+    def _all(cls):
         for path in settings.CUSTOM_UCR_REPORTS:
             with open(path) as f:
-                wrapped = cls.wrap(json.load(f))
-                for domain in wrapped.domains:
-                    doc = copy(wrapped.config)
-                    doc['domain'] = domain
-                    doc['_id'] = cls.get_doc_id(domain, wrapped.report_id)
-                    doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
-                    yield ReportConfiguration.wrap(doc)
+                yield cls.wrap(json.load(f))
+
+
+    @classmethod
+    def all(cls):
+        for wrapped in CustomReportConfiguration._all():
+            for domain in wrapped.domains:
+                doc = copy(wrapped.config)
+                doc['domain'] = domain
+                doc['_id'] = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
+                doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
+                yield ReportConfiguration.wrap(doc)
 
     @classmethod
     def by_domain(cls, domain):
