@@ -647,3 +647,10 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+TF_USE_SQLITE_BACKEND = StaticToggle(
+    'tf_use_sqlite_backend',
+    'Touchforms uses a SQLite backend for restored user data',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

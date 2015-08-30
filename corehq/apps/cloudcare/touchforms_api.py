@@ -6,6 +6,7 @@ from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq import toggles
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -72,6 +73,7 @@ class SessionDataHelper(object):
             "action": "touchcare-filter-cases",
             "filter_expr": xpath,
             "session_data": session_data,
+            "uses_sqlite": toggles.TF_USE_SQLITE_BACKEND
         }
 
         response = post_data(
