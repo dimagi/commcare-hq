@@ -11,8 +11,14 @@ from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
-from corehq.apps.userreports.models import ReportConfiguration, CustomReportConfiguration
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.models import (
+    CustomReportConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.view import (
+    ConfigurableReport,
+    CustomConfigurableReportDispatcher,
+)
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import standard as commtrack_reports
 from corehq.apps.reports.commtrack import maps as commtrack_maps
@@ -161,7 +167,13 @@ def _get_configurable_reports(project):
             # the report metadata should really be pulled outside of the report classes
             @classmethod
             def get_url(cls, domain, **kwargs):
-                return reverse(ConfigurableReport.slug, args=[domain, config._id])
+                from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
+                slug = (
+                    ConfigurableReport.slug
+                    if not config._id.startswith(CUSTOM_REPORT_PREFIX)
+                    else CustomConfigurableReportDispatcher.slug
+                )
+                return reverse(slug, args=[domain, config._id])
 
             @classmethod
             def show_in_navigation(cls, domain=None, project=None, user=None):
