@@ -347,6 +347,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
 
 CUSTOM_PREFIX = 'custom-'
+CUSTOM_REPORT_PREFIX = 'customreport-'
 
 
 class CustomDataSourceConfiguration(JsonObject):
@@ -401,10 +402,15 @@ class CustomReportConfiguration(JsonObject):
     report_id = StringProperty()
     data_source_table = StringProperty()
     config = DictProperty()
+    custom_configurable_report = StringProperty()
 
     @classmethod
-    def get_doc_id(cls, domain, report_id):
-        return '{}{}-{}'.format(CUSTOM_PREFIX, domain, report_id)
+    def get_doc_id(cls, domain, report_id, custom_configurable_report):
+        return '{}{}-{}'.format(
+            CUSTOM_PREFIX if not custom_configurable_report else CUSTOM_REPORT_PREFIX,
+            domain,
+            report_id,
+        )
 
     @classmethod
     def _all(cls):
