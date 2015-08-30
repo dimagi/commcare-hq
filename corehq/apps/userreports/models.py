@@ -440,3 +440,11 @@ class CustomReportConfiguration(JsonObject):
                 return ds
         raise BadSpecError(_('The report configuration referenced by this report could '
                              'not be found.'))
+
+    @classmethod
+    def report_class_by_domain_and_id(cls, domain, config_id):
+        for wrapped in cls._all():
+            if cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report) == config_id:
+                return wrapped.custom_configurable_report
+        raise BadSpecError(_('The report configuration referenced by this report could '
+                             'not be found.'))
