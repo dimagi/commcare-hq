@@ -186,10 +186,10 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
                 mark_safe(
                     """
                     Select  <a class="select-visible btn btn-mini btn-inverse">all</a>
-                    <a class="select-none btn btn-mini btn-warning">none</a>'
+                    <a class="select-none btn btn-mini btn-warning">none</a>
                     """
                 ),
-                sortable=False, span=2
+                sortable=False, span=3
             ),
             DataTablesColumn(_("View Form"), span=2),
             DataTablesColumn(_("Username"), prop_name='form.meta.username', span=3),
