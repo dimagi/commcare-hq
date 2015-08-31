@@ -892,6 +892,7 @@ def get_module_view_context_and_template(app, module):
             case_properties |= usercase_properties
 
         item['properties'] = sorted(case_properties)
+        item['fixture_select'] = module.fixture_select
 
         if isinstance(module, AdvancedModule):
             details = [item]
@@ -908,7 +909,6 @@ def get_module_view_context_and_template(app, module):
                 })
         else:
             item['parent_select'] = module.parent_select
-            item['fixture_select'] = module.fixture_select
             details = [item]
 
         return details
