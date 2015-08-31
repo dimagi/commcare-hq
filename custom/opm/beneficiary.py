@@ -652,6 +652,10 @@ class OPMCaseRow(object):
         return self.raw_num_children
 
     @property
+    def num_children_disp(self):
+        return {'sort_key': self.num_children, 'html': self.num_children}
+
+    @property
     def raw_num_children(self):
         # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
@@ -670,7 +674,7 @@ class OPMCaseRow(object):
     @property
     @memoized
     def forms(self):
-        return self.case.get_forms()
+        return self.data_provider.forms_by_case[self.case_id]
 
     @property
     def all_conditions_met(self):
@@ -896,7 +900,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('block_name', ugettext_lazy("Block Name"), True, None),
         ('village', ugettext_lazy("Village Name"), True, None),
-        ('num_children', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('num_children_disp', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
         ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
         ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
         ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
@@ -1030,7 +1034,7 @@ class LongitudinalConditionsMet(ConditionsMet):
                 form = sorted(forms, key=lambda form: form.received_on)[-1]
                 setattr(self, form_prop, form.form.get(form_prop, EMPTY_FIELD))
                 setattr(self, "weight_this_month_%s" % str(idx),
-                        form.form.get('child%s_child_growthmon' % str(idx), EMPTY_FIELD))
+                        form.form.get('child%s_weight' % str(idx), EMPTY_FIELD))
         self.one = format_bool(self.preg_attended_vhnd)
         self.two = format_bool(self.preg_weighed_trimestered(6))
         self.two_two = format_bool(self.preg_weighed_trimestered(9))

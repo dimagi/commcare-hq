@@ -3,6 +3,98 @@
 var VisitScheduler = (function () {
     'use strict';
 
+    var ModuleScheduler = function(params){
+        // Edits the schedule phases on the module setting page
+        var self = this;
+        self.home = params.home;
+
+        self.init = function () {
+            _.defer(function () {
+                ko.applyBindings(self, self.home.get(0));
+                self.home.on('textchange', 'input', self.change)
+                // all select2's are represented by an input[type="hidden"]
+                    .on('change', 'select, input[type="hidden"]', self.change)
+                    .on('click', 'a:not(.header)', self.change)
+                    .on('change', 'input[type="checkbox"]', self.change);
+
+                // https://gist.github.com/mkelly12/424774/#comment-92080
+                // textchange doesn't work with live event binding
+                $('#module-scheduler input').on('textchange', self.change);
+            });
+        };
+
+        self.change = function () {
+            self.saveButton.fire('change');
+        };
+
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged schedule settings",
+            save: function() {
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: params.saveUrl,
+                    data: {
+                        phases: JSON.stringify(self.serializePhases()),
+                        has_schedule: self.hasSchedule()
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                    }
+                });
+            }
+        });
+
+        var Phase = function(id, anchor, forms){
+            var self = this;
+            self.id = id;
+            self.anchor = uiElement.input().val(anchor);
+            self.anchor.observableVal = ko.observable(self.anchor.val());
+            self.anchor.on("change", function(){
+                self.anchor.observableVal(self.anchor.val());
+            });
+            CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
+            self.forms = ko.observable(forms);
+            self.form_abbreviations = ko.computed(function(){
+                return _.map(self.forms(), function(form){
+                    return form === '' ? '(no abbreviation)' : form;
+                }).join(', ');
+            });
+        };
+
+        self.hasSchedule = ko.observable(params.hasSchedule);
+
+        self.phases = ko.observableArray(
+            _.map(params.schedulePhases, function(phase){
+                return new Phase(phase.id, phase.anchor, phase.forms);
+            })
+        );
+        self.phases.subscribe(function(phase){
+            self.change();
+        });
+
+        self.selectedPhase = ko.observable();
+        self.selectPhase = function(phase){
+            self.selectedPhase(phase);
+        };
+
+        self.addPhase = function(){
+            var NEW_PHASE_ID = -1;
+            self.phases.push(new Phase(NEW_PHASE_ID, "", []));
+        };
+
+        self.removePhase = function(phase){
+            self.phases.remove(phase);
+        };
+
+        self.serializePhases = function(){
+            return _.map(self.phases(), function(phase){
+                return {id: phase.id,
+                        anchor: phase.anchor.val()};
+            });
+        };
+    };
+
     var Scheduler = function (params) {
         var self = this;
 
@@ -11,20 +103,23 @@ var VisitScheduler = (function () {
         self.save_url = params.save_url;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged case settings",
+            unsavedMessage: "You have unsaved schedule settings",
             save: function () {
-                var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
-                self.saveButton.ajax({
-                    type: 'post',
-                    url: self.save_url,
-                    data: {
-                        schedule: schedule
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
-                    }
-                });
+                var isValid = self.validate();
+                if (isValid){
+                    var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
+                    self.saveButton.ajax({
+                        type: 'post',
+                        url: self.save_url,
+                        data: {
+                            schedule: schedule
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                        }
+                    });
+                }
             }
         });
 
@@ -39,7 +134,44 @@ var VisitScheduler = (function () {
             self.saveButton.fire('change');
         };
 
-        self.formSchedule = FormSchedule.wrap(params.schedule, self);
+        self.validate = function(){
+            var errors = 0;
+            var $add_visit_button = self.home.find("#add-visit");
+
+            if (self.formSchedule.visits().length === 0){
+                $add_visit_button.closest(".control-group").addClass("error");
+                $add_visit_button.siblings(".error-text").show();
+                errors += 1;
+            } else {
+                $add_visit_button.closest(".control-group").removeClass("error");
+                $add_visit_button.siblings(".error-text").hide();
+            }
+
+            var required = self.home.find(":required").not(":disabled");
+            required.each(function(i, req){
+                var $req = $(req);
+                if ($req.val().trim().length === 0){
+                    $req.closest(".control-group").addClass("error");
+                    $req.siblings(".error-text").show();
+                    errors += 1;
+                }
+                else{
+                    $req.closest(".control-group").removeClass("error");
+                    $req.siblings(".error-text").hide();
+                }
+            });
+
+            if (!self.formSchedule.scheduleEnabled() || !errors ){
+                self.home.find("#form-errors").hide();
+                return true;
+            }else{
+                self.home.find("#form-errors").show();
+                return false;
+            }
+        };
+
+        self.schedulePhase = SchedulePhase.wrap(params.phase, self);
+        self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
 
         self.init = function () {
             _.defer(function () {
@@ -50,10 +182,39 @@ var VisitScheduler = (function () {
                      .on('click', 'a:not(.header)', self.change)
                      .on('change', 'input[type="checkbox"]', self.change);
 
-                // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#visit-scheduler input').on('textchange', self.change);
+                self.applyGlobalEventHandlers();
             });
         };
+
+        self.applyGlobalEventHandlers = function(){
+            // https://gist.github.com/mkelly12/424774/#comment-92080
+            // textchange doesn't work with live event binding
+            $('#visit-scheduler input').on('textchange', self.change);
+        };
+    };
+
+    var ScheduleRelevancy = {
+        mapping: function(self){
+            return {
+                include: [
+                    'starts',
+                    'expires',
+                ]
+            };
+        },
+        wrap: function(data){
+            var self = {};
+            ko.mapping.fromJS(data, ScheduleRelevancy.mapping(self), self);
+            self.starts_type = ko.observable(self.starts() < 0 ? 'before' : 'after');
+            self.expires_type = ko.observable(self.expires() < 0 ? 'before' : 'after');
+            self.enableFormExpiry = ko.observable(self.expires() !== null);
+            self.starts = ko.observable(Math.abs(self.starts()));
+            self.expires = ko.observable(Math.abs(self.expires()));
+            return self;
+        },
+        unwrap: function(self){
+            return ko.mapping.toJS(self, ScheduleRelevancy.mapping(self));
+        }
     };
 
     var ScheduleVisit = {
@@ -62,7 +223,10 @@ var VisitScheduler = (function () {
                 include: [
                     'due',
                     'type',
-                    'late_window'
+                    'starts',
+                    'expires',
+                    'repeats',
+                    'increment',
                 ]
             };
         },
@@ -71,6 +235,11 @@ var VisitScheduler = (function () {
                 config: config
             };
             ko.mapping.fromJS(data, ScheduleVisit.mapping(self), self);
+            if (self.repeats()){
+                self.due(self.increment());
+                self.type('repeats');
+            }
+            self.starts(self.starts() * -1);
             return self;
         },
 
@@ -79,15 +248,30 @@ var VisitScheduler = (function () {
         }
     };
 
+    var SchedulePhase = {
+        mapping: function(self){
+            return {
+                include: [
+                    'anchor',
+                ]
+            };
+        },
+        wrap: function (data, config) {
+            var self = {};
+            ko.mapping.fromJS(data, SchedulePhase.mapping(self), self);
+            return self;
+        }
+    };
+
     var FormSchedule = {
         mapping: function (self) {
             return {
                 include: [
-                    'anchor',
                     'expires',
-                    'post_schedule_increment',
+                    'allow_unscheduled',
                     'transition_condition',
-                    'termination_condition'
+                    'termination_condition',
+                    'schedule_form_id'
                 ],
                 visits: {
                     create: function (options) {
@@ -98,11 +282,13 @@ var VisitScheduler = (function () {
                 }
             };
         },
-        wrap: function (data, config) {
+        wrap: function (data, config, phase) {
             var self = {
-                config: config
+                config: config,
+                all_schedule_phase_anchors: data.all_schedule_phase_anchors,
+                phase: phase
             };
-            ko.mapping.fromJS(data, FormSchedule.mapping(self), self);
+            ko.mapping.fromJS(data.schedule, FormSchedule.mapping(self), self);
 
             // for compatibility with common template: case-config:condition
             self.allow = {
@@ -111,6 +297,7 @@ var VisitScheduler = (function () {
                 }
             };
 
+            self.scheduleEnabled = ko.observable(data.schedule.enabled);
             self.transition = ko.computed(FormSchedule.conditionComputed(self.config, self.transition_condition));
             self.terminate = ko.computed(FormSchedule.conditionComputed(self.config, self.termination_condition));
 
@@ -121,24 +308,22 @@ var VisitScheduler = (function () {
 
             self.hasExpiry = ko.observable();
 
-            self.hasPostSchedule = ko.observable(!!self.post_schedule_increment());
-
-            self.editValue = ko.dependentObservable({
-                read: function() {
-                    return self.post_schedule_increment();
-                },
-                write: function(newValue) {
-                    var parsedValue = parseInt(newValue, 10);
-                    this.post_schedule_increment(isNaN(parsedValue) ? newValue : parsedValue);
-                },
-                owner: self
+            self.hasRepeatVisit = ko.computed(function(){
+                return self.visits().length > 0 && self.visits()[self.visits().length - 1].type() === 'repeats';
             });
+
+            self.relevancy = ScheduleRelevancy.wrap(data.schedule);
+            var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
+            self.schedule_form_id = ko.observable(data.schedule_form_id).snakeCase(xmlRe);
 
             self.addVisit = function () {
                 self.visits.push(ScheduleVisit.wrap({
                     due: null,
                     type: 'after',
-                    late_window: null
+                    starts: null,
+                    expires: null,
+                    increment: null,
+                    repeats: false
                 }));
             };
 
@@ -178,17 +363,26 @@ var VisitScheduler = (function () {
             FormSchedule.cleanCondition(self.transition_condition);
             FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
-            if (!self.allowExpiry()) {
+            schedule.enabled = self.scheduleEnabled();
+            schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
+            if (self.relevancy.enableFormExpiry() && self.allowExpiry()){
+                schedule.expires = self.relevancy.expires() * (self.relevancy.expires_type() === 'before' ? -1 : 1);
+            }
+            else{
                 schedule.expires = null;
             }
-            if (!self.hasPostSchedule()) {
-                schedule.post_schedule_increment = null;
-            }
+
+            schedule.anchor = self.phase.anchor() || '';
+            schedule.schedule_form_id = self.schedule_form_id();
             schedule.visits = _.map(schedule.visits, function(visit) {
-                var due = visit.due * (visit.type === 'before' ? 1 : -1);
+                var due = visit.due * (visit.type === 'before' ? -1 : 1);
+                var repeats = visit.type === 'repeats';
                 return {
-                    due: due,
-                    late_window: visit.late_window
+                    due: repeats ? null : due,
+                    starts: visit.starts * -1,
+                    expires: visit.expires,
+                    repeats: repeats,
+                    increment: repeats ? visit.due : null
                 };
             });
             return schedule;
@@ -196,6 +390,42 @@ var VisitScheduler = (function () {
     };
 
     return {
-        Scheduler: Scheduler
+        Scheduler: Scheduler,
+        ModuleScheduler: ModuleScheduler
     };
 }());
+
+// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+//connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+            }
+        });
+    }
+};
+
+// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+//control visibility, give element focus, and select the contents (in order)
+ko.bindingHandlers.visibleAndSelect = {
+    update: function(element, valueAccessor) {
+        ko.bindingHandlers.visible.update(element, valueAccessor);
+        if (valueAccessor()) {
+            _.defer(function() {
+                $(element).focus().select();
+            });
+        }
+    }
+};

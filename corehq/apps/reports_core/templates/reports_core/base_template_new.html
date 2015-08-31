@@ -79,7 +79,6 @@
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log("wah waaaah");
                     $('#error-message').html(errorThrown);
                     $('#report-error').removeClass('hide');
                 }
@@ -101,7 +100,7 @@
         // add any filter javascript dependencies
         {% for filter in report.filters %}
             {% if filter.javascript_template %}
-                {% include filter.javascript_template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+                {% include filter.javascript_template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
             {% endif %}
         {% endfor %}
     });
@@ -121,6 +120,7 @@
 {% endblock %}
 
 {% block main_column %}
+{% block report_alerts %}
 <div id="report-error" class="alert alert-error hide">
     {% blocktrans %}
     There was an error rendering your report.
@@ -133,14 +133,15 @@
     {% endblocktrans %}
     <div id="warning-message"></div>
 </div>
-
+{% endblock report_alerts %}
+{% block main_column_content %}
 <div class="report-controls">
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
             <legend><span>{% trans "Report Filters" %}</span></legend>
             <input type="hidden" name="format" value="json"/>
             {% for filter in report.filters %}
-                {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+                {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
             {% endfor %}
         </fieldset>
 
@@ -195,4 +196,5 @@
     </table>
 </div>
 {% endblock reporttable %}
-{% endblock %}
+{% endblock main_column_content %}
+{% endblock main_column %}

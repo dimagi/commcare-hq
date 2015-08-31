@@ -234,7 +234,13 @@ class ProductsReportHelper(object):
             if monthly_consumption is None:
                 reorders.append((stockout.sql_product.code, None))
             else:
-                reorders.append((stockout.sql_product.code, int(monthly_consumption * REORDER_LEVEL)))
+                reorders.append(
+                    (
+                        stockout.sql_product.code,
+                        int(monthly_consumption * Decimal(stockout.sql_location.location_type.overstock_threshold)
+                            - stockout.stock_on_hand)
+                    )
+                )
         return reorders
 
     def _get_facilities_with_stock_category(self, category):
@@ -254,7 +260,7 @@ class ProductsReportHelper(object):
         return [
             transaction
             for transaction in self.transactions
-            if transaction.action == 'receipts' and transaction.quantity != '0'
+            if transaction.action == 'receipts' and transaction.quantity != 0
         ]
 
 

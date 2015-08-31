@@ -1,4 +1,5 @@
 from django.test import TestCase
+from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.helpers import make_product
@@ -48,8 +49,8 @@ class RebuildStockStateTest(TestCase):
         return stock_state, latest_txn, all_txns
 
     def _submit_ledgers(self, ledger_blocks):
-        submit_case_blocks(ledger_blocks.format(**self._stock_state_key),
-                           self.domain)
+        return submit_case_blocks(
+            ledger_blocks.format(**self._stock_state_key), self.domain)
 
     def test_simple(self):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
@@ -83,3 +84,15 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(stock_state.stock_on_hand, 150)
         self.assertEqual(latest_txn.stock_on_hand, 150)
         self.assertEqual(all_txns.count(), 2)
+
+    def test_case_actions(self):
+        """
+        make sure that when a case is rebuilt (using rebuild_case)
+        stock transactions show up as well
+        """
+        form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
+        case_id = self.case.case_id
+        rebuild_case(case_id)
+        case = CommCareCase.get(case_id)
+        self.assertEqual(case.xform_ids, [form_id])
+        self.assertEqual(case.actions[0].xform_id, form_id)

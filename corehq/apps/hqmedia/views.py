@@ -626,7 +626,7 @@ class ViewMultimediaFile(View):
                 data = CommCareImage.get_thumbnail_data(data, self.thumb)
             buffer = StringIO(data)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             metadata, buffer = obj.get()
             data = buffer.getvalue()

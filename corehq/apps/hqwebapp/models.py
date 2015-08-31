@@ -761,6 +761,10 @@ class MessagingTab(UITab):
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
                 RemindersListView,
+                BroadcastListView,
+                CreateBroadcastView,
+                EditBroadcastView,
+                CopyBroadcastView,
             )
             reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
             edit_reminder_urlname = EditScheduledReminderView.urlname
@@ -842,19 +846,19 @@ class MessagingTab(UITab):
             messages_urls.extend([
                 {
                     'title': _("Broadcast Messages"),
-                    'url': reverse('one_time_reminders', args=[self.domain]),
+                    'url': reverse(BroadcastListView.urlname, args=[self.domain]),
                     'subpages': [
                         {
                             'title': _("Edit Broadcast"),
-                            'urlname': 'edit_one_time_reminder'
+                            'urlname': EditBroadcastView.urlname,
                         },
                         {
                             'title': _("New Broadcast"),
-                            'urlname': 'add_one_time_reminder'
+                            'urlname': CreateBroadcastView.urlname,
                         },
                         {
-                            'title': _("New Broadcast"),
-                            'urlname': 'copy_one_time_reminder'
+                            'title': _("Copy Broadcast"),
+                            'urlname': CopyBroadcastView.urlname,
                         },
                     ],
                     'show_in_dropdown': True,
@@ -1407,6 +1411,8 @@ class AdminReportsTab(UITab):
                  'url': reverse('system_info')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
+                {'title': _('Download Malt table'),
+                 'url': reverse('download_malt')},
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [
