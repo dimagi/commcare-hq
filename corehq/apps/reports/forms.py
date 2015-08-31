@@ -8,6 +8,7 @@ from corehq.apps.userreports.reports.view import ConfigurableReport
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from .models import (
+    DEFAULT_REPORT_NOTIF_SUBJECT,
     ReportConfig,
     ReportNotification,
 )
@@ -124,6 +125,15 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
+    use_custom_email_subject = forms.BooleanField(
+        required=False,
+    )
+
+    custom_email_subject = forms.CharField(
+        required=False,
+        help_text='Defaults to "%s".' % DEFAULT_REPORT_NOTIF_SUBJECT,
+    )
+
     language = forms.ChoiceField(
         label='Language',
         required=False,
@@ -145,6 +155,11 @@ class ScheduledReportForm(forms.Form):
                 'attach_excel',
                 'recipient_emails',
                 'language',
+                crispy.Field('use_custom_email_subject', data_bind="checked: useCustomEmailSubject"),
+                crispy.Div(
+                    crispy.Field('custom_email_subject'),
+                    data_bind="visible: useCustomEmailSubject",
+                ),
                 crispy.HTML(
                     render_to_string('reports/partials/privacy_disclaimer.html')
                 )
