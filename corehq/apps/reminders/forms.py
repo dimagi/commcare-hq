@@ -2636,86 +2636,15 @@ class BroadcastForm(Form):
         layout_fields = [
             crispy.Fieldset(
                 _('Recipient'),
-                crispy.Field(
-                    'recipient_type',
-                    data_bind="value: recipient_type",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'case_group_id',
-                        data_bind='value: case_group_id',
-                    ),
-                    data_bind='visible: showCaseGroupSelect',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'user_group_id',
-                        data_bind='value: user_group_id',
-                    ),
-                    data_bind='visible: showUserGroupSelect',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'location_ids',
-                    ),
-                    crispy.Field(
-                        'include_child_locations',
-                    ),
-                    data_bind='visible: showLocationSelect',
-                ),
+                *self.crispy_recipient_fields
             ),
             crispy.Fieldset(
                 _('Timing'),
-                crispy.Field(
-                    'timing',
-                    data_bind='value: timing',
-                ),
-                crispy.Div(
-                    BootstrapMultiField(
-                        _("Date and Time"),
-                        InlineField(
-                            'date',
-                            data_bind='value: date',
-                            css_class="input-small",
-                        ),
-                        crispy.Div(
-                            template='reminders/partial/time_picker.html',
-                        ),
-                    ),
-                    ErrorsOnlyField('time'),
-                    ErrorsOnlyField('datetime'),
-                    data_bind='visible: showDateAndTimeSelect',
-                ),
+                *self.crispy_timing_fields
             ),
             crispy.Fieldset(
                 _('Content'),
-                crispy.Field(
-                    'content_type',
-                    data_bind='value: content_type',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'subject',
-                        data_bind='value: subject',
-                        style='height: 50px;',
-                    ),
-                    data_bind='visible: showSubject',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'message',
-                        data_bind='value: message',
-                        style='height: 50px;',
-                    ),
-                    data_bind='visible: showMessage',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'form_unique_id',
-                        data_bind='value: form_unique_id',
-                    ),
-                    data_bind='visible: showSurveySelect',
-                ),
+                *self.crispy_content_fields
             ),
             FormActions(
                 StrictButton(
@@ -2728,6 +2657,95 @@ class BroadcastForm(Form):
             ),
         ]
         self.helper.layout = crispy.Layout(*layout_fields)
+
+    @property
+    def crispy_recipient_fields(self):
+        return [
+            crispy.Field(
+                'recipient_type',
+                data_bind="value: recipient_type",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'case_group_id',
+                    data_bind='value: case_group_id',
+                ),
+                data_bind='visible: showCaseGroupSelect',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_id',
+                    data_bind='value: user_group_id',
+                ),
+                data_bind='visible: showUserGroupSelect',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'location_ids',
+                ),
+                crispy.Field(
+                    'include_child_locations',
+                ),
+                data_bind='visible: showLocationSelect',
+            ),
+        ]
+
+    @property
+    def crispy_timing_fields(self):
+        return [
+            crispy.Field(
+                'timing',
+                data_bind='value: timing',
+            ),
+            crispy.Div(
+                BootstrapMultiField(
+                    _("Date and Time"),
+                    InlineField(
+                        'date',
+                        data_bind='value: date',
+                        css_class="input-small",
+                    ),
+                    crispy.Div(
+                        template='reminders/partial/time_picker.html',
+                    ),
+                ),
+                ErrorsOnlyField('time'),
+                ErrorsOnlyField('datetime'),
+                data_bind='visible: showDateAndTimeSelect',
+            ),
+        ]
+
+    @property
+    def crispy_content_fields(self):
+        return [
+            crispy.Field(
+                'content_type',
+                data_bind='value: content_type',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'subject',
+                    data_bind='value: subject',
+                    style='height: 50px;',
+                ),
+                data_bind='visible: showSubject',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'message',
+                    data_bind='value: message',
+                    style='height: 50px;',
+                ),
+                data_bind='visible: showMessage',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'form_unique_id',
+                    data_bind='value: form_unique_id',
+                ),
+                data_bind='visible: showSurveySelect',
+            ),
+        ]
 
     @property
     def project_timezone(self):

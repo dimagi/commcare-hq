@@ -525,6 +525,17 @@ class CaseReminderHandler(Document):
     # MessagingEvent, this is the id of the MessagingEvent
     messaging_event_id = IntegerProperty()
 
+    # Set this property to filter the recipient list using custom user data.
+    # Should be a dictionary where each key is the name of the custom user data
+    # field, and each value is a list of allowed values to filter on.
+    # For example, if set to:
+    #   {'nickname': ['bob', 'jim'],
+    #    'phone_type': ['android']}
+    # then the recipient list would be filtered to only include users whose phone
+    # type is android and whose nickname is either bob or jim.
+    # If {}, then no filter is applied to the recipient list.
+    user_data_filter = DictProperty()
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -854,6 +865,22 @@ class CaseReminderHandler(Document):
                 location_ids.add(location.location_id)
         return location_ids
 
+    def apply_user_data_filter(self, recipients):
+        if not self.user_data_filter:
+            return recipients
+
+        def filter_fcn(recipient):
+            if not isinstance(recipient, CouchUser):
+                return False
+
+            for key, value in self.user_data_filter.iteritems():
+                if recipient.user_data.get(key) not in value:
+                    return False
+
+            return True
+
+        return filter(filter_fcn, recipients)
+
     def fire(self, reminder):
         """
         Sends the content associated with the given CaseReminder's current event.
@@ -877,11 +904,6 @@ class CaseReminderHandler(Document):
             for location_id in location_ids:
                 recipients.update(get_all_users_by_location(self.domain, location_id))
             recipients = list(recipients)
-
-            if len(recipients) == 0:
-                # If there are no users, then set recipient = None so that
-                # we stop the processing below
-                recipient = None
         elif isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
         elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
@@ -891,9 +913,10 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, CommCareCaseGroup):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
-            # If the recipient is not recognized, set recipient = None so that
-            # we stop processing below
+            recipients = []
             recipient = None
+
+        recipients = self.apply_user_data_filter(recipients)
 
         if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
             # If we are on one of the timeout intervals, then do not create
@@ -904,7 +927,7 @@ class CaseReminderHandler(Document):
             logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
         reminder.last_messaging_event_id = logged_event.pk
 
-        if recipient is None:
+        if recipient is None or len(recipients) == 0:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
             return True
 
