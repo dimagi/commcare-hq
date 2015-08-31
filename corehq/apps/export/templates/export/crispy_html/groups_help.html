@@ -1,0 +1,21 @@
+{% load i18n %}
+<p class="help help-block">
+   <i class="fa fa-users"
+      style="margin-right: 10px;"></i>
+   <strong>Include Everyone</strong> (All Groups) by default.
+   <button type="button"
+           class="btn btn-default"
+           ng-show="!showSelectGroups && hasGroups"
+           ng-click="showSelectGroups = true;">{% trans 'Select Groups' %}
+   </button>
+   <span ng-show="!!groupsLoading">
+        <i class="fa fa-spinner fa-spin"></i> {% trans "Loading Groups" %}
+   </span>
+   <span ng-show="!!hasError">{% trans "There was an issue loading groups. Using all groups by default." %}</span>
+</p>
+<p ng-show="!groupsLoading && !hasGroups">
+    {% trans "You don't have any reporting groups set up." %}
+    <a href="{% url 'all_groups' domain %}"
+       class="btn btn-default"
+       target="_blank">{% trans "Manage Groups" %}</a>
+</p>
