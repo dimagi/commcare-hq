@@ -41,8 +41,23 @@ requires imports/proptable.html to be included in the main template
 </style>
 <script>
     $(function () {
+        function _analytics(action, callback) {
+            var label = 'standalone_form', extra = {};
+            {% if context_case_id %}
+            label = 'case';
+            {% endif %}
+            if (callback) {
+                extra.hitCallback = callback;
+            }
+            analytics.usage('Edit Data', action, label, extra);
+        }
+
         $('.hq-help-template').each(function () {
             COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
+
+        $('#edit-form').click(function() {
+            _analytics('Edit Form Submission')
         });
 
         $("#archive-form").submit(function() {
@@ -55,7 +70,7 @@ requires imports/proptable.html to be included in the main template
                     document.getElementById('archive-form').submit();
                 }
             );
-            analytics.usage('Reports', 'Case History', 'Archive this form', {'hitCallback': analyticsCallback});
+            _analytics('Archive Form Submission', callback);
             analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
@@ -197,7 +212,7 @@ requires imports/proptable.html to be included in the main template
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary">
+                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary" id="edit-form">
                             <i class="icon-edit"></i> {% trans "Edit this form" %}
                         </a>
                 {% endif %}
