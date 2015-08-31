@@ -1,5 +1,6 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -14,7 +15,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     UpdateCaseAction,
     OpenSubCaseAction,
-)
+    CaseIndex)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -95,6 +96,11 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         xform = XForm(before)
         xform.strip_vellum_ns_attributes()
         self.assertXmlEqual(xform.render(), after)
+
+    def test_empty_itext(self):
+        self.app.build_langs = ['fra']  # lang that's not in the form
+        with self.assertRaises(XFormException):
+            self.form.render_xform()
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
@@ -340,37 +346,6 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
-    def test_schedule(self):
-        self.form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        self.module.has_schedule = True
-        self.form.schedule = FormSchedule(anchor='edd')
-        xml = self.get_xml('schedule').format(
-            form_id=self.form.schedule_form_id,
-            form_index=1
-        )
-        self.assertXmlEqual(xml, self.form.render_xform())
-
-    def test_schedule_index(self):
-        self.module.has_schedule = True
-        form = self.app.new_form(0, 'New Form', lang='en')
-        form.source = self.get_xml('original_form', override_path=('data',))
-        form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        form.schedule = FormSchedule(anchor='edd')
-
-        xml = self.get_xml('schedule').format(
-            form_id=form.schedule_form_id,
-            form_index=2
-        )
-        self.assertXmlEqual(xml, form.render_xform())
-
 
 class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
@@ -480,7 +455,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1'
+            case_indices=[CaseIndex(tag='load_1')]
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('subcase'), self.form.render_xform())
@@ -494,7 +469,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -511,7 +486,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='open_1',
+            case_indices=[CaseIndex(tag='open_1')],
             repeat_context="/data/child"
         ))
         for action in self.form.actions.open_cases:
@@ -527,7 +502,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -543,7 +518,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child1',
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[0].open_condition.type = 'if'
@@ -554,7 +529,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child2',
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[1].open_condition.type = 'if'

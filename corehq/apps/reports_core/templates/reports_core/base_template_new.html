@@ -100,7 +100,7 @@
         // add any filter javascript dependencies
         {% for filter in report.filters %}
             {% if filter.javascript_template %}
-                {% include filter.javascript_template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+                {% include filter.javascript_template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
             {% endif %}
         {% endfor %}
     });
@@ -141,7 +141,7 @@
             <legend><span>{% trans "Report Filters" %}</span></legend>
             <input type="hidden" name="format" value="json"/>
             {% for filter in report.filters %}
-                {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+                {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
             {% endfor %}
         </fieldset>
 

@@ -16,22 +16,29 @@ from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_u
 from corehq.feature_previews import CALLCENTER
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import UserTime
+from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
 
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
-    @property
-    def midnights(self):
-        """Returns a list containing a datetime for midnight in the domains timezone
-        on either side of the current date.
+    def midnights(self, utcnow=None):
+        """Returns a list containing two datetimes in UTC that corresponds to midnight
+        in the domains timezone on either side of the current UTC datetime.
+        i.e. [<previous midnight in TZ>, <next midnight in TZ>]
+
+        >>> d = DomainLite('', 'Asia/Kolkata', '')
+        >>> d.midnights(datetime(2015, 8, 27, 18, 30, 0  ))
+        [datetime.datetime(2015, 8, 26, 18, 30), datetime.datetime(2015, 8, 27, 18, 30)]
+        >>> d.midnights(datetime(2015, 8, 27, 18, 31, 0  ))
+        [datetime.datetime(2015, 8, 27, 18, 30), datetime.datetime(2015, 8, 28, 18, 30)]
         """
+        utcnow = utcnow or datetime.utcnow()
         tz = pytz.timezone(self.default_timezone)
-        now = datetime.utcnow()
-        midnight_utc = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        midnight_tz1 = UserTime(midnight_utc, tz).server_time().done()
-        midnight_tz2 = midnight_tz1 + timedelta(days=(1 if midnight_tz1 < now else -1))
-        return sorted([midnight_tz1, midnight_tz2])
+        current_time_tz = ServerTime(utcnow).user_time(tz).done()
+        midnight_tz1 = current_time_tz.replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_tz_utc1 = UserTime(midnight_tz1).server_time().done()
+        midnight_tz_utc2 = midnight_tz_utc1 + timedelta(days=(1 if midnight_tz_utc1 < utcnow else -1))
+        return sorted([midnight_tz_utc1, midnight_tz_utc2])
 
 
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')

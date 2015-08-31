@@ -27,7 +27,7 @@ class StockReportDomainTest(TestCase):
     def create_report(self, transactions=None, tag=None, date=None):
         form = XFormInstance(domain=self.domain)
         form.save()
-        report = StockReportHelper(
+        report = StockReportHelper.make_from_form(
             form,
             date or datetime.utcnow(),
             tag or REPORT_TYPE_BALANCE,

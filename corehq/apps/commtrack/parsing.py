@@ -248,4 +248,4 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         for transaction_helper in get_transaction_helpers(ledger_instruction)
     ]
 
-    return StockReportHelper(form, timestamp, report_type, transaction_helpers)
+    return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
