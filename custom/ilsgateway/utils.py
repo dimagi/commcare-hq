@@ -22,17 +22,17 @@ def get_current_group():
     return GROUPS[(month + 2) % 3]
 
 
-def send_for_all_domains(date, fn, **kwargs):
+def send_for_all_domains(date, reminder_class, **kwargs):
     for domain in ILSGatewayConfig.get_all_enabled_domains():
-        fn(domain, date, **kwargs)
+        reminder_class(domain=domain, date=date, **kwargs).send()
 
 
-def send_for_day(date, cutoff, f, **kwargs):
+def send_for_day(date, cutoff, reminder_class, **kwargs):
     now = datetime.utcnow()
     date = get_business_day_of_month_before(now.year, now.month, date)
     cutoff = get_business_day_of_month_before(now.year, now.month, cutoff)
     if now.day == date.day:
-        send_for_all_domains(cutoff, f, **kwargs)
+        send_for_all_domains(cutoff, reminder_class, **kwargs)
 
 
 def supply_points_with_latest_status_by_datespan(sps, status_type, status_value, datespan):
