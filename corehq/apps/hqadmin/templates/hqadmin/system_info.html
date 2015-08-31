@@ -200,6 +200,12 @@
                     model.autoRefresh(self.refreshStatus());
                 });
             };
+
+            self.refreshAll = function () {
+                $.each(self.models, function (index, model) {
+                    model.refresh();
+                });
+            };
         };
 
         var autoRefresh = new AutoRefreshModel();
@@ -213,7 +219,7 @@
             autoRefresh.addModel(pillowtopViewModel);
             autoRefresh.addModel(dbComparisonsViewModel);
 
-            autoRefresh.toggleRefresh();
+            autoRefresh.refreshAll();
             ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
         });
 
