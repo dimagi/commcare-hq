@@ -333,7 +333,7 @@ class Excel2007ExportWriter(ExportWriter):
                             "excel export. To export to excel you have to run the "
                             "command:  easy_install openpyxl")
 
-        self.book = openpyxl.workbook.Workbook(optimized_write=True)
+        self.book = openpyxl.Workbook(optimized_write=True)
         self.tables = {}
         self.table_indices = {}
 
