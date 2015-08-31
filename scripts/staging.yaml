@@ -59,6 +59,7 @@ branches:
   - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
   - custom-scheduled-subject # Nick P 8/26
   - new-mobile-workers # Biyeun 8/25
+  - upgrade-openpyxl # Nick P 8/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -69,6 +70,9 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/couchexport-src:
+    branches:
+      - upgrade-openpyxl # Nick P 8/31
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
