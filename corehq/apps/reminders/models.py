@@ -1,5 +1,4 @@
 import pytz
-from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -11,6 +10,8 @@ from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import get_form_name, enqueue_reminder_directly
@@ -18,6 +19,7 @@ from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.multithreading import process_fast
@@ -85,9 +87,11 @@ RECIPIENT_ALL_SUBCASES = "ALL_SUBCASES"
 RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
+RECIPIENT_LOCATION = "LOCATION"
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
+    RECIPIENT_LOCATION,
 ]
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
@@ -449,6 +453,15 @@ class CaseReminderHandler(Document):
     reminder_type = StringProperty(choices=REMINDER_TYPE_CHOICES, default=REMINDER_TYPE_DEFAULT)
     locked = BooleanProperty(default=False)
 
+    # Only used when recipient is RECIPIENT_LOCATION
+    # All users belonging to these locations will be recipients
+    # Should be a list of (Couch model) Location ids
+    location_ids = ListProperty()
+
+    # If True, all users belonging to any child locations of the above
+    # locations will also be recipients
+    include_child_locations = BooleanProperty(default=False)
+
     # Only used when recipient is RECIPIENT_SUBCASE.
     # All subcases matching the given criteria will be the recipients.
     recipient_case_match_property = StringProperty()
@@ -511,6 +524,17 @@ class CaseReminderHandler(Document):
     # If this reminder definition is being created as a subevent of a
     # MessagingEvent, this is the id of the MessagingEvent
     messaging_event_id = IntegerProperty()
+
+    # Set this property to filter the recipient list using custom user data.
+    # Should be a dictionary where each key is the name of the custom user data
+    # field, and each value is a list of allowed values to filter on.
+    # For example, if set to:
+    #   {'nickname': ['bob', 'jim'],
+    #    'phone_type': ['android']}
+    # then the recipient list would be filtered to only include users whose phone
+    # type is android and whose nickname is either bob or jim.
+    # If {}, then no filter is applied to the recipient list.
+    user_data_filter = DictProperty()
 
     @property
     def uses_parent_case_property(self):
@@ -668,6 +692,16 @@ class CaseReminderHandler(Document):
         return reminder
 
     @classmethod
+    def get_contact_timezone_or_utc(cls, contact):
+        if not hasattr(contact, 'get_time_zone'):
+            return pytz.UTC
+
+        try:
+            return pytz.timezone(str(contact.get_time_zone()))
+        except:
+            return pytz.UTC
+
+    @classmethod
     def utc_to_local(cls, contact, timestamp):
         """
         Converts the given naive datetime from UTC to the contact's time zone.
@@ -677,14 +711,8 @@ class CaseReminderHandler(Document):
         
         return      The converted timestamp, as a naive datetime.
         """
-        try:
-            time_zone = timezone(str(contact.get_time_zone()))
-            utc_datetime = pytz.utc.localize(timestamp)
-            local_datetime = utc_datetime.astimezone(time_zone)
-            naive_local_datetime = local_datetime.replace(tzinfo=None)
-            return naive_local_datetime
-        except Exception:
-            return timestamp
+        timezone = cls.get_contact_timezone_or_utc(contact)
+        return ServerTime(timestamp).user_time(timezone).done().replace(tzinfo=None)
 
     @classmethod
     def timestamp_to_utc(cls, contact, timestamp):
@@ -696,14 +724,8 @@ class CaseReminderHandler(Document):
         
         return      The converted timestamp, as a naive datetime.
         """
-        try:
-            time_zone = timezone(str(contact.get_time_zone()))
-            local_datetime = time_zone.localize(timestamp)
-            utc_datetime = local_datetime.astimezone(pytz.utc)
-            naive_utc_datetime = utc_datetime.replace(tzinfo=None)
-            return naive_utc_datetime
-        except Exception:
-            return timestamp
+        timezone = cls.get_contact_timezone_or_utc(contact)
+        return UserTime(timestamp, timezone).server_time().done().replace(tzinfo=None)
 
     def move_to_next_event(self, reminder):
         """
@@ -832,6 +854,33 @@ class CaseReminderHandler(Document):
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
 
+    def get_recipient_location_ids(self, locations):
+        location_ids = set()
+        for location in locations:
+            if self.include_child_locations:
+                location_ids.update(
+                    location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
+                )
+            else:
+                location_ids.add(location.location_id)
+        return location_ids
+
+    def apply_user_data_filter(self, recipients):
+        if not self.user_data_filter:
+            return recipients
+
+        def filter_fcn(recipient):
+            if not isinstance(recipient, CouchUser):
+                return False
+
+            for key, value in self.user_data_filter.iteritems():
+                if recipient.user_data.get(key) not in value:
+                    return False
+
+            return True
+
+        return filter(filter_fcn, recipients)
+
     def fire(self, reminder):
         """
         Sends the content associated with the given CaseReminder's current event.
@@ -846,7 +895,16 @@ class CaseReminderHandler(Document):
             return False
 
         recipient = reminder.recipient
-        if isinstance(recipient, list) and len(recipient) > 0:
+        if self.recipient == RECIPIENT_LOCATION:
+            # Use a better name here since recipient is a list of locations
+            locations = recipient
+
+            location_ids = self.get_recipient_location_ids(locations)
+            recipients = set()
+            for location_id in location_ids:
+                recipients.update(get_all_users_by_location(self.domain, location_id))
+            recipients = list(recipients)
+        elif isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
         elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
             recipients = [recipient]
@@ -855,9 +913,10 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, CommCareCaseGroup):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
         else:
-            # If the recipient is not recognized, set recipient = None so that
-            # we stop processing below
+            recipients = []
             recipient = None
+
+        recipients = self.apply_user_data_filter(recipients)
 
         if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
             # If we are on one of the timeout intervals, then do not create
@@ -868,7 +927,7 @@ class CaseReminderHandler(Document):
             logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
         reminder.last_messaging_event_id = logged_event.pk
 
-        if recipient is None:
+        if recipient is None or len(recipients) == 0:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
             return True
 
@@ -1041,6 +1100,8 @@ class CaseReminderHandler(Document):
             recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
             recipient = CommCareCase.get(self.case_id)
+        elif self.recipient == RECIPIENT_LOCATION:
+            recipient = self.locations
         else:
             recipient = None
         
@@ -1179,6 +1240,16 @@ class CaseReminderHandler(Document):
                 raise IllegalModelStateException("Minimum tick for a schedule "
                     "repeated multiple times intraday is %s minutes." % minutes)
 
+    @property
+    def locations(self):
+        """
+        Always returns a list of locations even if there is just one.
+        Also, ensures that the result returned by this property is
+        specifically a list type since filter() returns a QuerySet,
+        and other parts of the framework check for the list type.
+        """
+        return list(SQLLocation.objects.filter(location_id__in=self.location_ids,
+            is_archived=False))
 
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
@@ -1237,6 +1308,29 @@ class CaseReminderHandler(Document):
             CaseReminderHandler.wrap(doc)
             for doc in iter_docs(cls.get_db(), ids)
         ]
+
+    @classmethod
+    def get_upcoming_broadcast_ids(cls, domain):
+        utcnow_json = json_format_datetime(datetime.utcnow())
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain, REMINDER_TYPE_ONE_TIME, utcnow_json],
+            endkey=[domain, REMINDER_TYPE_ONE_TIME, {}],
+            include_docs=False,
+            reduce=False,
+        )
+        return [row['id'] for row in result]
+
+    @classmethod
+    def get_past_broadcast_ids(cls, domain):
+        utcnow_json = json_format_datetime(datetime.utcnow())
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain, REMINDER_TYPE_ONE_TIME, utcnow_json],
+            endkey=[domain, REMINDER_TYPE_ONE_TIME],
+            include_docs=False,
+            reduce=False,
+            descending=True,
+        )
+        return [row['id'] for row in result]
 
     @classmethod
     def get_handler_ids(cls, domain, reminder_type_filter=None):
@@ -1385,7 +1479,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_CASE:
             return CommConnectCase.get(self.case_id)
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
-            return CommCareCaseGroup.get(self.sample_id)
+            return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
             return get_wrapped_owner(get_owner_id(self.case))
         elif handler.recipient == RECIPIENT_PARENT_CASE:
@@ -1407,6 +1501,8 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return recipients
         elif handler.recipient == RECIPIENT_USER_GROUP:
             return Group.get(handler.user_group_id)
+        elif handler.recipient == RECIPIENT_LOCATION:
+            return handler.locations
         else:
             return None
     

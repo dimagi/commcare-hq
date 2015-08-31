@@ -10,7 +10,8 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import release_lock
 from threading import Thread
 
 
@@ -88,11 +89,8 @@ def message_is_stale(msg, utcnow):
 def _wait_and_release_lock(lock, timeout, start_timestamp):
     while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
         sleep(0.1)
-    try:
-        lock.release()
-    except:
-        # The lock could have timed out in the meantime
-        pass
+    release_lock(lock, True)
+
 
 def wait_and_release_lock(lock, timeout):
     timestamp = datetime.utcnow()
@@ -112,7 +110,7 @@ def handle_outgoing(msg):
         len(backend.phone_numbers) > 1)
 
     if use_rate_limit or use_load_balancing:
-        client = cache_core.get_redis_client()
+        client = get_redis_client()
 
     lbi = None
     orig_phone_number = None
@@ -170,7 +168,7 @@ def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
     """
-    client = cache_core.get_redis_client()
+    client = get_redis_client()
     utcnow = datetime.utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.
@@ -181,7 +179,7 @@ def process_sms(message_id):
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
-            message_lock.release()
+            release_lock(message_lock, True)
             return
 
         if msg.direction == OUTGOING:
@@ -190,7 +188,7 @@ def process_sms(message_id):
             else:
                 domain_object = None
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
-                message_lock.release()
+                release_lock(message_lock, True)
                 return
 
         requeue = False
@@ -213,8 +211,9 @@ def process_sms(message_id):
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
 
             if recipient_block:
-                recipient_lock.release()
-        message_lock.release()
+                release_lock(recipient_lock, True)
+
+        release_lock(message_lock, True)
         if requeue:
             process_sms.delay(message_id)
 

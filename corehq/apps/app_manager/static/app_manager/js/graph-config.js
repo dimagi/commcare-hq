@@ -310,6 +310,7 @@ var GraphViewModel = function(moduleOptions){
         'show-grid',
         'show-legend',
         'zoom',
+        'zoom-location',
         'bar-orientation',
     ];
     // Note: I don't like repeating the list of property options in the hints map.
@@ -334,6 +335,7 @@ var GraphViewModel = function(moduleOptions){
         'show-grid': 'true() or false()',
         'show-legend': 'true() or false()',
         'zoom': 'true() or false()',
+        'zoom-location': 'ex: \'top-right\'',
         'bar-orientation': '\'horizontal\' or \'vertical\'',
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];

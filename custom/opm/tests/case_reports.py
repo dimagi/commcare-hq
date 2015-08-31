@@ -54,6 +54,12 @@ class MockDataProvider(SharedDataProvider):
     def _service_dates(self):
         return self.service_map
 
+    @property
+    def forms_by_case(self):
+        assert getattr(self, 'cases', None) is not None, \
+            "MockDataProvider was not instantiated with cases"
+        return {case._id: case.get_forms() for case in self.cases}
+
 
 class Report(CaseReportMixin, JsonObject):
     month = IntegerProperty(required=True)
@@ -108,6 +114,7 @@ class MockCaseRow(OPMCaseRow):
         self.report = report
         self.report.is_rendered_as_email = None
         self.report._data_provider = data_provider or MockDataProvider(report.datespan.enddate.date())
+        self.report._data_provider.cases = [case]
         super(MockCaseRow, self).__init__(case, report, child_index=child_index, **kwargs)
 
 

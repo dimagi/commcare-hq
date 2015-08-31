@@ -41,6 +41,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
     make_owner_name_indicator,
+    get_filter_format_from_question_type
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
@@ -56,7 +57,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in ['Choice', 'Date', 'Numeric']:
+            if filter_conf.get('format', None) not in ['', 'Choice', 'Date', 'Numeric']:
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -729,20 +730,36 @@ class ConfigureNewReportBase(forms.Form):
             'Numeric': 'numeric'
         }
 
-        def _make_report_filter(conf):
-            col_id = self.data_source_properties[conf["property"]]['column_id']
+        def _make_report_filter(conf, index):
+            property = self.data_source_properties[conf["property"]]
+            col_id = property['column_id']
+
+            selected_filter_type = conf['format']
+            if not selected_filter_type:
+                if property['type'] == 'question':
+                    filter_format = get_filter_format_from_question_type(
+                        property['source']['type']
+                    )
+                else:
+                    assert property['type'] == 'meta'
+                    filter_format = get_filter_format_from_question_type(
+                        property['source'][1]
+                    )
+            else:
+                filter_format = filter_type_map[selected_filter_type]
+
             ret = {
                 "field": col_id,
-                "slug": col_id,
+                "slug": "{}-{}".format(col_id, index),
                 "display": conf["display_text"],
-                "type": filter_type_map[conf['format']]
+                "type": filter_format
             }
             if conf['format'] == 'Date':
                 ret.update({'compare_as_string': True})
             return ret
 
         filter_configs = self.cleaned_data['filters']
-        filters = [_make_report_filter(f) for f in filter_configs]
+        filters = [_make_report_filter(f, i) for i, f in enumerate(filter_configs)]
         if self.source_type == 'case':
             # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
             # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.

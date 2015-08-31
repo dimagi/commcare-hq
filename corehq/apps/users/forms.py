@@ -416,10 +416,11 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
-    def __init__(self, attrs=None, domain=None, id='supply-point'):
+    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
+        self.multiselect = multiselect
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
@@ -427,6 +428,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'name': name,
             'value': value or '',
             'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'multiselect': self.multiselect,
         }))
 
 

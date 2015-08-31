@@ -62,7 +62,8 @@ class CleanOwnerCaseSyncOperation(object):
                 self.restore_state.domain, list(other_ids_to_check), self.restore_state.last_sync_log.date
             ))
 
-        all_syncing = copy(case_ids_to_sync)
+        all_maybe_syncing = copy(case_ids_to_sync)
+        all_synced = set()
         all_indices = defaultdict(set)
         all_dependencies_syncing = set()
         while case_ids_to_sync:
@@ -77,6 +78,7 @@ class CleanOwnerCaseSyncOperation(object):
             )
             for update in updates:
                 case = update.case
+                all_synced.add(case._id)
                 append_update_to_response(response, update, self.restore_state)
 
                 # update the indices in the new sync log
@@ -84,7 +86,7 @@ class CleanOwnerCaseSyncOperation(object):
                     all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
-                        if index.referenced_id not in all_syncing:
+                        if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
                 if not _is_live(case, self.restore_state):
@@ -98,7 +100,7 @@ class CleanOwnerCaseSyncOperation(object):
             response.extend(commtrack_elements)
 
             # add any new values to all_syncing
-            all_syncing = all_syncing | case_ids_to_sync
+            all_maybe_syncing = all_maybe_syncing | case_ids_to_sync
 
         # update sync token - marking it as the new format
         self.restore_state.current_sync_log = SimplifiedSyncLog.wrap(
@@ -106,8 +108,8 @@ class CleanOwnerCaseSyncOperation(object):
         )
         self.restore_state.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
         index_tree = IndexTree(indices=all_indices)
-        case_ids_on_phone = all_syncing
-        primary_cases_syncing = all_syncing - all_dependencies_syncing
+        case_ids_on_phone = all_synced
+        primary_cases_syncing = all_synced - all_dependencies_syncing
         if not self.restore_state.is_initial:
             case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
             # subtract primary cases from dependencies since they must be newly primary
@@ -120,7 +122,8 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
-
+        # this is a shortcut to prune closed cases we just sent down before saving the sync log
+        self.restore_state.current_sync_log.prune_dependent_cases()
         return response
 
     def get_case_ids_for_owner(self, owner_id):

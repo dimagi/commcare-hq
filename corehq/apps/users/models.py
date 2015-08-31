@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -1391,6 +1392,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return self
 
+    def clear_quickcache_for_user(self):
+        self.get_usercase_id.clear(self)
+        super(CommCareUser, self).clear_quickcache_for_user()
+
     def save(self, **params):
         super(CommCareUser, self).save(**params)
 
@@ -2060,6 +2065,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             class_name=self.__class__.__name__,
             self=self
         ))
+
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def get_usercase_id(self):
+        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        return usercase.case_id if usercase else None
 
 
 class OrgMembershipMixin(DocumentSchema):

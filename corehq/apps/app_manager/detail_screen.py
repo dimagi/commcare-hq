@@ -554,4 +554,4 @@ class ScheduleXpathGenerator(BaseXpathGenerator):
 
     @property
     def xpath(self):
-        return self.column.field_property
+        return "${}".format(self.column.field_property)

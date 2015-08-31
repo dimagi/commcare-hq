@@ -23,7 +23,12 @@
                     with label: {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
                 </span>
                 <div data-bind="visible: !allowed">
-                    {% trans "Error! Registration form will be ignored since this module has parent case selection configured." %}
+                    {%  trans "Error! Registration form will be ignored since this module is not allowed to have one for the following reason:" %}<br/>
+                    <ul><li data-bind="text: now_allowed_reason"></li></ul>
+                    {% blocktrans %}
+                        To learn more, see our
+                        <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates#MinimizeDuplicates-Limitations" target="_blank">Help Site</a>
+                    {% endblocktrans %}
                 </div>
                 <div data-bind="visible: formMissing()">
                     {% trans "Error! The selected form does not exist." %}
@@ -51,6 +56,7 @@
                     (1) The registration form is in a different module<br/>
                     (2) Every form in the module updates or closes the case<br/>
                     (3) The case list does not have parent case selection configured.<br/>
+                    (4) The module's "Menu Mode" is configured as "Display module and then forms".<br/>
                     To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
                     {% endblocktrans %}
                 </div>
