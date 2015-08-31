@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
-    prepare_case_json
+    prepare_case_json, FormJsonDiff
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 
@@ -13,7 +13,7 @@ def _is_datetime(string):
         return False
     try:
         iso_string_to_datetime(string)
-    except ValueError:
+    except (ValueError, OverflowError):
         return False
     else:
         return True
@@ -77,4 +77,8 @@ class Command(BaseCommand):
             if json_diff.diff_type == 'diff':
                 if _is_datetime(json_diff.old_value) and _is_datetime(json_diff.new_value):
                     continue
+            if json_diff in (
+                    FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
+                    FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
+                continue
             print '[{}] {}'.format(form_id, json_diff)

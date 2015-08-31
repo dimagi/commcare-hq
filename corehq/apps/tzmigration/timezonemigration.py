@@ -135,7 +135,6 @@ def prepare_planning_db(domain):
         xform_copy = deepcopy(xform)
         xform_copy['form'] = form_json
         xformdoc = XFormInstance.wrap(xform_copy)
-        xformdoc.save = lambda: None
 
         case_actions = [
             (case_update.id, action.xform_id, action.to_json())
@@ -165,11 +164,10 @@ def prepare_case_json(planning_db):
         case = CommCareCase.wrap(case_json)
         # to normalize for any new fields added
         case_json = deepcopy(case.to_json())
-        case.save = lambda: None
         actions = [CommCareCaseAction.wrap(action)
                    for action in planning_db.get_actions_by_case(case.case_id)]
         rebuild_case_from_actions(case, actions)
         planning_db.update_case_json(case.case_id, case.to_json())
-        planning_db.add_diffs('case', case.case_id, json_diff(case.to_json(), case_json))
+        planning_db.add_diffs('case', case.case_id, json_diff(case_json, case.to_json()))
 
     return planning_db
