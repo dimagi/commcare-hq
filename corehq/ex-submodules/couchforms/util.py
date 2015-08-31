@@ -15,10 +15,11 @@ from django.http import (
     HttpResponseForbidden,
 )
 import iso8601
-from redis import ConnectionError
+from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -27,7 +28,8 @@ import xml2json
 
 import couchforms
 from . import const
-from .exceptions import DuplicateError, UnexpectedDeletedXForm
+from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
+    PhoneDateValueError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
@@ -100,7 +102,7 @@ def acquire_lock_for_xform(xform_id):
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
-    except ConnectionError:
+    except RedisError:
         lock = None
     return lock
 
@@ -485,6 +487,8 @@ class SubmissionPost(object):
             cases = []
             responses = []
             errors = []
+            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
                 if instance.doc_type == 'XFormInstance':
@@ -496,7 +500,7 @@ class SubmissionPost(object):
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
                             stock_result = process_stock(instance, case_db)
-                        except (IllegalCaseId, UsesReferrals, MissingProductId) as e:
+                        except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
                             # keep trying to send the form
@@ -513,7 +517,8 @@ class SubmissionPost(object):
                             # note that in the case of edit submissions this won't flag the previous
                             # submission as having been edited. this is intentional, since we should treat
                             # this use case as if the edit "failed"
-                            instance = _handle_unexpected_error(e, instance)
+                            error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
+                            instance = _handle_unexpected_error(instance, error_message)
                             instance.save()
                             raise
                         now = datetime.datetime.utcnow()
@@ -552,6 +557,16 @@ class SubmissionPost(object):
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
                                           extra={'details': {'errors': e.errors}})
+                            raise
+                        except Exception as e:
+                            docs_being_saved = [doc['_id'] for doc in docs]
+                            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                                type(e).__name__,
+                                unicode(e),
+                                ', '.join(docs_being_saved)
+                            )
+                            instance = _handle_unexpected_error(instance, error_message)
+                            instance.save()
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
@@ -666,20 +681,17 @@ def _handle_known_error(e, instance):
     return instance
 
 
-def _handle_unexpected_error(e, instance):
-    # Some things to consider here
+def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    error_message = '{}: {}'.format(
-        type(e).__name__, unicode(e))
     new_id = XFormError.get_db().server.next_uuid()
-    logging.exception((
+    notify_exception(None, (
         u"Error in case or stock processing "
-        u"for form {}: {}.\n"
+        u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance._id, error_message, new_id))
     instance.__class__ = XFormError

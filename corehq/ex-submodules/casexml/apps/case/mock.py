@@ -25,7 +25,7 @@ class CaseBlock(dict):
     ...     date_opened=NOW,
     ...     date_modified=NOW,
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     # Doesn't let you specify a keyword twice (here 'case_name')
     >>> try:
@@ -47,7 +47,7 @@ class CaseBlock(dict):
     ...         'date_opened': FIVE_DAYS_FROM_NOW,
     ...     },
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     """
     undefined = object()
@@ -205,15 +205,23 @@ class CaseBlock(dict):
                 self['update'] = CaseBlock.undefined
         if index and version == V2:
             self['index'] = {}
-            for name, (case_type, case_id) in index.items():
+            for name in index.keys():
+                case_type = index[name][0]
+                case_id = index[name][1]
+                # relationship = "child" for index to a parent case (default)
+                # relationship = "extension" for index to a host case
+                relationship = index[name][2] if len(index[name]) > 2 else 'child'
+                if relationship not in ('child', 'extension'):
+                    raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
+                _attrib = {'case_type': case_type}
+                if relationship != 'child':
+                    _attrib['relationship'] = relationship
                 self['index'][name] = {
-                    '_attrib': {
-                        'case_type': case_type
-                    },
+                    '_attrib': _attrib,
                     '_text': case_id
                 }
 
-    def as_xml(self, format_datetime=date_to_xml_string):
+    def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
@@ -255,7 +263,7 @@ class CaseBlock(dict):
         dict_to_xml(case, self)
         return case
 
-    def as_string(self, format_datetime=date_to_xml_string):
+    def as_string(self, format_datetime=None):
         return ElementTree.tostring(self.as_xml(format_datetime))
 
 

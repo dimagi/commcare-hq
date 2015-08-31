@@ -3,12 +3,15 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
-    CASE_ID, USERCASE_ID
+from corehq.apps.app_manager.const import (
+    APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
+    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+)
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
-from .xpath import CaseIDXPath, session_var, CaseTypeXpath
+from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
@@ -178,6 +181,9 @@ class WrappedNode(object):
 
     def __nonzero__(self):
         return self.xml is not None
+
+    def __len__(self):
+        return len(self.xml) if self.exists() else 0
 
     @property
     def tag_xmlns(self):
@@ -461,18 +467,29 @@ class CaseBlock(object):
             relevant=relevance,
         )
 
-    def add_index_ref(self, reference_id, case_type, ref):
+    def add_index_ref(self, reference_id, case_type, ref, relationship='child'):
+        """
+        When an index points to a parent case, its relationship attribute is
+        set to "child". When it points to a host case, relationship is set to
+        "extension".
+        """
         index_node = self.elem.find('{cx2}index'.format(**namespaces))
         if index_node is None:
             index_node = make_case_elem('index')
             self.elem.append(index_node)
-        parent_index = make_case_elem(reference_id, {'case_type': case_type})
-        index_node.append(parent_index)
+        if relationship not in ('child', 'extension'):
+            raise CaseError('Valid values for an index relationship are "child" and "extension"')
+        if relationship == 'child':
+            case_index = make_case_elem(reference_id, {'case_type': case_type})
+        else:
+            case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
+        index_node.append(case_index)
 
         self.xform.add_bind(
             nodeset='{path}case/index/{ref}'.format(path=self.path, ref=reference_id),
             calculate=ref,
         )
+
 
 def autoset_owner_id_for_open_case(actions):
     return not ('update_case' in actions and
@@ -552,6 +569,11 @@ class XForm(WrappedNode):
     def media_references(self, form):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
+
+    @property
+    def odk_intents(self):
+        nodes = self.findall('{h}head/{odk}intent')
+        return list(set(n.attrib.get('class') for n in nodes))
 
     @property
     def text_references(self):
@@ -689,6 +711,9 @@ class XForm(WrappedNode):
             if lang not in whitelist:
                 self.itext_node.remove(trans_node.xml)
                 changes = True
+
+        if changes and not len(self.itext_node):
+            raise XFormException(_(u"Form does not contain any translations for any of the build languages"))
 
         if changes:
             self._reset_translations_cache()
@@ -1274,14 +1299,14 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = session_var(form.session_var_for_action('open_case'))
+                case_id_xpath = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
-                    case_id=case_id
+                    case_id=case_id_xpath
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
@@ -1289,22 +1314,27 @@ class XForm(WrappedNode):
                 # This is a submodule. case_id will have changed to avoid a clash with the parent case.
                 # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
                 case_id = '_'.join((CASE_ID, form.get_case_type()))
-                session_case_id = CaseIDXPath(session_var(case_id))
+                case_id_xpath = CaseIDXPath(session_var(case_id))
                 self.add_bind(
                     nodeset="case/@case_id",
-                    calculate=session_case_id,
+                    calculate=case_id_xpath,
                 )
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=SESSION_CASE_ID,
                 )
+                case_id_xpath = SESSION_CASE_ID
 
             if 'update_case' in actions or extra_updates:
                 self.add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
-                    extra_updates=extra_updates)
+                    extra_updates=extra_updates,
+                    # case_id_xpath is set based on an assumption about the way suite_xml.py determines the
+                    # case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
+                    case_id_xpath=case_id_xpath
+                )
 
             if 'close_case' in actions:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
@@ -1333,7 +1363,7 @@ class XForm(WrappedNode):
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
-                    case_id = session_var(form.session_var_for_action('subcases', i))
+                    case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -1362,11 +1392,17 @@ class XForm(WrappedNode):
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
-                    reference_id = subcase.reference_id or 'parent'
+                    if subcase.reference_id:
+                        reference_id = subcase.reference_id
+                    elif subcase.relationship == 'extension':
+                        reference_id = 'host'
+                    else:
+                        reference_id = 'parent'
                     subcase_block.add_index_ref(
                         reference_id,
                         form.get_case_type(),
                         self.resolve_path("case/@case_id"),
+                        subcase.relationship,
                     )
 
         case = self.case_node
@@ -1388,36 +1424,93 @@ class XForm(WrappedNode):
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form."))
 
-    def create_casexml_2_advanced(self, form):
-        from corehq.apps.app_manager.util import split_path
+    def _schedule_global_next_visit_date(self, case_tag, action, form, case):
+        """
+        Adds the necessary hidden properties, fixture references, and calculations to
+        get the global next visit date for schedule modules
+        """
+        forms = [f for f in form.get_module().get_forms()
+                 if getattr(f, 'schedule') and f.schedule.enabled]
+        forms_due = []
+        for form in forms:
+            form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
+            name = u"next_{}".format(form.schedule_form_id)
+            forms_due.append(u"/data/{}".format(name))
 
-        def configure_visit_schedule_updates(update_block):
-            update_block.append(make_case_elem(SCHEDULE_PHASE))
-            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-            last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
-            update_block.append(make_case_elem(last_visit_num))
-
-            self.add_setvalue(
-                ref='case/update/{}'.format(SCHEDULE_PHASE),
-                value=str(form.id + 1)
-            )
-
-            last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
-            self.add_setvalue(
-                ref='case/update/{}'.format(last_visit_num),
-                value="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+            self.add_instance(
+                form_xpath.fixture_id,
+                u'jr://fixture/{}'.format(form_xpath.fixture_id)
             )
 
             self.add_bind(
-                nodeset='case/update/{}'.format(last_visit_date),
-                type="xsd:dateTime",
-                calculate=self.resolve_path("meta/timeEnd")
+                nodeset=u'/data/{}'.format(name),
+                calculate=form_xpath.xpath_phase_set
             )
+            self.data_node.append(_make_elem(name))
+
+        self.add_bind(
+            nodeset=u'/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+            calculate=u'date(min({}))'.format(','.join(forms_due))
+        )
+        self.data_node.append(_make_elem(SCHEDULE_GLOBAL_NEXT_VISIT_DATE))
+
+    def create_casexml_2_advanced(self, form):
+        from corehq.apps.app_manager.util import split_path
 
         if not form.actions.get_all_actions():
             return
 
         case_tag = lambda a: "case_{0}".format(a.case_tag)
+
+        def configure_visit_schedule_updates(update_block, action, session_case_id):
+            case = session_case_id.case()
+            schedule_form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
+
+            self.add_instance(
+                schedule_form_xpath.fixture_id,
+                u'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
+            )
+
+            self.add_bind(
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
+                type="xs:integer",
+                calculate=schedule_form_xpath.current_schedule_phase_calculation(
+                    self.action_relevance(form.schedule.termination_condition),
+                    self.action_relevance(form.schedule.transition_condition),
+                )
+            )
+            update_block.append(make_case_elem(SCHEDULE_PHASE))
+
+            self.add_bind(
+                nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
+                calculate=schedule_form_xpath.next_visit_due_num
+            )
+            self.data_node.append(_make_elem(SCHEDULE_CURRENT_VISIT_NUMBER))
+
+            self.add_bind(
+                nodeset=u'/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate=schedule_form_xpath.is_unscheduled_visit,
+            )
+            self.data_node.append(_make_elem(SCHEDULE_UNSCHEDULED_VISIT))
+
+            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+            self.add_bind(
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_num),
+                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
+            )
+            update_block.append(make_case_elem(last_visit_num))
+
+            last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
+            self.add_bind(
+                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_date),
+                type="xsd:dateTime",
+                calculate=self.resolve_path("meta/timeEnd"),
+                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+            )
+            update_block.append(make_case_elem(last_visit_date))
+
+            self._schedule_global_next_visit_date(case_tag, action, form, case)
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = case_tag(action)
@@ -1448,10 +1541,10 @@ class XForm(WrappedNode):
         )
 
         module = form.get_module()
-        has_schedule = module.has_schedule and form.schedule and form.schedule.anchor
-
+        has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled and
+                        getattr(form.get_phase(), 'anchor', False))
         adjusted_datums = {}
-        if module.root_module and module.root_module.module_type == 'basic':
+        if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
             from corehq.apps.app_manager.suite_xml import SuiteGenerator
@@ -1495,7 +1588,8 @@ class XForm(WrappedNode):
                     update_case_block.add_close_block(self.action_relevance(action.close_condition))
 
                 if has_schedule:
-                    configure_visit_schedule_updates(update_case_block.update_block)
+                    self.add_casedb()
+                    configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
         repeat_contexts = defaultdict(int)
         for action in form.actions.open_cases:
@@ -1550,9 +1644,9 @@ class XForm(WrappedNode):
             if action.case_properties:
                 open_case_block.add_update_block(action.case_properties)
 
-            if action.parent_tag:
-                parent_meta = form.actions.actions_meta_by_tag.get(action.parent_tag)
-                reference_id = action.parent_reference_id or 'parent'
+            for case_index in action.case_indices:
+                parent_meta = form.actions.actions_meta_by_tag.get(case_index.tag)
+                reference_id = case_index.reference_id or 'parent'
                 if parent_meta['type'] == 'load':
                     ref = CaseIDXPath(session_var(parent_meta['action'].case_session_var))
                 else:

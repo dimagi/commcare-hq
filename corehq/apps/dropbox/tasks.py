@@ -2,6 +2,7 @@ from celery.task import task
 from dropbox.client import DropboxClient
 from dropbox.rest import ErrorResponse
 
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
@@ -43,7 +44,10 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
         share = client.share(upload['path'])
         context = {
             'share_url': share.get('url', None),
-            'path': upload['path']
+            'path': u'Apps/{app}{dest}'.format(
+                app=settings.DROPBOX_APP_NAME,
+                dest=upload['path'],
+            )
         }
         with localize(couch_user.get_language_code()):
             subject = _(u'{} has been uploaded to dropbox!'.format(helper.dest))

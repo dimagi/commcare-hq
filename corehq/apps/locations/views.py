@@ -658,7 +658,8 @@ class LocationImportView(BaseLocationView):
 
 
 @locations_access_required
-def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id,
+                               template="style/bootstrap2/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -763,6 +764,7 @@ def sync_openlmis(request, domain):
 @locations_access_required
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
+    ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
@@ -772,6 +774,8 @@ def child_locations_for_select2(request, domain):
     if id:
         try:
             loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'no location with id %s found' % id},
@@ -779,6 +783,17 @@ def child_locations_for_select2(request, domain):
             )
         else:
             return json_response(loc_to_payload(loc))
+    elif ids:
+        from corehq.apps.locations.util import get_locations_from_ids
+        ids = json.loads(ids)
+        try:
+            locations = get_locations_from_ids(ids, domain)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'one or more locations not found'},
+                status_code=404,
+            )
+        return json_response([loc_to_payload(loc) for loc in locations])
     else:
         locs = []
         user_loc = user.get_sql_location(domain)

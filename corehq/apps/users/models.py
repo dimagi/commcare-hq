@@ -13,6 +13,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
@@ -57,10 +58,9 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-from dimagi.utils.parsing import json_format_datetime
 from xml.etree import ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound
+from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -678,27 +678,26 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
 
 class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
-    def _adjust_value(self, value):
-        if value is not None:
-            return value.lower()
+    def __init__(self, validators=None, *args, **kwargs):
+        if validators is None:
+            validators = ()
 
-#    def __set__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
+        def check_lowercase(value):
+            if value and any(char.isupper() for char in value):
+                raise BadValueError('uppercase characters not allowed')
 
-#    def __property_init__(self, instance, value):
-#        return super(LowercaseStringProperty, self).__property_init__(instance, self._adjust_value(value))
-
-    def to_json(self, value):
-        return super(LowercaseStringProperty, self).to_json(self._adjust_value(value))
-
+        validators += (check_lowercase,)
+        super(LowercaseStringProperty, self).__init__(validators=validators, *args, **kwargs)
 
 
 class DjangoUserMixin(DocumentSchema):
@@ -1382,6 +1381,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return self
 
+    def clear_quickcache_for_user(self):
+        self.get_usercase_id.clear(self)
+        super(CommCareUser, self).clear_quickcache_for_user()
+
     def save(self, **params):
         super(CommCareUser, self).save(**params)
 
@@ -1924,7 +1927,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml(format_datetime=json_format_datetime)
+                caseblock.as_xml()
             ),
             self.domain,
             self.username,
@@ -2051,6 +2054,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             class_name=self.__class__.__name__,
             self=self
         ))
+
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def get_usercase_id(self):
+        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        return usercase.case_id if usercase else None
 
 
 class OrgMembershipMixin(DocumentSchema):

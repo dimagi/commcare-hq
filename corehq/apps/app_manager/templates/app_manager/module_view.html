@@ -22,6 +22,7 @@
     window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
     window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
     window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
+    window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
@@ -29,7 +30,7 @@
     <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
@@ -47,7 +48,7 @@
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
-    {% include 'hqwebapp/key_value_mapping.html' %}
+    {% include 'style/bootstrap2/partials/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
@@ -79,9 +80,10 @@
                     langs: langs,
                     saveUrl: saveUrl,
                     parentModules: parentModules,
-                    childCaseTypes: detail.child_case_types,
+                    childCaseTypes: detail.subcase_types,
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
+                    fixtureSelect: detail.fixture_select,
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -110,7 +112,7 @@
             });
 
             if ($('#case-list-form').length) {
-                var CaseListForm = function (data, formOptions, allowed) {
+                var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
                     var self = this,
                         initialOption = data.form_id ? data.form_id : 'disabled',
                         formSet = !!data.form_id,
@@ -136,6 +138,7 @@
                     };
 
                     self.allowed = allowed;
+                    self.now_allowed_reason = now_allowed_reason;
                     self.formMissing = ko.observable(formMissing);
                     self.messageVisible = ko.observable(false);
                     self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
@@ -165,7 +168,8 @@
                 var caseListForm = new CaseListForm(
                     {{ module.case_list_form|JSON }},
                     {{ case_list_form_options|JSON }},
-                    {{ case_list_form_allowed|JSON }}
+                    {{ case_list_form_not_allowed_reason.allow|JSON }},
+                    {{ case_list_form_not_allowed_reason.message|JSON }}
                 );
                 ko.applyBindings(caseListForm, $('#case-list-form').get(0));
                 // Reset save button after bindings
@@ -186,6 +190,7 @@
     {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
+    {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
     {% for detail in details %}
@@ -202,8 +207,10 @@
     </li>
     {% endif %}
     {% endfor %}
+    {% endblock %}{# endblock tab-headers #}
 </ul>
 <div class="tab-content">
+    {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
@@ -236,8 +243,8 @@
                     <div class="controls">
                         <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
                         <option value="">{% trans "No Parent" %}</option>
-                        {% for module in valid_parent_modules %}
-                            <option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
+                        {% for mod in valid_parent_modules %}
+                            <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
                         {% endfor %}
                         </select>
                     </div>
@@ -263,7 +270,7 @@
                     <div class="controls">
                         <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
                         <span class="help-inline" id="case_type_error" style="display: none;">
-                            {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
                         </span>
                     </div>
                 </div>
@@ -311,6 +318,7 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% endblock %}{# endblock tab-content #}
 </div>
 </div>
 {% endblock %}

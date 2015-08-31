@@ -18,7 +18,6 @@ from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
-from dimagi.utils.parsing import json_format_datetime
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
@@ -544,15 +543,51 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
     @run_with_all_restore_configs
+    def test_closed_case_not_in_next_sync(self):
+        # create a case
+        case_id = self.factory.create_case()._id
+        # sync
+        restore_config = RestoreConfig(
+            project=Domain(name=self.project.name),
+            user=self.user, params=RestoreParams(self.sync_log._id, version=V2)
+        )
+        next_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
+        self.assertTrue(next_sync.phone_is_holding_case(case_id))
+        # close the case on the second sync
+        self.factory.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}),
+                                           form_extras={'last_sync_token': next_sync._id})
+        # sync again
+        restore_config = RestoreConfig(
+            project=Domain(name=self.project.name),
+            user=self.user, params=RestoreParams(next_sync._id, version=V2)
+        )
+        last_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
+        self.assertFalse(last_sync.phone_is_holding_case(case_id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
 
     @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_relevant_owner_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
+        case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': USER_ID}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        # todo: this bug isn't fixed on old sync. This check is a hack due to the inability to
+        # override the setting on a per-test level and should be removed when the new
+        # sync is fully rolled out.
+        if isinstance(sync_log, SimplifiedSyncLog):
+            self.assertTrue(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
 
     @run_with_all_restore_configs
     def test_reassign_and_close_in_same_form(self):
+        # this tests an edge case that used to crash on submission which is why there are no asserts
         case_id = self.factory.create_case()._id
         self.factory.create_or_update_case(
             CaseStructure(
@@ -793,7 +828,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         self._postFakeWithSyncToken(
             parent_case,
@@ -811,7 +846,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 owner_id=USER_ID,
                 version=V2,
                 index={'mother': ('mother', mother_id)}
-            ).as_xml(format_datetime=json_format_datetime),
+            ).as_xml(),
             latest_sync.get_id
         )
 
@@ -825,7 +860,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_type=PARENT_TYPE,
             owner_id=OTHER_USER_ID,
             version=V2,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2,
@@ -839,7 +874,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # create a case from one user
         case_id = "multi_user_edits"
-        self._createCaseStubs([case_id], owner_id=SHARED_ID)
+        self._createCaseStubs([case_id], owner_id=SHARED_ID, date_modified=time)
 
         # both users syncs
         main_sync_log = synclog_from_restore_payload(
@@ -857,7 +892,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             my_change,
             main_sync_log.get_id
@@ -871,7 +906,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             version=V2,
             update={'greeting_2': 'hello'}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         self._postFakeWithSyncToken(
             their_change,
             self.other_sync_log.get_id
@@ -892,7 +927,7 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=SHARED_ID,
             case_name='',
             case_type='mother',
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
 
         check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
@@ -921,7 +956,13 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # original user syncs again
         # make sure close block appears
-        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log._id)
+
+        # make sure closed cases don't show up in the next sync log
+        next_synclog = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id)
+        )
+        self.assertFalse(next_synclog.phone_is_holding_case(case_id))
 
     @run_with_all_restore_configs
     def testOtherUserUpdatesUnowned(self):
@@ -1100,7 +1141,10 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        # both cases should sync to original user with updated ownership / edits
+
+        # at this point both cases are assigned to the other user so the original user
+        # should not have them. however, the first sync should send them down (with new ownership)
+        # so that they can be purged.
         assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
@@ -1108,6 +1152,10 @@ class MultiUserSyncTest(SyncBaseTest):
         payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
+        # also check that the latest sync log knows those cases are no longer relevant to the phone
+        log = synclog_from_restore_payload(payload)
+        self.assertFalse(log.phone_is_holding_case(case_id))
+        self.assertFalse(log.phone_is_holding_case(parent_id))
         
         # change the parent again from the second user
         other_parent_update = CaseBlock(
@@ -1118,7 +1166,6 @@ class MultiUserSyncTest(SyncBaseTest):
             update={"other_greeting": "something different"}, 
             version=V2).as_xml()
         self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
-        
         
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)

@@ -4,7 +4,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
-from django.utils.translation import ugettext_lazy as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
@@ -86,7 +86,10 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                     default_row_data[idx].append(data[p].strftime('%Y-%m-%d %H:%M'))
                 else:
                     default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
-            percent = total * 100 / denominator
+            try:
+                percent = total * 100 / denominator
+            except ZeroDivisionError:
+                percent = 0
             if percent >= 60:
                 total_of_functional += 1
             default_row_data[-3].append(total)

@@ -6,7 +6,7 @@ from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_lazy as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
@@ -69,8 +69,12 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
 
         for index, sum in enumerate(sums):
             if index == 10:
-                html = "{0}/{1} ({2}%)".format(sum_row_10, denom_row_10, sum_row_10 * 100 / denom_row_10)
-                rows[index].append(format_datatables_data(html, sum_row_10 * 100 / denom_row_10))
+                try:
+                    percent = sum_row_10 * 100 / denom_row_10
+                except ZeroDivisionError:
+                    percent = 0
+                html = "{0}/{1} ({2}%)".format(sum_row_10, denom_row_10, percent)
+                rows[index].append(format_datatables_data(html, percent))
             else:
                 rows[index].append(format_datatables_data(sum, sum))
 

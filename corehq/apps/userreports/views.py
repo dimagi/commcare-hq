@@ -15,11 +15,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
-from corehq.apps.app_manager.models import(
-    Application,
-    Form,
-    get_apps_in_domain
-)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, Form
 
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
@@ -28,6 +25,7 @@ from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadBuilderConfigError, BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
@@ -250,7 +248,7 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.<br/><strong>Numeric</strong>: select this if the property is a number.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
         return context
 
@@ -386,7 +384,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -489,7 +487,7 @@ def rebuild_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -614,8 +612,15 @@ def data_source_status(request, domain, config_id):
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
+    if filter is None:
+        raise Http404(_(u'Filter {} not found!').format(filter_id))
 
     def get_choices(data_source, filter, search_term=None, limit=20, page=0):
+        # todo: we may want to log this as soon as mobile UCR stops hitting this
+        # for misconfigured filters
+        if not isinstance(filter, DynamicChoiceListFilter):
+            return []
+
         table = get_indicator_table(data_source)
         sql_column = table.c[filter.field]
         query = Session.query(sql_column)

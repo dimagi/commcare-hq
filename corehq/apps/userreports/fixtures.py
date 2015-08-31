@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import (
-    get_apps_in_domain,
     Application,
     AutoFilter,
     CustomDataAutoFilter,
@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     StaticChoiceListFilter,
     StaticDatespanFilter,
 )
+from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.reports.factory import ReportFactory
 from .models import ReportConfiguration
 
@@ -51,19 +52,23 @@ class ReportFixturesProvider(object):
         root = ElementTree.Element('fixture', attrib={'id': self.id})
         reports_elem = ElementTree.Element('reports')
         for report_config in report_configs:
-            report = ReportConfiguration.get(report_config.report_id)
-            reports_elem.append(self._report_to_fixture(report, report_config.filters, user))
+            try:
+                reports_elem.append(self._report_config_to_fixture(report_config, user))
+            except UserReportsError:
+                pass
         root.append(reports_elem)
         return [root]
 
-    def _report_to_fixture(self, report, filters, user):
-        report_elem = ElementTree.Element('report', attrib={'id': report._id})
+    def _report_config_to_fixture(self, report_config, user):
+        report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
+        report = ReportConfiguration.get(report_config.report_id)
         report_elem.append(self._element('name', report.title))
         report_elem.append(self._element('description', report.description))
         data_source = ReportFactory.from_spec(report)
+
         data_source.set_filter_values({
-            filter_slug: wrap_by_filter_type(filters[filter_slug]).get_filter_value(user)
-            for filter_slug in filters
+            filter_slug: wrap_by_filter_type(filter).get_filter_value(user)
+            for filter_slug, filter in report_config.filters.items()
         })
 
         rows_elem = ElementTree.Element('rows')

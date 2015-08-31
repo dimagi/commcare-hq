@@ -210,26 +210,31 @@ class InvalidDateException(Exception):
 class ImportErrorDetail(object):
 
     ERROR_MSG = {
-        ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
-                                       "when uploading because of these values. Make sure "
-                                       "the values in this column are ID's for users or "
-                                       "case sharing groups."),
-
-        ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
-                                         "when uploading because of these values."),
-
-        ImportErrors.InvalidDate: _("Date fields were specified that caused an error during"
-                                    "conversion. This is likely caused by a value from "
-                                    "excel having the wrong type or not being formatted "
-                                    "properly."),
-
-        ImportErrors.BlankExternalId: _("Blank external ids were found in these rows causing as "
-                                        "error when importing cases."),
-
-        ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
-
-        ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
-                                        "uploaded case."),
+        ImportErrors.InvalidOwnerId: _(
+            "Owner ID was used in the mapping but there were errors when "
+            "uploading because of these values. Make sure the values in this "
+            "column are ID's for users or case sharing groups or locations."
+        ),
+        ImportErrors.InvalidOwnerName: _(
+            "Owner name was used in the mapping but there were errors when "
+            "uploading because of these values."
+        ),
+        ImportErrors.InvalidDate: _(
+            "Date fields were specified that caused an error during"
+            "conversion. This is likely caused by a value from excel having "
+            "the wrong type or not being formatted properly."
+        ),
+        ImportErrors.BlankExternalId: _(
+            "Blank external ids were found in these rows causing as error "
+            "when importing cases."
+        ),
+        ImportErrors.CaseGeneration: _(
+            "These rows failed to generate cases for unknown reasons"
+        ),
+        ImportErrors.InvalidParentId: _(
+            "An invalid or unknown parent case was specified for the "
+            "uploaded case."
+        ),
         ImportErrors.DuplicateLocationName: _(
             "Owner ID was used in the mapping, but there were errors when "
             "uploading because of these values. There are multiple locations "
@@ -397,14 +402,11 @@ def get_spreadsheet(download_ref, column_headers=True):
     return ExcelFile(download_ref.get_filename(), column_headers)
 
 
-def is_location_group(owner_id, domain):
-    """
-    Return yes if the specified owner_id is one of the
-    faked location groups.
-    """
+def is_valid_location_owner(owner_id, domain):
     results = SQLLocation.objects.filter(
         domain=domain,
-        location_id=owner_id
+        location_id=owner_id,
+        location_type__shares_cases=True,
     )
     return results.exists()
 
@@ -424,7 +426,7 @@ def is_valid_id(uploaded_id, domain, cache):
             is_user_or_case_sharing_group(owner) and
             owner.is_member_of(domain)
         ) or
-        is_location_group(uploaded_id, domain)
+        is_valid_location_owner(uploaded_id, domain)
     )
 
 
@@ -455,11 +457,10 @@ def get_id_from_name(name, domain, cache):
         return getattr(group, 'get_id', None)
 
     def get_from_location(name):
-        for filter_ in [{'site_code': name}, {'name__iexact': name}]:
-            try:
-                return SQLLocation.objects.get(domain=domain, **filter_).location_id
-            except SQLLocation.DoesNotExist:
-                pass
+        try:
+            return SQLLocation.objects.get_from_user_input(domain, name).location_id
+        except SQLLocation.DoesNotExist:
+            return None
 
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id

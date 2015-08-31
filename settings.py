@@ -177,7 +177,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'south',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -223,6 +222,7 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -366,7 +366,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'raven.contrib.django.raven_compat',
     'rosetta',
     'soil',
-    'south',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -687,6 +686,7 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'tastypie',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -902,6 +902,11 @@ COMPRESS_PRECOMPILERS = (
 )
 COMPRESS_ENABLED = True
 
+LESS_B3_PATHS = {
+    'variables': '../../../style/less/bootstrap3/includes/variables',
+    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+}
+
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
@@ -932,13 +937,10 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
-####### South Settings #######
-SKIP_SOUTH_TESTS = True
-SOUTH_TESTS_MIGRATE = False
-
 # Dropbox
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
 
 try:
@@ -965,7 +967,8 @@ try:
                     )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-    pass
+   # fallback in case nothing else is found - used for readthedocs
+   from dev_settings import *
 
 if DEBUG:
     try:
@@ -1128,6 +1131,9 @@ INSTALLED_APPS += LOCAL_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
+
+seen = set()
+INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 

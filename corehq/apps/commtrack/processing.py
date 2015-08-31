@@ -51,7 +51,7 @@ def create_models_for_stock_report(domain, stock_report_helper):
     """
     Save stock report and stock transaction models to the database.
     """
-    assert stock_report_helper._form.domain == domain
+    assert stock_report_helper.domain == domain
     if stock_report_helper.tag not in stockconst.VALID_REPORT_TYPES:
         return
     report = _create_model_for_stock_report(domain, stock_report_helper)
@@ -65,6 +65,7 @@ def _create_model_for_stock_report(domain, stock_report_helper):
         date=stock_report_helper.timestamp,
         type=stock_report_helper.tag,
         domain=domain,
+        server_date=stock_report_helper.server_date,
     )
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
@@ -131,15 +132,9 @@ def _create_model_for_stock_transaction(report, transaction_helper):
     return txn
 
 
-@log_exception()
-def process_stock(xform, case_db=None):
-    """
-    process the commtrack xml constructs in an incoming submission
-    """
-    case_db = case_db or CaseDbCache()
-    assert isinstance(case_db, CaseDbCache)
+def get_stock_actions(xform):
     if is_device_report(xform):
-        return StockProcessingResult(xform)
+        return [], []
 
     stock_report_helpers = list(unpack_commtrack(xform))
     transaction_helpers = [
@@ -147,37 +142,53 @@ def process_stock(xform, case_db=None):
         for stock_report_helper in stock_report_helpers
         for transaction_helper in stock_report_helper.transactions
     ]
-
-    # omitted: normalize_transactions (used for bulk requisitions?)
-
     if not transaction_helpers:
-        return StockProcessingResult(xform)
-
-    # validate product ids
-    if any(transaction_helper.product_id in ('', None)
-            for transaction_helper in transaction_helpers):
-        raise MissingProductId(
-            _('Product IDs must be set for all ledger updates!'))
+        return [], []
 
     # list of cases that had stock reports in the form
-    # there is no need to wrap them by case type
     case_ids = list(set(transaction_helper.case_id
                         for transaction_helper in transaction_helpers))
-    relevant_cases = [case_db.get(case_id) for case_id in case_ids]
 
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
+    case_actions = []
+    for case_id in case_ids:
+        case_action = CommCareCaseAction.from_parsed_action(
+            submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
+        )
+        case_actions.append((case_id, case_action))
 
+    return stock_report_helpers, case_actions
+
+
+@log_exception()
+def process_stock(xform, case_db=None):
+    """
+    process the commtrack xml constructs in an incoming submission
+    """
+    case_db = case_db or CaseDbCache()
+    assert isinstance(case_db, CaseDbCache)
+
+    stock_report_helpers, case_actions = get_stock_actions(xform)
+    # omitted: normalize_transactions (used for bulk requisitions?)
+
+    # validate product ids
+    if any(transaction_helper.product_id in ('', None)
+            for stock_report_helper in stock_report_helpers
+            for transaction_helper in stock_report_helper.transactions):
+        raise MissingProductId(
+            _('Product IDs must be set for all ledger updates!'))
+
+    relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
-    for case_id, case in zip(case_ids, relevant_cases):
+    for case_id, case_action in case_actions:
+        case = case_db.get(case_id)
+        relevant_cases.append(case)
         if case is None:
             raise IllegalCaseId(
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        case_action = CommCareCaseAction.from_parsed_action(
-            submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
-        )
         # hack: clear the sync log id so this modification always counts
         # since consumption data could change server-side
         case_action.sync_log_id = ''

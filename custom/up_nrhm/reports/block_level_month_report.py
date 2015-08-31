@@ -7,7 +7,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext_lazy as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
@@ -63,7 +63,10 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
                     sum += v['sort_key'] if v is not None else 0
             mean = (float(sum) / float(len(values)))
             if idx == 10:
-                percent = mean * 100 / denom
+                try:
+                    percent = mean * 100 / denom
+                except ZeroDivisionError:
+                    percent = 0
                 html = "{0}/{1} ({2}%)".format(int(mean), int(denom), int(percent))
                 return format_datatables_data(html, percent)
             mean = "%.0f" % mean

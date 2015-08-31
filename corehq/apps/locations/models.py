@@ -149,6 +149,36 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
 
+    def get_from_user_input(self, domain, user_input):
+        """
+        First check by site-code, if that fails, fall back to name.
+        Note that name lookup may raise MultipleObjectsReturned.
+        """
+        try:
+            return self.get(domain=domain, site_code=user_input)
+        except self.model.DoesNotExist:
+            return self.get(domain=domain, name__iexact=user_input)
+
+    def filter_by_user_input(self, domain, user_input):
+        """
+        Accepts partial matches, matches against name and site_code.
+        """
+        return (self.filter(domain=domain)
+                    .filter(models.Q(name__icontains=user_input) |
+                            models.Q(site_code__icontains=user_input)))
+
+    def filter_path_by_user_input(self, domain, user_input):
+        """
+        Returns a queryset including all locations matching the user input
+        and their children. This means "Middlesex" will match:
+            Massachusetts/Middlesex
+            Massachusetts/Middlesex/Boston
+            Massachusetts/Middlesex/Cambridge
+        It matches by name or site-code
+        """
+        direct_matches = self.filter_by_user_input(domain, user_input)
+        return self.get_queryset_descendants(direct_matches, include_self=True)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -175,6 +205,10 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+
+    @property
+    def get_id(self):
+        return self.location_id
 
     @property
     def products(self):
@@ -230,13 +264,11 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def _make_group_object(self, user_id, case_sharing):
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
+    def get_path_display(self):
+        return '/'.join(self.get_ancestors(include_self=True)
+                            .values_list('name', flat=True))
 
+    def _make_group_object(self, user_id, case_sharing):
         from corehq.apps.groups.models import UnsavableGroup
 
         g = UnsavableGroup()
@@ -245,13 +277,13 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.utcnow()
 
         if case_sharing:
-            g.name = group_name() + '-Cases'
+            g.name = self.get_path_display() + '-Cases'
             g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
             # reporting groups
-            g.name = group_name()
+            g.name = self.get_path_display()
             g._id = LOCATION_REPORTING_PREFIX + self.location_id
             g.case_sharing = False
             g.reporting = True

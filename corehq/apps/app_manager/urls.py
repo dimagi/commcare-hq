@@ -44,8 +44,9 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^browse/(?P<app_id>[\w-]+)/user_registration/source/$',
         'get_user_registration_source', name='get_user_registration_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', 'form_casexml'),
-    url(r'^source/(?P<app_id>[\w-]+)/$', 'app_source'),
+    url(r'^source/(?P<app_id>[\w-]+)/$', 'app_source', name='app_source'),
     url(r'^import_app/$', 'import_app', name='import_app'),
+    url(r'^app_from_template/(?P<slug>[\w-]+)/$', 'app_from_template', name='app_from_template'),
     url(r'^copy_app/$', 'copy_app', name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
     url(r'^schema/(?P<app_id>[\w-]+)/$', 'get_data_schema', name='get_data_schema'),
@@ -86,8 +87,12 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'edit_advanced_form_actions'),
+
+    # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'edit_visit_schedule'),
+    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'edit_schedule_phases'),
+
     # multimedia stuff
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),
@@ -128,6 +133,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
+    url(r'^api/list_apps/$', 'list_apps', name='list_apps'),
+    url(r'^api/download_ccz/$', 'direct_ccz', name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),

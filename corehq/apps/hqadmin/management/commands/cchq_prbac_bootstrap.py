@@ -7,6 +7,7 @@ import logging
 from optparse import make_option
 
 # Django imports
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 
@@ -18,6 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+
+
+def cchq_prbac_bootstrap(apps, schema_editor):
+    """Convenience function for use in data migrations.
+    Example operation:
+        migrations.RunPython(cchq_prbac_bootstrap)
+    """
+    call_command('cchq_prbac_bootstrap')
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'

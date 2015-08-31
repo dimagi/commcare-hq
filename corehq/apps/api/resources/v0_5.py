@@ -14,6 +14,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.es import UserES
 
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
@@ -116,26 +117,34 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
-            if key == 'phone_numbers' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.phone_numbers = []
-                for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
+            if getattr(bundle.obj, key, None) != value:
+                if key == 'phone_numbers':
+                    bundle.obj.phone_numbers = []
+                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
 
-                    bundle.obj.add_phone_number(strip_plus(phone_number))
-                    if idx == 0:
-                        bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        if idx == 0:
+                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        should_save = True
+                elif key == 'groups':
+                    bundle.obj.set_groups(bundle.data.get("groups", []))
                     should_save = True
-            if key == 'groups' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.set_groups(bundle.data.get("groups", []))
-                should_save = True
-            elif getattr(bundle.obj, key, None) != value:
-                setattr(bundle.obj, key, value)
-                should_save = True
+                elif key in ['email', 'username']:
+                    setattr(bundle.obj, key, value.lower())
+                    should_save = True
+                else:
+                    setattr(bundle.obj, key, value)
+                    should_save = True
         return should_save
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
-            bundle.obj = CommCareUser.create(domain=kwargs['domain'], username=bundle.data['username'],
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = CommCareUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()
@@ -179,23 +188,31 @@ class WebUserResource(v0_1.WebUserResource):
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
-            if key == 'phone_numbers' and getattr(bundle.obj, key, None) != value:
-                bundle.obj.phone_numbers = []
-                for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                    bundle.obj.add_phone_number(strip_plus(phone_number))
-                    if idx == 0:
-                        bundle.obj.set_default_phone_number(strip_plus(phone_number))
+            if getattr(bundle.obj, key, None) != value:
+                if key == 'phone_numbers':
+                    bundle.obj.phone_numbers = []
+                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
+                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        if idx == 0:
+                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                        should_save = True
+                elif key in ['email', 'username']:
+                    setattr(bundle.obj, key, value.lower())
                     should_save = True
-            elif getattr(bundle.obj, key, None) != value:
-                setattr(bundle.obj, key, value)
-                should_save = True
+                else:
+                    setattr(bundle.obj, key, value)
+                    should_save = True
         return should_save
 
     def obj_create(self, bundle, request=None, **kwargs):
         try:
             self._meta.domain = kwargs['domain']
-            bundle.obj = WebUser.create(domain=kwargs['domain'], username=bundle.data['username'],
-                                             password=bundle.data['password'], email=bundle.data.get('email', ''))
+            bundle.obj = WebUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                email=bundle.data.get('email', '').lower(),
+            )
             del bundle.data['password']
             self._update(bundle)
             bundle.obj.save()
@@ -356,8 +373,11 @@ class GroupResource(v0_4.GroupResource):
 
 
 class DomainAuthorization(ReadOnlyAuthorization):
+    def __init__(self, domain_key='domain', *args, **kwargs):
+        self.domain_key = domain_key
+
     def read_list(self, object_list, bundle):
-        return object_list.filter(domain=bundle.request.domain)
+        return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
 class NoCountingPaginator(Paginator):
@@ -410,3 +430,36 @@ class DeviceReportResource(HqBaseResource, ModelResource):
             "xform_id": ('exact',),
             "device_id": ('exact',),
         }
+
+
+class StockTransactionResource(HqBaseResource, ModelResource):
+
+    class Meta:
+        queryset = StockTransaction.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'stock_transaction'
+        authentication = RequirePermissionAuthentication(Permissions.view_reports)
+        paginator_class = NoCountingPaginator
+        authorization = DomainAuthorization(domain_key='report__domain')
+
+        filtering = {
+            "case_id": ('exact',),
+            "section_id": ('exact'),
+        }
+
+        fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
+        include_resource_uri = False
+
+    def build_filters(self, filters=None):
+        orm_filters = super(StockTransactionResource, self).build_filters(filters)
+        if 'start_date' in filters:
+            orm_filters['report__date__gte'] = filters['start_date']
+        if 'end_date' in filters:
+            orm_filters['report__date__lte'] = filters['end_date']
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle.data['product_name'] = bundle.obj.sql_product.name
+        bundle.data['transaction_date'] = bundle.obj.report.date
+        return bundle
