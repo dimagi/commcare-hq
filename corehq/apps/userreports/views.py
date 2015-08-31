@@ -248,7 +248,7 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.<br/><strong>Numeric</strong>: select this if the property is a number.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
         return context
 

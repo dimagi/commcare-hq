@@ -164,7 +164,16 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range', '']
+DATE_RANGE_CHOICES = [
+    'last7',
+    'last30',
+    'lastn',
+    'lastmonth',
+    'lastyear',
+    'since',
+    'range',
+    '',
+]
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):

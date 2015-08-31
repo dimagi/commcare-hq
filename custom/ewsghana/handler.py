@@ -1,4 +1,6 @@
 import re
+from corehq.apps.sms.api import send_sms_to_verified_number
+from custom.ewsghana.handlers import INVALID_MESSAGE
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.alerts import AlertsHandler
@@ -19,7 +21,8 @@ def handle(verified_contact, text, msg=None):
 
     args = text.split()
     if not args:
-        return False
+        send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
+        return True
     keyword = args[0]
     args = args[1:]
     params = {

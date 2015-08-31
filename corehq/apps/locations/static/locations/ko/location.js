@@ -8,16 +8,17 @@ var insert_new_user = function(user) {
     $('#id_users-selected_ids').multiselect('addSelected', user.user_id, user.text);
 };
 
-$('#new_user').on('show', function() {
-
+$(function() {
     var form_node = $('#add_commcare_account_form');
     var url = form_node.prop('action');
 
-    $.get(url, function(data) {
-        form_node.html(data.form_html);
+    $('#new_user').on('show', function() {
+        $.get(url, function(data) {
+            form_node.html(data.form_html);
+        });
     });
 
-    var handle_submission = function(event) {
+    form_node.submit(function(event) {
         event.preventDefault();
         $.post(url, form_node.serialize(), function(data) {
             if (data.status === 'success') {
@@ -27,7 +28,5 @@ $('#new_user').on('show', function() {
                 form_node.html(data.form_html);
             }
         });
-    };
-
-    form_node.submit(handle_submission);
+    });
 });

@@ -106,7 +106,7 @@
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
-            this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
+            this.formatOptions = ko.observableArray(["Choice", "Date"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -154,7 +154,7 @@
             });
             // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
-                hasFormatCol: true,
+                hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
                 propertyHelpText: '{{ filter_property_help_text|escapejs}}',
@@ -166,12 +166,18 @@
                 initialCols: initialColumns,
                 buttonText: 'Add Column'
             });
-            this.submitHandler = function(){
+            this.submitHandler = function(formElement){
                 var isValid = true;
                 isValid = that.filtersList.validate() && isValid;
                 isValid = that.columnsList.validate() && isValid;
                 if (!isValid){
                     alert('Invalid report configuration. Please fix the issues and try again.');
+                    // The event handler that disables the button is triggered
+                    // after this handler is invoked. Therefore, we use _.defer()
+                    // to re-enable it immediately after the call stack clears.
+                    _.defer(function(el){
+                        $(el).find('.disable-on-submit').enableButton();
+                    }, formElement);
                 }
                 return isValid;
             }

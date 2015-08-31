@@ -219,6 +219,8 @@ def update_calculated_properties():
             "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
             "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
             "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+            "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+            "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']

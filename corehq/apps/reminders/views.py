@@ -14,13 +14,14 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
+    DataTablesAJAXPaginationMixin)
 from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
@@ -30,6 +31,7 @@ from corehq.apps.reminders.forms import (
     EditContactForm,
     RemindersInErrorForm,
     OneTimeReminderForm,
+    BroadcastForm,
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
@@ -910,6 +912,157 @@ class EditNormalKeywordView(EditStructuredKeywordView):
         return sk
 
 
+class CreateBroadcastView(BaseMessagingSectionView):
+    urlname = 'add_broadcast'
+    page_title = ugettext_lazy('New Broadcast')
+    template_name = 'reminders/broadcast.html'
+    force_create_new_broadcast = False
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': BroadcastListView.page_title,
+                'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+            },
+        ]
+
+    def create_new_broadcast(self):
+        return CaseReminderHandler(
+            domain=self.domain,
+            nickname='One-time Reminder',
+            reminder_type=REMINDER_TYPE_ONE_TIME,
+        )
+
+    @property
+    @memoized
+    def broadcast(self):
+        return self.create_new_broadcast()
+
+    @property
+    def form_kwargs(self):
+        return {
+            'domain': self.domain,
+            'can_use_survey': can_use_survey_reminders(self.request),
+        }
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return BroadcastForm(self.request.POST, **self.form_kwargs)
+        else:
+            return BroadcastForm(**self.form_kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.broadcast_form,
+        }
+
+    def save_model(self, broadcast, form):
+        broadcast.default_lang = 'xx'
+        broadcast.method = form.cleaned_data.get('content_type')
+        broadcast.recipient = form.cleaned_data.get('recipient_type')
+        broadcast.start_condition_type = ON_DATETIME
+        broadcast.start_datetime = form.cleaned_data.get('datetime')
+        broadcast.start_offset = 0
+        broadcast.events = [CaseReminderEvent(
+            day_num=0,
+            fire_time=time(0, 0),
+            form_unique_id=form.cleaned_data.get('form_unique_id'),
+            message=({broadcast.default_lang: form.cleaned_data.get('message')}
+                     if form.cleaned_data.get('message') else {}),
+            subject=({broadcast.default_lang: form.cleaned_data.get('subject')}
+                     if form.cleaned_data.get('subject') else {}),
+            callback_timeout_intervals=[],
+        )]
+        broadcast.schedule_length = 1
+        broadcast.event_interpretation = EVENT_AS_OFFSET
+        broadcast.max_iteration_count = 1
+        broadcast.sample_id = form.cleaned_data.get('case_group_id')
+        broadcast.user_group_id = form.cleaned_data.get('user_group_id')
+        broadcast.location_ids = form.cleaned_data.get('location_ids')
+        broadcast.include_child_locations = form.cleaned_data.get('include_child_locations')
+        broadcast.save()
+
+    def post(self, request, *args, **kwargs):
+        if self.broadcast_form.is_valid():
+            if self.force_create_new_broadcast:
+                broadcast = self.create_new_broadcast()
+            else:
+                broadcast = self.broadcast
+
+            self.save_model(broadcast, self.broadcast_form)
+            return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditBroadcastView(CreateBroadcastView):
+    urlname = 'edit_broadcast'
+    page_title = ugettext_lazy('Edit Broadcast')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.broadcast_id])
+
+    @property
+    def broadcast_id(self):
+        return self.kwargs.get('broadcast_id')
+
+    @property
+    @memoized
+    def broadcast(self):
+        try:
+            broadcast = CaseReminderHandler.get(self.broadcast_id)
+        except:
+            raise Http404()
+
+        if (
+            broadcast.doc_type != 'CaseReminderHandler' or
+            broadcast.domain != self.domain or
+            broadcast.reminder_type != REMINDER_TYPE_ONE_TIME
+        ):
+            raise Http404()
+
+        return broadcast
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return BroadcastForm(self.request.POST, **self.form_kwargs)
+
+        broadcast = self.broadcast
+        start_user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        initial = {
+            'timing': SEND_LATER,
+            'date': start_user_time.ui_string('%Y-%m-%d'),
+            'time': start_user_time.ui_string('%H:%M'),
+            'recipient_type': broadcast.recipient,
+            'case_group_id': broadcast.sample_id,
+            'user_group_id': broadcast.user_group_id,
+            'content_type': broadcast.method,
+            'message': broadcast.events[0].message.get(broadcast.default_lang, None),
+            'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
+            'form_unique_id': broadcast.events[0].form_unique_id,
+            'location_ids': ','.join(broadcast.location_ids),
+            'include_child_locations': broadcast.include_child_locations,
+        }
+        return BroadcastForm(initial=initial, **self.form_kwargs)
+
+
+class CopyBroadcastView(EditBroadcastView):
+    urlname = 'copy_broadcast'
+    page_title = ugettext_lazy('Copy Broadcast')
+    force_create_new_broadcast = True
+
+
 @survey_reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
@@ -1429,6 +1582,99 @@ class RemindersListView(BaseMessagingSectionView):
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
             return HttpResponse(json.dumps(self.get_action_response(action)))
         return HttpResponse(status=400)
+
+
+class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+    template_name = 'reminders/broadcasts_list.html'
+    urlname = 'list_broadcasts'
+    page_title = ugettext_lazy('Broadcasts')
+
+    LIST_UPCOMING = 'list_upcoming'
+    LIST_PAST = 'list_past'
+    DELETE_BROADCAST = 'delete_broadcast'
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    def format_recipients(self, broadcast):
+        reminders = broadcast.get_reminders()
+        if len(reminders) == 0:
+            return _('(none)')
+        return get_recipient_name(reminders[0].recipient, include_desc=False)
+
+    def format_content(self, broadcast):
+        if broadcast.method == METHOD_SMS_SURVEY:
+            content = get_form_name(broadcast.events[0].form_unique_id)
+        else:
+            message = broadcast.events[0].message[broadcast.default_lang]
+            if len(message) > 50:
+                content = '"%s..."' % message[:47]
+            else:
+                content = '"%s"' % message
+        return content
+
+    def format_broadcast_name(self, broadcast):
+        user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        return user_time.ui_string(SERVER_DATETIME_FORMAT)
+
+    def format_broadcast_data(self, ids):
+        broadcasts = CaseReminderHandler.get_handlers_from_ids(ids)
+        result = []
+        for broadcast in broadcasts:
+            display = self.format_broadcast_name(broadcast)
+            result.append([
+                display,
+                self.format_recipients(broadcast),
+                self.format_content(broadcast),
+                broadcast._id,
+                reverse(EditBroadcastView.urlname, args=[self.domain, broadcast._id]),
+                reverse(CopyBroadcastView.urlname, args=[self.domain, broadcast._id]),
+            ])
+        return result
+
+    def get_broadcast_ajax_response(self, upcoming=True):
+        """
+        upcoming - True to include only upcoming broadcasts, False to include
+                   only past broadcasts.
+        """
+        if upcoming:
+            ids = CaseReminderHandler.get_upcoming_broadcast_ids(self.domain)
+        else:
+            ids = CaseReminderHandler.get_past_broadcast_ids(self.domain)
+
+        total_records = len(ids)
+        ids = ids[self.display_start:self.display_start + self.display_length]
+        data = self.format_broadcast_data(ids)
+        return self.datatables_ajax_response(data, total_records)
+
+    def delete_broadcast(self, broadcast_id):
+        try:
+            broadcast = CaseReminderHandler.get(broadcast_id)
+        except:
+            raise Http404()
+
+        if broadcast.doc_type != 'CaseReminderHandler' or broadcast.domain != self.domain:
+            raise Http404()
+
+        broadcast.retire()
+        return HttpResponse()
+
+    def get(self, *args, **kwargs):
+        action = self.request.GET.get('action')
+        if action in (self.LIST_UPCOMING, self.LIST_PAST):
+            upcoming = (action == self.LIST_UPCOMING)
+            return self.get_broadcast_ajax_response(upcoming)
+        else:
+            return super(BroadcastListView, self).get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action == self.DELETE_BROADCAST:
+            return self.delete_broadcast(self.request.POST.get('broadcast_id', None))
+        else:
+            return HttpResponse(status=400)
 
 
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):

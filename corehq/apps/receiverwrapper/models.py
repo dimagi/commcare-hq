@@ -60,7 +60,7 @@ DELETED = "-Deleted"
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
 
-class GeneratorCollection():
+class GeneratorCollection(object):
     """Collection of format_name to Payload Generators for a Repeater class
 
     args:

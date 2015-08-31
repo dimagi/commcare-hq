@@ -8,3 +8,8 @@ except ImportError, e:
     import logging
     logging.exception(e)
     raise
+
+from corehq.apps.callcenter.utils import DomainLite
+__test__ = {
+    'DomainLite.midnights': DomainLite.midnights
+}

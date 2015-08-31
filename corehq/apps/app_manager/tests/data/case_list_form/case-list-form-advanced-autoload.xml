@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite descriptor="Suite File">
   <xform>
-    <resource id="register_case_form" descriptor="Form: (Module create) - Register Case">
+    <resource id="register_dugong_form_0" descriptor="Form: (Module register_dugong module) - register_dugong form 0">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="update_case_form" descriptor="Form: (Module update) - Update Case">
+    <resource id="update_dugong_form_0" descriptor="Form: (Module update_dugong module) - update_dugong form 0">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>
@@ -137,7 +137,7 @@
     <stack>
         <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm1' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) &gt; 0">
             <command value="'m1'"/>
-            <datum id="case_id_load_dugong" value="instance('commcaresession')/session/data/case_id_new_dugong_0"/>
+            <datum id="case_id_load_dugong_0" value="instance('commcaresession')/session/data/case_id_new_dugong_0"/>
         </create>
         <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm1' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_dugong_0]) = 0">
             <command value="'m1'"/>
@@ -153,7 +153,7 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-      <datum id="case_id_load_dugong" nodeset="instance('casedb')/casedb/case[@case_type='dugong'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+      <datum id="case_id_load_dugong_0" nodeset="instance('casedb')/casedb/case[@case_type='dugong'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
     </session>
   </entry>
   <menu id="m0">

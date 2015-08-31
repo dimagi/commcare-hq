@@ -1,38 +1,21 @@
-from django.test import TestCase
-
-from corehq.apps.commtrack.tests.util import bootstrap_domain
-
 from ..models import LocationType
 from ..util import get_locations_and_children
-from .util import delete_all_locations, setup_locations_and_types
+from .util import LocationHierarchyTestCase
 
 
-class MassachusettsTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = 'test-domain'
-        cls.domain_obj = bootstrap_domain(cls.domain)
-
-        cls.location_type_names = ['state', 'county', 'city']
-        cls.location_structure = [
-            ('Massachusetts', [
-                ('Middlesex', [
-                    ('Cambridge', []),
-                    ('Somerville', []),
-                ]),
-                ('Suffolk', [
-                    ('Boston', []),
-                ])
+class MassachusettsTestCase(LocationHierarchyTestCase):
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
             ])
-        ]
-        cls.location_types, cls.locations = setup_locations_and_types(
-            cls.domain, cls.location_type_names, cls.location_structure
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        delete_all_locations()
+        ])
+    ]
 
 
 class TestLocationsSetup(MassachusettsTestCase):
