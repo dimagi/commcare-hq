@@ -76,7 +76,7 @@
                         objects = _(objects).sortBy(function (x) { return x[sort_by]; })
                     }
                     self.models(objects);
-                    if (self.autoRefresh) {
+                    if (self.autoRefresh()) {
                         self.timer = setTimeout(self.refresh, self.interval);
                     }
                 })
@@ -86,7 +86,7 @@
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
                     self.error("Error: " + err);
-                    self.autoRefresh = false;
+                    self.autoRefresh(false);
                     self.timer = null;
                 })
                 .always(function (){
