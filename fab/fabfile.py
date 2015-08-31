@@ -452,8 +452,8 @@ def update_code(use_current_release=False):
     # If not updating current release,  we are making a new release and thus have to do cloning
     # we should only ever not make a new release when doing a hotfix deploy
     if not use_current_release:
-        with cd(env.code_current):
-            if files.exists(env.code_current):
+        if files.exists(env.code_current):
+            with cd(env.code_current):
                 submodules = sudo("git submodule | awk '{ print $2 }'").split()
         with cd(env.code_root):
             if files.exists(env.code_current):
@@ -562,23 +562,6 @@ def _confirm_translated():
         "\n(https://confluence.dimagi.com/display/commcarehq/"
         "Internationalization+and+Localization+-+Transifex+Translations)"
     )
-
-
-@task
-def deploy():
-    """deploy code to remote host by checking out the latest via git"""
-    _require_target()
-    user_confirm = (
-        _confirm_translated() and
-        console.confirm("Hey girl, you sure you didn't mean to run AWESOME DEPLOY?", default=False) and
-        console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) and
-        console.confirm('Did you run "fab {env.environment} preindex_views"?'.format(env=env), default=False)
-    )
-    if not user_confirm:
-        utils.abort('Deployment aborted.')
-
-    run('echo ping!')  # workaround for delayed console response
-    _deploy_without_asking()
 
 
 def _deploy_without_asking():
