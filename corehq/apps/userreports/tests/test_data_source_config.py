@@ -67,6 +67,25 @@ class DataSourceConfigurationTest(SimpleTestCase):
                 # in the database layer. this should eventually be fixed.
                 self.assertEqual(str(expected_indicators[result.column.id]), result.value)
 
+    def test_configured_filter_auto_date_convert(self):
+        source = self.config.to_json()
+        source['configured_filter'] = {
+            "expression": {
+                "datatype": "date",
+                "expression": {
+                    "datatype": "date",
+                    "property_name": "visit_date",
+                    "type": "property_name"
+                },
+                "type": "root_doc"
+            },
+            "operator": "gt",
+            "property_value": "2015-05-05",
+            "type": "boolean_expression"
+        }
+        config = DataSourceConfiguration.wrap(source)
+        config.validate()
+
 
 class DataSourceConfigurationDbTest(TestCase):
 

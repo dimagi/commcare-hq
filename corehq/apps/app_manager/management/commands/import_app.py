@@ -35,7 +35,7 @@ class Command(BaseCommand):
                     help='The URL of the CommCare instance.'),
     )
 
-    def _get_required_option(self, name, **options):
+    def _get_required_option(self, name, options):
         value = options.get(name)
         if not value:
             raise CommandError("Option: '--{}' must be specified".format(name))
@@ -44,9 +44,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain, app_id = args
 
-        username = self._get_required_option('username')
-        target_domain = self._get_required_option('to_domain')
-        name = self._get_required_option('to_name')
+        username = self._get_required_option('username', options)
+        target_domain = self._get_required_option('to_domain', options)
+        name = self._get_required_option('to_name', options)
 
         url_base = options['url']
         password = options['password']

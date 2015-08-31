@@ -1,6 +1,8 @@
+from django.test import TestCase
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 
 TEST_DOMAIN = 'locations-test'
@@ -70,3 +72,24 @@ def setup_locations_and_types(domain, location_types, locations):
         _setup_location_types(domain, location_types),
         _setup_locations(domain, locations, location_types)
     )
+
+
+class LocationHierarchyTestCase(TestCase):
+    """
+    Sets up and tears down a hierarchy for you based on the two class attrs
+    """
+    location_type_names = []
+    location_structure = []
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'test-domain'
+        cls.domain_obj = bootstrap_domain(cls.domain)
+        cls.location_types, cls.locations = setup_locations_and_types(
+            cls.domain, cls.location_type_names, cls.location_structure
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        delete_all_locations()

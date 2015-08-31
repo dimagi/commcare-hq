@@ -252,6 +252,14 @@ def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
+def fixture_detail(module):
+    return detail(module, 'fixture_select')
+
+
+def fixture_session_var(module):
+    return u'fixture_value_m{module.id}'.format(module=module)
+
+
 def menu_id(module):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
@@ -286,5 +294,6 @@ def indicator_instance(indicator_set_name):
     return u"indicators:%s" % indicator_set_name
 
 
-def schedule_fixture(form):
-    return u'schedule:m{module.id}:f{form.id}'.format(module=form.get_module(), form=form)
+def schedule_fixture(module, phase, form):
+    form_id = phase.get_phase_form_index(form)
+    return u'schedule:m{module.id}:p{phase.id}:f{form_id}'.format(module=module, phase=phase, form_id=form_id)

@@ -116,16 +116,12 @@ def forms(domain, *args):
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
-def sms(domain, direction):
-    key = [domain, "SMSLog", direction]
-    row = get_db().view("sms/direction_by_domain",
-                        startkey=key,
-                        endkey=key + [{}]).one()
-    return row["value"] if row else 0
 
-
-def sms_in_last(domain, days=None):
+def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
+
+    if direction:
+        query = query.direction(direction)
 
     if days:
         query = query.received(date.today() - relativedelta(days=30))
@@ -133,8 +129,24 @@ def sms_in_last(domain, days=None):
     return query.run().total
 
 
+def sms(domain, direction):
+    return _sms_helper(domain, direction=direction)
+
+
+def sms_in_last(domain, days=None):
+    return _sms_helper(domain, days=days)
+
+
 def sms_in_last_bool(domain, days=None):
     return sms_in_last(domain, days) > 0
+
+
+def sms_in_in_last(domain, days=None):
+    return _sms_helper(domain, direction="I", days=days)
+
+
+def sms_out_in_last(domain, days=None):
+    return _sms_helper(domain, direction="O", days=days)
 
 
 def active(domain, *args):
@@ -208,7 +220,8 @@ CALC_ORDER = [
     'cases_in_last--120', 'active', 'first_form_submission',
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
-    'sms_in_last_bool', 'sms_in_last_bool--30'
+    'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
+    'sms_out_in_last--30',
 ]
 
 CALCS = {
@@ -221,6 +234,8 @@ CALCS = {
     'sms_in_last': "# SMS ever",
     'sms_in_last_bool--30': "used messaging in last 30 days",
     'sms_in_last_bool': "used messaging ever",
+    'sms_in_in_last--30': "# incoming SMS in last 30 days",
+    'sms_out_in_last--30': "# outgoing SMS in last 30 days",
     'cases': "# cases",
     'mobile_users--active': "# active mobile users",
     'mobile_users--inactive': "# inactive mobile users",
@@ -245,6 +260,8 @@ CALC_FNS = {
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
+    "sms_in_in_last": sms_in_in_last,
+    "sms_out_in_last": sms_out_in_last,
     "cases": cases,
     "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
@@ -302,7 +319,8 @@ ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
                    "cp_n_active_cases", "cp_n_cases", "cp_n_forms",
                    "cp_first_form", "cp_last_form", "cp_is_active",
                    'cp_has_app', "cp_n_in_sms", "cp_n_out_sms", "cp_n_sms_ever",
-                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d"]
+                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
+                   "cp_n_sms_out_30_d"]
 
 def total_distinct_users(domains=None):
     """
