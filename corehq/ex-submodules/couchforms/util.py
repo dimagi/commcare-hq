@@ -24,7 +24,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
-from no_exceptions.exceptions import HttpException
 import xml2json
 
 import couchforms

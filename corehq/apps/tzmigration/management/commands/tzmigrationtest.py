@@ -48,8 +48,13 @@ class Command(BaseCommand):
             self.show_diffs()
         if options['play']:
             from corehq.apps.tzmigration.planning import *
-            session = self.planning_db.Session()
-            import ipdb; ipdb.set_trace()
+            session = self.planning_db.Session()  # noqa
+            try:
+                import ipdb as pdb
+            except ImportError:
+                import pdb
+
+            pdb.set_trace()
 
     def valiate_forms_and_cases(self, domain):
         form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
