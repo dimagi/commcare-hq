@@ -403,7 +403,8 @@ class ScheduleFormXPath(object):
 
     @property
     def next_visit_due_num(self):
-        return XPath.if_(self.next_valid_schedules(), self.next_visit_id(), 0)
+        phase = self.phase.id
+        return XPath.if_(self.next_valid_schedules(phase), self.next_visit_id(), 0)
 
     @property
     def is_unscheduled_visit(self):
