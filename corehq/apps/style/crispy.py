@@ -89,3 +89,14 @@ class B3MultiField(LayoutObject):
             'multifield': self,
         })
         return render_to_string(self.template, context)
+
+
+class CrispyTemplate(object):
+
+    def __init__(self, template, context):
+        self.template = template
+        self.context = context
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update(self.context)
+        return render_to_string(self.template, context)
