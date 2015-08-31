@@ -6,12 +6,17 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+import pytz
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
-from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
+from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm, \
+    FilterExportDownloadForm
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
@@ -19,8 +24,10 @@ from corehq.apps.reports.standard.export import (
     ExcelExportReport,
 )
 from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
@@ -405,3 +412,82 @@ class CreateCaseExportView(BaseProjectDataView):
             )]
             for app in get_apps_in_domain(self.domain)
         }
+
+
+class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
+    urlname = 'export_download_forms'
+    page_title = ugettext_noop("Download Form Export")
+    template_name = 'export/download_form_export.html'
+
+    @method_decorator(use_bootstrap3())
+    @method_decorator(use_select2())
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadFormExportView, self).dispatch(*args, **kwargs)
+
+    @property
+    @memoized
+    def timezone(self):
+        if not self.domain:
+            return pytz.utc
+        else:
+            try:
+                return get_timezone_for_user(self.request.couch_user, self.domain)
+            except AttributeError:
+                return get_timezone_for_user(None, self.domain)
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return FilterExportDownloadForm(
+            self.domain,
+            self.timezone,
+            initial={'user_types': ['mobile']}
+        )
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Export Forms"),
+            'url': '#',
+        }]
+
+    @property
+    def page_context(self):
+        return {
+            'download_export_form': self.download_export_form,
+            'export_list': self.export_list,
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.export_id])
+
+    @property
+    def export_list(self):
+        return [self.download_export_form.format_form_export(self.export)]
+
+    @property
+    @memoized
+    def export(self):
+        return SavedExportSchema.get(self.export_id)
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    @allow_remote_invocation
+    def get_group_options(self, in_data):
+        groups = map(
+            lambda g: {'id': g._id, 'text': g.name},
+            Group.get_reporting_groups(self.domain)
+        )
+        return {
+            'success': True,
+            'groups': groups,
+            'placeholder': {'id': '-1', 'placeholder': _("Everyone")},
+        }
+
+    @allow_remote_invocation
+    def check_export_prep(self, in_data):
+        print "check download", in_data
+        return {}
