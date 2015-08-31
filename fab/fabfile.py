@@ -37,7 +37,7 @@ from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.colors import blue
+from fabric.colors import blue, red
 from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
@@ -719,12 +719,12 @@ def clean_releases(keep=3):
                 to_remove.append(release)
 
     if len(to_remove) == len(releases):
-        print 'Aborting, about to remove every release'
-        exit()
+        print red('Aborting clean_releases, about to remove every release')
+        return
 
     if os.path.basename(env.code_root) in to_remove:
-        print 'Aborting, about to remove current release'
-        exit()
+        print red('Aborting clean_releases, about to remove current release')
+        return
 
     for release in to_remove:
         sudo('rm -rf {}/{}'.format(env.releases, release))
