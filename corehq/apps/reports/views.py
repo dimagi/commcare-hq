@@ -805,6 +805,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     context['day_value'] = getattr(instance, "day", 1)
     context['weekly_day_options'] = ReportNotification.day_choices()
     context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
+    context['use_custom_email_subject'] = instance.use_custom_email_subject
     if is_new:
         context['form_action'] = _("Create a new")
         context['report']['title'] = _("New Scheduled Report")

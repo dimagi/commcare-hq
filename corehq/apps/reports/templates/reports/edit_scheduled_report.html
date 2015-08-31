@@ -79,6 +79,11 @@ $(function(){
         day_value: {{ day_value }}
     });
     scheduled_report_form_helper.init();
+
+    var scheduledReportFormModel = {
+        useCustomEmailSubject: ko.observable({{ use_custom_email_subject|yesno:"true,false" }})
+    };
+    ko.applyBindings(scheduledReportFormModel, $('#id-scheduledReportForm').get(0));
 </script>
 <script type="text/javascript">
     $('#id-scheduledReportForm').submit(function() {
