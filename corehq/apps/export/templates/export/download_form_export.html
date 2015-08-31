@@ -1,0 +1,73 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.css' %}" />
+{% endblock stylesheets %}
+
+{% block head %}
+<script type="text/javascript" src="{% new_static 'reports/javascripts/daterangepicker.js' %}"></script>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'style/lib/daterangepicker-b3/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'export/js/download_export.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script type="text/javascript">
+(function (angular, undefined) {
+   'use strict';
+    var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
+    downloadExportsApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    downloadExportsApp.constant('exportList', {{ export_list|JSON }});
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div ng-app="downloadExportsApp">
+        <div ng-controller="DownloadExportFormController">
+            <form class="form form-horizontal"
+                  name="exportFiltersForm"
+                  ng-submit="prepareExport()"
+                  novalidate="novalidate">
+                <div class="alert alert-info">
+                    {% blocktrans %}
+                        You are downloading the following exports:
+                    {% endblocktrans %}
+                    <ul>
+                        {% angularjs %}
+                        <li ng-repeat="export in exportList">{{ export.name }}</li>
+                        {% endangularjs %}
+                    </ul>
+                </div>
+                {% crispy download_export_form %}
+                <div class="form-actions">
+                    <div class="col-sm-5 col-sm-offset-2">
+                        <button type="submit"
+                                class="btn btn-primary"
+                                ng-disabled="!!exportFiltersForm.$invalid">
+                            <i class="fa fa-download"></i>
+                            {% trans "Prepare Export" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock page_content %}
