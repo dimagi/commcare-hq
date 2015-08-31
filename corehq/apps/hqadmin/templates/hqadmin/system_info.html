@@ -324,6 +324,9 @@
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
             </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
@@ -372,6 +375,9 @@
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
             </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
@@ -399,6 +405,9 @@
             Couch Tasks
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
@@ -438,6 +447,9 @@
             Couch Tasks
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
@@ -481,6 +493,9 @@
             Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
