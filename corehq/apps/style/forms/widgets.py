@@ -6,6 +6,8 @@ from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 import json
+from django.utils.translation import ugettext_noop
+
 
 class BootstrapCheckboxInput(CheckboxInput):
 
@@ -158,4 +160,71 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
                 });
             </script>
         """ % final_attrs.get('id')
+        return mark_safe(output)
+
+
+class DateRangePickerWidget(Input):
+    """SUPPORTS BOOTSTRAP 3 ONLY
+    Extends the standard input widget to render a Date Range Picker Widget.
+    Documentation and Demo here: http://www.daterangepicker.com/
+    """
+
+    class Range(object):
+        LAST_7 = 'last_7_days'
+        LAST_MONTH = 'last_month'
+        LAST_30_DAYS = 'last_30_days'
+
+
+    class Media:
+        """INCLUDE THIS MANUALLY IN YOUR TEMPLATE. ONLY HERE FOR REMINDER.
+        You can't put the generator variable in the template directly
+        in one of the js content blocks because offline compression \
+        will fall apart.
+        """
+        css = {
+            'all': ('style/lib/daterangepicker-b3/daterangepicker.css',)
+        }
+        js = (
+            'style/lib/daterangepicker-b3/moment.min.js',
+            'style/lib/daterangepicker-b3/daterangepicker.js',
+            # maybe this should live somewhere else eventually:
+            'reports/javascripts/daterangepicker.js',
+        )
+
+    range_labels = {
+        Range.LAST_7: ugettext_noop('Last 7 Days'),
+        Range.LAST_MONTH: ugettext_noop('Last Month'),
+        Range.LAST_30_DAYS: ugettext_noop('Last 30 Days'),
+    }
+    separator = ugettext_noop(' to ')
+
+    def __init__(self, attrs=None, range_labels=None, separator=None):
+        self.range_labels = range_labels or self.range_labels
+        self.separator = separator or self.separator
+        super(DateRangePickerWidget, self).__init__(attrs=attrs)
+
+    def render(self, name, value, attrs=None):
+        final_attrs = self.build_attrs(attrs)
+        output = super(DateRangePickerWidget, self).render(name, value, attrs)
+        # yes, I know inline html in python is gross, but this is what the
+        # built in django widgets are doing. :|
+        output += """
+            <script type="text/javascript">
+                $(function () {
+                    var separator = '%(separator)s';
+                    var report_labels = JSON.parse('%(range_labels_json)s');
+                    $('#%(elem_id)s').createDateRangePicker(
+                        report_labels, separator
+                    );
+                });
+            </script>
+        """ % {
+            'elem_id': final_attrs.get('id'),
+            'separator': self.separator,
+            'range_labels_json': json.dumps(self.range_labels)
+        }
+        output = """
+            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+        """ + output
+        output = '<div class="input-group">{}</div>'.format(output)
         return mark_safe(output)
