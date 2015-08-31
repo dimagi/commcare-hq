@@ -418,7 +418,6 @@ class CustomReportConfiguration(JsonObject):
             with open(path) as f:
                 yield cls.wrap(json.load(f))
 
-
     @classmethod
     def all(cls):
         for wrapped in CustomReportConfiguration._all():
