@@ -116,7 +116,13 @@ def get_planning_db(domain):
 
 def delete_planning_db(domain):
     db_filepath = get_planning_db_filepath(domain)
-    os.remove(db_filepath)
+    try:
+        os.remove(db_filepath)
+    except OSError as e:
+        # continue if the file didn't exist to begin with
+        # reraise on any other error
+        if e.errno != 2:
+            raise
 
 
 def prepare_planning_db(domain):
