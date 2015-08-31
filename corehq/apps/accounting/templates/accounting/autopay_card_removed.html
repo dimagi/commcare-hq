@@ -1,0 +1,21 @@
+{% load i18n %}
+{% blocktrans %}
+<p>
+    Hello,
+</p>
+<p>
+    Your card is no longer being used for autopayment on the account {{billing_account_name}}.
+</p>
+<p>
+    A card belonging to <strong><a href="mailto:{{ new_user }}">{{new_user}}</a></strong> is being used instead. You may want to contact them if this is a surprise to you.
+</p>
+<p>
+    Alternatively, you can contact <a href="mailto:accounting@dimagi.com">accounting@dimagi.com</a> with any questions.
+</p>
+<p>
+    Cheers,
+</p>
+<p>
+    The CommcareHQ Team
+</p>
+{% endblocktrans %}

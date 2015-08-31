@@ -390,6 +390,7 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
+            logging.info("[Billing][Autopay] Autopaying invoice {}".format(invoice.id))
             amount = invoice.balance.quantize(Decimal(10) ** -2)
 
             auto_payer = invoice.subscription.account.auto_pay_user
@@ -406,19 +407,25 @@ class AutoPayInvoicePaymentHandler(object):
             except stripe_generic_errors as e:
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
-
-            invoice.pay_invoice(amount, payment_record)
-            self._send_payment_receipt(invoice, payment_record)
+            else:
+                invoice.pay_invoice(amount, payment_record)
+                self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
-
         try:
             receipt_email_template = 'accounting/invoice_receipt_email.html'
             receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
             domain = invoice.subscription.account.created_by_domain
             product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
-            context = {}
+
+            context = {
+                'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+                'balance': fmt_dollar_amount(invoice.balance),
+                'is_paid': invoice.is_paid,
+                'date_due': invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else 'None',
+                'invoice_num': invoice.invoice_number,
+            }
             send_purchase_receipt.delay(
                 payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
             )
@@ -426,16 +433,15 @@ class AutoPayInvoicePaymentHandler(object):
             self._handle_email_failure(invoice, payment_record)
 
     def _handle_card_declined(self, invoice):
-        logger.error("[Billing] An automatic payment failed for invoice: {} "
-                     "because the card was declined".format(invoice.id))
-        print "card declined"
-        # TODO: send an email
-        # TODO: add to retry queue
+        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {} "
+                     "because the card was declined. This invoice will not be automatically paid."
+                     .format(invoice.id))
 
-    def _handle_card_errors(self, invoice):
-        # TODO: probably do the same stuff as if the card is declined
-        print "card error"
+    def _handle_card_errors(self, invoice, e):
+        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {invoice} "
+                     "because the of {error}. This invoice will not be automatically paid."
+                     .format(invoice=invoice.id, error=e))
 
     def _handle_email_failure(self, payment_record):
-        logger.error("[Billing] During an automatic payment, sending a payment receipt failed"
-                     " for Payment Record: {}. everything else succeeded".format(payment_record.id))
+        logger.error("[Billing][Autopay] During an automatic payment, sending a payment receipt failed"
+                     " for Payment Record: {}. Everything else succeeded".format(payment_record.id))

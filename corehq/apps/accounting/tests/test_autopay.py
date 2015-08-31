@@ -25,6 +25,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.fake_stripe_customer = FakeStripeCustomer(cards=[self.fake_card])
 
         self.account.update_autopay_user(self.web_user.username)
+        self.account.save()
         self.invoice_date = utils.months_from_date(self.subscription.date_start,
                                                    random.randint(2, self.subscription_length))
         self.payment_method = StripePaymentMethod(web_user=self.web_user.username,

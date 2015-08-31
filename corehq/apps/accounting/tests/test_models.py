@@ -41,12 +41,14 @@ class TestBillingAccount(BaseAccountingTest):
 
         autopay_user = generator.arbitrary_web_user()
         self.billing_account.update_autopay_user(autopay_user.username)
+        self.billing_account.save()
         self.assertEqual(len(mail.outbox), 0)
         self.assertTrue(self.billing_account.auto_pay_enabled)
         self.assertEqual(self.billing_account.auto_pay_user, autopay_user.username)
 
         other_autopay_user = generator.arbitrary_web_user()
         self.billing_account.update_autopay_user(other_autopay_user.username)
+        self.billing_account.save()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user.username)
 
