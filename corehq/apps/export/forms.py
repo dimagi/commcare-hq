@@ -1,11 +1,18 @@
+import json
 from django import forms
-from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField
+from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
+from corehq.apps.style.forms.widgets import Select2MultipleChoiceWidget, \
+    DateRangePickerWidget
 
-from crispy_forms.bootstrap import FormActions
+from crispy_forms.bootstrap import FormActions, InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from crispy_forms.layout import Layout, Fieldset
 
 
 class CreateFormExportForm(forms.Form):
@@ -137,3 +144,104 @@ class CreateCaseExportForm(forms.Form):
                 data_bind="visible: case_type",
             ),
         )
+
+_USER_TYPES_CHOICES = [
+    ('mobile', ugettext_noop("Mobile Worker")),
+    ('demo_user', ugettext_noop("Demo User")),
+    ('admin', ugettext_noop("Admin")),
+    ('unknown', ugettext_noop("Unknown")),
+    ('supply', ugettext_noop("CommCare Supply")),
+]
+
+
+class FilterExportDownloadForm(forms.Form):
+
+    user_types = forms.MultipleChoiceField(
+        label=ugettext_noop("User Type"),
+        required=True,
+        choices=_USER_TYPES_CHOICES,
+        widget=Select2MultipleChoiceWidget
+    )
+    groups = forms.MultipleChoiceField(
+        label=ugettext_noop("Groups"),
+        required=False,
+        choices=[],  # filled dynamically
+        widget=Select2MultipleChoiceWidget,
+    )
+    date_range = forms.CharField(
+        label=ugettext_noop("Date Range"),
+        required=True,
+        widget=DateRangePickerWidget(),
+    )
+    exports = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True,
+    )
+
+    def __init__(self, domain, timezone, *args, **kwargs):
+        self.domain = domain
+        self.timezone = timezone
+        super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
+        self.fields['date_range'].help_text = _(
+            "The timezone for this export is %(timezone)s."
+        ) % {
+            'timezone': self.timezone,
+        }
+
+        initial = kwargs.get('initial', {})
+        if initial.get('export_id'):
+            self.fields['export_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-2'
+        self.helper.field_class = 'col-sm-5'
+        self.helper.layout = Layout(
+            crispy.Field(
+                'export_id',
+                ng_required='true',
+                ng_model='formData.export_id',
+            ),
+            crispy.Field(
+                'user_types',
+                ng_model='formData.user_types',
+                ng_required='true',
+                placeholder=_("Everyone"),
+                ng_init="formData.user_types = [{}]".format(
+                    json.dumps(_USER_TYPES_CHOICES[0])
+                )
+            ),
+            B3MultiField(
+                _("Groups"),
+                crispy.Div(
+                    crispy.Div(
+                        InlineField(
+                            'groups',
+                            ng_model='formData.groups',
+                            ng_required='false',
+                            style="width: 98%",
+                        ),
+                        ng_show="showSelectGroups && hasGroups",
+                    ),
+                ),
+                CrispyTemplate('export/crispy_html/groups_help.html', {
+                    'domain': self.domain,
+                }),
+            ),
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_rage',
+                ng_required='true',
+            ),
+        )
+
+    def format_form_export(self, export):
+        return {
+            'export_id': export.get_id,
+            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+            'export_type': 'form',
+            'format':  export.default_format,
+            'dlocation': reverse('export_custom_data',
+                                 args=[self.domain, export.get_id]),
+            'name': export.name,
+        }
