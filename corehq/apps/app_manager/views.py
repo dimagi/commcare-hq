@@ -1834,13 +1834,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module[SLUG].show = json.loads(request.POST[show])
             module[SLUG].label[lang] = request.POST[label]
 
-    if isinstance(module, AdvancedModule):
-        module.has_schedule = should_edit('has_schedule')
-        if should_edit('has_schedule'):
-            for form in module.get_forms():
-                if not form.schedule:
-                    form.schedule = FormSchedule()
-
     if should_edit("root_module_id"):
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
