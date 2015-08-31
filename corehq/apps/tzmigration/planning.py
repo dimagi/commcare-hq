@@ -177,3 +177,15 @@ class PlanningDB(object):
             .order_by(PlanningCaseAction.id)
             .with_entities(PlanningCaseAction.action_json))
         return [json.loads(action_json) for action_json, in result]
+
+    def get_forms(self):
+        session = self.Session()
+        return (json.loads(form_json) for form_json, in
+                session.query(PlanningForm).order_by(PlanningForm.id)
+                .with_entities(PlanningForm.form_json).all())
+
+    def get_cases(self):
+        session = self.Session()
+        return (json.loads(case_json) for case_json, in
+                session.query(PlanningCase).order_by(PlanningCase.id)
+                .with_entities(PlanningCase.case_json).all())

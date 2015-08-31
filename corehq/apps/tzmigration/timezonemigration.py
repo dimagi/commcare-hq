@@ -21,7 +21,6 @@ from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 
 
 def run_timezone_migration_for_domain(domain):
-    print get_migration_status(domain, strict=True)
     set_migration_started(domain)
     _run_timezone_migration_for_domain(domain)
     set_migration_complete(domain)
@@ -76,7 +75,13 @@ def json_diff(obj1, obj2):
 
 
 def _run_timezone_migration_for_domain(domain):
-    pass
+    if settings.UNIT_TESTING:
+        delete_planning_db(domain)
+    planning_db = prepare_planning_db(domain)
+    for form in planning_db.get_forms():
+        XFormInstance.get_db().save_doc(form)
+    for case in planning_db.get_cases():
+        CommCareCase.get_db().save_doc(case)
 
 
 def _get_submission_xml(xform_id):
@@ -126,15 +131,17 @@ def prepare_planning_db(domain):
             xml = _get_submission_xml(xform_id)
         except ResourceNotFound:
             continue
-        form_json = _get_new_form_json(xml, xform_id)
-        planning_db.add_form(xform_id, form_json)
-        planning_db.add_diffs('form', xform_id,
-                              json_diff(xform['form'], form_json))
+        new_form_json = _get_new_form_json(xml, xform_id)
 
-        case_updates = get_case_updates(form_json)
+        case_updates = get_case_updates(new_form_json)
         xform_copy = deepcopy(xform)
-        xform_copy['form'] = form_json
+        xform_copy['form'] = new_form_json
         xformdoc = XFormInstance.wrap(xform_copy)
+        xformdoc_json = xformdoc.to_json()
+
+        planning_db.add_form(xform_id, xformdoc_json)
+        planning_db.add_diffs('form', xform_id,
+                              json_diff(xform, xformdoc_json))
 
         case_actions = [
             (case_update.id, action.xform_id, action.to_json())
@@ -155,7 +162,7 @@ def prepare_planning_db(domain):
             stock_report_helper.to_json()
             for stock_report_helper in stock_report_helpers
         ])
-    prepare_case_json(planning_db)
+    return prepare_case_json(planning_db)
 
 
 def prepare_case_json(planning_db):
