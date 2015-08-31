@@ -384,7 +384,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev')
     return json_response(config)
 
 
