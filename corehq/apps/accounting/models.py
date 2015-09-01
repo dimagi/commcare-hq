@@ -2411,7 +2411,6 @@ class StripePaymentMethod(PaymentMethod):
         proxy = True
 
     @property
-    @memoized
     def customer(self):
         return self._get_or_create_stripe_customer()
 

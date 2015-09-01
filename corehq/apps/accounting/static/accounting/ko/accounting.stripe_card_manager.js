@@ -6,29 +6,35 @@ var StripeCard = function(card){
         copy: ['url', 'token']
     };
 
-    ko.mapping.fromJS(card, mapping, self);
-    self.is_autopay(self.is_autopay() == 'True');
+    self.wrap = function(data){
+        ko.mapping.fromJS(data, mapping, self);
+        self.is_autopay(self.is_autopay() == 'True');
+    };
+    self.wrap(card);
 
     self.setAutopay = function(){
-        self.is_autopay(true);
-        self.submit({is_autopay: self.is_autopay()});
+        cardManager.autoPayButtonEnabled(false);
+        self.submit({is_autopay: true}).always(function(){
+            cardManager.autoPayButtonEnabled(true);
+        });
     };
 
     self.unSetAutopay = function(){
-        self.is_autopay(false);
-        self.submit({is_autopay: self.is_autopay()});
+        cardManager.autoPayButtonEnabled(false);
+        self.submit({is_autopay: false}).always(function(){
+            cardManager.autoPayButtonEnabled(true);
+        });
     };
 
     self.submit = function(data){
-        cardManager.autoPayButtonEnabled(false);
-        $.ajax({
+        return $.ajax({
             type: "POST",
             url: self.url,
             data: data
         }).success(function(data){
             cardManager.wrap(data);
-        }).always(function(){
-            cardManager.autoPayButtonEnabled(true);
+        }).fail(function(){
+            alert("something went horribly wrong");
         });
     };
 };

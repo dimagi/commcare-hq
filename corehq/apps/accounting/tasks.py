@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from django.utils.html import strip_tags
 
+from corehq.util.view_utils import absolute_reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
@@ -440,6 +441,7 @@ def send_autopay_card_removed_email(billing_account, old_user, new_user):
 @task
 def send_autopay_card_added_email(billing_account, autopayer):
     """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
+    from corehq.apps.domain.views import EditExistingBillingAccountView
     web_user = WebUser.get_by_username(autopayer)
     subject = ugettext("Your card is being used to auto-pay for {billing_account}").format(
         billing_account=billing_account.name)
@@ -450,6 +452,8 @@ def send_autopay_card_added_email(billing_account, autopayer):
         'domain': billing_account.created_by_domain,
         'last_4': getattr(billing_account.autopay_card, 'last4', None),
         'billing_account_name': billing_account.name,
+        'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                             args=[billing_account.created_by_domain])
     }
 
     send_HTML_email(
