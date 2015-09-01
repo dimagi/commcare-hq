@@ -31,7 +31,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application
 
 
-class ExportReport(DataInterface, ProjectReportParametersMixin):
+class AbstractExportReport(DataInterface, ProjectReportParametersMixin):
     """
         Base class for export reports.
     """
@@ -51,8 +51,14 @@ class ExportReport(DataInterface, ProjectReportParametersMixin):
             get_filter_params=self.get_filter_params(),
         )
 
+    def get_saved_exports(self):
+        raise NotImplementedError()
 
-class FormExportReportBase(ExportReport, DatespanMixin):
+    def get_filter_params(self):
+        raise NotImplementedError()
+
+
+class FormExportReportBase(AbstractExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -300,7 +306,7 @@ class ExcelExportReport(FormExportReportBase):
         return context
 
 
-class CaseExportReport(ExportReport):
+class CaseExportReport(AbstractExportReport):
     name = ugettext_lazy("Export Cases")
     slug = "case_export"
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
