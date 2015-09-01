@@ -325,6 +325,8 @@ class MessageLogReport(BaseCommConnectLogReport):
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
+        contact_cache = {}
+
         def filter_by_types(data_):
             filtered_types = {t.lower() for t in MessageTypeFilter.get_value(self.request, self.domain)}
             if not filtered_types:
@@ -374,6 +376,22 @@ class MessageLogReport(BaseCommConnectLogReport):
             timestamp = ServerTime(date_).user_time(self.timezone).done()
             return timestamp.strftime(SERVER_DATETIME_FORMAT)
 
+        def get_contact_link(couch_recipient, couch_recipient_doc_type):
+            doc_info = self.get_recipient_info(couch_recipient_doc_type, couch_recipient, contact_cache)
+            if doc_info:
+                username = doc_info.display
+                url = doc_info.link
+                if doc_info.is_deleted:
+                    username = '%s (%s %s)' % (username, _('Deleted'), _(doc_info.type_display))
+                    url = None
+            else:
+                username = None
+                url = None
+            username = username or "-"
+            if url:
+                return '<a target="_blank" href="{url}">{username}</a>'.format(username=username, url=url)
+            return username
+
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
         data = SMS.objects.filter(
@@ -391,7 +409,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         for message in data:
             yield [
                 get_timestamp(message.date),
-                message.couch_recipient or '---',
+                get_contact_link(message.couch_recipient, message.couch_recipient_doc_type),
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
