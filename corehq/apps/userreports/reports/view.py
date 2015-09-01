@@ -48,7 +48,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     emailable = True
 
     @property
-    def is_custom(self):
+    def is_static(self):
         return any(
             self.report_config_id.startswith(prefix)
             for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
@@ -61,7 +61,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     @memoized
     def spec(self):
-        if self.is_custom:
+        if self.is_static:
             return CustomReportConfiguration.by_id(self.report_config_id)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
