@@ -2,6 +2,9 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.users.models import CommCareUser
+from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
+from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
+from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
 from custom.ewsghana.api import EWSApi
 
 from corehq.apps.commtrack.models import StockState, Product
@@ -53,6 +56,43 @@ def migration_task():
             endpoint = GhanaEndpoint.from_config(config)
             ews_bootstrap_domain(EWSApi(config.domain, endpoint))
             stock_data_task.delay(EWSStockDataSynchronization(config.domain, endpoint))
+
+
+# Alert when facilities have not been reported continuously for 3 weeks
+@periodic_task(run_every=crontab(hour=10, minute=00),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def on_going_non_reporting():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        OnGoingNonReporting(domain).send()
+
+
+# Ongoing STOCKOUTS at SDP and RMS
+@periodic_task(run_every=crontab(hour=10, minute=25),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def on_going_stockout():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        OnGoingStockouts(domain).send()
+        OnGoingStockoutsRMS(domain).send()
+
+
+# Urgent Non-Reporting
+@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def urgent_non_reporting():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        UrgentNonReporting(domain)
+
+
+# Urgent Stockout
+@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def urgent_stockout():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        UrgentStockoutAlert(domain)
 
 
 @periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=58),
