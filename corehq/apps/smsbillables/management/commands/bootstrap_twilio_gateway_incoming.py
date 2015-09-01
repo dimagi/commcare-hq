@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.apps.twilio.models import TwilioBackend
+from commcarehq.messaging.smsbackends.twilio.models import TwilioBackend
 from corehq.apps.sms.models import INCOMING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
