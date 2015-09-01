@@ -29,6 +29,11 @@ def notify_error(message):
 
 
 def notify_exception(request, message=None, details=None):
+    """
+    :param request: a Django request object
+    :param message: message string
+    :param details: dict with additional details to be included in the output
+    """
     if request is not None:
         message = message or request.path
     notify_logger.error(
