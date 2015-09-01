@@ -70,6 +70,9 @@ var ReportConfig = function (data) {
             } else if (date_range === 'lastn') {
                 days = self.days();
             } else {
+                if (self.report_name() === 'Case List') {
+                    return '';
+                }
                 throw "Invalid date range.";
             }
 
