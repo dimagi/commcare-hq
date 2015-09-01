@@ -1,7 +1,9 @@
 from datetime import datetime
 from django.test.testcases import TestCase
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
+from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, REMINDER_R_AND_R_DISTRICT, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, REMINDER_STOCKONHAND, SUPERVISION_REMINDER
@@ -50,6 +52,10 @@ class TestReminders(TestCase):
                        first_name='test1', last_name='Test')
         bootstrap_user(cls.district, username='msd_person', domain=domain.name, phone_number='111',
                        first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
+
+    @classmethod
+    def tearDownClass(cls):
+        Domain.get_by_name(TEST_DOMAIN).delete()
 
     def tearDown(self):
         SMS.objects.all().delete()
