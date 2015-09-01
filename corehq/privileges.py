@@ -20,7 +20,6 @@ CUSTOM_SMS_GATEWAY = 'custom_sms_gateway'
 INBOUND_SMS = 'inbound_sms'
 
 BULK_CASE_MANAGEMENT = 'bulk_case_management'
-BULK_FORM_MANAGEMENT = 'bulk_form_management'
 BULK_USER_MANAGEMENT = 'bulk_user_management'
 
 DEIDENTIFIED_DATA = 'deidentified_data'
@@ -50,7 +49,6 @@ MAX_PRIVILEGES = [
     CUSTOM_SMS_GATEWAY,
     INBOUND_SMS,
     BULK_CASE_MANAGEMENT,
-    BULK_FORM_MANAGEMENT,
     BULK_USER_MANAGEMENT,
     DEIDENTIFIED_DATA,
     HIPAA_COMPLIANCE_ASSURANCE,
@@ -87,7 +85,6 @@ class Titles(object):
             REMINDERS_FRAMEWORK: _("Reminders Framework"),
             CUSTOM_SMS_GATEWAY: _("Custom Android Gateway"),
             BULK_CASE_MANAGEMENT: _("Bulk Case Management"),
-            BULK_FORM_MANAGEMENT: _("Bulk Form Management"),
             BULK_USER_MANAGEMENT: _("Bulk User Management"),
             ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
             DEIDENTIFIED_DATA: _("De-Identified Data"),
