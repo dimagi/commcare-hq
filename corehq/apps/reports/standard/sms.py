@@ -321,50 +321,82 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = SMSLog.by_domain_date(self.domain, startdate, enddate,
-                                     limit=self.pagination.count, skip=self.pagination.start)
-        result = []
-
-        reporting_locations_id = self.get_location_filter() if self.uses_locations else []
-        # Retrieve message log options
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
-        contact_cache = {}
-        message_type_filter = self.get_message_type_filter()
+        def filter_by_types(data_):
+            filtered_types = {t.lower() for t in MessageTypeFilter.get_value(self.request, self.domain)}
+            if not filtered_types:
+                return data_
+
+            relevant_workflows = (
+                WORKFLOW_REMINDER,
+                WORKFLOW_KEYWORD,
+                WORKFLOW_BROADCAST,
+                WORKFLOW_CALLBACK,
+                WORKFLOW_DEFAULT,
+            )
+            incl_survey = MessageTypeFilter.OPTION_SURVEY.lower() in filtered_types
+            incl_other = MessageTypeFilter.OPTION_OTHER.lower() in filtered_types
+            is_workflow_relevant = Q(workflow__in=relevant_workflows)
+            workflow_filter = Q(is_workflow_relevant & Q(workflow__in=filtered_types))
+            survey_filter = ~Q(xforms_session_couch_id__exact=None)
+            other_filter = ~Q(is_workflow_relevant | survey_filter)
+            # We can chain ANDs together, but not ORs, so we have to do all the ORs at the same time.
+            if incl_survey and incl_other:
+                filters = (workflow_filter | survey_filter | other_filter)
+            elif incl_survey:
+                filters = (workflow_filter | survey_filter)
+            elif incl_other:
+                filters = (workflow_filter | other_filter)
+            else:
+                filters = workflow_filter
+            return data_.filter(filters)
+
+        def order_by_col(data_):
+            col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
+            sort_col = self.request_params.get('iSortCol_0')
+            if sort_col is not None and sort_col < len(col_fields):
+                data_ = data_.order_by(col_fields[sort_col])
+            if self.request_params.get('sSortDir_0') == 'desc':
+                data_ = data_.reverse()
+            return data_
+
+        def get_phone_number(phone_number):
+            if abbreviate_phone_number and phone_number is not None:
+                return phone_number[0:7] if phone_number[0] == "+" else phone_number[0:6]
+            return phone_number
+
+        get_direction = lambda d: {INCOMING: _('Incoming'), OUTGOING: _('Outgoing')}.get(d, '---')
+
+        def get_timestamp(date_):
+            timestamp = ServerTime(date_).user_time(self.timezone).done()
+            return timestamp.strftime(SERVER_DATETIME_FORMAT)
+
+        startdate = json_format_datetime(self.datespan.startdate_utc)
+        enddate = json_format_datetime(self.datespan.enddate_utc)
+        data = SMS.objects.filter(
+            domain=self.domain,
+            date__range=(startdate, enddate),
+        ).exclude(
+            # Exclude outgoing messages that have not yet been processed
+            direction=OUTGOING,
+            processed=False
+        )
+        data = filter_by_types(data)
+        data = order_by_col(data)
+        data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for message in data:
-            if message.direction == OUTGOING and not message.processed:
-                continue
-
-            message_types = self._get_message_types(message)
-            if not message_type_filter(message_types):
-                continue
-
-            if reporting_locations_id and message.location_id not in reporting_locations_id:
-                continue
-
-            doc_info = self.get_recipient_info(message.couch_recipient_doc_type,
-                message.couch_recipient, contact_cache)
-
-            phone_number = message.phone_number
-            if abbreviate_phone_number and phone_number is not None:
-                phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
-
-            timestamp = ServerTime(message.date).user_time(self.timezone).done()
-            result.append([
-                self._fmt_timestamp(timestamp),
-                self._fmt_contact_link(message.couch_recipient, doc_info),
-                self._fmt(phone_number),
-                self._fmt_direction(message.direction),
-                self._fmt(message.text),
-                self._fmt(", ".join(message_types)),
-            ])
-
-        return result
+            yield [
+                get_timestamp(message.date),
+                message.couch_recipient or '---',
+                get_phone_number(message.phone_number),
+                get_direction(message.direction),
+                message.text,
+                ', '.join(self._get_message_types(message)),
+            ]
 
     @property
     def total_records(self):
