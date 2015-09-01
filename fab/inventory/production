@@ -9,6 +9,9 @@ hqdjango8.internal.commcarehq.org
 hqdjango9.internal.commcarehq.org
 hqdjango10.internal.commcarehq.org
 hqdjango11.internal.commcarehq.org
+hqdjango12.internal.commcarehq.org
+hqdjango13.internal.commcarehq.org
+hqdjango14.internal.commcarehq.org
 
 [webworkers:vars]
 newrelic_app_name=django
