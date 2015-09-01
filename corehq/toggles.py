@@ -641,6 +641,7 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+
 BROADCAST_TO_LOCATIONS = StaticToggle(
     'broadcast_to_locations',
     'Send broadcasts to locations',
@@ -652,5 +653,13 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SMS_PERFORMANCE_FEEDBACK = StaticToggle(
+    'sms_performance_feedback',
+    'Enable SMS-based performance feedback',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
