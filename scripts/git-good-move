@@ -1,0 +1,6 @@
+#!/bin/bash
+NEW_PATH=$2
+OLD_PATH=$1
+
+git read-tree --prefix=$NEW_PATH -u master:$OLD_PATH
+rm -rf $OLD_PATH
