@@ -116,7 +116,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
 
@@ -159,7 +160,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
 
@@ -194,7 +196,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
         self.assertEqual(
@@ -211,7 +214,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
 
