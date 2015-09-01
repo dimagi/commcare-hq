@@ -15,7 +15,7 @@ class TestCustomDataSource(SimpleTestCase, TestFileMixin):
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
     def test_get_all(self):
-        with override_settings(CUSTOM_DATA_SOURCES=[self.get_path('sample_custom_data_source', 'json')]):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_custom_data_source', 'json')]):
             all = list(CustomDataSourceConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all

@@ -1008,7 +1008,7 @@ They conform to a slightly different style:
 }
 ```
 
-Having defined the data source you need to add the path to the data source file to the `CUSTOM_DATA_SOURCES`
+Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
 setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 

@@ -364,7 +364,7 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def all(cls):
-        for path in settings.CUSTOM_DATA_SOURCES:
+        for path in settings.STATIC_DATA_SOURCES:
             with open(path) as f:
                 wrapped = cls.wrap(json.load(f))
                 for domain in wrapped.domains:
@@ -414,7 +414,7 @@ class CustomReportConfiguration(JsonObject):
 
     @classmethod
     def _all(cls):
-        for path in settings.CUSTOM_UCR_REPORTS:
+        for path in settings.STATIC_UCR_REPORTS:
             with open(path) as f:
                 yield cls.wrap(json.load(f))
 

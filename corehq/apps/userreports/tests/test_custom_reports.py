@@ -15,7 +15,7 @@ class TestCustomReportConfig(SimpleTestCase, TestFileMixin):
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
     def test_get_all(self):
-        with override_settings(CUSTOM_UCR_REPORTS=[self.get_path('custom_report_config', 'json')]):
+        with override_settings(STATIC_UCR_REPORTS=[self.get_path('custom_report_config', 'json')]):
             all = list(CustomReportConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all
