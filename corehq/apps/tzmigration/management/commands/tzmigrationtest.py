@@ -13,7 +13,7 @@ def _is_datetime(string):
         return False
     try:
         iso_string_to_datetime(string)
-    except (ValueError, OverflowError):
+    except (ValueError, OverflowError, TypeError):
         return False
     else:
         return True

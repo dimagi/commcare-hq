@@ -172,9 +172,13 @@ def prepare_planning_db(domain):
 
 
 def prepare_case_json(planning_db):
-    case_ids = planning_db.get_all_case_ids()
+    case_ids = planning_db.get_all_case_ids(valid_only=False)
     for case_json in iter_docs(CommCareCase.get_db(), case_ids):
         case = CommCareCase.wrap(case_json)
+        if case.doc_type != 'CommCareCase':
+            assert case.doc_type == 'CommCareCase-Deleted'
+            continue
+
         # to normalize for any new fields added
         case_json = deepcopy(case.to_json())
         actions = [CommCareCaseAction.wrap(action)

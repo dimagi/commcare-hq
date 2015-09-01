@@ -25,6 +25,7 @@ class PlanningCase(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(50), nullable=False, unique=True)
     case_json = Column(UnicodeText, nullable=True)
+    doc_type = Column(String(50), nullable=True)
 
 
 class PlanningCaseAction(Base):
@@ -137,13 +138,13 @@ class PlanningDB(object):
         }
         return form_ids
 
-    def get_all_case_ids(self):
+    def get_all_case_ids(self, valid_only=True):
+        """Exclude CommCareCare-Deleted"""
         session = self.Session()
-
-        case_ids = {
-            uuid for (uuid,) in
-            session.query(PlanningCase).with_entities(PlanningCase.uuid).all()
-        }
+        query = session.query(PlanningCase).with_entities(PlanningCase.uuid)
+        if valid_only:
+            query = query.filter(PlanningCase.doc_type == 'CommCareCase')
+        case_ids = {uuid for (uuid,) in query.all()}
         return case_ids
 
     def get_diffs(self):
@@ -166,6 +167,12 @@ class PlanningDB(object):
         session = self.Session()
         (session.query(PlanningCase).filter(PlanningCase.uuid == case_id)
          .update({'case_json': json.dumps(case_json)}))
+        session.commit()
+
+    def update_case_doc_type(self, case_id, doc_type):
+        session = self.Session()
+        (session.query(PlanningCase).filter(PlanningCase.uuid == case_id)
+         .update({'doc_type': doc_type}))
         session.commit()
 
     def get_actions_by_case(self, case_id):
