@@ -1,12 +1,21 @@
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% block head %}
+    {{ block.super }}
+    {% block reports-css %}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
