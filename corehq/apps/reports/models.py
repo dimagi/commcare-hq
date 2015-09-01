@@ -539,6 +539,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
 
+DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -550,6 +552,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     attach_excel = BooleanProperty()
     # language is only used if some of the config_ids refer to UCRs.
     language = StringProperty()
+    email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
@@ -701,7 +704,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
-            title = _("Scheduled report from CommCare HQ")
+            title = (
+                _(DEFAULT_REPORT_NOTIF_SUBJECT)
+                if self.email_subject == DEFAULT_REPORT_NOTIF_SUBJECT
+                else self.email_subject
+            )
             attach_excel = getattr(self, 'attach_excel', False)
             body, excel_files = get_scheduled_report_response(
                 self.owner, self.domain, self._id, attach_excel=attach_excel
