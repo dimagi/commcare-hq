@@ -11,7 +11,7 @@ def non_empty_only(dct):
     return dict([(key, value) for key, value in dct.items() if value])
 
 
-def _create_custom_app_strings(app, lang):
+def _create_custom_app_strings(app, lang, for_default=False):
 
     def trans(d):
         return clean_trans(d, langs)
@@ -66,6 +66,14 @@ def _create_custom_app_strings(app, lang):
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+
+        icon = module.icon_app_string(lang, for_default=for_default)
+        audio = module.audio_app_string(lang, for_default=for_default)
+        if icon:
+            yield id_strings.module_icon_locale(module), icon
+        if audio:
+            yield id_strings.module_audio_locale(module), audio
+
         if hasattr(module, 'report_configs'):
             for config in module.report_configs:
                 yield id_strings.report_command(config.uuid), trans(config.header)
@@ -82,6 +90,13 @@ def _create_custom_app_strings(app, lang):
         if hasattr(module, 'case_list'):
             if module.case_list.show:
                 yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+                icon = module.case_list.icon_app_string(lang, for_default=for_default)
+                audio = module.case_list.audio_app_string(lang, for_default=for_default)
+                if icon:
+                    yield id_strings.case_list_icon_locale(module), icon
+                if audio:
+                    yield id_strings.case_list_audio_locale(module), audio
+
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
@@ -89,11 +104,24 @@ def _create_custom_app_strings(app, lang):
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
 
+            icon = form.icon_app_string(lang, for_default=for_default)
+            audio = form.audio_app_string(lang, for_default=for_default)
+            if icon:
+                yield id_strings.form_icon_locale(form), icon
+            if audio:
+                yield id_strings.form_audio_locale(form), audio
+
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             yield (
                 id_strings.case_list_form_locale(module),
                 trans(module.case_list_form.label) or "Create a new Case"
             )
+            icon = module.case_list_form.icon_app_string(lang, for_default=for_default)
+            audio = module.case_list_form.audio_app_string(lang, for_default=for_default)
+            if icon:
+                yield id_strings.case_list_form_icon_locale(module), icon
+            if audio:
+                yield id_strings.case_list_form_audio_locale(module), audio
 
 
 class AppStringsBase(object):
@@ -106,7 +134,7 @@ class AppStringsBase(object):
         return self._load_translations(lang)
 
     def create_custom_app_strings(self, app, lang, for_default=False):
-        custom = dict(_create_custom_app_strings(app, lang))
+        custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))
         if not for_default:
             custom = non_empty_only(custom)
         return custom
