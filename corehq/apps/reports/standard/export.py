@@ -72,7 +72,7 @@ class FormExportReportBase(AbstractExportReport, DatespanMixin):
         exports = stale_get_exports(self.domain)
         exports = filter(lambda x: x.type == "form", exports)
         if not self.can_view_deid:
-            exports = filter(lambda x: not x.is_safe, exports)
+            exports = [export for export in exports if export.is_safe]
         return sorted(exports, key=lambda x: x.name)
 
     @property
