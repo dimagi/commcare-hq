@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from braces.views import JsonRequestResponseMixin
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404

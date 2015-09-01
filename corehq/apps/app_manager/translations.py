@@ -4,7 +4,7 @@ from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
