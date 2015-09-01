@@ -6,7 +6,7 @@ from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-from corehq.apps.telerivet.models import TelerivetBackend
+from commcarehq.messaging.smsbackends.telerivet.models import TelerivetBackend
 
 
 logger = logging.getLogger('accounting')

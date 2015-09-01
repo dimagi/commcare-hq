@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cat tomove | xargs -n1 ./moveapp
+touch commcarehq/__init__.py commcarehq/messaging/__init__.py commcarehq/messaging/smsbackends/__init__.py

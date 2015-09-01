@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.sms.api import create_billable_for_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.tropo.api import TropoBackend
+from commcarehq.messaging.smsbackends.tropo.api import TropoBackend
 
 
 class TestBillableCreation(TestCase):
