@@ -2438,19 +2438,24 @@ class StripePaymentMethod(PaymentMethod):
     def _get_stripe_customer(self):
         return stripe.Customer.retrieve(self.customer_id)
 
+    @property
+    def all_cards(self):
+        return self.customer.cards.data
+
     def get_card(self, card_token):
         return self.customer.cards.retrieve(card_token)
 
     def get_autopay_card(self, billing_account):
-        return next((card for card in self.customer.cards
-                     if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) is True),
+        return next((card for card in self.all_cards
+                     if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'),
                     None)
 
     def remove_card(self, card):
         return self.get_card(card).delete()
 
     def create_card(self, stripe_token, billing_account, autopay=False):
-        card = self.customer.cards.create(card=stripe_token)
+        customer = self.customer
+        card = customer.cards.create(card=stripe_token)
         self.set_default_card(card)
         if autopay:
             self.set_autopay(card, billing_account)
@@ -2468,11 +2473,10 @@ class StripePaymentMethod(PaymentMethod):
 
         If there are other cards that auto_pay for that billing account, remove them
         """
-        self._update_autopay_status(card, billing_account, autopay=True)
-
         if billing_account.auto_pay_enabled:
             self._remove_other_auto_pay_cards(billing_account)
 
+        self._update_autopay_status(card, billing_account, autopay=True)
         billing_account.update_autopay_user(self.web_user)
         billing_account.save()
 
@@ -2480,13 +2484,15 @@ class StripePaymentMethod(PaymentMethod):
         """
         Unsets the auto_pay status for this card, and removes it from the billing account
         """
-        if card.metadata[self._auto_pay_card_metadata_key(billing_account)] is True:
+        if card.metadata[self._auto_pay_card_metadata_key(billing_account)] == "True":
             self._update_autopay_status(card, billing_account, autopay=False)
             billing_account.remove_autopay_user()
             billing_account.save()
 
     def _update_autopay_status(self, card, billing_account, autopay, save=True):
-        card.metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
+        metadata = card.metadata.copy()
+        metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
+        card.metadata = metadata
         if save:
             card.save()
 

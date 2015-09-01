@@ -1,0 +1,38 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<fieldset>
+    <legend>{% trans 'Saved Credit Cards' %}</legend>
+    <table class='table'>
+        <thead>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ko foreach: cards -->
+                <tr>
+                    <td><strong><span data-bind="text: brand"></span></strong></td>
+                    <td> ************<strong><span data-bind="text: last4"></span></strong></td>
+                    <td><span data-bind="text: exp_month"></span>/<span data-bind="text: exp_year"></span></td>
+                    <td>
+                        <button data-bind="visible: is_autopay,
+                                           click: unSetAutopay,
+                                           enable: $parent.autoPayButtonEnabled"
+                                class='btn btn-alert autopay-button'>
+                            {% trans 'Remove this card from autopay' %}
+                        </button>
+                        <button data-bind="visible: !is_autopay(),
+                                           click: setAutopay,
+                                           enable: $parent.autoPayButtonEnabled"
+                                class='btn btn-success autopay-button'>
+                            {% trans 'Set this card as autopay' %}
+                        </button>
+                    </td>
+                </tr>
+              <!-- /ko -->
+        </tbody>
+    </table>
+</fieldset>

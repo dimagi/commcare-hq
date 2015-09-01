@@ -23,7 +23,7 @@ from corehq.apps.domain.views import (
     FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
-    WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView
+    WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView, CardView,
 )
 
 #
@@ -126,6 +126,7 @@ domain_settings = patterns(
         name=BulkStripePaymentView.urlname),
     url(r'^billing/make_wire_invoice/$', WireInvoiceView.as_view(),
         name=WireInvoiceView.urlname),
+    url(r'^billing/cards/(?P<card_token>card_[\w]+)/$', CardView.as_view(), name=CardView.url_name),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^subscription/renew/$', SubscriptionRenewalView.as_view(),
         name=SubscriptionRenewalView.urlname),

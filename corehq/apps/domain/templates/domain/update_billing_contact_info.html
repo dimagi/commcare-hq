@@ -6,6 +6,15 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script type="text/javascript"
+            src="{% static 'accounting/ko/accounting.stripe_card_manager.js' %}"></script>
+    <script type="text/javascript">
+     var cardManager = new StripeCardManager({
+         cards: {{ cards|JSON }}
+     });
+     ko.applyBindings(cardManager, $("#card-manager")[0])
+    </script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -24,5 +33,8 @@
 {% block main_column %}
     <div id="billing-info">
         {% crispy billing_account_info_form %}
+    </div>
+    <div id="card-manager">
+        {% include 'domain/stripe_cards.html' %}
     </div>
 {% endblock %}

@@ -756,7 +756,24 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
+            'cards': self._get_cards(),
         }
+
+    def _get_cards(self):
+        try:
+            payment_method = StripePaymentMethod.objects.get(web_user=self.request.couch_user.username)
+        except StripePaymentMethod.DoesNotExist:
+            return []
+        else:
+            return [{
+                'brand': card.brand,
+                'last4': card.last4,
+                'exp_month': card.exp_month,
+                'exp_year': card.exp_year,
+                'token': card.id,
+                'is_autopay': card.metadata.get('auto_pay_{}'.format(self.account.id), False),
+                'url': reverse(CardView.url_name, args=[self.domain, card.id]),
+            } for card in payment_method.all_cards]
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -2691,3 +2708,30 @@ def _send_request_notification_email(request, org, dom):
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)
+
+
+class CardView(DomainAccountingSettings):
+    url_name = "card_view"
+
+    def post(self, request, domain, card_token):
+        user = request.user.username
+        payment_method = StripePaymentMethod.objects.get(web_user=user)
+        card = payment_method.get_card(card_token)
+
+        if request.POST.get("is_autopay") == 'true':
+            payment_method.set_autopay(card, self.account)
+        elif request.POST.get("is_autopay") == 'false':
+            payment_method.unset_autopay(card, self.account)
+
+        return json_response({'cards': self._all_cards(payment_method)})
+
+    def _all_cards(self, payment_method):
+        return [{
+            'brand': card.brand,
+            'last4': card.last4,
+            'exp_month': card.exp_month,
+            'exp_year': card.exp_year,
+            'token': card.id,
+            'is_autopay': card.metadata.get('auto_pay_{}'.format(self.account.id), False),
+            'url': reverse(CardView.url_name, args=[self.domain, card.id]),
+        } for card in payment_method.all_cards]
