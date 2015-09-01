@@ -21,10 +21,10 @@ class Excel2007DictReader(object):
         else:
             filename = f
 
-        self.wb = openpyxl.reader.excel.load_workbook(filename, use_iterators=True)
+        self.wb = openpyxl.load_workbook(filename, use_iterators=True)
         self.worksheet = self.wb.worksheets[0]
         self.fieldnames = []
-        self.fieldnames = [cell.internal_value for cell in self.worksheet.iter_rows().next()]
+        self.fieldnames = [cell.value for cell in self.worksheet.iter_rows().next()]
     def __iter__(self):
         rows = self.worksheet.iter_rows()
         rows.next()
@@ -35,7 +35,7 @@ class Excel2007DictReader(object):
                 return unicode(int(thing))
             return thing
         for row in rows:
-            yield dict(zip(self.fieldnames, [to_string(cell.internal_value) for cell in row]))
+            yield dict(zip(self.fieldnames, [to_string(cell.value) for cell in row]))
 
 
 class JSONReaderError(Exception):
@@ -176,7 +176,7 @@ class WorksheetJSONReader(IteratorJSONReader):
         except StopIteration:
             header_row = []
         for cell in header_row:
-            if cell.internal_value is None:
+            if cell.value is None:
                 break
             else:
                 width += 1
@@ -192,7 +192,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                     return value
             for row in self.worksheet.iter_rows():
                 cell_values = [
-                    _convert_float(cell.internal_value)
+                    _convert_float(cell.value)
                     for cell in row[:width]
                 ]
                 if not any(cell_values):
@@ -213,9 +213,10 @@ class WorkbookJSONReader(object):
         else:
             filename = f
 
-        self.wb = openpyxl.reader.excel.load_workbook(filename, use_iterators=True)
+        self.wb = openpyxl.load_workbook(filename, use_iterators=True)
         self.worksheets_by_title = {}
         self.worksheets = []
+
         for worksheet in self.wb.worksheets:
             ws = WorksheetJSONReader(worksheet, title=worksheet.title)
             self.worksheets_by_title[worksheet.title] = ws
