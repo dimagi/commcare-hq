@@ -781,7 +781,8 @@ In most simple reports you will only have one level of aggregation. See examples
 
 ## Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. The currently supported transform types are shown below:
+Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+The currently supported transform types are shown below:
 
 ### Displaying username instead of user ID
 
