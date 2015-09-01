@@ -346,8 +346,8 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return get_all_report_configs()
 
 
-CUSTOM_PREFIX = 'custom-'
-CUSTOM_REPORT_PREFIX = 'customreport-'
+CUSTOM_PREFIX = 'static-'
+CUSTOM_REPORT_PREFIX = 'custom-'
 
 
 class CustomDataSourceConfiguration(JsonObject):
