@@ -10,7 +10,7 @@ from django_prbac.utils import has_privilege
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
-require_form_management_privilege = requires_privilege_with_fallback(privileges.BULK_FORM_MANAGEMENT)
+require_form_management_privilege = requires_privilege_with_fallback(privileges.DATA_CLEANUP)
 
 
 
