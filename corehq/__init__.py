@@ -12,7 +12,7 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.receiverwrapper import reports as receiverwrapper
 from corehq.apps.userreports.models import (
-    CustomReportConfiguration,
+    StaticReportConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
@@ -158,7 +158,7 @@ def _get_configurable_reports(project):
     """
     User configurable reports
     """
-    configs = ReportConfiguration.by_domain(project.name) + CustomReportConfiguration.by_domain(project.name)
+    configs = ReportConfiguration.by_domain(project.name) + StaticReportConfiguration.by_domain(project.name)
     if configs:
         def _make_report_class(config):
             from corehq.apps.reports.generic import GenericReportView

@@ -22,7 +22,7 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import (
     STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
-    CustomReportConfiguration,
+    StaticReportConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -62,7 +62,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @memoized
     def spec(self):
         if self.is_static:
-            return CustomReportConfiguration.by_id(self.report_config_id)
+            return StaticReportConfiguration.by_id(self.report_config_id)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
@@ -346,7 +346,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         domain = kwargs.get('domain')
         report_config_id = kwargs.get('report_config_id')
-        class_path = CustomReportConfiguration.report_class_by_domain_and_id(
+        class_path = StaticReportConfiguration.report_class_by_domain_and_id(
             domain, report_config_id
         )
         report_class = to_function(class_path)

@@ -350,7 +350,7 @@ STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
 
-class CustomDataSourceConfiguration(JsonObject):
+class StaticDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository
     """
@@ -394,7 +394,7 @@ class CustomDataSourceConfiguration(JsonObject):
                              'not be found.'))
 
 
-class CustomReportConfiguration(JsonObject):
+class StaticReportConfiguration(JsonObject):
     """
     For statically defined reports based off of custom data sources
     """
@@ -420,12 +420,12 @@ class CustomReportConfiguration(JsonObject):
 
     @classmethod
     def all(cls):
-        for wrapped in CustomReportConfiguration._all():
+        for wrapped in StaticReportConfiguration._all():
             for domain in wrapped.domains:
                 doc = copy(wrapped.config)
                 doc['domain'] = domain
                 doc['_id'] = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
-                doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
+                doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
                 yield ReportConfiguration.wrap(doc)
 
     @classmethod

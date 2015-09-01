@@ -2,7 +2,7 @@ import os
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.apps.app_manager.tests import TestFileMixin
-from corehq.apps.userreports.models import CustomDataSourceConfiguration, CustomReportConfiguration
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, StaticReportConfiguration
 
 
 class TestCustomReportConfig(SimpleTestCase, TestFileMixin):
@@ -11,12 +11,12 @@ class TestCustomReportConfig(SimpleTestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def test_wrap(self):
-        wrapped = CustomReportConfiguration.wrap(self.get_json('custom_report_config'))
+        wrapped = StaticReportConfiguration.wrap(self.get_json('custom_report_config'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
     def test_get_all(self):
         with override_settings(STATIC_UCR_REPORTS=[self.get_path('custom_report_config', 'json')]):
-            all = list(CustomReportConfiguration.all())
+            all = list(StaticReportConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all
             self.assertEqual('example', example.domain)
@@ -25,5 +25,5 @@ class TestCustomReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for data_source in CustomDataSourceConfiguration.all():
+        for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()
