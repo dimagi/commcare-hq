@@ -51,6 +51,9 @@ class OpmCaseFluff(fluff.IndicatorDocument):
     women_registered = user_calcs.WomenRegistered()
     children_registered = user_calcs.ChildrenRegistered()
 
+    class Meta:
+        app_label = 'opm'
+
 
 def is_valid_user(user):
     if not (user.is_active and user.base_doc == "CouchUser"):
@@ -89,6 +92,9 @@ class OpmUserFluff(fluff.IndicatorDocument):
     village = user_data('village')
     gps = user_data('gps')
 
+    class Meta:
+        app_label = 'opm'
+
 
 def _get_user_id(form):
     case = form.form.get('case', {})
@@ -114,6 +120,10 @@ class OpmFormFluff(fluff.IndicatorDocument):
     service_forms = user_calcs.ServiceForms()
     growth_monitoring = user_calcs.GrowthMonitoring()
 
+    class Meta:
+        app_label = 'opm'
+
+
 
 class VhndAvailabilityFluff(fluff.IndicatorDocument):
 
@@ -124,6 +134,9 @@ class VhndAvailabilityFluff(fluff.IndicatorDocument):
     document_filter = CasePropertyFilter(type='vhnd')
 
     vhnd = case_calcs.VhndAvailabilityCalc()
+
+    class Meta:
+        app_label = 'opm'
 
 
 # These Pillows need to be added to the list of PILLOWTOPS in settings.py
