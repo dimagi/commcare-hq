@@ -15,8 +15,10 @@ def pillow_seq_store():
                 None,
                 message='Found seq number lower than previous for {}. '
                         'This could mean we are in a rewind state'.format(store.checkpoint_id),
-                details='seq stored: {}, new seq found {}'.format(checkpoint['seq'], store.seq)
-            )
+                details={
+                    'seq stored': checkpoint['seq'],
+                    'new seq found': store.seq
+                })
         else:
             store.seq = checkpoint['seq']
             store.save()
