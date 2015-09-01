@@ -9,18 +9,16 @@ class UndoHandler(KeywordHandler):
     def help(self):
         return self.handle()
 
-    def get_user_latest_report(self, user):
-        xform = XFormInstance.view(
+    def get_user_latest_xform(self, user):
+        return XFormInstance.view(
             'reports_forms/all_forms',
             startkey=['submission xmlns user', self.domain, COMMTRACK_REPORT_XMLNS, user.get_id, {}],
             endkey=['submission xmlns user', self.domain, COMMTRACK_REPORT_XMLNS, user.get_id],
             reduce=False,
             include_docs=True,
-            descending=True
+            descending=True,
+            limit=1
         ).first()
-        if not xform:
-            return
-        return StockReport.objects.filter(form_id=xform.get_id)
 
     def restore_message_from_transactions(self, transactions):
         product_dict = defaultdict(lambda: {'soh': None, 'receipts': 0})
@@ -39,18 +37,18 @@ class UndoHandler(KeywordHandler):
         )
 
     def handle(self):
-        last_reports = self.get_user_latest_report(self.user)
-
-        if not last_reports:
+        xform = self.get_user_latest_xform(self.user)
+        if not xform:
             self.respond('You have not submitted any product reports yet.')
             return True
 
+        stock_reports = StockReport.objects.filter(form_id=xform.get_id)
+
         transactions = []
-        for report in last_reports:
+        for report in stock_reports:
             transactions.extend(report.stocktransaction_set.all())
 
         message = self.restore_message_from_transactions(transactions)
-        for last_report in last_reports:
-            last_report.delete()
+        xform.archive()
         self.respond("Success. Your previous report has been removed. It was: %(report)s", report=message)
         return True

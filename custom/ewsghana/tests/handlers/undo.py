@@ -1,9 +1,20 @@
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
+from couchforms.models import XFormInstance
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 
 
 class TestUndo(EWSScriptTest):
+
+    def tearDown(self):
+        for xform in XFormInstance.view(
+            'reports_forms/all_forms',
+            startkey=['submission', TEST_DOMAIN],
+            endkey=['submission', TEST_DOMAIN, {}],
+            reduce=False,
+            include_docs=True,
+        ):
+            xform.delete()
 
     def test_no_product_reports(self):
         a = """
