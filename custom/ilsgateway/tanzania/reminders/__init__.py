@@ -194,7 +194,7 @@ class Languages(object):
 def update_statuses(supply_point_ids, type, value):
     for supply_point_id in supply_point_ids:
         now = datetime.utcnow()
-        SupplyPointStatus.objects.create(supply_point=supply_point_id,
+        SupplyPointStatus.objects.create(location_id=supply_point_id,
                                          status_type=type,
                                          status_value=value,
                                          status_date=now)

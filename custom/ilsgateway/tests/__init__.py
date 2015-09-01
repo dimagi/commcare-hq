@@ -19,3 +19,4 @@ from .handlers.supervision import *
 from .handlers.yes import *
 from .handlers.stockout import *
 from .handlers.messageinitatior import *
+from .test_reminders import *
