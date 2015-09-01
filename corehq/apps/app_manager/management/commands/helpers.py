@@ -41,6 +41,8 @@ class AppMigrationCommandBase(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        self.options = options
+
         def _migrate_app_ids(app_ids):
             to_save = []
             count = len(app_ids)
