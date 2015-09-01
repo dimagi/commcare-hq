@@ -2,9 +2,9 @@ from collections import namedtuple
 from urllib import urlencode
 from corehq.toggles import OPENLMIS
 
-from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
@@ -361,6 +361,12 @@ class DashboardTab(UITab):
                 return domain_has_apps(self.domain)
         return False
 
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.dashboard.views import default_dashboard_url
+        return default_dashboard_url(self._request, self.domain)
+
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
@@ -462,6 +468,12 @@ class SetupTab(UITab):
                 self.project.commtrack_enabled)
 
     @property
+    @memoized
+    def url(self):
+        from corehq.apps.commtrack.views import default_commtrack_url
+        return default_commtrack_url(self.domain)
+
+    @property
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
@@ -553,6 +565,15 @@ class SetupTab(UITab):
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
+
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.data_interfaces.views import default_data_view_url
+        try:
+            return default_data_view_url(self._request, self.domain)
+        except Http404:
+            return None
 
     @property
     @memoized
@@ -705,7 +726,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.default"
+    view = "corehq.apps.sms.views.compose_message"
 
     @property
     def is_viewable(self):
