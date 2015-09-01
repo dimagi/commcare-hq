@@ -70,7 +70,8 @@ class FormExportReportBase(AbstractExportReport, DatespanMixin):
     @memoized
     def get_saved_exports(self):
         exports = stale_get_exports(self.domain)
-        exports = filter(lambda x: x.type == "form", exports)
+        exports = [FormExportSchema.wrap(export.to_json())
+                   for export in exports if export.type == "form"]
         if not self.can_view_deid:
             exports = [export for export in exports if export.is_safe]
         return sorted(exports, key=lambda x: x.name)
