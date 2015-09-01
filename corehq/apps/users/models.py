@@ -2347,7 +2347,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         loc_id = self.get_location_id(domain)
         if loc_id:
             try:
-                return SQLLocation.objects.get(loc_id)
+                return SQLLocation.objects.get(location_id=loc_id)
             except SQLLocation.DoesNotExist:
                 pass
         return None
