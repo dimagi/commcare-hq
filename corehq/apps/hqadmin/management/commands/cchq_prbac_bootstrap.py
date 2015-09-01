@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+BULK_FORM_MANAGEMENT = 'bulk_form_management'
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
@@ -191,6 +193,7 @@ class Command(BaseCommand):
 
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
+        BULK_FORM_MANAGEMENT,
     ]
 
     BOOTSTRAP_GRANTS = {
