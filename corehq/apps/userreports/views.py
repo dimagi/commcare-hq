@@ -385,7 +385,7 @@ def import_report(request, domain):
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return json_response(config._doc)
 
 
 @login_and_domain_required
@@ -488,7 +488,7 @@ def rebuild_data_source(request, domain, config_id):
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return json_response(config._doc)
 
 
 @login_and_domain_required
