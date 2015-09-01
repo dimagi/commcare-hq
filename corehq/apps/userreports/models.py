@@ -346,7 +346,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return get_all_report_configs()
 
 
-CUSTOM_PREFIX = 'static-'
+STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
 
@@ -354,7 +354,7 @@ class CustomDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository
     """
-    _datasource_id_prefix = CUSTOM_PREFIX
+    _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
     config = DictProperty()
 
@@ -407,7 +407,7 @@ class CustomReportConfiguration(JsonObject):
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
         return '{}{}-{}'.format(
-            CUSTOM_PREFIX if not custom_configurable_report else CUSTOM_REPORT_PREFIX,
+            STATIC_PREFIX if not custom_configurable_report else CUSTOM_REPORT_PREFIX,
             domain,
             report_id,
         )

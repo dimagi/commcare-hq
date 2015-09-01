@@ -20,7 +20,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     UserReportsFilterError)
 from corehq.apps.userreports.models import (
-    CUSTOM_PREFIX,
+    STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
     CustomReportConfiguration,
     ReportConfiguration,
@@ -51,7 +51,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def is_custom(self):
         return any(
             self.report_config_id.startswith(prefix)
-            for prefix in [CUSTOM_PREFIX, CUSTOM_REPORT_PREFIX]
+            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
         )
 
     @property
