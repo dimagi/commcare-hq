@@ -37,7 +37,7 @@ from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.colors import blue
+from fabric.colors import blue, red
 from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
@@ -356,65 +356,6 @@ def webworkers():
     env.supervisor_roles = ROLES_DJANGO
 
 
-@task
-def what_os():
-    with settings(warn_only=True):
-        _require_target()
-        if getattr(env, 'host_os_map', None) is None:
-            # prior use case of setting a env.remote_os
-            # did not work when doing multiple hosts with different os!
-            # Need to keep state per host!
-            env.host_os_map = defaultdict(lambda: '')
-        if env.host_os_map[env.host_string] == '':
-            print 'Testing operating system type...'
-            if (files.exists('/etc/lsb-release',verbose=True) and
-                    files.contains(text='DISTRIB_ID=Ubuntu', filename='/etc/lsb-release')):
-                remote_os = 'ubuntu'
-                print ('Found lsb-release and contains "DISTRIB_ID=Ubuntu", '
-                       'this is an Ubuntu System.')
-            elif files.exists('/etc/redhat-release', verbose=True):
-                remote_os = 'redhat'
-                print 'Found /etc/redhat-release, this is a RedHat system.'
-            else:
-                print 'System OS not recognized! Aborting.'
-                exit()
-            env.host_os_map[env.host_string] = remote_os
-        return env.host_os_map[env.host_string]
-
-
-@task
-@roles(ROLES_ALL_SRC)
-def bootstrap():
-    """Initialize remote host environment (virtualenv, deploy, update)
-
-    Use it with a targeted -H <hostname> you want to bootstrap for django worker use.
-    """
-    _require_target()
-
-    create_code_dir()
-    update_code()
-    create_virtualenvs()
-    update_virtualenv()
-    setup_dirs()
-    update_current()
-
-    # copy localsettings if it doesn't already exist in case any management
-    # commands we want to run now would error otherwise
-    with cd(env.code_root):
-        sudo('cp -n localsettings.example.py localsettings.py',
-             user=env.sudo_user)
-
-
-@task
-def unbootstrap():
-    """Delete cloned repos and virtualenvs"""
-
-    require('code_root', 'virtualenv_root')
-
-    with settings(warn_only=True):
-        sudo(('rm -rf %(virtualenv_current)s %(code_current)s') % env)
-
-
 @roles(ROLES_ALL_SRC)
 @parallel
 def create_virtualenvs():
@@ -447,14 +388,22 @@ def remove_submodule_source(path):
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def _remove_submodule_source_main(path):
-    with cd(env.code_root):
+def _remove_submodule_source_main(path, use_current_release=False):
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('rm -rf submodules/%s' % path)
 
 
 @task
 @roles(ROLES_DB_ONLY)
 def preindex_views():
+    """
+    Creates a new release that runs preindex_everything. Clones code from `current` release and updates it.
+    """
+    setup_release()
+    _preindex_views()
+
+
+def _preindex_views():
     if not env.should_migrate:
         utils.abort((
             'Skipping preindex_views for "%s" because should_migrate = False'
@@ -470,14 +419,15 @@ def preindex_views():
         version_static()
 
 
+
 @roles(ROLES_ALL_SRC)
 @parallel
 def update_code(use_current_release=False):
     # If not updating current release,  we are making a new release and thus have to do cloning
     # we should only ever not make a new release when doing a hotfix deploy
     if not use_current_release:
-        with cd(env.code_current):
-            if files.exists(env.code_current):
+        if files.exists(env.code_current):
+            with cd(env.code_current):
                 submodules = sudo("git submodule | awk '{ print $2 }'").split()
         with cd(env.code_root):
             if files.exists(env.code_current):
@@ -529,20 +479,19 @@ def mail_admins(subject, message):
 
 @roles(ROLES_DB_ONLY)
 def record_successful_deploy(url):
-    with cd(env.code_root):
+    with cd(env.code_current):
         sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
+            '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
             '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
-            'virtualenv_root': env.virtualenv_root,
+            'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
             'url': url,
         })
 
 
-@task
 @roles(ROLES_ALL_SRC)
 @parallel
 def record_successful_release():
@@ -589,36 +538,24 @@ def _confirm_translated():
 
 
 @task
-def deploy():
-    """deploy code to remote host by checking out the latest via git"""
-    _require_target()
-    user_confirm = (
-        _confirm_translated() and
-        console.confirm("Hey girl, you sure you didn't mean to run AWESOME DEPLOY?", default=False) and
-        console.confirm('Are you sure you want to deploy to {env.environment}?'.format(env=env), default=False) and
-        console.confirm('Did you run "fab {env.environment} preindex_views"?'.format(env=env), default=False)
-    )
-    if not user_confirm:
-        utils.abort('Deployment aborted.')
+def setup_release():
+    _execute_with_timing(create_code_dir)
+    _execute_with_timing(update_code)
+    _execute_with_timing(update_virtualenv)
 
-    run('echo ping!')  # workaround for delayed console response
-    _deploy_without_asking()
+    # Update localsettings
+    _execute_with_timing(copy_localsettings)
+    _execute_with_timing(copy_tf_localsettings)
 
 
 def _deploy_without_asking():
     try:
-        _execute_with_timing(create_code_dir)
-        _execute_with_timing(update_code)
-        _execute_with_timing(update_virtualenv)
+        setup_release()
+
+        _execute_with_timing(_preindex_views)
 
         max_wait = datetime.timedelta(minutes=5)
         pause_length = datetime.timedelta(seconds=5)
-
-        # Update localsettings
-        _execute_with_timing(copy_localsettings)
-        _execute_with_timing(copy_tf_localsettings)
-        _execute_with_timing(preindex_views)
-
         start = datetime.datetime.utcnow()
 
         @roles(ROLES_DB_ONLY)
@@ -645,12 +582,9 @@ def _deploy_without_asking():
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
-        # initial update of manifest to make sure we have no
-        # Offline Compression Issues as services restart
-        _execute_with_timing(update_manifest, soft=True)
 
         _execute_with_timing(clear_services_dir)
-        set_supervisor_config()
+        _set_supervisor_config()
 
         do_migrate = env.should_migrate
         if do_migrate:
@@ -689,13 +623,29 @@ def _deploy_without_asking():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def update_current(release=None):
+    """
+    Updates the current release to the one specified or to the code_root
+    """
+    if not files.exists(env.code_root):
+        utils.abort('About to update current to non-existant release')
+
     sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
 
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def unlink_current():
+    """
+    Unlinks the current code directory. Use with caution.
+    """
+    message = 'Are you sure you want to unlink the current release of {env.environment}?'.format(env=env)
+
+    if not console.confirm(message, default=False):
+        utils.abort('Deployment aborted.')
+
     if files.exists(env.code_current):
         sudo('unlink {}'.format(env.code_current))
 
@@ -707,22 +657,27 @@ def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
 
-@task
 @roles(ROLES_ALL_SRC)
 def copy_localsettings():
     sudo('cp {}/localsettings.py {}/localsettings.py'.format(env.code_current, env.code_root))
 
 
-@task
 @roles(ROLES_TOUCHFORMS)
 def copy_tf_localsettings():
-    sudo('cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py {}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(env.code_current, env.code_root))
+    sudo(
+        'cp {}/submodules/touchforms-src/touchforms/backend/localsettings.py '
+        '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
+            env.code_current, env.code_root
+        ))
 
 
 @task
 @roles(ROLES_ALL_SRC)
 @parallel
 def clean_releases(keep=3):
+    """
+    Cleans old and failed deploys from the ~/www/<environment>/releases/ directory
+    """
     releases = sudo('ls {}'.format(env.releases)).split()
     current_release = os.path.basename(sudo('readlink {}'.format(env.code_current)))
 
@@ -741,24 +696,15 @@ def clean_releases(keep=3):
                 to_remove.append(release)
 
     if len(to_remove) == len(releases):
-        print 'Aborting, about to remove every release'
-        exit()
+        print red('Aborting clean_releases, about to remove every release')
+        return
 
     if os.path.basename(env.code_root) in to_remove:
-        print 'Aborting, about to remove current release'
-        exit()
+        print red('Aborting clean_releases, about to remove current release')
+        return
 
     for release in to_remove:
         sudo('rm -rf {}/{}'.format(env.releases, release))
-
-
-@task
-def force_update_static():
-    _require_target()
-    execute(_do_collectstatic)
-    execute(_do_compress)
-    execute(update_manifest)
-    execute(services_restart)
 
 
 def _tag_commit():
@@ -914,27 +860,6 @@ def _migrate():
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
 
 
-@task
-@roles(ROLES_DB_ONLY)
-def migrate():
-    """run south migration on remote environment"""
-    if not console.confirm(
-            'Are you sure you want to run south migrations on '
-            '{env.environment}? '
-            'You must preindex beforehand. '.format(env=env), default=False):
-        utils.abort('Task aborted.')
-    _require_target()
-    execute(stop_pillows)
-    execute(stop_celery_tasks)
-    with cd(env.code_root_preindex):
-        sudo(
-            '%(virtualenv_root_preindex)s/bin/python manage.py migrate --noinput ' % env
-            + env.get('app', ''),
-            user=env.sudo_user
-        )
-    _supervisor_command('start all')
-
-
 @roles(ROLES_DB_ONLY)
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
@@ -1004,37 +929,6 @@ def version_static():
         ),
             user=env.sudo_user
         )
-
-
-@task
-@roles(ROLES_STATIC)
-def collectstatic():
-    """run collectstatic on remote environment"""
-    _require_target()
-    update_code()
-    _do_collectstatic()
-    _do_compress()
-    update_manifest(save=True)
-
-
-@task
-def reset_local_db():
-    """Reset local database from remote host"""
-    _require_target()
-    if env.environment == 'production':
-        utils.abort('Local DB reset is for staging environment only')
-    question = ('Are you sure you want to reset your local '
-                'database with the %(environment)s database?' % env)
-    sys.path.append('.')
-    if not console.confirm(question, default=False):
-        utils.abort('Local database reset aborted.')
-    local_db = loc['default']['NAME']
-    remote_db = remote['default']['NAME']
-    with settings(warn_only=True):
-        local('dropdb %s' % local_db)
-    local('createdb %s' % local_db)
-    host = '%s@%s' % (env.user, env.hosts[0])
-    local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
@@ -1125,8 +1019,14 @@ def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
+
 @task
 def set_supervisor_config():
+    setup_release()
+    _set_supervisor_config()
+
+
+def _set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     _require_target()
     _execute_with_timing(set_celery_supervisorconf)
@@ -1144,29 +1044,6 @@ def set_supervisor_config():
 def _supervisor_command(command):
     _require_target()
     sudo('supervisorctl %s' % (command), shell=False, user='root')
-
-
-@task
-def update_apache_conf():
-    require('code_root', 'django_port')
-
-    with cd(env.code_root):
-        tmp = "/tmp/cchq"
-        sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.django_port, tmp))
-        sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp, user='root')
-
-    with settings(warn_only=True):
-        sudo('a2dissite 000-default', user='root')
-        sudo('a2dissite default', user='root')
-
-    sudo('a2enmod proxy_http', user='root')
-    sudo('a2ensite cchq', user='root')
-    sudo('service apache2 reload', user='root')
-
-@task
-def update_translations():
-    do_update_translations()
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1200,6 +1077,7 @@ def do_update_translations():
 @task
 def reset_mvp_pillows():
     _require_target()
+    setup_release()
     mvp_pillows = [
         'MVPFormIndicatorPillow',
         'MVPCaseIndicatorPillow',
