@@ -1,18 +1,23 @@
 {% load i18n %}
-<p class="help help-block">
-   <i class="fa fa-users"
-      style="margin-right: 10px;"></i>
-   <strong>Include Everyone</strong> (All Groups) by default.
+<div ng-show="!isSelectGroups">
+   <div class="label label-default label-lg">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+            You may either select <strong>User Types</strong> OR a <strong>Group</strong> for export.
+        {% endblocktrans %}
+   </div>
    <button type="button"
            class="btn btn-default"
-           ng-show="!showSelectGroups && hasGroups"
-           ng-click="showSelectGroups = true;">{% trans 'Select Groups' %}
+           ng-show="!isSelectGroups && hasGroups"
+           ng-click="isSelectGroups = true; isFormInvalid();">
+       <i class="fa fa-users"></i>
+       {% trans 'Select Group' %}
    </button>
-   <span ng-show="!!groupsLoading">
-        <i class="fa fa-spinner fa-spin"></i> {% trans "Loading Groups" %}
-   </span>
-   <span ng-show="!!hasError">{% trans "There was an issue loading groups. Using all groups by default." %}</span>
+</div>
+<p ng-show="!!groupsLoading">
+    <i class="fa fa-spinner fa-spin"></i> {% trans "Loading Groups" %}
 </p>
+<p ng-show="!!hasError">{% trans "There was an issue loading groups. Using all groups by default." %}</p>
 <p ng-show="!groupsLoading && !hasGroups">
     {% trans "You don't have any reporting groups set up." %}
     <a href="{% url 'all_groups' domain %}"
