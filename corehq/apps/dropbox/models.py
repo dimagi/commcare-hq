@@ -23,6 +23,9 @@ class DropboxUploadHelper(models.Model):
 
     initiated = False
 
+    class Meta:
+        app_label = 'dropbox'
+
     @classmethod
     def create(cls, token, **kwargs):
         download_id = kwargs.get('download_id')

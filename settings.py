@@ -125,6 +125,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -445,7 +446,6 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()

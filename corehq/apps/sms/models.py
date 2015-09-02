@@ -337,6 +337,9 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
 
+    class Meta:
+        app_label = 'sms'
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -606,6 +609,9 @@ class PhoneNumber(models.Model):
     # True to allow this phone number to opt back in, False if not
     can_opt_in = models.BooleanField(null=False, default=True)
 
+    class Meta:
+        app_label = 'sms'
+
     @classmethod
     def get_by_phone_number(cls, phone_number):
         phone_number = smsutil.strip_plus(phone_number)
@@ -857,6 +863,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     additional_error_text = models.TextField(null=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        app_label = 'sms'
 
     @classmethod
     def get_recipient_type_from_doc_type(cls, recipient_doc_type):
@@ -1160,6 +1169,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
+
+    class Meta:
+        app_label = 'sms'
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
