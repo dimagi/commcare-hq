@@ -358,11 +358,9 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         )
         return to_function(class_path)
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request, report_config_id, **kwargs):
         domain = kwargs['domain']
-        report_config_id = kwargs['report_config_id']
         request.domain = domain
-        del kwargs['report_config_id']
         return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
 
     def get_report(self, domain, slug, config_id):
