@@ -11,7 +11,7 @@ GUINEA_CONTACT_TRACING_DOMAIN = 'guinea_contact_tracing'
 GUINEA_CONTACT_TRACING_DATABASE = 'guineact-backup'
 
 
-@periodic_task(run_every=crontab(hour="1", day_of_week="7"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="1", day_of_week="0"), queue='background_queue')
 def copy_data_to_backup():
     # https://<your_username>:<your_password>@commcarehq.cloudant.com/commcarehq
     prod_couchdb_connection = 'https://{username}:{password}@commcarehq.cloudant.com/{database}'.format(
