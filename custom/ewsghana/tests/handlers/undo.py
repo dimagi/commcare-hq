@@ -16,8 +16,6 @@ class TestUndo(EWSScriptTest):
         ):
             xform.delete()
 
-        StockReport.objects.all().delete()
-
     def test_no_product_reports(self):
         a = """
             5551234 > undo

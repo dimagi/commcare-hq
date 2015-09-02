@@ -123,7 +123,10 @@ class EWSScriptTest(TestScript):
                 caption='receipts'
             )
         )
-        config.consumption_config = ConsumptionConfig(use_supply_point_type_default_consumption=True)
+        config.consumption_config = ConsumptionConfig(
+            use_supply_point_type_default_consumption=True,
+            exclude_invalid_periods=True
+        )
         config.save()
 
         set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id, 8)
