@@ -637,7 +637,7 @@ FIXTURE_CASE_SELECTION = StaticToggle(
 EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'ews_invalid_report_response',
     'Send response about invalid stock on hand',
-    TAG_UNKNOWN,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
