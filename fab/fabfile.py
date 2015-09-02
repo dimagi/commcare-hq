@@ -552,7 +552,6 @@ def setup_release():
     _execute_with_timing(update_code)
     _execute_with_timing(update_virtualenv)
 
-
     # Update localsettings
     _execute_with_timing(copy_localsettings)
     _execute_with_timing(copy_tf_localsettings)
