@@ -351,17 +351,19 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     slug = prefix = 'custom_configurable'
     map_name = 'CUSTOM_UCR'
 
-    def dispatch(self, request, *args, **kwargs):
-        domain = kwargs.get('domain')
-        report_config_id = kwargs.get('report_config_id')
+    @staticmethod
+    def _report_class(domain, config_id):
         class_path = StaticReportConfiguration.report_class_by_domain_and_id(
-            domain, report_config_id
+            domain, config_id
         )
-        report_class = to_function(class_path)
-        report_class_obj = report_class()
+        return to_function(class_path)
+
+    def dispatch(self, request, *args, **kwargs):
+        domain = kwargs['domain']
+        report_config_id = kwargs['report_config_id']
         request.domain = domain
         del kwargs['report_config_id']
-        return report_class_obj.dispatch(request, report_config_id, **kwargs)
+        return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
 
     @classmethod
     def url_pattern(cls):
