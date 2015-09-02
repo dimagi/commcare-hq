@@ -315,14 +315,14 @@ def third_district():
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=15),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def supervision_task():
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
     if now.day == last_business_day.day:
         send_for_all_domains(last_business_day, SupervisionReminder)
 
 
 def get_last_and_nth_business_day(date, n):
-    last_month = datetime.datetime(date.year, date.month, 1) - datetime.timedelta(days=1)
+    last_month = datetime(date.year, date.month, 1) - datetime.timedelta(days=1)
     last_month_last_day = get_business_day_of_month(month=last_month.month, year=last_month.year, count=-1)
     nth_business_day = get_business_day_of_month(month=date.month, year=date.year, count=n)
     return last_month_last_day, nth_business_day
@@ -331,7 +331,7 @@ def get_last_and_nth_business_day(date, n):
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def first_soh_task():
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
     if now.day == last_business_day.day:
         send_for_all_domains(last_business_day, SOHReminder)
@@ -340,7 +340,7 @@ def first_soh_task():
 @periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def second_soh_task():
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     last_month_last_day, first_business_day = get_last_and_nth_business_day(now, 1)
     if now.day == first_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
@@ -349,7 +349,7 @@ def second_soh_task():
 @periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def third_soh_task():
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
     if now.day == fifth_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
