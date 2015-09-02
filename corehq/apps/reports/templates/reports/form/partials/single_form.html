@@ -41,7 +41,7 @@ requires imports/proptable.html to be included in the main template
 </style>
 <script>
     $(function () {
-        function _analytics(action, callback) {
+        function _analytics_usage(action, callback) {
             var label = 'standalone_form', extra = {};
             {% if context_case_id %}
             label = 'case';
@@ -57,7 +57,7 @@ requires imports/proptable.html to be included in the main template
         });
 
         $('#edit-form').click(function() {
-            _analytics('Edit Form Submission')
+            _analytics_usage('Edit Form Submission')
         });
 
         $("#archive-form").submit(function() {
@@ -70,7 +70,7 @@ requires imports/proptable.html to be included in the main template
                     document.getElementById('archive-form').submit();
                 }
             );
-            _analytics('Archive Form Submission', callback);
+            _analytics_usage('Archive Form Submission', callback);
             analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
