@@ -24,7 +24,7 @@ from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE,
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE, SCHEDULE_DATE_CASE_OPENED,
 )
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1400,6 +1400,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
         has_schedule = getattr(module, 'has_schedule', False)
         if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
+            yield DetailVariable(name=SCHEDULE_DATE_CASE_OPENED, function="date_opened")  # date case is opened
             forms_due = []
             for phase in module.get_schedule_phases():
                 if not phase.anchor:
