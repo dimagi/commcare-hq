@@ -338,6 +338,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 WORKFLOW_BROADCAST,
                 WORKFLOW_CALLBACK,
                 WORKFLOW_DEFAULT,
+                WORKFLOW_PERFORMANCE,
             )
             incl_survey = MessageTypeFilter.OPTION_SURVEY.lower() in filtered_types
             incl_other = MessageTypeFilter.OPTION_OTHER.lower() in filtered_types
