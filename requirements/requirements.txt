@@ -17,7 +17,7 @@ defusedxml==0.4.1
 diff-match-patch==20120106
 django-kombu==0.9.1
 django-rosetta==0.7.1
-django-tastypie==git+https://github.com/django-tastypie/django-tastypie#egg=TastyPie
+git+https://github.com/django-tastypie/django-tastypie#egg=TastyPie
 djtables==0.1.1
 elasticsearch==0.4.4
 #egenix-mx-base==3.2.8
