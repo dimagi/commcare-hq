@@ -5,7 +5,7 @@
         "airsmadagascar",
         "airsethiopia"
     ],
-   "data_source_table":"static-supervisory-indicators",
+   "data_source_table":"supervisory",
    "report_id":"incident-report",
    "config":{
       "domain":"abtmali",
