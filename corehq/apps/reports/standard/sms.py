@@ -371,27 +371,17 @@ class MessageLogReport(BaseCommConnectLogReport):
                 return phone_number[0:7] if phone_number[0] == "+" else phone_number[0:6]
             return phone_number
 
-        get_direction = lambda d: {INCOMING: _('Incoming'), OUTGOING: _('Outgoing')}.get(d, '---')
+        get_direction = lambda d: self._fmt_direction(d)['html']
 
         def get_timestamp(date_):
             timestamp = ServerTime(date_).user_time(self.timezone).done()
-            return timestamp.strftime(SERVER_DATETIME_FORMAT)
+            table_cell = self._fmt_timestamp(timestamp)
+            return table_cell['html']
 
         def get_contact_link(couch_recipient, couch_recipient_doc_type):
             doc_info = self.get_recipient_info(couch_recipient_doc_type, couch_recipient, contact_cache)
-            if doc_info:
-                username = doc_info.display
-                url = doc_info.link
-                if doc_info.is_deleted:
-                    username = '%s (%s %s)' % (username, _('Deleted'), _(doc_info.type_display))
-                    url = None
-            else:
-                username = None
-                url = None
-            username = username or "-"
-            if url:
-                return '<a target="_blank" href="{url}">{username}</a>'.format(username=username, url=url)
-            return username
+            table_cell = self._fmt_contact_link(couch_recipient, doc_info)
+            return table_cell['html']
 
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
