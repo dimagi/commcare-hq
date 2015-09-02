@@ -235,9 +235,8 @@ def rebuild_staging(config, print_details=True, push=True):
             )
             git = get_git(cwd)
             if print_details:
-                print_merge_details(
-                    branch, config.name, git,
-                    known_branches=[config.trunk] + config.branches)
+                print_merge_details(branch, config.name, git,
+                                    known_branches=config.branches)
 
     if merge_conflicts or not_found:
         exit(1)
