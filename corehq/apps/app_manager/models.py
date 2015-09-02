@@ -1705,12 +1705,14 @@ class FixtureSelect(DocumentSchema):
 
     fixture_type:       FixtureDataType.tag
     display_column:     name of the column to display in the list
+    localize:           boolean if display_column actually contains the key for the localized string
     variable_column:    name of the column whose value should be saved when the user selects an item
     xpath:              xpath expression to use as the case filter
     """
     active = BooleanProperty(default=False)
     fixture_type = StringProperty()
     display_column = StringProperty()
+    localize = BooleanProperty(default=False)
     variable_column = StringProperty()
     xpath = StringProperty(default='')
 
