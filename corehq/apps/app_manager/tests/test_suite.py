@@ -487,7 +487,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         module.fixture_select.active = True
         module.fixture_select.fixture_type = 'days'
         module.fixture_select.display_column = 'my_display_column'
-        module.fixture_select.localization = True
+        module.fixture_select.localize = True
         module.fixture_select.variable_column = 'my_variable_column'
         module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
 
