@@ -312,12 +312,17 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column.column_id for column in self.spec.report_columns]
-        rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+
+        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_ids = []
+        for column in self.spec.report_columns:
+            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+
+        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = (
             [get_total_row(
                 raw_rows, data.aggregation_columns, data.column_configs,
-                get_expanded_columns(data.column_configs, data.config)
+                column_id_to_expanded_column_ids
             )]
             if data.has_total_row else []
         )
