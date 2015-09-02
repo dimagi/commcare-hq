@@ -1,6 +1,6 @@
 from casexml.apps.stock.models import StockTransaction
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE, NAMESPACE_DOMAIN
-from custom.ewsghana.handlers import INVALID_MESSAGE
+from custom.ewsghana.handlers import INVALID_MESSAGE, MS_STOCKOUT
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, restore_location_products, \
     assign_products_to_location, TEST_DOMAIN
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
@@ -234,3 +234,25 @@ class StockOnHandTest(EWSScriptTest):
         """.format(self.user1.full_name, msg)
         self.run_script(a)
         EWS_INVALID_REPORT_RESPONSE.set(TEST_DOMAIN, False, NAMESPACE_DOMAIN)
+
+    def test_rms_stockout(self):
+        a = """
+           44444 > soh lf 0.0
+           44444 < Dear test4 test4, these items are stocked out: lf.
+           333333 < %s
+           44444 > soh lf 10.0
+           44444 < Dear test4 test4, thank you for reporting the commodities you have in stock.
+           333333 < The following commodities Lofem are now available at the RMS. Please place your order now.
+        """ % unicode(MS_STOCKOUT) % {'ms_type': 'RMS', 'products_names': 'Lofem'}
+        self.run_script(a)
+
+    def test_cms_stockout(self):
+        a = """
+           55555 > soh lf 0.0
+           55555 < Dear test5 test5, these items are stocked out: lf.
+           66666 < %s
+           55555 > soh lf 10.0
+           55555 < Dear test5 test5, thank you for reporting the commodities you have in stock.
+           66666 < The following commodities Lofem are now available at the CMS. Please place your order now.
+        """ % unicode(MS_STOCKOUT) % {'ms_type': 'CMS', 'products_names': 'Lofem'}
+        self.run_script(a)
