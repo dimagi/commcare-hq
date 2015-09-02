@@ -1,5 +1,10 @@
 {
-    "domains": ["airs"],
+    "domains": [
+        "airs",
+        "abtmali",
+        "airsmadagascar",
+        "airsethiopia"
+    ],
     "config": {
         "base_item_expression": {
             "type": "abt_supervisor"

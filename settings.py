@@ -1313,6 +1313,7 @@ PILLOWTOPS = {
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json')
 ]
 
 
