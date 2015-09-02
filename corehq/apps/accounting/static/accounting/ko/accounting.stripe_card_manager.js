@@ -26,6 +26,27 @@ var StripeCard = function(card){
         });
     };
 
+    self.showDeleteConfirmation = ko.observable(false);
+    self.toggleDeleteConfirmation = function(){
+        self.showDeleteConfirmation(!self.showDeleteConfirmation());
+    };
+
+    self.deleteCard = function(card){
+        cardManager.cards.destroy(card);
+        $.ajax({
+            type: "DELETE",
+            url: self.url
+        }).success(function(data){
+            cardManager.wrap(data);
+        }).fail(function(data){
+            var response = JSON.parse(data.responseText);
+            alert_user(response.error, "error");
+            if (response.cards){
+                cardManager.wrap(response);
+            }
+        });
+    };
+
     self.submit = function(data){
         return $.ajax({
             type: "POST",

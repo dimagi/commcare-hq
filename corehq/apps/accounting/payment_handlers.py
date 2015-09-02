@@ -379,11 +379,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         })
         return context
 
-stripe_generic_errors = (stripe.error.AuthenticationError,
-                         stripe.error.InvalidRequestError,
-                         stripe.error.APIConnectionError,
-                         stripe.error.StripeError, )
-
 
 class AutoPayInvoicePaymentHandler(object):
     def pay_autopayable_invoices(self, date_due):
@@ -404,7 +399,7 @@ class AutoPayInvoicePaymentHandler(object):
             except stripe.error.CardError:
                 self._handle_card_declined(invoice, payment_method)
                 continue
-            except stripe_generic_errors as e:
+            except payment_method.STRIPE_GENERIC_ERROR as e:
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
             else:

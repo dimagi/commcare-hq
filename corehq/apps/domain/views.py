@@ -2725,6 +2725,21 @@ class CardView(DomainAccountingSettings):
 
         return json_response({'cards': self._all_cards(payment_method)})
 
+    def delete(self, request, domain, card_token):
+        user = request.user.username
+        payment_method = StripePaymentMethod.objects.get(web_user=user)
+        card = payment_method.get_card(card_token)
+        try:
+            payment_method.remove_card(card)
+        except payment_method.STRIPE_GENERIC_ERROR as e:
+            body = e.json_body
+            err = body['error']
+            return json_response({'error': err['message'],
+                                  'cards': self._all_cards(payment_method)},
+                                 status_code=502)
+
+        return json_response({'cards': self._all_cards(payment_method)})
+
     def _all_cards(self, payment_method):
         return [{
             'brand': card.brand,

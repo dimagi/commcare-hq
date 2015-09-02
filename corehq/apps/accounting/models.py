@@ -2410,6 +2410,11 @@ class StripePaymentMethod(PaymentMethod):
     class Meta:
         proxy = True
 
+    STRIPE_GENERIC_ERROR = (stripe.error.AuthenticationError,
+                            stripe.error.InvalidRequestError,
+                            stripe.error.APIConnectionError,
+                            stripe.error.StripeError,)
+
     @property
     def customer(self):
         return self._get_or_create_stripe_customer()
@@ -2450,7 +2455,8 @@ class StripePaymentMethod(PaymentMethod):
                     None)
 
     def remove_card(self, card):
-        return self.get_card(card).delete()
+        card = self.get_card(card.id)
+        card.delete()
 
     def create_card(self, stripe_token, billing_account, autopay=False):
         customer = self.customer
