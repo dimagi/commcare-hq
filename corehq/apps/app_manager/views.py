@@ -1357,6 +1357,16 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list
     })
+
+    if domain_has_privilege(domain, privileges.TEMPLATED_INTENTS):
+        vellum_features.update({
+            'templated_intents': True
+        })
+    if domain_has_privilege(domain, privileges.CUSTOM_INTENTS):
+        vellum_features.update({
+            'custom_intents': True
+        })
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
