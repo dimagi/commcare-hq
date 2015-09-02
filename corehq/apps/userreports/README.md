@@ -1035,8 +1035,8 @@ the following style:
 
 Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
 the report using a custom Django template or with custom Excel formatting, define a subclass of
-```ConfigurableReport``` and override the necessary functions.  Then include the python path to the class
-in the field ```custom_configurable_report``` of the static report and don't forget to include the static
+`ConfigurableReport` and override the necessary functions.  Then include the python path to the class
+in the field `custom_configurable_report` of the static report and don't forget to include the static
 report in `STATIC_DATA_SOURCES` in `settings.py`.
 
 ## Extending User Configurable Reports
