@@ -10,6 +10,30 @@
       rel="stylesheet"
       media="all"
       href="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.css' %}" />
+<style type="text/css">
+    .download-in-progress-container {
+        position: relative;
+    }
+    .download-in-progress-notice {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 210px;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 4999;
+
+    }
+    .download-in-progress-notice .label {
+        margin: 0 auto;
+        position: absolute;
+        width: 300px;
+        left: 50%;
+        margin-left: -150px;
+        margin-top: 62px;
+        z-index: 5000;
+    }
+</style>
 {% endblock stylesheets %}
 
 {% block head %}
@@ -41,32 +65,138 @@
 {% block page_content %}
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController">
-            <form class="form form-horizontal"
+            <div class="alert alert-info">
+                {% blocktrans %}
+                    You are downloading the following exports:
+                {% endblocktrans %}
+                <ul>
+                    {% angularjs %}
+                    <li ng-repeat="export in exportList">{{ export.name }}</li>
+                    {% endangularjs %}
+                </ul>
+            </div>
+            <form class="form form-horizontal download-in-progress-container"
                   name="exportFiltersForm"
                   ng-submit="prepareExport()"
                   novalidate="novalidate">
-                <div class="alert alert-info">
-                    {% blocktrans %}
-                        You are downloading the following exports:
-                    {% endblocktrans %}
-                    <ul>
-                        {% angularjs %}
-                        <li ng-repeat="export in exportList">{{ export.name }}</li>
-                        {% endangularjs %}
-                    </ul>
-                </div>
                 {% crispy download_export_form %}
-                <div class="form-actions">
+                <div class="download-in-progress-notice"
+                     ng-show="!!downloadInProgress">
+                    <div class="label label-default label-lg">
+                        <i class="fa fa-info-circle"></i>
+                        {% trans "Download in progress." %}
+                    </div>
+                </div>
+                <div class="form-actions" ng-show="!downloadInProgress">
                     <div class="col-sm-5 col-sm-offset-2">
                         <button type="submit"
                                 class="btn btn-primary"
-                                ng-disabled="!!exportFiltersForm.$invalid">
+                                ng-show="!preparingExport"
+                                ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
                             <i class="fa fa-download"></i>
                             {% trans "Prepare Export" %}
                         </button>
+                        <div class="label label-info label-lg"
+                             ng-show="preparingExport">
+                            <i class="fa-spin fa fa-spinner"></i>
+                            {% trans "Preparing Export" %}
+                        </div>
                     </div>
                 </div>
             </form>
+        </div>
+        <div ng-controller="DownloadProgressController">
+            <div class="form-actions"
+                 ng-show="!!showDownloadStatus">
+                <div class="col-sm-9 col-lg-5 col-sm-offset-2">
+                    <div class="row">
+                        <div class="col-sm-3 col-md-4">
+                            {% angularjs %}
+                            <form class="form-inline download-form"
+                                  method="POST"
+                                  action="{{ dropboxUrl }}">
+                                <a href="{{ downloadUrl }}"
+                                   class="btn btn-primary btn-lg"
+                                   style="width: 100%;"
+                                   ng-show="!!isDownloadReady"
+                                   ng-disabled="!isDownloadReady"
+                                   ng-click="isDownloaded = true;">
+                                        <i class="fa fa-download"></i>
+                                        {% trans "Download" %}
+                                </a>
+                                <button type="button"
+                                        class="btn btn-primary btn-lg"
+                                        style="width: 100%;"
+                                        ng-show="!isDownloadReady"
+                                        ng-disabled="!isDownloadReady">
+                                        <i class="fa fa-download"></i>
+                                    {% trans "Download" %}
+                                </button>
+                                <button button="submit"
+                                        class="btn btn-default"
+                                        style="margin-top: 5px; width: 100%;"
+                                        ng-disabled="!isDownloadReady"
+                                        ng-click="isDownloaded = true;">
+                                    <i class="fa fa-dropbox"></i>
+                                    {% trans "Sync to Dropbox" %}
+                                </button>
+                            </form>
+                            {% endangularjs %}
+                        </div>
+                        <div class="col-sm-9 col-md-8"
+                             style="padding-top: 10px;"
+                             ng-show="!isDownloaded">
+                            <div class="label label-danger label-lg"
+                                 ng-show="!!progress.error">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Something went wrong!" %}</strong>
+                                {{ progress.error_message }}
+                            </div>
+                            <div class="label label-info label-lg"
+                               ng-show="!isDownloadReady">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                {% trans "Collecting Data" %}
+                            </div>
+                            <div class="label label-success label-lg"
+                               ng-show="!!isDownloadReady">
+                                <i class="fa fa-check"></i>
+                                {% trans "Export is Ready" %}
+                            </div>
+                            <div class="progress">
+                                <div id="download-progress-bar"
+                                     class="progress-bar"
+                                     role="progressbar"
+                                     aria-valuenow="60"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {% angularjs %}
+                                    <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
+                                    {% endangularjs %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-9 col-md-8" ng-show="!!isDownloaded">
+                            <button type="button"
+                                    class="btn btn-default btn-lg"
+                                    ng-click="resetDownload()">
+                                {% trans "Update Filters & Re-Download" %}
+                            </button>
+                        </div>
+                    </div>
+                    <p class="alert alert-info" style="margin-top: 10px;">
+                        <small>
+                            <i class="fa fa-info-circle"></i>
+                            {% blocktrans %}
+                                If you are downloading a large file over
+                                a slow or unstable connection, we
+                                recommend syncing to Dropbox.
+                                Learn more about <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox">
+                                Sync to Dropbox</a>.
+                            {% endblocktrans %}
+                        </small>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 
