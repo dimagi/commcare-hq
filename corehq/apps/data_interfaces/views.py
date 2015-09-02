@@ -14,7 +14,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
 from django.utils.decorators import method_decorator
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
