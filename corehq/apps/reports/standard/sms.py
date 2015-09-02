@@ -1,4 +1,6 @@
 import cgi
+from lxml.etree import ParseError
+from lxml import etree
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -165,7 +167,18 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
-            ret = self.table_cell(username, '<a target="_blank" href="%s">%s</a>' % (url, username))
+            # We need to store the contact type and the recipient ID in the contact link element, because
+            # MessageLogReport can only use the link, not the whole table cell dictionary, and so it won't have
+            # table_cell['raw'] available for export. export_table will read contacttype and recipientid
+            # attributes to populate those columns in the export spreadsheet.
+            ret = self.table_cell(
+                username,
+                '<a target="_blank" href="{url}" contacttype="{type}" recipientid="{id}">{username}</a>'.format(
+                    username=username,
+                    url=url,
+                    type=contact_type,
+                    id=recipient_id or ''
+                ))
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
@@ -430,6 +443,33 @@ class MessageLogReport(BaseCommConnectLogReport):
             {'name': 'enddate', 'value': end_date},
             {'name': 'log_type', 'value': MessageTypeFilter.get_value(self.request, self.domain)},
         ]
+
+    @property
+    def export_table(self):
+
+        def get_contact_info(contact_link):
+            """
+            Contact info is extracted from the contact link
+
+            We can't use the table cell dictionary's 'raw' key because rows don't contain table cells. Pagination
+            is done server-side, and rows are passed via AJAX and contain only strings.
+            """
+            try:
+                element = etree.fromstring(contact_link)
+                return element.text, element.get('contacttype'), element.get('recipientid')
+            except ParseError:
+                return contact_link, _("Unknown"), ''
+
+        result = super(BaseCommConnectLogReport, self).export_table
+        table = result[0][1]
+        table[0].append(_("Contact Type"))
+        table[0].append(_("Contact ID"))
+        for row in table[1:]:
+            username, contact_type, recipient_id = get_contact_info(row[1])
+            row[1] = username
+            row.append(contact_type)
+            row.append(recipient_id)
+        return result
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
