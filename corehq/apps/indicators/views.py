@@ -20,6 +20,7 @@ from corehq.apps.indicators.models import (
     DynamicIndicatorDefinition,
 )
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
+from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
@@ -120,7 +121,7 @@ class BulkExportIndicatorsView(View):
                 ).all()
                 data[view_type].extend([_clean_indicator(d['doc']) for d in result])
 
-        response = HttpResponse(json.dumps(data), mimetype='application/json')
+        response = HttpResponse(json.dumps(data), content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename=%(domain)s-indicators.json' % {
             'domain': domain,
         }
@@ -135,8 +136,8 @@ class BulkImportIndicatorsView(BaseSectionPageView, DomainViewMixin):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_edit_indicators)
+    @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
-        request.preview_bootstrap3 = True
         return super(BulkImportIndicatorsView, self).dispatch(request, *args, **kwargs)
 
     @property

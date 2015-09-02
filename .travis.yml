@@ -1,4 +1,6 @@
 language: python
+sudo: false
+cache: pip
 python:
   - "2.7"
 env:
@@ -17,17 +19,22 @@ before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
   - "lsb_release -a"
+addons:
+  apt:
+    packages:
+    - moreutils
+    - libblas-dev
+    - liblapack-dev
 install:
-  - "sudo apt-get install moreutils libblas-dev liblapack-dev"
   - "git clone https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
-  - "time (bash -e scripts/uninstall-requirements.sh | ts)"
+  - "bash -e scripts/uninstall-requirements.sh"
   # set env variables for couch username/password, used by install.sh, to blank
-  - "time (bash -e .travis/quietly-run-install.sh | ts)"
+  - "bash -e .travis/quietly-run-install.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors --timeout 60)"
-  - "time (bash -e .travis/misc-setup.sh | ts)"
+  - "bash -e .travis/misc-setup.sh"
   - "cp .travis/localsettings.py localsettings.py"
   - "pip install coverage unittest2 mock --use-mirrors"
 script: "coverage run manage.py test --noinput --failfast --traceback --testrunner=$TEST_RUNNER"

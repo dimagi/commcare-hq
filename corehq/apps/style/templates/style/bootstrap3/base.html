@@ -1,0 +1,314 @@
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+    <head>
+        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+        <title>
+            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+        </title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+
+        {# link tags #}
+        <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
+        <link type="application/opensearchdescription+xml"
+              rel="search"
+              href="{% url 'osdd' %}"
+              title="CommCare HQ" />
+
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/bootstrap.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/style.less' %}" />
+        {% endcompress %}
+
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/b3-migration.less' %}" />
+        {% endcompress %}
+
+        {% block stylesheets %}{% endblock stylesheets %}
+
+        {% if request.use_select2 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/lib/select2-4.0/dist/css/select2.min.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
+        {# Core Libraries #}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/underscore/underscore-1.6.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
+        {% endcompress %}
+
+        {% if formdesigner %}
+        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% endif %}
+
+        {% block head %}
+        {% endblock %}
+
+        {% include 'style/includes/analytics_all.html' %}
+
+        {% if less_debug %}
+            <script>
+                less = {
+                    env: "development",
+                    useFileCache: true,
+                    logLevel: 2,
+                    errorReporting: 'console',
+                    async: false,
+                    fileAsync: false,
+                    poll: 1000,
+                    functions: {},
+                    dumpLineNumbers: "comments",
+                    relativeUrls: false
+                };
+            </script>
+            <script src="{% new_static 'style/lib/lessjs/less-1.7.3.min.js' cache=True %}"></script>
+            {% if less_watch %}<script>less.watch();</script>{% endif %}
+        {% endif %}
+    </head>
+    <body>
+        {% maintenance_alert %}
+        <div id="hq-navigation"
+             class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a href="{% url "homepage" %}" class="navbar-brand">
+                        <img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
+                    </a>
+                </div>
+                <nav class="collapse navbar-collapse" role="navigation">
+                    {% block tabs %}
+                        {% format_main_menu %}
+                    {% endblock %}
+                    {% if request.user.is_authenticated %}
+                        {% include 'style/includes/global_navigation_bar.html' %}
+                    {% else %}
+                        <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                    {% endif %}
+                </nav>
+                {% format_subtab_menu %}
+            </div>
+        </div>
+        {% if request.project.is_snapshot %}
+            <div class="alert alert-info">
+                {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
+                {% if request.project.copied_from.organization %}
+                    by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if not no_header %}
+            <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none;">
+                <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                <p>
+                    {% blocktrans %}
+                    We recommend
+                    <a href="https://www.google.com/chrome">Chrome</a>
+                    or <a href="http://www.mozilla.org/">Firefox</a>.
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="container-fluid">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                            <a class="close" data-dismiss="alert" href="#">&times;</a>
+                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {# todo: handle with angular #}
+{#            <div id="message-alerts" data-bind="foreach: alerts">#}
+{#                <div data-bind="attr: {'class': alert_class}">#}
+{#                    <a class="close" data-dismiss="alert" href="#">&times;</a>#}
+{#                    <span data-bind="text: message"></span>#}
+{#                </div>#}
+{#            </div>#}
+        {% endif %}
+        {% block content %}{% endblock content %}
+        <footer>
+            <nav id="hq-footer"
+                 role="navigation"
+                 class="navbar navbar-inverse navbar-fixed-bottom navbar-hq-footer">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a href="http://www.commcarehq.org/">
+                            <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}" alt="CommCare" />
+                        </a>
+                        <a href="http://www.dimagi.com/">
+                            <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
+                                 alt="Powered by Dimagi, Inc." />
+                        </a>
+                    </div>
+                    <p class="text-align-center pull-left text-hq-copyright">
+                        {% blocktrans %}
+                            <a href="http://www.commcarehq.org/">CommCare HQ</a>
+                            is copyright &copy;
+                        {% endblocktrans %}{% now "Y" %}
+                        <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                        {% if user.is_authenticated %}
+                            &nbsp;|&nbsp;
+                            <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                        {% endif %}
+                        <br />
+                        <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                        &nbsp;|&nbsp;
+                        <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                        &nbsp;|&nbsp;
+                        <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                    </p>
+                    <div class="btn-toolbar pull-right">
+                        <button type="button"
+                                id="uvSubmitIdea"
+                                data-user-email="{{ user.email }}"
+                                data-user-name="{{ user.name }}"
+                                data-domain="{{ domain }}"
+                                data-uv-locale="{{ LANGUAGE_CODE }}"
+                                class="btn btn-footer-highlight">
+                            <i class="fa fa-lightbulb-o"></i>&nbsp;
+                            {% trans 'Submit an Idea' %}
+                        </button>
+                        <button type="button"
+                                class="btn btn-footer-highlight"
+                                data-toggle="modal"
+                                data-target="#modalReportIssue">
+                            <i class="fa fa-comment"></i>&nbsp;
+                            {% trans 'Report an Issue' %}
+                        </button>
+                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
+                           target="_blank"
+                           class="btn btn-footer">
+                            <i class="fa fa-info-circle"></i>&nbsp;
+                            {% trans 'CommCare Help Site' %}
+                        </a>
+                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}"
+                           target="_blank"
+                           class="btn btn-footer">
+                            <i class="fa fa-envelope"></i>&nbsp;
+                            {% trans 'Mailing List' %}
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </footer>
+
+        {# modals #}
+        {% block modals %}{% endblock modals %}
+
+        {# javascript below this line #}
+
+        <script style="text/javascript">
+            var USE_BOOTSTRAP_3 = true;
+        </script>
+
+        {# HQ Specific Libraries #}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/uv.widget.js' %}"></script>
+        {% endcompress %}
+
+        <script type="text/javascript">
+            COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Save" %}',
+                SAVING: '{% trans "Saving..." %}',
+                SAVED: '{% trans "Saved" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error saving" %}'
+            }, 'btn btn-success');
+            COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Delete" %}',
+                SAVING: '{% trans "Deleting..." %}',
+                SAVED: '{% trans "Deleted" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error deleting" %}'
+            }, 'btn btn-danger');
+        </script>
+
+        {# JavaScript Display Logic Libaries #}
+
+        {# Use knockout explicitly, opt to move to angular js when possible. #}
+        {% if use_knockout_js %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/knockout/knockout-3.1.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {# always use angular js by default, as this will be our core library #}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-route.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-resource.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-messages.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-cookies.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
+        {% endcompress %}
+
+        {% if request.use_select2 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% compress js %}
+        {% block js %}{% endblock js %}
+        {% endcompress %}
+
+        {# Report Issue #}
+        {% include 'style/includes/modal_report_issue.html' %}
+
+        {# EULA #}
+        {% include 'style/includes/modal_eula.html' %}
+
+        {# 30 Day Trial #}
+        {% include 'style/includes/modal_30_day_trial.html' %}
+
+        <!--[if IE]>
+        <script>
+            $(function () {
+                $('#unsupported-browser').show();
+            });
+        </script>
+        <![endif]-->
+        
+        {# todo keyboard shortcuts #}
+
+        {% block js-inline %}{% endblock js-inline %}
+
+    </body>
+</html>

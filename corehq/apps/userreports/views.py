@@ -11,22 +11,23 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from corehq.apps.app_manager.models import(
-    Application,
-    Form,
-    get_apps_in_domain
-)
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 
-from sqlalchemy import types, exc
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, Form
 
+from sqlalchemy import types, exc
+from sqlalchemy.exc import ProgrammingError
+
+from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadSpecError, UserQueryError
+from corehq.apps.userreports.exceptions import BadBuilderConfigError, BadSpecError, UserQueryError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -40,7 +41,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     CustomDataSourceConfiguration,
 )
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
+from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -94,7 +95,7 @@ def create_report(request, domain):
 class ReportBuilderView(TemplateView):
 
     @cls_to_view_login_and_domain
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    @method_decorator(toggles.REPORT_BUILDER.required_decorator())
     @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
@@ -110,8 +111,50 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             "domain": self.domain,
             "report": {
                 "title": _("Create New Report")
-            }
+            },
+            "tiles": self.tiles,
         }
+
+    @property
+    def tiles(self):
+        return [
+            TileConfiguration(
+                title=_('Chart'),
+                slug='chart',
+                icon='fcc fcc-piegraph-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
+                help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
+                            ' You choose the property to graph.'),
+            ),
+            TileConfiguration(
+                title=_('Form or Case List'),
+                slug='form-or-case-list',
+                icon='fcc fcc-form-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'list']),
+                help_text=_('A list of cases or form submissions.'
+                            ' You choose which properties will be columns.'),
+            ),
+            TileConfiguration(
+                title=_('Worker Report'),
+                slug='worker-report',
+                icon='fcc fcc-user-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
+                help_text=_('A table of your mobile workers.'
+                            ' You choose which properties will be the columns.'),
+            ),
+            TileConfiguration(
+                title=_('Data Table'),
+                slug='data-table',
+                icon='fcc fcc-datatable-report',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'table']),
+                help_text=_('A table of aggregated data from form submissions or case properties.'
+                            ' You choose the columns and rows.'),
+            ),
+        ]
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
@@ -167,7 +210,7 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = ReportConfiguration.get(report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             view_class = {
                 'chart': ConfigureChartReport,
@@ -175,7 +218,11 @@ class EditReportInBuilder(View):
                 'worker': ConfigureWorkerReport,
                 'table': ConfigureTableReport
             }[report.report_meta.builder_report_type]
-            return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            try:
+                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+            except BadBuilderConfigError as e:
+                messages.error(request, e.message)
+                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
@@ -199,6 +246,9 @@ class ConfigureChartReport(ReportBuilderView):
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
             ],
+            'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
+            'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
         return context
 
@@ -283,7 +333,7 @@ def _edit_report_shared(request, domain, config):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER)
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
@@ -334,7 +384,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -408,7 +458,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(get_engine(), config)
+    adapter = IndicatorSqlAdapter(config)
     adapter.drop_table()
     config.delete()
     if request:
@@ -437,7 +487,7 @@ def rebuild_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -445,9 +495,8 @@ def data_source_json(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    table = get_indicator_table(config)
-
-    q = Session.query(table)
+    adapter = IndicatorSqlAdapter(config)
+    q = adapter.get_query_object()
     context = _shared_context(domain)
     context.update({
         'data_source': config,
@@ -522,8 +571,9 @@ def process_url_params(params, columns):
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    table = get_indicator_table(config)
-    q = Session.query(table)
+    adapter = IndicatorSqlAdapter(config)
+    q = adapter.get_query_object()
+    table = adapter.get_table()
 
     try:
         params = process_url_params(request.GET, table.columns)
@@ -562,8 +612,15 @@ def data_source_status(request, domain, config_id):
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
+    if filter is None:
+        raise Http404(_(u'Filter {} not found!').format(filter_id))
 
     def get_choices(data_source, filter, search_term=None, limit=20, page=0):
+        # todo: we may want to log this as soon as mobile UCR stops hitting this
+        # for misconfigured filters
+        if not isinstance(filter, DynamicChoiceListFilter):
+            return []
+
         table = get_indicator_table(data_source)
         sql_column = table.c[filter.field]
         query = Session.query(sql_column)
@@ -571,7 +628,10 @@ def choice_list_api(request, domain, report_id, filter_id):
             query = query.filter(sql_column.contains(search_term))
 
         offset = page * limit
-        return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
+        try:
+            return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
+        except ProgrammingError:
+            return []
 
     return json_response(get_choices(
         report.config,

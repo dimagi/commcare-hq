@@ -15,9 +15,9 @@
         <script>
             setTimeout(function() {
                 $('#tabular_filter').remove();
-                $(".dataTables_control").remove()
+                $(".dataTables_control").remove();
                 window.print();
-           }, 1000);
+           }, 3000);
 
         </script>
 
@@ -25,7 +25,6 @@
             table {
                 border-collapse: collapse;
             }
-
             td {
                 border: 1px solid #000000;
             }
@@ -36,10 +35,6 @@
 
             body {
                 width: 297mm;
-            }
-            #map {
-                height: 15cm !important;
-                page-break-after: always;
             }
             tr {
                 border: 1px solid #000000;
@@ -62,9 +57,51 @@
             }
         </style>
     {% endif %}
-
+    <style>
+        #legend, #extra-legend {
+            max-height: 17em !important;
+            overflow-y: auto;
+        }
+        #legend > div {
+            font: 10px/0.9 "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        #map {
+            height: 15cm !important;
+            page-break-after: always;
+        }
+    </style>
     {{ block.super }}
 {% endblock js-libs %}
+
+{% block js-script %}
+<script>
+
+CONTEXT = {{ context|JSON }};
+ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+MIN_HEIGHT = 300; //px
+
+$(document).ready(function() {
+    if (CONTEXT !== '') {
+        load(CONTEXT, ICON_PATH);
+        var div = '<div id="extra-legend" class="control-pane leaflet-control"><h4>AWC Name</h4><div>' +
+                '<table class="enumlegend"><tbody>';
+        for(var awc_name in CONTEXT.config.metrics[0].children[3].color.categories) {
+            div += "<tr><td>" + awc_name + "</td></tr>"
+        }
+        div += '</tbody></table></div></div>';
+        $('#info').after(div);
+
+        $('.ticklabel').first().css('top', '143px');
+        $('.ticklabel').last().css('top', '7px');
+        $('#metrics').on('click', '.choice', function() {
+            $('.ticklabel').first().css('top', '143px');
+            $('.ticklabel').last().css('top', '7px');
+        })
+    }
+});
+
+</script>
+{% endblock js-script %}
 
 {% block content %}
     <h2 class="media-heading">{{ report.report_title }}</h2>

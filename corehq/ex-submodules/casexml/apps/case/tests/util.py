@@ -202,7 +202,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
 
 def post_util(create=False, case_id=None, user_id=None, owner_id=None,
-              case_type=None, version=V2, form_extras=None, close=False,
+              case_type=None, version=V2, form_extras=None, close=False, date_modified=None,
               **kwargs):
 
     uid = lambda: uuid.uuid4().hex
@@ -213,6 +213,7 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       owner_id=owner_id or uid(),
                       case_type=case_type or 'test',
                       version=version,
+                      date_modified=date_modified,
                       update=kwargs,
                       close=close).as_xml()
     form_extras = form_extras or {}

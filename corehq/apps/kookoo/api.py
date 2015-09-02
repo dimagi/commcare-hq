@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime
+from dimagi.utils.logging import notify_exception
 from django.http import HttpResponse
 from django.conf import settings
 from urllib import urlencode
@@ -8,16 +9,18 @@ from xml.etree.ElementTree import XML
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from xml.sax.saxutils import escape
+from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
 from corehq.apps.smsforms.util import form_requires_input
-from corehq.apps.ivr.api import format_ivr_response, get_input_length
+from corehq.apps.ivr.api import (log_error, GatewayConnectionError,
+    set_first_ivr_response)
 from corehq.apps.app_manager.models import Form
 
-class InvalidPhoneNumberException(Exception):
-    pass
 
 API_ID = "KOOKOO"
+
 
 def get_http_response_string(gateway_session_id, ivr_responses, collect_input=False, hang_up=True, input_length=None):
     xml_string = ""
@@ -47,100 +50,87 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
     
     return '<response sid="%s">%s</response>' % (gateway_session_id[7:], xml_string)
 
-"""
-Expected kwargs:
-    api_key
 
-Returns True if the call was queued successfully, or False if an error occurred.
-"""
-def initiate_outbound_call(call_log_entry, *args, **kwargs):
-    phone_number = call_log_entry.phone_number
-    if phone_number.startswith("+"):
-        phone_number = phone_number[1:]
-
-    if phone_number.startswith("91"):
-        phone_number = "0" + phone_number[2:]
-    else:
-        call_log_entry.error = True
-        call_log_entry.error_message = "Kookoo can only send to Indian phone numbers."
-        call_log_entry.save()
-        return False
-
-    form = Form.get_form(call_log_entry.form_unique_id)
-    app = form.get_app()
-    module = form.get_module()
-
-    # Only precache the first response if it's not an only-label form, otherwise we could end up
-    # submitting the form regardless of whether the person actually answers the call.
-    if form_requires_input(form):
-        recipient = call_log_entry.recipient
-        case_id = call_log_entry.case_id
-        case_for_case_submission = call_log_entry.case_for_case_submission
-        session, responses = start_session(recipient.domain, recipient, app,
-            module, form, case_id, yield_responses=True,
-            session_type=XFORMS_SESSION_IVR,
-            case_for_case_submission=case_for_case_submission)
-
-        ivr_responses = []
-        if len(responses) == 0:
-            call_log_entry.error = True
-            call_log_entry.error_message = "No prompts seen in form. Please check that the form does not have errors."
-            call_log_entry.save()
-            return False
-
-        for response in responses:
-            ivr_responses.append(format_ivr_response(response.event.caption, app))
-
-        input_length = get_input_length(responses[-1])
-
-        call_log_entry.use_precached_first_response = True
-        call_log_entry.xforms_session_id = session.session_id
-
-    url_base = get_url_base()
-
-    params = urlencode({
-        "phone_no" : phone_number,
-        "api_key" : kwargs["api_key"],
-        "outbound_version" : "2",
-        "url" : url_base + reverse("corehq.apps.kookoo.views.ivr"),
-        "callback_url" : url_base + reverse("corehq.apps.kookoo.views.ivr_finished"),
-    })
-    url = "http://www.kookoo.in/outbound/outbound.php?%s" % params
-    if kwargs.get("is_test", False):
-        session_id = hashlib.sha224(datetime.utcnow().isoformat()).hexdigest()
-        response = "<request><status>queued</status><message>%s</message></request>" % session_id
-    else:
-        response = urlopen(url, timeout=settings.IVR_GATEWAY_TIMEOUT).read()
-
-    root = XML(response)
+def get_status_and_message(xml_response):
+    """
+    Gets the status and message from a KooKoo initiate
+    outbound call XML response.
+    """
+    status = ''
+    message = ''
+    root = XML(xml_response)
     for child in root:
         if child.tag.endswith("status"):
             status = child.text
         elif child.tag.endswith("message"):
             message = child.text
+    return (status, message)
+
+
+def invoke_kookoo_outbound_api(phone_number, api_key, is_test=False):
+    if is_test:
+        session_id = hashlib.sha224(datetime.utcnow().isoformat()).hexdigest()
+        return "<request><status>queued</status><message>%s</message></request>" % session_id
+
+    url_base = get_url_base()
+    params = urlencode({
+        'phone_no': phone_number,
+        'api_key': api_key,
+        'outbound_version': '2',
+        'url': url_base + reverse('corehq.apps.kookoo.views.ivr'),
+        'callback_url': url_base + reverse('corehq.apps.kookoo.views.ivr_finished'),
+    })
+    url = 'http://www.kookoo.in/outbound/outbound.php?%s' % params
+
+    try:
+        return urlopen(url, timeout=settings.IVR_GATEWAY_TIMEOUT).read()
+    except Exception:
+        notify_exception(None, message='[IVR] Error connecting to KooKoo')
+        raise GatewayConnectionError('Error connecting to KooKoo')
+
+
+def initiate_outbound_call(call_log_entry, logged_subevent, ivr_data=None, *args, **kwargs):
+    """
+    Expected kwargs:
+        api_key
+
+    Same expected return value as corehq.apps.ivr.api.initiate_outbound_call
+    """
+    phone_number = strip_plus(call_log_entry.phone_number)
+
+    if phone_number.startswith('91'):
+        phone_number = '0%s' % phone_number[2:]
+    else:
+        log_error(MessagingEvent.ERROR_UNSUPPORTED_COUNTRY,
+            call_log_entry, logged_subevent)
+        return True
+
+    response = invoke_kookoo_outbound_api(phone_number, kwargs['api_key'], kwargs.get('is_test', False))
+    status, message = get_status_and_message(response)
 
     do_not_retry = False
-    if status == "queued":
+    if status == 'queued':
         call_log_entry.error = False
-        call_log_entry.gateway_session_id = "KOOKOO-" + message
-    elif status == "error":
+        call_log_entry.gateway_session_id = 'KOOKOO-%s' % message
+
+        if ivr_data:
+            set_first_ivr_response(call_log_entry, call_log_entry.gateway_session_id,
+                ivr_data, get_http_response_string)
+    elif status == 'error':
         call_log_entry.error = True
         call_log_entry.error_message = message
         if (message.strip().upper() in [
             'CALLS WILL NOT BE MADE BETWEEN 9PM TO 9AM.',
             'PHONE NUMBER IN DND LIST',
         ]):
+            # These are error messages that come from KooKoo and
+            # are indicative of non-recoverable errors, so we
+            # wouldn't benefit from retrying the call.
             do_not_retry = True
+        logged_subevent.error(MessagingEvent.ERROR_GATEWAY_ERROR)
     else:
-        call_log_entry.error = True
-        call_log_entry.error_message = "Unknown status received from Kookoo."
-
-    if call_log_entry.error:
-        call_log_entry.use_precached_first_response = False
-
-    if call_log_entry.use_precached_first_response:
-        call_log_entry.first_response = get_http_response_string(call_log_entry.gateway_session_id, ivr_responses, collect_input=True, hang_up=False, input_length=input_length)
+        log_error(MessagingEvent.ERROR_GATEWAY_ERROR,
+            call_log_entry, logged_subevent)
 
     call_log_entry.save()
     return not call_log_entry.error or do_not_retry
-

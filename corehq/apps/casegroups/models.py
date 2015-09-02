@@ -3,9 +3,10 @@ from couchdbkit.ext.django.schema import StringProperty, ListProperty
 from casexml.apps.case.models import CommCareCase
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 
-class CommCareCaseGroup(Document):
+class CommCareCaseGroup(UndoableDocument):
     """
         This is a group of CommCareCases. Useful for managing cases in larger projects.
     """
@@ -44,3 +45,11 @@ class CommCareCaseGroup(Document):
         if len(self.cases) != len(cleaned_list):
             self.cases = cleaned_list
             self.save()
+
+    def create_delete_record(self, *args, **kwargs):
+        return DeleteCaseGroupRecord(*args, **kwargs)
+
+
+class DeleteCaseGroupRecord(DeleteDocRecord):
+    def get_doc(self):
+        return CommCareCaseGroup.get(self.doc_id)

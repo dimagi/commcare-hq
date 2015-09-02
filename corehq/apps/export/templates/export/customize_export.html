@@ -342,19 +342,20 @@
                     return tables;
                 };
 
-                self.output = function () {
+                self.output = function (preview) {
                     var output = ko.mapping.toJS({
                         custom_export: self.custom_export,
                         presave: self.presave,
-                        export_stock: self.export_stock
+                        export_stock: self.export_stock,
+                        preview: preview
                     });
                     output.custom_export.tables = self.make_tables();
                     return JSON.stringify(output);
                 };
 
-                self.save = function () {
-                    self.save.state('saving');
-                    $.post(self.urls.save(), self.output()).done(function (data) {
+                self.save = function (preview) {
+                    self.save.state('saving' + (preview ? '-preview': ''));
+                    $.post(self.urls.save(), self.output(preview)).done(function (data) {
 
                         var redirect = function(){
                             window.location.href = data.redirect;
@@ -385,6 +386,14 @@
                     });
                 };
                 self.save.state = ko.observable('save');
+
+                self.save_no_preview = function() {
+                    self.save(false);
+                };
+
+                self.save_preview = function() {
+                    self.save(true);
+                };
 
                 self.row_label_classes = function(row) {
                     return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label";
@@ -688,10 +697,10 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save,
-                disable: save.state() === 'saving'
+                click: save_no_preview,
+                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
             ">
-                <span data-bind="visible: save.state() === 'save'">
+                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>
                     <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create" %}</span>
                 </span>
@@ -702,8 +711,25 @@
                 <span data-bind="visible: save.state() === 'error'">
                     {% trans "Try Again" %}
                 </span>
-
             </button>
+            {% if request|toggle_enabled:"REVAMPED_EXPORTS" %}
+            <button type="submit" class="btn btn-large btn-primary" data-bind="
+                click: save_preview,
+                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
+            ">
+                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving')">
+                    <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save & Preview" %}</span>
+                    <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create & Preview" %}</span>
+                </span>
+                <span data-bind="visible: save.state() === 'saving-preview'">
+                    <i class="icon-refresh icon-spin"></i>
+                    {% trans "Saving" %}
+                </span>
+                <span data-bind="visible: save.state() === 'error'">
+                    {% trans "Try Again" %}
+                </span>
+            </button>
+            {% endif %}
             <a class="btn btn-large" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
             <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">

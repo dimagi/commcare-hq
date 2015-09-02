@@ -1,5 +1,6 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -14,7 +15,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     UpdateCaseAction,
     OpenSubCaseAction,
-)
+    CaseIndex)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -31,12 +32,7 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original')
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-
-    def tearDown(self):
-        self.is_usercase_in_use_patch.stop()
+        self.form.source = self.get_xml('original_form', override_path=('data',))
 
     def test_no_actions(self):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
@@ -101,11 +97,10 @@ class FormPreparationV2Test(SimpleTestCase, TestFileMixin):
         xform.strip_vellum_ns_attributes()
         self.assertXmlEqual(xform.render(), after)
 
-    def test_case_list_form(self):
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        self.form.actions.open_case.condition.type = 'always'
-        self.module.case_list_form.form_id = self.form.get_unique_id()
-        self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
+    def test_empty_itext(self):
+        self.app.build_langs = ['fra']  # lang that's not in the form
+        with self.assertRaises(XFormException):
+            self.form.render_xform()
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestFileMixin):
@@ -223,7 +218,7 @@ class FormPreparationCareplanTest(SimpleTestCase, TestFileMixin):
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original')
+        self.form.source = self.get_xml('original_form', override_path=('data',))
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
 
@@ -253,11 +248,9 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
-        form = AdvancedForm(name={"en": "Untitled Form"})
-        self.module.forms.append(form)
-        self.form = self.module.get_form(-1)
         self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original')
+        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
@@ -353,72 +346,74 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestFileMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
-    def test_schedule(self):
-        self.form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        self.module.has_schedule = True
-        self.form.schedule = FormSchedule(anchor='edd')
-        xml = self.get_xml('schedule').format(
-            form_id=self.form.schedule_form_id,
-            form_index=1
-        )
-        self.assertXmlEqual(xml, self.form.render_xform())
 
-    def test_schedule_index(self):
-        self.module.has_schedule = True
-        form = self.app.new_form(0, 'New Form', lang='en')
-        form.source = self.get_xml('original')
-        form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
-            case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
-        ))
-        form.schedule = FormSchedule(anchor='edd')
+class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
+    file_path = 'data', 'form_preparation_v2_advanced'
 
-        xml = self.get_xml('schedule').format(
-            form_id=form.schedule_form_id,
-            form_index=2
-        )
-        self.assertXmlEqual(xml, form.render_xform())
+    def setUp(self):
+        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app.version = 3
 
-    def test_case_list_form(self):
-        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
-            case_type=self.module.case_type,
-            case_tag='open_1',
-            name_path="/data/question1"
-        ))
-        self.form.actions.open_cases[0].open_condition.type = 'always'
-        self.module.case_list_form.form_id = self.form.get_unique_id()
-        self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
-
-    def test_child_module_adjusted_datums(self):
+    def test_child_module_adjusted_datums_advanced_module(self):
         """
         Testing that the session variable name for the case_id is correct since
         it will have been adjusted in the suite.xml to match the variable name
         in the root module.
         """
-        self.form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type=self.module.case_type,
+        module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
+        module.case_type = 'test_case_type'
+        form = module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+
+        form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=module.case_type,
             case_tag='load_1',
             case_properties={'question1': '/data/question1'}
         ))
 
         root_module = self.app.add_module(Module.new_module('root module', None))
         root_module.unique_id = 'm_root'
-        root_module.case_type = self.module.case_type
+        root_module.case_type = module.case_type
 
-        root_module_form = self.app.new_form(1, 'root module form', None)
+        root_module_form = root_module.new_form('root module form', None)
         root_module_form.requires = 'case'
         root_module_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
         root_module_form.actions.update_case.condition.type = 'always'
 
         # make module a child module of root_module
-        self.module.root_module_id = root_module.unique_id
+        module.root_module_id = root_module.unique_id
 
-        self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id'), self.form.render_xform())
+        self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id_advanced'), form.render_xform())
+
+    def test_child_module_adjusted_datums_basic_module(self):
+        """
+        Testing that the session variable name for the case_id is correct since
+        it will have been adjusted in the suite.xml to match the variable name
+        in the root module.
+        """
+        module = self.app.add_module(Module.new_module('New Module', lang='en'))
+        module.case_type = 'guppy'
+        form = module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+
+        form.requires = 'case'
+        form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        form.actions.update_case.condition.type = 'always'
+
+        root_module = self.app.add_module(Module.new_module('root module', None))
+        root_module.unique_id = 'm_root'
+        root_module.case_type = 'test_case_type'
+
+        root_module_form = root_module.new_form('root module form', None)
+        root_module_form.requires = 'case'
+        root_module_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        root_module_form.actions.update_case.condition.type = 'always'
+
+        # make module a child module of root_module
+        module.root_module_id = root_module.unique_id
+
+        module.parent_select.active = True
+        module.parent_select.module_id = root_module.unique_id
+
+        self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id_basic'), form.render_xform())
 
 
 class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
@@ -430,7 +425,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
         self.parent_module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.parent_form = self.app.new_form(0, 'New Form', lang='en')
         self.parent_module.case_type = 'parent_test_case_type'
-        self.parent_form.source = self.get_xml('original')
+        self.parent_form.source = self.get_xml('original_form', override_path=('data',))
         self.parent_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.parent_form.actions.open_case.condition.type = 'always'
 
@@ -451,8 +446,6 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
 
-
-
     def test_subcase(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.parent_module.case_type,
@@ -462,7 +455,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1'
+            case_indices=[CaseIndex(tag='load_1')]
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('subcase'), self.form.render_xform())
@@ -476,7 +469,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -493,7 +486,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='open_1',
+            case_indices=[CaseIndex(tag='open_1')],
             repeat_context="/data/child"
         ))
         for action in self.form.actions.open_cases:
@@ -509,7 +502,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -525,7 +518,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child1',
             case_tag='open_1',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[0].open_condition.type = 'if'
@@ -536,7 +529,7 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
             case_type='child2',
             case_tag='open_2',
             name_path='/data/mother_name',
-            parent_tag='load_1',
+            case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
         self.form.actions.open_cases[1].open_condition.type = 'if'

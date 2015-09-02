@@ -17,24 +17,6 @@
     Confirm Account {% if alert_message %}<small>{{ alert_message }}</small>{% endif %}
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ul class="breadcrumb breadcrumb-steps">
-        <li class="past">
-            {% blocktrans with request.couch_user.first_name as first_name %}
-                Account Created for <strong>{{ first_name }}</strong>
-            {% endblocktrans %}
-            <span class="divider">></span>
-        </li>
-        <li class="past">
-            Project Requested{% if requested_domain %} for <strong>{{ requested_domain }}</strong>{% endif %}
-            <span class="divider">></span>
-        </li>
-        <li class="active">
-            {% trans "Confirm Account (Email Sent)" %}
-        </li>
-    </ul>
-{% endblock %}
-
 {% block registration-content %}
     <div class="alert alert-info">
         <strong>{% blocktrans with request.user.username as username %}

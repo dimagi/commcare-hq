@@ -4,13 +4,15 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
+from custom.up_nrhm.reports import LangMixin
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
+from django.utils.translation import ugettext as _, ugettext_noop
 
 
-class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = "District Functionality Report"
+class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport, LangMixin):
+    name = ugettext_noop("Format-5 Functionality of ASHAs in blocks")
     slug = "district_functionality_report"
     no_value = '--'
 
@@ -26,12 +28,13 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
         blocks = self.get_blocks_for_district()
         headers = [DataTablesColumnGroup('')]
         headers.extend([DataTablesColumnGroup(block) for block in self.get_blocks_for_district()])
-        columns = [DatabaseColumn("Percentage of ASHAs functional on "
-                                  "(Number of functional ASHAs/total number of ASHAs) x 100", SimpleColumn(''),
+        columns = [DatabaseColumn(_("Percentage of ASHAs functional on "
+                                  "(Number of functional ASHAs/total number of ASHAs) x 100"), SimpleColumn(''),
                                   header_group=headers[0])]
         for i, block in enumerate(blocks):
-            columns.append(DatabaseColumn('% of ASHAs', SimpleColumn(block), header_group=headers[i + 1]))
-            columns.append(DatabaseColumn('Grade of Block', SimpleColumn(block), header_group=headers[i + 1]))
+            columns.append(DatabaseColumn(_('%s of ASHAs') % '%',
+                                          SimpleColumn(block), header_group=headers[i + 1]))
+            columns.append(DatabaseColumn(_('Grade of Block'), SimpleColumn(block), header_group=headers[i + 1]))
         return DataTablesHeader(*headers)
 
     @property
@@ -50,7 +53,10 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
     @property
     def rows(self):
         def percent(v1, v2):
-            return float(v1) * 100.0 / float(v2)
+            try:
+                return float(v1) * 100.0 / float(v2)
+            except ZeroDivisionError:
+                return 0
 
         def get_grade(v):
             return 'D' if v < 25 else 'C' if v < 50 else 'B' if v < 75 else 'A'
@@ -71,6 +77,8 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
                     rows[index].append(format_datatables_data(grade, grade))
                 else:
                     rows[index].append(row[-1])
-                    rows[index].append(format_datatables_data('', ''))
+                    val = row[-1]['sort_key']
+                    grade = get_grade(val)
+                    rows[index].append(format_datatables_data(grade, grade))
 
         return rows, 0

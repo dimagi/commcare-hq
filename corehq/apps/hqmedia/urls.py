@@ -10,6 +10,7 @@ from corehq.apps.hqmedia.views import (
     ProcessAudioFileUploadView,
     ProcessVideoFileUploadView,
     ProcessLogoFileUploadView,
+    ProcessTextFileUploadView,
     RemoveLogoView,
 )
 
@@ -27,6 +28,8 @@ application_urls = patterns('corehq.apps.hqmedia.views',
         name=ProcessLogoFileUploadView.name),
     url(r'^uploaded/audio/$', ProcessAudioFileUploadView.as_view(), name=ProcessAudioFileUploadView.name),
     url(r'^uploaded/video/$', ProcessVideoFileUploadView.as_view(), name=ProcessVideoFileUploadView.name),
+    url(r'^uploaded/text/$', ProcessTextFileUploadView.as_view(),
+        name=ProcessTextFileUploadView.name),
     url(r'^remove_logo/$', RemoveLogoView.as_view(), name=RemoveLogoView.name),
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
     url(r'^search/$', 'search_for_media', name='hqmedia_search'),

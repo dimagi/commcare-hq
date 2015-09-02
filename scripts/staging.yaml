@@ -45,26 +45,43 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-unused-views  # Danny 6/25
   - vellum-staging # J$ 11/13
   - fixtures-spike  # cz 1/29
   - update-submodules # TS 5/6
-  - reverseLanguageMedia # Sravan 6/10
-  - autoload-supplypoint  # Ethan 6/15
-  - track-plan-editions # Nick P 6/25
-  - remove-billing-admin-forwards+wire-prepay # Farid June 26
-  - remove-billing-admin-forwards # Farid 25/6
-  - wire-prepay # Farid June 26
-  - new-account-domain # Jenny July 1
-  - locations-for-robber-barons  # Ethan 5/7
-  - index-phonelog-reportentry # Ben 6/8
+  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
+#  - reverseLanguageMedia # Sravan 6/10
+  - web-user-requests # Jenny, July 16
+  - FormArchive # Sravan 7/22
+  - ckeditor # J$ 7/24
+  - quickcache-user-roles  # Ethan 8/13
+  - optmize-deploy+knockout-js2 # Ben 8/24
+  - knockout-js # Ben 8/17
+  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
+  - new-mobile-workers # Biyeun 8/25
+  - upgrade-openpyxl # Nick P 8/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 221-jars # wsp 5/20
+      - knockout-js # Ben 8/17
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+  submodules/couchexport-src:
+    branches:
+      - upgrade-openpyxl # Nick P 8/31
+  submodules/ctable-src:
+    branches: []
+  submodules/django-digest-src:
+    branches: []
+  submodules/pillowtop-src:
+    branches: []
+  submodules/dimagi-utils-src:
+    branches: []
+  submodules/django-soil-src:
+    branches: []
+  submodules/django-prbac-src:
+    branches: []
+

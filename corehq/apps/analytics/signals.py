@@ -1,9 +1,11 @@
+from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
+from corehq.apps.analytics.tasks import track_user_sign_in_on_hubspot, HUBSPOT_COOKIE
 from .tasks import identify
 
 from django.dispatch import receiver
 
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
@@ -17,7 +19,7 @@ from corehq.apps.users.signals import couch_user_post_save
 @receiver(couch_user_post_save)
 def user_save_callback(sender, **kwargs):
     couch_user = kwargs.get("couch_user", None)
-    if couch_user and couch_user.is_web_user:
+    if couch_user and couch_user.is_web_user():
         update_subscription_properties_by_user(couch_user)
 
 
@@ -62,3 +64,18 @@ def update_subscription_properties_by_domain(domain):
 
     for web_user in affected_users:
         update_subscription_properties_by_user(web_user)
+
+
+@receiver(user_logged_in)
+def track_user_login(sender, request, user, **kwargs):
+    couch_user = CouchUser.from_django_user(user)
+    if couch_user and couch_user.is_web_user():
+        if not request or HUBSPOT_COOKIE not in request.COOKIES:
+            # API calls, form submissions etc.
+            return
+
+        meta = {
+            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+        }
+        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta)

@@ -1,7 +1,7 @@
 from collections import namedtuple, defaultdict
 import copy
 from functools import total_ordering
-from itertools import izip_longest
+from itertools import izip_longest, chain
 import os
 from os.path import commonprefix
 import re
@@ -11,6 +11,7 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from lxml import etree
 from xml.sax.saxutils import escape, unescape
 
+from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
 
 from .exceptions import (
@@ -21,16 +22,19 @@ from .exceptions import (
 )
 from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO, USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import (
+    CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE,
+)
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    actions_use_usercase
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
+    actions_use_usercase, is_usercase_in_use
+from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
+    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    ScheduleFormXPath, QualifiedScheduleFormXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -226,9 +230,70 @@ class DisplayNode(XmlObject):
             self.text = text
 
 
-class Command(DisplayNode, IdNode):
+class LocaleId(XmlObject):
+    ROOT_NAME = 'locale'
+    locale_id = StringField('@id')
+
+
+class MediaText(XmlObject):
+    ROOT_NAME = 'text'
+    form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
+    locale = NodeField('locale', LocaleId)
+
+
+class LocalizedMediaDisplay(XmlObject):
+    ROOT_NAME = 'display'
+
+    media_text = NodeListField('text', MediaText)
+
+
+class TextOrDisplay(XmlObject):
+    text = NodeField('text', Text)
+    display = NodeField('display', LocalizedMediaDisplay)
+
+    def __init__(self, node=None, context=None,
+                 menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
+                 media_image=None, media_audio=None, **kwargs):
+        super(TextOrDisplay, self).__init__(node, context, **kwargs)
+        text = Text(locale_id=menu_locale_id) if menu_locale_id else None
+
+        media_text = []
+        if media_image:
+            media_text.append(MediaText(
+                locale=LocaleId(locale_id=image_locale_id),
+                form_name='image',
+            ))
+        if media_audio:
+            media_text.append(MediaText(
+                locale=LocaleId(locale_id=audio_locale_id),
+                form_name='audio'
+            ))
+
+        if media_text:
+            self.display = LocalizedMediaDisplay(
+                media_text=[text] + media_text if text else media_text
+            )
+        elif text:
+            self.text = text
+
+
+class CommandMixin(XmlObject):
     ROOT_NAME = 'command'
     relevant = StringField('@relevant')
+
+
+class LocalizedCommand(CommandMixin, TextOrDisplay, IdNode):
+    """
+        For CC >= 2.21
+    """
+    pass
+
+
+class Command(CommandMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
 
 
 class Instance(IdNode, OrderedXmlObject):
@@ -359,12 +424,26 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
-class Menu(DisplayNode, IdNode):
+class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
     relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
+
+
+class Menu(MenuMixin, DisplayNode, IdNode):
+    """
+        For CC < 2.21
+    """
+    pass
+
+
+class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
+    """
+        For CC >= 2.21
+    """
+    pass
 
 
 class AbstractTemplate(XmlObject):
@@ -443,12 +522,22 @@ class Field(OrderedXmlObject):
     background = NodeField('background/text', Text)
 
 
-class Action(OrderedXmlObject):
+class ActionMixin(OrderedXmlObject):
     ROOT_NAME = 'action'
     ORDER = ('display', 'stack')
 
     stack = NodeField('stack', Stack)
+
+
+class Action(ActionMixin):
+    """ For CC < 2.21 """
+
     display = NodeField('display', Display)
+
+
+class LocalizedAction(ActionMixin, TextOrDisplay):
+    """ For CC >= 2.21 """
+    pass
 
 
 class DetailVariable(XmlObject):
@@ -528,6 +617,13 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
+
+        if self.action:
+            for frame in self.action.stack.frames:
+                result.add(frame.if_clause)
+                for datum in getattr(frame, 'datums', []):
+                    result.add(datum.value)
+
         for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)
@@ -555,19 +651,25 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
-class ScheduleVisit(IdNode):
+class ScheduleFixtureVisit(IdNode):
     ROOT_NAME = 'visit'
 
-    due = StringField('@due')
-    late_window = StringField('@late_window')
+    due = IntegerField('@due')
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+
+    repeats = StringField('@repeats')
+    increment = IntegerField('@increment')
 
 
 class Schedule(XmlObject):
     ROOT_NAME = 'schedule'
 
-    expires = StringField('@expires')
-    post_schedule_increment = StringField('@post_schedule_increment')
-    visits = NodeListField('visit', ScheduleVisit)
+    starts = IntegerField('@starts')
+    expires = IntegerField('@expires')
+    allow_unscheduled = StringField('@allow_unscheduled')
+
+    visits = NodeListField('visit', ScheduleFixtureVisit)
 
 
 class ScheduleFixture(Fixture):
@@ -592,28 +694,84 @@ class Suite(OrderedXmlObject):
     descriptor = StringField('@descriptor')
 
 
+class StackFrameMeta(object):
+    """
+    Class used in computing the form workflow.
+    """
+    def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
+        if if_prefix:
+            template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
+            if_clause = template.format(if_prefix)
+        self.if_clause = unescape(if_clause) if if_clause else None
+        self.children = []
+        self.allow_empty_frame = allow_empty_frame
+
+        if children:
+            for child in children:
+                self.add_child(child)
+
+    def add_child(self, child):
+        if isinstance(child, basestring) and not isinstance(child, XPath):
+            child = XPath.string(child)
+        if isinstance(child, DatumMeta):
+            child = child.to_stack_datum()
+        self.children.append(child)
+
+    def to_frame(self):
+        if not self.children and not self.allow_empty_frame:
+            return
+
+        frame = CreateFrame(if_clause=self.if_clause)
+
+        for child in self.children:
+            if isinstance(child, XPath):
+                frame.add_command(child)
+            elif isinstance(child, StackDatum):
+                frame.add_datum(child)
+            else:
+                raise Exception("Unexpected child type: {} ({})".format(type(child), child))
+
+        return frame
+
+
 @total_ordering
 class DatumMeta(object):
     """
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
     """
-    type_regex = re.compile("\[@case_type='([\w_]+)'\]")
+    type_regex = re.compile("\[@case_type='([\w-]+)'\]")
 
-    def __init__(self, session_datum):
-        self.id = session_datum.id
-        self.nodeset = session_datum.nodeset
-        self.function = session_datum.function
-        self.source_id = self.id
+    def __init__(self, datum_id, nodeset, function):
+        self.id = datum_id
+        self.nodeset = nodeset
+        self.function = function
+
+    @classmethod
+    def from_session_datum(cls, session_datum):
+        return cls(session_datum.id, session_datum.nodeset, session_datum.function)
+
+    @property
+    def requires_selection(self):
+        return bool(self.nodeset)
 
     @property
     @memoized
     def case_type(self):
-        if not self.nodeset:
-            return None
+        """Get the case type from the nodeset or the function if possible
+        """
+        def _extract_type(xpath):
+            match = self.type_regex.search(xpath)
+            return match.group(1) if match else None
 
-        match = self.type_regex.search(self.nodeset)
-        return match.group(1)
+        if self.nodeset:
+            return _extract_type(self.nodeset)
+        elif self.function:
+            return _extract_type(self.function)
+
+    def to_stack_datum(self, datum_id=None, source_id=None):
+        value = session_var(source_id or self.id) if self.requires_selection else self.function
+        return StackDatum(id=datum_id or self.id, value=value)
 
     def __lt__(self, other):
         return self.id < other.id
@@ -625,7 +783,7 @@ class DatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={}, case_type={}, source_id={})'.format(self.id, self.case_type, self.source_id)
+        return 'DatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
 
 
 def get_default_sort_elements(detail):
@@ -698,7 +856,6 @@ class SuiteGeneratorBase(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-        self.id_strings = id_strings
 
     def generate_suite(self):
         suite = Suite(
@@ -717,24 +874,6 @@ class SuiteGeneratorBase(object):
         pass
 
 
-GROUP_INSTANCE = Instance(id='groups', src='jr://fixture/user-groups')
-REPORT_INSTANCE = Instance(id='reports', src='jr://fixture/commcare:reports')
-LEDGER_INSTANCE = Instance(id='ledgerdb', src='jr://instance/ledgerdb')
-CASE_INSTANCE = Instance(id='casedb', src='jr://instance/casedb')
-SESSION_INSTANCE = Instance(id='commcaresession', src='jr://instance/session')
-
-INSTANCE_BY_ID = {
-    instance.id: instance
-    for instance in (
-        GROUP_INSTANCE,
-        REPORT_INSTANCE,
-        LEDGER_INSTANCE,
-        CASE_INSTANCE,
-        SESSION_INSTANCE,
-    )
-}
-
-
 def get_instance_factory(scheme):
     return get_instance_factory._factory_map.get(scheme, preset_instances)
 get_instance_factory._factory_map = {}
@@ -750,6 +889,14 @@ class register_factory(object):
         return fn
 
 
+INSTANCE_BY_ID = {
+    'groups': Instance(id='groups', src='jr://fixture/user-groups'),
+    'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
+    'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
+    'casedb': Instance(id='casedb', src='jr://instance/casedb'),
+    'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
+}
+
 @register_factory(*INSTANCE_BY_ID.keys())
 def preset_instances(instance_name):
     return INSTANCE_BY_ID.get(instance_name, None)
@@ -761,31 +908,17 @@ def generic_fixture_instances(instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-class SuiteGenerator(SuiteGeneratorBase):
-    descriptor = u"Suite File"
-    sections = (
-        'xform_resources',
-        'locale_resources',
-        'details',
-        'entries',
-        'menus',
-        'fixtures',
-    )
+class WorkflowHelper(object):
+    def __init__(self, suite, app, modules):
+        self.suite = suite
+        self.app = app
+        self.modules = modules
 
-    def __init__(self, app, is_usercase_enabled=None):
-        super(SuiteGenerator, self).__init__(app)
-        self.is_usercase_enabled = is_usercase_enabled
+        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        self.root_module_datums = [datum for module in root_modules
+                          for datum in self.get_module_datums(u'm{}'.format(module.id)).values()]
 
-    def post_process(self, suite):
-        if self.app.enable_post_form_workflow:
-            self.add_form_workflow(suite)
-
-        details_by_id = self.get_detail_mapping()
-        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
-        for e in suite.entries:
-            self.add_referenced_instances(e, details_by_id, relevance_by_menu, menu_by_command)
-
-    def add_form_workflow(self, suite):
+    def add_form_workflow(self):
         """
         post_form_workflow = 'module':
           * Add stack frame and a command with value = "module command"
@@ -799,181 +932,281 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import (
-            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
-        )
-
-        @memoized
-        def get_entry(suite, form_command):
-            entry = self.get_form_entry(suite, form_command)
-            if not entry.stack:
-                entry.stack = Stack()
-                return entry, True
-            else:
-                return entry, False
-
-        def create_workflow_stack(suite, form_command, frame_children,
-                                  allow_empty_stack=False, if_clause=None):
-            if not frame_children and not allow_empty_stack:
-                return
-
-            entry, is_new = get_entry(suite, form_command)
-            entry = self.get_form_entry(suite, form_command)
-            if not is_new:
-                # TODO: find a more general way of handling multiple contributions to the workflow
-                if_prefix = '{} = 0'.format(session_var(RETURN_TO).count())
-                template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
-                if_clause = template.format(if_prefix)
-
-            if_clause = unescape(if_clause) if if_clause else None
-            frame = CreateFrame(if_clause=if_clause)
-            entry.stack.add_frame(frame)
-
-            for child in frame_children:
-                if isinstance(child, basestring):
-                    frame.add_command(XPath.string(child))
-                else:
-                    value = session_var(child.source_id) if child.nodeset else child.function
-                    frame.add_datum(StackDatum(id=child.id, value=value))
-            return frame
-
-        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
-        root_module_datums = [datum for module in root_modules
-                              for datum in self.get_module_datums(suite, u'm{}'.format(module.id)).values()]
-
-        def get_frame_children(target_form, module_only=False):
-            """
-            For a form return the list of stack frame children that are required
-            to navigate to that form.
-
-            This is based on the following algorithm:
-
-            * Add the module the form is in to the stack (we'll call this `m`)
-            * Walk through all forms in the module, determine what datum selections are present in all of the modules
-              (this may be an empty set)
-              * Basically if there are three forms that respectively load
-                * f1: v1, v2, v3, v4
-                * f2: v1, v2, v4
-                * f3: v1, v2
-              * The longest common chain is v1, v2
-            * Add a datum for each of those values to the stack
-            * Add the form "command id" for the <entry> to the stack
-            * Add the remainder of the datums for the current form to the stack
-            * For the three forms above, the stack entries for "last element" would be
-              * m, v1, v2, f1, v3, v4
-              * m, v1, v2, f2, v4
-              * m, v1, v2, f3
-
-            :returns:   list of strings and DatumMeta objects. String represent stack commands
-                        and DatumMeta's represent stack datums.
-            """
-            target_form_command = self.id_strings.form_command(target_form)
-            target_module_id, target_form_id = target_form_command.split('-')
-            module_command = self.id_strings.menu_id(target_form.get_module())
-            module_datums = self.get_module_datums(suite, target_module_id)
-            form_datums = module_datums[target_form_id]
-
-            if module_command == self.id_strings.ROOT:
-                datums_list = root_module_datums
-            else:
-                datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
-
-            common_datums = commonprefix(datums_list)
-            remaining_datums = form_datums[len(common_datums):]
-
-            frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-            frame_children.extend(common_datums)
-            if not module_only:
-                frame_children.append(target_form_command)
-                frame_children.extend(remaining_datums)
-
-            return frame_children
-
-        def get_datums_matched_to_source(target_frame_elements, source_datums):
-            """
-            Attempt to match the target session variables with ones in the source session.
-            Making some large assumptions about how people will actually use this feature
-            """
-            datum_index = -1
-            for child in target_frame_elements:
-                if not isinstance(child, DatumMeta) or child.function:
-                    yield child
-                else:
-                    datum_index += 1
-                    try:
-                        source_datum = source_datums[datum_index]
-                    except IndexError:
-                        yield child
-                    else:
-                        if child.id != source_datum.id and not source_datum.case_type or \
-                                source_datum.case_type == child.case_type:
-                            target_datum = copy.copy(child)
-                            target_datum.source_id = source_datum.id
-                            yield target_datum
-                        else:
-                            yield child
-
         for module in self.modules:
             for form in module.get_forms():
-                if form.post_form_workflow == WORKFLOW_DEFAULT:
-                    continue
+                form_command = id_strings.form_command(form)
+                if_prefix = None
+                stack_frames = []
+                case_list_form_frames = self.case_list_forms_frames(form)
+                stack_frames.extend(case_list_form_frames)
 
-                form_command = self.id_strings.form_command(form)
+                if case_list_form_frames:
+                    if_prefix = session_var(RETURN_TO).count().eq(0)
 
-                if form.post_form_workflow == WORKFLOW_ROOT:
-                    create_workflow_stack(suite, form_command, [], True)
-                elif form.post_form_workflow == WORKFLOW_MODULE:
-                    module_command = self.id_strings.menu_id(module)
-                    frame_children = [module_command] if module_command != self.id_strings.ROOT else []
-                    create_workflow_stack(suite, form_command, frame_children)
-                elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-                    frame_children = get_frame_children(form)
+                stack_frames.extend(self.form_workflow_frames(if_prefix, module, form))
 
-                    # since we want to go the 'previous' screen we need to drop the last
-                    # datum
-                    last = frame_children.pop()
-                    while isinstance(last, DatumMeta) and last.function:
-                        # keep removing last element until we hit a command
-                        # or a non-autoselect datum
-                        last = frame_children.pop()
+                self.create_workflow_stack(form_command, stack_frames)
 
-                    create_workflow_stack(suite, form_command, frame_children)
-                elif form.post_form_workflow == WORKFLOW_FORM:
-                    module_id, form_id = form_command.split('-')
-                    source_form_datums = self.get_form_datums(suite, module_id, form_id)
-                    for link in form.form_links:
-                        target_form = self.app.get_form(link.form_id)
-                        target_module = target_form.get_module()
+    def case_list_forms_frames(self, form):
+        stack_frames = []
+        if form.is_registration_form() and form.is_case_list_form:
+            for target_module in form.case_list_modules:
 
-                        frame_children = get_frame_children(target_form)
-                        frame_children = get_datums_matched_to_source(frame_children, source_form_datums)
+                return_to = session_var(RETURN_TO)
+                target_command = XPath.string(id_strings.menu_id(target_module))
 
-                        if target_module in module.get_child_modules():
-                            parent_frame_children = get_frame_children(module.get_form(0), module_only=True)
+                def get_if_clause(case_count_xpath):
+                    return XPath.and_(
+                        return_to.count().eq(1),
+                        return_to.eq(target_command),
+                        case_count_xpath
+                    )
 
-                            # exclude frame children from the child module if they are already
-                            # supplied by the parent module
-                            child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
-                            frame_children = parent_frame_children + [
-                                child for child in frame_children
-                                if getattr(child, "id", child) not in child_ids_in_parent
+                if form.form_type == 'module_form':
+                    [reg_action] = form.get_registration_actions(target_module.case_type)
+                    source_session_var = form.session_var_for_action(reg_action)
+                if form.form_type == 'advanced_form':
+                    # match case session variable
+                    reg_action = form.get_registration_actions(target_module.case_type)[0]
+                    source_session_var = reg_action.case_session_var
+
+                source_case_id = session_var(source_session_var)
+                case_count = CaseIDXPath(source_case_id).case().count()
+
+                frame_case_created = StackFrameMeta(None, get_if_clause(case_count.gt(0)))
+                stack_frames.append(frame_case_created)
+
+                frame_case_not_created = StackFrameMeta(None, get_if_clause(case_count.eq(0)))
+                stack_frames.append(frame_case_not_created)
+
+                def get_case_type_created_by_form(form):
+                    if form.form_type == 'module_form':
+                        [reg_action] = form.get_registration_actions(target_module.case_type)
+                        if reg_action == 'open_case':
+                            return form.get_module().case_type
+                        else:
+                            return reg_action.case_type
+                    elif form.form_type == 'advanced_form':
+                        return form.get_registration_actions(target_module.case_type)[0].case_type
+
+                def add_datums_for_target(module, source_form_dm, allow_missing=False):
+                    """
+                    Given a target module and a list of datums from the source module add children
+                    to the stack frames that are required to by the target module and present in the source datums
+                    list.
+                    """
+                    # assume all forms in the module have the same datums
+                    target_form_dm = self.get_form_datums(module.get_form(0))
+
+                    def get_target_dm(case_type):
+                        try:
+                            [target_dm] = [
+                                target_meta for target_meta in target_form_dm
+                                if target_meta.case_type == case_type
                             ]
+                        except ValueError:
+                            raise SuiteError(
+                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                            )
 
-                        create_workflow_stack(suite, form_command, frame_children, if_clause=link.xpath)
+                        return target_dm
 
-    def get_form_datums(self, suite, module_id, form_id):
-        return self.get_module_datums(suite, module_id)[form_id]
+                    used = set()
+                    for source_meta in source_form_dm:
+                        if source_meta.case_type:
+                            # This is true for registration forms where the case being created is a subcase
+                            try:
+                                target_dm = get_target_dm(source_meta.case_type)
+                            except SuiteError:
+                                if source_meta.requires_selection:
+                                    raise
+                            else:
+                                used.add(source_meta)
+                                meta = DatumMeta.from_session_datum(source_meta)
+                                frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
+                                frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
+                        else:
+                            source_case_type = get_case_type_created_by_form(form)
+                            try:
+                                target_dm = get_target_dm(source_case_type)
+                            except SuiteError:
+                                if not allow_missing:
+                                    raise
+                            else:
+                                used.add(source_meta)
+                                datum_meta = DatumMeta.from_session_datum(target_dm)
+                                frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
 
-    def get_module_datums(self, suite, module_id):
-        _, datums = self._get_entries_datums(suite)
+                    # return any source datums that were not already added to the target
+                    return [dm for dm in source_form_dm if dm not in used]
+
+                source_form_dm = self.get_form_datums(form)
+
+                if target_module.root_module_id:
+                    # add stack children for the root module before adding any for the child module.
+                    root_module = target_module.root_module
+                    root_module_command = XPath.string(id_strings.menu_id(root_module))
+                    frame_case_created.add_child(root_module_command)
+                    frame_case_not_created.add_child(root_module_command)
+
+                    source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
+
+                frame_case_created.add_child(target_command)
+                frame_case_not_created.add_child(target_command)
+                add_datums_for_target(target_module, source_form_dm)
+
+        return stack_frames
+
+    def form_workflow_frames(self, if_prefix, module, form):
+        from corehq.apps.app_manager.models import (
+            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
+        )
+        stack_frames = []
+        if form.post_form_workflow == WORKFLOW_ROOT:
+            stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
+        elif form.post_form_workflow == WORKFLOW_MODULE:
+            module_command = id_strings.menu_id(module)
+            frame_children = [module_command] if module_command != id_strings.ROOT else []
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_PREVIOUS:
+            frame_children = self.get_frame_children(form)
+
+            # since we want to go the 'previous' screen we need to drop the last
+            # datum
+            last = frame_children.pop()
+            while isinstance(last, DatumMeta) and not last.requires_selection:
+                # keep removing last element until we hit a command
+                # or a non-autoselect datum
+                last = frame_children.pop()
+
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_FORM:
+            source_form_datums = self.get_form_datums(form)
+            for link in form.form_links:
+                target_form = self.app.get_form(link.form_id)
+                target_module = target_form.get_module()
+
+                frame_children = self.get_frame_children(target_form)
+                frame_children = WorkflowHelper.get_datums_matched_to_source(frame_children, source_form_datums)
+
+                if target_module in module.get_child_modules():
+                    parent_frame_children = self.get_frame_children(module.get_form(0), module_only=True)
+
+                    # exclude frame children from the child module if they are already
+                    # supplied by the parent module
+                    child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
+                    frame_children = parent_frame_children + [
+                        child for child in frame_children
+                        if getattr(child, "id", child) not in child_ids_in_parent
+                    ]
+
+                stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
+
+        return stack_frames
+
+    @staticmethod
+    def get_datums_matched_to_source(target_frame_elements, source_datums):
+        """
+        Attempt to match the target session variables with ones in the source session.
+        Making some large assumptions about how people will actually use this feature
+        """
+        datum_index = -1
+        for child in target_frame_elements:
+            if not isinstance(child, DatumMeta) or not child.requires_selection:
+                yield child
+            else:
+                datum_index += 1
+                try:
+                    source_datum = source_datums[datum_index]
+                except IndexError:
+                    yield child.to_stack_datum()
+                else:
+                    if child.id != source_datum.id and not source_datum.case_type or \
+                            source_datum.case_type == child.case_type:
+                        yield child.to_stack_datum(source_id=source_datum.id)
+                    else:
+                        yield child.to_stack_datum()
+
+    def get_frame_children(self, target_form, module_only=False):
+        """
+        For a form return the list of stack frame children that are required
+        to navigate to that form.
+
+        This is based on the following algorithm:
+
+        * Add the module the form is in to the stack (we'll call this `m`)
+        * Walk through all forms in the module, determine what datum selections are present in all of the modules
+          (this may be an empty set)
+          * Basically if there are three forms that respectively load
+            * f1: v1, v2, v3, v4
+            * f2: v1, v2, v4
+            * f3: v1, v2
+          * The longest common chain is v1, v2
+        * Add a datum for each of those values to the stack
+        * Add the form "command id" for the <entry> to the stack
+        * Add the remainder of the datums for the current form to the stack
+        * For the three forms above, the stack entries for "last element" would be
+          * m, v1, v2, f1, v3, v4
+          * m, v1, v2, f2, v4
+          * m, v1, v2, f3
+
+        :returns:   list of strings and DatumMeta objects. String represent stack commands
+                    and DatumMeta's represent stack datums.
+        """
+        target_form_command = id_strings.form_command(target_form)
+        target_module_id, target_form_id = target_form_command.split('-')
+        module_command = id_strings.menu_id(target_form.get_module())
+        module_datums = self.get_module_datums(target_module_id)
+        form_datums = module_datums[target_form_id]
+
+        if module_command == id_strings.ROOT:
+            datums_list = self.root_module_datums
+        else:
+            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+
+        common_datums = commonprefix(datums_list)
+        remaining_datums = form_datums[len(common_datums):]
+
+        frame_children = [module_command] if module_command != id_strings.ROOT else []
+        frame_children.extend(common_datums)
+        if not module_only:
+            frame_children.append(target_form_command)
+            frame_children.extend(remaining_datums)
+
+        return frame_children
+
+    def create_workflow_stack(self, form_command, frame_metas):
+        frames = filter(None, [meta.to_frame() for meta in frame_metas])
+        if not frames:
+            return
+
+        entry = self.get_form_entry(form_command)
+        if not entry.stack:
+            entry.stack = Stack()
+
+        for frame in frames:
+            entry.stack.add_frame(frame)
+
+    def get_form_datums(self, form):
+        """
+        :return: List of DatumMeta objects for this form
+        """
+        module_id, form_id = id_strings.form_command(form).split('-')
+        return self.get_module_datums(module_id)[form_id]
+
+    def get_module_datums(self, module_id):
+        """
+        :return: Dictionary keyed by form ID containing list of DatumMeta objects for each form.
+        """
+        _, datums = self._get_entries_datums()
         return datums[module_id]
 
-    def get_form_entry(self, suite, form_command):
-        entries, _ = self._get_entries_datums(suite)
+    def get_form_entry(self, form_command):
+        entries, _ = self._get_entries_datums()
         return entries[form_command]
 
     @memoized
-    def _get_entries_datums(self, suite):
+    def _get_entries_datums(self):
         datums = defaultdict(lambda: defaultdict(list))
         entries = {}
 
@@ -982,7 +1215,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             # formats that we know we don't need or don't work
             return not entry.command.id.startswith('reports') and not entry.command.id.endswith('case-list')
 
-        for e in filter(_include_datums, suite.entries):
+        for e in filter(_include_datums, self.suite.entries):
             command = e.command.id
             module_id, form_id = command.split('-', 1)
             entries[command] = e
@@ -990,9 +1223,38 @@ class SuiteGenerator(SuiteGeneratorBase):
                 datums[module_id][form_id] = []
             else:
                 for d in e.datums:
-                    datums[module_id][form_id].append(DatumMeta(d))
+                    datums[module_id][form_id].append(DatumMeta.from_session_datum(d))
 
         return entries, datums
+
+
+class SuiteGenerator(SuiteGeneratorBase):
+    descriptor = u"Suite File"
+    sections = (
+        'xform_resources',
+        'locale_resources',
+        'details',
+        'entries',
+        'menus',
+        'fixtures',
+    )
+
+    def __init__(self, app):
+        super(SuiteGenerator, self).__init__(app)
+        self.detail_ids = {
+            id_strings.detail(module, detail_type)
+            for module in self.modules for detail_type, detail, enabled in module.get_details()
+            if enabled and detail.columns
+        }
+
+    def post_process(self, suite):
+        if self.app.enable_post_form_workflow:
+            WorkflowHelper(suite, self.app, self.modules).add_form_workflow()
+
+        details_by_id = self.get_detail_mapping()
+        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
+        for e in suite.entries:
+            self.add_referenced_instances(e, details_by_id, relevance_by_menu, menu_by_command)
 
     @property
     def xform_resources(self):
@@ -1007,7 +1269,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 path = './user_registration.xml'
                 this_list = last
             resource = XFormResource(
-                id=self.id_strings.xform_resource(form),
+                id=id_strings.xform_resource(form),
                 version=form.get_version(),
                 local=path,
                 remote=path,
@@ -1031,7 +1293,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             path = './{lang}/app_strings.txt'.format(lang=lang)
             resource = LocaleResource(
                 language=lang,
-                id=self.id_strings.locale_resource(lang),
+                id=id_strings.locale_resource(lang),
                 version=self.app.version,
                 local=path,
                 remote=path,
@@ -1059,7 +1321,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_column_infos,
                     [],
                     None,
-                    Text(locale_id=self.id_strings.detail_tab_title_locale(
+                    Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
                     tab_spans[tab.id][0],
@@ -1086,7 +1348,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             # Add variables
             variables = list(
-                self.detail_variables(module, detail, detail_column_infos[start:end])
+                SuiteGenerator.detail_variables(module, detail, detail_column_infos[start:end])
             )
             if variables:
                 d.variables.extend(variables)
@@ -1100,30 +1362,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                 d.fields.extend(fields)
 
             # Add actions
-            if module.case_list_form.form_id and detail_type.endswith('short') and \
-                    not (hasattr(module, 'parent_select') and module.parent_select.active):
-                # add form action to detail
-                form = self.app.get_form(module.case_list_form.form_id)
-                if form.form_type == 'module_form':
-                    case_session_var = form.session_var_for_action('open_case')
-                elif form.form_type == 'advanced_form':
-                    # match case session variable
-                    reg_action = form.get_registration_actions(module.case_type)[0]
-                    case_session_var = reg_action.case_session_var
-
-                d.action = Action(
-                    display=Display(
-                        text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
-                        media_image=module.case_list_form.media_image,
-                        media_audio=module.case_list_form.media_audio,
-                    ),
-                    stack=Stack()
-                )
-                frame = PushFrame()
-                frame.add_command(XPath.string(self.id_strings.form_command(form)))
-                frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
-                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
-                d.action.stack.add_frame(frame)
+            if module.case_list_form.form_id and detail_type.endswith('short')\
+                    and not module.put_in_root:
+                self._add_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -1133,6 +1374,70 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def get_datums_meta_for_form_generic(self, form):
+            if form.form_type == 'module_form':
+                datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            elif form.form_type == 'advanced_form':
+                datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+                datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+            else:
+                raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+                    form.form_type, form.unique_id
+                ))
+            return datums_meta
+
+    def _add_action_to_detail(self, detail, module):
+        # add form action to detail
+        form = self.app.get_form(module.case_list_form.form_id)
+
+        if self.app.enable_localized_menu_media:
+            case_list_form = module.case_list_form
+            detail.action = LocalizedAction(
+                menu_locale_id=id_strings.case_list_form_locale(module),
+                media_image=bool(len(case_list_form.all_image_paths())),
+                media_audio=bool(len(case_list_form.all_audio_paths())),
+                image_locale_id=id_strings.case_list_form_icon_locale(module),
+                audio_locale_id=id_strings.case_list_form_audio_locale(module),
+                stack=Stack()
+            )
+        else:
+            detail.action = Action(
+                display=Display(
+                    text=Text(locale_id=id_strings.case_list_form_locale(module)),
+                    media_image=module.case_list_form.default_media_image,
+                    media_audio=module.case_list_form.default_media_audio,
+                ),
+                stack=Stack()
+            )
+
+        frame = PushFrame()
+        frame.add_command(XPath.string(id_strings.form_command(form)))
+
+        target_form_dm = self.get_datums_meta_for_form_generic(form)
+        source_form_dm = self.get_datums_meta_for_form_generic(module.get_form(0))
+        for target_meta in target_form_dm:
+            if target_meta['requires_selection']:
+                # This is true for registration forms where the case being created is a subcase
+                try:
+                    [source_dm] = [
+                        source_meta for source_meta in source_form_dm
+                        if source_meta['case_type'] == target_meta['case_type']
+                    ]
+                except ValueError:
+                    raise SuiteError("Form selected as case list form requires a case "
+                                     "but no matching case could be found: {}".format(form.unique_id))
+                else:
+                    frame.add_datum(StackDatum(
+                        id=target_meta['datum'].id,
+                        value=session_var(source_dm['datum'].id))
+                    )
+            else:
+                s_datum = target_meta['datum']
+                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
+
+        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
+        detail.action.stack.add_frame(frame)
 
     @property
     @memoized
@@ -1165,8 +1470,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         detail,
                                         detail_column_infos,
                                         list(detail.get_tabs()),
-                                        self.id_strings.detail(module, detail_type),
-                                        Text(locale_id=self.id_strings.detail_title_locale(
+                                        id_strings.detail(module, detail_type),
+                                        Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
                                         0,
@@ -1174,87 +1479,69 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     )
                                     if d:
                                         r.append(d)
+                if module.fixture_select.active:
+                    d = Detail(
+                        id=id_strings.fixture_detail(module),
+                        title=Text(),
+                    )
+                    fields = [Field(header=Header(text=Text()),
+                                    template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                    sort_node='')]
+
+                    d.fields = fields
+                    r.append(d)
         return r
 
-    def detail_variables(self, module, detail, detail_column_infos):
+    @staticmethod
+    def _schedule_detail_variables(module, detail, detail_column_infos):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
-        if hasattr(module, 'has_schedule') and \
-                module.has_schedule and \
-                module.all_forms_require_a_case and \
-                has_schedule_columns:
+        has_schedule = getattr(module, 'has_schedule', False)
+        if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
             forms_due = []
-            for form in module.get_forms():
-                if not (form.schedule and form.schedule.anchor):
-                    raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
+            for phase in module.get_schedule_phases():
+                if not phase.anchor:
+                    raise ScheduleError(_("Schedule Phase in module '{module_name}' is missing an anchor")
+                                        .format(module_name=module.default_name()))
 
-                fixture_id = self.id_strings.schedule_fixture(form)
-                anchor = form.schedule.anchor
+                for form in phase.get_forms():
+                    """
+                    Adds the following variables for each form:
+                    <anchor_{form_id} function="{anchor}"/>
+                    <last_visit_number_{form_id} function="{last_visit_number}"/>
+                    <last_visit_date_{form_id} function="{last_visit_date}"/>
+                    <next_{form_id} function={phase_set}/>
+                    """
+                    if not form.schedule_form_id:
+                        raise ScheduleError(
+                            _("Form '{form_name}' in module '{module_name}' is missing an abbreviation")
+                            .format(form_name=trans(form["name"], langs=[module.get_app().default_language]),
+                                    module_name=module.default_name()))
+                    form_xpath = ScheduleFormXPath(form, phase, module)
+                    name = u"next_{}".format(form.schedule_form_id)
+                    forms_due.append(u"${}".format(name))
 
-                # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
-                within_window = XPath.or_(
-                    XPath('@late_window').eq(XPath.string('')),
-                    XPath('today() <= ({} + {} + {})'.format(
-                        XPath.date(anchor),
-                        XPath.int('@due'),
-                        XPath.int('@late_window'))
-                    )
-                )
+                    # Add an anchor and last_visit variables so we can reference it in the calculation
+                    yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
+                    yield DetailVariable(name=form_xpath.last_visit_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT.format(form.schedule_form_id))
+                    yield DetailVariable(name=form_xpath.last_visit_date_detail_variable_name,
+                                         function=SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id))
+                    if phase.id == 1:
+                        # If this is the first phase, `current_schedule_phase` and
+                        # last_visit_num might not be set yet
+                        yield DetailVariable(name=name, function=form_xpath.first_visit_phase_set)
+                    else:
+                        yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
-                due_first = ScheduleFixtureInstance(fixture_id).visit().\
-                    select_raw(within_window).\
-                    select_raw("1").slash('@due')
+            yield DetailVariable(name='next_due', function=u'date(min({}))'.format(','.join(forms_due)))
+            yield DetailVariable(name='is_late', function='$next_due < today()')
 
-                # current_schedule_phase = 1 and anchor != '' and (
-                #   instance(...)/schedule/@expires = ''
-                #   or
-                #   today() < (date(anchor) + instance(...)/schedule/@expires)
-                # )
-                expires = ScheduleFixtureInstance(fixture_id).expires()
-                valid_not_expired = XPath.and_(
-                    XPath(SCHEDULE_PHASE).eq(form.id + 1),
-                    XPath(anchor).neq(XPath.string('')),
-                    XPath.or_(
-                        XPath(expires).eq(XPath.string('')),
-                        "today() < ({} + {})".format(XPath.date(anchor), expires)
-                    ))
+            if len(forms_due) != len(set(forms_due)):
+                raise ScheduleError(_("Your app has multiple forms with the same schedule abbreviation"))
 
-                visit_num_valid = XPath('@id > {}'.format(
-                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
-                ))
-
-                due_not_first = ScheduleFixtureInstance(fixture_id).visit().\
-                    select_raw(visit_num_valid).\
-                    select_raw(within_window).\
-                    select_raw("1").slash('@due')
-
-                name = 'next_{}'.format(form.schedule_form_id)
-                forms_due.append(name)
-
-                def due_date(due_days):
-                    return '{} + {}'.format(XPath.date(anchor), XPath.int(due_days))
-
-                xpath_phase_set = XPath.if_(valid_not_expired, due_date(due_not_first), 0)
-                if form.id == 0:  # first form must cater for empty phase
-                    yield DetailVariable(
-                        name=name,
-                        function=XPath.if_(
-                            XPath(SCHEDULE_PHASE).eq(XPath.string('')),
-                            due_date(due_first),
-                            xpath_phase_set
-                        )
-                    )
-                else:
-                    yield DetailVariable(name=name, function=xpath_phase_set)
-
-            yield DetailVariable(
-                name='next_due',
-                function='min({})'.format(','.join(forms_due))
-            )
-
-            yield DetailVariable(
-                name='is_late',
-                function='next_due < today()'
-            )
+    @staticmethod
+    def detail_variables(module, detail, detail_column_infos):
+        return chain(SuiteGenerator._schedule_detail_variables(module, detail, detail_column_infos),)
 
     def build_case_tile_detail(self, module, detail, detail_type):
         """
@@ -1267,8 +1554,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
 
         template_args = {
-            "detail_id": self.id_strings.detail(module, detail_type),
-            "title_text_id": self.id_strings.detail_title_locale(
+            "detail_id": id_strings.detail(module, detail_type),
+            "title_text_id": id_strings.detail_title_locale(
                 module, detail_type
             )
         }
@@ -1287,7 +1574,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 "prop_name": get_column_xpath_generator(
                     self.app, module, detail, column
                 ).xpath,
-                "locale_id": self.id_strings.detail_column_header_locale(
+                "locale_id": id_strings.detail_column_header_locale(
                     module, detail_type, column,
                 ),
                 # Just using default language for now
@@ -1300,7 +1587,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 template_args[template_field]["enum_keys"] = {}
                 for mapping in column.enum:
                     template_args[template_field]["enum_keys"][mapping.key] = \
-                        self.id_strings.detail_column_enum_variable(
+                        id_strings.detail_column_enum_variable(
                             module, detail_type, column, mapping.key_as_variable
                         )
         # Populate the template
@@ -1319,7 +1606,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         )) as f:
             return f.read().decode('utf-8')
 
-    def get_filter_xpath(self, module, delegation=False):
+    @staticmethod
+    def get_filter_xpath(module, delegation=False):
         filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % filter
@@ -1330,36 +1618,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
-    def get_nodeset_xpath(self, case_type, module, use_filter):
+    @staticmethod
+    def get_nodeset_xpath(case_type, module, use_filter):
         return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
-            filter_xpath=self.get_filter_xpath(module) if use_filter else '',
+            filter_xpath=SuiteGenerator.get_filter_xpath(module) if use_filter else '',
         )
 
-    def get_parent_filter(self, relationship, parent_id):
+    @staticmethod
+    def get_parent_filter(relationship, parent_id):
         return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
             relationship=relationship,
             parent_id=parent_id,
         )
 
-    def get_module_by_id(self, module_id):
-        try:
-            [parent_module] = (
-                module for module in self.app.get_modules()
-                if module.unique_id == module_id
-            )
-        except ValueError:
-            raise ParentModuleReferenceError(
-                "Module %s in app %s not found" % (module_id, self.app)
-            )
-        else:
-            return parent_module
-
-    def get_select_chain(self, module, include_self=True):
+    @staticmethod
+    def get_select_chain(app, module, include_self=True):
         select_chain = [module] if include_self else []
         current_module = module
         while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
-            current_module = self.get_module_by_id(
+            current_module = app.get_module_by_unique_id(
                 current_module.parent_select.module_id
             )
             select_chain.append(current_module)
@@ -1384,11 +1662,11 @@ class SuiteGenerator(SuiteGeneratorBase):
         return relevance_by_menu, menu_by_command
 
     def get_detail_id_safe(self, module, detail_type):
-        detail_id = self.id_strings.detail(
+        detail_id = id_strings.detail(
             module=module,
             detail_type=detail_type,
         )
-        return detail_id if detail_id in self.get_detail_mapping() else None
+        return detail_id if detail_id in self.detail_ids else None
 
     def get_instances_for_module(self, module, additional_xpaths=None):
         """
@@ -1463,7 +1741,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         entry.require_instance(*instances)
 
-    def get_userdata_autoselect(self, key, session_id, mode):
+    @staticmethod
+    def get_userdata_autoselect(key, session_id, mode):
         base_xpath = session_var('data', path='user')
         xpath = session_var(key, path='user/data')
         protected_xpath = XPath.if_(
@@ -1473,13 +1752,13 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
         datum = SessionDatum(id=session_id, function=protected_xpath)
         assertions = [
-            self.get_assertion(
+            SuiteGenerator.get_assertion(
                 XPath.and_(base_xpath.count().eq(1),
                            xpath.count().eq(1)),
                 'case_autoload.{0}.property_missing'.format(mode),
                 [key],
             ),
-            self.get_assertion(
+            SuiteGenerator.get_assertion(
                 CaseIDXPath(xpath).case().count().eq(1),
                 'case_autoload.{0}.case_missing'.format(mode),
             )
@@ -1495,12 +1774,23 @@ class SuiteGenerator(SuiteGeneratorBase):
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command = Command(
-                    id=self.id_strings.form_command(form),
-                    locale_id=self.id_strings.form_locale(form),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
-                )
+                # Ideally all of this version check should happen in Command/Display class
+                if self.app.enable_localized_menu_media:
+                    e.command = LocalizedCommand(
+                        id=id_strings.form_command(form),
+                        menu_locale_id=id_strings.form_locale(form),
+                        media_image=bool(len(form.all_image_paths())),
+                        media_audio=bool(len(form.all_audio_paths())),
+                        image_locale_id=id_strings.form_icon_locale(form),
+                        audio_locale_id=id_strings.form_audio_locale(form),
+                    )
+                else:
+                    e.command = Command(
+                        id=id_strings.form_command(form),
+                        locale_id=id_strings.form_locale(form),
+                        media_image=form.default_media_image,
+                        media_audio=form.default_media_audio,
+                    )
                 config_entry = {
                     'module_form': self.configure_entry_module_form,
                     'advanced_form': self.configure_entry_advanced_form,
@@ -1513,7 +1803,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     session_var('supply_point_id') in getattr(form, 'source', "")
                 ):
                     from .models import AUTO_SELECT_LOCATION
-                    datum, assertions = self.get_userdata_autoselect(
+                    datum, assertions = SuiteGenerator.get_userdata_autoselect(
                         'commtrack-supply-point',
                         'supply_point_id',
                         AUTO_SELECT_LOCATION,
@@ -1524,21 +1814,30 @@ class SuiteGenerator(SuiteGeneratorBase):
                 results.append(e)
 
             if hasattr(module, 'case_list') and module.case_list.show:
-                e = Entry(
-                    command=Command(
-                        id=self.id_strings.case_list_command(module),
-                        locale_id=self.id_strings.case_list_locale(module),
-                        media_image=module.case_list.media_image,
-                        media_audio=module.case_list.media_audio,
+                e = Entry()
+                if self.app.enable_localized_menu_media:
+                    e.command = LocalizedCommand(
+                        id=id_strings.case_list_command(module),
+                        menu_locale_id=id_strings.case_list_locale(module),
+                        media_image=bool(len(module.case_list.all_image_paths())),
+                        media_audio=bool(len(module.case_list.all_audio_paths())),
+                        image_locale_id=id_strings.case_list_icon_locale(module),
+                        audio_locale_id=id_strings.case_list_audio_locale(module),
                     )
-                )
+                else:
+                    e.command = Command(
+                        id=id_strings.case_list_command(module),
+                        locale_id=id_strings.case_list_locale(module),
+                        media_image=module.case_list.default_media_image,
+                        media_audio=module.case_list.default_media_audio,
+                    )
                 if isinstance(module, Module):
                     for datum_meta in self.get_datum_meta_module(module, use_filter=False):
                         e.datums.append(datum_meta['datum'])
                 elif isinstance(module, AdvancedModule):
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
-                        nodeset=(self.get_nodeset_xpath(module.case_type, module, False)),
+                        nodeset=(SuiteGenerator.get_nodeset_xpath(module.case_type, module, False)),
                         value="./@case_id",
                         detail_select=self.get_detail_id_safe(module, 'case_short'),
                         detail_confirm=self.get_detail_id_safe(module, 'case_long')
@@ -1557,7 +1856,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return results
 
-    def get_assertion(self, test, locale_id, locale_arguments=None):
+    @staticmethod
+    def get_assertion(test, locale_id, locale_arguments=None):
         assertion = Assertion(test=test)
         text = Text(locale_id=locale_id)
         if locale_arguments:
@@ -1567,31 +1867,32 @@ class SuiteGenerator(SuiteGeneratorBase):
         assertion.text.append(text)
         return assertion
 
-    def add_case_sharing_assertion(self, entry):
-        assertion = self.get_assertion("count(instance('groups')/groups/group) = 1",
+    @staticmethod
+    def add_case_sharing_assertion(entry):
+        assertion = SuiteGenerator.get_assertion("count(instance('groups')/groups/group) = 1",
                            'case_sharing.exactly_one_group')
         entry.assertions.append(assertion)
 
-    def get_auto_select_assertions(self, case_id_xpath, mode, locale_arguments=None):
+    @staticmethod
+    def get_auto_select_assertions(case_id_xpath, mode, locale_arguments=None):
         case_count = CaseIDXPath(case_id_xpath).case().count()
         return [
-            self.get_assertion(
+            SuiteGenerator.get_assertion(
                 "{0} = 1".format(case_id_xpath.count()),
                 'case_autoload.{0}.property_missing'.format(mode),
                 locale_arguments
             ),
-            self.get_assertion(
+            SuiteGenerator.get_assertion(
                 "{0} = 1".format(case_count),
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
 
-    def get_extra_case_id_datums(self, form):
+    @staticmethod
+    def get_extra_case_id_datums(form):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
-            if not self.is_usercase_enabled:
-                raise SuiteError('Form uses usercase, but usercase not enabled')
             case = UserCaseXPath().case()
             datums.append({
                 'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
@@ -1605,7 +1906,8 @@ class SuiteGenerator(SuiteGeneratorBase):
     def any_usercase_datums(datums):
         return any(d['case_type'] == USERCASE_TYPE for d in datums)
 
-    def get_new_case_id_datums_meta(self, form):
+    @staticmethod
+    def get_new_case_id_datums_meta(form):
         if not form:
             return []
 
@@ -1621,12 +1923,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                 })
 
             if 'subcases' in actions:
-                for i, subcase in enumerate(actions['subcases']):
+                for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
                         datums.append({
-                            'datum': SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'),
+                            'datum': SessionDatum(
+                                id=form.session_var_for_action(subcase), function='uuid()'
+                            ),
                             'case_type': subcase.case_type,
                             'requires_selection': False,
                             'action': subcase
@@ -1643,33 +1947,14 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         return datums
 
-    def configure_entry_as_case_list_form(self, form, entry):
-        target_module = form.case_list_module
-        if form.form_type == 'module_form':
-            source_session_var = form.session_var_for_action('open_case')
-        if form.form_type == 'advanced_form':
-            # match case session variable
-            reg_action = form.get_registration_actions(target_module.case_type)[0]
-            source_session_var = reg_action.case_session_var
-
-        target_session_var = 'case_id'
-        if target_module.module_type == 'advanced':
-            # match case session variable for target module
-            form = target_module.forms[0]
-            target_session_var = form.actions.load_update_cases[0].case_session_var
-
-        entry.stack = Stack()
-        source_case_id = session_var(source_session_var)
-        case_count = CaseIDXPath(source_case_id).case().count()
-        return_to = session_var(RETURN_TO)
-        frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
-        frame_case_created.add_command(return_to)
-        frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
-        entry.stack.add_frame(frame_case_created)
-
-        frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
-        frame_case_not_created.add_command(return_to)
-        entry.stack.add_frame(frame_case_not_created)
+    def get_case_datums_basic_module(self, module, form):
+        datums = []
+        if not form or form.requires_case():
+            datums.extend(self.get_datum_meta_module(module, use_filter=True))
+        datums.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+        datums.extend(SuiteGenerator.get_extra_case_id_datums(form))
+        self.add_parent_datums(datums, module)
+        return datums
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -1682,20 +1967,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        datums = []
-        if not form or form.requires_case():
-            datums.extend(self.get_datum_meta_module(module, use_filter=True))
-
-        datums.extend(self.get_new_case_id_datums_meta(form))
-        datums.extend(self.get_extra_case_id_datums(form))
+        datums = self.get_case_datums_basic_module(module, form)
         for datum in datums:
             e.datums.append(datum['datum'])
 
-        if form and 'open_case' in form.active_actions() and form.is_case_list_form:
-            self.configure_entry_as_case_list_form(form, e)
-
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
-            self.add_case_sharing_assertion(e)
+            SuiteGenerator.add_case_sharing_assertion(e)
 
     def _get_datums_meta(self, module):
         """
@@ -1709,7 +1986,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if not (module and module.module_type == 'basic'):
             return []
 
-        select_chain = self.get_select_chain(module)
+        select_chain = SuiteGenerator.get_select_chain(self.app, module)
         return [
             {
                 'session_var': ('parent_' * i or 'case_') + 'id',
@@ -1727,7 +2004,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
             if parent_id:
-                parent_filter = self.get_parent_filter(datum['module'].parent_select.relationship, parent_id)
+                parent_filter = SuiteGenerator.get_parent_filter(datum['module'].parent_select.relationship, parent_id)
             else:
                 parent_filter = ''
 
@@ -1739,15 +2016,31 @@ class SuiteGenerator(SuiteGeneratorBase):
                     and (detail.use_case_tiles or detail.custom_xml)
                     and enabled
                 ):
-                    detail_persistent = self.id_strings.detail(datum['module'], detail_type)
+                    detail_persistent = id_strings.detail(datum['module'], detail_type)
                     detail_inline = bool(detail.pull_down_tile)
                     break
+
+            fixture_select_filter = ''
+            if datum['module'].fixture_select.active:
+                datums.append({
+                    'datum': SessionDatum(
+                        id=id_strings.fixture_session_var(datum['module']),
+                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
+                        value=datum['module'].fixture_select.variable_column,
+                        detail_select=id_strings.fixture_detail(datum['module'])
+                    )
+                })
+                filter_xpath_template = datum['module'].fixture_select.xpath
+                fixture_value = session_var(id_strings.fixture_session_var(datum['module']))
+                fixture_select_filter = "[{}]".format(
+                    filter_xpath_template.replace('$fixture_value', fixture_value)
+                )
 
             datums.append({
                 'datum': SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
-                             + parent_filter),
+                    nodeset=(SuiteGenerator.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                             + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                     detail_confirm=(
@@ -1763,11 +2056,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             })
         return datums
 
-    def get_auto_select_datums_and_assertions(self, action, auto_select, form):
+    @staticmethod
+    def get_auto_select_datums_and_assertions(action, auto_select, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
         if auto_select.mode == AUTO_SELECT_USER:
-            return self.get_userdata_autoselect(
+            return SuiteGenerator.get_userdata_autoselect(
                 auto_select.value_key,
                 action.case_session_var,
                 auto_select.mode,
@@ -1779,7 +2073,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             except KeyError:
                 raise ValueError("Case tag not found: %s" % auto_select.value_source)
             xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            assertions = SuiteGenerator.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
             return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
@@ -1787,12 +2081,12 @@ class SuiteGenerator(SuiteGeneratorBase):
         elif auto_select.mode == AUTO_SELECT_FIXTURE:
             xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
             xpath = xpath_base.slash(auto_select.value_key)
-            fixture_assertion = self.get_assertion(
+            fixture_assertion = SuiteGenerator.get_assertion(
                 "{0} = 1".format(xpath_base.count()),
                 'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
                 [auto_select.value_source]
             )
-            assertions = self.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
+            assertions = SuiteGenerator.get_auto_select_assertions(xpath, auto_select.mode, [auto_select.value_key])
             return SessionDatum(
                 id=action.case_session_var,
                 function=xpath
@@ -1804,7 +2098,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 id=action.case_session_var,
                 function=case_id_xpath
             ), [
-                self.get_assertion(
+                SuiteGenerator.get_assertion(
                     "{0} = 1".format(case_count),
                     'case_autoload.{0}.case_missing'.format(auto_select.mode)
                 )
@@ -1815,7 +2109,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 id=action.case_session_var,
                 function=case.slash('@case_id')
             ), [
-                self.get_assertion(
+                SuiteGenerator.get_assertion(
                     "{0} = 1".format(case.count()),
                     'case_autoload.{0}.case_missing'.format(auto_select.mode)
                 )
@@ -1830,7 +2124,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             return False
 
         datums, assertions = self.get_datum_meta_assertions_advanced(module, form)
-        datums.extend(self.get_new_case_id_datums_meta(form))
+        datums.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
 
         for datum_meta in datums:
             e.datums.append(datum_meta['datum'])
@@ -1838,11 +2132,8 @@ class SuiteGenerator(SuiteGeneratorBase):
         # assertions come after session
         e.assertions.extend(assertions)
 
-        if form.is_registration_form() and form.is_case_list_form:
-            self.configure_entry_as_case_list_form(form, e)
-
         if self.app.case_sharing and case_sharing_requires_assertion(form):
-            self.add_case_sharing_assertion(e)
+            SuiteGenerator.add_case_sharing_assertion(e)
 
     def get_datum_meta_assertions_advanced(self, module, form):
         def get_target_module(case_type, module_id, with_product_details=False):
@@ -1868,9 +2159,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if case_type == module.case_type:
                     return module
 
-                target_modules = [mod for mod in module.get_app().modules
-                                      if mod.case_type == case_type and
-                                         (not with_product_details or hasattr(mod, 'product_details'))]
+                target_modules = [
+                    mod for mod in module.get_app().modules
+                    if mod.case_type == case_type and (not with_product_details or hasattr(mod, 'product_details'))
+                ]
                 try:
                     return target_modules[0]
                 except IndexError:
@@ -1878,12 +2170,27 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
+        def get_manual_datum(action_, parent_filter_=''):
+            target_module_ = get_target_module(action_.case_type, action_.details_module)
+            referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
+            return SessionDatum(
+                id=action_.case_session_var,
+                nodeset=(SuiteGenerator.get_nodeset_xpath(action_.case_type, target_module_, True) +
+                         parent_filter_),
+                value="./@case_id",
+                detail_select=self.get_detail_id_safe(target_module_, 'case_short'),
+                detail_confirm=(
+                    self.get_detail_id_safe(target_module_, 'case_long')
+                    if not referenced_by or referenced_by['type'] != 'load' else None
+                )
+            )
+
         datums = []
         assertions = []
         for action in form.actions.get_load_update_actions():
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                datum, assertions = self.get_auto_select_datums_and_assertions(action, auto_select, form)
+                datum, assertions = SuiteGenerator.get_auto_select_datums_and_assertions(action, auto_select, form)
                 datums.append({
                     'datum': datum,
                     'case_type': None,
@@ -1891,29 +2198,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                     'action': action
                 })
             else:
-                if action.parent_tag:
-                    parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
-                    parent_filter = self.get_parent_filter(
-                        action.parent_reference_id,
+                if action.case_index.tag:
+                    parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
+                    parent_filter = SuiteGenerator.get_parent_filter(
+                        action.case_index.reference_id,
                         parent_action.case_session_var
                     )
                 else:
                     parent_filter = ''
-
-                target_module = get_target_module(action.case_type, action.details_module)
-                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-                datum = SessionDatum(
-                    id=action.case_session_var,
-                    nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
-                    value="./@case_id",
-                    detail_select=self.get_detail_id_safe(target_module, 'case_short'),
-                    detail_confirm=(
-                        self.get_detail_id_safe(target_module, 'case_long')
-                        if not referenced_by or referenced_by['type'] != 'load' else None
-                    )
-                )
                 datums.append({
-                    'datum': datum,
+                    'datum': get_manual_datum(action, parent_filter),
                     'case_type': action.case_type,
                     'requires_selection': True,
                     'action': action
@@ -1943,70 +2237,152 @@ class SuiteGenerator(SuiteGeneratorBase):
             except IndexError:
                 pass
 
-        root_module = module.root_module
-        root_datums = []
-        if root_module and root_module.module_type == 'basic':
-            # For advanced modules the onus is on the user to make things work by loading the correct cases and
-            # using the correct case tags.
-            try:
-                # assume that all forms in the root module have the same case management
-                root_module_form = root_module.get_form(0)
-            except FormNotFoundException:
-                pass
-            else:
-                if root_module_form.requires_case():
-                    root_datums.extend(self.get_datum_meta_module(root_module))
-                root_datums.extend(self.get_new_case_id_datums_meta(root_module_form))
+        self.add_parent_datums(datums, module)
 
-        if root_datums:
+        return datums, assertions
+
+    def add_parent_datums(self, datums, module):
+
+        def update_refs(datum_meta, changed_ids_):
+            """
+            Update references in the nodeset of the given datum, if necessary
+
+            e.g. "instance('casedb')/casedb/case[@case_type='guppy']
+                                                [@status='open']
+                                                [index/parent=instance('commcaresession')/session/data/parent_id]"
+            is updated to
+                 "instance('casedb')/casedb/case[@case_type='guppy']
+                                                [@status='open']
+                                                [index/parent=instance('commcaresession')/session/data/case_id]"
+                                                                                                       ^^^^^^^
+            because the case referred to by "parent_id" in the child module has the ID "case_id" in the parent
+            module.
+            """
+            def _apply_change_to_datum_attr(datum, attr, change):
+                xpath = getattr(datum, attr, None)
+                if xpath:
+                    old = session_var(change['old_id'])
+                    new = session_var(change['new_id'])
+                    setattr(datum, attr, xpath.replace(old, new))
+
+            datum = datum_meta['datum']
+            action = datum_meta['action']
+            if action:
+                if hasattr(action, 'case_indices'):
+                    # This is an advanced module
+                    for case_index in action.case_indices:
+                        if case_index.tag in changed_ids_:
+                            # update any reference to previously changed datums
+                            for change in changed_ids_[case_index.tag]:
+                                _apply_change_to_datum_attr(datum, 'nodeset', change)
+                                _apply_change_to_datum_attr(datum, 'function', change)
+                else:
+                    if 'basic' in changed_ids_:
+                        for change in changed_ids_['basic']:
+                            _apply_change_to_datum_attr(datum, 'nodeset', change)
+                            _apply_change_to_datum_attr(datum, 'function', change)
+
+        def rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
+            """
+            If the ID of parent datum matches the ID of another datum in this
+            form, rename the ID of the other datum in this form
+
+            e.g. if parent datum ID == "case_id" and there is a datum in this
+            form with the ID of "case_id" too, then rename the ID of the datum
+            in this form to "case_id_<case_type>" (where <case_type> is the
+            case type of the datum in this form).
+            """
+            changed_id = {}
+            parent_datum = parent_datum_meta_['datum']
+            action = this_datum_meta_['action']
+            if action:
+                if parent_datum.id in datum_ids_:
+                    datum = datum_ids_[parent_datum.id]
+                    new_id = '_'.join((datum['datum'].id, datum['case_type']))
+                    # Only advanced module actions have a case_tag attribute.
+                    case_tag = getattr(action, 'case_tag', 'basic')
+                    changed_id = {
+                        case_tag: {
+                            'old_id': datum['datum'].id,
+                            'new_id': new_id,
+                        }
+                    }
+                    datum['datum'].id = new_id
+            return changed_id
+
+        def get_changed_id(this_datum_meta_, parent_datum_meta_):
+            """
+            Maps IDs in the child module to IDs in the parent module
+
+            e.g. The case with the ID "parent_id" in the child module has the
+            ID "case_id" in the parent module.
+            """
+            changed_id = {}
+            action = this_datum_meta_['action']
+            if action:
+                case_tag = getattr(action, 'case_tag', 'basic')
+                changed_id = {
+                    case_tag: {
+                        "old_id": this_datum_meta_['datum'].id,
+                        "new_id": parent_datum_meta_['datum'].id
+                    }
+                }
+            return changed_id
+
+        def get_datums(module_):
+            """
+            Return the datums of the first form in the given module
+            """
+            datums_ = []
+            if module_:
+                try:
+                    # assume that all forms in the module have the same case management
+                    form = module_.get_form(0)
+                except FormNotFoundException:
+                    pass
+                else:
+                    datums_.extend(self.get_datums_meta_for_form_generic(form))
+
+            return datums_
+
+        def append_update(dict_, new_dict):
+            for key in new_dict:
+                dict_[key].append(new_dict[key])
+
+        parent_datums = get_datums(module.root_module)
+        if parent_datums:
             # we need to try and match the datums to the root module so that
             # the navigation on the phone works correctly
             # 1. Add in any datums that don't require user selection e.g. new case IDs
             # 2. Match the datum ID for datums that appear in the same position and
             #    will be loading the same case type
             # see advanced_app_features#child-modules in docs
-            datum_pairs = list(izip_longest(datums, root_datums))
+            datum_ids = {d['datum'].id: d for d in datums}
             index = 0
-            changed_ids_by_case_tag = {}
-            for this_datum_meta, parent_datum_meta in datum_pairs:
+            changed_ids_by_case_tag = defaultdict(list)
+            for this_datum_meta, parent_datum_meta in list(izip_longest(datums, parent_datums)):
                 if not this_datum_meta:
                     continue
-
-                this_datum = this_datum_meta['datum']
-                action = this_datum_meta['action']
-                if action and action.parent_tag in changed_ids_by_case_tag:
-                    # update any reference to previously changed datums
-                    change = changed_ids_by_case_tag[action.parent_tag]
-                    nodeset = this_datum.nodeset
-                    old = session_var(change['old_id'])
-                    new = session_var(change['new_id'])
-                    this_datum.nodeset = nodeset.replace(old, new)
-
+                update_refs(this_datum_meta, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
-
-                that_datum = parent_datum_meta['datum']
-                if this_datum.id != that_datum.id:
+                if this_datum_meta['datum'].id != parent_datum_meta['datum'].id:
                     if not parent_datum_meta['requires_selection']:
+                        # Add parent datums of opened subcases and automatically-selected cases
                         datums.insert(index, parent_datum_meta)
                     elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
-                        action = action
-                        if action:
-                            changed_ids_by_case_tag[action.case_tag] = {
-                                "old_id": this_datum.id,
-                                "new_id": that_datum.id
-                            }
-                        this_datum.id = that_datum.id
-
+                        append_update(changed_ids_by_case_tag,
+                                      rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
+                        append_update(changed_ids_by_case_tag,
+                                      get_changed_id(this_datum_meta, parent_datum_meta))
+                        this_datum_meta['datum'].id = parent_datum_meta['datum'].id
                 index += 1
 
-        return datums, assertions
-
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-            parent_module = self.get_module_by_id(module.parent_select.module_id)
+            parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
             e.datums.append(SessionDatum(
                 id='case_id',
-                nodeset=self.get_nodeset_xpath(parent_module.case_type, parent_module, False),
+                nodeset=SuiteGenerator.get_nodeset_xpath(parent_module.case_type, parent_module, False),
                 value="./@case_id",
                 detail_select=self.get_detail_id_safe(parent_module, 'case_short'),
                 detail_confirm=self.get_detail_id_safe(parent_module, 'case_long')
@@ -2038,19 +2414,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -2059,10 +2435,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         frame.if_clause = '{count} >= 1'.format(count=count)
 
                         frame.add_command(XPath.string(
-                            self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
+                            id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
                         ))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
+                    frame.add_command(XPath.string(id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':
@@ -2070,6 +2446,15 @@ class SuiteGenerator(SuiteGeneratorBase):
                 elif form.mode == 'update':
                     e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                     e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+    def _schedule_filter_conditions(self, form, module, case):
+        phase = form.get_phase()
+        try:
+            form_xpath = QualifiedScheduleFormXPath(form, phase, module, case_xpath=case)
+            relevant = form_xpath.filter_condition(phase.id)
+        except ScheduleError:
+            relevant = None
+        return relevant
 
     @property
     @memoized
@@ -2081,30 +2466,30 @@ class SuiteGenerator(SuiteGeneratorBase):
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 update_menu = Menu(
-                    id=self.id_strings.menu_id(module),
-                    locale_id=self.id_strings.module_locale(module),
+                    id=id_strings.menu_id(module),
+                    locale_id=id_strings.module_locale(module),
                 )
 
                 if not module.display_separately:
-                    parent = self.get_module_by_id(module.parent_select.module_id)
+                    parent = self.app.get_module_by_unique_id(module.parent_select.module_id)
                     create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
                     create_menu = Menu(
-                        id=self.id_strings.menu_id(parent),
-                        locale_id=self.id_strings.module_locale(parent),
+                        id=id_strings.menu_id(parent),
+                        locale_id=id_strings.module_locale(parent),
                     )
-                    create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
+                    create_menu.commands.append(Command(id=id_strings.form_command(create_goal_form)))
                     menus.append(create_menu)
 
-                    update_menu.root = self.id_strings.menu_id(parent)
+                    update_menu.root = id_strings.menu_id(parent)
                 else:
                     update_menu.commands.extend([
-                        Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
+                        Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
                     ])
 
                 update_menu.commands.extend([
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
-                    Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
+                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
                 ])
                 menus.append(update_menu)
             elif hasattr(module, 'get_menus'):
@@ -2112,42 +2497,66 @@ class SuiteGenerator(SuiteGeneratorBase):
                     menus.append(menu)
             else:
                 menu_kwargs = {
-                    'id': self.id_strings.menu_id(module),
-                    'locale_id': self.id_strings.module_locale(module),
-                    'media_image': module.media_image,
-                    'media_audio': module.media_audio,
+                    'id': id_strings.menu_id(module),
                 }
-                if self.id_strings.menu_root(module):
-                    menu_kwargs['root'] = self.id_strings.menu_root(module)
+                if id_strings.menu_root(module):
+                    menu_kwargs['root'] = id_strings.menu_root(module)
 
                 if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                         self.app.enable_module_filtering and
                         getattr(module, 'module_filter', None)):
                     menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
-                menu = Menu(**menu_kwargs)
+                if self.app.enable_localized_menu_media:
+                    menu_kwargs.update({
+                        'menu_locale_id': id_strings.module_locale(module),
+                        'media_image': bool(len(module.all_image_paths())),
+                        'media_audio': bool(len(module.all_audio_paths())),
+                        'image_locale_id': id_strings.module_icon_locale(module),
+                        'audio_locale_id': id_strings.module_audio_locale(module),
+                    })
+                    menu = LocalizedMenu(**menu_kwargs)
+                else:
+                    menu_kwargs.update({
+                        'locale_id': id_strings.module_locale(module),
+                        'media_image': module.default_media_image,
+                        'media_audio': module.default_media_audio,
+                    })
+                    menu = Menu(**menu_kwargs)
 
                 def get_commands():
                     for form in module.get_forms():
-                        command = Command(id=self.id_strings.form_command(form))
-                        if module.all_forms_require_a_case() and \
-                                not module.put_in_root and \
-                                getattr(form, 'form_filter', None):
-                            if isinstance(form, AdvancedForm):
-                                try:
-                                    action = next(a for a in form.actions.load_update_cases if not a.auto_select)
-                                    case = CaseIDXPath(session_var(action.case_session_var)).case() if action else None
-                                except IndexError:
-                                    case = None
-                            else:
-                                case = SESSION_CASE_ID.case()
+                        command = Command(id=id_strings.form_command(form))
 
-                            if case:
-                                command.relevant = interpolate_xpath(form.form_filter, case)
+                        if form.requires_case():
+                            form_datums = self.get_datums_meta_for_form_generic(form)
+                            var_name = next(
+                                meta['datum'].id for meta in reversed(form_datums)
+                                if meta['action'] and meta['requires_selection']
+                            )
+                            case = CaseIDXPath(session_var(var_name)).case()
+                        else:
+                            case = None
+
+                        if (
+                            getattr(form, 'form_filter', None) and
+                            not module.put_in_root and
+                            (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
+                        ):
+                            command.relevant = interpolate_xpath(form.form_filter, case)
+
+                        if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
+                            # If there is a schedule and another filter condition, disregard it...
+                            # Other forms of filtering are disabled in the UI
+
+                            schedule_filter_condition = self._schedule_filter_conditions(form, module, case)
+                            if schedule_filter_condition is not None:
+                                command.relevant = schedule_filter_condition
+
                         yield command
 
                     if hasattr(module, 'case_list') and module.case_list.show:
-                        yield Command(id=self.id_strings.case_list_command(module))
+                        yield Command(id=id_strings.case_list_command(module))
 
                 menu.commands.extend(get_commands())
 
@@ -2157,6 +2566,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @property
     def fixtures(self):
+        return chain(self._case_sharing_fixtures, self._schedule_fixtures)
+
+    @property
+    def _case_sharing_fixtures(self):
         if self.app.case_sharing:
             f = Fixture(id='user-groups')
             f.user_id = 'demo_user'
@@ -2170,25 +2583,38 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
-        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
-                            module.all_forms_require_a_case)
-        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+    @property
+    def _schedule_fixtures(self):
+        schedule_modules = (module for module in self.modules
+                            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
+        schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())
+        schedule_forms = (form for phase in schedule_phases for form in phase.get_forms())
+
         for form in schedule_forms:
             schedule = form.schedule
-            fx = ScheduleFixture(
-                id=self.id_strings.schedule_fixture(form),
-                schedule=Schedule(
-                    expires=schedule.expires,
-                    post_schedule_increment=schedule.post_schedule_increment
-                ))
-            for i, visit in enumerate(schedule.visits):
-                fx.schedule.visits.append(ScheduleVisit(
-                    id=i + 1,
-                    due=visit.due,
-                    late_window=visit.late_window
-                ))
 
-            yield fx
+            if schedule is None:
+                raise (ScheduleError(_("There is no schedule for form {form_id}")
+                                     .format(form_id=form.unique_id)))
+
+            visits = [ScheduleFixtureVisit(id=visit.id,
+                                           due=visit.due,
+                                           starts=visit.starts,
+                                           expires=visit.expires,
+                                           repeats=visit.repeats,
+                                           increment=visit.increment)
+                      for visit in schedule.get_visits()]
+
+            schedule_fixture = ScheduleFixture(
+                id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
+                schedule=Schedule(
+                    starts=schedule.starts,
+                    expires=schedule.expires if schedule.expires else '',
+                    allow_unscheduled=schedule.allow_unscheduled,
+                    visits=visits,
+                )
+            )
+            yield schedule_fixture
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):
@@ -2214,8 +2640,8 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = '../../{}'.format(path)
-            local_path = './{}/{}'.format(path, name)
+            install_path = u'../../{}'.format(path)
+            local_path = u'./{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
@@ -2225,14 +2651,15 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
             if self.app.build_version >= '2.9':
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
-                                "CommCareVideo": "Video"}
+                                "CommCareVideo": "Video",
+                                "CommCareMultimedia": "Text"}
                 descriptor = u"{filetype} File: {name}".format(
                     filetype=type_mapping.get(m.media_type, "Media"),
                     name=name
                 )
 
             yield MediaResource(
-                id=self.id_strings.media_resource(m.unique_id, name),
+                id=id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
                 descriptor=descriptor,

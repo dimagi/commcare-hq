@@ -1,5 +1,5 @@
 <partial>
-  <detail id="reports.d3ff18cd83adf4550b35db8d391f6008.summary">
+  <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary">
     <title>
       <text>
         <locale id="cchq.report_menu"/>
@@ -35,10 +35,12 @@
       </header>
       <template form="graph">
         <graph type="bar">
-          <series nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/rows/row">
+          <series nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']/rows/row">
+            <configuration/>
             <x function="column[@id='owner']" />
             <y function="column[@id='tickets']" />
           </series>
+          <configuration/>
         </graph>
       </template>
     </field>

@@ -1,39 +1,51 @@
-<span class="product-selection-pane">
-    <table id="report_table_product_selection_pane" class="table table-nonfluid datatable">
+{% if is_rendered_as_email %}
+    <p>
+        <span style="font-weight: bold">Products:</span>
         {% for program, product_dict in products_by_program.iteritems %}
-            <tbody data-program="{{ program }}">
-                <tr>
-                    <td>
-                        <div class="program">{{ program }}
-                            <span>
-                                <input class="program-checkbox"
-                                       type="checkbox"
-                                       {% if product_dict.all %}checked{% endif %}
-                                       {% if is_rendered_as_email %}disabled{% endif %}/>
-                            </span>
-                        </div>
-                    </td>
-                </tr>
-                {% for product in product_dict.product_list %}
+            {% for product in product_dict.product_list %}
+                {% if product.checked %}
+                    {{ product.name }}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </p>
+{% else %}
+    <span class="product-selection-pane">
+        <table id="report_table_product_selection_pane" class="table table-nonfluid datatable">
+            {% for program, product_dict in products_by_program.iteritems %}
+                <tbody data-program="{{ program }}">
                     <tr>
                         <td>
-                            <input data-column="{{ product.idx }}"
-                                   class="toggle-column product-checkbox"
-                                   type="checkbox"
-                                   name="{{ product.name }} ({{ product.code }})"
-                                   value="{{ product.code }}"
-                                   {% if product.checked %}checked{% endif %}
-                                   {% if is_rendered_as_email %}disabled{% endif %}>
-                            {{ product.name }} ({{ product.code }})
+                            <div class="program">{{ program }}
+                                <span>
+                                    <input class="program-checkbox"
+                                           type="checkbox"
+                                           {% if product_dict.all %}checked{% endif %}
+                                           {% if is_rendered_as_email %}disabled{% endif %}/>
+                                </span>
+                            </div>
                         </td>
                     </tr>
-                {% endfor %}
-            </tbody>
-        {% endfor %}
-    </table>
+                    {% for product in product_dict.product_list %}
+                        <tr>
+                            <td>
+                                <input data-column="{{ product.idx }}"
+                                       class="toggle-column product-checkbox"
+                                       type="checkbox"
+                                       name="{{ product.name }} ({{ product.code }})"
+                                       value="{{ product.code }}"
+                                       {% if product.checked %}checked{% endif %}
+                                       {% if is_rendered_as_email %}disabled{% endif %}>
+                                {{ product.name }} ({{ product.code }})
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            {% endfor %}
+        </table>
 
-</span>
-
+    </span>
+{% endif %}
 
 <script>
     $('.program-checkbox').click(function() {

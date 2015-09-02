@@ -1,12 +1,13 @@
 from django.db.models import Q
+from django.http import HttpResponse
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from custom.common import ALL_OPTION
 from custom.ewsghana import StockLevelsReport
-from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import MultiReport, ReportingRatesData, ProductSelectionPane, EWSPieChart
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
@@ -14,7 +15,7 @@ from custom.ewsghana.reports.stock_levels_report import FacilityReportData, Stoc
 from custom.ewsghana.utils import get_country_id, ews_date_format
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.utils import link_format
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
@@ -28,9 +29,9 @@ class ReportingRates(ReportingRatesData):
     def title(self):
 
         if self.config.get('datespan_type') == '1':
-            return _('Reporting Rates({}, {})'.format(
+            return _('Reporting Rates({}, {})').format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
-            ))
+            )
         else:
             return _('Reporting Rates (Weekly Reporting Period)')
 
@@ -52,19 +53,19 @@ class ReportingRates(ReportingRatesData):
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
-            chart_data = [
-                dict(value=reported_percent,
-                     label=_('Reporting'),
-                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
-                                                                self.datetext())),
-                     color='green'),
+            chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting'),
+                     label=_('Non-Reporting %s%%' % non_reported_formatted),
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
-            ]
-        pie_chart = EWSPieChart('', '', chart_data, ['green', 'red'])
+                dict(value=reported_percent,
+                     label=_('Reporting %s%%' % reported_formatted),
+                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
+                                                                self.datetext())),
+                     color='green'),
+            ], key=lambda x: x['value'], reverse=True)
+        pie_chart = EWSPieChart('', '', chart_data, [chart_data[0]['color'], chart_data[1]['color']])
         pie_chart.tooltips = False
         return [pie_chart]
 
@@ -77,9 +78,9 @@ class ReportingDetails(ReportingRatesData):
     @property
     def title(self):
         if self.config.get('datespan_type') == '1':
-            return _('Reporting Details({}, {})'.format(
+            return _('Reporting Details({}, {})').format(
                 self.config['startdate'].strftime('%B'), self.config['startdate'].year
-            ))
+            )
         else:
             return _('Reporting Details (Weekly Reporting Period)')
 
@@ -104,15 +105,15 @@ class ReportingDetails(ReportingRatesData):
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                     label=_('Complete'),
-                     description=_("%s%% (%d) Complete Reports in %s" %
-                                   (complete_formatted, data['complete'], self.datetext())),
-                     color='green'),
+                    label=_('Complete %s%%') % complete_formatted,
+                    description=_("%s%% (%d) Complete Reports in %s") %
+                        (complete_formatted, data['complete'], self.datetext()),
+                    color='green'),
                 dict(value=incomplete_formatted,
-                     label=_('Incomplete'),
-                     description=_("%s%% (%d) Incomplete Reports in %s" %
-                                   (incomplete_formatted, data['incomplete'], self.datetext())),
-                     color='purple'),
+                    label=_('Incomplete %s%%') % incomplete_formatted,
+                    description=_("%s%% (%d) Incomplete Reports in %s") %
+                        (incomplete_formatted, data['incomplete'], self.datetext()),
+                    color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
         pie_chart.tooltips = False
@@ -124,7 +125,7 @@ class SummaryReportingRates(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'summary_reporting'
-    title = _('Summary Reporting Rates')
+    title = ugettext_lazy('Summary Reporting Rates')
     use_datatables = True
 
     @property
@@ -161,10 +162,10 @@ class SummaryReportingRates(ReportingRatesData):
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (values['location_id'], self.config['startdate'], self.config['enddate'])
                 )
-
+                is_rendered_as_email = self.config['is_rendered_as_email']
                 rows.append(
                     [
-                        link_format(location_name, url),
+                        link_format(location_name, url) if not is_rendered_as_email else location_name,
                         values['all'],
                         values['complete'] + values['incomplete'],
                         '%d%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
@@ -221,7 +222,7 @@ class NonReporting(ReportingRatesData):
                     date = ews_date_format(st[0].report.date)
                 else:
                     date = '---'
-                rows.append([link_format(name, url), date])
+                rows.append([link_format(name, url) if not self.config['is_rendered_as_email'] else name, date])
         return rows
 
 
@@ -230,7 +231,7 @@ class InCompleteReports(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'incomplete_reporting'
-    title = _('Incomplete Reports')
+    title = ugettext_lazy('Incomplete Reports')
     use_datatables = True
 
     @property
@@ -254,7 +255,12 @@ class InCompleteReports(ReportingRatesData):
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location_id, self.config['startdate'], self.config['enddate'])
                 )
-                rows.append([link_format(name, url), ews_date_format(date)])
+                rows.append(
+                    [
+                        link_format(name, url) if not self.config['is_rendered_as_email'] else name,
+                        ews_date_format(date)
+                    ]
+                )
         return rows
 
 
@@ -262,7 +268,7 @@ class AlertsData(ReportingRatesData):
     show_table = True
     show_chart = False
     slug = 'alerts'
-    title = _('Alerts')
+    title = ugettext_lazy('Alerts')
 
     @property
     def headers(self):
@@ -277,7 +283,7 @@ class AlertsData(ReportingRatesData):
 
         for hit in query.run().hits:
             with_reporters.add(hit['location_id'])
-            if hit['user_data'].get('role') == 'In Charge':
+            if 'In Charge' in hit['user_data'].get('role', []):
                 with_in_charge.add(hit['location_id'])
 
         return with_reporters, with_in_charge
@@ -315,9 +321,14 @@ class ReportingRatesReport(MultiReport):
     name = 'Reporting'
     title = 'Reporting'
     slug = 'reporting_page'
-    fields = [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]
     split = False
     is_exportable = True
+
+    @property
+    def fields(self):
+        if self.is_reporting_type():
+            return [EWSRestrictionLocationFilter, ProductByProgramFilter]
+        return [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]
 
     def get_supply_points(self, location_id):
         sql_location = SQLLocation.objects.get(location_id=location_id)
@@ -434,7 +445,7 @@ class ReportingRatesReport(MultiReport):
         }
 
     def report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, EWSDateFilter]]
 
     @property
     def report_config(self):
@@ -447,15 +458,49 @@ class ReportingRatesReport(MultiReport):
             products=None,
             program=program if program != ALL_OPTION else None,
             user=self.request.couch_user,
-            datespan_type=self.request.GET.get('datespan_type')
+            datespan_type=self.request.GET.get('datespan_type'),
+            is_rendered_as_email=self.is_rendered_as_email
         )
+
+    @property
+    def print_providers(self):
+        config = self.report_config
+        config.update(self.reporting_rates())
+        config.update({'is_rendered_as_print': self.is_rendered_as_print})
+        providers = [
+            ReportingRates(config=config),
+            ReportingDetails(config=config),
+            NonReporting(config=config),
+            InCompleteReports(config=config)
+        ]
+        location = self.active_location
+        if location.location_type.name.lower() in ['country', 'region']:
+            providers.insert(2, SummaryReportingRates(config=config))
+
+        return providers
+
+    @property
+    def email_providers(self):
+        config = self.report_config
+        config.update(self.reporting_rates())
+        config.update({'is_rendered_as_email': self.is_rendered_as_email})
+        providers = [
+            NonReporting(config=config),
+            InCompleteReports(config=config)
+        ]
+        if self.active_location.location_type.name.lower() in ['country', 'region']:
+            providers = [SummaryReportingRates(config=config)] + providers
+
+        return providers
 
     @property
     def data_providers(self):
         config = self.report_config
         if self.is_reporting_type():
             self.split = True
-            if self.is_rendered_as_email:
+            if self.is_rendered_as_email and self.is_rendered_as_print:
+                return [FacilityReportData(config), InventoryManagementData(config)]
+            elif self.is_rendered_as_email:
                 return [FacilityReportData(config)]
             else:
                 return [
@@ -468,30 +513,36 @@ class ReportingRatesReport(MultiReport):
                 ]
         self.split = False
         config.update(self.reporting_rates())
+        if self.is_rendered_as_print:
+            return self.print_providers
+        elif self.is_rendered_as_email:
+            return self.email_providers
+
         data_providers = [
             AlertsData(config=config),
             ReportingRates(config=config),
             ReportingDetails(config=config)
         ]
-        if config['location_id']:
-            location = SQLLocation.objects.get(location_id=config['location_id'])
-            if location.location_type.name.lower() in ['country', 'region']:
-                data_providers.append(SummaryReportingRates(config=config))
+        location = SQLLocation.objects.get(location_id=config['location_id'])
+        if config['location_id'] and location.location_type.name.lower() in ['country', 'region']:
+            data_providers.append(SummaryReportingRates(config=config))
 
-        if self.is_rendered_as_email:
-            data_providers = [NonReporting(config=config), InCompleteReports(config=config)]
-        else:
-            data_providers.extend([NonReporting(config=config), InCompleteReports(config=config)])
-
+        data_providers.extend([
+            NonReporting(config=config),
+            InCompleteReports(config=config)
+        ])
         return data_providers
 
     @property
     def export_table(self):
         if self.is_reporting_type():
             return super(ReportingRatesReport, self).export_table
-
-        reports = [self.report_context['reports'][-2]['report_table'],
+        non_reporting = self.report_context['reports'][-2]['report_table']
+        non_reporting['title'] = 'Non reporting'
+        reports = [non_reporting,
                    self.report_context['reports'][-1]['report_table']]
+        if self.report_location.location_type.name.lower() in ['country', 'region']:
+            reports = [self.report_context['reports'][-3]['report_table']] + reports
         return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
@@ -512,3 +563,18 @@ class ReportingRatesReport(MultiReport):
         table.extend(rows)
 
         return [export_sheet_name, self._report_info + table]
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_print = True
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        if self.is_reporting_type():
+            self.override_template = 'ewsghana/facility_page_print_report.html'
+        else:
+            self.override_template = 'ewsghana/reporting_rates_print_report.html'
+        return HttpResponse(self._async_context()['report'])

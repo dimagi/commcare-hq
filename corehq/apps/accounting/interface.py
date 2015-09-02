@@ -4,7 +4,7 @@ from corehq.apps.accounting.dispatcher import (
 from corehq.apps.accounting.filters import *
 from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
-    BillingAccount, Subscription, SoftwarePlan
+    BillingAccount, Subscription, SoftwarePlan, CreditAdjustment
 )
 from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal, make_anchor_tag
 from corehq.apps.reports.cache import request_cache
@@ -473,8 +473,12 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info = BillingContactInfo()
 
             account_url = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
+            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             columns = [
-                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(invoice_url, invoice.invoice_number)),
+                    invoice.id,
+                ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_url, invoice.account.name)),
                     invoice.account.name
@@ -501,7 +505,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             if not self.is_rendered_as_email:
                 columns.extend([
                     mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
@@ -653,9 +656,13 @@ class InvoiceInterface(InvoiceInterfaceBase):
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
+            invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
-                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(invoice_href, invoice.invoice_number)),
+                    invoice.id,
+                ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
@@ -721,7 +728,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 columns.extend([
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
                     mark_safe(make_anchor_tag(
-                        reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+                        invoice_href,
                         "Go to Invoice",
                         {"class": "btn"},
                     ))
@@ -898,7 +905,7 @@ class PaymentRecordInterface(GenericTabularReport):
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
             filters.update(
-                payment_method__account__name=account_name,
+                creditadjustment__credit_line__account__name=account_name,
             )
         if DateCreatedFilter.use_filter(self.request):
             filters.update(
@@ -908,7 +915,7 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                payment_method__billing_admin__domain=subscriber,
+                creditadjustment__credit_line__account__created_by_domain=subscriber,
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -921,6 +928,13 @@ class PaymentRecordInterface(GenericTabularReport):
     def payment_records(self):
         return PaymentRecord.objects.filter(**self.filters)
 
+    def get_account(self, payment_record):
+        return (CreditAdjustment.objects
+                .filter(payment_record_id=payment_record.id)
+                .latest('last_modified')
+                .credit_line
+                .account)
+
     @property
     def rows(self):
         rows = []
@@ -930,9 +944,9 @@ class PaymentRecordInterface(GenericTabularReport):
                     text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                record.payment_method.account.name,
-                record.payment_method.billing_admin.domain,
-                record.payment_method.billing_admin.web_user,
+                self.get_account(record).name,
+                self.get_account(record).created_by_domain,
+                record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
                         '<a href="https://dashboard.stripe.com/payments/%s"'

@@ -69,6 +69,7 @@ class LocationForm(forms.Form):
     external_id.widget.attrs['readonly'] = True
 
     strict = True  # optimization hack: strict or loose validation
+    # TODO remove user from parameters once all these branches are merged
 
     def __init__(self, location, bound_data=None, is_new=False, user=None,
                  *args, **kwargs):
@@ -150,7 +151,10 @@ class LocationForm(forms.Form):
         return errors
 
     def clean_parent_id(self):
-        parent_id = self.cleaned_data['parent_id'] or self.location.parent_id
+        if self.is_new_location:
+            parent_id = self.location.parent_id
+        else:
+            parent_id = self.cleaned_data['parent_id'] or None
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 

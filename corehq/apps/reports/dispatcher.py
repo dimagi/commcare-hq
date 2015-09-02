@@ -7,7 +7,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
@@ -247,11 +247,8 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check:
-            try:
-                ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
-            except PermissionDenied:
-                return False
+        if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
+            return False
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 

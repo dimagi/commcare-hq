@@ -3,7 +3,7 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.userreports import tasks
-from corehq import ConfigurableReport, ReportConfiguration
+from corehq import ConfigurableReport, ReportConfiguration, Session
 from corehq.apps.userreports.models import DataSourceConfiguration
 
 from casexml.apps.case.mock import CaseBlock
@@ -133,6 +133,9 @@ class ConfigurableReportViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls._delete_everything()
+        # todo: understand why this is necessary. the view call uses the session and the
+        # signal doesn't fire to kill it.
+        Session.remove()
 
     @classmethod
     def setUpClass(cls):

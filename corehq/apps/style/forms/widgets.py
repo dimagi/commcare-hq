@@ -138,3 +138,24 @@ class Select2Widget(forms.Select):
             'all': ('hqwebapp/js/lib/select2/select2.css',)
         }
         js = ('hqwebapp/js/lib/select2/select2.js',)
+
+
+class Select2MultipleChoiceWidget(forms.SelectMultiple):
+
+    class Media:
+        css = {
+            'all': ('hqwebapp/js/lib/select2/select2.css',)
+        }
+        js = ('hqwebapp/js/lib/select2/select2.js',)
+
+    def render(self, name, value, attrs=None, choices=()):
+        final_attrs = self.build_attrs(attrs)
+        output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
+        output += """
+            <script type="text/javascript">
+                $(function() {
+                    $('#%s').select2({ width: 'resolve' });
+                });
+            </script>
+        """ % final_attrs.get('id')
+        return mark_safe(output)

@@ -1,4 +1,3 @@
-
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -10,6 +9,25 @@
             width: 100%;
         }
     </style>
+
+    {#  TODO - remove after migration to bootstrap 3  #}
+    {% include 'userreports/partials/col-style.html' %}
+    {% include 'userreports/partials/panel-style.html' %}
+
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -24,34 +42,37 @@
         {% include 'app_manager/partials/new_app_buttons.html' %}
     {% else %}
         <div class="row-fluid">
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "chart" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Chart' %}
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "list" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Form or Case List' %}
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "worker" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Worker Report' %}
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="{% url "report_builder_select_source" domain "table" %}">
-                    <button class="btn btn-primary btn-large btn-report-type">
-                        {% trans 'Data Table' %}
-                    </button>
-                </a>
-            </div>
+            {% for tile in tiles %}
+            <tile-{{ tile.ng_directive }}
+                    slug="{{ tile.slug }}"
+                    title="{{ tile.title }}">
+                <div class="col-sm-2">
+                    <div class="panel panel-dashboard panel-dashboard-small">
+                        <div class="panel-heading">
+                            <a href="{{ tile.url }}"
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.helpText }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="bottom"
+                               title="">{{ tile.title }}</a>
+                        </div>
+                        <div class="panel-body">
+                            <a href="{{ tile.url }}"
+                               class="dashboard-link"
+                               track-analytics=""
+                               process-external-link=""
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.helpText }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="top"
+                               title="">
+                                <i class="dashboard-icon dashboard-icon-small {{ tile.icon }}"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </tile-{{ tile.ng_directive }}>
+            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}

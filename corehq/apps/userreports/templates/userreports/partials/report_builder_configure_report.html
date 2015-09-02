@@ -19,6 +19,12 @@
         {
             border-top-width: 0px;
         }
+        legend div.subtext
+        {
+            {# These values are sort of arbitrary. Would be good to base off of less variables #}
+            line-height: 18px;
+            margin-bottom: 8px;
+        }
     </style>
 {% endblock %}
 
@@ -29,6 +35,13 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+        });
+    </script>
     <script type="text/javascript">
         /**
          * Knockout view model representing a row in the filter property list
@@ -39,6 +52,7 @@
             this.existsInCurrentVersion = ko.observable(true);
             this.property = ko.observable("");
             this.displayText = ko.observable("");
+            this.userModifiedDisplayText = false;
             this.format = ko.observable("");
             this.dataSourceField = ko.observable("");
 
@@ -61,6 +75,12 @@
             this.isValid= ko.computed(function(){
                 return that.isNotBlank() && that.existsInCurrentVersion();
             });
+
+            this.property.subscribe(function(newValue) {
+                if (! that.userModifiedDisplayText){
+                    that.displayText(newValue);
+                }
+            });
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
@@ -68,6 +88,7 @@
             i.property(o.property !== undefined ? o.property : null);
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
+            i.userModifiedDisplayText = true;
             i.format(o.format);
             return i;
         };
@@ -78,9 +99,14 @@
         var propertyList = function(options) {
             var that = this;
             options = options || {};
+
             this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
+            this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
+            this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
-            this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
+            this.formatOptions = ko.observableArray(["Choice", "Date"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -126,22 +152,32 @@
             var initialColumns = _.map({{ initial_columns|JSON }}, function(i){
                 return PropertyListItem.wrap(i);
             });
+            // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
-                hasFormatCol: true,
+                hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 initialCols: initialFilters,
-                buttonText: 'Add Filter'
+                buttonText: 'Add Filter',
+                propertyHelpText: '{{ filter_property_help_text|escapejs}}',
+                displayHelpText: '{{ filter_display_help_text|escapejs }}',
+                formatHelpText: '{{ filter_format_help_text|escapejs }}'
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
                 initialCols: initialColumns,
                 buttonText: 'Add Column'
             });
-            this.submitHandler = function(){
+            this.submitHandler = function(formElement){
                 var isValid = true;
                 isValid = that.filtersList.validate() && isValid;
                 isValid = that.columnsList.validate() && isValid;
                 if (!isValid){
                     alert('Invalid report configuration. Please fix the issues and try again.');
+                    // The event handler that disables the button is triggered
+                    // after this handler is invoked. Therefore, we use _.defer()
+                    // to re-enable it immediately after the call stack clears.
+                    _.defer(function(el){
+                        $(el).find('.disable-on-submit').enableButton();
+                    }, formElement);
                 }
                 return isValid;
             }

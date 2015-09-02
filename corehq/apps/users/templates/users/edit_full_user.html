@@ -4,10 +4,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
 {% include 'users/partial/basic_info_js_inline.html' %}
 {% endblock %}

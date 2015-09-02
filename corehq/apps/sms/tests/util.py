@@ -23,14 +23,12 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
-from casexml.apps.case.models import CommCareCase
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
 import uuid
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.mock import CaseBlock
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V2
 
 
@@ -95,7 +93,7 @@ class TouchformsTestCase(LiveServerTestCase):
             owner_id=owner._id,
             user_id=owner._id,
             version=V2
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
@@ -106,7 +104,7 @@ class TouchformsTestCase(LiveServerTestCase):
             owner_id=user._id,
             version=V2,
             index={'parent': ('participant', case._id)}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
@@ -234,9 +232,9 @@ class TouchformsTestCase(LiveServerTestCase):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        [form] = get_forms_by_type(self.domain, 'XFormInstance',
+        result = get_forms_by_type(self.domain, 'XFormInstance',
                                    recent_first=True, limit=1)
-        return form
+        return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()

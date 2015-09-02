@@ -24,7 +24,6 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from corehq.pillows.utils import get_deleted_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -67,6 +66,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     configured_indicators = ListProperty()
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
@@ -169,12 +172,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         if self.base_item_expression:
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
         return None
-
-    @property
-    def table_exists(self):
-        adapter = IndicatorSqlAdapter(get_engine(), self)
-        table = adapter.get_table()
-        return table.exists()
 
     def get_columns(self):
         return self.indicators.get_columns()
@@ -349,8 +346,14 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return get_all_report_configs()
 
 
+CUSTOM_PREFIX = 'custom-'
+
+
 class CustomDataSourceConfiguration(JsonObject):
-    _datasource_id_prefix = 'custom-'
+    """
+    For custom data sources maintained in the repository
+    """
+    _datasource_id_prefix = CUSTOM_PREFIX
     domains = ListProperty()
     config = DictProperty()
 
@@ -387,4 +390,48 @@ class CustomDataSourceConfiguration(JsonObject):
             if ds.get_id == config_id:
                 return ds
         raise BadSpecError(_('The data source referenced by this report could '
+                             'not be found.'))
+
+
+class CustomReportConfiguration(JsonObject):
+    """
+    For statically defined reports based off of custom data sources
+    """
+    domains = ListProperty()
+    report_id = StringProperty()
+    data_source_table = StringProperty()
+    config = DictProperty()
+
+    @classmethod
+    def get_doc_id(cls, domain, report_id):
+        return '{}{}-{}'.format(CUSTOM_PREFIX, domain, report_id)
+
+    @classmethod
+    def all(cls):
+        for path in settings.CUSTOM_UCR_REPORTS:
+            with open(path) as f:
+                wrapped = cls.wrap(json.load(f))
+                for domain in wrapped.domains:
+                    doc = copy(wrapped.config)
+                    doc['domain'] = domain
+                    doc['_id'] = cls.get_doc_id(domain, wrapped.report_id)
+                    doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
+                    yield ReportConfiguration.wrap(doc)
+
+    @classmethod
+    def by_domain(cls, domain):
+        """
+        Returns a list of ReportConfiguration objects, NOT CustomReportConfigurations.
+        """
+        return [ds for ds in cls.all() if ds.domain == domain]
+
+    @classmethod
+    def by_id(cls, config_id):
+        """
+        Returns a ReportConfiguration object, NOT CustomReportConfigurations.
+        """
+        for ds in cls.all():
+            if ds.get_id == config_id:
+                return ds
+        raise BadSpecError(_('The report configuration referenced by this report could '
                              'not be found.'))

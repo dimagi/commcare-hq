@@ -14,13 +14,15 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
+    DataTablesAJAXPaginationMixin)
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
@@ -29,11 +31,10 @@ from corehq.apps.reminders.forms import (
     EditContactForm,
     RemindersInErrorForm,
     OneTimeReminderForm,
+    BroadcastForm,
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
     CaseReminderEventMessageForm,
-    KEYWORD_CONTENT_CHOICES,
-    KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
     KeywordForm,
     NO_RESPONSE,
@@ -60,6 +61,7 @@ from corehq.apps.reminders.models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
     METHOD_STRUCTURED_SMS,
+    METHOD_EMAIL,
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
@@ -80,6 +82,7 @@ from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
+from custom.ewsghana.forms import EWSBroadcastForm
 
 ACTION_ACTIVATE = 'activate'
 ACTION_DEACTIVATE = 'deactivate'
@@ -154,7 +157,7 @@ def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
             "start_datetime" : ServerTime(handler.start_datetime).user_time(timezone).done() if handler.start_datetime is not None else None,
         })
     
-    return render(request, "reminders/partial/list_reminders.html", {
+    return render(request, "reminders/list_broadcasts.html", {
         'domain': domain,
         'reminder_handlers': handlers,
         'reminder_type': reminder_type,
@@ -193,7 +196,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
     timezone = get_timezone_for_user(None, domain) # Use project timezone only
 
     if request.method == "POST":
-        form = OneTimeReminderForm(request.POST, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(request.POST,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -212,11 +217,15 @@ def add_one_time_reminder(request, domain, handler_id=None):
             handler.start_datetime = form.cleaned_data.get("datetime")
             handler.start_offset = 0
             handler.events = [CaseReminderEvent(
-                day_num = 0,
-                fire_time = time(0,0),
-                form_unique_id = form.cleaned_data.get("form_unique_id") if content_type == METHOD_SMS_SURVEY else None,
-                message = {handler.default_lang : form.cleaned_data.get("message")} if content_type == METHOD_SMS else {},
-                callback_timeout_intervals = [],
+                day_num=0,
+                fire_time=time(0, 0),
+                form_unique_id=(form.cleaned_data.get("form_unique_id")
+                                if content_type == METHOD_SMS_SURVEY else None),
+                message=({handler.default_lang: form.cleaned_data.get("message")}
+                         if content_type in (METHOD_SMS, METHOD_EMAIL) else {}),
+                subject=({handler.default_lang: form.cleaned_data.get("subject")}
+                         if content_type == METHOD_EMAIL else {}),
+                callback_timeout_intervals=[],
             )]
             handler.schedule_length = 1
             handler.event_interpretation = EVENT_AS_OFFSET
@@ -242,6 +251,11 @@ def add_one_time_reminder(request, domain, handler_id=None):
                     if handler.default_lang in handler.events[0].message
                     else None
                 ),
+                "subject": (
+                    handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject
+                    else None
+                ),
                 "form_unique_id": (
                     handler.events[0].form_unique_id
                     if handler.events[0].form_unique_id is not None
@@ -251,7 +265,9 @@ def add_one_time_reminder(request, domain, handler_id=None):
         else:
             initial = {}
 
-        form = OneTimeReminderForm(initial=initial, can_use_survey=can_use_survey_reminders(request))
+        form = OneTimeReminderForm(initial=initial,
+            can_use_survey=can_use_survey_reminders(request),
+            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
@@ -259,16 +275,21 @@ def add_one_time_reminder(request, domain, handler_id=None):
 def copy_one_time_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     initial = {
-        "send_type" : SEND_NOW,
-        "recipient_type" : handler.recipient,
-        "case_group_id" : handler.sample_id,
-        "user_group_id" : handler.user_group_id,
-        "content_type" : handler.method,
-        "message" : handler.events[0].message[handler.default_lang] if handler.default_lang in handler.events[0].message else None,
-        "form_unique_id" : handler.events[0].form_unique_id if handler.events[0].form_unique_id is not None else None,
+        "send_type": SEND_NOW,
+        "recipient_type": handler.recipient,
+        "case_group_id": handler.sample_id,
+        "user_group_id": handler.user_group_id,
+        "content_type": handler.method,
+        "message": (handler.events[0].message[handler.default_lang]
+                    if handler.default_lang in handler.events[0].message else None),
+        "subject": (handler.events[0].subject[handler.default_lang]
+                    if handler.default_lang in handler.events[0].subject else None),
+        "form_unique_id": (handler.events[0].form_unique_id
+                           if handler.events[0].form_unique_id is not None else None),
     }
     form = OneTimeReminderForm(initial=initial,
-        can_use_survey=can_use_survey_reminders(request))
+        can_use_survey=can_use_survey_reminders(request),
+        can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
     return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
@@ -892,6 +913,168 @@ class EditNormalKeywordView(EditStructuredKeywordView):
         return sk
 
 
+class CreateBroadcastView(BaseMessagingSectionView):
+    urlname = 'add_broadcast'
+    page_title = ugettext_lazy('New Broadcast')
+    template_name = 'reminders/broadcast.html'
+    force_create_new_broadcast = False
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': BroadcastListView.page_title,
+                'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+            },
+        ]
+
+    def create_new_broadcast(self):
+        return CaseReminderHandler(
+            domain=self.domain,
+            nickname='One-time Reminder',
+            reminder_type=REMINDER_TYPE_ONE_TIME,
+        )
+
+    @property
+    @memoized
+    def broadcast(self):
+        return self.create_new_broadcast()
+
+    @property
+    def form_kwargs(self):
+        return {
+            'domain': self.domain,
+            'can_use_survey': can_use_survey_reminders(self.request),
+        }
+
+    @property
+    def form_class(self):
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            return EWSBroadcastForm
+        else:
+            return BroadcastForm
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return self.form_class(self.request.POST, **self.form_kwargs)
+        else:
+            return self.form_class(**self.form_kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.broadcast_form,
+        }
+
+    def save_model(self, broadcast, form):
+        broadcast.default_lang = 'xx'
+        broadcast.method = form.cleaned_data.get('content_type')
+        broadcast.recipient = form.cleaned_data.get('recipient_type')
+        broadcast.start_condition_type = ON_DATETIME
+        broadcast.start_datetime = form.cleaned_data.get('datetime')
+        broadcast.start_offset = 0
+        broadcast.events = [CaseReminderEvent(
+            day_num=0,
+            fire_time=time(0, 0),
+            form_unique_id=form.cleaned_data.get('form_unique_id'),
+            message=({broadcast.default_lang: form.cleaned_data.get('message')}
+                     if form.cleaned_data.get('message') else {}),
+            subject=({broadcast.default_lang: form.cleaned_data.get('subject')}
+                     if form.cleaned_data.get('subject') else {}),
+            callback_timeout_intervals=[],
+        )]
+        broadcast.schedule_length = 1
+        broadcast.event_interpretation = EVENT_AS_OFFSET
+        broadcast.max_iteration_count = 1
+        broadcast.sample_id = form.cleaned_data.get('case_group_id')
+        broadcast.user_group_id = form.cleaned_data.get('user_group_id')
+        broadcast.location_ids = form.cleaned_data.get('location_ids')
+        broadcast.include_child_locations = form.cleaned_data.get('include_child_locations')
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            broadcast.user_data_filter = form.get_user_data_filter()
+        broadcast.save()
+
+    def post(self, request, *args, **kwargs):
+        if self.broadcast_form.is_valid():
+            if self.force_create_new_broadcast:
+                broadcast = self.create_new_broadcast()
+            else:
+                broadcast = self.broadcast
+
+            self.save_model(broadcast, self.broadcast_form)
+            return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditBroadcastView(CreateBroadcastView):
+    urlname = 'edit_broadcast'
+    page_title = ugettext_lazy('Edit Broadcast')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.broadcast_id])
+
+    @property
+    def broadcast_id(self):
+        return self.kwargs.get('broadcast_id')
+
+    @property
+    @memoized
+    def broadcast(self):
+        try:
+            broadcast = CaseReminderHandler.get(self.broadcast_id)
+        except:
+            raise Http404()
+
+        if (
+            broadcast.doc_type != 'CaseReminderHandler' or
+            broadcast.domain != self.domain or
+            broadcast.reminder_type != REMINDER_TYPE_ONE_TIME
+        ):
+            raise Http404()
+
+        return broadcast
+
+    @property
+    @memoized
+    def broadcast_form(self):
+        if self.request.method == 'POST':
+            return self.form_class(self.request.POST, **self.form_kwargs)
+
+        broadcast = self.broadcast
+        start_user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        initial = {
+            'timing': SEND_LATER,
+            'date': start_user_time.ui_string('%Y-%m-%d'),
+            'time': start_user_time.ui_string('%H:%M'),
+            'recipient_type': broadcast.recipient,
+            'case_group_id': broadcast.sample_id,
+            'user_group_id': broadcast.user_group_id,
+            'content_type': broadcast.method,
+            'message': broadcast.events[0].message.get(broadcast.default_lang, None),
+            'subject': broadcast.events[0].subject.get(broadcast.default_lang, None),
+            'form_unique_id': broadcast.events[0].form_unique_id,
+            'location_ids': ','.join(broadcast.location_ids),
+            'include_child_locations': broadcast.include_child_locations,
+        }
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            initial['role'] = broadcast.user_data_filter.get('role', [None])[0]
+        return self.form_class(initial=initial, **self.form_kwargs)
+
+
+class CopyBroadcastView(EditBroadcastView):
+    urlname = 'copy_broadcast'
+    page_title = ugettext_lazy('Copy Broadcast')
+    force_create_new_broadcast = True
+
+
 @survey_reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
@@ -1413,6 +1596,99 @@ class RemindersListView(BaseMessagingSectionView):
         return HttpResponse(status=400)
 
 
+class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+    template_name = 'reminders/broadcasts_list.html'
+    urlname = 'list_broadcasts'
+    page_title = ugettext_lazy('Broadcasts')
+
+    LIST_UPCOMING = 'list_upcoming'
+    LIST_PAST = 'list_past'
+    DELETE_BROADCAST = 'delete_broadcast'
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    def format_recipients(self, broadcast):
+        reminders = broadcast.get_reminders()
+        if len(reminders) == 0:
+            return _('(none)')
+        return get_recipient_name(reminders[0].recipient, include_desc=False)
+
+    def format_content(self, broadcast):
+        if broadcast.method == METHOD_SMS_SURVEY:
+            content = get_form_name(broadcast.events[0].form_unique_id)
+        else:
+            message = broadcast.events[0].message[broadcast.default_lang]
+            if len(message) > 50:
+                content = '"%s..."' % message[:47]
+            else:
+                content = '"%s"' % message
+        return content
+
+    def format_broadcast_name(self, broadcast):
+        user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
+        return user_time.ui_string(SERVER_DATETIME_FORMAT)
+
+    def format_broadcast_data(self, ids):
+        broadcasts = CaseReminderHandler.get_handlers_from_ids(ids)
+        result = []
+        for broadcast in broadcasts:
+            display = self.format_broadcast_name(broadcast)
+            result.append([
+                display,
+                self.format_recipients(broadcast),
+                self.format_content(broadcast),
+                broadcast._id,
+                reverse(EditBroadcastView.urlname, args=[self.domain, broadcast._id]),
+                reverse(CopyBroadcastView.urlname, args=[self.domain, broadcast._id]),
+            ])
+        return result
+
+    def get_broadcast_ajax_response(self, upcoming=True):
+        """
+        upcoming - True to include only upcoming broadcasts, False to include
+                   only past broadcasts.
+        """
+        if upcoming:
+            ids = CaseReminderHandler.get_upcoming_broadcast_ids(self.domain)
+        else:
+            ids = CaseReminderHandler.get_past_broadcast_ids(self.domain)
+
+        total_records = len(ids)
+        ids = ids[self.display_start:self.display_start + self.display_length]
+        data = self.format_broadcast_data(ids)
+        return self.datatables_ajax_response(data, total_records)
+
+    def delete_broadcast(self, broadcast_id):
+        try:
+            broadcast = CaseReminderHandler.get(broadcast_id)
+        except:
+            raise Http404()
+
+        if broadcast.doc_type != 'CaseReminderHandler' or broadcast.domain != self.domain:
+            raise Http404()
+
+        broadcast.retire()
+        return HttpResponse()
+
+    def get(self, *args, **kwargs):
+        action = self.request.GET.get('action')
+        if action in (self.LIST_UPCOMING, self.LIST_PAST):
+            upcoming = (action == self.LIST_UPCOMING)
+            return self.get_broadcast_ajax_response(upcoming)
+        else:
+            return super(BroadcastListView, self).get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action == self.DELETE_BROADCAST:
+            return self.delete_broadcast(self.request.POST.get('broadcast_id', None))
+        else:
+            return HttpResponse(status=400)
+
+
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = 'reminders/keyword_list.html'
     urlname = 'keyword_list'
@@ -1466,8 +1742,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             }
 
     def _fmt_keyword_data(self, keyword):
-        actions = [a.action for a in keyword.actions]
-        is_structured = METHOD_STRUCTURED_SMS in actions
         return {
             'id': keyword._id,
             'keyword': keyword.keyword,
@@ -1475,7 +1749,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
                 args=[self.domain, keyword._id]
-            ) if is_structured else reverse(
+            ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
                 args=[self.domain, keyword._id]
             ),
@@ -1509,35 +1783,29 @@ def int_or_none(i):
 
 @reminders_framework_permission
 def rule_progress(request, domain):
-    handler_id = request.GET.get("handler_id", None)
-    response = {
-        "success": False,
-    }
+    client = get_redis_client()
+    handlers = CaseReminderHandler.get_handlers(domain,
+        reminder_type_filter=REMINDER_TYPE_DEFAULT)
 
-    try:
-        assert isinstance(handler_id, basestring)
-        handler = CaseReminderHandler.get(handler_id)
-        assert handler.doc_type == "CaseReminderHandler"
-        assert handler.domain == domain
+    response = {}
+    for handler in handlers:
+        info = {}
         if handler.locked:
-            response["complete"] = False
+            info['complete'] = False
             current = None
             total = None
-            # It shouldn't be necessary to lock this out, but a deadlock can
-            # happen in rare cases without it
-            with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-                client = get_redis_client()
-                current = client.get("reminder-rule-processing-current-%s" % handler_id)
-                total = client.get("reminder-rule-processing-total-%s" % handler_id)
-            response["current"] = int_or_none(current)
-            response["total"] = int_or_none(total)
-            response["success"] = True
+
+            try:
+                current = client.get('reminder-rule-processing-current-%s' % handler._id)
+                total = client.get('reminder-rule-processing-total-%s' % handler._id)
+            except:
+                continue
+
+            info['current'] = int_or_none(current)
+            info['total'] = int_or_none(total)
         else:
-            response["complete"] = True
-            response["success"] = True
-    except:
-        pass
+            info['complete'] = True
+
+        response[handler._id] = info
 
     return HttpResponse(json.dumps(response))
-
-

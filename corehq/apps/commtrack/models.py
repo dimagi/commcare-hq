@@ -2,23 +2,22 @@ from decimal import Decimal
 import uuid
 import logging
 from xml.etree import ElementTree
-from copy import copy
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.db import transaction
+
 from django.utils.translation import ugettext as _
 from django.dispatch import receiver
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+
 from dimagi.ext.couchdbkit import *
+from dimagi.ext import jsonobject
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
-    compute_daily_consumption)
-from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
+from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
+from casexml.apps.stock.models import StockReport, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.commtrack import const
@@ -31,10 +30,9 @@ from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, DAYS_IN_MONTH
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
-from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -289,14 +287,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     def openlmis_enabled(self):
         return self.openlmis_config.enabled
 
-def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
-    extras = {"limit": limit} if limit else {}
-    startkey = [domain, location_id] if location_id else [domain]
-    endkey = copy(startkey) + [{}]
-    return CommCareCase.get_db().view(
-        view_name, startkey=startkey, endkey=endkey,
-        reduce=False, skip=skip, **extras)
-
 
 def force_int(value):
     if value is None:
@@ -321,128 +311,44 @@ def force_empty_string_to_null(value):
         return value
 
 
-class StringDataSchema(DocumentSchema):
-
-    @classmethod
-    def force_wrap(cls, data):
-        data = copy(data)
-        for property in cls.properties().values():
-            transform = {
-                IntegerProperty: force_int,
-                BooleanProperty: force_bool,
-                DateProperty: force_empty_string_to_null,
-                DateTimeProperty: force_empty_string_to_null,
-            }.get(property.__class__, lambda x: x)
-            data[property.name] = transform(data.get(property.name))
-        return super(StringDataSchema, cls).wrap(data)
-
-    @classmethod
-    def wrap(cls, data):
-        raise NotImplementedError()
-
-class NewStockReport(object):
+class StockReportHelper(jsonobject.JsonObject):
     """
     Intermediate class for dealing with stock XML
     """
-    # todo: fix name, remove old stock report class
-    def __init__(self, form, timestamp, tag, transactions):
-        self._form = form
-        self.form_id = form._id
-        self.timestamp = timestamp
-        self.tag = tag
-        self.transactions = transactions
+
+    domain = jsonobject.StringProperty()
+    form_id = jsonobject.StringProperty()
+    timestamp = jsonobject.DateTimeProperty()
+    tag = jsonobject.StringProperty()
+    transactions = jsonobject.ListProperty(lambda: StockTransactionHelper)
+    server_date = jsonobject.DateTimeProperty()
 
     @classmethod
-    def from_xml(cls, form, config, elem):
-        tag = elem.tag
-        tag = tag[tag.find('}')+1:] # strip out ns
-        timestamp = force_to_datetime(elem.attrib.get('date') or form.received_on).replace(tzinfo=None)
-        products = elem.findall('./{%s}entry' % stockconst.COMMTRACK_REPORT_XMLNS)
-        transactions = [t for prod_entry in products for t in
-                        StockTransaction.from_xml(config, timestamp, tag, elem, prod_entry)]
-
-        return cls(form, timestamp, tag, transactions)
-
-    @transaction.atomic
-    def create_models(self, domain=None):
-        # todo: this function should probably move to somewhere in casexml.apps.stock
-        if self.tag not in stockconst.VALID_REPORT_TYPES:
-            return
-        report = DbStockReport.objects.create(
-            form_id=self.form_id,
-            date=self.timestamp,
-            type=self.tag,
-            domain=self._form.domain,
+    def make_from_form(cls, form, timestamp, tag, transactions):
+        return cls(
+            domain=form.domain,
+            form_id=form.get_id,
+            timestamp=timestamp,
+            tag=tag,
+            transactions=transactions,
+            server_date=form.received_on,
         )
-        for txn in self.transactions:
-            db_txn = DbStockTransaction(
-                report=report,
-                case_id=txn.case_id,
-                section_id=txn.section_id,
-                product_id=txn.product_id,
-            )
-            if domain:
-                # set this as a shortcut for post save signal receivers
-                db_txn.domain = domain
-            db_txn.type = txn.action
-            db_txn.subtype = txn.subaction
-            if self.tag == stockconst.REPORT_TYPE_BALANCE:
-                db_txn.stock_on_hand = txn.quantity
-                db_txn.quantity = 0
-            else:
-                assert self.tag == stockconst.REPORT_TYPE_TRANSFER
-                previous_transaction = db_txn.get_previous_transaction()
-                db_txn.quantity = txn.relative_quantity
-                db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
-            db_txn.save()
 
 
-class StockTransaction(object):
+class StockTransactionHelper(jsonobject.JsonObject):
     """
     Helper class for transactions
     """
-    action = None
-    subaction = None
-    quantity = None
-    location_id = None
-    product = None
-    timestamp = None
 
-    def __init__(self, **kwargs):
-        def _action_def(val):
-            return {
-                'action': val.action,
-                'subaction': val.subaction,
-            }
-        def _product(val):
-            # FIXME want to store product in memory object (but not persist to couch...
-            # is this possible in jsonobject?)
-            #self.product = val
-            return {
-                'product_id': val._id,
-            }
-        def _inferred(val):
-            return {
-                'subaction': stockconst.TRANSACTION_SUBTYPE_INFERRED,
-            }
-        def _config(val):
-            ret = {
-                'processing_order': STOCK_ACTION_ORDER.index(kwargs['action']),
-            }
-            if not kwargs.get('domain'):
-                ret['domain'] = val.domain
-            return ret
-
-        for name, var in locals().iteritems():
-            if hasattr(var, '__call__') and name.startswith('_'):
-                attr = name[1:]
-                if kwargs.get(attr):
-                    val = kwargs[attr]
-                    del kwargs[attr]
-                    kwargs.update(var(val))
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    product_id = jsonobject.StringProperty()
+    action = jsonobject.StringProperty()
+    subaction = jsonobject.StringProperty()
+    domain = jsonobject.StringProperty()
+    quantity = jsonobject.DecimalProperty()
+    location_id = jsonobject.StringProperty()
+    timestamp = jsonobject.DateTimeProperty()
+    case_id = jsonobject.StringProperty()
+    section_id = jsonobject.StringProperty()
 
     @property
     def relative_quantity(self):
@@ -456,7 +362,8 @@ class StockTransaction(object):
             return self.quantity
 
     def action_config(self, commtrack_config):
-        action = CommtrackActionConfig(action=self.action, subaction=self.subaction)
+        action = CommtrackActionConfig(action=self.action,
+                                       subaction=self.subaction)
         for a in commtrack_config.all_actions:
             if a.name == action.name:
                 return a
@@ -467,90 +374,14 @@ class StockTransaction(object):
         if self.timestamp:
             return dateparse.json_format_datetime(self.timestamp)
 
-    @classmethod
-    def from_xml(cls, config, timestamp, action_tag, action_node, product_node):
-        action_type = action_node.attrib.get('type')
-        subaction = action_type
-        product_id = product_node.attrib.get('id')
-
-        def _txn(action, case_id, section_id, quantity):
-            # warning: here be closures
-            quantity = Decimal(str(quantity)) if quantity is not None else None
-            data = {
-                'timestamp': timestamp,
-                'product_id': product_id,
-                'quantity': quantity,
-                'action': action,
-                'case_id': case_id,
-                'section_id': section_id,
-                'subaction': subaction if subaction and subaction != action else None
-                # note: no location id
-            }
-            return cls(config=config, **data)
-
-        def _yield_txns(section_id, quantity):
-            # warning: here be closures
-            if action_tag == 'balance':
-                case_id = action_node.attrib['entity-id']
-                yield _txn(
-                    action=const.StockActions.STOCKONHAND if quantity > 0 else const.StockActions.STOCKOUT,
-                    case_id=case_id,
-                    section_id=section_id,
-                    quantity=quantity,
-                )
-            elif action_tag == 'transfer':
-                src, dst = [action_node.attrib.get(k) for k in ('src', 'dest')]
-                assert src or dst
-                if src is not None:
-                    yield _txn(action=const.StockActions.CONSUMPTION, case_id=src,
-                               section_id=section_id, quantity=quantity)
-                if dst is not None:
-                    yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
-                               section_id=section_id, quantity=quantity)
-
-        def _quantity_or_none(value, config, section_id):
-            try:
-                return float(value)
-            except (ValueError, TypeError):
-                logging.error((
-                    "Non-numeric quantity submitted on domain %s for "
-                    "a %s ledger" % (config.domain, section_id)
-                ))
-                return None
-
-        section_id = action_node.attrib.get('section-id', None)
-        grouped_entries = section_id is not None
-        if grouped_entries:
-            quantity = _quantity_or_none(
-                product_node.attrib.get('quantity'),
-                config,
-                section_id
-            )
-            # make sure quantity is not an empty, unset node value
-            if quantity is not None:
-                for txn in _yield_txns(section_id, quantity):
-                    yield txn
-        else:
-            values = [child for child in product_node]
-            for value in values:
-                section_id = value.attrib.get('section-id')
-                quantity = _quantity_or_none(
-                    value.attrib.get('quantity'),
-                    config,
-                    section_id
-                )
-                # make sure quantity is not an empty, unset node value
-                if quantity is not None:
-                    for txn in _yield_txns(section_id, quantity):
-                        yield txn
-
     def to_xml(self, E=None, **kwargs):
         if not E:
             E = XML()
 
         return E.entry(
             id=self.product_id,
-            quantity=str(self.quantity if self.action != StockActions.STOCKOUT else 0),
+            quantity=str(self.quantity if self.action != StockActions.STOCKOUT
+                         else 0),
         )
 
     @property
@@ -562,7 +393,7 @@ class StockTransaction(object):
         A short string representation of this to be used in sms correspondence
         """
         if self.quantity is not None:
-            quant = int(self.quantity) if self.quantity == int(self.quantity) else self.quantity
+            quant = self.quantity
         else:
             quant = ''
         # FIXME product fetch here is inefficient
@@ -576,17 +407,6 @@ class StockTransaction(object):
             location_id=self.location_id,
             product_id=self.product_id,
         )
-
-
-def _get_single_index(case, identifier, type, wrapper=None):
-    matching = filter(lambda i: i.identifier == identifier, case.indices)
-    if matching:
-        assert len(matching) == 1, 'should only be one parent index'
-        assert matching[0].referenced_type == type, \
-             ' parent had bad case type %s' % matching[0].referenced_type
-        ref_id = matching[0].referenced_id
-        return wrapper.get(ref_id) if wrapper else ref_id
-    return None
 
 
 class SupplyPointCase(CommCareCase):
@@ -617,7 +437,7 @@ class SupplyPointCase(CommCareCase):
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
         username = const.COMMTRACK_USERNAME
-        casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=dateparse.json_format_datetime))
+        casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, domain, username, const.get_commtrack_user_id(domain),
                            xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
         return cls.get(caseblock._id)
@@ -751,139 +571,6 @@ class SupplyPointCase(CommCareCase):
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
 DEFAULT_CONSUMPTION = 10.  # per month
-
-
-class RequisitionCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to requisitions.
-    """
-    class Meta:
-        # This is necessary otherwise syncdb will confuse this app with casexml
-        app_label = "commtrack"
-
-    requisition_status = StringProperty()
-
-    # TODO none of these properties are supported on mobile currently
-    # we need to discuss what will be eventually so we know what we need
-    # to support here
-    requested_on = DateTimeProperty()
-    approved_on = DateTimeProperty()
-    fulfilled_on = DateTimeProperty()
-    received_on = DateTimeProperty()
-    requested_by = StringProperty()
-    approved_by = StringProperty()
-    fulfilled_by = StringProperty()
-    received_by = StringProperty()
-
-    @memoized
-    def get_location(self):
-        try:
-            return SupplyPointCase.get(self.indices[0].referenced_id).location
-        except ResourceNotFound:
-            return None
-
-    @memoized
-    def get_requester(self):
-        # TODO this doesn't get set by mobile yet
-        # if self.requested_by:
-        #     return CommCareUser.get(self.requested_by)
-        return None
-
-    def sms_format(self):
-        if self.requisition_status == RequisitionStatus.REQUESTED:
-            section = 'ct-requested'
-        elif self.requisition_status == RequisitionStatus.APPROVED:
-            section = 'ct-approved'
-        else:
-            section = 'stock'
-
-        formatted_strings = []
-        states = StockState.objects.filter(
-            case_id=self._id,
-            section_id=section
-        )
-        for state in states:
-            product = Product.get(state.product_id)
-            formatted_strings.append(
-                '%s:%d' % (product.code, state.stock_on_hand)
-            )
-        return ' '.join(sorted(formatted_strings))
-
-    def get_next_action(self):
-        req_config = CommtrackConfig.for_domain(self.domain).requisition_config
-        return req_config.get_next_action(
-            RequisitionStatus.to_action_type(self.requisition_status)
-        )
-
-    @classmethod
-    def get_by_external_id(cls, domain, external_id):
-        # only used by openlmis
-        raise NotImplementedError()
-
-        # return cls.view('hqcase/by_domain_external_id',
-        #     key=[domain, external_id],
-        #     include_docs=True, reduce=False,
-        #     classes={'CommCareCase': RequisitionCase}
-        # ).all()
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Status"),
-                            "expr": "requisition_status"
-                        }
-                    ],
-                ]
-            },
-            {
-                "layout": [
-                    [
-                        {
-                            "name": _("Requested On"),
-                            "expr": "requested_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("requested_by"),
-                            "expr": "requested_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Approved On"),
-                            "expr": "approved_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("approved_by"),
-                            "expr": "approved_by"
-                        }
-                    ],
-                    [
-                        {
-                            "name": _("Received On"),
-                            "expr": "received_on",
-                            "parse_date": True
-                        },
-                        {
-                            "name": _("received_by"),
-                            "expr": "received_by"
-                        }
-                    ]
-                ]
-            }
-        ]
-
-
-class RequisitionTransaction(StockTransaction):
-    @property
-    def category(self):
-        return 'requisition'
 
 
 class ActiveManager(models.Manager):
@@ -1054,78 +741,6 @@ def sync_location_supply_point(loc):
             pass
 
 
-@receiver(post_save, sender=DbStockTransaction)
-def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
-    update_stock_state_for_transaction(instance)
-
-
-def update_stock_state_for_transaction(instance):
-    try:
-        domain_name = instance.domain
-    except AttributeError:
-        domain_name = CommCareCase.get(instance.case_id).domain
-
-    domain = Domain.get_by_name(domain_name)
-
-    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
-
-    try:
-        sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
-    except SQLLocation.DoesNotExist:
-        sql_location = None
-
-    try:
-        state = StockState.include_archived.get(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-        )
-    except StockState.DoesNotExist:
-        state = StockState(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-            sql_product=sql_product,
-            sql_location=sql_location,
-        )
-
-    state.last_modified_date = instance.report.date
-    state.stock_on_hand = instance.stock_on_hand
-
-    if domain and domain.commtrack_settings:
-        consumption_calc = domain.commtrack_settings.get_consumption_config()
-    else:
-        consumption_calc = None
-
-    state.daily_consumption = compute_daily_consumption(
-        instance.case_id,
-        instance.product_id,
-        instance.report.date,
-        'stock',
-        consumption_calc
-    )
-    # so you don't have to look it up again in the signal receivers
-    state.domain = domain
-    state.save()
-
-
-@receiver(post_delete, sender=DbStockTransaction)
-def stock_state_deleted(sender, instance, *args, **kwargs):
-    qs = DbStockTransaction.objects.filter(
-        section_id=instance.section_id,
-        case_id=instance.case_id,
-        product_id=instance.product_id,
-    ).order_by('-report__date')
-    if qs:
-        update_stock_state_for_transaction(qs[0])
-    else:
-        StockState.objects.filter(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-        ).delete()
-
-
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
@@ -1156,15 +771,12 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    DbStockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform._id).delete()
 
 
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    for case in process_stock(xform):
-        case.save()
-
-
-# import signals
-from . import signals
+    result = process_stock(xform)
+    result.commit()
+    CommCareCase.get_db().bulk_save(result.relevant_cases)

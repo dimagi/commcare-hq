@@ -19,21 +19,29 @@ class SupervisionSummaryData(ILSData):
 
     @property
     def rows(self):
-        super_data = []
         if self.config['org_summary']:
             data = GroupSummary.objects.filter(
                 title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                 org_summary__in=self.config['org_summary']
             ).aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
-            super_data.append(GroupSummary(
+            return [GroupSummary(
                 title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                 responded=data['responded__avg'],
                 on_time=data['on_time__avg'],
                 complete=data['complete__avg'],
                 total=data['total__max']
-            ))
-        return super_data
+            )]
+        else:
+            return [
+                GroupSummary(
+                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                    responded=0,
+                    on_time=0,
+                    complete=0,
+                    total=0
+                )
+            ]
 
 
 class SupervisionData(ILSData):
@@ -41,6 +49,7 @@ class SupervisionData(ILSData):
     slug = 'supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -104,6 +113,7 @@ class DistrictSupervisionData(ILSData):
     slug = 'district_supervision_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -123,11 +133,17 @@ class DistrictSupervisionData(ILSData):
             for loc in locations:
                 total_responses = 0
                 total_possible = 0
-                for group_summary in GroupSummary.objects.filter(
+                group_summaries = GroupSummary.objects.filter(
                     org_summary__date__lte=self.config['startdate'],
                     org_summary__location_id=loc.location_id,
-                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY
-                ):
+                    title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                    total=1
+                )
+
+                if not group_summaries:
+                    continue
+
+                for group_summary in group_summaries:
                     if group_summary:
                         total_responses += group_summary.responded
                         total_possible += group_summary.total

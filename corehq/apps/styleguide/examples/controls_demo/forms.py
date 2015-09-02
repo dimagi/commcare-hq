@@ -1,8 +1,8 @@
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _
-from bootstrap3_crispy.helper import FormHelper
-from bootstrap3_crispy import layout as crispy
-from bootstrap3_crispy import bootstrap as twbscrispy
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 OFFICES = [

@@ -2,12 +2,12 @@
 API endpoints for filter options
 """
 import logging
-from itertools import islice
 
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
+from corehq import toggles
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.elastic import es_wrapper, ESError
@@ -31,29 +31,11 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def get(self, request, domain):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
-        if self.q and self.q.strip():
-            tokens = self.q.split()
-            queries = ['%s*' % tokens.pop()] + tokens
-            self.user_query = {"bool": {"must": [
-                {"query_string": {
-                    "query": q,
-                    "fields": ["first_name", "last_name", "username"],
-                }} for q in queries
-            ]}}
-            self.group_query = {"bool": {"must": [
-                {"query_string": {
-                    "query": q,
-                    "default_field": "name",
-                }} for q in queries
-            ]}}
-        else:
-            self.user_query = None
-            self.group_query = None
         try:
-            self._init_counts()
+            count, options = self.get_options()
             return self.render_json_response({
-                'results': self.get_options(),
-                'total': self.total_results,
+                'results': options,
+                'total': count,
             })
         except ESError as e:
             if self.q:
@@ -64,7 +46,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 # introduced by the addition of the query_string query, which
                 # contains the user's input.
                 logger.info('ElasticSearch error caused by query "%s": %s',
-                    self.q, e)
+                            self.q, e)
             else:
                 # The error was our fault
                 notify_exception(request, e)
@@ -73,81 +55,91 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'total': 0,
         })
 
+    def get_locations_query(self, query):
+        return SQLLocation.objects.filter_path_by_user_input(self.domain, query)
+
+    def get_locations(self, query, start, size):
+        return map(self.utils.location_tuple,
+                   self.get_locations_query(query)[start:size])
+
+    def get_locations_size(self, query):
+        return self.get_locations_query(query).count()
+
     @property
-    def locations_query(self):
-        return SQLLocation.objects.filter(
-            name__icontains=self.q.lower(),
-            domain=self.domain,
-        )
-
-    def get_location_groups(self):
-        for loc in self.locations_query:
-            group = loc.reporting_group_object()
-            yield (group._id, group.name + ' [group]')
-
-    def get_locations_size(self):
-        return self.locations_query.count()
-
-    def _init_counts(self):
-        users, _ = self.user_es_call(size=0, return_count=True)
-        self.group_start = len(self.static_options)
-        self.location_start = self.group_start + self.get_group_size()
-        self.user_start = self.location_start + self.get_locations_size()
-        self.total_results = self.user_start + users
+    def data_sources(self):
+        if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
+        else:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_users_size, self.get_users),
+            ]
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
-        limit = int(self.request.GET.get('page_limit', 10))
-        start = limit * (page - 1)
-        stop = start + limit
+        size = int(self.request.GET.get('page_limit', 10))
+        start = size * (page - 1)
+        count, options = paginate_options(self.data_sources, self.q, start, size)
+        return count, [{'id': id_, 'text': text} for id_, text in options]
 
-        options = self.static_options[start:stop]
+    def get_static_options_size(self, query):
+        return len(self.get_all_static_options(query))
 
-        g_start = max(0, start - self.group_start)
-        g_size = limit - len(options) if start < self.location_start else 0
-        options += self.get_groups(g_start, g_size) if g_size else []
+    def get_all_static_options(self, query):
+        return [user_type for user_type in self.utils.static_options
+                if query.lower() in user_type[1].lower()]
 
-        l_start = max(0, start - self.location_start)
-        l_size = limit - len(options) if start < self.user_start else 0
-        l_end = l_start + l_size
-        location_groups = islice(self.get_location_groups(), l_start, l_end)
-        options += location_groups
+    def get_static_options(self, query, start, size):
+        return self.get_all_static_options(query)[start:start+size]
 
-        u_start = max(0, start - self.user_start)
-        u_size = limit - len(options)
-        options += self.get_users(u_start, u_size) if u_size else []
+    def get_es_query_strings(self, query):
+        if query and query.strip():
+            tokens = query.split()
+            return ['%s*' % tokens.pop()] + tokens
 
-        return [{'id': id, 'text': text} for id, text in options]
+    def user_es_call(self, query, **kwargs):
+        query = {"bool": {"must": [
+            {"query_string": {
+                "query": q,
+                "fields": ["first_name", "last_name", "username"],
+            }} for q in self.get_es_query_strings(query)
+        ]}} if query and query.strip() else None
+        return es_wrapper('users', domain=self.domain, q=query, **kwargs)
 
-    @property
-    @memoized
-    def static_options(self):
-        return filter(
-            lambda user_type: self.q.lower() in user_type[1].lower(),
-            self.utils.static_options
-        )
+    def get_users_size(self, query):
+        return self.user_es_call(query, size=0, return_count=True)[0]
 
-    def user_es_call(self, **kwargs):
-        return es_wrapper('users', domain=self.domain, q=self.user_query, **kwargs)
-
-    def get_users(self, start, size):
+    def get_users(self, query, start, size):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
-        users = self.user_es_call(fields=fields, start_at=start, size=size,
+        users = self.user_es_call(query, fields=fields, start_at=start, size=size,
                                   sort_by='username.exact', order='asc')
         return [self.utils.user_tuple(u) for u in users]
 
-    def get_group_size(self):
-        return self.group_es_call(size=0, return_count=True)[0]
+    def get_groups_size(self, query):
+        return self.group_es_call(query, size=0, return_count=True)[0]
 
-    def group_es_call(self, **kwargs):
-        reporting_filter = {"term": {'reporting': "true"}}
-        return es_wrapper('groups', domain=self.domain, q=self.group_query,
-                          filters=[reporting_filter], doc_type='Group',
+    def group_es_call(self, query, group_type="reporting", **kwargs):
+        query = {"bool": {"must": [
+            {"query_string": {
+                "query": q,
+                "default_field": "name",
+            }} for q in self.get_es_query_strings(query)
+        ]}} if query and query.strip() else None
+        type_filter = {"term": {group_type: "true"}}
+        return es_wrapper('groups', domain=self.domain, q=query,
+                          filters=[type_filter], doc_type='Group',
                           **kwargs)
 
-    def get_groups(self, start, size):
+    def get_groups(self, query, start, size):
         fields = ['_id', 'name']
         groups = self.group_es_call(
+            query,
             fields=fields,
             sort_by="name.exact",
             order="asc",
@@ -155,3 +147,29 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             size=size,
         )
         return [self.utils.reporting_group_tuple(g) for g in groups]
+
+
+def paginate_options(data_sources, query, start, size):
+    """
+    Returns the appropriate slice of values from the data sources
+    data_sources is a list of (count_fn, getter_fn) tuples
+        count_fn returns the total number of entries in a data source,
+        getter_fn takes in a start and size parameter and returns entries
+    """
+    # Note this is pretty confusing, check TestEmwfPagination for reference
+    options = []
+    total = 0
+    for get_size, get_objects in data_sources:
+        count = get_size(query)
+        total += count
+
+        if start > count:  # skip over this whole data source
+            start -= count
+            continue
+
+        # return a page of objects
+        objects = list(get_objects(query, start, size))
+        start = 0
+        size -= len(objects)  # how many more do we need for this page?
+        options.extend(objects)
+    return total, options

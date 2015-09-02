@@ -1,51 +1,102 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
-
-    def forwards(self, orm):
-        
-        # Adding model 'FormData'
-        db.create_table(u'sofabed_formdata', (
-            ('domain', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=255, blank=True)),
-            ('received_on', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
-            ('instance_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255, primary_key=True)),
-            ('time_start', self.gf('django.db.models.fields.DateTimeField')()),
-            ('time_end', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
-            ('duration', self.gf('django.db.models.fields.IntegerField')()),
-            ('device_id', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('user_id', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=255, blank=True)),
-            ('username', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('app_id', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=255, blank=True)),
-            ('xmlns', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=1000, blank=True)),
-        ))
-        db.send_create_signal(u'sofabed', ['FormData'])
+from django.db import models, migrations
 
 
-    def backwards(self, orm):
-        
-        # Deleting model 'FormData'
-        db.delete_table(u'sofabed_formdata')
+class Migration(migrations.Migration):
 
+    dependencies = [
+    ]
 
-    models = {
-        u'sofabed.formdata': {
-            'Meta': {'object_name': 'FormData'},
-            'app_id': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
-            'device_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'domain': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
-            'duration': ('django.db.models.fields.IntegerField', [], {}),
-            'instance_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255', 'primary_key': 'True'}),
-            'received_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
-            'time_end': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
-            'time_start': ('django.db.models.fields.DateTimeField', [], {}),
-            'user_id': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'xmlns': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '1000', 'blank': 'True'})
-        }
-    }
-
-    complete_apps = ['sofabed']
+    operations = [
+        migrations.CreateModel(
+            name='CaseActionData',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('index', models.IntegerField()),
+                ('action_type', models.CharField(max_length=64, db_index=True)),
+                ('user_id', models.CharField(max_length=128, null=True, db_index=True)),
+                ('date', models.DateTimeField(db_index=True)),
+                ('server_date', models.DateTimeField(null=True)),
+                ('xform_id', models.CharField(max_length=128, null=True)),
+                ('xform_xmlns', models.CharField(max_length=128, null=True)),
+                ('sync_log_id', models.CharField(max_length=128, null=True)),
+                ('domain', models.CharField(max_length=128, null=True, db_index=True)),
+                ('case_owner', models.CharField(max_length=128, null=True, db_index=True)),
+                ('case_type', models.CharField(max_length=128, null=True, db_index=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='CaseData',
+            fields=[
+                ('case_id', models.CharField(max_length=128, unique=True, serialize=False, primary_key=True)),
+                ('domain', models.CharField(max_length=128, db_index=True)),
+                ('version', models.CharField(max_length=10, null=True)),
+                ('type', models.CharField(max_length=128, null=True, db_index=True)),
+                ('closed', models.BooleanField(default=False, db_index=True)),
+                ('user_id', models.CharField(max_length=128, null=True, db_index=True)),
+                ('owner_id', models.CharField(max_length=128, null=True, db_index=True)),
+                ('opened_on', models.DateTimeField(null=True, db_index=True)),
+                ('opened_by', models.CharField(max_length=128, null=True, db_index=True)),
+                ('closed_on', models.DateTimeField(null=True, db_index=True)),
+                ('closed_by', models.CharField(max_length=128, null=True, db_index=True)),
+                ('modified_on', models.DateTimeField(db_index=True)),
+                ('modified_by', models.CharField(max_length=128, null=True)),
+                ('server_modified_on', models.DateTimeField(null=True, db_index=True)),
+                ('name', models.CharField(max_length=512, null=True)),
+                ('external_id', models.CharField(max_length=128, null=True)),
+                ('case_owner', models.CharField(max_length=128, null=True, db_index=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='CaseIndexData',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('identifier', models.CharField(max_length=64, db_index=True)),
+                ('referenced_type', models.CharField(max_length=64, db_index=True)),
+                ('referenced_id', models.CharField(max_length=128, db_index=True)),
+                ('case', models.ForeignKey(related_name='indices', to='sofabed.CaseData')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='FormData',
+            fields=[
+                ('domain', models.CharField(max_length=255, db_index=True)),
+                ('received_on', models.DateTimeField(db_index=True)),
+                ('instance_id', models.CharField(max_length=255, unique=True, serialize=False, primary_key=True)),
+                ('time_start', models.DateTimeField()),
+                ('time_end', models.DateTimeField(db_index=True)),
+                ('duration', models.BigIntegerField()),
+                ('device_id', models.CharField(max_length=255, null=True)),
+                ('user_id', models.CharField(max_length=255, null=True, db_index=True)),
+                ('username', models.CharField(max_length=255, null=True)),
+                ('app_id', models.CharField(max_length=255, null=True, db_index=True)),
+                ('xmlns', models.CharField(max_length=1000, null=True, db_index=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AddField(
+            model_name='caseactiondata',
+            name='case',
+            field=models.ForeignKey(related_name='actions', to='sofabed.CaseData'),
+            preserve_default=True,
+        ),
+        migrations.AlterUniqueTogether(
+            name='caseactiondata',
+            unique_together=set([('case', 'index')]),
+        ),
+    ]

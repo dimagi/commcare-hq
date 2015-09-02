@@ -136,7 +136,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
     @property
     def config(self):
         patient_status = self.request.GET.get('patient_status', None)
-        cate_site = self.request.GET.get('care_site')
+        cate_site = self.request.GET.get('care_site_display')
         is_active = None
         if patient_status:
             is_active = 'True' if patient_status == 'active' else 'False'

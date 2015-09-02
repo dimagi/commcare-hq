@@ -13,7 +13,7 @@ from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
     Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
-    DefaultProductPlan, BillingAccountAdmin, SubscriptionAdjustment,
+    DefaultProductPlan, SubscriptionAdjustment,
     SoftwarePlanEdition, BillingContactInfo, SubscriptionType,
 )
 from corehq.apps.domain.models import Domain

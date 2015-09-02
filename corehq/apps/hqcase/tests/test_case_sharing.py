@@ -5,7 +5,6 @@ from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V1, V2
 from corehq.apps.domain.shortcuts import create_domain
-from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
@@ -125,7 +124,7 @@ class CaseSharingTest(TestCase):
             owner_id=owner_id,
             version=version,
             **kwargs
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         return case_block
 
     def get_update_block(self, case_id, owner_id=None, update=None, version=V1):
@@ -135,5 +134,5 @@ class CaseSharingTest(TestCase):
             update=update,
             owner_id=owner_id or CaseBlock.undefined,
             version=version,
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         return case_block

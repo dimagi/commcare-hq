@@ -1,16 +1,21 @@
+from django_prbac.decorators import requires_privilege_raise404
+from corehq import privileges
 from functools import wraps
 from django.http import Http404
-from .models import SQLLocation
+from corehq import toggles, Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from .models import SQLLocation
+from .util import get_xform_location
 
 
 def locations_access_required(view_fn):
     """
     Decorator controlling domain-level access to locations.
-    Mostly a placeholder, soon this will also check for standard plan
     """
-    return login_and_domain_required(view_fn)
+    return login_and_domain_required(
+        requires_privilege_raise404(privileges.LOCATIONS)(view_fn)
+    )
 
 
 def is_locations_admin(view_fn):
@@ -98,3 +103,18 @@ def can_edit_location_types(view_fn):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
+
+
+def can_edit_form_location(domain, user, form):
+    # Domain admins can always edit locations.  If the user isn't an admin and
+    # the location restriction is enabled, they can only edit forms that are
+    # explicitly at or below them in the location tree.
+    domain_obj = Domain.get_by_name(domain)
+    if (not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain)
+            or user_can_edit_any_location(user, domain_obj)):
+        return True
+
+    location = get_xform_location(form)
+    if not location:
+        return False
+    return user_can_edit_location(user, location, domain_obj)

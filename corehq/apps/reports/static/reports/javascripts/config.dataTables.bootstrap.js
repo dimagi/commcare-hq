@@ -251,7 +251,7 @@ function convertNum(k) {
 
 function convertDate(k) {
     var m = k.match(/title="*(.+)"/);
-    return new Date(m);
+    return new Date(m[1]);
 }
 
 jQuery.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };

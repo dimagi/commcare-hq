@@ -1,15 +1,20 @@
 from collections import namedtuple
 from datetime import datetime
+from couchdbkit import ResourceNotFound
 from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_indexed_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.util import get_indexed_cases
+from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
     get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.logging import notify_exception
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
@@ -45,19 +50,40 @@ def should_create_flags_on_submission(domain):
     return False
 
 
+def set_cleanliness_flags_for_enabled_domains(force_full=False):
+    """
+    Updates cleanliness for all domains that have the toggle enabled
+    """
+    for domain in Domain.get_all_names():
+        if OWNERSHIP_CLEANLINESS.enabled(domain):
+            try:
+                set_cleanliness_flags_for_domain(domain, force_full=force_full)
+            except InvalidDomainError as e:
+                notify_exception(None, unicode(e))
+
+
 def set_cleanliness_flags_for_domain(domain, force_full=False):
     """
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        if owner_id not in WEIRD_USER_IDS:
-            set_cleanliness_flags(domain, owner_id, force_full=force_full)
+        if owner_id and owner_id not in WEIRD_USER_IDS:
+            try:
+                set_cleanliness_flags(domain, owner_id, force_full=force_full)
+            except InvalidOwnerIdError as e:
+                notify_exception(None, unicode(e))
 
 
 def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
+    if not domain or len(domain) > 100:
+        raise InvalidDomainError(u'Domain {} must be a non-empty string less than 100 characters'.format(domain))
+    if not owner_id or len(owner_id) > 100:
+        raise InvalidOwnerIdError(
+            u'Owner ID {} must be a non-empty string less than 100 characters'.format(owner_id)
+        )
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,
@@ -85,15 +111,26 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         cleanliness_object.is_clean = cleanliness_flag.is_clean
         cleanliness_object.hint = cleanliness_flag.hint
 
-    cleanliness_object.last_checked = datetime.utcnow()
-    cleanliness_object.save()
-
     if force_full and not needs_check and previous_clean_flag and not cleanliness_object.is_clean:
         # we went from clean to dirty and would not have checked except that we forced it
         # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
         # flag was turned off for the domain. either way cory probably wants to know.
-        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=True)
-        _assert(False, 'Cleanliness flags out of sync for owner {} in domain {}!'.format(owner_id, domain))
+        try:
+            document = get_db().get(owner_id)
+        except ResourceNotFound:
+            document = {'doc_type': 'unknown'}
+
+        owner_doc_type = document.get('doc_type', None)
+        # filter out docs where we expect this to be broken (currently just web users)
+        if owner_doc_type != 'WebUser':
+            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
+            _assert(False, 'Cleanliness flags out of sync for a {} with id {} in domain {}!'.format(
+                owner_doc_type, owner_id, domain
+            ))
+
+    else:
+        cleanliness_object.last_checked = datetime.utcnow()
+        cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):

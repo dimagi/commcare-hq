@@ -1,6 +1,6 @@
+from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
-from datetime import timedelta, datetime, time
-from django.db.models import Q
+from datetime import timedelta, datetime
 from django.template.defaultfilters import floatformat
 from corehq.apps.commtrack.models import SQLProduct, StockState
 from corehq.apps.locations.models import SQLLocation
@@ -8,17 +8,18 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from django.utils import html
 from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
-from custom.ilsgateway.models import SupplyPointStatusTypes, ProductAvailabilityData, \
-    OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
-from custom.ilsgateway.tanzania import ILSData, DetailsReport
+from custom.ilsgateway.models import ProductAvailabilityData, \
+    OrganizationSummary
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, RecentMessages, Notes
 from custom.ilsgateway.tanzania.reports.mixins import ProductAvailabilitySummary, SohSubmissionData
 from django.utils.translation import ugettext as _
-from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url
-from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
+from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url, get_hisp_resp_rate, \
+    get_last_reported, calculate_months_remaining
+from dimagi.utils.dates import get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
 from django.db.models.aggregates import Avg, Max
+from custom.ilsgateway.tanzania import ILSData, DetailsReport
 
 
 def get_facilities(location, domain):
@@ -69,6 +70,7 @@ class SohPercentageTableData(ILSData):
     slug = 'inventory_region_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def headers(self):
@@ -98,83 +100,145 @@ class SohPercentageTableData(ILSData):
 
         return headers
 
-    @property
-    def rows(self):
-        rows = []
+    def get_soh_data(self, location, facs_count):
+        org_summary = OrganizationSummary.objects.filter(
+            date__range=(self.config['startdate'], self.config['enddate']),
+            location_id=location.location_id
+        )
+        if facs_count > 0:
+            soh_rows = SohSubmissionData(config={'org_summary': org_summary}).rows
+            soh_data = soh_rows[0] if soh_rows else None
+            if soh_data:
+                soh_on_time = soh_data.on_time * 100 / facs_count
+                soh_late = soh_data.late * 100 / facs_count
+                soh_not_responding = soh_data.not_responding * 100 / facs_count
+                return soh_late, soh_not_responding, soh_on_time
+        return None, None, None
+
+    def get_previous_month(self, enddate):
+        month = enddate.month - 1 if enddate.month != 1 else 12
+        year = enddate.year - 1 if enddate.month == 1 else enddate.year
+        return month, year
+
+    def get_stockouts(self, facs):
+        facs_count = facs.count()
+        if facs_count == 0:
+            return 0
+
+        fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+        enddate = self.config['enddate']
+        month, year = self.get_previous_month(enddate)
+        stockouts = StockTransaction.objects.filter(
+            case_id__in=list(fac_ids),
+            stock_on_hand__lte=0,
+            report__domain=self.config['domain'],
+            report__date__range=[
+                datetime(year, month, 1),
+                datetime(enddate.year, enddate.month, 1)
+            ]
+        ).order_by('case_id').distinct('case_id').count()
+        percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
+
+        return percent_stockouts
+
+    def get_products_ids(self):
         if not self.config['products']:
-            prd_id = SQLProduct.objects.filter(
+            products_ids = SQLProduct.objects.filter(
                 domain=self.config['domain']
             ).order_by('code').values_list('product_id', flat=True)
         else:
-            prd_id = self.config['products']
+            products_ids = self.config['products']
+        return products_ids
 
-        if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
-            for loc in locations:
-                org_summary = OrganizationSummary.objects.filter(
-                    date__range=(self.config['startdate'], self.config['enddate']),
-                    location_id=loc.location_id
-                )
-                self.config['org_summary'] = org_summary
+    def _format_row(self, percent_stockouts, soh_late, soh_not_responding, soh_on_time, sql_location):
+        url = make_url(
+            StockOnHandReport,
+            self.config['domain'],
+            '?location_id=%s&filter_by_program=%s&'
+            'datespan_type=%s&datespan_first=%s&datespan_second=%s',
+            (sql_location.location_id, self.config['program'], self.config['datespan_type'],
+             self.config['datespan_first'], self.config['datespan_second'])
+        )
+        row_data = [
+            link_format(sql_location.name, url),
+            format_percent(soh_on_time),
+            format_percent(soh_late),
+            format_percent(soh_not_responding),
+            format_percent(percent_stockouts)
+        ]
+        return row_data
 
-                soh_rows = SohSubmissionData(config=self.config).rows
-                soh_data = soh_rows[0] if soh_rows else None
-                facs = get_facilities(loc, self.config['domain'])
-                facs_count = facs.count()
+    def get_stockouts_map(self, enddate, location):
+        month, year = self.get_previous_month(enddate)
+        transactions = StockTransaction.objects.filter(
+            stock_on_hand__lte=0,
+            report__domain=self.config['domain'],
+            report__date__range=[
+                datetime(year, month, 1),
+                datetime(enddate.year, enddate.month, 1)
+            ]
+        ).order_by('case_id').distinct('case_id')
+        location_parent_dict = dict(
+            location.get_descendants().filter(
+                location_type__administrative=False
+            ).values_list('supply_point_id', 'parent__parent__parent__location_id')
+        )
+        stockouts_map = defaultdict(lambda: 0)
+        for transaction in transactions:
+            stockouts_map[location_parent_dict[transaction.case_id]] += 1
+        return stockouts_map
 
-                if soh_data and facs_count > 0:
-                    soh_on_time = soh_data.on_time * 100 / facs_count
-                    soh_late = soh_data.late * 100 / facs_count
-                    soh_not_responding = soh_data.not_responding * 100 / facs_count
-                else:
-                    soh_on_time = None
-                    soh_late = None
-                    soh_not_responding = None
+    @property
+    def rows(self):
+        rows = []
+        products_ids = self.get_products_ids()
 
-                if facs_count > 0:
-                    fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
-                    enddate = self.config['enddate']
-                    month = enddate.month - 1 if enddate.month != 1 else 12
-                    year = enddate.year - 1 if enddate.month == 1 else enddate.year
-                    stockouts = StockTransaction.objects.filter(
-                        case_id__in=list(fac_ids),
-                        stock_on_hand__lte=0,
-                        report__domain=self.config['domain'],
-                        report__date__range=[
-                            datetime(year, month, 1),
-                            datetime(enddate.year, enddate.month, 1)
-                        ]
-                    ).order_by('case_id').distinct('case_id').count()
-                    percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
+        if not self.config['location_id']:
+            return rows
+
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        sql_locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+        is_mohsw = False
+        stockouts_map = {}
+        product_availabilities = {
+            (pa['location_id'], pa['product']): (pa['without_stock'], pa['total'])
+            for pa in ProductAvailabilityData.objects.filter(
+                location_id__in=list(sql_locations.values_list('location_id', flat=True)),
+                date__range=(self.config['startdate'], self.config['enddate'])
+            ).values('location_id', 'product').annotate(without_stock=Avg('without_stock'), total=Max('total'))
+        }
+        if location.location_type.name == 'MOHSW':
+            is_mohsw = True
+            stockouts_map = self.get_stockouts_map(self.config['enddate'], location)
+
+        for sql_location in sql_locations.exclude(is_archived=True):
+            facilities = get_facilities(sql_location, self.config['domain'])
+            facilities_count = facilities.count()
+
+            soh_late, soh_not_responding, soh_on_time = self.get_soh_data(sql_location, facilities_count)
+            if not is_mohsw:
+                percent_stockouts = self.get_stockouts(facilities)
+            else:
+                if facilities_count > 0:
+                    stockouts = stockouts_map.get(sql_location.location_id, 0)
+                    percent_stockouts = stockouts * 100 / float(facilities_count)
                 else:
                     percent_stockouts = 0
 
-                url = make_url(StockOnHandReport, self.config['domain'],
-                               '?location_id=%s&filter_by_program=%s&'
-                               'datespan_type=%s&datespan_first=%s&datespan_second=%s',
-                               (loc.location_id,
-                                self.config['program'], self.config['datespan_type'],
-                                self.config['datespan_first'], self.config['datespan_second']))
-
-                row_data = [
-                    link_format(loc.name, url),
-                    format_percent(soh_on_time),
-                    format_percent(soh_late),
-                    format_percent(soh_not_responding),
-                    format_percent(percent_stockouts)
-                ]
-                for product in prd_id:
-                    ps = ProductAvailabilityData.objects.filter(
-                        location_id=org_summary[0].location_id,
-                        product=product,
-                        date__range=(self.config['startdate'], self.config['enddate'])
-                    ).aggregate(without_stock=Avg('without_stock'), total=Max('total'))
-                    if ps['without_stock'] and ps['total']:
-                        row_data.append(format_percent(ps['without_stock'] * 100 / float(ps['total'])))
-                    else:
-                        row_data.append("<span class='no_data'>No Data</span>")
-                rows.append(row_data)
-
+            row_data = self._format_row(
+                percent_stockouts, soh_late, soh_not_responding, soh_on_time, sql_location
+            )
+            for product_id in products_ids:
+                product_availability = product_availabilities.get((sql_location.location_id, product_id))
+                if product_availability and product_availability[1] != 0:
+                    row_data.append(
+                        format_percent(
+                            product_availability[0] * 100 / float(product_availability[1])
+                        )
+                    )
+                else:
+                    row_data.append("<span class='no_data'>No Data</span>")
+            rows.append(row_data)
         return rows
 
 
@@ -215,6 +279,7 @@ class DistrictSohPercentageTableData(ILSData):
     slug = 'inventory_district_table'
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def title(self):
@@ -240,13 +305,17 @@ class DistrictSohPercentageTableData(ILSData):
             return 'Inventory'
         return 'Month of Stock'
 
+    @memoized
+    def get_products(self):
+        if self.config['products']:
+            return SQLProduct.objects.filter(product_id__in=self.config['products'],
+                                             domain=self.config['domain']).order_by('code')
+        else:
+            return SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
+
     @property
     def headers(self):
-        if self.config['products']:
-            products = SQLProduct.objects.filter(product_id__in=self.config['products'],
-                                                 domain=self.config['domain']).order_by('code')
-        else:
-            products = SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
+        products = self.get_products()
         headers = DataTablesHeader(
             DataTablesColumn(_('MSD Code')),
             DataTablesColumn(_('Facility Name')),
@@ -265,61 +334,14 @@ class DistrictSohPercentageTableData(ILSData):
         rows = []
         enddate = self.config['enddate']
 
-        def get_last_reported(supplypoint):
-
-            last_bd_of_the_month = get_business_day_of_month(enddate.year,
-                                                             enddate.month,
-                                                             -1)
-            st = StockTransaction.objects.filter(
-                case_id=supplypoint,
-                type='stockonhand',
-                report__date__lte=last_bd_of_the_month
-            ).order_by('-report__date')
-            last_of_last_month = datetime(enddate.year, enddate.month, 1) - timedelta(days=1)
-            last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
-                                                     last_of_last_month.month,
-                                                     -1), time())
-            if st:
-                sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
-                return sts, st[0].report.date.date()
-            else:
-                sts = OnTimeStates.NO_DATA
-                return sts, None
-
-        def get_hisp_resp_rate(location):
-            statuses = SupplyPointStatus.objects.filter(
-                location_id=location.location_id,
-                status_type=SupplyPointStatusTypes.SOH_FACILITY
-            )
-            if not statuses:
-                return None
-            status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
-            denom = len(status_month_years)
-            num = 0
-            for s in status_month_years:
-                f = statuses.filter(status_date__month=s[0], status_date__year=s[1]).filter(
-                    Q(status_value=SupplyPointStatusValues.SUBMITTED) |
-                    Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
-                    Q(status_value=SupplyPointStatusValues.RECEIVED) |
-                    Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)
-                ).order_by("-status_date")
-                if f.count():
-                    num += 1
-
-            return float(num) / float(denom), num, denom
-
-        if not self.config['products']:
-            products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('code')
-        else:
-            products = SQLProduct.objects.filter(product_id__in=self.config['products'],
-                                                 domain=self.config['domain']).order_by('code')
+        products = self.get_products()
 
         if self.config['location_id']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 
-                status, last_reported = get_last_reported(supply_point)
+                status, last_reported = get_last_reported(supply_point, self.config['domain'], enddate)
                 hisp = get_hisp_resp_rate(loc)
 
                 url = make_url(FacilityDetailsReport, self.config['domain'],
@@ -344,6 +366,7 @@ class DistrictSohPercentageTableData(ILSData):
                     first_of_the_next_month = last_of_the_month + timedelta(days=1)
                     try:
                         srs = StockTransaction.objects.filter(
+                            report__domain=self.config['domain'],
                             report__date__lt=first_of_the_next_month,
                             case_id=supply_point,
                             product_id=product.product_id
@@ -352,13 +375,6 @@ class DistrictSohPercentageTableData(ILSData):
                         srs = None
 
                     if srs:
-                        def calculate_months_remaining(stock_state, quantity):
-                            consumption = stock_state.get_monthly_consumption()
-                            if consumption is not None and consumption > 0 and quantity is not None:
-                                return float(quantity) / float(consumption)
-                            elif quantity == 0:
-                                return 0
-                            return None
                         try:
                             ss = StockState.objects.get(case_id=supply_point, product_id=product.product_id)
                             val = calculate_months_remaining(ss, srs.stock_on_hand)

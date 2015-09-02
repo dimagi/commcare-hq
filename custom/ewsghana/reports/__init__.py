@@ -1,24 +1,24 @@
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-import pytz
+from django.utils.safestring import mark_safe
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+
+from custom.ewsghana.filters import EWSRestrictionLocationFilter
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
-from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
-from custom.ewsghana.utils import get_supply_points, filter_slugs_by_role, ews_date_format
+from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
+    get_products_for_locations_by_program, get_products_for_locations_by_products
 from casexml.apps.stock.models import StockTransaction
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def get_url(view_name, text, domain):
@@ -73,7 +73,9 @@ class EWSData(object):
 
     @property
     def location_id(self):
-        return self.config.get('location_id')
+        return self.config.get('location_id') or get_object_or_404(
+            SQLLocation, domain=self.domain, location_type__name='country'
+        ).location_id
 
     @property
     @memoized
@@ -97,18 +99,11 @@ class EWSData(object):
 
     def unique_products(self, locations, all=False):
         if self.config['products'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-            ).filter(pk__in=self.config['products']).exclude(is_archived=True)
+            return get_products_for_locations_by_products(locations, self.config['products'])
         elif self.config['program'] and not all:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True),
-                program_id=self.config['program']
-            ).exclude(is_archived=True)
+            return get_products_for_locations_by_program(locations, self.config['program'])
         else:
-            return SQLProduct.objects.filter(
-                pk__in=locations.values_list('_products', flat=True)
-            ).exclude(is_archived=True)
+            return get_products_for_locations(locations)
 
 
 class ReportingRatesData(EWSData):
@@ -153,75 +148,7 @@ class ReportingRatesData(EWSData):
                           self.config['enddate'].strftime("%Y-%m-%d"))
 
 
-class EWSDateSpan(DateSpan):
-
-    @classmethod
-    def get_date(cls, type=None, month_or_week=None, year=None, format=ISO_DATE_FORMAT,
-                 inclusive=True, timezone=pytz.utc):
-        if month_or_week is None:
-            month_or_week = datetime.datetime.date.today().month
-        if year is None:
-            year = datetime.datetime.date.today().year
-        if type == 2:
-            days = month_or_week.split('|')
-            start = force_to_datetime(days[0])
-            end = force_to_datetime(days[1])
-        else:
-            start = datetime(year, month_or_week, 1, 0, 0, 0)
-            print start
-            end = start + relativedelta(months=1) - relativedelta(days=1)
-        return DateSpan(start, end, format, inclusive, timezone)
-
-
-class MonthWeekMixin(object):
-    _datespan = None
-
-    @property
-    def datespan(self):
-        if self._datespan is None:
-            datespan = EWSDateSpan.get_date(self.type, self.first, self.second)
-            self.request.datespan = datespan
-            self.context.update(dict(datespan=datespan))
-            self._datespan = datespan
-        return self._datespan
-
-    @property
-    def type(self):
-        """
-            We have a 3 possible type:
-            1 - month
-            2 - quarter
-            3 - year
-        """
-        if 'datespan_type' in self.request_params:
-            return int(self.request_params['datespan_type'])
-        else:
-            return 1
-
-    @property
-    def first(self):
-        """
-            If we choose type 1 in this we get a month [00-12]
-            If we choose type 2 we get quarter [1-4]
-            This property is unused when we choose type 3
-        """
-        if 'datespan_first' in self.request_params:
-            try:
-                return int(self.request_params['datespan_first'])
-            except ValueError:
-                return self.request_params['datespan_first']
-        else:
-            return datetime.utcnow().month
-
-    @property
-    def second(self):
-        if 'datespan_second' in self.request_params:
-            return int(self.request_params['datespan_second'])
-        else:
-            return datetime.utcnow().year
-
-
-class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin):
+class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
@@ -230,11 +157,44 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
     printable = True
     is_exportable = False
     base_template = 'ewsghana/base_template.html'
+    is_rendered_as_email = False
+    is_rendered_as_print = False
+
+    @property
+    @memoized
+    def active_location(self):
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return SQLLocation.objects.get(location_id=loc_id)
+        else:
+            return get_object_or_404(SQLLocation, location_type__name='country', domain=self.domain)
 
     @property
     @memoized
     def report_location(self):
         return SQLLocation.objects.get(location_id=self.report_config['location_id'])
+
+    @property
+    def report_subtitles(self):
+        if self.is_rendered_as_email:
+            program = self.request.GET.get('filter_by_program')
+            products = self.request.GET.getlist('filter_by_product')
+            return mark_safe("""
+            <br>For Filters:<br>
+            Location: {0}<br>
+            Program: {1}<br>
+            Product: {2}<br>
+            Date range: {3} - {4}
+            """.format(
+                self.report_location.name,
+                Program.get(program).name if program != ALL_OPTION else ALL_OPTION.title(),
+                ", ".join(
+                    [p.name for p in SQLProduct.objects.filter(product_id__in=products)]
+                ) if products != ALL_OPTION and products else ALL_OPTION.title(),
+                ews_date_format(self.datespan.startdate_utc),
+                ews_date_format(self.datespan.enddate_utc)
+            ))
+        return None
 
     def get_stock_transactions(self):
         return StockTransaction.objects.filter(
@@ -260,10 +220,20 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
             else:
                 program_id = 'all'
 
-            url = '%s?location_id=%s&filter_by_program=%s' % (
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
+                    location = location.parent
+                loc_id = location.location_id
+
+            start_date, end_date = EWSDateFilter.last_reporting_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
-                dm.location_id if dm.location_id else '',
-                program_id if program_id else ''
+                loc_id,
+                program_id if program_id else '',
+                start_date.strftime('%Y-%m-%d'),
+                end_date.strftime('%Y-%m-%d')
             )
 
         return url
@@ -291,19 +261,23 @@ class MultiReport(MonthWeekMixin, CustomProjectReport, CommtrackReportMixin, Pro
         return [f.slug for f in self.fields]
 
     def fpr_report_filters(self):
-        return [f.slug for f in [AsyncLocationFilter, ProductByProgramFilter, EWSDateFilter]]
+        return [f.slug for f in [EWSRestrictionLocationFilter, ProductByProgramFilter, EWSDateFilter]]
 
     @property
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
+            'subtitle': self.report_subtitles,
             'split': self.split,
             'r_filters': self.report_filters(),
             'fpr_filters': self.fpr_report_filters(),
             'exportable': self.is_exportable,
+            'emailable': self.emailable,
             'location_id': self.request.GET.get('location_id'),
-            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain)
+            'slugs': filter_slugs_by_role(self.request.couch_user, self.domain),
+            'startdate': self.datespan.startdate,
+            'enddate': self.datespan.enddate,
         }
         return context
 
@@ -418,8 +392,12 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rendered_content(self):
-        locations = get_supply_points(self.config['location_id'], self.config['domain'])
-        products = self.unique_products(locations, all=True)
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        if location.location_type.administrative:
+            locations = get_descendants(self.config['location_id'])
+            products = self.unique_products(locations, all=True)
+        else:
+            products = location.products
         programs = {program.get_id: program.name for program in Program.by_domain(self.domain)}
         headers = []
         if 'report_type' in self.config:
@@ -447,7 +425,6 @@ class ProductSelectionPane(EWSData):
 
         for _, product_dict in result.iteritems():
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
-
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,
             'is_rendered_as_email': self.config.get('is_rendered_as_email', False),

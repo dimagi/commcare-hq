@@ -17,7 +17,6 @@ def get_table(mapping):
 def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     now = datetime.utcnow()
     return FormData(
-        doc_type='XFormInstance',
         domain=domain,
         user_id=user_id,
         time_end=now - timedelta(days=days_ago),
@@ -37,7 +36,6 @@ def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
     date_ago = now - timedelta(days=case_info.days_ago)
     return CaseData(
         case_id=case_info.id,
-        doc_type='CommCareCase',
         type=case_info.case_type,
         domain=domain,
         owner_id=owner_id,
@@ -47,7 +45,8 @@ def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
         modified_on=now,
         closed=case_info.is_closed,
         closed_on=(date_ago if case_info.is_closed else None),
-        closed_by=(closed_by or user_id) if case_info.is_closed else None
+        closed_by=(closed_by or user_id) if case_info.is_closed else None,
+        case_owner=(owner_id or user_id)
     )
     return case
 
@@ -58,6 +57,9 @@ def add_case_action(case):
         action_type='update',
         date=case.opened_on,
         user_id=case.user_id,
+        domain=case.domain,
+        case_owner=case.case_owner,
+        case_type=case.type
     )
 
 

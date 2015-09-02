@@ -3,20 +3,24 @@ import copy
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
+from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
+    rebuild_stock_state
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.sofabed.models import FormData
+from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_response
 
 from corehq.apps.domain.decorators import (
     domain_admin_required,
-    login_and_domain_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
@@ -26,11 +30,14 @@ from .util import all_sms_codes
 
 @domain_admin_required
 def default(request, domain):
-    from corehq.apps.products.views import ProductListView
     if not (request.project and request.project.commtrack_enabled):
         raise Http404()
-    return HttpResponseRedirect(reverse(ProductListView.urlname,
-                                        args=[domain]))
+    return HttpResponseRedirect(default_commtrack_url(domain))
+
+
+def default_commtrack_url(domain):
+    from corehq.apps.products.views import ProductListView
+    return reverse(ProductListView.urlname, args=[domain])
 
 
 class BaseCommTrackManageView(BaseDomainView):
@@ -285,3 +292,79 @@ class StockLevelsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
+
+
+class RebuildStockStateView(BaseCommTrackManageView):
+    urlname = 'rebuild_stock_state'
+    page_title = ugettext_noop("Rebuild Stock State")
+    template_name = 'commtrack/manage/rebuild_stock_state.html'
+
+    @memoized
+    def get_server_date_by_form_id(self, form_id):
+        server_dates = (FormData.objects.filter(instance_id=form_id)
+                        .values_list('received_on'))
+        if server_dates:
+            (server_date,), = server_dates
+            return ServerTime(server_date).ui_string()
+        else:
+            return None
+
+    @property
+    def page_context(self, **kwargs):
+        stock_state_limit = 100
+        stock_transaction_limit = 10000
+        stock_state_limit_exceeded = False
+        stock_transaction_limit_exceeded = False
+
+        stock_state_keys = [
+            (txn.case_id, txn.section_id, txn.product_id)
+            for txn in
+            StockTransaction.objects.filter(report__domain=self.domain)
+            .order_by('case_id', 'section_id', 'product_id')
+            .distinct('case_id', 'section_id', 'product_id')
+            [:stock_state_limit]
+        ]
+        if len(stock_state_keys) >= stock_state_limit:
+            stock_state_limit_exceeded = True
+
+        actions_by_stock_state_key = []
+        stock_transaction_count = 0
+        for stock_state_key in stock_state_keys:
+            case_id, section_id, product_id = stock_state_key
+            actions = [
+                (
+                    action.__class__.__name__,
+                    action,
+                    self.get_server_date_by_form_id(
+                        action.stock_transaction.report.form_id),
+                ) for action in
+                plan_rebuild_stock_state(case_id, section_id, product_id)
+            ]
+            stock_transaction_count += len(actions)
+            if stock_transaction_count > stock_transaction_limit:
+                stock_transaction_limit_exceeded = True
+                break
+            actions_by_stock_state_key.append(
+                ({'case_id': case_id, 'section_id': section_id,
+                  'product_id': product_id},
+                 actions,
+                 get_doc_info_by_id(self.domain, case_id))
+            )
+
+        assert len(set(stock_state_keys)) == len(stock_state_keys)
+        return {
+            'actions_by_stock_state_key': actions_by_stock_state_key,
+            'stock_state_limit_exceeded': stock_state_limit_exceeded,
+            'stock_state_limit': stock_state_limit,
+            'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
+            'stock_transaction_limit': stock_transaction_limit,
+        }
+
+    def post(self, request, *args, **kwargs):
+        case_id = request.POST.get('case_id')
+        section_id = request.POST.get('section_id')
+        product_id = request.POST.get('product_id')
+        if None in (case_id, section_id, product_id):
+            return HttpResponseBadRequest()
+        rebuild_stock_state(case_id, section_id, product_id)
+        return HttpResponseRedirect('.')

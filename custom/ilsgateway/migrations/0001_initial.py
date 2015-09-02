@@ -1,92 +1,212 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import models, migrations
 import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(migrations.Migration):
 
-    def forwards(self, orm):
-        
-        # Adding model 'ILSMigrationCheckpoint'
+    dependencies = [
+        ('locations', '0001_initial'),
+    ]
 
-        db.create_table(u'ilsgateway_ilsmigrationcheckpoint', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('domain', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('date', self.gf('django.db.models.fields.DateTimeField')(null=True)),
-            ('api', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('limit', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('offset', self.gf('django.db.models.fields.PositiveIntegerField')()),
-        ))
-        db.send_create_signal(u'ilsgateway', ['ILSMigrationCheckpoint'])
-
-        # Adding model 'SupplyPointStatus'
-        db.create_table(u'ilsgateway_supplypointstatus', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('status_type', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('status_value', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('status_date', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.utcnow)),
-            ('supply_point', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-        ))
-        db.send_create_signal(u'ilsgateway', ['SupplyPointStatus'])
-
-        # Adding model 'DeliveryGroupReport'
-        db.create_table(u'ilsgateway_deliverygroupreport', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('supply_point', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('quantity', self.gf('django.db.models.fields.IntegerField')()),
-            ('report_date',
-             self.gf('django.db.models.fields.DateTimeField')
-             (
-                 default=datetime.datetime(2014, 10, 1, 9, 15, 49, 89325),
-                 auto_now_add=True, blank=True
-             )),
-            ('message', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('delivery_group', self.gf('django.db.models.fields.CharField')(max_length=1)),
-        ))
-        db.send_create_signal(u'ilsgateway', ['DeliveryGroupReport'])
-
-    def backwards(self, orm):
-        
-        # Deleting model 'ILSMigrationCheckpoint'
-        db.delete_table(u'ilsgateway_ilsmigrationcheckpoint')
-
-        # Deleting model 'SupplyPointStatus'
-        db.delete_table(u'ilsgateway_supplypointstatus')
-
-        # Deleting model 'DeliveryGroupReport'
-        db.delete_table(u'ilsgateway_deliverygroupreport')
-
-    models = {
-        u'ilsgateway.deliverygroupreport': {
-            'Meta': {'ordering': "('-report_date',)", 'object_name': 'DeliveryGroupReport'},
-            'delivery_group': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'quantity': ('django.db.models.fields.IntegerField', [], {}),
-            'report_date': ('django.db.models.fields.DateTimeField', [],
-                            {'default': 'datetime.datetime(2014, 10, 1, 9, 15, 49, 89325)',
-                             'auto_now_add': 'True', 'blank': 'True'}),
-            'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
-        },
-        u'ilsgateway.ilsmigrationcheckpoint': {
-            'Meta': {'object_name': 'ILSMigrationCheckpoint'},
-            'api': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'limit': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'offset': ('django.db.models.fields.PositiveIntegerField', [], {})
-        },
-        u'ilsgateway.supplypointstatus': {
-            'Meta': {'ordering': "('-status_date',)", 'object_name': 'SupplyPointStatus'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'status_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
-            'status_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'status_value': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
-        }
-    }
-
-    complete_apps = ['ilsgateway']
+    operations = [
+        migrations.CreateModel(
+            name='Alert',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date', models.DateTimeField()),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('create_date', models.DateTimeField(editable=False)),
+                ('update_date', models.DateTimeField(editable=False)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+                ('type', models.CharField(max_length=50, null=True, blank=True)),
+                ('number', models.PositiveIntegerField(default=0)),
+                ('text', models.TextField()),
+                ('url', models.CharField(max_length=100, null=True, blank=True)),
+                ('expires', models.DateTimeField()),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='DeliveryGroupReport',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('quantity', models.IntegerField()),
+                ('report_date', models.DateTimeField(default=datetime.datetime(2015, 7, 31, 17, 38, 49, 821416))),
+                ('message', models.CharField(max_length=100, db_index=True)),
+                ('delivery_group', models.CharField(max_length=1)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+            ],
+            options={
+                'ordering': ('-report_date',),
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='GroupSummary',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('title', models.CharField(max_length=50, null=True, blank=True)),
+                ('total', models.PositiveIntegerField(default=0)),
+                ('responded', models.PositiveIntegerField(default=0)),
+                ('on_time', models.PositiveIntegerField(default=0)),
+                ('complete', models.PositiveIntegerField(default=0)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='HistoricalLocationGroup',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date', models.DateField()),
+                ('group', models.CharField(max_length=1)),
+                ('location_id', models.ForeignKey(to='locations.SQLLocation')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='ILSNotes',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('domain', models.CharField(max_length=100)),
+                ('user_name', models.CharField(max_length=128)),
+                ('user_role', models.CharField(max_length=100, null=True)),
+                ('user_phone', models.CharField(max_length=20, null=True)),
+                ('date', models.DateTimeField()),
+                ('text', models.TextField()),
+                ('location', models.ForeignKey(to='locations.SQLLocation')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='OrganizationSummary',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date', models.DateTimeField()),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('create_date', models.DateTimeField(editable=False)),
+                ('update_date', models.DateTimeField(editable=False)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+                ('total_orgs', models.PositiveIntegerField(default=0)),
+                ('average_lead_time_in_days', models.FloatField(default=0)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='ProductAvailabilityData',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date', models.DateTimeField()),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('create_date', models.DateTimeField(editable=False)),
+                ('update_date', models.DateTimeField(editable=False)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+                ('product', models.CharField(max_length=100, db_index=True)),
+                ('total', models.PositiveIntegerField(default=0)),
+                ('with_stock', models.PositiveIntegerField(default=0)),
+                ('without_stock', models.PositiveIntegerField(default=0)),
+                ('without_data', models.PositiveIntegerField(default=0)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='ReportRun',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('start', models.DateTimeField()),
+                ('end', models.DateTimeField()),
+                ('start_run', models.DateTimeField()),
+                ('end_run', models.DateTimeField(null=True)),
+                ('complete', models.BooleanField(default=False)),
+                ('has_error', models.BooleanField(default=False)),
+                ('domain', models.CharField(max_length=60)),
+                ('location', models.ForeignKey(to='locations.SQLLocation', null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='RequisitionReport',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('submitted', models.BooleanField(default=False)),
+                ('report_date', models.DateTimeField(default=datetime.datetime.utcnow)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='SupervisionDocument',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('document', models.TextField()),
+                ('domain', models.CharField(max_length=100)),
+                ('name', models.CharField(max_length=100)),
+                ('data_type', models.CharField(max_length=100)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='SupplyPointStatus',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('status_type', models.CharField(max_length=50, choices=[(b'rr_fac', b'rr_fac'), (b'soh_fac', b'soh_fac'), (b'super_fac', b'super_fac'), (b'rr_dist', b'rr_dist'), (b'del_del', b'del_del'), (b'la_fac', b'la_fac'), (b'del_dist', b'del_dist'), (b'del_fac', b'del_fac')])),
+                ('status_value', models.CharField(max_length=50, choices=[(b'received', b'received'), (b'not_received', b'not_received'), (b'submitted', b'submitted'), (b'not_submitted', b'not_submitted'), (b'reminder_sent', b'reminder_sent'), (b'alert_sent', b'alert_sent')])),
+                ('status_date', models.DateTimeField(default=datetime.datetime.utcnow)),
+                ('location_id', models.CharField(max_length=100, db_index=True)),
+                ('external_id', models.PositiveIntegerField(null=True, db_index=True)),
+            ],
+            options={
+                'ordering': ('-status_date',),
+                'get_latest_by': 'status_date',
+                'verbose_name': 'Facility Status',
+                'verbose_name_plural': 'Facility Statuses',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='SupplyPointWarehouseRecord',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('supply_point', models.CharField(max_length=100, db_index=True)),
+                ('create_date', models.DateTimeField()),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AlterUniqueTogether(
+            name='historicallocationgroup',
+            unique_together=set([('location_id', 'date', 'group')]),
+        ),
+        migrations.AddField(
+            model_name='groupsummary',
+            name='org_summary',
+            field=models.ForeignKey(to='ilsgateway.OrganizationSummary'),
+            preserve_default=True,
+        ),
+    ]

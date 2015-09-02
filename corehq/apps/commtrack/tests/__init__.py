@@ -10,3 +10,4 @@ from .test_stock_state import *
 from .test_products import *
 from .test_programs import *
 from .test_dbaccessors import *
+from .test_rebuild import *

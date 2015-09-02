@@ -1,4 +1,5 @@
 from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.util.quickcache import quickcache
 
 DOMAIN = 'opm'
 
@@ -12,7 +13,12 @@ CFU2_XMLNS = "http://openrosa.org/formdesigner/9ef423bba8595a99976f0bc9532617841
 CFU3_XMLNS = "http://openrosa.org/formdesigner/f15b9f8fb92e2552b1885897ece257609ed16649"
 GROWTH_MONITORING_XMLNS= "http://openrosa.org/formdesigner/F1356F3F-C695-491F-9277-7F9B5522200C"
 
+CLOSE_FORM = "http://openrosa.org/formdesigner/41A1B3E0-C1A4-41EA-AE90-71A328F0D8FD"
 CHILDREN_FORMS = [CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS, CHILD_FOLLOWUP_XMLNS]
+
+OPM_XMLNSs = [PREG_REG_XMLNS, VHND_XMLNS, BIRTH_PREP_XMLNS, DELIVERY_XMLNS,
+              CHILD_FOLLOWUP_XMLNS, CFU1_XMLNS, CFU2_XMLNS, CFU3_XMLNS,
+              GROWTH_MONITORING_XMLNS, CLOSE_FORM]
 
 # TODO Move these to a cached fixtures lookup
 MONTH_AMT = 250
@@ -20,9 +26,9 @@ TWO_YEAR_AMT = 2000
 THREE_YEAR_AMT = 3000
 
 
+@quickcache([], timeout=30 * 60)
 def get_fixture_data():
-    fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts',
-        'condition')
+    fixtures = FixtureDataItem.get_indexed_items(DOMAIN, 'condition_amounts', 'condition')
     return dict((k, int(fixture['rs_amount'])) for k, fixture in fixtures.items())
 
 

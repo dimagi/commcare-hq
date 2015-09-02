@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, ERROR_PHONE_NUMBER_OPTED_OUT)
+    PhoneNumber, SMS)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
@@ -44,17 +44,18 @@ class MessageMetadata(object):
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
         self.reminder_id = kwargs.get("reminder_id", None)
         self.chat_user_id = kwargs.get("chat_user_id", None)
-        self.ignore_opt_out = kwargs.get("ignore_opt_out", False)
+        self.ignore_opt_out = kwargs.get("ignore_opt_out", None)
         self.location_id = kwargs.get('location_id', None)
+        self.messaging_subevent_id = kwargs.get('messaging_subevent_id', None)
 
 
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
-                  'ignore_opt_out', 'location_id')
+                  'ignore_opt_out', 'location_id', 'messaging_subevent_id')
         for field in fields:
             value = getattr(metadata, field)
-            if value:
+            if value is not None:
                 setattr(msg, field, value)
         msg.save()
 
@@ -210,7 +211,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 # flag.
                 pass
             else:
-                msg.set_system_error(ERROR_PHONE_NUMBER_OPTED_OUT)
+                msg.set_system_error(SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
                 return False
 
         if not backend:

@@ -8,8 +8,11 @@ from couchdbkit import ResourceNotFound
 from django.contrib.auth.forms import SetPasswordForm
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
+from braces.views import JsonRequestResponseMixin
 from openpyxl.shared.exc import InvalidFileException
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -17,24 +20,23 @@ from django.http import HttpResponseRedirect, HttpResponse,\
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
+from django.views.generic import View
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
     BillingAccountType,
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
-from corehq.apps.users.util import (
-    can_add_extra_mobile_workers,
-    smart_query_string,
-)
+from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
@@ -46,6 +48,7 @@ from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfo
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
@@ -55,7 +58,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
 from .custom_data_fields import UserFieldsView
@@ -159,10 +162,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
-        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
+        if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
-                'commtrack_enabled': self.request.project.commtrack_enabled,
-                'locations_enabled': self.request.project.locations_enabled,
+                'commtrack_enabled': self.domain_object.commtrack_enabled,
+                'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
@@ -235,11 +238,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     def can_bulk_edit_users(self):
         if not user_can_edit_any_location(self.request.couch_user, self.request.project):
             return False
-        try:
-            ensure_request_has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
 
     @property
     def can_add_extra_users(self):
@@ -251,9 +250,8 @@ class ListCommCareUsersView(BaseUserSettingsView):
             (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
 
     @property
-    def is_billing_admin(self):
-        return (BillingAccountAdmin.get_admin_status_and_account(self.couch_user, self.domain)[0]
-                or self.couch_user.is_superuser)
+    def can_edit_billing_info(self):
+        return self.couch_user.is_domain_admin(self.domain) or self.couch_user.is_superuser
 
     def _escape_val_error(self, expression, default):
         try:
@@ -336,7 +334,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_edit_user_archive': self.can_edit_user_archive,
-            'is_billing_admin': self.is_billing_admin,
+            'can_edit_billing_info': self.can_edit_billing_info,
         }
 
 
@@ -378,17 +376,12 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
-        is_simple, query = smart_query_string(self.query)
-        default_fields = ["username.exact", "last_name", "first_name"]
         q = {
-            "query": {"query_string": {
-                "query": query,
-                "default_operator": "AND",
-                "fields": default_fields if is_simple else None
-            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
+        default_fields = ["username.exact", "last_name", "first_name"]
+        q["query"] = search_string_query(self.query, default_fields)
         params = {
             "domain": self.domain,
             "is_active": not self.show_inactive,
@@ -494,7 +487,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @method_decorator(require_billing_admin())
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
@@ -623,10 +616,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     page_title = ugettext_noop("New Mobile Worker")
 
     @property
-    def password_format(self):
-        return self.request.project.password_format()
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -639,16 +628,13 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            form = CommCareAccountForm(self.request.POST)
-            form.password_format = self.password_format
-            return form
+            return CommCareAccountForm(self.request.POST)
         return CommCareAccountForm()
 
     @property
     def page_context(self):
         return {
             'form': self.new_commcare_user_form,
-            'only_numeric': self.password_format == 'n',
             'data_fields_form': self.custom_data.form,
         }
 
@@ -683,6 +669,77 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return self.get(request, *args, **kwargs)
 
 
+# This is almost entirely a duplicate of CreateCommCareUserView. That view will
+# be going away soon, so I didn't bother to abstract out the commonalities.
+class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
+    template_name = "users/new_mobile_worker_modal.html"
+    urlname = 'new_mobile_worker_modal'
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        if not can_add_extra_mobile_workers(request):
+            raise PermissionDenied()
+        return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
+
+    def render_form(self, status):
+        context = RequestContext(self.request, {
+            'form': self.new_commcare_user_form,
+            'data_fields_form': self.custom_data.form,
+        })
+        return self.render_json_response({
+            "status": status,
+            "form_html": render_to_string(self.template_name, context)
+        })
+
+    def get(self, request, *args, **kwargs):
+        return self.render_form("success")
+
+    @property
+    @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
+    @memoized
+    def new_commcare_user_form(self):
+        if self.request.method == "POST":
+            data = self.request.POST.dict()
+            data['domain'] = self.domain
+            return CommCareAccountForm(data)
+        return CommCareAccountForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
+            username = self.new_commcare_user_form.cleaned_data['username']
+            password = self.new_commcare_user_form.cleaned_data['password']
+            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
+
+            if 'location_id' in request.GET:
+                loc = get_document_or_404(Location, self.domain,
+                                          request.GET.get('location_id'))
+
+            user = CommCareUser.create(
+                self.domain,
+                username,
+                password,
+                phone_number=phone_number,
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
+            )
+
+            if 'location_id' in request.GET:
+                user.set_location(loc)
+
+            user_json = {'user_id': user._id, 'text': user.username_in_report}
+            return self.render_json_response({"status": "success",
+                                              "user": user_json})
+        return self.render_form("failure")
+
+
 class UploadCommCareUsers(BaseManageCommCareUserView):
     template_name = 'users/upload_commcare_users.html'
     urlname = 'upload_commcare_users'
@@ -713,8 +770,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         return context
 
     def post(self, request, *args, **kwargs):
-        upload = request.FILES.get('bulk_upload_file')
         """View's dispatch method automatically calls this"""
+        upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
         except InvalidFileException:
@@ -761,7 +818,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            return HttpResponseBadRequest(e)
+            messages.error(request, _(e.message))
+            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(None, expiry=1*60*60)
         task = bulk_upload_async.delay(
@@ -792,8 +850,10 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'title': _("Mobile Worker Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -840,7 +900,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
 
     try:

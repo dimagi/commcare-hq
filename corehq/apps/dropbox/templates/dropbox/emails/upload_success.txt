@@ -1,0 +1,11 @@
+{% load i18n %}
+{% blocktrans %}
+Congrats! Your file has been successfully uploaded to {{ path }} on your dropbox account. You can share it with this link:
+{% endblocktrans %}
+
+{{ share_url }}
+
+{% blocktrans %}
+Thanks,
+CommCareHQ Team
+{% endblocktrans %}

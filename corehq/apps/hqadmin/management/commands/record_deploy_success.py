@@ -18,13 +18,14 @@ class Command(BaseCommand):
         make_option('--user', help='User', default=False),
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
+        make_option('--url', help='A link to a URL for the deploy', default=False),
     )
     
     def handle(self, *args, **options):
 
         root_dir = settings.FILEPATH
         git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=True)
-
+        git_snapshot['diff_url'] = options.get('url', None)
         deploy = HqDeploy(
             date=datetime.utcnow(),
             user=options['user'],

@@ -43,7 +43,8 @@ class IntraHealthReportConfigMixin(object):
             enddate=self.datespan.enddate.replace(hour=23, minute=59, second=59),
             visit="''",
             strsd=json_format_date(self.datespan.startdate),
-            stred=json_format_date(self.datespan.enddate)
+            stred=json_format_date(self.datespan.enddate),
+            empty_prd_code='__none__'
         )
         self.config_update(config)
         return config

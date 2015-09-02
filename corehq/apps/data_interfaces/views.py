@@ -37,16 +37,19 @@ def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
 
+    return HttpResponseRedirect(default_data_view_url(request, domain))
+
+
+def default_data_view_url(request, domain):
     if request.couch_user.can_view_reports():
-        return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                            args=[domain, ExcelExportReport.slug]))
+        return reverse(DataInterfaceDispatcher.name(), args=[domain, ExcelExportReport.slug])
+
     exportable_reports = request.couch_user.get_exportable_reports(domain)
     if exportable_reports:
-        return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                            args=[domain, exportable_reports[0]]))
+        return reverse(DataInterfaceDispatcher.name(), args=[domain, exportable_reports[0]])
+
     if request.couch_user.can_edit_data():
-        return HttpResponseRedirect(reverse(EditDataInterfaceDispatcher.name(),
-                                            args=[domain, CaseReassignmentInterface.slug]))
+        return reverse(EditDataInterfaceDispatcher.name(), args=[domain, CaseReassignmentInterface.slug])
     raise Http404()
 
 
@@ -152,7 +155,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def get_deleted_item_data(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
-        case_group.delete()
+        case_group.soft_delete()
         return {
             'itemData': item_data,
             'template': 'deleted-group-template',

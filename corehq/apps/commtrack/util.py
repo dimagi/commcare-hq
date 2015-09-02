@@ -1,26 +1,21 @@
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import (
-    CommtrackConfig, CommtrackActionConfig, RequisitionActions,
-    CommtrackRequisitionConfig, SupplyPointCase, RequisitionCase
-)
+from corehq.apps.commtrack.const import RequisitionActions
+from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
+    CommtrackRequisitionConfig
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location
 import itertools
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from calendar import monthrange
-import math
-import bisect
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
-from corehq.feature_previews import enable_commtrack_previews
-from corehq.util.dates import iso_string_to_date
-from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
 
@@ -78,24 +73,12 @@ def get_or_create_default_program(domain):
         )
 
 
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    """
-    Create a new CommtrackConfig object for a domain
-    if it does not already exist.
-
-    This adds some collection of default products, programs,
-    SMS keywords, etc.
-    """
-    def _needs_commtrack_config(domain):
-        return (domain and
-                domain.commtrack_enabled and
-                not CommtrackConfig.for_domain(domain.name))
-
-    if not _needs_commtrack_config(domain):
+def _create_commtrack_config_if_needed(domain):
+    if CommtrackConfig.for_domain(domain):
         return
 
-    config = CommtrackConfig(
-        domain=domain.name,
+    CommtrackConfig(
+        domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -126,20 +109,26 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
                 caption='Stock-out',
             ),
         ],
-    )
+    ).save()
 
-    if requisitions_enabled:
-        config.requisition_config = get_default_requisition_config()
 
-    config.save()
+def _enable_commtrack_previews(domain):
+    for toggle_class in (
+        toggles.COMMTRACK,
+        feature_previews.LOCATIONS,
+        toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
+        toggles.VELLUM_ADVANCED_ITEMSETS,
+    ):
+        toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
-    program = get_or_create_default_program(domain.name)
 
-    # Enable feature flags if necessary - this is required by exchange
-    # and should have no effect on changing the project settings directly
-    enable_commtrack_previews(domain)
-
-    return config
+def make_domain_commtrack(domain_object):
+    domain_object.commtrack_enabled = True
+    domain_object.locations_enabled = True
+    domain_object.save()
+    _create_commtrack_config_if_needed(domain_object.name)
+    get_or_create_default_program(domain_object.name)
+    _enable_commtrack_previews(domain_object.name)
 
 
 def get_default_requisition_config():
@@ -203,40 +192,6 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 
-def num_periods_late(product_case, schedule, *schedule_args):
-    last_reported = iso_string_to_date(getattr(product_case, 'last_reported', '2000-01-01')[:10])
-
-    class DueDateStream(object):
-        """mimic an array of due dates to perform a binary search"""
-
-        def __getitem__(self, i):
-            return self.normalize(self.due_date(i + 1))
-
-        def __len__(self):
-            """highest number of periods late before we stop caring"""
-            max_horizon = 30. * 365.2425 / self.period_length() # arbitrary upper limit -- 30 years
-            return math.ceil(max_horizon)
-
-        def due_date(self, n):
-            return {
-                'weekly': due_date_weekly,
-                'monthly': due_date_monthly,
-            }[schedule](*schedule_args, past_period=n)
-
-        def period_length(self, n=100):
-            """get average length of reporting period"""
-            return (self.due_date(0) - self.due_date(n)).days / float(n)
-
-        def normalize(self, dt):
-            """convert dates into a numerical scale (where greater == more in the past)"""
-            return -(dt - date(2000, 1, 1)).days
-
-    stream = DueDateStream()
-    # find the earliest due date that is on or after the most-recent report date,
-    # and return how many reporting periods back it occurs
-    return bisect.bisect_right(stream, stream.normalize(last_reported))
-
-
 def submit_mapping_case_block(user, index):
     mapping = user.get_location_map_case()
 
@@ -261,7 +216,7 @@ def submit_mapping_case_block(user, index):
 
     submit_case_blocks(
         ElementTree.tostring(
-            caseblock.as_xml(format_datetime=json_format_datetime)
+            caseblock.as_xml()
         ),
         user.domain,
     )
@@ -286,12 +241,7 @@ def get_commtrack_location_id(user, domain):
 def get_case_wrapper(data):
     return {
         const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-        const.REQUISITION_CASE_TYPE: RequisitionCase,
     }.get(data.get('type'), CommCareCase)
-
-
-def wrap_commtrack_case(case_json):
-    return get_case_wrapper(case_json).wrap(case_json)
 
 
 def unicode_slug(text):

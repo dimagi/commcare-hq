@@ -18,8 +18,8 @@
                 </th>
             </tr>
         </thead>
-        <tbody data-bind="foreach: visibleUsers">
-            <tr data-bind="if: full_name && phone_numbers && !in_charge">
+        <tbody data-bind="foreach: visibleUsers()">
+            <tr data-bind="if: full_name && phone_numbers && !in_charge()">
                 <td><a data-bind="attr: { href: url }, text: full_name"></a></td>
                 <td data-bind="text: phone_numbers"></td>
             </tr>
@@ -94,7 +94,7 @@
                 <div class="control-group">
                     <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
                     <div class="controls">
-                        <select style="width: 250px" multiple data-bind="options: users, optionsText: 'full_name', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
+                        <select style="width: 250px" multiple data-bind="options: districtInCharges, optionsText: 'optionsText', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
                     </div>
                 </div>
             </div>
@@ -110,7 +110,7 @@
 <script src="{% static 'ewsghana/ko/ewsghana.users_view_model.js' %}"></script>
 <script>
     ko.applyBindings(
-        new UsersViewModel(ko.toJS({{ users | JSON }}), '{{ location_id }}', '{% url 'configure_in_charge' domain %}'),
+        new UsersViewModel(ko.toJS({{ users | JSON }}), ko.toJS({{ district_in_charges | JSON }}), '{{ location_id }}', '{% url 'configure_in_charge' domain %}'),
         document.getElementById('users-tables')
     );
 </script>

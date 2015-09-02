@@ -19,11 +19,11 @@ from corehq.apps.domain.views import (
     BillingStatementPdfView, OrgSettingsView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
-    AddFormRepeaterView, AddOpsUserAsDomainAdminView,
+    AddFormRepeaterView,
     FeatureFlagsView, EditDhis2SettingsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
-    WireInvoiceView, SubscriptionRenewalView,
+    WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView
 )
 
 #
@@ -49,7 +49,7 @@ from corehq.apps.domain.views import (
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
         return password_reset(request, *args, **kwargs)
-    except None: 
+    except None:
         vals = {'error_msg':'There was a problem with your request',
                 'error_details':sys.exc_info(),
                 'show_homepage_link': 1 }
@@ -112,6 +112,8 @@ domain_settings = patterns(
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
+    url(r'^subscription/credis/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
+        name=CreditsWireInvoiceView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
         BillingStatementPdfView.as_view(),
         name=BillingStatementPdfView.urlname
@@ -124,8 +126,6 @@ domain_settings = patterns(
         name=BulkStripePaymentView.urlname),
     url(r'^billing/make_wire_invoice/$', WireInvoiceView.as_view(),
         name=WireInvoiceView.urlname),
-    url(r'^billing/join_billing_admins/$', AddOpsUserAsDomainAdminView.as_view(),
-        name=AddOpsUserAsDomainAdminView.urlname),
     url(r'^subscription/$', DomainSubscriptionView.as_view(), name=DomainSubscriptionView.urlname),
     url(r'^subscription/renew/$', SubscriptionRenewalView.as_view(),
         name=SubscriptionRenewalView.urlname),

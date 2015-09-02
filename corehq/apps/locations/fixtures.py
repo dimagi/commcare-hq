@@ -2,6 +2,7 @@ from collections import defaultdict
 from xml.etree.ElementTree import Element
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
+from corehq.apps.fixtures.models import UserFixtureType
 
 
 class LocationSet(object):
@@ -27,16 +28,29 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, location_db):
+def fixture_last_modified(user):
+    """Return when the fixture was last modified"""
+    return user.fixture_status(UserFixtureType.LOCATION)
+
+
+def should_sync_locations(last_sync, location_db, user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
     """
-    if not last_sync or not last_sync.date:
+    if (
+        not last_sync or
+        not last_sync.date or
+        fixture_last_modified(user) >= last_sync.date
+    ):
         return True
 
     for location in location_db.by_id.values():
-        if not location.last_modified or location.last_modified >= last_sync.date:
+        if (
+            not location.last_modified or
+            location.last_modified >= last_sync.date or
+            location.location_type.last_modified >= last_sync.date
+        ):
             return True
 
     return False
@@ -54,9 +68,6 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        if not user.project.uses_locations:
-            return []
-
         if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
             locations = SQLLocation.objects.filter(domain=user.domain)
         else:
@@ -78,7 +89,7 @@ class LocationFixtureProvider(object):
 
         location_db = _location_footprint(locations)
 
-        if not should_sync_locations(last_sync, location_db):
+        if not should_sync_locations(last_sync, location_db, user):
             return []
 
         root = Element('fixture',

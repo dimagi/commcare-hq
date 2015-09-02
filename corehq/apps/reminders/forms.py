@@ -8,7 +8,7 @@ from crispy_forms import layout as crispy
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 import pytz
-from datetime import timedelta, datetime, time
+from datetime import timedelta, datetime, time, date
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
@@ -17,12 +17,17 @@ from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
 )
+from corehq.apps.users.forms import SupplyPointSelectWidget
+from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -33,6 +38,7 @@ from .models import (
     RECIPIENT_CASE,
     RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_OWNER,
+    RECIPIENT_LOCATION,
     MATCH_EXACT,
     MATCH_REGEX,
     MATCH_ANY_VALUE,
@@ -45,10 +51,9 @@ from .models import (
     METHOD_SMS_CALLBACK,
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
+    METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
-    FORM_TYPE_ONE_BY_ONE,
-    FORM_TYPE_ALL_AT_ONCE,
     SurveyKeyword,
     RECIPIENT_PARENT_CASE,
     RECIPIENT_SUBCASE,
@@ -74,7 +79,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.shared.exc import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -82,89 +87,65 @@ from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
+NO_RESPONSE = "none"
+
 YES_OR_NO = (
-    ("Y","Yes"),
-    ("N","No"),
+    ("Y", ugettext_lazy("Yes")),
+    ("N", ugettext_lazy("No")),
 )
 
 NOW_OR_LATER = (
-    (SEND_NOW, _("Now")),
-    (SEND_LATER ,_("Later")),
+    (SEND_NOW, ugettext_lazy("Now")),
+    (SEND_LATER, ugettext_lazy("Later")),
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS")),
-    (METHOD_SMS_SURVEY, _("SMS Survey")),
+    (METHOD_SMS, ugettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
+    (NO_RESPONSE, ugettext_lazy("No Response")),
 )
 
-NO_RESPONSE = "none"
-
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-    (RECIPIENT_OWNER, _("The case's owner")),
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
-    ("", _("---choose---")),
-    (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
-)
-
-METHOD_CHOICES = (
-    ('sms', 'SMS'),
-    #('email', 'Email'),
-    #('test', 'Test'),
-    ('survey', 'SMS survey'),
-    ('callback', 'SMS expecting callback'),
-    ('ivr_survey', 'IVR survey'),
-)
-
-RECIPIENT_CHOICES = (
-    (RECIPIENT_OWNER, "The case's owner(s)"),
-    (RECIPIENT_USER, "The case's last submitting user"),
-    (RECIPIENT_CASE, "The case"),
-    (RECIPIENT_PARENT_CASE, "The case's parent case"),
-    (RECIPIENT_SUBCASE, "The case's child case(s)"),
-    (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
-    (RECIPIENT_USER_GROUP, _("User Group")),
-)
-
-MATCH_TYPE_DISPLAY_CHOICES = (
-    (MATCH_EXACT, "equals"),
-    (MATCH_ANY_VALUE, "exists"),
-    (MATCH_REGEX, "matches the regular expression")
-)
-
-START_IMMEDIATELY = "IMMEDIATELY"
-START_ON_DATE = "DATE"
-
-START_CHOICES = (
-    (START_ON_DATE, "defined by case property"),
-    (START_IMMEDIATELY, "immediately")
-)
-
-ITERATE_INDEFINITELY = "INDEFINITE"
-ITERATE_FIXED_NUMBER = "FIXED"
-
-ITERATION_CHOICES = (
-    (ITERATE_INDEFINITELY, "using the following case property"),
-    (ITERATE_FIXED_NUMBER, "after repeating the schedule the following number of times")
+    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_SURVEY_SAMPLE, ugettext_lazy("Case Group")),
 )
 
 EVENT_CHOICES = (
-    (EVENT_AS_OFFSET, "Offset-based"),
-    (EVENT_AS_SCHEDULE, "Schedule-based")
+    (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
+    (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
 
-FORM_TYPE_CHOICES = (
-    (FORM_TYPE_ONE_BY_ONE, "One sms per question"),
-    (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
-)
+
+def add_field_choices(form, field_name, choice_tuples):
+    choices = copy.copy(form.fields[field_name].choices)
+    choices.extend(choice_tuples)
+    form.fields[field_name].choices = choices
+
+
+def user_group_choices(domain):
+    ids = Group.ids_by_domain(domain)
+    return [(doc['_id'], doc['name'])
+            for doc in iter_docs(Group.get_db(), ids)]
+
+
+def case_group_choices(domain):
+    return [(group._id, group.name)
+            for group in get_case_groups_in_domain(domain)]
+
+
+def form_choices(domain):
+    available_forms = get_form_list(domain)
+    return [(form['code'], form['name']) for form in available_forms]
 
 
 def validate_integer(value, error_msg, nonnegative=False):
@@ -177,10 +158,16 @@ def validate_integer(value, error_msg, nonnegative=False):
     except (ValueError, AssertionError):
         raise ValidationError(error_msg)
 
+
 def validate_date(value):
-    date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
-    if date_regex.match(value) is None:
-        raise ValidationError("Dates must be in yyyy-mm-dd format.")
+    date_regex = re.compile('^\d\d\d\d-\d\d-\d\d$')
+    if not isinstance(value, basestring) or date_regex.match(value) is None:
+        raise ValidationError(_('Dates must be in YYYY-MM-DD format.'))
+    try:
+        return parse(value).date()
+    except Exception:
+        raise ValidationError(_('Invalid date given.'))
+
 
 def validate_time(value):
     if isinstance(value, time):
@@ -190,40 +177,56 @@ def validate_time(value):
     if not isinstance(value, basestring) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
     try:
-        value = parse(value).time()
-        return value
+        return parse(value).time()
     except Exception:
         raise ValidationError(error_msg)
 
+
 def validate_form_unique_id(form_unique_id, domain):
+    error_msg = _('Invalid form chosen.')
     try:
         form = CCHQForm.get_form(form_unique_id)
         app = form.get_app()
-        assert app.domain == domain
     except Exception:
-        raise ValidationError(_("Invalid form chosen."))
+        raise ValidationError(error_msg)
+
+    if app.domain != domain:
+        raise ValidationError(error_msg)
+
+    return form_unique_id
+
 
 def clean_group_id(group_id, expected_domain):
+    error_msg = _('Invalid selection.')
+    if not group_id:
+        raise ValidationError(error_msg)
+
     try:
-        assert group_id is not None
-        assert group_id != ""
         group = Group.get(group_id)
-        assert group.doc_type == "Group"
-        assert group.domain == expected_domain
-        return group_id
     except Exception:
-        raise ValidationError(_("Invalid selection."))
+        raise ValidationError(error_msg)
+
+    if group.doc_type != 'Group' or group.domain != expected_domain:
+        raise ValidationError(error_msg)
+
+    return group_id
+
 
 def clean_case_group_id(group_id, expected_domain):
+    error_msg = _('Invalid selection.')
+    if not group_id:
+        raise ValidationError(error_msg)
+
     try:
-        assert group_id is not None
-        assert group_id != ""
         group = CommCareCaseGroup.get(group_id)
-        assert group.doc_type == "CommCareCaseGroup"
-        assert group.domain == expected_domain
-        return group_id
     except Exception:
-        raise ValidationError(_("Invalid selection."))
+        raise ValidationError(error_msg)
+
+    if group.doc_type != 'CommCareCaseGroup' or group.domain != expected_domain:
+        raise ValidationError(error_msg)
+
+    return group_id
+
 
 # Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
 def validate_phone_number(value):
@@ -417,10 +420,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     event_interpretation = forms.ChoiceField(
         label=ugettext_noop("Schedule Type"),
         initial=EVENT_AS_OFFSET,
-        choices=(
-            (EVENT_AS_OFFSET, ugettext_noop("Offset-based")),
-            (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
-        ),
+        choices=EVENT_CHOICES,
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
     )
 
@@ -506,6 +506,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.initial_event = {
             'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
+            'subject': dict([(l, '') for l in available_languages]),
             'message': dict([(l, '') for l in available_languages]),
         }
 
@@ -536,17 +537,20 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
 
         if can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.append((METHOD_SMS_SURVEY, "SMS Survey"))
-            self.fields['method'].choices = method_choices
+            add_field_choices(self, 'method', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
 
         if is_previewer and can_use_survey:
-            method_choices = copy.copy(self.fields['method'].choices)
-            method_choices.extend([
-                (METHOD_IVR_SURVEY, _("IVR Survey")),
-                (METHOD_SMS_CALLBACK, _("SMS Expecting Callback")),
+            add_field_choices(self, 'method', [
+                (METHOD_IVR_SURVEY, _('IVR Survey')),
+                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
-            self.fields['method'].choices = method_choices
+
+        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
+            add_field_choices(self, 'method', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -930,6 +934,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'METHOD_SMS_CALLBACK': METHOD_SMS_CALLBACK,
             'METHOD_SMS_SURVEY': METHOD_SMS_SURVEY,
             'METHOD_IVR_SURVEY': METHOD_IVR_SURVEY,
+            'METHOD_EMAIL': METHOD_EMAIL,
             'START_PROPERTY_OFFSET_DELAY': START_PROPERTY_OFFSET_DELAY,
             'START_PROPERTY_OFFSET_IMMEDIATE': START_PROPERTY_OFFSET_IMMEDIATE,
             'FIRE_TIME_DEFAULT': FIRE_TIME_DEFAULT,
@@ -1108,6 +1113,23 @@ class BaseScheduleCaseReminderForm(forms.Form):
         else:
             return []
 
+    def clean_translated_field(self, translations, default_lang):
+        for lang, msg in translations.items():
+            if msg:
+                msg = msg.strip()
+            if not msg:
+                del translations[lang]
+            else:
+                translations[lang] = msg
+        if default_lang not in translations:
+            default_lang_name = (get_language_name(default_lang) or
+                default_lang)
+            raise ValidationError(_("Please provide messages for the "
+                "default language (%(language)s) or change the default "
+                "language at the bottom of the page.") %
+                {"language": default_lang_name})
+        return translations
+
     def clean_events(self):
         method = self.cleaned_data['method']
         try:
@@ -1133,28 +1155,22 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # the reason why we clean the following fields here instead of eventForm is so that
             # we can utilize the ValidationErrors for this field.
 
+            # clean subject:
+            if method == METHOD_EMAIL:
+                event['subject'] = self.clean_translated_field(
+                    event.get('subject', {}), default_lang)
+            else:
+                event['subject'] = {}
+
             # clean message:
-            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
-                translations = event.get('message', {})
-                for lang, msg in translations.items():
-                    if msg:
-                        msg = msg.strip()
-                    if not msg:
-                        del translations[lang]
-                    else:
-                        translations[lang] = msg
-                if default_lang not in translations:
-                    default_lang_name = (get_language_name(default_lang) or
-                        default_lang)
-                    raise ValidationError(_("Please provide messages for the "
-                        "default language (%(language)s) or change the default "
-                        "language at the bottom of the page.") %
-                        {"language": default_lang_name})
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+                event['message'] = self.clean_translated_field(
+                    event.get('message', {}), default_lang)
             else:
                 event['message'] = {}
 
             # clean form_unique_id:
-            if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
+            if method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
                 event['form_unique_id'] = None
             else:
                 form_unique_id = event.get('form_unique_id')
@@ -1217,6 +1233,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
+            del event['subject_data']
             del event['is_immediate']
 
         event_interpretation = self.cleaned_data["event_interpretation"]
@@ -1394,9 +1411,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
                         if not event_json.get("message", None):
                             event_json["message"] = {}
+
+                        if not event_json.get("subject", None):
+                            event_json["subject"] = {}
+
                         for langcode in available_languages:
                             if langcode not in event_json["message"]:
                                 event_json["message"][langcode] = ""
+                            if langcode not in event_json["subject"]:
+                                event_json["subject"][langcode] = ""
 
                         timeouts = [str(i) for i in
                             event_json["callback_timeout_intervals"]]
@@ -1616,7 +1639,14 @@ class CaseReminderEventForm(forms.Form):
         required=False
     )
 
-    # messages is visible when the method of the reminder is METHOD_SMS or METHOD_SMS_CALLBACK
+    # subject is visible when the method of the reminder is METHOD_EMAIL
+    # value will be a dict of {langcode: message}
+    subject_data = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+    )
+
+    # message is visible when the method of the reminder is (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL)
     # value will be a dict of {langcode: message}
     message_data = forms.CharField(
         required=False,
@@ -1660,6 +1690,7 @@ class CaseReminderEventForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
+            crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
             crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
@@ -1693,6 +1724,10 @@ class CaseReminderEventMessageForm(forms.Form):
         required=False,
         widget=forms.HiddenInput
     )
+    subject = forms.CharField(
+        required=False,
+        widget=forms.Textarea
+    )
     message = forms.CharField(
         required=False,
         widget=forms.Textarea
@@ -1710,14 +1745,22 @@ class CaseReminderEventMessageForm(forms.Form):
                 '(<span data-bind="text:languageLabel"></span>)</span>' %
                 _("Message"),
                 InlineField(
+                    'subject',
+                    data_bind="value: subject, valueUpdate: 'keyup',"
+                              "visible: $parent.isEmailSelected()",
+                    css_class="input-xlarge",
+                    rows="2",
+                ),
+                InlineField(
                     'message',
                     data_bind="value: message, valueUpdate: 'keyup'",
                     css_class="input-xlarge",
                     rows="2",
                 ),
                 crispy.Div(
-                    style="padding-top: 10px",
-                    data_bind="template: { name: 'event-message-length-template' }"
+                    style="padding-top: 10px; padding-left: 5px;",
+                    data_bind="template: { name: 'event-message-length-template' },"
+                              "visible: !$parent.isEmailSelected()"
                 )
             ),
         )
@@ -1740,16 +1783,24 @@ class OneTimeReminderForm(Form):
     case_group_id = CharField(required=False)
     user_group_id = CharField(required=False)
     content_type = ChoiceField(choices=(
-        (METHOD_SMS, _("SMS Message")),
+        (METHOD_SMS, ugettext_lazy("SMS Message")),
     ))
+    subject = TrimmedCharField(required=False)
     message = TrimmedCharField(required=False)
     form_unique_id = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
+        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
-            self.fields['content_type'].choices = CONTENT_CHOICES
+            add_field_choices(self, 'content_type', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
+        if can_use_email:
+            add_field_choices(self, 'content_type', [
+                (METHOD_EMAIL, _('Email')),
+            ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -1784,9 +1835,19 @@ class OneTimeReminderForm(Form):
             validate_time(value)
             return parse(value).time()
 
+    def clean_subject(self):
+        value = self.cleaned_data.get("subject")
+        if self.cleaned_data.get("content_type") == METHOD_EMAIL:
+            if value:
+                return value
+            else:
+                raise ValidationError("This field is required.")
+        else:
+            return None
+
     def clean_message(self):
         value = self.cleaned_data.get("message")
-        if self.cleaned_data.get("content_type") == METHOD_SMS:
+        if self.cleaned_data.get("content_type") in (METHOD_SMS, METHOD_EMAIL):
             if value:
                 return value
             else:
@@ -2300,11 +2361,7 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
-        choices.append(
-            (NO_RESPONSE, _("No Response"))
-        )
-        return choices
+        return KEYWORD_CONTENT_CHOICES
 
     @property
     @memoized
@@ -2318,8 +2375,7 @@ class KeywordForm(Form):
     @property
     @memoized
     def form_choices(self):
-        available_forms = get_form_list(self._cchq_domain)
-        return [(a['code'], a['name']) for a in available_forms]
+        return form_choices(self._cchq_domain)
 
     @property
     def current_values(self):
@@ -2484,3 +2540,303 @@ class KeywordForm(Form):
         else:
             return None
 
+
+class BroadcastForm(Form):
+    recipient_type = ChoiceField(
+        required=True,
+        label=ugettext_lazy('Recipient'),
+        choices=ONE_TIME_RECIPIENT_CHOICES,
+    )
+    timing = ChoiceField(
+        required=True,
+        label=ugettext_lazy('Timing'),
+        choices=NOW_OR_LATER,
+    )
+    date = CharField(
+        required=False,
+        label=ugettext_lazy('Date'),
+    )
+    time = CharField(
+        required=False,
+        label=ugettext_lazy('Time'),
+    )
+    datetime = DateTimeField(
+        required=False,
+    )
+    case_group_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy('Case Group'),
+    )
+    user_group_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy('Mobile Worker Group'),
+    )
+    location_ids = CharField(
+        label='Location(s)',
+        required=False,
+    )
+    include_child_locations = BooleanField(
+        required=False,
+        label=ugettext_lazy('Also send to users at child locations'),
+    )
+    content_type = ChoiceField(
+        label=ugettext_lazy('Send'),
+        choices=((METHOD_SMS, ugettext_lazy("SMS Message")),)
+    )
+    subject = TrimmedCharField(
+        required=False,
+        label=ugettext_lazy('Subject'),
+        widget=forms.Textarea,
+    )
+    message = TrimmedCharField(
+        required=False,
+        label=ugettext_lazy('Message'),
+        widget=forms.Textarea,
+    )
+    form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy('Survey'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs or 'can_use_survey' not in kwargs:
+            raise Exception('Expected kwargs: domain, can_use_survey')
+
+        self.domain = kwargs.pop('domain')
+        self.can_use_survey = kwargs.pop('can_use_survey')
+        super(BroadcastForm, self).__init__(*args, **kwargs)
+
+        if self.can_use_survey:
+            add_field_choices(self, 'content_type', [
+                (METHOD_SMS_SURVEY, _('SMS Survey')),
+            ])
+
+        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
+            add_field_choices(self, 'content_type', [
+                (METHOD_EMAIL, _('Email')),
+            ])
+
+        if toggles.BROADCAST_TO_LOCATIONS.enabled(self.domain):
+            add_field_choices(self, 'recipient_type', [
+                (RECIPIENT_LOCATION, _('Location')),
+            ])
+
+        self.fields['form_unique_id'].choices = form_choices(self.domain)
+        self.fields['case_group_id'].choices = case_group_choices(self.domain)
+        self.fields['user_group_id'].choices = user_group_choices(self.domain)
+        self.fields['location_ids'].widget = SupplyPointSelectWidget(
+            domain=self.domain,
+            multiselect=True,
+        )
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+
+        from corehq.apps.reminders.views import BroadcastListView
+        layout_fields = [
+            crispy.Fieldset(
+                _('Recipient'),
+                *self.crispy_recipient_fields
+            ),
+            crispy.Fieldset(
+                _('Timing'),
+                *self.crispy_timing_fields
+            ),
+            crispy.Fieldset(
+                _('Content'),
+                *self.crispy_content_fields
+            ),
+            FormActions(
+                StrictButton(
+                    _("Save"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
+                            % reverse(BroadcastListView.urlname, args=[self.domain]))
+            ),
+        ]
+        self.helper.layout = crispy.Layout(*layout_fields)
+
+    @property
+    def crispy_recipient_fields(self):
+        return [
+            crispy.Field(
+                'recipient_type',
+                data_bind="value: recipient_type",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'case_group_id',
+                    data_bind='value: case_group_id',
+                ),
+                data_bind='visible: showCaseGroupSelect',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_id',
+                    data_bind='value: user_group_id',
+                ),
+                data_bind='visible: showUserGroupSelect',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'location_ids',
+                ),
+                crispy.Field(
+                    'include_child_locations',
+                ),
+                data_bind='visible: showLocationSelect',
+            ),
+        ]
+
+    @property
+    def crispy_timing_fields(self):
+        return [
+            crispy.Field(
+                'timing',
+                data_bind='value: timing',
+            ),
+            crispy.Div(
+                BootstrapMultiField(
+                    _("Date and Time"),
+                    InlineField(
+                        'date',
+                        data_bind='value: date',
+                        css_class="input-small",
+                    ),
+                    crispy.Div(
+                        template='reminders/partial/time_picker.html',
+                    ),
+                ),
+                ErrorsOnlyField('time'),
+                ErrorsOnlyField('datetime'),
+                data_bind='visible: showDateAndTimeSelect',
+            ),
+        ]
+
+    @property
+    def crispy_content_fields(self):
+        return [
+            crispy.Field(
+                'content_type',
+                data_bind='value: content_type',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'subject',
+                    data_bind='value: subject',
+                    style='height: 50px;',
+                ),
+                data_bind='visible: showSubject',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'message',
+                    data_bind='value: message',
+                    style='height: 50px;',
+                ),
+                data_bind='visible: showMessage',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'form_unique_id',
+                    data_bind='value: form_unique_id',
+                ),
+                data_bind='visible: showSurveySelect',
+            ),
+        ]
+
+    @property
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    def clean_date(self):
+        if self.cleaned_data.get('timing') == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get('date')
+            return validate_date(value)
+
+    def clean_time(self):
+        if self.cleaned_data.get('timing') == SEND_NOW:
+            return None
+        else:
+            value = self.cleaned_data.get('time')
+            return validate_time(value)
+
+    def clean_datetime(self):
+        utcnow = datetime.utcnow()
+        if self.cleaned_data.get('timing') == SEND_NOW:
+            value = utcnow + timedelta(minutes=1)
+        else:
+            dt = self.cleaned_data.get('date')
+            tm = self.cleaned_data.get('time')
+            if not isinstance(dt, date) or not isinstance(tm, time):
+                # validation didn't pass on the date or time fields
+                return None
+            value = datetime.combine(dt, tm)
+            value = UserTime(value, self.project_timezone).server_time().done().replace(tzinfo=None)
+            if value < utcnow:
+                raise ValidationError(_('Date and time cannot occur in the past.'))
+        return value
+
+    def clean_case_group_id(self):
+        if self.cleaned_data.get('recipient_type') == RECIPIENT_SURVEY_SAMPLE:
+            value = self.cleaned_data.get('case_group_id')
+            return clean_case_group_id(value, self.domain)
+        else:
+            return None
+
+    def clean_user_group_id(self):
+        if self.cleaned_data.get('recipient_type') == RECIPIENT_USER_GROUP:
+            value = self.cleaned_data.get('user_group_id')
+            return clean_group_id(value, self.domain)
+        else:
+            return None
+
+    def clean_subject(self):
+        value = None
+        if self.cleaned_data.get('content_type') == METHOD_EMAIL:
+            value = self.cleaned_data.get('subject')
+            if not value:
+                raise ValidationError('This field is required.')
+        return value
+
+    def clean_message(self):
+        value = None
+        if self.cleaned_data.get('content_type') in (METHOD_SMS, METHOD_EMAIL):
+            value = self.cleaned_data.get('message')
+            if not value:
+                raise ValidationError('This field is required.')
+        return value
+
+    def clean_form_unique_id(self):
+        if self.cleaned_data.get('content_type') == METHOD_SMS_SURVEY:
+            value = self.cleaned_data.get('form_unique_id')
+            return validate_form_unique_id(value, self.domain)
+        else:
+            return None
+
+    def clean_location_ids(self):
+        if self.cleaned_data.get('recipient_type') != RECIPIENT_LOCATION:
+            return []
+
+        value = self.cleaned_data.get('location_ids')
+        if not isinstance(value, basestring) or value.strip() == '':
+            raise ValidationError(_('Please choose at least one location'))
+
+        location_ids = [location_id.strip() for location_id in value.split(',')]
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
+
+    @property
+    def current_values(self):
+        values = {}
+        for field_name in self.fields.keys():
+            values[field_name] = self[field_name].value()
+        return values

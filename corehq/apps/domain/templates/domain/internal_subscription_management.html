@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'style/bootstrap2/base_section.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -12,8 +12,14 @@
 {% block js-inline %}{{ block.super }}
     <script>
         var viewModel = {
-            subscriptionType: ko.observable($('#id_subscription_type').val() || null)
+            subscriptionType: ko.observable($('#id_subscription_type').val() || null),
+            trialLength: ko.observable(90)
         };
+        viewModel.end_date = ko.computed(function() {
+            var date = new Date('{{ today.isoformat }}');
+            date.setDate(date.getDate() + parseInt(viewModel.trialLength()));
+            return date.toJSON().slice(0, 10);
+        });
         ko.applyBindings(viewModel, document.getElementById('subscription_management'));
 
         var billingInfoHandler = new BillingContactInfoHandler(

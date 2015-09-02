@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
     <script src="{% static 'users/ko/commcare_users.async.js' %}"></script>
 {% endblock %}
@@ -111,7 +110,7 @@
                     </p>
                     {% endif %}
                     <p>
-                    {% if is_billing_admin %}
+                    {% if can_edit_billing_info %}
                         <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary">{% trans 'Confirm Billing Information' %}</a>
                     {% else %}
                         {% blocktrans %}

@@ -30,9 +30,9 @@ Using apache / nginx to handle downloads
     make_file(path)
 
     if transfer_enabled:
-        response = TransferHttpResponse(path, mimetype=self.zip_mimetype)
+        response = TransferHttpResponse(path, content_type=self.zip_mimetype)
     else:
-        response = StreamingHttpResponse(FileWrapper(open(path)), mimetype=self.zip_mimetype)
+        response = StreamingHttpResponse(FileWrapper(open(path)), content_type=self.zip_mimetype)
 
     response['Content-Length'] = os.path.getsize(fpath)
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename

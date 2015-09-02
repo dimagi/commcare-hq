@@ -166,21 +166,21 @@ class CaseAPITest(TestCase):
         # I don't think we can say anything super useful about this base set
 
     def testGetAllStripHistory(self):
-        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   strip_history=True)
         self.assertEqual(self.expectedAll, len(list))
         self.assertListMatches(list, lambda c: len(c._couch_doc.actions) == 0)
         self.assertListMatches(list, lambda c: len(c._couch_doc.xform_ids) == 0)
 
     def testGetAllIdsOnly(self):
-        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True)
         self.assertEqual(self.expectedAll, len(list))
         self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
     def testGetAllIdsOnlyStripHistory(self):
-        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True, strip_history=True)
         self.assertEqual(self.expectedAll, len(list))
         self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))

@@ -72,17 +72,11 @@ class PatientInteractionsReport(PatientDetailsReport):
                 if completed in ret['patient']:
                     received_date = ret['patient'][completed]
 
-            schedulet_date = EMPTY_FIELD
-            if 'scheduled_source' in visit and ret['patient'].get_case_property(visit['scheduled_source']):
-                schedulet_date = ret['patient'].get_case_property(visit['scheduled_source'])
-
             interaction = {
                 'url': '',
                 'name': visit['visit_name'],
                 'target_date': target_date,
                 'received_date': received_date,
-                'completed_by': EMPTY_FIELD,
-                'scheduled_date': schedulet_date
             }
 
             if visit['show_button']:

@@ -1,5 +1,6 @@
 from urlparse import urlparse
 from datetime import datetime
+import logging
 import json
 import os
 import re
@@ -34,6 +35,10 @@ from restkit import Resource
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.dropbox.decorators import require_dropbox_session
+from corehq.apps.dropbox.models import DropboxUploadHelper
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.receiverwrapper.models import Repeater
@@ -49,7 +54,7 @@ from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
-from soil import heartbeat
+from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
 
@@ -192,7 +197,8 @@ def redirect_to_default(req, domain=None):
                         req.couch_user, domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('dashboard_default', args=[domain])
+                    from corehq.apps.dashboard.views import dashboard_default
+                    return dashboard_default(req, domain)
 
             else:
                 raise Http404
@@ -219,7 +225,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
 </cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, mimetype="application/xml")
+    return HttpResponse(x_domain, content_type="application/xml")
 
 
 @login_required()
@@ -309,33 +315,36 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
-def _login(req, domain, template_name):
+def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
-        if not domain:
+        if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST['username'] = format_username(req.POST['username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain:
+    if domain_name:
+        domain = Domain.get_by_name(domain_name)
         context.update({
-            'domain': domain,
+            'domain': domain_name,
+            'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
         })
 
+    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        authentication_form=authentication_form,
                         extra_context=context)
 
 
@@ -387,8 +396,54 @@ def logout(req):
         return HttpResponseRedirect(reverse('login'))
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
+def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
+
+
+def dropbox_next_url(request, download_id):
+    return request.META.get('HTTP_REFERER', '/')
+
+
+@login_required
+@require_dropbox_session(next_url=dropbox_next_url)
+def dropbox_upload(request, download_id):
+    download = DownloadBase.get(download_id)
+    if download is None:
+        logging.error("Download file request for expired/nonexistent file requested")
+        raise Http404
+    else:
+        filename = download.get_filename()
+        # Hack to get target filename from content disposition
+        match = re.search('filename="([^"]*)"', download.content_disposition)
+        dest = match.group(1) if match else 'download.txt'
+
+        try:
+            uploader = DropboxUploadHelper.create(
+                request.session.get(DROPBOX_ACCESS_TOKEN),
+                src=filename,
+                dest=dest,
+                download_id=download_id,
+                user=request.user,
+            )
+        except DropboxUploadAlreadyInProgress:
+            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+            messages.warning(
+                request,
+                u'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+                'complete.'.format(uploader.progress * 100)
+            )
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        uploader.upload()
+
+        messages.success(
+            request,
+            _(u"Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+        )
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
 
 @require_superuser
 def debug_notify(request):
@@ -533,7 +588,7 @@ def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html", {'tmpl': template})
+    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
 
 
 def eula(request):
@@ -569,7 +624,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'hqwebapp/base_page.html'
+    template_name = 'style/bootstrap2/base_page.html'
 
     @property
     def page_name(self):
@@ -630,7 +685,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "style/bootstrap2/base_section.html"
 
     @property
     def section_url(self):
@@ -848,7 +903,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'hqwebapp/partials/create_item_form.html', {
+            'style/includes/create_item_form.html', {
                 'form': create_form
             }
         )
@@ -858,7 +913,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'style/bootstrap2/partials/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -952,7 +1007,7 @@ def osdd(request, template='osdd.xml'):
     return response
 
 @require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
@@ -993,3 +1048,28 @@ def deactivate_alert(request):
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
+
+class DataTablesAJAXPaginationMixin(object):
+    @property
+    def echo(self):
+        return self.request.GET.get('sEcho')
+
+    @property
+    def display_start(self):
+        return int(self.request.GET.get('iDisplayStart'))
+
+    @property
+    def display_length(self):
+        return int(self.request.GET.get('iDisplayLength'))
+
+    @property
+    def search_phrase(self):
+        return self.request.GET.get('sSearch', '').strip()
+
+    def datatables_ajax_response(self, data, total_records, filtered_records=None):
+        return HttpResponse(json.dumps({
+            'sEcho': self.echo,
+            'aaData': data,
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': filtered_records or total_records,
+        }))

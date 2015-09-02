@@ -1,57 +1,36 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
+from django.db import models, migrations
 
-    def forwards(self, orm):
 
-        # Adding model 'IncomingRequest'
-        db.create_table('telerivet_incomingrequest', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('event', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('message_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('message_type', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('content', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('from_number', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('from_number_e164', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('to_number', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('time_created', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('time_sent', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('contact_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('phone_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('service_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('project_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('secret', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-        ))
-        db.send_create_signal('telerivet', ['IncomingRequest'])
+class Migration(migrations.Migration):
 
-    def backwards(self, orm):
-        
-        # Deleting model 'IncomingRequest'
-        db.delete_table('telerivet_incomingrequest')
+    dependencies = [
+    ]
 
-    models = {
-        'telerivet.incomingrequest': {
-            'Meta': {'object_name': 'IncomingRequest'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'event': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'message_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'message_type': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'content': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'from_number': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'from_number_e164': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'to_number': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'time_created': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'time_sent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'contact_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'phone_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'service_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'project_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-        },
-    }
-
-    complete_apps = ['telerivet']
+    operations = [
+        migrations.CreateModel(
+            name='IncomingRequest',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('event', models.CharField(max_length=255, null=True)),
+                ('message_id', models.CharField(max_length=255, null=True)),
+                ('message_type', models.CharField(max_length=255, null=True)),
+                ('content', models.TextField(null=True)),
+                ('from_number', models.CharField(max_length=255, null=True)),
+                ('from_number_e164', models.CharField(max_length=255, null=True)),
+                ('to_number', models.CharField(max_length=255, null=True)),
+                ('time_created', models.CharField(max_length=255, null=True)),
+                ('time_sent', models.CharField(max_length=255, null=True)),
+                ('contact_id', models.CharField(max_length=255, null=True)),
+                ('phone_id', models.CharField(max_length=255, null=True)),
+                ('service_id', models.CharField(max_length=255, null=True)),
+                ('project_id', models.CharField(max_length=255, null=True)),
+                ('secret', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+    ]

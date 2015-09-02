@@ -13,9 +13,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
-from corehq.apps.users.models import WebUser
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.translation import localize
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
@@ -23,7 +21,7 @@ from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
 from celery.task import task
 from celery.utils.log import get_task_logger
-from dimagi.utils.couch import get_redis_client
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
@@ -124,11 +122,8 @@ def get_report_queue(report):
 @task(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
-    owner = WebUser.get(notification.owner_id)
-    language = owner.get_language_code()
     try:
-        with localize(language):
-            notification.send()
+        notification.send()
     except UnsupportedScheduledReportError:
         pass
 
@@ -224,6 +219,8 @@ def update_calculated_properties():
             "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
             "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
             "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+            "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+            "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']

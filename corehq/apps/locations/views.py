@@ -20,7 +20,6 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -582,7 +581,7 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')
-    template_name = 'hqwebapp/soil_status_full.html'
+    template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -659,7 +658,8 @@ class LocationImportView(BaseLocationView):
 
 
 @locations_access_required
-def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id,
+                               template="style/bootstrap2/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -680,7 +680,7 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
     dump_locations(response, domain, include_consumption)
     return response
@@ -764,6 +764,7 @@ def sync_openlmis(request, domain):
 @locations_access_required
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
+    ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
@@ -773,6 +774,8 @@ def child_locations_for_select2(request, domain):
     if id:
         try:
             loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'no location with id %s found' % id},
@@ -780,6 +783,17 @@ def child_locations_for_select2(request, domain):
             )
         else:
             return json_response(loc_to_payload(loc))
+    elif ids:
+        from corehq.apps.locations.util import get_locations_from_ids
+        ids = json.loads(ids)
+        try:
+            locations = get_locations_from_ids(ids, domain)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'one or more locations not found'},
+                status_code=404,
+            )
+        return json_response([loc_to_payload(loc) for loc in locations])
     else:
         locs = []
         user_loc = user.get_sql_location(domain)

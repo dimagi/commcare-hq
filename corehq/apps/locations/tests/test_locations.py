@@ -1,3 +1,4 @@
+from mock import patch
 from corehq.apps.groups.tests import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
     LOCATION_REPORTING_PREFIX
@@ -16,7 +17,6 @@ from corehq.apps.domain.shortcuts import create_domain
 class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         self.domain.save()
 
         LocationType.objects.get_or_create(
@@ -78,7 +78,7 @@ class LocationProducts(TestCase):
 class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
+        self.domain.convert_to_commtrack()
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
@@ -363,6 +363,7 @@ class LocationGroupTest(LocationTestBase):
             self.loc.sql_location.reporting_group_object().metadata
         )
 
+    @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
     def test_location_fixture_generator(self):
         """
         This tests the location XML fixture generator. It specifically ensures that no duplicate XML
