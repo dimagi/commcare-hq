@@ -2,23 +2,23 @@ from __future__ import print_function, unicode_literals
 
 from django.test import TestCase
 
-from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.const import APP_V2
 
+
 class DomainCopyTest(TestCase):
     def setUp(self):
         self.domain = Domain(name='test')
-        self.domain.save();
+        self.domain.save()
         app = Application.new_app(
             'test', "Test Application", lang='en',
             application_version=APP_V2
         )
         module = Module.new_module("Untitled Module", 'en')
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", 'en')
+        app.new_form(0, "Untitled Form", 'en')
         app.save()
 
     def tearDown(self):
