@@ -757,23 +757,17 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return {
             'billing_account_info_form': self.billing_info_form,
             'cards': self._get_cards(),
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'card_base_url': reverse(CardsView.url_name, args=[self.domain]),
         }
 
     def _get_cards(self):
-        try:
-            payment_method = StripePaymentMethod.objects.get(web_user=self.request.couch_user.username)
-        except StripePaymentMethod.DoesNotExist:
-            return []
-        else:
-            return [{
-                'brand': card.brand,
-                'last4': card.last4,
-                'exp_month': card.exp_month,
-                'exp_year': card.exp_year,
-                'token': card.id,
-                'is_autopay': card.metadata.get('auto_pay_{}'.format(self.account.id), False),
-                'url': reverse(CardView.url_name, args=[self.domain, card.id]),
-            } for card in payment_method.all_cards]
+        user = self.request.user.username
+        payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method.all_cards_serialized(self.account)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -2711,49 +2705,79 @@ def _send_request_notification_email(request, org, dom):
 
 
 class CardView(DomainAccountingSettings):
+    """View for dealing with a single Credit Card"""
     url_name = "card_view"
 
     def post(self, request, domain, card_token):
         user = request.user.username
-        payment_method = StripePaymentMethod.objects.get(web_user=user)
-        card = payment_method.get_card(card_token)
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        try:
+            card = payment_method.get_card(card_token)
+            if request.POST.get("is_autopay") == 'true':
+                payment_method.set_autopay(card, self.account)
+            elif request.POST.get("is_autopay") == 'false':
+                payment_method.unset_autopay(card, self.account)
+        except payment_method.STRIPE_GENERIC_ERROR as e:
+            body = e.json_body
+            err = body['error']
+            return json_response({'error': err['message']}, status_code=502)
+        except Exception as e:
+            return self._generic_error()
 
-        if request.POST.get("is_autopay") == 'true':
-            payment_method.set_autopay(card, self.account)
-        elif request.POST.get("is_autopay") == 'false':
-            payment_method.unset_autopay(card, self.account)
-
-        return json_response({'cards': self._all_cards(payment_method)})
+        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
 
     def delete(self, request, domain, card_token):
         user = request.user.username
-        payment_method = StripePaymentMethod.objects.get(web_user=user)
-        card = payment_method.get_card(card_token)
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
         try:
+            card = payment_method.get_card(card_token)
             payment_method.remove_card(card)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             body = e.json_body
             err = body['error']
             return json_response({'error': err['message'],
-                                  'cards': self._all_cards(payment_method)},
+                                  'cards': payment_method.all_cards_serialized(self.account)},
                                  status_code=502)
 
-        return json_response({'cards': self._all_cards(payment_method)})
+        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
 
-    def _all_cards(self, payment_method):
-        return [{
-            'brand': card.brand,
-            'last4': card.last4,
-            'exp_month': card.exp_month,
-            'exp_year': card.exp_year,
-            'token': card.id,
-            'is_autopay': card.metadata.get('auto_pay_{}'.format(self.account.id), False),
-            'url': reverse(CardView.url_name, args=[self.domain, card.id]),
-        } for card in payment_method.all_cards]
+    def _generic_error(self):
+        error = ("Something went wrong while processing your request. "
+                 "We're working quickly to resolve the issue. "
+                 "Please try again in a few hours.")
+        return json_response({'error': error}, status_code=500)
 
 
 class CardsView(DomainAccountingSettings):
+    """View for dealing Credit Cards"""
     url_name = "cards_view"
 
-    def post(self, request, domain, card_token):
+    def post(self, request, domain):
         user = request.user.username
+        stripe_token = request.POST.get('token')
+        autopay = request.POST.get('autopay') == 'true'
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        try:
+            payment_method.create_card(stripe_token, self.account, autopay)
+        except payment_method.STRIPE_GENERIC_ERROR as e:
+            body = e.json_body
+            err = body['error']
+            return json_response({'error': err['message'],
+                                  'cards': payment_method.all_cards_serialized(self.account)},
+                                 status_code=502)
+        except Exception as e:
+            error = ("Something went wrong while processing your request. "
+                     "We're working quickly to resolve the issue. "
+                     "Please try again in a few hours.")
+            return json_response({'error': error}, status_code=500)
+
+        return json_response({'cards': payment_method.all_cards_serialized(self.account)})

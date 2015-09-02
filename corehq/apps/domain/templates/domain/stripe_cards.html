@@ -68,18 +68,26 @@
 </fieldset>
 
 <!-- ko with: newCard -->
-<a class="new-card" data-toggle="modal" href="#card-modal">NEW CARD</a>
-<div class="modal hide fade" id="card-modal">
-    <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
-    <div class="modal-footer">
-            <button style="" type="button" class="btn" data-dismiss="modal">
-                {% trans 'Cancel' %}
-            </button>
-            <button type="button" class="btn btn-success"
-                    data-bind="click: save">
-                {% trans 'Save' %}
-            </button>
-        </div>
-</div>
+<button type='button' class="btn btn-success new-card" data-toggle="modal" href="#card-modal">
+    <i class='icon-plus'></i> {% trans 'Add Card' %}
+</button>
+<div data-bind="template: {name: 'new-stripe-card-template'}"></div>
 {% include 'accounting/partials/new_stripe_card_template.html' %}
 <!-- /ko -->
+
+<div class="modal hide" id="success-modal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Add New Credit Card" %}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="alert alert-success">
+            {% trans "Your request was successful!" %}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button style="" type="button" class="btn" data-dismiss="modal">
+            {% trans 'Close' %}
+        </button>
+    </div>
+</div>

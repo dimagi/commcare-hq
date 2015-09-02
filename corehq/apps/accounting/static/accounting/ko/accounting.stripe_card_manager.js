@@ -8,18 +8,66 @@ var NewStripeCard = function(data){
     self.wrap = function(data){
         ko.mapping.fromJS(data, mapping, self);
     };
-    self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
+    self.init = function(){
+        self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
+    };
+    self.init();
+
+    self.unwrap = function(){
+        return {token: self.token(), autopay: self.isAutopay()};
+    };
 
     self.isTestMode = ko.observable(false);
     self.isProcessing = ko.observable(false);
     self.agreedToPrivacyPolicy = ko.observable(false);
+    self.errorMsg = ko.observable('');
 
-    self.save = function(){
-        console.log(ko.mapping.toJS(self));
+    var submit = function(){
+        // Sends the new card to HQ
+        return $.ajax({
+            type: "POST",
+            url: data.url,
+            data: self.unwrap()
+        }).success(function(data){
+            $("#card-modal").modal('hide');
+            $("#success-modal").modal('show');
+            cardManager.wrap(data);
+            self.init();
+        }).fail(function(data){
+            var response = JSON.parse(data.responseText);
+            self.errorMsg(response.error);
+        }).always(function(){
+            self.isProcessing(false);
+        });
+    };
+
+    var handleStripeResponse = function(status, response){
+        if (response.error){
+            self.isProcessing(false);
+            self.errorMsg(response.error.message);
+        } else {
+            self.errorMsg('');
+            self.token(response.id);
+            submit();
+        }
+    };
+
+    var createStripeToken = function(){
+        Stripe.card.createToken({
+            number: self.number(),
+            cvc: self.cvc(),
+            exp_month: self.expMonth(),
+            exp_year: self.expYear()
+        }, handleStripeResponse);
+    };
+
+    self.saveCard = function(){
+        self.isProcessing(true);
+        createStripeToken();
     };
 };
 
-var StripeCard = function(card){
+var StripeCard = function(card, baseUrl){
     'use strict';
     var self = this;
     var mapping = {
@@ -30,6 +78,7 @@ var StripeCard = function(card){
     self.wrap = function(data){
         ko.mapping.fromJS(data, mapping, self);
         self.is_autopay(self.is_autopay() == 'True');
+        self.url = baseUrl + card.token + '/';
     };
     self.wrap(card);
 
@@ -88,7 +137,7 @@ var StripeCardManager = function(data){
     var mapping = {
         'cards':{
             create: function(card){
-                return new StripeCard(card.data);
+                return new StripeCard(card.data, data.url);
             }
         }
     };
@@ -99,6 +148,5 @@ var StripeCardManager = function(data){
     self.wrap(data);
 
     self.autoPayButtonEnabled = ko.observable(true);
-    self.newCard = new NewStripeCard();
-    console.log(self.newCard);
+    self.newCard = new NewStripeCard({url: data.url});
 };

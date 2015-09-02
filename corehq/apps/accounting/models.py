@@ -2446,6 +2446,16 @@ class StripePaymentMethod(PaymentMethod):
     def all_cards(self):
         return self.customer.cards.data
 
+    def all_cards_serialized(self, billing_account):
+        return [{
+            'brand': card.brand,
+            'last4': card.last4,
+            'exp_month': card.exp_month,
+            'exp_year': card.exp_year,
+            'token': card.id,
+            'is_autopay': card.metadata.get('auto_pay_{}'.format(billing_account.id), False),
+        } for card in self.all_cards]
+
     def get_card(self, card_token):
         return self.customer.cards.retrieve(card_token)
 
