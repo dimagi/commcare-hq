@@ -44,6 +44,15 @@
             </div>
         </div>
         <div class="control-group">
+            <label class="control-label">{% trans "Localize Display Column" %}
+                <span class="hq-help-template" data-title="{% trans "Localize Display Column" %}"data-content="{% trans "Set this checkbox to indicate that the fixture does not contain the display string, but a reference to the localization string" %}"
+            ></span>
+            </label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: localize"/>
+            </div>
+        </div>
+        <div class="control-group">
             <label class="control-label">
                 {% trans "Variable Column" %}
                 <span class="hq-help-template" data-title="{% trans "Variable Column" %}"data-content="{% trans "This Column will be used as the variable which is input into the xpath expression below" %}"></span>

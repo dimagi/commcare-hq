@@ -92,9 +92,15 @@ class LocaleArgument(XmlObject):
     value = StringField('.')
 
 
+class Id(XmlObject):
+    ROOT_NAME = 'id'
+    xpath = NodeField('xpath', Xpath)
+
+
 class Locale(XmlObject):
     ROOT_NAME = 'locale'
     id = StringField('@id')
+    child_id = NodeField('id', Id)
     arguments = NodeListField('argument', LocaleArgument)
 
 
@@ -1484,8 +1490,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                         id=id_strings.fixture_detail(module),
                         title=Text(),
                     )
+                    xpath = Xpath(function=module.fixture_select.display_column)
+                    if module.fixture_select.localize:
+                        template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
+                    else:
+                        template_text = Text(xpath_function=module.fixture_select.display_column)
                     fields = [Field(header=Header(text=Text()),
-                                    template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                    template=Template(text=template_text),
                                     sort_node='')]
 
                     d.fields = fields

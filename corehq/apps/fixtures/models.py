@@ -515,4 +515,5 @@ class UserFixtureStatus(models.Model):
     DEFAULT_LAST_MODIFIED = datetime.min
 
     class Meta(object):
+        app_label = 'fixtures'
         unique_together = ("user_id", "fixture_type")

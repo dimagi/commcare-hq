@@ -9,7 +9,10 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
 from corehq.apps.reports.views import AddSavedReportConfigView
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import (
+    ConfigurableReport,
+    CustomConfigurableReportDispatcher,
+)
 from corehq.apps.userreports.views import (
     ConfigureChartReport,
     ConfigureListReport,
@@ -29,6 +32,7 @@ custom_report_urls = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     TestReport.url_pattern(),
     ConfigurableReport.url_pattern(),
+    CustomConfigurableReportDispatcher.url_pattern(),
 
     url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name='report_builder_select_type'),
     url(r'^builder/(?P<report_type>list|chart|table|worker)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),

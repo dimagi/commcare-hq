@@ -3,7 +3,7 @@ from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.db import connection_manager
@@ -103,7 +103,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
 class CustomDataSourcePillow(ConfigurableIndicatorPillow):
 
     def get_all_configs(self):
-        return CustomDataSourceConfiguration.all()
+        return StaticDataSourceConfiguration.all()
 
     def rebuild_table(self, table):
         super(CustomDataSourcePillow, self).rebuild_table(table)
