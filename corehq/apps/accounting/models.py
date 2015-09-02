@@ -360,10 +360,12 @@ class BillingAccount(models.Model):
             send_autopay_card_removed_email.delay(self, old_user=self.auto_pay_user, new_user=new_user)
 
         self.auto_pay_user = new_user
+        self.save()
         send_autopay_card_added_email.delay(self, new_user)
 
     def remove_autopay_user(self):
         self.auto_pay_user = None
+        self.save()
 
 
 class BillingContactInfo(models.Model):
@@ -2464,9 +2466,16 @@ class StripePaymentMethod(PaymentMethod):
                      if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'),
                     None)
 
-    def remove_card(self, card):
-        card = self.get_card(card.id)
+    def remove_card(self, card_token):
+        card = self.get_card(card_token)
+        self._remove_card_from_all_accounts(card)
         card.delete()
+
+    def _remove_card_from_all_accounts(self, card):
+        accounts = BillingAccount.objects.filter(auto_pay_user=self.web_user)
+        for account in accounts:
+            if account.autopay_card == card:
+                account.remove_autopay_user()
 
     def create_card(self, stripe_token, billing_account, autopay=False):
         customer = self.customer
@@ -2493,7 +2502,6 @@ class StripePaymentMethod(PaymentMethod):
 
         self._update_autopay_status(card, billing_account, autopay=True)
         billing_account.update_autopay_user(self.web_user)
-        billing_account.save()
 
     def unset_autopay(self, card, billing_account):
         """
@@ -2502,7 +2510,6 @@ class StripePaymentMethod(PaymentMethod):
         if card.metadata[self._auto_pay_card_metadata_key(billing_account)] == "True":
             self._update_autopay_status(card, billing_account, autopay=False)
             billing_account.remove_autopay_user()
-            billing_account.save()
 
     def _update_autopay_status(self, card, billing_account, autopay, save=True):
         metadata = card.metadata.copy()

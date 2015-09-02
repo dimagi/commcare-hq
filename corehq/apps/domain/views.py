@@ -2715,48 +2715,15 @@ def _send_request_notification_email(request, org, dom):
                         "but the message was:\n%s" % text_content)
 
 
-class CardView(DomainAccountingSettings):
-    """View for dealing with a single Credit Card"""
-    url_name = "card_view"
+class BaseCardView(DomainAccountingSettings):
 
-    def post(self, request, domain, card_token):
-        user = request.user.username
+    @property
+    def payment_method(self):
         payment_method, __ = StripePaymentMethod.objects.get_or_create(
-            web_user=user,
+            web_user=self.request.user.username,
             method_type=PaymentMethodType.STRIPE,
         )
-        try:
-            card = payment_method.get_card(card_token)
-            if request.POST.get("is_autopay") == 'true':
-                payment_method.set_autopay(card, self.account)
-            elif request.POST.get("is_autopay") == 'false':
-                payment_method.unset_autopay(card, self.account)
-        except payment_method.STRIPE_GENERIC_ERROR as e:
-            body = e.json_body
-            err = body['error']
-            return json_response({'error': err['message']}, status_code=502)
-        except Exception as e:
-            return self._generic_error()
-
-        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
-
-    def delete(self, request, domain, card_token):
-        user = request.user.username
-        payment_method, __ = StripePaymentMethod.objects.get_or_create(
-            web_user=user,
-            method_type=PaymentMethodType.STRIPE,
-        )
-        try:
-            card = payment_method.get_card(card_token)
-            payment_method.remove_card(card)
-        except payment_method.STRIPE_GENERIC_ERROR as e:
-            body = e.json_body
-            err = body['error']
-            return json_response({'error': err['message'],
-                                  'cards': payment_method.all_cards_serialized(self.account)},
-                                 status_code=502)
-
-        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
+        return payment_method
 
     def _generic_error(self):
         error = ("Something went wrong while processing your request. "
@@ -2764,39 +2731,56 @@ class CardView(DomainAccountingSettings):
                  "Please try again in a few hours.")
         return json_response({'error': error}, status_code=500)
 
+    def _stripe_error(self, e):
+        body = e.json_body
+        err = body['error']
+        return json_response({'error': err['message'],
+                              'cards': self.payment_method.all_cards_serialized(self.account)},
+                             status_code=502)
 
-class CardsView(DomainAccountingSettings):
+
+class CardView(BaseCardView):
+    """View for dealing with a single Credit Card"""
+    url_name = "card_view"
+
+    def post(self, request, domain, card_token):
+        try:
+            card = self.payment_method.get_card(card_token)
+            if request.POST.get("is_autopay") == 'true':
+                self.payment_method.set_autopay(card, self.account)
+            elif request.POST.get("is_autopay") == 'false':
+                self.payment_method.unset_autopay(card, self.account)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
+        except Exception as e:
+            return self._generic_error()
+
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+    def delete(self, request, domain, card_token):
+        try:
+            self.payment_method.remove_card(card_token)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
+
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+class CardsView(BaseCardView):
     """View for dealing Credit Cards"""
     url_name = "cards_view"
 
     def get(self, request, domain):
-        user = request.user.username
-        payment_method, __ = StripePaymentMethod.objects.get_or_create(
-            web_user=user,
-            method_type=PaymentMethodType.STRIPE,
-        )
-        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
 
     def post(self, request, domain):
-        user = request.user.username
         stripe_token = request.POST.get('token')
         autopay = request.POST.get('autopay') == 'true'
-        payment_method, __ = StripePaymentMethod.objects.get_or_create(
-            web_user=user,
-            method_type=PaymentMethodType.STRIPE,
-        )
         try:
-            payment_method.create_card(stripe_token, self.account, autopay)
-        except payment_method.STRIPE_GENERIC_ERROR as e:
-            body = e.json_body
-            err = body['error']
-            return json_response({'error': err['message'],
-                                  'cards': payment_method.all_cards_serialized(self.account)},
-                                 status_code=502)
+            self.payment_method.create_card(stripe_token, self.account, autopay)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
         except Exception as e:
-            error = ("Something went wrong while processing your request. "
-                     "We're working quickly to resolve the issue. "
-                     "Please try again in a few hours.")
-            return json_response({'error': error}, status_code=500)
+            return self._generic_error()
 
-        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
