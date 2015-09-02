@@ -377,7 +377,7 @@ class StaticDataSourceConfiguration(JsonObject):
     def by_domain(cls, domain):
         """
         Returns a list of DataSourceConfiguration objects,
-        NOT CustomDataSourceConfigurations.
+        NOT StaticDataSourceConfigurations.
         """
         return [ds for ds in cls.all() if ds.domain == domain]
 
@@ -385,7 +385,7 @@ class StaticDataSourceConfiguration(JsonObject):
     def by_id(cls, config_id):
         """
         Returns a DataSourceConfiguration object,
-        NOT a CustomDataSourceConfiguration.
+        NOT a StaticDataSourceConfiguration.
         """
         for ds in cls.all():
             if ds.get_id == config_id:
@@ -431,14 +431,14 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def by_domain(cls, domain):
         """
-        Returns a list of ReportConfiguration objects, NOT CustomReportConfigurations.
+        Returns a list of ReportConfiguration objects, NOT StaticReportConfigurations.
         """
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
     def by_id(cls, config_id):
         """
-        Returns a ReportConfiguration object, NOT CustomReportConfigurations.
+        Returns a ReportConfiguration object, NOT StaticReportConfigurations.
         """
         for ds in cls.all():
             if ds.get_id == config_id:
