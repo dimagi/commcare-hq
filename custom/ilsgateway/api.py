@@ -187,8 +187,6 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
     def get_stocktransactions(self, filters=None, **kwargs):
         filters = filters or {}
-        if 'date__lte' in filters:
-            filters.pop('date__lte')
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, filters=filters, **kwargs)
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]
