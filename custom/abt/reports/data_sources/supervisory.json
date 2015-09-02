@@ -313,6 +313,6 @@
         "display_name": "Supervisory Indicators",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "static-supervisory-indicators"
+        "table_id": "supervisory"
     }
 }
