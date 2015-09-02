@@ -365,6 +365,9 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         del kwargs['report_config_id']
         return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
 
+    def get_report(self, domain, slug, config_id):
+        return self._report_class(domain, config_id).get_report(domain, slug, config_id)
+
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
