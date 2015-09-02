@@ -188,7 +188,7 @@ class DateRangePickerWidget(Input):
             'style/lib/daterangepicker-b3/moment.min.js',
             'style/lib/daterangepicker-b3/daterangepicker.js',
             # maybe this should live somewhere else eventually:
-            'reports/javascripts/daterangepicker.js',
+            'style/js/daterangepicker.config.js',
         )
 
     range_labels = {
@@ -213,7 +213,7 @@ class DateRangePickerWidget(Input):
                 $(function () {
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');
-                    $('#%(elem_id)s').createDateRangePicker(
+                    $('#%(elem_id)s').createBootstrap3DateRangePicker(
                         report_labels, separator
                     );
                 });
