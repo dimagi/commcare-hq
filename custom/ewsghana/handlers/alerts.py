@@ -1,5 +1,7 @@
-from decimal import Decimal
-from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
+from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
+    MS_STOCKOUT, MS_RESOLVED_STOCKOUTS
 from collections import defaultdict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
@@ -10,7 +12,6 @@ from custom.ewsghana.reminders import ERROR_MESSAGE
 from custom.ewsghana.utils import ProductsReportHelper
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ewsghana.alerts.alerts import stock_alerts
-from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.commtrack.sms import *
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 
@@ -246,6 +247,48 @@ class AlertsHandler(KeywordHandler):
 
         self.respond('{} {}'.format(error_message.format(**kwargs), unicode(ASSISTANCE_MESSAGE)))
 
+    def send_ms_alert(self, previous_stockouts, transactions, ms_type):
+        stockouts = {
+            SQLProduct.objects.get(product_id=transaction.product_id).name
+            for transaction in transactions
+            if transaction.quantity == 0 and transaction.action == 'stockonhand'
+        }
+
+        with_stock = {
+            SQLProduct.objects.get(product_id=transaction.product_id).name
+            for transaction in transactions
+            if transaction.quantity != 0 and transaction.action == 'stockonhand'
+        }
+
+        resolved_stockouts = previous_stockouts.intersection(with_stock)
+
+        if ms_type == 'RMS':
+            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=False)
+        elif ms_type == 'CMS':
+            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=True)
+        else:
+            return
+
+        for sql_location in locations:
+            for user in get_users_by_location_id(self.domain, sql_location.location_id):
+                verified_number = user.get_verified_number()
+                if not verified_number:
+                    continue
+
+                if stockouts:
+                    send_sms_to_verified_number(
+                        verified_number,
+                        MS_STOCKOUT % {'products_names': ', '.join(stockouts), 'ms_type': ms_type}
+                    )
+
+                if resolved_stockouts:
+                    send_sms_to_verified_number(
+                        verified_number,
+                        MS_RESOLVED_STOCKOUTS % {
+                            'products_names': '. '.join(resolved_stockouts), 'ms_type': ms_type
+                        }
+                    )
+
     def handle(self):
         verified_contact = self.verified_contact
         user = verified_contact.owner
@@ -289,9 +332,20 @@ class AlertsHandler(KeywordHandler):
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
             return True
 
+        stockouts = set()
+        if self.sql_location.location_type.name in ['Regional Medical Store', 'Central Medical Store']:
+            stockouts = set(StockState.objects.filter(
+                case_id=self.sql_location.supply_point_id,
+                stock_on_hand=0
+            ).values_list('sql_product__name', flat=True))
+
         process(domain.name, data)
         transactions = data['transactions']
         if not parser.bad_codes:
+            if self.sql_location.location_type.name == 'Regional Medical Store':
+                self.send_ms_alert(stockouts, transactions, 'RMS')
+            elif self.sql_location.location_type.name == 'Central Medical Store':
+                self.send_ms_alert(stockouts, transactions, 'CMS')
             stock_alerts(transactions, user)
         else:
             self.send_errors(transactions, parser.bad_codes)
