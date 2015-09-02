@@ -1474,6 +1474,15 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return account
 
     @property
+    def payment_method(self):
+        user = self.request.user.username
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method
+
+    @property
     @memoized
     def is_form_post(self):
         return 'company_name' in self.request.POST
@@ -1504,6 +1513,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_account_info_form,
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'cards': self.payment_method.all_cards_serialized(self.account)
         }
 
     def post(self, request, *args, **kwargs):
@@ -2757,6 +2768,14 @@ class CardView(DomainAccountingSettings):
 class CardsView(DomainAccountingSettings):
     """View for dealing Credit Cards"""
     url_name = "cards_view"
+
+    def get(self, request, domain):
+        user = request.user.username
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return json_response({'cards': payment_method.all_cards_serialized(self.account)})
 
     def post(self, request, domain):
         user = request.user.username
