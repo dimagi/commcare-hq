@@ -405,7 +405,8 @@ class MessageLogReport(BaseCommConnectLogReport):
         )
         data = filter_by_types(data)
         data = order_by_col(data)
-        data = data[self.pagination.start:self.pagination.start + self.pagination.count]
+        if self.pagination:
+            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for message in data:
             yield [
