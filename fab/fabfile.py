@@ -365,32 +365,6 @@ def install_npm_packages():
             sudo("npm install")
 
 
-@task
-def what_os():
-    with settings(warn_only=True):
-        _require_target()
-        if getattr(env, 'host_os_map', None) is None:
-            # prior use case of setting a env.remote_os
-            # did not work when doing multiple hosts with different os!
-            # Need to keep state per host!
-            env.host_os_map = defaultdict(lambda: '')
-        if env.host_os_map[env.host_string] == '':
-            print 'Testing operating system type...'
-            if (files.exists('/etc/lsb-release',verbose=True) and
-                    files.contains(text='DISTRIB_ID=Ubuntu', filename='/etc/lsb-release')):
-                remote_os = 'ubuntu'
-                print ('Found lsb-release and contains "DISTRIB_ID=Ubuntu", '
-                       'this is an Ubuntu System.')
-            elif files.exists('/etc/redhat-release', verbose=True):
-                remote_os = 'redhat'
-                print 'Found /etc/redhat-release, this is a RedHat system.'
-            else:
-                print 'System OS not recognized! Aborting.'
-                exit()
-            env.host_os_map[env.host_string] = remote_os
-        return env.host_os_map[env.host_string]
-
-
 @roles(ROLES_ALL_SRC)
 @parallel
 def create_virtualenvs():
@@ -423,14 +397,22 @@ def remove_submodule_source(path):
 
 @roles(ROLES_ALL_SRC)
 @parallel
-def _remove_submodule_source_main(path):
-    with cd(env.code_root):
+def _remove_submodule_source_main(path, use_current_release=False):
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('rm -rf submodules/%s' % path)
 
 
 @task
 @roles(ROLES_DB_ONLY)
 def preindex_views():
+    """
+    Creates a new release that runs preindex_everything. Clones code from `current` release and updates it.
+    """
+    setup_release()
+    _preindex_views()
+
+
+def _preindex_views():
     if not env.should_migrate:
         utils.abort((
             'Skipping preindex_views for "%s" because should_migrate = False'
@@ -444,6 +426,7 @@ def preindex_views():
             '+%%m%%d%%H%%M.%%S`'
         ) % env)
         version_static()
+
 
 
 @roles(ROLES_ALL_SRC)
@@ -518,7 +501,6 @@ def record_successful_deploy(url):
         })
 
 
-@task
 @roles(ROLES_ALL_SRC)
 @parallel
 def record_successful_release():
@@ -564,20 +546,26 @@ def _confirm_translated():
     )
 
 
+@task
+def setup_release():
+    _execute_with_timing(create_code_dir)
+    _execute_with_timing(update_code)
+    _execute_with_timing(update_virtualenv)
+
+
+    # Update localsettings
+    _execute_with_timing(copy_localsettings)
+    _execute_with_timing(copy_tf_localsettings)
+
+
 def _deploy_without_asking():
     try:
-        _execute_with_timing(create_code_dir)
-        _execute_with_timing(update_code)
-        _execute_with_timing(update_virtualenv)
+        setup_release()
+
+        _execute_with_timing(_preindex_views)
 
         max_wait = datetime.timedelta(minutes=5)
         pause_length = datetime.timedelta(seconds=5)
-
-        # Update localsettings
-        _execute_with_timing(copy_localsettings)
-        _execute_with_timing(copy_tf_localsettings)
-        _execute_with_timing(preindex_views)
-
         start = datetime.datetime.utcnow()
 
         @roles(ROLES_DB_ONLY)
@@ -609,7 +597,7 @@ def _deploy_without_asking():
         _execute_with_timing(_do_compress)
 
         _execute_with_timing(clear_services_dir)
-        set_supervisor_config()
+        _set_supervisor_config()
 
         do_migrate = env.should_migrate
         if do_migrate:
@@ -648,13 +636,29 @@ def _deploy_without_asking():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def update_current(release=None):
+    """
+    Updates the current release to the one specified or to the code_root
+    """
+    if not files.exists(env.code_root):
+        utils.abort('About to update current to non-existant release')
+
     sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
 
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def unlink_current():
+    """
+    Unlinks the current code directory. Use with caution.
+    """
+    message = 'Are you sure you want to unlink the current release of {env.environment}?'.format(env=env)
+
+    if not console.confirm(message, default=False):
+        utils.abort('Deployment aborted.')
+
     if files.exists(env.code_current):
         sudo('unlink {}'.format(env.code_current))
 
@@ -684,6 +688,9 @@ def copy_tf_localsettings():
 @roles(ROLES_ALL_SRC)
 @parallel
 def clean_releases(keep=3):
+    """
+    Cleans old and failed deploys from the ~/www/<environment>/releases/ directory
+    """
     releases = sudo('ls {}'.format(env.releases)).split()
     current_release = os.path.basename(sudo('readlink {}'.format(env.code_current)))
 
@@ -711,15 +718,6 @@ def clean_releases(keep=3):
 
     for release in to_remove:
         sudo('rm -rf {}/{}'.format(env.releases, release))
-
-
-@task
-def force_update_static():
-    _require_target()
-    execute(_do_collectstatic)
-    execute(_do_compress)
-    execute(update_manifest)
-    execute(services_restart)
 
 
 def _tag_commit():
@@ -778,7 +776,6 @@ def update_touchforms():
         sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
-@task
 @roles(ROLES_ALL_SRC)
 @parallel
 def update_virtualenv():
@@ -954,37 +951,6 @@ def version_static():
         )
 
 
-@task
-@roles(ROLES_STATIC)
-def collectstatic():
-    """run collectstatic on remote environment"""
-    _require_target()
-    update_code()
-    _do_collectstatic()
-    _do_compress()
-    update_manifest(save=True)
-
-
-@task
-def reset_local_db():
-    """Reset local database from remote host"""
-    _require_target()
-    if env.environment == 'production':
-        utils.abort('Local DB reset is for staging environment only')
-    question = ('Are you sure you want to reset your local '
-                'database with the %(environment)s database?' % env)
-    sys.path.append('.')
-    if not console.confirm(question, default=False):
-        utils.abort('Local database reset aborted.')
-    local_db = loc['default']['NAME']
-    remote_db = remote['default']['NAME']
-    with settings(warn_only=True):
-        local('dropdb %s' % local_db)
-    local('createdb %s' % local_db)
-    host = '%s@%s' % (env.user, env.hosts[0])
-    local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
-
-
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
     with cd(env.code_root):
         sudo((
@@ -1073,8 +1039,14 @@ def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
+
 @task
 def set_supervisor_config():
+    setup_release()
+    _set_supervisor_config()
+
+
+def _set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     _require_target()
     _execute_with_timing(set_celery_supervisorconf)
@@ -1092,29 +1064,6 @@ def set_supervisor_config():
 def _supervisor_command(command):
     _require_target()
     sudo('supervisorctl %s' % (command), shell=False, user='root')
-
-
-@task
-def update_apache_conf():
-    require('code_root', 'django_port')
-
-    with cd(env.code_root):
-        tmp = "/tmp/cchq"
-        sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.django_port, tmp))
-        sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp, user='root')
-
-    with settings(warn_only=True):
-        sudo('a2dissite 000-default', user='root')
-        sudo('a2dissite default', user='root')
-
-    sudo('a2enmod proxy_http', user='root')
-    sudo('a2ensite cchq', user='root')
-    sudo('service apache2 reload', user='root')
-
-@task
-def update_translations():
-    do_update_translations()
 
 
 @roles(ROLES_PILLOWTOP)
@@ -1148,6 +1097,7 @@ def do_update_translations():
 @task
 def reset_mvp_pillows():
     _require_target()
+    setup_release()
     mvp_pillows = [
         'MVPFormIndicatorPillow',
         'MVPCaseIndicatorPillow',
