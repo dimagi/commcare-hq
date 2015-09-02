@@ -14,7 +14,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
 from optparse import make_option
 from corehq.util.soft_assert.api import soft_assert
-_soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com')
+_soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include

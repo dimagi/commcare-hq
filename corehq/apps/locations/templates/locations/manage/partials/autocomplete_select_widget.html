@@ -9,6 +9,7 @@ $(function() {
 $("#{{ id }}").select2({
     placeholder: '{% trans "Select a Location" %}',
     allowClear: true,
+    multiple: {{ multiselect|JSON }},
     ajax: {
         url: "{{ query_url }}",
         dataType: 'json',
@@ -23,12 +24,18 @@ $("#{{ id }}").select2({
         }
     },
     initSelection: function(element, callback) {
-        var id = $(element).val();
+        var val = $(element).val() || "";
+        var arr = val.split(",");
+        var payload = {};
 
-        if (id !== "") {
-            $.get("{{ query_url }}", {
-                id: id
-            }).done(function(data) { callback(data); });
+        if (arr.length === 1) {
+            payload.id = val;
+        } else {
+            payload.ids = JSON.stringify(arr);
+        }
+
+        if (val !== "") {
+            $.get("{{ query_url }}", payload).done(function(data) { callback(data); });
         }
     },
     formatResult: function(e) { return e.name; },

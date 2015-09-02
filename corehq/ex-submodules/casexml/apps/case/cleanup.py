@@ -42,6 +42,7 @@ def close_case(case_id, domain, user):
 
 
 def _get_actions_from_forms(sorted_forms, case_id):
+    from corehq.apps.commtrack.processing import get_stock_actions
     case_actions = []
     domain = None
     for form in sorted_forms:
@@ -53,10 +54,13 @@ def _get_actions_from_forms(sorted_forms, case_id):
         filtered_updates = [u for u in case_updates if u.id == case_id]
         for u in filtered_updates:
             case_actions.extend(u.get_case_actions(form))
+        _, case_stock_actions = get_stock_actions(form)
+        case_actions.extend([case_action
+                             for _, case_action in case_stock_actions])
     return case_actions, domain
 
 
-def rebuild_case_from_actions(case, actions, all_form_ids):
+def rebuild_case_from_actions(case, actions):
     reset_state(case)
     # in addition to resetting the state, also manually clear xform_ids and actions
     # since we're going to rebuild these from the forms
@@ -66,9 +70,6 @@ def rebuild_case_from_actions(case, actions, all_form_ids):
     # call "rebuild" on the case, which should populate xform_ids
     # and re-sort actions if necessary
     case.rebuild(strict=False)
-    # don't swallow stock-only xform_ids during case rebuilds
-    case.xform_ids = case.xform_ids + [form_id for form_id in all_form_ids
-                                       if form_id not in case.xform_ids]
 
 
 def rebuild_case(case_id):
@@ -95,7 +96,7 @@ def rebuild_case(case_id):
     if not found and case.domain is None:
         case.domain = domain
 
-    rebuild_case_from_actions(case, actions, [f.get_id for f in sorted_forms])
+    rebuild_case_from_actions(case, actions)
     # todo: should this move to case.rebuild?
     if not case.xform_ids:
         if not found:

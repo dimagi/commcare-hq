@@ -1,10 +1,11 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.stock.consumption import ConsumptionConfiguration
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from couchforms.models import XFormInstance
 from corehq import Domain
 from corehq.apps.accounting import generator
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig, \
+    SupplyPointCase
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
@@ -44,31 +45,10 @@ class EWSScriptTest(TestScript):
             report=report
         )
         stock_transaction.save()
-        report = StockReport(
-            form_id=xform._id,
-            date=now.replace(second=0, microsecond=0),
-            type='balance',
-            domain=TEST_DOMAIN
-        )
-        report.save()
-        stock_transaction = StockTransaction(
-            case_id=loc.linked_supply_point().get_id,
-            product_id=product.get_id,
-            sql_product=SQLProduct.objects.get(product_id=product.get_id),
-            section_id='stock',
-            type='stockonhand',
-            stock_on_hand=consumption,
-            report=report
-        )
-        stock_transaction.save()
 
     def setUp(self):
-        p1 = Product.get_by_code(TEST_DOMAIN, 'mc')
-        p2 = Product.get_by_code(TEST_DOMAIN, 'lf')
-        p3 = Product.get_by_code(TEST_DOMAIN, 'mg')
-        self._create_stock_state(p1, 5)
-        self._create_stock_state(p2, 10)
-        self._create_stock_state(p3, 5)
+        Product.get_by_code(TEST_DOMAIN, 'mc')
+        Product.get_by_code(TEST_DOMAIN, 'lf')
 
     def tearDown(self):
         StockTransaction.objects.all().delete()
@@ -89,23 +69,51 @@ class EWSScriptTest(TestScript):
         p4.save()
         p5 = Product(domain=domain.name, name='Micro-G', code='mg', unit='each')
         p5.save()
+
+        Product(domain=domain.name, name='Ad', code='ad', unit='each').save()
+        Product(domain=domain.name, name='Al', code='al', unit='each').save()
+        Product(domain=domain.name, name='Qu', code='qu', unit='each').save()
+        Product(domain=domain.name, name='Sp', code='sp', unit='each').save()
+        Product(domain=domain.name, name='Rd', code='rd', unit='each').save()
+
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
+        SupplyPointCase.create_from_location(TEST_DOMAIN, loc)
+        loc.save()
+
+        loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name)
+        SupplyPointCase.create_from_location(TEST_DOMAIN, loc2)
+        loc2.save()
+
+        supply_point_id = loc.linked_supply_point().get_id
+        supply_point_id2 = loc2.linked_supply_point().get_id
+
         test.bootstrap(TEST_BACKEND, to_console=True)
         cls.user1 = bootstrap_user(username='stella', first_name='test1', last_name='test1',
                                    domain=domain.name, home_loc=loc)
-        cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc,
+        cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc2,
                                    first_name='test2', last_name='test2',
-                                   phone_number='222222', user_data={'role': 'In Charge'})
+                                   phone_number='222222', user_data={'role': ['In Charge']})
+        cls.user3 = bootstrap_user(username='pharmacist', domain=domain.name, home_loc=loc2,
+                                   first_name='test3', last_name='test3',
+                                   phone_number='333333')
 
         try:
             XFormInstance.get(docid='test-xform')
         except ResourceNotFound:
             xform = XFormInstance(_id='test-xform')
             xform.save()
+
         sql_location = loc.sql_location
-        sql_location.products = SQLProduct.objects.filter(product_id=p5.get_id)
+        sql_location.products = []
         sql_location.save()
+
+        sql_location = loc2.sql_location
+        sql_location.products = []
+        sql_location.save()
+
         config = CommtrackConfig.for_domain(domain.name)
+        config.use_auto_consumption = False
+        config.individual_consumption_defaults = True
         config.actions.append(
             CommtrackActionConfig(
                 action='receipts',
@@ -113,8 +121,15 @@ class EWSScriptTest(TestScript):
                 caption='receipts'
             )
         )
-        config.consumption_config = ConsumptionConfig(min_transactions=0, min_window=0, optimal_window=60)
+        config.consumption_config = ConsumptionConfig(use_supply_point_type_default_consumption=True)
         config.save()
+
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id, 8)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p3.get_id, supply_point_id, 5)
+
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id2, 10)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p3.get_id, supply_point_id2, 10)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p5.get_id, supply_point_id2, 10)
 
     @classmethod
     def tearDownClass(cls):

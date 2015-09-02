@@ -78,6 +78,20 @@
         {% include 'style/includes/analytics_all.html' %}
 
         {% if less_debug %}
+            <script>
+                less = {
+                    env: "development",
+                    useFileCache: true,
+                    logLevel: 2,
+                    errorReporting: 'console',
+                    async: false,
+                    fileAsync: false,
+                    poll: 1000,
+                    functions: {},
+                    dumpLineNumbers: "comments",
+                    relativeUrls: false
+                };
+            </script>
             <script src="{% new_static 'style/lib/lessjs/less-1.7.3.min.js' cache=True %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}

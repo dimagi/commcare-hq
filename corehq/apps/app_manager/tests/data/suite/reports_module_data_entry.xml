@@ -1,24 +1,24 @@
 <partial>
   <entry>
     <form>fixmeclayton</form>
-    <command id="reports.d3ff18cd83adf4550b35db8d391f6008">
+    <command id="reports.-1044519270389493083">
       <text>
-        <locale id="cchq.reports.d3ff18cd83adf4550b35db8d391f6008.name"/>
+        <locale id="cchq.reports.-1044519270389493083.name"/>
       </text>
     </command>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
       <datum
-        id="report_id_d3ff18cd83adf4550b35db8d391f6008"
-        nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']"
+        id="report_id_-1044519270389493083"
+        nodeset="instance('reports')/reports/report[@id='-1044519270389493083']"
         value="./@id"
-        detail-select="reports.d3ff18cd83adf4550b35db8d391f6008.select"
-        detail-confirm="reports.d3ff18cd83adf4550b35db8d391f6008.summary"/>
+        detail-select="reports.-1044519270389493083.select"
+        detail-confirm="reports.-1044519270389493083.summary"/>
       <datum
-        id="throwaway_d3ff18cd83adf4550b35db8d391f6008"
-        nodeset="instance('reports')/reports/report[@id='d3ff18cd83adf4550b35db8d391f6008']/rows/row"
+        id="throwaway_-1044519270389493083"
+        nodeset="instance('reports')/reports/report[@id='-1044519270389493083']/rows/row"
         value="''"
-        detail-select="reports.d3ff18cd83adf4550b35db8d391f6008.data"/>
+        detail-select="reports.-1044519270389493083.data"/>
     </session>
   </entry>
 </partial>
