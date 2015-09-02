@@ -59,6 +59,8 @@ class SessionDataHelper(object):
             else:
                 session_data["case_id"] = self.case_id
 
+        session_data["uses_sqlite"] = toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain)
+
         return session_data
 
     def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None):
@@ -73,7 +75,7 @@ class SessionDataHelper(object):
             "action": "touchcare-filter-cases",
             "filter_expr": xpath,
             "session_data": session_data,
-            "uses_sqlite": toggles.TF_USE_SQLITE_BACKEND
+            "uses_sqlite": toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain)
         }
 
         response = post_data(
