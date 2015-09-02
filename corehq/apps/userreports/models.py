@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 import json
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import (
@@ -366,9 +366,9 @@ class StaticDataSourceConfiguration(JsonObject):
     def all(cls):
         for path in settings.STATIC_DATA_SOURCES:
             with open(path) as f:
-                wrapped = cls.wrap(json.load(f))
-                for domain in wrapped.domains:
-                    doc = copy(wrapped.config)
+                custom_data_source_obj = cls.wrap(json.load(f)).to_json()
+                for domain in custom_data_source_obj['domains']:
+                    doc = deepcopy(custom_data_source_obj['config'])
                     doc['domain'] = domain
                     doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
