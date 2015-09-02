@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
@@ -12,13 +12,16 @@ import pytz
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
+from corehq.apps.export.custom_export_helpers import make_custom_export_helper, \
+    FormCustomExportHelper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm, \
-    FilterExportDownloadForm
+    FilterExportDownloadForm, FilterFormExportDownloadForm
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exportfilters import default_form_filter
+from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
@@ -28,13 +31,19 @@ from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
+import couchexport
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
+from couchexport.util import SerializableFunction
+from couchforms.filters import instances
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context
 
 require_form_export_permission = require_permission(
     Permissions.view_report,
@@ -438,10 +447,9 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
     @property
     @memoized
     def download_export_form(self):
-        return FilterExportDownloadForm(
+        return FilterFormExportDownloadForm(
             self.domain,
             self.timezone,
-            initial={'user_types': ['mobile']}
         )
 
     @property
@@ -464,7 +472,7 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     def export_list(self):
-        return [self.download_export_form.format_form_export(self.export)]
+        return [self.download_export_form.format_export_data(self.export)]
 
     @property
     @memoized
@@ -484,10 +492,95 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         return {
             'success': True,
             'groups': groups,
-            'placeholder': {'id': '-1', 'placeholder': _("Everyone")},
         }
 
     @allow_remote_invocation
-    def check_export_prep(self, in_data):
-        print "check download", in_data
-        return {}
+    def prepare_custom_export(self, in_data):
+        """Uses the current exports download framework (with some nasty filters)
+        to return the current download id to POLL for the download status.
+        A successful request returns:
+        {
+            'success': True,
+            'download_id': '<some uuid>',
+        }
+        """
+        # todo
+        # - eventually combine users + group field, but to do that exports
+        #   might need a revamp, so leaving that for later.
+        # - does the parameter minimal matter here?
+        try:
+            exports = in_data['exports']
+            form_data = in_data['form_data']
+            use_group = in_data['use_group']
+        except (KeyError, TypeError):
+            return {
+                'error': ("Request requires a list of exports and filters."),
+            }
+
+        if not use_group:
+            form_data['group'] = ''  # make double sure that group is none
+
+        filter_form = FilterFormExportDownloadForm(
+            self.domain, self.timezone, form_data)
+
+        if not filter_form.is_valid():
+            return {
+                'error': _("Form did not validate."),
+            }
+
+        form_filter = filter_form.get_form_filter()
+        export_filter = SerializableFunction(default_form_filter,
+                                             filter=form_filter)
+
+        export_data = exports[0]
+        export_object = FormExportSchema.get(export_data['export_id'])
+        export_object.update_schema()
+
+        # todo
+        # if safe_only and not export_object.is_safe:
+        #     return HttpResponseForbidden()
+
+        # todo where is max_column_size currently set in exports?
+        max_column_size = int(in_data.get('max_column_size', 2000))
+
+        filename = export_data.get('filename', export_object.name)
+        filename += ' ' + date.today().isoformat()
+
+        format = export_object.default_format or 'form'
+        download = DownloadBase()
+        download.set_task(couchexport.tasks.export_async.delay(
+            export_object,
+            download.download_id,
+            format=format,
+            filter=export_filter,
+            filename=filename,
+            previous_export_id=None,
+            max_column_size=max_column_size,
+        ))
+        return {
+            'success': True,
+            'download_id': download.download_id,
+        }
+
+    @allow_remote_invocation
+    def poll_custom_export_download(self, in_data):
+        try:
+            download_id = in_data['download_id']
+        except KeyError:
+            return {
+                'error': _("Requires a download id")
+            }
+        try:
+            context = get_download_context(download_id, check_state=True)
+        except TaskFailedError as e:
+            print e
+            context = {'error': list(e)}
+        if context.get('is_ready', False):
+            context.update({
+                'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
+                'download_url': "{}?get_file".format(
+                    reverse('retrieve_download', args=(download_id,))
+                ),
+            })
+        context['is_poll_successful'] = True
+        return context
