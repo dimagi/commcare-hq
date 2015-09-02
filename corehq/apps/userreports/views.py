@@ -248,7 +248,7 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.<br/><strong>Numeric</strong>: select this if the property is a number.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
         return context
 
@@ -384,7 +384,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -487,7 +487,7 @@ def rebuild_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 

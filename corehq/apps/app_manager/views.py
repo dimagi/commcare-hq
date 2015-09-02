@@ -10,7 +10,7 @@ import os
 import re
 import json
 import yaml
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from soil import DownloadBase
 from xml.dom.minidom import parseString
@@ -34,6 +34,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
+    ScheduleError,
 )
 
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -174,7 +175,10 @@ from corehq.apps.app_manager.models import (
     load_app_template,
     load_case_reserved_words,
     str_to_cls,
-    ReportAppConfig)
+    ReportAppConfig,
+    SchedulePhaseForm,
+    FixtureSelect,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -427,6 +431,30 @@ def default(request, domain):
     return view_app(request, domain)
 
 
+def get_schedule_context(form):
+    from corehq.apps.app_manager.models import SchedulePhase
+    schedule_context = {}
+    module = form.get_module()
+
+    if not form.schedule:
+        # Forms created before the scheduler module existed don't have this property
+        # so we need to add it so everything works.
+        form.schedule = FormSchedule(enabled=False)
+
+    schedule_context.update({
+        'all_schedule_phase_anchors': [phase.anchor for phase in module.get_schedule_phases()],
+        'schedule_form_id': form.schedule_form_id,
+    })
+
+    if module.has_schedule:
+        phase = form.get_phase()
+        if phase is not None:
+            schedule_context.update({'schedule_phase': phase})
+        else:
+            schedule_context.update({'schedule_phase': SchedulePhase(anchor='')})
+    return schedule_context
+
+
 def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
@@ -479,11 +507,9 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             form_action_errors = form.validate_for_build()
             if not form_action_errors:
                 form.add_stuff_to_xform(xform)
-                if settings.DEBUG and False:
-                    xform.validate()
         except CaseError as e:
             messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormValidationError as e:
+        except XFormException as e:
             messages.error(request, unicode(e))
         except Exception as e:
             if settings.DEBUG:
@@ -517,6 +543,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         form.get_unique_id()
         app.save()
 
+    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
         'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
@@ -528,8 +555,8 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': not isinstance(form, CareplanForm),
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
+        'allow_form_workflow': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
@@ -555,6 +582,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
+        context.update(get_schedule_context(form))
         return "app_manager/form_view_advanced.html", context
     else:
         context.update({
@@ -820,12 +848,9 @@ def get_module_view_context_and_template(app, module):
     if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
     builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
-    child_case_types = set()
-    for m in app.get_modules():
-        if m.case_type == module.case_type:
-            child_case_types.update(m.get_child_case_types())
-    child_case_types = list(child_case_types)
+    subcase_types = list(app.get_subcase_types(module.case_type))
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
+    fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
 
     def get_parent_modules(case_type_):
         parent_types = builder.get_parent_types(case_type_)
@@ -859,7 +884,7 @@ def get_module_view_context_and_template(app, module):
             'sort_elements': module.case_details.short.sort_elements,
             'short': module.case_details.short,
             'long': module.case_details.long,
-            'child_case_types': child_case_types,
+            'subcase_types': subcase_types,
         }
         case_properties = builder.get_properties(case_type_)
         if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
@@ -867,6 +892,7 @@ def get_module_view_context_and_template(app, module):
             case_properties |= usercase_properties
 
         item['properties'] = sorted(case_properties)
+        item['fixture_select'] = module.fixture_select
 
         if isinstance(module, AdvancedModule):
             details = [item]
@@ -879,7 +905,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 })
         else:
             item['parent_select'] = module.parent_select
@@ -890,8 +916,29 @@ def get_module_view_context_and_template(app, module):
     # make sure all modules have unique ids
     app.ensure_module_unique_ids(should_save=True)
 
-    def case_list_form_allowed(allow=True):
-        return allow and module.all_forms_require_a_case() and not module.put_in_root
+    class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
+        ALL_FORMS_REQUIRE_CASE = 1
+        MODULE_IN_ROOT = 2
+        PARENT_SELECT_ACTIVE = 3
+
+        @property
+        def message(self):
+            if self.reason == self.ALL_FORMS_REQUIRE_CASE:
+                return _('Not all forms in the module update a case.')
+            elif self.reason == self.MODULE_IN_ROOT:
+                return _("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
+            elif self.reason == self.PARENT_SELECT_ACTIVE:
+                return _("The module has 'Parent Selection' configured.")
+
+    def case_list_form_not_allowed_reason(allow=None):
+        if allow and not allow.allow:
+            return allow
+        elif not module.all_forms_require_a_case():
+            return AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
+        elif module.put_in_root:
+            return AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
+        else:
+            return AllowWithReason(True, '')
 
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
@@ -907,7 +954,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
                 {
                     'label': _('Task List'),
@@ -918,7 +965,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': child_case_types,
+                    'subcase_types': subcase_types,
                 },
             ],
         }
@@ -929,12 +976,17 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': case_list_form_allowed(),
+            'case_list_form_not_allowed_reason': case_list_form_not_allowed_reason(),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
             ],
-            'child_module_enabled': True
+            'child_module_enabled': True,
+            'schedule_phases': [{
+                'id': schedule.id,
+                'anchor': schedule.anchor,
+                'forms': [form.schedule_form_id for form in schedule.get_forms()],
+            } for schedule in module.get_schedule_phases()],
         }
     elif isinstance(module, ReportModule):
         def _report_to_config(report):
@@ -964,13 +1016,16 @@ def get_module_view_context_and_template(app, module):
         form_options = case_list_form_options(case_type)
         # don't allow this for modules with parent selection until this mobile bug is fixed:
         # http://manage.dimagi.com/default.asp?178635
-        allow_case_list_form = case_list_form_allowed(not module.parent_select.active)
+        allow_case_list_form = case_list_form_not_allowed_reason(
+            AllowWithReason(not module.parent_select.active, AllowWithReason.PARENT_SELECT_ACTIVE)
+        )
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
+            'fixture_columns': fixture_columns,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
-            'case_list_form_allowed': allow_case_list_form,
+            'case_list_form_not_allowed_reason': allow_case_list_form,
             'valid_parent_modules': [parent_module
                                      for parent_module in app.modules
                                      if not getattr(parent_module, 'root_module_id', None) and
@@ -1086,19 +1141,26 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         specific_media = {
             'menu': {
                 'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id
+                    module, module_id, form=form, form_index=form_id, to_language=context['lang']
                 ),
-                'default_file_name': default_file_name,
+                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=context['lang']),
             }
         }
         if module and module.uses_media():
+            def _make_name(suffix):
+                return "{default_name}_{suffix}_{lang}".format(
+                    default_name=default_file_name,
+                    suffix=suffix,
+                    lang=context['lang'],
+                )
+
             specific_media['case_list_form'] = {
-                'menu_refs': app.get_case_list_form_media(module, module_id),
-                'default_file_name': '{}_case_list_form'.format(default_file_name),
+                'menu_refs': app.get_case_list_form_media(module, module_id, to_language=context['lang']),
+                'default_file_name': _make_name('case_list_form'),
             }
             specific_media['case_list_menu_item'] = {
-                'menu_refs': app.get_case_list_menu_item_media(module, module_id),
-                'default_file_name': '{}_case_list_menu_item'.format(default_file_name),
+                'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=context['lang']),
+                'default_file_name': _make_name('case_list_menu_item'),
             }
             specific_media['case_list_lookup'] = {
                 'menu_refs': app.get_case_list_lookup_image(module, module_id),
@@ -1734,19 +1796,20 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_form_media_image'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_image',
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        module.case_list_form.media_image = val
+        module.case_list_form.set_icon(lang, new_path)
+
     if should_edit('case_list_form_media_audio'):
-        val = _process_media_attribute(
+        new_path = _process_media_attribute(
             'case_list_form_media_audio',
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.media_audio = val
+        module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
         val = _process_media_attribute(
@@ -1754,14 +1817,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
-        module.case_list.media_image = val
+        module.case_list.set_icon(lang, val)
     if should_edit('case_list-menu_item_media_audio'):
         val = _process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
         )
-        module.case_list.media_audio = val
+        module.case_list.set_audio(lang, val)
 
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
@@ -1779,13 +1842,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module[SLUG].show = json.loads(request.POST[show])
             module[SLUG].label[lang] = request.POST[label]
 
-    if isinstance(module, AdvancedModule):
-        module.has_schedule = should_edit('has_schedule')
-        if should_edit('has_schedule'):
-            for form in module.get_forms():
-                if not form.schedule:
-                    form.schedule = FormSchedule()
-
     if should_edit("root_module_id"):
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
@@ -1796,7 +1852,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             except ModuleNotFoundException:
                 messages.error(_("Unknown Module"))
 
-    _handle_media_edits(request, module, should_edit, resp)
+    _handle_media_edits(request, module, should_edit, resp, lang)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -1818,7 +1874,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
-    and sort_elements.
+    fixture_select and sort_elements.
     """
     params = json_request(request.POST)
     detail_type = params.get('type')
@@ -1828,6 +1884,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
+    fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
@@ -1880,6 +1937,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+    if fixture_select is not None:
+        module.fixture_select = FixtureSelect.wrap(fixture_select)
 
     resp = {}
     app.save(resp)
@@ -1944,13 +2003,13 @@ def _process_media_attribute(attribute, resp, val):
     return val
 
 
-def _handle_media_edits(request, item, should_edit, resp):
+def _handle_media_edits(request, item, should_edit, resp, lang):
     if 'corrections' not in resp:
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            val = _process_media_attribute(attribute, resp, request.POST.get(attribute))
-            setattr(item, attribute, val)
+            media_path = _process_media_attribute(attribute, resp, request.POST.get(attribute))
+            item._set_media(attribute, lang, media_path)
 
 
 @no_conflict_require_POST
@@ -2072,7 +2131,7 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         )
         form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
-    _handle_media_edits(request, form, should_edit, resp)
+    _handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
     if ajax:
@@ -2083,11 +2142,53 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def edit_schedule_phases(request, domain, app_id, module_id):
+    NEW_PHASE_ID = -1
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    phases = json.loads(request.POST.get('phases'))
+    changed_anchors = [(phase['id'], phase['anchor'])
+                       for phase in phases if phase['id'] != NEW_PHASE_ID]
+    all_anchors = [phase['anchor'] for phase in phases]
+    enabled = json.loads(request.POST.get('has_schedule'))
+    try:
+        module.update_schedule_phase_anchors(changed_anchors)
+        module.update_schedule_phases(all_anchors)
+        module.has_schedule = enabled
+    except ScheduleError as e:
+        return HttpResponseBadRequest(unicode(e))
+
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+
     json_loads = json.loads(request.POST.get('schedule'))
-    form.schedule = FormSchedule.wrap(json_loads)
+    enabled = json_loads.pop('enabled')
+    anchor = json_loads.pop('anchor')
+    schedule_form_id = json_loads.pop('schedule_form_id')
+
+    if enabled:
+        try:
+            phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
+        except ScheduleError as e:
+            return HttpResponseBadRequest(unicode(e))
+        form.schedule_form_id = schedule_form_id
+        form.schedule = FormSchedule.wrap(json_loads)
+        phase.add_form(form)
+    else:
+        try:
+            form.disable_schedule()
+        except ScheduleError:
+            pass
+
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
@@ -2744,7 +2845,7 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()

@@ -17,6 +17,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsFilterError)
 from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.util import get_total_row
 from corehq.apps.userreports.util import default_language, localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
@@ -204,6 +205,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 raise
             return self.render_json_response({
                 'error': e.message,
+                'aaData': [],
             })
         except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:
@@ -224,12 +226,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         datatables_params = DatatablesParams.from_request_dict(request.GET)
         end = min(datatables_params.start + datatables_params.count, total_records)
         page = list(data.get_data())[datatables_params.start:end]
-        return self.render_json_response({
+
+        json_response = {
             'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
-        })
+        }
+        if data.has_total_row:
+            json_response.update({
+                "total_row": get_total_row(page, data.aggregation_columns, data.column_configs),
+            })
+        return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
         pass
@@ -280,15 +288,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 'error': e.message,
             })
 
-        report_config = ReportConfiguration.get(self.report_config_id)
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column.column_id for column in report_config.report_columns]
+        columns = [column.column_id for column in self.spec.report_columns]
         rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+        total_rows = (
+            [get_total_row(raw_rows, data.aggregation_columns, data.column_configs)]
+            if data.has_total_row else []
+        )
         return [
             [
                 self.title,
-                [headers] + rows
+                [headers] + rows + total_rows
             ]
         ]
 

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
@@ -370,7 +371,7 @@ class StockAndReceiptParser(StockReportParser):
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.RECEIPTS,
-                        quantity=value.split('.')[1]
+                        quantity=Decimal(value.split('.')[1])
                     )
                     yield StockTransactionHelper(
                         domain=self.domain.name,
@@ -378,7 +379,7 @@ class StockAndReceiptParser(StockReportParser):
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.STOCKONHAND,
-                        quantity=value.split('.')[0]
+                        quantity=Decimal(value.split('.')[0])
                     )
                 products = []
         if products:

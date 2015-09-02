@@ -1,57 +1,20 @@
-import datetime
-
-from celery.schedules import crontab
-from celery.task import periodic_task
-from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusTypes
-from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND, update_statuses
+from custom.ilsgateway.models import SupplyPointStatusTypes
+from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND
 from casexml.apps.stock.models import StockTransaction
-from dimagi.utils.dates import get_business_day_of_month
-from custom.ilsgateway.utils import send_for_all_domains, send_translated_message
-import settings
+from custom.ilsgateway.tanzania.reminders.reminder import Reminder
 
 
-def send_soh_reminder(domain, date, test_list=None):
-    sp_ids = set()
-    users = CommCareUser.by_domain(domain) if not test_list else test_list
-    for user in users:
-        if user.is_active and user.location and user.location.location_type == 'FACILITY':
-            sp = SupplyPointCase.get_by_location(user.location)
-            if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,
-                                                          type='stockonhand').exists():
-                result = send_translated_message(user, REMINDER_STOCKONHAND)
-                if not test_list and result:
-                    sp_ids.add(sp._id)
-    update_statuses(sp_ids, SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
+class SOHReminder(Reminder):
 
+    def get_message(self):
+        return REMINDER_STOCKONHAND
 
-def get_last_and_nth_business_day(date, n):
-    last_month = datetime.datetime(date.year, date.month, 1) - datetime.timedelta(days=1)
-    last_month_last_day = get_business_day_of_month(month=last_month.month, year=last_month.year, count=-1)
-    nth_business_day = get_business_day_of_month(month=date.month, year=date.year, count=n)
-    return last_month_last_day, nth_business_day
+    def get_status_type(self):
+        return SupplyPointStatusTypes.SOH_FACILITY
 
-
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def first_soh_task():
-    now = datetime.datetime.utcnow()
-    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
-    if now.day == last_business_day.day:
-        send_for_all_domains(last_business_day, send_soh_reminder)
-
-
-@periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def second_soh_task():
-    now = datetime.datetime.utcnow()
-    last_month_last_day, first_business_day = get_last_and_nth_business_day(now, 1)
-    if now.day == first_business_day.day:
-        send_for_all_domains(last_month_last_day, send_soh_reminder)
-
-
-@periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def third_soh_task():
-    now = datetime.datetime.utcnow()
-    last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
-    if now.day == fifth_business_day.day:
-        send_for_all_domains(last_month_last_day, send_soh_reminder)
+    def location_filter(self, sql_location):
+        return not StockTransaction.objects.filter(
+            case_id=sql_location.supply_point_id,
+            report__date__gte=self.date,
+            type='stockonhand'
+        ).exists()

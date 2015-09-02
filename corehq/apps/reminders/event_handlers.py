@@ -2,10 +2,10 @@ from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
     METHOD_EMAIL, CaseReminderHandler)
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
-    CommCareMobileContactMixin, InvalidFormatException)
+from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
@@ -74,25 +74,8 @@ def get_workflow(handler):
 def get_recipient_phone_number(reminder, recipient, verified_numbers):
     verified_number = verified_numbers.get(recipient.get_id, None)
     unverified_number = None
-
     if verified_number is None:
-        if isinstance(recipient, CouchUser):
-            try:
-                unverified_number = recipient.phone_number
-            except Exception:
-                unverified_number = None
-        elif isinstance(recipient, CommCareCase):
-            unverified_number = recipient.get_case_property("contact_phone_number")
-            unverified_number = apply_leniency(unverified_number)
-            if unverified_number:
-                try:
-                    CommCareMobileContactMixin.validate_number_format(
-                        unverified_number)
-                except InvalidFormatException:
-                    unverified_number = None
-            else:
-                unverified_number = None
-
+        unverified_number = get_unverified_number_for_recipient(recipient)
     return (verified_number, unverified_number)
 
 

@@ -63,6 +63,7 @@ class ReportColumn(JsonObject):
     display = DefaultProperty()
     description = StringProperty()
     transform = DictProperty()
+    calculate_total = BooleanProperty(default=False)
 
     def format_data(self, data):
         """

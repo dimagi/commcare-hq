@@ -620,16 +620,16 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DROPBOX_SYNC = StaticToggle(
-    'dropbox_sync',
-    'Allows users to sync their file downloads to Dropbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 EMAIL_IN_REMINDERS = StaticToggle(
     'email_in_reminders',
     'Send emails from reminders',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+FIXTURE_CASE_SELECTION = StaticToggle(
+    'fixture_case',
+    'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
@@ -639,4 +639,27 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'Send response about invalid stock on hand',
     TAG_UNKNOWN,
     [NAMESPACE_DOMAIN]
+)
+
+
+BROADCAST_TO_LOCATIONS = StaticToggle(
+    'broadcast_to_locations',
+    'Send broadcasts to locations',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+EWS_BROADCAST_BY_ROLE = StaticToggle(
+    'ews_broadcast_by_role',
+    'EWS: Filter broadcast recipients by role',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SMS_PERFORMANCE_FEEDBACK = StaticToggle(
+    'sms_performance_feedback',
+    'Enable SMS-based performance feedback',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
 )

@@ -197,7 +197,8 @@ def redirect_to_default(req, domain=None):
                         req.couch_user, domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('dashboard_default', args=[domain])
+                    from corehq.apps.dashboard.views import dashboard_default
+                    return dashboard_default(req, domain)
 
             else:
                 raise Http404
@@ -1047,3 +1048,28 @@ def deactivate_alert(request):
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
+
+class DataTablesAJAXPaginationMixin(object):
+    @property
+    def echo(self):
+        return self.request.GET.get('sEcho')
+
+    @property
+    def display_start(self):
+        return int(self.request.GET.get('iDisplayStart'))
+
+    @property
+    def display_length(self):
+        return int(self.request.GET.get('iDisplayLength'))
+
+    @property
+    def search_phrase(self):
+        return self.request.GET.get('sSearch', '').strip()
+
+    def datatables_ajax_response(self, data, total_records, filtered_records=None):
+        return HttpResponse(json.dumps({
+            'sEcho': self.echo,
+            'aaData': data,
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': filtered_records or total_records,
+        }))

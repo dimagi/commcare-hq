@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase
+    AutoSelectCase, CaseIndex
 
 
 class AppFactory(object):
@@ -60,15 +60,16 @@ class AppFactory(object):
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
         index = len(module.forms)
-        form = module.new_form('{} form {}'.format(slug, index), lang='en')
+        form = module.new_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
+        form.source = ''  # set form source since we changed the unique_id
         return form
 
     @staticmethod
-    def form_updates_case(form, case_type=None, parent_case_type=None):
+    def form_updates_case(form, case_type=None, parent_case_type=None, update=None):
         if form.form_type == 'module_form':
             form.requires = 'case'
-            form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+            form.actions.update_case = UpdateCaseAction(update=update)
             form.actions.update_case.condition.type = 'always'
 
             if parent_case_type:
@@ -85,12 +86,13 @@ class AppFactory(object):
             action = LoadUpdateAction(
                 case_type=case_type,
                 case_tag='load_{}_{}'.format(case_type, index),
+                case_properties=update,
             )
 
             if parent_case_type:
                 parent_action = form.actions.load_update_cases[-1]
                 assert parent_action.case_type == parent_case_type
-                action.parent_tag = parent_action.case_tag
+                action.case_index = CaseIndex(tag=parent_action.case_tag)
 
             form.actions.load_update_cases.append(action)
 
@@ -114,9 +116,25 @@ class AppFactory(object):
                 name_path='/data/name'
             )
             if is_subcase:
-                action.parent_tag = form.actions.load_update_cases[-1].case_tag
+                action.case_indices = [CaseIndex(tag=form.actions.load_update_cases[-1].case_tag)]
 
             form.actions.open_cases.append(action)
+
+    @classmethod
+    def case_list_form_app_factory(cls):
+        factory = cls(build_version='2.9')
+
+        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
+        factory.form_updates_case(update_case_form)
+
+        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+        factory.form_opens_case(register_form)
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'New Case'
+        }
+        return factory
 
     @staticmethod
     def advanced_form_autoloads(form, mode, value_key, value_source=None):

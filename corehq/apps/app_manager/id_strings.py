@@ -202,8 +202,62 @@ def media_resource(multimedia_id, name):
     return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
 
+@pattern('modules.m%d.icon')
+def module_icon_locale(module):
+    return u"modules.m{module.id}.icon".format(module=module)
+
+
+@pattern('modules.m%d.audio')
+def module_audio_locale(module):
+    return u"modules.m{module.id}.audio".format(module=module)
+
+
+@pattern('forms.m%df%d.icon')
+def form_icon_locale(form):
+    return u"forms.m{module.id}f{form.id}.icon".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+@pattern('forms.m%df%d.audio')
+def form_audio_locale(form):
+    return u"forms.m{module.id}f{form.id}.audio".format(
+        module=form.get_module(),
+        form=form
+    )
+
+
+@pattern('case_list_form.m%d.icon')
+def case_list_form_icon_locale(module):
+    return u"case_list_form.m{module.id}.icon".format(module=module)
+
+
+@pattern('case_list_form.m%d.audio')
+def case_list_form_audio_locale(module):
+    return u"case_list_form.m{module.id}.audio".format(module=module)
+
+
+@pattern('case_lists.m%d.icon')
+def case_list_icon_locale(module):
+    return u"case_lists.m{module.id}.icon".format(module=module)
+
+
+@pattern('case_lists.m%d.audio')
+def case_list_audio_locale(module):
+    return u"case_lists.m{module.id}.audio".format(module=module)
+
+
 def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
+
+
+def fixture_detail(module):
+    return detail(module, 'fixture_select')
+
+
+def fixture_session_var(module):
+    return u'fixture_value_m{module.id}'.format(module=module)
 
 
 def menu_id(module):
@@ -240,5 +294,6 @@ def indicator_instance(indicator_set_name):
     return u"indicators:%s" % indicator_set_name
 
 
-def schedule_fixture(form):
-    return u'schedule:m{module.id}:f{form.id}'.format(module=form.get_module(), form=form)
+def schedule_fixture(module, phase, form):
+    form_id = phase.get_phase_form_index(form)
+    return u'schedule:m{module.id}:p{phase.id}:f{form_id}'.format(module=module, phase=phase, form_id=form_id)

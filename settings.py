@@ -177,7 +177,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'south',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -265,6 +264,7 @@ HQ_APPS = (
     'corehq.apps.yo',
     'corehq.apps.telerivet',
     'corehq.apps.mach',
+    'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -366,7 +366,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'raven.contrib.django.raven_compat',
     'rosetta',
     'soil',
-    'south',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -459,6 +458,7 @@ PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
+DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
@@ -903,6 +903,11 @@ COMPRESS_PRECOMPILERS = (
 )
 COMPRESS_ENABLED = True
 
+LESS_B3_PATHS = {
+    'variables': '../../../style/less/bootstrap3/includes/variables',
+    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+}
+
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
@@ -932,10 +937,6 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 
 # override for production
 DEFAULT_PROTOCOL = 'http'
-
-####### South Settings #######
-SKIP_SOUTH_TESTS = True
-SOUTH_TESTS_MIGRATE = False
 
 # Dropbox
 DROPBOX_KEY = ''
@@ -1107,6 +1108,7 @@ COUCHDB_APPS = [
     'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
+    ('performance_sms', 'meta'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
@@ -1131,6 +1133,9 @@ INSTALLED_APPS += LOCAL_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
+
+seen = set()
+INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 

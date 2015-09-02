@@ -1,5 +1,5 @@
-DOMAIN_INDEX = "hqdomains_201505012_1117"
-DOMAIN_MAPPING={'_meta': {'comment': 'Farid modified on 5/12/2015',
+DOMAIN_INDEX = "hqdomains_201508027_1117"
+DOMAIN_MAPPING={'_meta': {'comment': 'j$ modified on 5/12/2015',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -73,6 +73,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Farid modified on 5/12/2015',
                 'cp_n_in_sms': {'type': 'long'},
                 'cp_n_sms_ever': {'type': 'long'},
                 'cp_n_sms_30_d': {'type': 'long'},
+                'cp_n_sms_in_30_d': {'type': 'long'},
+                'cp_n_sms_out_30_d': {'type': 'long'},
                 'cp_sms_ever': {'type': 'boolean'},
                 'cp_sms_30_d': {'type': 'boolean'},
                 'cp_last_updated': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
