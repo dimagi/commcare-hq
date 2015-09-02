@@ -66,3 +66,20 @@
         </tbody>
     </table>
 </fieldset>
+
+<!-- ko with: newCard -->
+<a class="new-card" data-toggle="modal" href="#card-modal">NEW CARD</a>
+<div class="modal hide fade" id="card-modal">
+    <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+    <div class="modal-footer">
+            <button style="" type="button" class="btn" data-dismiss="modal">
+                {% trans 'Cancel' %}
+            </button>
+            <button type="button" class="btn btn-success"
+                    data-bind="click: save">
+                {% trans 'Save' %}
+            </button>
+        </div>
+</div>
+{% include 'accounting/partials/new_stripe_card_template.html' %}
+<!-- /ko -->

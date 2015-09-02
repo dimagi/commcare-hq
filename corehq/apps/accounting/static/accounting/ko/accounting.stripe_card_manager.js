@@ -1,3 +1,24 @@
+var NewStripeCard = function(data){
+    'use strict';
+    var self = this;
+    var mapping = {
+        observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token']
+    };
+
+    self.wrap = function(data){
+        ko.mapping.fromJS(data, mapping, self);
+    };
+    self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
+
+    self.isTestMode = ko.observable(false);
+    self.isProcessing = ko.observable(false);
+    self.agreedToPrivacyPolicy = ko.observable(false);
+
+    self.save = function(){
+        console.log(ko.mapping.toJS(self));
+    };
+};
+
 var StripeCard = function(card){
     'use strict';
     var self = this;
@@ -78,4 +99,6 @@ var StripeCardManager = function(data){
     self.wrap(data);
 
     self.autoPayButtonEnabled = ko.observable(true);
+    self.newCard = new NewStripeCard();
+    console.log(self.newCard);
 };

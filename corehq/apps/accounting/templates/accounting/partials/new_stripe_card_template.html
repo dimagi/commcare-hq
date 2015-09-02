@@ -1,0 +1,75 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/html" id="new-stripe-card-template">
+    <input type="hidden"
+           name="stripeToken"
+           data-bind="value: token" />
+
+    <div class="control-group">
+        <label class="control-label">
+            {% trans 'Card Number' %}
+        </label>
+        <div class="controls">
+            <input type="text"
+                   data-bind="value: number"
+                   size="20"
+                   placeholder="xxxx-xxxx-xxxx-xxxx" />
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label">
+            {% trans 'CVC' %}
+        </label>
+        <div class="controls">
+            <input type="text"
+                   data-bind="value: cvc"
+                   size="4"
+                   class="input-small"
+                   placeholder="xxxx"/>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label">
+            {% trans 'Expiration' %}
+        </label>
+        <div class="controls">
+            <div class="control-row">
+                <input type="text"
+                       data-bind="value: expMonth"
+                       size="2"
+                       class="span1"
+                       placeholder="MM" />
+                <input type="text"
+                       data-bind="value: expYear"
+                       size="4"
+                       class="span2"
+                       placeholder="YYYY" />
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <label class="checkbox">
+                <input type="checkbox"
+                       data-bind="checked: agreedToPrivacyPolicy" />
+                {% blocktrans %}
+                I agree to Dimagi's <a href="http://www.dimagi.com/policy" target="_blank">Privacy Policy</a>.
+                {% endblocktrans %}
+            </label>
+            <label class="checkbox">
+                <input type="checkbox" name="autopay" data-bind="checked: isAutopay"/>
+                {% trans 'Use this card to autopay' %}
+            </label>
+            <span class="help-block">
+                <i class="icon-info-sign"></i>
+                {% blocktrans %}
+                We use <a href="http://www.stripe.com/" target="_blank">Stripe</a>
+                to process this transaction.
+                {% endblocktrans %}
+            </span>
+        </div>
+    </div>
+</script>

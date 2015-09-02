@@ -2750,3 +2750,10 @@ class CardView(DomainAccountingSettings):
             'is_autopay': card.metadata.get('auto_pay_{}'.format(self.account.id), False),
             'url': reverse(CardView.url_name, args=[self.domain, card.id]),
         } for card in payment_method.all_cards]
+
+
+class CardsView(DomainAccountingSettings):
+    url_name = "cards_view"
+
+    def post(self, request, domain, card_token):
+        user = request.user.username
