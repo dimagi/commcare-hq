@@ -1,5 +1,6 @@
 from collections import namedtuple
 from couchdbkit import ResourceNotFound
+from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
     DuplicateFixtureTagException, FixtureAPIException
 from django.core.validators import ValidationError
@@ -142,9 +143,8 @@ class FixtureWorkbook(object):
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
             raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
-        except Exception:
+        except InvalidFileException:
             raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
-
 
     def get_types_sheet(self):
         try:
