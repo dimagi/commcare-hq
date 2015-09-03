@@ -39,7 +39,7 @@ def _switch_expression(spec, context):
     wrapped = SwitchExpressionSpec.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.switch_on, context),
-        {k : ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.iteritems()},
+        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.iteritems()},
         ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped
