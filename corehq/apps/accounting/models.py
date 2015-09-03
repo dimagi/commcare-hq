@@ -2063,8 +2063,12 @@ class BillingRecord(BillingRecordBase):
             })
 
         if self.invoice.subscription.account.auto_pay_enabled:
+            try:
+                last_4 = getattr(self.invoice.subscription.account.autopay_card, 'last4', None)
+            except StripePaymentMethod.DoesNotExist:
+                last_4 = None
             context.update({
-                'last_4': getattr(self.invoice.subscription.account.autopay_card, 'last4', None),
+                'last_4': last_4,
             })
 
         return context

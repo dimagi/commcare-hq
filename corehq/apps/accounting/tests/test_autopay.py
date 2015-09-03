@@ -27,10 +27,6 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.account.update_autopay_user(self.web_user.username)
         self.invoice_date = utils.months_from_date(self.subscription.date_start,
                                                    random.randint(2, self.subscription_length))
-        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
-                                                  customer_id=self.fake_stripe_customer.id)
-        self.payment_method.set_autopay(self.fake_card, self.account)
-        self.payment_method.save()
 
         self.account_2 = generator.billing_account(self.dimagi_user, self.web_user)
         self.domain_2 = generator.arbitrary_domain()
@@ -42,7 +38,13 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
         tasks.generate_invoices(self.invoice_date)
 
-    def test_get_autopayable_invoices(self):
+    @mock.patch.object(StripePaymentMethod, 'customer')
+    def test_get_autopayable_invoices(self, fake_customer):
+        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
+        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
+                                                  customer_id=self.fake_stripe_customer.id)
+        self.payment_method.set_autopay(self.fake_card, self.account)
+        self.payment_method.save()
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
         date_due = autopayable_invoice.first().date_due
 
@@ -54,6 +56,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @mock.patch.object(Charge, 'create')
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
+        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
+                                                  customer_id=self.fake_stripe_customer.id)
+        self.payment_method.set_autopay(self.fake_card, self.account)
+        self.payment_method.save()
         original_outbox_length = len(mail.outbox)
 
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
