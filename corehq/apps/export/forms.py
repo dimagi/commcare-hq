@@ -172,6 +172,14 @@ class FilterExportDownloadForm(forms.Form):
         (_USER_UNKNOWN, ugettext_noop("Unknown Users")),
         (_USER_SUPPLY, ugettext_noop("CommCare Supply")), # todo filter out supply
     ]
+    type_or_group = forms.ChoiceField(
+        label=ugettext_noop("User Types or Group"),
+        required=False,
+        choices=(
+            ('type', ugettext_noop("User Types")),
+            ('group', ugettext_noop("Group")),
+        )
+    )
     user_types = forms.MultipleChoiceField(
         label=ugettext_noop("Select User Types"),
         widget=Select2MultipleChoiceWidget,
@@ -208,44 +216,39 @@ class FilterExportDownloadForm(forms.Form):
         self.helper.field_class = 'col-sm-5'
         self.helper.layout = Layout(
             crispy.Field(
-                'export_id',
-                ng_required='true',
-                ng_model='formData.export_id',
+                'type_or_group',
+                ng_model="formData.type_or_group",
+                ng_required='false',
             ),
-            B3MultiField(
-                _("User Types"),
-                crispy.Div(
-                    crispy.Div(
-                        InlineField(
-                            'user_types',
-                            ng_model='formData.user_types',
-                            ng_required='false',
-                            style="width: 98%",
-                        ),
-                        ng_show="!isSelectGroups || !hasGroups",
-                    ),
+            crispy.Div(
+                crispy.Field(
+                    'user_types',
+                    ng_model='formData.user_types',
+                    ng_required='false',
                 ),
-                CrispyTemplate('export/crispy_html/user_types_help.html', {
-                    'domain': self.domain,
-                }),
+                ng_show="formData.type_or_group === 'type'",
             ),
-            B3MultiField(
-                _("Group"),
-                crispy.Div(
+            crispy.Div(
+                B3MultiField(
+                    _("Group"),
                     crispy.Div(
-                        InlineField(
-                            'group',
-                            ng_model='formData.group',
-                            ng_required='false',
-                            style="width: 98%",
+                        crispy.Div(
+                            InlineField(
+                                'group',
+                                ng_model='formData.group',
+                                ng_required='false',
+                                style="width: 98%",
+                            ),
+                            ng_show="hasGroups",
                         ),
-                        ng_show="isSelectGroups && hasGroups",
                     ),
+                    CrispyTemplate('export/crispy_html/groups_help.html', {
+                        'domain': self.domain,
+                    }),
                 ),
-                CrispyTemplate('export/crispy_html/groups_help.html', {
-                    'domain': self.domain,
-                }),
+                ng_show="formData.type_or_group === 'group'",
             ),
+
             crispy.Field(
                 'date_range',
                 ng_model='formData.date_range',
