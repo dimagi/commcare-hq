@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0001_initial'),
+        ('accounting', '0002_update_pricing_table'),
     ]
 
     operations = [
