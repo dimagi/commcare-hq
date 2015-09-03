@@ -212,7 +212,7 @@ class FilterExportDownloadForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-2'
+        self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
         self.helper.layout = Layout(
             crispy.Field(
