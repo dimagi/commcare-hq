@@ -244,7 +244,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
         end = min(datatables_params.start + datatables_params.count, total_records)
-        page = list(data_source.get_data())[datatables_params.start:end]
+        data = list(data_source.get_data())
+        page = data[datatables_params.start:end]
 
         json_response = {
             'aaData': page,
@@ -255,7 +256,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         if data_source.has_total_row:
             json_response.update({
                 "total_row": get_total_row(
-                    page, data_source.aggregation_columns, data_source.column_configs,
+                    data, data_source.aggregation_columns, data_source.column_configs,
                     get_expanded_columns(data_source.column_configs, data_source.config)
                 ),
             })
