@@ -340,6 +340,7 @@ def _login(req, domain_name, template_name):
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'allow_domain_requests': domain.allow_domain_requests,
         })
 
     authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
