@@ -1,6 +1,7 @@
 import json
 import dateutil
 from django import forms
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
@@ -315,8 +316,8 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
             'export_id': export.get_id,
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_type': 'form',
-            'format':  export.default_format,
             'name': export.name,
+            'edit_url': '#',  #todo
         }
 
 class FilterCaseExportDownloadForm(FilterExportDownloadForm):
