@@ -11,26 +11,32 @@
       media="all"
       href="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.css' %}" />
 <style type="text/css">
-    .download-in-progress-container {
+    .form-notice-container {
         position: relative;
+        height: 145px;
     }
-    .download-in-progress-notice {
+    @media (max-width: 767px) {
+        .form-notice-container {
+            height: 217px;
+        }
+    }
+    .form-notice {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 210px;
-        background-color: rgba(255, 255, 255, 0.7);
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.6);
         z-index: 4999;
 
     }
-    .download-in-progress-notice .label {
+    .form-notice .label {
         margin: 0 auto;
         position: absolute;
-        width: 300px;
+        width: 350px;
         left: 50%;
         margin-left: -150px;
-        margin-top: 62px;
+        margin-top: -3px;
         z-index: 5000;
     }
 </style>
@@ -64,31 +70,38 @@
 
 {% block page_content %}
     <div ng-app="downloadExportsApp">
-        <div ng-controller="DownloadExportFormController">
+        <div ng-controller="DownloadExportFormController"
+             ng-cloak>
             <div class="alert alert-info">
                 {% blocktrans %}
                     You are downloading the following exports:
                 {% endblocktrans %}
                 <ul>
                     {% angularjs %}
-                    <li ng-repeat="export in exportList">{{ export.name }}</li>
+                    <li ng-repeat="export in exportList">
+                        <a href="{{ export.edit_url }}" target="_blank">
+                            <i class="fa fa-file-text"></i>
+                            {{ export.name }}</a>
+                    </li>
                     {% endangularjs %}
                 </ul>
             </div>
-            <form class="form form-horizontal download-in-progress-container"
+            <form class="form form-horizontal form-notice-container"
                   name="exportFiltersForm"
                   ng-submit="prepareExport()"
                   novalidate="novalidate">
-                {% crispy download_export_form %}
-                <div class="download-in-progress-notice"
-                     ng-show="!!downloadInProgress">
-                    <div class="label label-default label-lg">
-                        <i class="fa fa-info-circle"></i>
-                        {% trans "Download in progress." %}
+                <div class="form-notice-container">
+                    {% crispy download_export_form %}
+                    <div class="form-notice"
+                         ng-show="!!downloadInProgress">
+                        <div class="label label-default label-lg">
+                            <i class="fa fa-info-circle"></i>
+                            {% trans "Filters inactive while download in progress. " %}
+                        </div>
                     </div>
                 </div>
                 <div class="form-actions" ng-show="!downloadInProgress">
-                    <div class="col-sm-5 col-sm-offset-2">
+                    <div class="col-sm-5 col-sm-offset-3">
                         <button type="submit"
                                 class="btn btn-primary"
                                 ng-show="!preparingExport"
@@ -105,10 +118,11 @@
                 </div>
             </form>
         </div>
-        <div ng-controller="DownloadProgressController">
+        <div ng-controller="DownloadProgressController"
+             ng-cloak>
             <div class="form-actions"
                  ng-show="!!showDownloadStatus">
-                <div class="col-sm-9 col-lg-5 col-sm-offset-2">
+                <div class="col-sm-9 col-lg-5 col-sm-offset-3">
                     <div class="row">
                         <div class="col-sm-3 col-md-4">
                             {% angularjs %}
@@ -175,7 +189,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-9 col-md-8" ng-show="!!isDownloaded">
+                        <div class="col-sm-9 col-md-8"
+                             ng-show="!!isDownloaded">
                             <button type="button"
                                     class="btn btn-default btn-lg"
                                     ng-click="resetDownload()">
@@ -184,16 +199,15 @@
                         </div>
                     </div>
                     <p class="alert alert-info" style="margin-top: 10px;">
-                        <small>
-                            <i class="fa fa-info-circle"></i>
-                            {% blocktrans %}
-                                If you are downloading a large file over
-                                a slow or unstable connection, we
-                                recommend syncing to Dropbox.
-                                Learn more about <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox">
-                                Sync to Dropbox</a>.
-                            {% endblocktrans %}
-                        </small>
+                        <i class="fa fa-info-circle"></i>
+                        {% blocktrans %}
+                            If you are downloading a large file over
+                            a slow or unstable connection, we
+                            recommend syncing to Dropbox.
+                        {% endblocktrans %}
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox"
+                           target="_blank">
+                            {% trans 'Learn more about Sync to Dropbox' %}</a>.
                     </p>
                 </div>
             </div>
