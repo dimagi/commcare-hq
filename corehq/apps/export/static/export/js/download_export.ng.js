@@ -24,13 +24,15 @@
     };
 
     download_export.constant('exportList', []);
+    download_export.constant('maxColumnSize', 2000);
 
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
-        $scope, djangoRMI, exportList, exportDownloadService
+        $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
+        self._maxColumnSize = maxColumnSize;
         $scope.formData = {};
         $scope.exportList = _.map(exportList, function (exportData) {
             exportData['filename'] = encodeURIComponent(exportData['name']);
@@ -93,6 +95,7 @@
             $scope.preparingExport = true;
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
+                max_column_size: self._maxColumnSize,
                 form_data: $scope.formData
             })
                 .success(function (data) {
