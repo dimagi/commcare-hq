@@ -347,19 +347,27 @@ class Excel2007ExportWriter(ExportWriter):
 
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
+
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         dirty_chars = re.compile(
-            u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]')
+            u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
+        )
+
+        def get_write_value(value):
+            if isinstance(value, (int, long, float)):
+                return value
+            if isinstance(value, str):
+                value = unicode(value, encoding="utf-8")
+            elif value is not None:
+                value = unicode(value)
+            else:
+                value = u''
+            return dirty_chars.sub(u'?', value)
+
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(
-            [dirty_chars.sub(
-                u'?',
-                unicode(v, encoding="utf-8")
-                if isinstance(v, str) else unicode(v) if v is not None else u'')
-             for v in self.get_data(row)]
-        )
+        sheet.append(map(get_write_value, self.get_data(row)))
 
     def _close(self):
         """
