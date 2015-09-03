@@ -304,8 +304,9 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         replace = 'replace' in request.POST
 
-        file_ref = expose_cached_download(request.file.read(),
-                                   expiry=1*60*60)
+        suffix = '.{}'.format(request.file.name.rsplit('.', 1)[-1])
+        file_ref = expose_cached_download(request.file.read(), expiry=1*60*60,
+                                          suffix=suffix)
 
         # catch basic validation in the synchronous UI
         try:
