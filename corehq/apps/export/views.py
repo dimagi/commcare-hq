@@ -450,6 +450,9 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         return FilterFormExportDownloadForm(
             self.domain,
             self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
         )
 
     @property
@@ -511,14 +514,14 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         try:
             exports = in_data['exports']
             form_data = in_data['form_data']
-            use_group = in_data['use_group']
         except (KeyError, TypeError):
             return {
                 'error': ("Request requires a list of exports and filters."),
             }
 
-        if not use_group:
-            form_data['group'] = ''  # make double sure that group is none
+        if form_data['type_or_group'] != 'group':
+            # make double sure that group is none
+            form_data['group'] = ''  
 
         filter_form = FilterFormExportDownloadForm(
             self.domain, self.timezone, form_data)

@@ -17,6 +17,9 @@
         },
         group: function () {
             return $('#id_group');
+        },
+        user_type: function () {
+            return $('#id_user_types');
         }
     };
 
@@ -34,14 +37,15 @@
             return exportData;
         });
 
+        $scope.formData.type_or_group = 'type';
+        $scope.formData.user_types = ['mobile'];
+        $element.user_type().select2('val', ['mobile']);
 
-        $scope.isSelectGroups = false;
-        $scope.hasGroups = false;
-
-        $scope.groupsLoading = true;
-        $scope.groupsError = false;
         $scope.preparingExport = false;
 
+        $scope.hasGroups = false;
+        $scope.groupsLoading = true;
+        $scope.groupsError = false;
         self._groupRetries = 0;
 
         self._handleGroupError = function () {
@@ -79,7 +83,7 @@
         self._getGroups();
 
         $scope.isFormInvalid = function () {
-            if ($scope.isSelectGroups) {
+            if ($scope.formData.type_or_group === 'group') {
                 return _.isEmpty($scope.formData.group);
             }
             return _.isEmpty($scope.formData.user_types);
@@ -89,8 +93,7 @@
             $scope.preparingExport = true;
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
-                form_data: $scope.formData,
-                use_group: !!$scope.isSelectGroups
+                form_data: $scope.formData
             })
                 .success(function (data) {
                     if (data.success) {
