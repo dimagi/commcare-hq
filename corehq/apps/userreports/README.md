@@ -159,19 +159,19 @@ This expression returns the value of the expression for the case that matches th
     },
     "cases": {
         "north": {
-            "type: "constant",
+            "type": "constant",
             "constant": 4000
         },
         "south": {
-            "type: "constant",
+            "type": "constant",
             "constant": 2500
         },
         "east": {
-            "type: "constant",
+            "type": "constant",
             "constant": 3300
         },
         "west": {
-            "type: "constant",
+            "type": "constant",
             "constant": 65
         },
     },
