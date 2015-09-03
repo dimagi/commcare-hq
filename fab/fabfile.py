@@ -129,6 +129,7 @@ def format_env(current_env, extra=None):
         'es_endpoint',
         'jython_home',
         'virtualenv_root',
+        'virtualenv_current',
         'django_port',
         'django_bind',
         'flower_port',
