@@ -9,6 +9,7 @@ import json
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
+from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -41,6 +42,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -495,6 +497,10 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
+    @property
+    def can_view_deid(self):
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+
     @allow_remote_invocation
     def get_group_options(self, in_data):
         groups = map(
@@ -547,9 +553,15 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         export_object = FormExportSchema.get(export_data['export_id'])
         export_object.update_schema()
 
-        # todo
-        # if safe_only and not export_object.is_safe:
-        #     return HttpResponseForbidden()
+        # if the export is de-identified (is_safe), check that
+        # the requesting domain has access to the deid feature.
+        if export_object.is_safe and not self.can_view_deid:
+            return {
+                'error': _(
+                    "You do not have permission to download de-identified "
+                    "exports."
+                )
+            }
 
         max_column_size = int(in_data.get('max_column_size', 2000))
 
