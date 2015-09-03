@@ -1,6 +1,6 @@
 from copy import copy, deepcopy
 import json
-from couchdbkit import ResourceNotFound
+from django.http import Http404
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -262,8 +262,9 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def config(self):
         try:
-            return DataSourceConfiguration.get(self.config_id)
-        except ResourceNotFound:
+            from corehq.apps.userreports.views import get_datasource_config_or_404
+            return get_datasource_config_or_404(self.config_id, self.domain)[0]
+        except Http404:
             raise BadSpecError(_('The data source referenced by this report could not be found.'))
 
     @property
