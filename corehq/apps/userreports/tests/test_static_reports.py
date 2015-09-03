@@ -5,7 +5,7 @@ from corehq.apps.app_manager.tests import TestFileMixin
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, StaticReportConfiguration
 
 
-class TestCustomReportConfig(SimpleTestCase, TestFileMixin):
+class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
 
     file_path = ('data', 'static_reports')
     root = os.path.dirname(__file__)
