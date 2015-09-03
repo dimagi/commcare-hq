@@ -549,7 +549,7 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         filename = export_data.get('filename', export_object.name)
         filename += ' ' + date.today().isoformat()
 
-        format = export_object.default_format or 'form'
+        format = export_object.default_format
         download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
             export_object,
