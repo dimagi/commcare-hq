@@ -312,12 +312,17 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column.column_id for column in self.spec.report_columns]
-        rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+
+        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_ids = []
+        for column in self.spec.report_columns:
+            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+
+        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = (
             [get_total_row(
                 raw_rows, data.aggregation_columns, data.column_configs,
-                get_expanded_columns(data.column_configs, data.config)
+                column_id_to_expanded_column_ids
             )]
             if data.has_total_row else []
         )
@@ -351,17 +356,20 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     slug = prefix = 'custom_configurable'
     map_name = 'CUSTOM_UCR'
 
-    def dispatch(self, request, *args, **kwargs):
-        domain = kwargs.get('domain')
-        report_config_id = kwargs.get('report_config_id')
+    @staticmethod
+    def _report_class(domain, config_id):
         class_path = StaticReportConfiguration.report_class_by_domain_and_id(
-            domain, report_config_id
+            domain, config_id
         )
-        report_class = to_function(class_path)
-        report_class_obj = report_class()
+        return to_function(class_path)
+
+    def dispatch(self, request, report_config_id, **kwargs):
+        domain = kwargs['domain']
         request.domain = domain
-        del kwargs['report_config_id']
-        return report_class_obj.dispatch(request, report_config_id, **kwargs)
+        return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
+
+    def get_report(self, domain, slug, config_id):
+        return self._report_class(domain, config_id).get_report(domain, slug, config_id)
 
     @classmethod
     def url_pattern(cls):
