@@ -40,7 +40,7 @@
             </div>
             <div class="span4">
                 <aside class="well">
-                    <h3>Not {{ user.username }}?</h3>
+                    <h3>Not {{ formatted_username|safe }}?</h3>
                     <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
                     {% trans "or" %}<br />
                     <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
