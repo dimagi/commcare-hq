@@ -570,7 +570,7 @@ def process_url_params(params, columns):
 @login_or_basic
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
     q = adapter.get_query_object()
     table = adapter.get_table()
@@ -604,7 +604,7 @@ def export_data_source(request, domain, config_id):
 
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, _ = get_datasource_config_or_404(config_id, domain)
     return json_response({'isBuilt': config.meta.build.finished})
 
 
