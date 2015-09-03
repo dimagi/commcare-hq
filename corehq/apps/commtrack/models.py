@@ -579,7 +579,7 @@ class ActiveManager(models.Manager):
     """
 
     def get_queryset(self):
-        return super(ActiveManager, self).get_query_set() \
+        return super(ActiveManager, self).get_queryset() \
             .exclude(sql_product__is_archived=True) \
             .exclude(sql_location__is_archived=True)
 

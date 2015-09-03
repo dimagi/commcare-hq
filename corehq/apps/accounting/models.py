@@ -2101,13 +2101,13 @@ class InvoicePdf(SafeSaveDocument):
 
 class LineItemManager(models.Manager):
     def get_products(self):
-        return self.get_query_set().filter(feature_rate__exact=None)
+        return self.get_queryset().filter(feature_rate__exact=None)
 
     def get_features(self):
-        return self.get_query_set().filter(product_rate__exact=None)
+        return self.get_queryset().filter(product_rate__exact=None)
 
     def get_feature_by_type(self, feature_type):
-        return self.get_query_set().filter(feature_rate__feature__feature_type=feature_type)
+        return self.get_queryset().filter(feature_rate__feature__feature_type=feature_type)
 
 
 class LineItem(models.Model):

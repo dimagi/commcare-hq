@@ -544,7 +544,7 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
-TEST_RUNNER = 'testrunner.TwoStageTestRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
