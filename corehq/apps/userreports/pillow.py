@@ -100,11 +100,11 @@ class ConfigurableIndicatorPillow(PythonPillow):
         super(ConfigurableIndicatorPillow, self).set_checkpoint(change)
 
 
-class CustomDataSourcePillow(ConfigurableIndicatorPillow):
+class StaticDataSourcePillow(ConfigurableIndicatorPillow):
 
     def get_all_configs(self):
         return StaticDataSourceConfiguration.all()
 
     def rebuild_table(self, table):
-        super(CustomDataSourcePillow, self).rebuild_table(table)
+        super(StaticDataSourcePillow, self).rebuild_table(table)
         rebuild_indicators.delay(table.config.get_id)
