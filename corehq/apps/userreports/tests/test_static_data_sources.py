@@ -7,15 +7,15 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 
 class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
-    file_path = ('data', 'custom_data_sources')
+    file_path = ('data', 'static_data_sources')
     root = os.path.dirname(__file__)
 
     def test_wrap(self):
-        wrapped = StaticDataSourceConfiguration.wrap(self.get_json('sample_custom_data_source'))
+        wrapped = StaticDataSourceConfiguration.wrap(self.get_json('sample_static_data_source'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
     def test_get_all(self):
-        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_custom_data_source', 'json')]):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
             all = list(StaticDataSourceConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all
