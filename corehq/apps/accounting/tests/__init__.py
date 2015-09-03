@@ -9,3 +9,4 @@ from .test_subscription_changes import *
 from .test_new_domain_subscription import *
 from .test_renew_subscription import *
 from .test_forms import *
+from .test_autopay import *
