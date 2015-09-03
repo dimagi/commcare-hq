@@ -9,6 +9,9 @@ from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
+from django.utils.html import strip_tags
+
+from corehq.util.view_utils import absolute_reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
@@ -29,6 +32,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
@@ -406,3 +410,64 @@ def weekly_digest():
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
+
+
+@periodic_task(run_every=crontab(hour=01, minute=0,))
+def pay_autopay_invoices():
+    """ Check for autopayable invoices every day and pay them """
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
+
+
+@task
+def send_autopay_card_removed_email(billing_account, old_user, new_user):
+    """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
+    from corehq.apps.domain.views import EditExistingBillingAccountView
+
+    subject = ugettext("Your card is no longer being used to auto-pay for {billing_account}").format(
+        billing_account=billing_account.name)
+
+    try:
+        old_user_name = WebUser.get_by_username(old_user).first_name
+    except ResourceNotFound:
+        old_user_name = old_user
+
+    context = {
+        'new_user': new_user,
+        'old_user_name': old_user_name,
+        'billing_account_name': billing_account.name,
+        'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                             args=[billing_account.created_by_domain])
+    }
+
+    send_HTML_email(
+        subject,
+        old_user,
+        render_to_string('accounting/autopay_card_removed.html', context),
+        text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
+    )
+
+
+@task
+def send_autopay_card_added_email(billing_account, autopayer):
+    """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
+    from corehq.apps.domain.views import EditExistingBillingAccountView
+    web_user = WebUser.get_by_username(autopayer)
+    subject = ugettext("Your card is being used to auto-pay for {billing_account}").format(
+        billing_account=billing_account.name)
+
+    context = {
+        'name': getattr(web_user, 'name', autopayer),
+        'email': autopayer,
+        'domain': billing_account.created_by_domain,
+        'last_4': getattr(billing_account.autopay_card, 'last4', None),
+        'billing_account_name': billing_account.name,
+        'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                             args=[billing_account.created_by_domain])
+    }
+
+    send_HTML_email(
+        subject,
+        autopayer,
+        render_to_string('accounting/invoice_autopay_setup.html', context),
+        text_content=strip_tags(render_to_string('accounting/invoice_autopay_setup.html', context)),
+    )
