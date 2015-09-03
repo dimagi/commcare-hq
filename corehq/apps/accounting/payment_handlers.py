@@ -73,7 +73,7 @@ class BaseStripePaymentHandler(object):
         remove_card = request.POST.get('removeCard')
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         save_card = request.POST.get('saveCard') and not is_saved_card
-        autopay = request.POST.get('autoPay')
+        autopay = request.POST.get('autopayCard')
         customer = self.payment_method.customer
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {

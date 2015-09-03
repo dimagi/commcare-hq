@@ -8,10 +8,10 @@ var NewStripeCard = function(data){
     self.wrap = function(data){
         ko.mapping.fromJS(data, mapping, self);
     };
-    self.init = function(){
+    self.reset = function(){
         self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
     };
-    self.init();
+    self.reset();
 
     self.unwrap = function(){
         return {token: self.token(), autopay: self.isAutopay()};
@@ -32,7 +32,7 @@ var NewStripeCard = function(data){
             $("#card-modal").modal('hide');
             $("#success-modal").modal('show');
             cardManager.wrap(data);
-            self.init();
+            self.reset();
         }).fail(function(data){
             var response = JSON.parse(data.responseText);
             self.errorMsg(response.error);
