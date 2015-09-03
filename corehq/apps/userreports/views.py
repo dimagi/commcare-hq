@@ -37,9 +37,12 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureWorkerReportForm
 )
 from corehq.apps.userreports.models import (
+    CUSTOM_REPORT_PREFIX,
+    STATIC_PREFIX,
     ReportConfiguration,
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
+    StaticReportConfiguration,
 )
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -70,6 +73,20 @@ def get_datasource_config_or_404(config_id, domain):
             raise Http404()
     else:
         config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    return config, is_static
+
+
+def get_report_config_or_404(config_id, domain):
+    is_static = any(
+        config_id.startswith(prefix)
+        for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+    )
+    if is_static:
+        config = StaticReportConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            raise Http404()
+    else:
+        config = get_document_or_404(ReportConfiguration, domain, config_id)
     return config, is_static
 
 
