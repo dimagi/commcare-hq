@@ -46,7 +46,7 @@ class InvitationView(object):
         username = self.request.user.username
         # Add zero-width space for better line breaking
         username = username.replace("@", "&#x200b;@")
-        return { 'formatted_username': username }
+        return {'formatted_username': username}
 
     def validate_invitation(self, invitation):
         pass
