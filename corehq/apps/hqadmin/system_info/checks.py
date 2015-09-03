@@ -16,7 +16,7 @@ def check_redis():
         rc = cache.get_cache('redis')
         try:
             import redis
-            redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
+            redis_api = redis.StrictRedis.from_url('%s' % rc._server)
             info_dict = redis_api.info()
             redis_status = "Online"
             redis_results = "Used Memory: %s" % info_dict['used_memory_human']

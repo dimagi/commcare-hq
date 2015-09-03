@@ -78,7 +78,7 @@ from dimagi.utils.parsing import string_to_datetime
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField

@@ -1,2 +1,3 @@
 flower==0.7.0
 newrelic
+errand-boy==0.3.8

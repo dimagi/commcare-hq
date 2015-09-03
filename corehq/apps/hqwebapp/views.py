@@ -197,7 +197,8 @@ def redirect_to_default(req, domain=None):
                         req.couch_user, domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('dashboard_default', args=[domain])
+                    from corehq.apps.dashboard.views import dashboard_default
+                    return dashboard_default(req, domain)
 
             else:
                 raise Http404

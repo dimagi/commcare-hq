@@ -239,6 +239,9 @@ class Currency(models.Model):
     )
     date_updated = models.DateField(auto_now=True)
 
+    class Meta:
+        app_label = 'accounting'
+
     @classmethod
     def get_default(cls):
         default, _ = cls.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
@@ -276,6 +279,9 @@ class BillingAccount(models.Model):
         choices=EntryPoint.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     @property
     def balance(self):
@@ -379,6 +385,9 @@ class BillingContactInfo(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'accounting'
+
     @property
     def full_name(self):
         if not self.first_name:
@@ -396,6 +405,9 @@ class SoftwareProduct(models.Model):
     name = models.CharField(max_length=40, unique=True)
     product_type = models.CharField(max_length=25, db_index=True, choices=SoftwareProductType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
@@ -417,6 +429,9 @@ class SoftwareProductRate(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
@@ -447,6 +462,9 @@ class Feature(models.Model):
     feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'accounting'
+
     def __str__(self):
         return "Feature '%s' of type '%s'" % (self.name, self.feature_type)
 
@@ -473,6 +491,9 @@ class FeatureRate(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         return '%s @ $%s /month, $%s /excess, limit: %d' % (
@@ -525,6 +546,9 @@ class SoftwarePlan(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'accounting'
+
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
@@ -547,6 +571,9 @@ class DefaultProductPlan(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     @classmethod
     def get_default_plan_by_domain(cls, domain, edition=None, is_trial=False):
@@ -588,6 +615,9 @@ class SoftwarePlanVersion(models.Model):
     is_active = models.BooleanField(default=True)
     role = models.ForeignKey(Role)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         return "%(plan_name)s (v%(version_num)d)" % {
@@ -696,6 +726,9 @@ class Subscriber(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         if self.organization:
@@ -819,6 +852,9 @@ class Subscription(models.Model):
         default=ProBonoStatus.NOT_SET,
     )
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -1548,6 +1584,9 @@ class WireInvoice(InvoiceBase):
     # WireInvoice is tied to a domain, rather than a subscription
     domain = models.CharField(max_length=80)
 
+    class Meta:
+        app_label = 'accounting'
+
     @property
     @memoized
     def account(self):
@@ -1574,6 +1613,7 @@ class WireInvoice(InvoiceBase):
 
 class WirePrepaymentInvoice(WireInvoice):
     class Meta:
+        app_label = 'accounting'
         proxy = True
 
     items = []
@@ -1590,6 +1630,9 @@ class Invoice(InvoiceBase):
     to CreditAdjustments.
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+
+    class Meta:
+        app_label = 'accounting'
 
     @property
     def email_recipients(self):
@@ -1689,6 +1732,9 @@ class SubscriptionAdjustment(models.Model):
     new_date_delay_invoicing = models.DateField(blank=True, null=True)
     new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     @classmethod
     def record_adjustment(cls, subscription, **kwargs):
@@ -1853,6 +1899,9 @@ class WireBillingRecord(BillingRecordBase):
     INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
 
+    class Meta:
+        app_label = 'accounting'
+
     @property
     def should_send_email(self):
         hidden = self.invoice.is_hidden
@@ -1874,6 +1923,7 @@ class WireBillingRecord(BillingRecordBase):
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
     class Meta:
+        app_label = 'accounting'
         proxy = True
 
     def email_subject(self):
@@ -1884,6 +1934,9 @@ class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+
+    class Meta:
+        app_label = 'accounting'
 
     @property
     def html_template(self):
@@ -2070,6 +2123,9 @@ class LineItem(models.Model):
 
     objects = LineItemManager()
 
+    class Meta:
+        app_label = 'accounting'
+
     @property
     def subtotal(self):
         return self.base_cost + self.unit_cost * self.quantity
@@ -2112,6 +2168,9 @@ class CreditLine(models.Model):
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def __str__(self):
         credit_level = ("Account-Level" if self.subscription is None
@@ -2291,6 +2350,9 @@ class PaymentMethod(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'accounting'
+
 
 class PaymentRecord(models.Model):
     """Records the transaction with external payment APIs.
@@ -2302,6 +2364,9 @@ class PaymentRecord(models.Model):
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     @property
     def public_transaction_id(self):
@@ -2336,6 +2401,9 @@ class CreditAdjustment(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     web_user = models.CharField(max_length=80, null=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'accounting'
 
     def clean(self):
         """

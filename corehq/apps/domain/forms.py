@@ -1513,6 +1513,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
@@ -1532,8 +1533,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             )
         else:
             self.fields['end_date'].initial = self.current_subscription.date_end
+            self.fields['software_plan_edition'].initial = plan_edition
             self.helper.layout = crispy.Layout(
-                TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),

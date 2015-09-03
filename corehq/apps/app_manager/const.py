@@ -29,6 +29,7 @@ SCHEDULE_TERMINATED = '-1'
 SCHEDULE_CURRENT_VISIT_NUMBER = 'current_visit_number'
 SCHEDULE_UNSCHEDULED_VISIT = 'unscheduled_visit'
 SCHEDULE_MAX_DATE = (2 ** 31) - 1
+SCHEDULE_DATE_CASE_OPENED = u'date_opened'
 
 ATTACHMENT_PREFIX = 'attachment:'
 

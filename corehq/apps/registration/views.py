@@ -237,7 +237,9 @@ def resend_confirmation(request):
 
     if request.method == 'POST':
         try:
-            send_domain_registration_email(dom_req.new_user_username, dom_req.domain, dom_req.activation_guid)
+            send_domain_registration_email(dom_req.new_user_username,
+                    dom_req.domain, dom_req.activation_guid,
+                    request.user.get_full_name())
         except Exception:
             context.update({
                 'error_msg': _('There was a problem with your request'),

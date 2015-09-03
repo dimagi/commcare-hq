@@ -58,15 +58,6 @@ run_with_all_restore_configs = functools.partial(
             },
             post_run=lambda *args, **kwargs: args[0].tearDown()
         ),
-        # clean restore code but without cleanliness flags
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_CLEAN_RESTORE': True,
-                'TESTS_SHOULD_TRACK_CLEANLINESS': False,
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
         # clean restore code with cleanliness flags
         RunConfig(
             settings={

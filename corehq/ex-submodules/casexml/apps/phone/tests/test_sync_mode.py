@@ -565,6 +565,16 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self.assertFalse(last_sync.phone_is_holding_case(case_id))
 
     @run_with_all_restore_configs
+    def test_sync_by_user_id(self):
+        # create a case with an empty owner but valid user id
+        case_id = self.factory.create_case(owner_id='', user_id=USER_ID)._id
+        restore_config = RestoreConfig(self.project, user=self.user)
+        payload = restore_config.get_payload().as_string()
+        self.assertTrue(case_id in payload)
+        sync_log = synclog_from_restore_payload(payload)
+        self.assertTrue(sync_log.phone_is_holding_case(case_id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
