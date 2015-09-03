@@ -1,5 +1,5 @@
 {
-    "doc_type": "CustomDataSourceConfiguration",
+    "doc_type": "StaticDataSourceConfiguration",
     "domains": ["example", "dimagi"],
     "config": {
         "doc_type": "DataSourceConfiguration",

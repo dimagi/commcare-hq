@@ -256,17 +256,26 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def _dispatcher(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
+        from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
+        from corehq.apps.userreports.reports.view import (
+            ConfigurableReport,
+            CustomConfigurableReportDispatcher,
+        )
 
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            ConfigurableReport,
         ]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
+
+        if self.report_type == 'configurable':
+            if self.subreport_slug.startswith(CUSTOM_REPORT_PREFIX):
+                return CustomConfigurableReportDispatcher()
+            else:
+                return ConfigurableReport()
 
         if self.doc_type != 'ReportConfig-Deleted':
             self.doc_type += '-Deleted'

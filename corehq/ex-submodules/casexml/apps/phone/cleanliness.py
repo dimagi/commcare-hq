@@ -10,7 +10,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
     get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.database import get_db
@@ -25,13 +24,7 @@ def should_track_cleanliness(domain):
     """
     Whether a domain should track cleanliness on submission.
     """
-    if settings.UNIT_TESTING:
-        override = getattr(
-            settings, 'TESTS_SHOULD_TRACK_CLEANLINESS', None)
-        if override is not None:
-            return override
-
-    return domain and OWNERSHIP_CLEANLINESS.enabled(domain)
+    return True
 
 
 def should_create_flags_on_submission(domain):
@@ -55,11 +48,10 @@ def set_cleanliness_flags_for_enabled_domains(force_full=False):
     Updates cleanliness for all domains that have the toggle enabled
     """
     for domain in Domain.get_all_names():
-        if OWNERSHIP_CLEANLINESS.enabled(domain):
-            try:
-                set_cleanliness_flags_for_domain(domain, force_full=force_full)
-            except InvalidDomainError as e:
-                notify_exception(None, unicode(e))
+        try:
+            set_cleanliness_flags_for_domain(domain, force_full=force_full)
+        except InvalidDomainError as e:
+            notify_exception(None, unicode(e))
 
 
 def set_cleanliness_flags_for_domain(domain, force_full=False):
@@ -92,15 +84,9 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
 
     def needs_full_check(domain, cleanliness_obj):
         # if it already is clean we don't need to do anything since that gets invalidated on submission
-        return (
-            # if clean, only check if the toggle is not enabled since then it won't be properly invalidated
-            # on submission
-            cleanliness_obj.is_clean and not OWNERSHIP_CLEANLINESS.enabled(domain)
-        ) or (
-            # if dirty, first check the hint and only do a full check if it's not valid
-            not cleanliness_object.is_clean and (
-                not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
-            )
+        # if dirty, first check the hint and only do a full check if it's not valid
+        return not cleanliness_object.is_clean and (
+            not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
         )
 
     needs_check = needs_full_check(domain, cleanliness_object)

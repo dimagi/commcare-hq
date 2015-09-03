@@ -1009,13 +1009,36 @@ They conform to a slightly different style:
 }
 ```
 
-Having defined the data source you need to add the path to the data source file to the `CUSTOM_DATA_SOURCES`
+Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
 setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
 can use the UI to rebuild the data source (requires Celery to be running).
 
+
+## Static configurable reports
+
+Configurable reports can also be defined in the source repository.  Static configurable reports have
+the following style:
+```
+{
+    "domains": ["my-domain"],
+    "data_source_table": "my_table",
+    "report_id": "my-report",
+    "config": {
+        ... put the normal report configuration here
+    }
+}
+```
+
+## Custom configurable reports
+
+Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
+the report using a custom Django template or with custom Excel formatting, define a subclass of
+`ConfigurableReport` and override the necessary functions.  Then include the python path to the class
+in the field `custom_configurable_report` of the static report and don't forget to include the static
+report in `STATIC_DATA_SOURCES` in `settings.py`.
 
 ## Extending User Configurable Reports
 

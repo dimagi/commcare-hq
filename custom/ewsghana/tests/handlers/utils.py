@@ -78,11 +78,24 @@ class EWSScriptTest(TestScript):
         Product(domain=domain.name, name='Ov', code='ov', unit='each').save()
         Product(domain=domain.name, name='Ml', code='ml', unit='each').save()
 
-        loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
+        national = make_loc(code='country', name='Test national', type='country', domain=domain.name)
+        region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)
+        loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name,
+                       parent=national)
         SupplyPointCase.create_from_location(TEST_DOMAIN, loc)
         loc.save()
 
-        loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name)
+        rms2 = make_loc(code="wrms", name="Test RMS 2", type="Regional Medical Store", domain=domain.name,
+                        parent=region)
+        SupplyPointCase.create_from_location(TEST_DOMAIN, rms2)
+        rms2.save()
+
+        cms = make_loc(code="cms", name="Central Medical Stores", type="Central Medical Store",
+                       domain=domain.name, parent=national)
+        SupplyPointCase.create_from_location(TEST_DOMAIN, cms)
+        cms.save()
+
+        loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name, parent=region)
         SupplyPointCase.create_from_location(TEST_DOMAIN, loc2)
         loc2.save()
 
@@ -98,7 +111,15 @@ class EWSScriptTest(TestScript):
         cls.user3 = bootstrap_user(username='pharmacist', domain=domain.name, home_loc=loc2,
                                    first_name='test3', last_name='test3',
                                    phone_number='333333')
-
+        cls.rms_user = bootstrap_user(username='rmsuser', domain=domain.name, home_loc=rms2,
+                                      first_name='test4', last_name='test4',
+                                      phone_number='44444')
+        cls.cms_user = bootstrap_user(username='cmsuser', domain=domain.name, home_loc=cms,
+                                      first_name='test5', last_name='test5',
+                                      phone_number='55555')
+        cls.region_user = bootstrap_user(username='regionuser', domain=domain.name, home_loc=region,
+                                         first_name='test6', last_name='test6',
+                                         phone_number='66666')
         try:
             XFormInstance.get(docid='test-xform')
         except ResourceNotFound:
@@ -113,6 +134,14 @@ class EWSScriptTest(TestScript):
         sql_location.products = []
         sql_location.save()
 
+        sql_location = rms2.sql_location
+        sql_location.products = []
+        sql_location.save()
+
+        sql_location = cms.sql_location
+        sql_location.products = []
+        sql_location.save()
+
         config = CommtrackConfig.for_domain(domain.name)
         config.use_auto_consumption = False
         config.individual_consumption_defaults = True
@@ -123,7 +152,10 @@ class EWSScriptTest(TestScript):
                 caption='receipts'
             )
         )
-        config.consumption_config = ConsumptionConfig(use_supply_point_type_default_consumption=True)
+        config.consumption_config = ConsumptionConfig(
+            use_supply_point_type_default_consumption=True,
+            exclude_invalid_periods=True
+        )
         config.save()
 
         set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id, 8)

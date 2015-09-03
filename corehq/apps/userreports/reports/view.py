@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -9,15 +10,26 @@ from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext_noop as _
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
-from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.reports.dispatcher import (
+    cls_to_view_login_and_domain,
+    ReportDispatcher,
+)
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     UserReportsFilterError)
-from corehq.apps.userreports.models import ReportConfiguration, CUSTOM_PREFIX, CustomReportConfiguration
+from corehq.apps.userreports.models import (
+    STATIC_PREFIX,
+    CUSTOM_REPORT_PREFIX,
+    StaticReportConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.reports.util import get_total_row
+from corehq.apps.userreports.reports.util import (
+    get_expanded_columns,
+    get_total_row,
+)
 from corehq.apps.userreports.util import default_language, localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
@@ -39,14 +51,21 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     emailable = True
 
     @property
-    def is_custom(self):
-        return self.report_config_id.startswith(CUSTOM_PREFIX)
+    def is_static(self):
+        return any(
+            self.report_config_id.startswith(prefix)
+            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+        )
+
+    @property
+    def is_custom_rendered(self):
+        return self.report_config_id.startswith(CUSTOM_REPORT_PREFIX)
 
     @property
     @memoized
     def spec(self):
-        if self.is_custom:
-            return CustomReportConfiguration.by_id(self.report_config_id)
+        if self.is_static:
+            return StaticReportConfiguration.by_id(self.report_config_id)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
@@ -235,7 +254,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         }
         if data.has_total_row:
             json_response.update({
-                "total_row": get_total_row(page, data.aggregation_columns, data.column_configs),
+                "total_row": get_total_row(
+                    page, data.aggregation_columns, data.column_configs,
+                    get_expanded_columns(data.column_configs, data.config)
+                ),
             })
         return self.render_json_response(json_response)
 
@@ -290,10 +312,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column.column_id for column in self.spec.report_columns]
-        rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+
+        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_ids = []
+        for column in self.spec.report_columns:
+            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+
+        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = (
-            [get_total_row(raw_rows, data.aggregation_columns, data.column_configs)]
+            [get_total_row(
+                raw_rows, data.aggregation_columns, data.column_configs,
+                column_id_to_expanded_column_ids
+            )]
             if data.has_total_row else []
         )
         return [
@@ -320,3 +350,29 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         file = StringIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
+
+
+class CustomConfigurableReportDispatcher(ReportDispatcher):
+    slug = prefix = 'custom_configurable'
+    map_name = 'CUSTOM_UCR'
+
+    @staticmethod
+    def _report_class(domain, config_id):
+        class_path = StaticReportConfiguration.report_class_by_domain_and_id(
+            domain, config_id
+        )
+        return to_function(class_path)
+
+    def dispatch(self, request, report_config_id, **kwargs):
+        domain = kwargs['domain']
+        request.domain = domain
+        return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
+
+    def get_report(self, domain, slug, config_id):
+        return self._report_class(domain, config_id).get_report(domain, slug, config_id)
+
+    @classmethod
+    def url_pattern(cls):
+        from django.conf.urls import url
+        pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
+        return url(pattern, cls.as_view(), name=cls.slug)

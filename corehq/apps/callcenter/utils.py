@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
@@ -14,7 +13,6 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from corehq.feature_previews import CALLCENTER
-from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
@@ -44,7 +42,7 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type'))
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
-def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
+def sync_user_case(commcare_user, case_type, owner_id):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -63,7 +61,7 @@ def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
                 return False
 
         # remove any keys that aren't valid XML element names
-        fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)} if copy_user_data else {}
+        fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)}
 
         # language or phone_number can be null and will break
         # case submission
@@ -133,8 +131,7 @@ def sync_usercase(user):
         sync_user_case(
             user,
             USERCASE_TYPE,
-            user.get_id,
-            copy_user_data=False
+            user.get_id
         )
 
 

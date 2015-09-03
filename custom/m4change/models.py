@@ -53,6 +53,9 @@ class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     domains = M4CHANGE_DOMAINS
     save_direct_to_sql = True
 
+    class Meta:
+        app_label = 'm4change'
+
 
 class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
@@ -73,6 +76,9 @@ class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
     postnatal_clinic_visit_lte_1_day = anc_hmis_report_calcs.PostnatalClinicVisitWithin1DayOfDeliveryCalculator()
     postnatal_clinic_visit_lte_3_days = anc_hmis_report_calcs.PostnatalClinicVisitWithin3DaysOfDeliveryCalculator()
     postnatal_clinic_visit_gte_7_days = anc_hmis_report_calcs.PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator()
+
+    class Meta:
+        app_label = 'm4change'
 
 
 AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
@@ -254,6 +260,9 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     #     {"": ""}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, _form_passes_filter_date_delivery
     # )
 
+    class Meta:
+        app_label = 'm4change'
+
 LdHmisCaseFluffPillow = LdHmisCaseFluff.pillow()
 
 
@@ -283,6 +292,9 @@ class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
     yellow_fever = immunization_hmis_report_calcs.PncImmunizationCalculator("yellow_fever")
     measles_2 = immunization_hmis_report_calcs.PncImmunizationCalculator("measles_2")
     conjugate_csm = immunization_hmis_report_calcs.PncImmunizationCalculator("conjugate_csm")
+
+    class Meta:
+        app_label = 'm4change'
 
 ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
 
@@ -319,6 +331,9 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     mno_glo = project_indicators_report_calcs.MnoCalculator('glo')
     mno_airtel = project_indicators_report_calcs.MnoCalculator('airtel')
 
+    class Meta:
+        app_label = 'm4change'
+
 ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 
 
@@ -334,6 +349,9 @@ class McctStatus(models.Model):
     is_stillbirth = models.BooleanField(null=False, default=False)
     modified_on = models.DateTimeField(auto_now=True)
     user = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        app_label = 'm4change'
 
     def update_status(self, new_status, reason, user):
         self.status = new_status
@@ -362,6 +380,9 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
 
     location_id = fluff.FlatField(_get_form_location_id)
     status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
+
+    class Meta:
+        app_label = 'm4change'
 
 McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
 
@@ -468,6 +489,9 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     hiv_exposed_infants_breast_feeding_receiving_arv = all_hmis_report_calcs.FormComparisonCalculator(
         [("commenced_drugs", operator.contains, "infant_nvp")], PMTCT_CLIENTS_FORM
     )
+
+    class Meta:
+        app_label = 'm4change'
 
 AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()
 

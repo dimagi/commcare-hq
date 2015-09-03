@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
-from unittest import skip
-import pytz
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.callcenter.utils import sync_call_center_user_case, is_midnight_for_domain, get_call_center_cases, \
-    DomainLite
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.callcenter.utils import (
+    sync_call_center_user_case,
+    is_midnight_for_domain,
+    get_call_center_cases,
+    DomainLite,
+    sync_usercase,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
@@ -135,6 +139,46 @@ class CallCenterUtilsTests(TestCase):
         ])
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
+
+
+class CallCenterUtilsUserCaseTests(TestCase):
+
+    def setUp(self):
+        self.domain = create_domain(TEST_DOMAIN)
+        self.domain.usercase_enabled = True
+        self.domain.save()
+        self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', commit=False)  # Don't commit yet
+
+    def tearDown(self):
+        delete_all_cases()
+        self.domain.delete()
+
+    def test_sync_usercase_custom_user_data_on_create(self):
+        """
+        Custom user data should be synced when the user is created
+        """
+        self.user.user_data = {
+            'completed_training': 'yes',
+        }
+        self.user.save()
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertIsNotNone(case)
+        self.assertEquals(case.completed_training, 'yes')
+
+    def test_sync_usercase_custom_user_data_on_update(self):
+        """
+        Custom user data should be synced when the user is updated
+        """
+        self.user.user_data = {
+            'completed_training': 'no',
+        }
+        self.user.save()
+        self.user.user_data = {
+            'completed_training': 'yes',
+        }
+        sync_usercase(self.user)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertEquals(case.completed_training, 'yes')
 
 
 class DomainTimezoneTests(SimpleTestCase):

@@ -116,7 +116,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
 
@@ -159,7 +160,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
 
@@ -194,7 +196,8 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
             )
         )
         self.assertEqual(
@@ -211,7 +214,60 @@ class ReportConfigurationTotalRowTest(SimpleTestCase):
                     },
                 ],
                 config_agg.aggregation_columns,
-                config_agg.report_columns
+                config_agg.report_columns,
+                {}
+            )
+        )
+
+    def test_totaling_with_expanded_column(self):
+        config_agg = ReportConfiguration(
+            aggregation_columns=['agg_col'],
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_2',
+                    "aggregation": "simple",
+                    "type": "expanded",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['Total', '', 8, 13],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                        'col_2-A': 3,
+                        'col_2-B': 6,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                        'col_2-A': 5,
+                        'col_2-B': 7,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {
+                    "col_2": [
+                        "col_2-A",
+                        "col_2-B",
+                    ],
+                }
             )
         )
 

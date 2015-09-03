@@ -67,7 +67,7 @@
                     <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
                         <label class="control-label" for="start_date">{% trans "Begin Date" %}</label>
                         <div class="controls">
-                            <input type="text" class="date-picker save-date-picker" name="start_date" data-bind="value: start_date"/>
+                            <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
                             <span class="help-inline">
                                 <small class="label">{% trans "YYYY-MM-DD" %}</small>
                                 <small class="label">{% trans "Required" %}</small>
@@ -77,7 +77,7 @@
                     <div class="control-group" data-bind="visible: date_range() == 'range'">
                         <label class="control-label" for="end_date">{% trans "End Date" %}</label>
                         <div class="controls">
-                            <input type="text" id="save-end" class="date-picker save-date-picker" name="end_date" data-bind="value: end_date"/>
+                            <input type="text" id="save-end" class="date-picker" name="end_date" data-bind="value: end_date"/>
                             <span class="help-inline">
                                 <small class="label">{% trans "YYYY-MM-DD" %}</small>
                                 <small class="label">{% trans "Required" %}</small>

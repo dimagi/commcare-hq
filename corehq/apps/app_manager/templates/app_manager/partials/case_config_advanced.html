@@ -225,6 +225,9 @@
                 "></select>
                 <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
                 <!-- /ko -->
+                &nbsp;
+                {% trans "Case Tag:" %}
+                <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
                 <span class="help-inline" data-bind="text: validate"></span>
                 <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
                     <i class="icon-trash"></i>

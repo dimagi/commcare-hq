@@ -556,7 +556,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm) and not form_has_schedule,
+        'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
@@ -1357,6 +1357,16 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list
     })
+
+    if domain_has_privilege(domain, privileges.TEMPLATED_INTENTS):
+        vellum_features.update({
+            'templated_intents': True
+        })
+    if domain_has_privilege(domain, privileges.CUSTOM_INTENTS):
+        vellum_features.update({
+            'custom_intents': True
+        })
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({

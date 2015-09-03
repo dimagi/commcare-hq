@@ -24,7 +24,7 @@ from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE,
+    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE, SCHEDULE_DATE_CASE_OPENED,
 )
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -92,9 +92,15 @@ class LocaleArgument(XmlObject):
     value = StringField('.')
 
 
+class Id(XmlObject):
+    ROOT_NAME = 'id'
+    xpath = NodeField('xpath', Xpath)
+
+
 class Locale(XmlObject):
     ROOT_NAME = 'locale'
     id = StringField('@id')
+    child_id = NodeField('id', Id)
     arguments = NodeListField('argument', LocaleArgument)
 
 
@@ -1484,8 +1490,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                         id=id_strings.fixture_detail(module),
                         title=Text(),
                     )
+                    xpath = Xpath(function=module.fixture_select.display_column)
+                    if module.fixture_select.localize:
+                        template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
+                    else:
+                        template_text = Text(xpath_function=module.fixture_select.display_column)
                     fields = [Field(header=Header(text=Text()),
-                                    template=Template(text=Text(xpath_function=module.fixture_select.display_column)),
+                                    template=Template(text=template_text),
                                     sort_node='')]
 
                     d.fields = fields
@@ -1497,6 +1508,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
         has_schedule = getattr(module, 'has_schedule', False)
         if (has_schedule and module.all_forms_require_a_case() and has_schedule_columns):
+            yield DetailVariable(name=SCHEDULE_DATE_CASE_OPENED, function="date_opened")  # date case is opened
             forms_due = []
             for phase in module.get_schedule_phases():
                 if not phase.anchor:
