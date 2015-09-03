@@ -9,11 +9,22 @@ from corehq.apps.userreports.reports.view import ConfigurableReport
 
 
 class FormattedSupervisoryReport(ConfigurableReport):
+
+    @property
+    def export_table(self):
+        data = super(FormattedSupervisoryReport, self).export_table
+        table = data[0][1]
+        for row in range(1, len(table) - 1):
+            for column in range(2, len(table[row])):
+                if table[row][column] == 0:
+                    table[row][column] = ''
+        return data
+
     @property
     def excel_response(self):
-        excel_file = super(FormattedSupervisoryReport, self).excel_response
+        unformatted_excel_file = super(FormattedSupervisoryReport, self).excel_response
 
-        workbook = openpyxl.load_workbook(excel_file)
+        workbook = openpyxl.load_workbook(unformatted_excel_file)
         worksheet = workbook.get_active_sheet()
 
         red = PatternFill(
