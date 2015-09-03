@@ -4,10 +4,11 @@
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
-{% block js %}
-<script src="{% static 'hqwebapp/js/main.js' %}"></script>
-<script src="{% new_static 'users/js/roles.js' %}"></script>
-<script src="{% new_static 'users/js/web_users_list.ng.js' %}"></script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'users/js/roles.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

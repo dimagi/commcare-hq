@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 import logging
 from celery.schedules import crontab
@@ -322,7 +322,7 @@ def supervision_task():
 
 
 def get_last_and_nth_business_day(date, n):
-    last_month = datetime(date.year, date.month, 1) - datetime.timedelta(days=1)
+    last_month = datetime(date.year, date.month, 1) - timedelta(days=1)
     last_month_last_day = get_business_day_of_month(month=last_month.month, year=last_month.year, count=-1)
     nth_business_day = get_business_day_of_month(month=date.month, year=date.year, count=n)
     return last_month_last_day, nth_business_day
