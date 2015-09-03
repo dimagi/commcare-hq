@@ -1,11 +1,19 @@
+{% load i18n %}
 <label for="{{ css_id }}" class="control-label">{{ label }}</label>
 <div class="controls">
     {% block filter_content %}
     {% endblock %}
     {% if help_text %}
-    <div class="help-inline helptext" style="margin-left: 1em;">
-        {{ help_text }}
-    </div>
+        {% if help_style_bubble %}
+            <span class="hq-help-template"
+              data-title="{% trans 'Help' %}"
+              data-content="{{ help_text }}"
+            ></span>
+        {% else %}
+            <div class="help-inline helptext" style="margin-left: 1em;">
+                {{ help_text }}
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 {% block filter_js %}
