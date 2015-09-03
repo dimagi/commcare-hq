@@ -1,0 +1,28 @@
+{% extends "performance_sms/performance_sms_base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            ko.applyBindings({
+                application: ko.observable('{{ form.app_id }}'),
+                source: ko.observable('{{ form.source_id }}'),
+                sourceType: ko.observable("form"),
+                sourcesMap: {{ sources_map|JSON }}
+            }, $("#performance-form").get(0));
+        });
+    </script>
+{% endblock %}
+{% block main_column %}
+    <h2>{% if editing %}{% trans 'Edit Performance Message' %}{% else %}{% trans 'New Performance Message' %}{% endif %}</h2>
+    {% crispy form %}
+    {% if editing %}
+        <form method='post' action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
+            <input type="submit" value="{% trans 'Delete'%}" class="btn btn-danger disable-on-submit">
+        </form>
+    {% endif %}
+{% endblock %}

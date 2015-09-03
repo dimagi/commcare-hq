@@ -39,7 +39,7 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
-    CustomDataSourceConfiguration,
+    StaticDataSourceConfiguration,
 )
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -63,9 +63,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
-    is_static = config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
+    is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
-        config = CustomDataSourceConfiguration.by_id(config_id)
+        config = StaticDataSourceConfiguration.by_id(config_id)
         if not config or config.domain != domain:
             raise Http404()
     else:
@@ -384,7 +384,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -487,7 +487,7 @@ def rebuild_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -643,7 +643,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
-    custom_data_sources = list(CustomDataSourceConfiguration.by_domain(domain))
+    custom_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
         'reports': ReportConfiguration.by_domain(domain),

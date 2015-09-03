@@ -11,7 +11,6 @@ from casexml.apps.phone.restore import RestoreState, RestoreParams
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import OWNERSHIP_CLEANLINESS
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
@@ -19,8 +18,6 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def setUp(self):
         super(OwnerCleanlinessTest, self).setUp()
-        # ensure that randomization is on
-        OWNERSHIP_CLEANLINESS.randomness = 1
         self.owner_id = uuid.uuid4().hex
         self.synclog_id = uuid.uuid4().hex
         self.domain = uuid.uuid4().hex
@@ -142,13 +139,6 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_dirty()
         self.assertEqual(self.child._id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
-
-    def test_toggle(self):
-        # make sure the flag gets removed
-        OWNERSHIP_CLEANLINESS.randomness = 0
-        # and any test that normally expects a flag to be set to fail
-        with self.assertRaises(AssertionError):
-            self.test_create_dirty_makes_dirty()
 
     def test_set_flag_clean_no_data(self):
         unused_owner_id = uuid.uuid4().hex

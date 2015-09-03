@@ -70,6 +70,9 @@ var ReportConfig = function (data) {
             } else if (date_range === 'lastn') {
                 days = self.days();
             } else {
+                if (self.report_slug() === 'case_list') {
+                    return '';
+                }
                 throw "Invalid date range.";
             }
 
@@ -89,6 +92,17 @@ var ReportConfig = function (data) {
 
         return "startdate=" + start_date + "&enddate=" + end_date + "&";
     };
+
+    self.dateRangeSubs = self.date_range.subscribe(function(newValue) {
+        if (newValue === 'since' || newValue === 'range') {
+            $('.date-picker').datepicker({
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                dateFormat: 'yy-mm-dd'
+            });
+        }
+    });
 
     return self;
 };
@@ -225,12 +239,12 @@ var ReportConfigsViewModel = function (options) {
         self.configBeingEdited(self.configBeingViewed());
         self.modalSaveButton.state('save');
 
-        $(".save-date-picker").removeClass('hasDatepicker').datepicker({
+        // Required to initialise datepicker if modal opened with date_range in ('since', 'range')
+        $(".date-picker").datepicker({
             changeMonth: true,
             changeYear: true,
             showButtonPanel: true,
-            dateFormat: 'yy-mm-dd',
-            numberOfMonths: 2
+            dateFormat: 'yy-mm-dd'
         });
     };
 

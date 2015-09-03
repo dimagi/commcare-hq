@@ -352,3 +352,6 @@ class SQLProduct(models.Model):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain).all()
+
+    class Meta:
+        app_label = 'products'

@@ -14,7 +14,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -164,18 +164,6 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = [
-    'last7',
-    'last30',
-    'lastn',
-    'lastmonth',
-    'lastyear',
-    'since',
-    'range',
-    '',
-]
-
-
 class ReportConfig(CachedCouchDocumentMixin, Document):
 
     domain = StringProperty()
@@ -192,7 +180,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     filters = DictProperty()
 
-    date_range = StringProperty(choices=DATE_RANGE_CHOICES)
+    date_range = StringProperty(choices=get_all_daterange_slugs())
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
@@ -551,6 +539,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
 
+DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -562,6 +552,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     attach_excel = BooleanProperty()
     # language is only used if some of the config_ids refer to UCRs.
     language = StringProperty()
+    email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
@@ -713,7 +704,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
-            title = _("Scheduled report from CommCare HQ")
+            title = (
+                _(DEFAULT_REPORT_NOTIF_SUBJECT)
+                if self.email_subject == DEFAULT_REPORT_NOTIF_SUBJECT
+                else self.email_subject
+            )
             attach_excel = getattr(self, 'attach_excel', False)
             body, excel_files = get_scheduled_report_response(
                 self.owner, self.domain, self._id, attach_excel=attach_excel

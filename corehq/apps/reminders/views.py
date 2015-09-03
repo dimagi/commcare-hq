@@ -82,6 +82,7 @@ from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
+from custom.ewsghana.forms import EWSBroadcastForm
 
 ACTION_ACTIVATE = 'activate'
 ACTION_DEACTIVATE = 'deactivate'
@@ -952,12 +953,19 @@ class CreateBroadcastView(BaseMessagingSectionView):
         }
 
     @property
+    def form_class(self):
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            return EWSBroadcastForm
+        else:
+            return BroadcastForm
+
+    @property
     @memoized
     def broadcast_form(self):
         if self.request.method == 'POST':
-            return BroadcastForm(self.request.POST, **self.form_kwargs)
+            return self.form_class(self.request.POST, **self.form_kwargs)
         else:
-            return BroadcastForm(**self.form_kwargs)
+            return self.form_class(**self.form_kwargs)
 
     @property
     def page_context(self):
@@ -989,6 +997,8 @@ class CreateBroadcastView(BaseMessagingSectionView):
         broadcast.user_group_id = form.cleaned_data.get('user_group_id')
         broadcast.location_ids = form.cleaned_data.get('location_ids')
         broadcast.include_child_locations = form.cleaned_data.get('include_child_locations')
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            broadcast.user_data_filter = form.get_user_data_filter()
         broadcast.save()
 
     def post(self, request, *args, **kwargs):
@@ -1036,7 +1046,7 @@ class EditBroadcastView(CreateBroadcastView):
     @memoized
     def broadcast_form(self):
         if self.request.method == 'POST':
-            return BroadcastForm(self.request.POST, **self.form_kwargs)
+            return self.form_class(self.request.POST, **self.form_kwargs)
 
         broadcast = self.broadcast
         start_user_time = ServerTime(broadcast.start_datetime).user_time(self.project_timezone)
@@ -1054,7 +1064,9 @@ class EditBroadcastView(CreateBroadcastView):
             'location_ids': ','.join(broadcast.location_ids),
             'include_child_locations': broadcast.include_child_locations,
         }
-        return BroadcastForm(initial=initial, **self.form_kwargs)
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            initial['role'] = broadcast.user_data_filter.get('role', [None])[0]
+        return self.form_class(initial=initial, **self.form_kwargs)
 
 
 class CopyBroadcastView(EditBroadcastView):

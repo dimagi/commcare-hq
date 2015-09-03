@@ -252,6 +252,7 @@ class Worker(Process):
                         for i in reversed(range(5)):
                             try:
                                 save(dt, self.targetdb)
+                                break
                             except (ResourceConflict, ParserError, TypeError) as e:
                                 if i == 0:
                                     _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(e))

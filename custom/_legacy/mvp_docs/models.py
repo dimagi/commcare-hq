@@ -54,6 +54,9 @@ class IndicatorDocument(object):
 
 class IndicatorXForm(IndicatorDocument, XFormInstance):
 
+    class Meta:
+        app_label = 'mvp_docs'
+
     def save(self, **kwargs):
         self.doc_type = 'IndicatorXForm'
         assert self.get_db().uri != XFormInstance.get_db().uri
@@ -65,6 +68,9 @@ class IndicatorXForm(IndicatorDocument, XFormInstance):
 
 
 class IndicatorCase(IndicatorDocument, CommCareCase):
+
+    class Meta:
+        app_label = 'mvp_docs'
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorCase'

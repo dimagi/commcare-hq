@@ -8,8 +8,10 @@ from corehq.apps.hqcase.utils import assign_cases
 def user_db():
     return CouchUser.get_db()
 
+
 def get_owner_id(case):
-    return case.owner_id if case.owner_id is not None else case.user_id
+    return case.owner_id or case.user_id
+
 
 def get_wrapped_owner(owner_id):
     """

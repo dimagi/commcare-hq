@@ -38,7 +38,7 @@ from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
-from django.utils.importlib import import_module
+from importlib import import_module
 from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
@@ -1234,6 +1234,9 @@ class TransferDomainRequest(models.Model):
     TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
+
+    class Meta:
+        app_label = 'domain'
 
     @property
     @memoized

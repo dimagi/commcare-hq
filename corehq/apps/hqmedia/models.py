@@ -521,14 +521,17 @@ class HQMediaMixin(Document):
         self.media_form_errors = False
 
         def _add_menu_media(item, **kwargs):
-            if item.media_image:
-                media.append(ApplicationMediaReference(item.media_image,
-                                                       media_class=CommCareImage,
-                                                       is_menu_media=True, **kwargs))
-            if item.media_audio:
-                media.append(ApplicationMediaReference(item.media_audio,
-                                                       media_class=CommCareAudio,
-                                                       is_menu_media=True, **kwargs))
+            media.extend([ApplicationMediaReference(image,
+                                                    media_class=CommCareImage,
+                                                    is_menu_media=True, **kwargs)
+                          for image in item.all_image_paths()
+                          if image])
+
+            media.extend([ApplicationMediaReference(audio,
+                                                    media_class=CommCareAudio,
+                                                    is_menu_media=True, **kwargs)
+                          for audio in item.all_audio_paths()
+                          if audio])
 
         for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
             media_kwargs = {
@@ -547,28 +550,10 @@ class HQMediaMixin(Document):
                     )
 
             if module.case_list_form.form_id:
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+                _add_menu_media(module.case_list_form, **media_kwargs)
 
             if hasattr(module, 'case_list') and module.case_list.show:
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+                _add_menu_media(module.case_list, **media_kwargs)
 
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
@@ -596,28 +581,31 @@ class HQMediaMixin(Document):
                     self.media_form_errors = True
         return media
 
-    def get_menu_media(self, module, module_index, form=None, form_index=None):
+    def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(
             module, module_index, form=form, form_index=form_index,
             is_menu_media=True)
+        media_kwargs.update(to_language=to_language or self.default_language)
         item = form or module
         return self._get_item_media(item, media_kwargs)
 
-    def get_case_list_form_media(self, module, module_index):
+    def get_case_list_form_media(self, module, module_index, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
-    def get_case_list_menu_item_media(self, module, module_index):
+    def get_case_list_menu_item_media(self, module, module_index, to_language=None):
         if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
 
     def get_case_list_lookup_image(self, module, module_index, type='case'):
@@ -639,8 +627,9 @@ class HQMediaMixin(Document):
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
+        to_language = media_kwargs.pop('to_language', self.default_language)
         image_ref = ApplicationMediaReference(
-            item.media_image,
+            item.icon_by_language(to_language),
             media_class=CommCareImage,
             **media_kwargs
         )
@@ -648,7 +637,7 @@ class HQMediaMixin(Document):
         menu_media['image'] = image_ref
 
         audio_ref = ApplicationMediaReference(
-            item.media_audio,
+            item.audio_by_language(to_language),
             media_class=CommCareAudio,
             **media_kwargs
         )

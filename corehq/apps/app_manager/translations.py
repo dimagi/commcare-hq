@@ -4,7 +4,7 @@ from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -170,13 +170,13 @@ def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
     assert sheet_name is not None
     assert isinstance(languages, list)
     assert isinstance(case_labels, list)
-    assert isinstance(media_image, (type(None), basestring))
-    assert isinstance(media_audio, (type(None), basestring))
+    assert isinstance(media_image, list)
+    assert isinstance(media_audio, list)
     assert isinstance(unique_id, basestring)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages + case_labels
-                         + [media_image, media_audio, unique_id])]
+                         + media_image + media_audio + [unique_id])]
 
 
 def expected_bulk_app_sheet_headers(app):
@@ -208,8 +208,8 @@ def expected_bulk_app_sheet_headers(app):
             sheet_name='sheet_name',
             languages=languages_list,
             case_labels=['label_for_cases_%s' % l for l in app.langs],
-            media_image='icon_filepath',
-            media_audio='audio_filepath',
+            media_image=['icon_filepath_%s' % l for l in app.langs],
+            media_audio=['audio_filepath_%s' % l for l in app.langs],
             unique_id='unique_id',
         )
     ])
@@ -245,8 +245,8 @@ def expected_bulk_app_sheet_rows(app):
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
             case_labels=[module.case_label.get(lang) for lang in app.langs],
-            media_image=module.media_image,
-            media_audio=module.media_audio,
+            media_image=[module.icon_by_language(lang) for lang in app.langs],
+            media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         )
         rows["Modules_and_forms"].append(row_data)
@@ -317,8 +317,8 @@ def expected_bulk_app_sheet_rows(app):
                     languages=[form.name.get(lang) for lang in app.langs],
                     # leave all
                     case_labels=[None] * len(app.langs),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
+                    media_image=[form.icon_by_language(lang) for lang in app.langs],
+                    media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
                 )
 
@@ -434,14 +434,10 @@ def process_modules_and_forms_sheet(rows, app):
                     if lang in document.case_label:
                         del document.case_label[lang]
 
-        image = row.get('icon_filepath', None)
-        audio = row.get('audio_filepath', None)
-        if image == '':
-            image = None
-        if audio == '':
-            audio = None
-        document.media_image = image
-        document.media_audio = audio
+        for lang in app.langs:
+            document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
+            document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
+
     return msgs
 
 

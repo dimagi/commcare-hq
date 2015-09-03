@@ -6,6 +6,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_LAST_VISIT_DATE,
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
+    SCHEDULE_DATE_CASE_OPENED,
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
@@ -368,6 +369,7 @@ class ScheduleFormXPath(object):
         self.anchor = u"${}".format(self.anchor_detail_variable_name)
         self.last_visit = u"${}".format(self.last_visit_detail_variable_name)
         self.last_visit_date = u"${}".format(self.last_visit_date_detail_variable_name)
+        self.date_opened = u"${}".format(SCHEDULE_DATE_CASE_OPENED)
         self.current_schedule_phase = SCHEDULE_PHASE
 
     @property
@@ -390,7 +392,8 @@ class ScheduleFormXPath(object):
     @property
     def first_visit_phase_set(self):
         """
-        returns the first due date if the case hasn't been visited yet
+        returns the first due date if the case hasn't been visited yet.
+        if the first due date has passed, return the date when the case was opened
         otherwise, returns the next due date of valid upcoming schedules
         """
         within_zeroth_phase = XPath.and_(
@@ -398,12 +401,22 @@ class ScheduleFormXPath(object):
             XPath(self.anchor).neq(XPath.string('')),
             self.within_form_relevancy(),
         )
+        first_due_date_or_date_opened = XPath.if_(
+            u"{} < today()".format(self.first_due_date()),
+            self.date_opened,
+            self.first_due_date()
+        )
 
-        return XPath.if_(within_zeroth_phase, self.first_due_date(), self.xpath_phase_set)
+        return XPath.if_(
+            within_zeroth_phase,
+            first_due_date_or_date_opened,
+            self.xpath_phase_set
+        )
 
     @property
     def next_visit_due_num(self):
-        return XPath.if_(self.next_valid_schedules(), self.next_visit_id(), 0)
+        phase = self.phase.id
+        return XPath.if_(self.next_valid_schedules(phase), self.next_visit_id(), 0)
 
     @property
     def is_unscheduled_visit(self):
