@@ -290,8 +290,7 @@ class UploadProductView(BaseCommTrackManageView):
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_cached_download(upload.read(),
-                                   expiry=1*60*60)
+        file_ref = expose_cached_download(upload.read(), expiry=1*60*60)
         task = import_products_async.delay(
             domain,
             file_ref.download_id,
