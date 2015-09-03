@@ -3445,7 +3445,6 @@ class ReportAppConfig(DocumentSchema):
 
     def get_entry(self):
         return suite_xml.Entry(
-            form='fixmeclayton',
             command=suite_xml.Command(
                 id='reports.{}'.format(self.uuid),
                 text=suite_xml.Text(
