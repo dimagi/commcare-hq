@@ -64,6 +64,7 @@
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
     downloadExportsApp.constant('exportList', {{ export_list|JSON }});
+    downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
 }(window.angular));
 </script>
 {% endblock %}

@@ -468,6 +468,7 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         return {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
+            'max_column_size': self.max_column_size,
         }
 
     @property
@@ -486,6 +487,13 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    def max_column_size(self):
+        try:
+            return int(self.request.GET.get('max_column_size', 2000))
+        except TypeError:
+            return 2000
 
     @allow_remote_invocation
     def get_group_options(self, in_data):
@@ -543,7 +551,6 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         # if safe_only and not export_object.is_safe:
         #     return HttpResponseForbidden()
 
-        # todo where is max_column_size currently set in exports?
         max_column_size = int(in_data.get('max_column_size', 2000))
 
         filename = export_data.get('filename', export_object.name)
