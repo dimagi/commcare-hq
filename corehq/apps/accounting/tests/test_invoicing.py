@@ -132,8 +132,31 @@ class TestInvoice(BaseInvoiceTestCase):
         )
         domain.delete()
 
-    def test_date_due_gets_set(self):
-        """Date Due only gets set if the invoice is above a threshold"""
+    def test_date_due_not_set_small_invoice(self):
+        """Date Due doesn't get set if the invoice is small"""
+        subscription_length = 5  # months
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.STANDARD,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan,
+        )
+
+        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date_small)
+        small_invoice = subscription.invoice_set.first()
+
+        self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
+        self.assertIsNone(small_invoice.date_due)
+
+    def test_date_due_set_large_invoice(self):
+        """Date Due only gets set for a large invoice (> $100)"""
         subscription_length = 5  # months
         plan = DefaultProductPlan.objects.get(
             edition=SoftwarePlanEdition.ADVANCED,
@@ -148,17 +171,9 @@ class TestInvoice(BaseInvoiceTestCase):
             plan_version=plan,
         )
 
-        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
-        tasks.generate_invoices(invoice_date_small)
-
         invoice_date_large = utils.months_from_date(subscription.date_start, 3)
         tasks.generate_invoices(invoice_date_large)
-
-        small_invoice = subscription.invoice_set.first()
         large_invoice = subscription.invoice_set.last()
-
-        self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
-        self.assertIsNone(small_invoice.date_due)
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(large_invoice.date_due)
