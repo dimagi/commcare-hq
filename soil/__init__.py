@@ -21,22 +21,25 @@ if SOIL_DEFAULT_CACHE != 'default':
 
 CHUNK_SIZE = 8192
 
+
 class DownloadBase(object):
     """
     A basic download object.
     """
-    
+
     def __init__(self, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, 
-                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None):
+                 transfer_encoding=None, extras=None, download_id=None,
+                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
+                 suffix=None):
         self.content_type = content_type if content_type else mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
         self.extras = extras or {}
         self.download_id = download_id or uuid.uuid4().hex
         self.cache_backend = cache_backend
-
+        # legacy default
+        self.suffix = suffix or '.xls'
 
     def get_cache(self):
         return cache.get_cache(self.cache_backend)
@@ -51,7 +54,7 @@ class DownloadBase(object):
         # some libraries like to work with files rather than content
         # so use this to force it be a file. FileDownload will override
         # this to avoid the duplicate storage.
-        fd, filename = mkstemp(suffix='.xls')
+        fd, filename = mkstemp(suffix=self.suffix)
         with os.fdopen(fd, "wb") as tmp:
             tmp.write(self.get_content())
         return filename
@@ -157,18 +160,21 @@ class DownloadBase(object):
         """
         raise NotImplementedError("This should be overridden by subclasses!")
 
+
 class CachedDownload(DownloadBase):
     """
     Download that lives in the cache
     """
-    
+
     def __init__(self, cacheindex, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, 
-                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None):
+                 transfer_encoding=None, extras=None, download_id=None,
+                 cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
+                 suffix=None):
         super(CachedDownload, self).__init__(
-                content_type if content_type else mimetype, content_disposition,
-                transfer_encoding, extras, download_id, cache_backend)
+            content_type if content_type else mimetype, content_disposition,
+            transfer_encoding, extras, download_id, cache_backend,
+            suffix=suffix)
         self.cacheindex = cacheindex
 
     def get_content(self):
