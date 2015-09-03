@@ -129,13 +129,10 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
-    full_name = form.cleaned_data['full_name']
     email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
-    new_user.first_name = full_name[0]
-    new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
 
