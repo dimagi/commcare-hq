@@ -18,9 +18,10 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     cache.set(temp_id, "It works!", expiry)
     cache.set(download_id, CachedDownload(temp_id), expiry)
 
+
 @task
 def prepare_download(download_id, payload_func, content_disposition,
-        content_type, expiry=10*60*60):
+                     content_type, expiry=10*60*60):
     """
     payload_func should be an instance of SerializableFunction, and can return
     either a string or a FileWrapper object
@@ -34,7 +35,8 @@ def prepare_download(download_id, payload_func, content_disposition,
                            download_id=download_id)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def heartbeat():
     """
     A heartbeat, used to confirm that celery is alive and kicking.
