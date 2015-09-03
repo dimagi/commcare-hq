@@ -519,6 +519,7 @@ class CaseCustomExportHelper(CustomExportHelper):
 
 def make_custom_export_helper(request, export_type, domain=None, export_id=None):
     export_type = export_type or request.GET.get('request_type', 'form')
+    # NOTE: minimal is a hack so that some domains can load the exports page properly :-(
     minimal = bool(request.GET.get('minimal', False))
     return {
         'form': FormCustomExportHelper,
