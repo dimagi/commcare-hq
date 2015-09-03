@@ -3459,14 +3459,6 @@ class ReportAppConfig(DocumentSchema):
                     nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
                     value='./@id',
                 ),
-                # you are required to select something - even if you don't use it
-                suite_xml.SessionDatum(
-                    detail_select=self.data_detail_id,
-                    id='throwaway_{}'.format(self.uuid),
-                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
-                    value="''",
-                )
-
             ]
         )
 
