@@ -215,10 +215,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     def get_ajax(self, request, domain=None, **kwargs):
         try:
-            data = self.data_source
-            data.set_filter_values(self.filter_values)
-            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-            total_records = data.get_total_records()
+            data_source = self.data_source
+            data_source.set_filter_values(self.filter_values)
+            data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+            total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -244,7 +244,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
         end = min(datatables_params.start + datatables_params.count, total_records)
-        page = list(data.get_data())[datatables_params.start:end]
+        data = list(data_source.get_data())
+        page = data[datatables_params.start:end]
 
         json_response = {
             'aaData': page,
@@ -252,11 +253,11 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data.has_total_row:
+        if data_source.has_total_row:
             json_response.update({
                 "total_row": get_total_row(
-                    page, data.aggregation_columns, data.column_configs,
-                    get_expanded_columns(data.column_configs, data.config)
+                    data, data_source.aggregation_columns, data_source.column_configs,
+                    get_expanded_columns(data_source.column_configs, data_source.config)
                 ),
             })
         return self.render_json_response(json_response)
