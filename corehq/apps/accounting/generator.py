@@ -236,7 +236,16 @@ def create_excess_community_users(domain):
 class FakeStripeCard(mock.MagicMock):
     def __init__(self):
         super(FakeStripeCard, self).__init__()
-        self.metadata = {}
+        self._metadata = {}
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        """Stripe returns everything as JSON. This will do for testing"""
+        self._metadata = {k: str(v) for k, v in value.iteritems()}
 
     def save(self):
         pass
@@ -246,4 +255,5 @@ class FakeStripeCustomer(mock.MagicMock):
     def __init__(self, cards):
         super(FakeStripeCustomer, self).__init__()
         self.id = uuid.uuid4().hex.lower()[:25]
-        self.cards = cards
+        self.cards = mock.MagicMock()
+        self.cards.data = cards

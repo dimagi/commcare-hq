@@ -184,13 +184,13 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): True})
+        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
         self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account_2)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): True,
-                                                   "auto_pay_{}".format(self.billing_account_2.id): True})
+        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
+                                                   "auto_pay_{}".format(self.billing_account_2.id): 'True'})
 
         other_web_user = generator.arbitrary_web_user()
         other_payment_method = StripePaymentMethod(web_user=other_web_user)
@@ -199,15 +199,15 @@ class TestStripePaymentMethod(BaseAccountingTest):
         other_payment_method.set_autopay(different_fake_card, self.billing_account)
         self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
         self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
-        self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
+        self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
 
     def test_unset_autopay(self, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.payment_method.set_autopay(self.fake_card, self.billing_account)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): True})
+        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
 
         self.payment_method.unset_autopay(self.fake_card, self.billing_account)
 
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): False})
+        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)

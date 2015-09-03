@@ -2426,6 +2426,7 @@ class StripePaymentMethod(PaymentMethod):
     """ Do stuff with Stripe  """
     class Meta:
         proxy = True
+        app_label = 'accounting'
 
     STRIPE_GENERIC_ERROR = (stripe.error.AuthenticationError,
                             stripe.error.InvalidRequestError,
