@@ -1,6 +1,6 @@
 from .test_app_manager_integration import *
 from .test_columns import *
-from .test_custom_data_sources import *
+from .test_static_data_sources import *
 from .test_custom_reports import *
 from .test_export import *
 from .test_expressions import *
