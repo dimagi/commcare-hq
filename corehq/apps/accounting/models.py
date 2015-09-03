@@ -1988,6 +1988,9 @@ class BillingRecord(BillingRecordBase):
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
 
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/invoice_email_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/invoice_email_autopayment.txt'
+
     class Meta:
         app_label = 'accounting'
 
@@ -1995,15 +1998,21 @@ class BillingRecord(BillingRecordBase):
     def html_template(self):
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             return self.INVOICE_CONTRACTED_HTML_TEMPLATE
-        else:
-            return self.INVOICE_HTML_TEMPLATE
+
+        if self.invoice.subscription.account.auto_pay_enabled:
+            return self.INVOICE_AUTOPAY_HTML_TEMPLATE
+
+        return self.INVOICE_HTML_TEMPLATE
 
     @property
     def text_template(self):
         if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
             return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
-        else:
-            return self.INVOICE_TEXT_TEMPLATE
+
+        if self.invoice.subscription.account.auto_pay_enabled:
+            return self.INVOICE_AUTOPAY_TEXT_TEMPLATE
+
+        return self.INVOICE_TEXT_TEMPLATE
 
     @property
     def should_send_email(self):
@@ -2052,6 +2061,12 @@ class BillingRecord(BillingRecordBase):
                     domain=self.invoice.get_domain()
                 )
             })
+
+        if self.invoice.subscription.account.auto_pay_enabled:
+            context.update({
+                'last_4': getattr(self.invoice.subscription.account.autopay_card, 'last4', None),
+            })
+
         return context
 
     def email_subject(self):
