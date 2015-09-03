@@ -1010,7 +1010,7 @@ They conform to a slightly different style:
 ```
 
 Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
-setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
+setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
