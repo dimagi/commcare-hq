@@ -1046,6 +1046,11 @@ def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
+@roles(ROLES_DJANGO)
+def set_errand_boy_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_errand_boy.conf')
+
+
 @roles(ROLES_TOUCHFORMS)
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
@@ -1071,6 +1076,7 @@ def set_supervisor_config():
     _require_target()
     _execute_with_timing(set_celery_supervisorconf)
     _execute_with_timing(set_djangoapp_supervisorconf)
+    _execute_with_timing(set_errand_boy_supervisorconf)
     _execute_with_timing(set_formsplayer_supervisorconf)
     _execute_with_timing(set_pillowtop_supervisorconf)
     _execute_with_timing(set_sms_queue_supervisorconf)
