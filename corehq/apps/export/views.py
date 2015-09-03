@@ -160,6 +160,7 @@ class BaseCreateCustomExportView(BaseExportView):
             schema = create_basic_form_checkpoint(export_tag)
 
         if request.GET.get('minimal', False):
+            # minimal mode is a HACK so that some large domains can load this page. halp.
             messages.warning(request,
                 _("Warning you are using minimal mode, some things may not be functional"))
 
@@ -510,7 +511,6 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         # todo
         # - eventually combine users + group field, but to do that exports
         #   might need a revamp, so leaving that for later.
-        # - does the parameter minimal matter here?
         try:
             exports = in_data['exports']
             form_data = in_data['form_data']
