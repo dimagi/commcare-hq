@@ -121,6 +121,7 @@ class ExcelExportReport(FormExportReportBase):
                        group=True)
         return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
 
+
     def properties(self, size_hash):
         properties = dict()
         exports = self.get_saved_exports()
