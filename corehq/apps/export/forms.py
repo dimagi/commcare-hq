@@ -152,13 +152,8 @@ class CreateCaseExportForm(forms.Form):
         )
 
 
-
-
-
-
 class FilterExportDownloadForm(forms.Form):
 
-    DEFAULT_GROUP_OPTION = ('everyone', ugettext_noop("Everyone (All Groups)"))
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
     _USER_ADMIN = 'admin'
