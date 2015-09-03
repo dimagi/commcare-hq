@@ -23,7 +23,15 @@
          "flag"
       ],
       "filters":[  
-
+         {
+            "display": "Form Name",
+            "field": "form_name",
+            "type": "dynamic_choice_list",
+            "datatype": "string",
+            "compare_as_string": true,
+            "required": false,
+            "slug": "form_name"
+         }
       ],
       "report_meta":{  
          "doc_type":"ReportMeta",
