@@ -35,7 +35,7 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-class InvitationView():
+class InvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     inv_id = None
     inv_type = Invitation
@@ -43,7 +43,10 @@ class InvitationView():
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
 
     def added_context(self):
-        return {}
+        username = self.request.user.username
+        # Add zero-width space for better line breaking
+        username = username.replace("@", "&#x200b;@")
+        return { 'formatted_username': username }
 
     def validate_invitation(self, invitation):
         pass
