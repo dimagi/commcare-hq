@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-01 19:38+0000\n"
+"POT-Creation-Date: 2015-09-03 12:37+0000\n"
 "PO-Revision-Date: 2015-08-07 15:24+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -17644,17 +17644,13 @@ msgstr ""
 msgid "An error occurred while generating this report."
 msgstr ""
 
-#: corehq/apps/reports/models.py:659
+#: corehq/apps/reports/models.py:662
 msgid "Every day"
 msgstr ""
 
-#: corehq/apps/reports/models.py:660
+#: corehq/apps/reports/models.py:663
 #, python-format
 msgid "Day %s of every month"
-msgstr ""
-
-#: corehq/apps/reports/models.py:704
-msgid "Scheduled report from CommCare HQ"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/basic.py:247
@@ -18276,7 +18272,7 @@ msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:445
 #: corehq/apps/sms/templates/sms/default.html:60
-#: custom/ilsgateway/tanzania/reminders/__init__.py:133
+#: custom/ilsgateway/tanzania/reminders/__init__.py:136
 msgid "Sent"
 msgstr ""
 
@@ -25287,7 +25283,7 @@ msgstr ""
 "<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:25
-#: custom/ilsgateway/tanzania/reminders/__init__.py:66
+#: custom/ilsgateway/tanzania/reminders/__init__.py:69
 msgid ""
 "Have you sent in your R&R form yet for this quarter? Please reply \"submitted"
 "\" or \"not submitted\""
@@ -25296,7 +25292,7 @@ msgstr ""
 "\"sijatuma\""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:29
-#: custom/ilsgateway/tanzania/reminders/__init__.py:70
+#: custom/ilsgateway/tanzania/reminders/__init__.py:73
 msgid ""
 "How many R&R forms have you submitted to MSD? Reply with 'submitted A "
 "<number of R&Rs submitted for group A> B <number of R&Rs submitted for group "
@@ -25306,7 +25302,7 @@ msgstr ""
 "ya R&R fomu za kundi a> B <idadi ya R&R fomu za kundi B>...'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:34
-#: custom/ilsgateway/tanzania/reminders/__init__.py:81
+#: custom/ilsgateway/tanzania/reminders/__init__.py:84
 msgid ""
 "Did you receive your delivery yet? Please reply 'delivered <product> "
 "<amount> <product> <amount>...'"
@@ -25316,7 +25312,7 @@ msgstr ""
 "'sijapokea'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:37
-#: custom/ilsgateway/tanzania/reminders/__init__.py:84
+#: custom/ilsgateway/tanzania/reminders/__init__.py:87
 msgid ""
 "Did you receive your delivery yet? Please reply 'delivered' or 'not "
 "delivered'"
@@ -25325,7 +25321,7 @@ msgstr ""
 "'nimepokea', kama haujapokea jibu 'sijapokea'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:39
-#: custom/ilsgateway/tanzania/reminders/__init__.py:62
+#: custom/ilsgateway/tanzania/reminders/__init__.py:65
 msgid ""
 "Have you received supervision this month? Please reply 'supervision yes' or "
 "'supervision no'"
@@ -25363,7 +25359,16 @@ msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
 "%(facility_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:56
+#: custom/ilsgateway/tanzania/reminders/__init__.py:53
+#, fuzzy
+msgid ""
+"Sorry, invalid format. The message should be in the format 'soh <product> "
+"<amount> <product> <amount>...'"
+msgstr ""
+"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
+"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
+
+#: custom/ilsgateway/tanzania/reminders/__init__.py:59
 msgid ""
 "Supervision reminders will come monthly, and you can respond 'supervision "
 "yes' if you have received supervision or 'supervision no' if you have not"
@@ -25372,27 +25377,27 @@ msgstr ""
 "ndiyo' kama umefanyiwa usimamizi au 'usimamizi hapana' kama haujafanyiwa "
 "usimamizi."
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:59
+#: custom/ilsgateway/tanzania/reminders/__init__.py:62
 msgid ""
 "You have reported that you have not yet received supervision this month."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:60
+#: custom/ilsgateway/tanzania/reminders/__init__.py:63
 msgid "Thank you for reporting that you have received supervision this month."
 msgstr "Asante kwa kutoa taarifa za hesabu ya mkono kwa mwezi huu"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:75
+#: custom/ilsgateway/tanzania/reminders/__init__.py:78
 msgid "You have reported that you haven't yet received your delivery."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:77
+#: custom/ilsgateway/tanzania/reminders/__init__.py:80
 #, python-format
 msgid ""
 "Thank you, you reported a delivery of %(reply_list)s. If incorrect, please "
 "resend."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:78
+#: custom/ilsgateway/tanzania/reminders/__init__.py:81
 #, python-format
 msgid ""
 "Thank you %(contact_name)s for reporting your delivery for %(facility_name)s"
@@ -25400,7 +25405,7 @@ msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
 "%(facility_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:79
+#: custom/ilsgateway/tanzania/reminders/__init__.py:82
 msgid ""
 "To record a delivery, respond with \"delivered product amount product "
 "amount...\""
@@ -25408,7 +25413,7 @@ msgstr ""
 "Kutuma taarifa za kupokea vifaa, jibu  \"nimepokea<acha nafasi><jina la "
 "kifaa><acha nafasi><idadi ya kifaa><acha nafasi>...\""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:86
+#: custom/ilsgateway/tanzania/reminders/__init__.py:89
 #, python-format
 msgid ""
 "Facility deliveries for group %(group_name)s (out of %(group_total)d): "
@@ -25419,11 +25424,11 @@ msgstr ""
 "%(not_responded_count)d havijajibu na %(not_received_count)d vimetoa taarifa "
 "kua havijapokea vifaa. Tizama kwenye ilsgateway.com"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:91
+#: custom/ilsgateway/tanzania/reminders/__init__.py:94
 msgid "You have reported that you haven't yet sent in your R&R."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:94
+#: custom/ilsgateway/tanzania/reminders/__init__.py:97
 #, python-format
 msgid ""
 "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
@@ -25432,34 +25437,34 @@ msgstr ""
 "%(district_name)s imetuma R&R fomu kwenda MSD: %(group_a)s kwa ajili ya "
 "Kundi A, %(group_b)s kwa ajili ya Kundi B %(group_c)s kwa ajili ya Kundi C"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:97
+#: custom/ilsgateway/tanzania/reminders/__init__.py:100
 #, python-format
 msgid ""
 "Thank you %(contact_name)s for submitting your R and R form for %(sp_name)s"
 msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya %(sp_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:98
+#: custom/ilsgateway/tanzania/reminders/__init__.py:101
 #, python-format
 msgid ""
 "District %(district_name)s has reported that they sent their R&R forms to MSD"
 msgstr ""
 "Wilaya %(district_name)s imetoa taarifa kuwa fomu za R&R zimewasilishwa MSD"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:100
+#: custom/ilsgateway/tanzania/reminders/__init__.py:103
 msgid "To report an arrival, please send 'arrived <MSD code>'."
 msgstr ""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:101
+#: custom/ilsgateway/tanzania/reminders/__init__.py:104
 msgid "Thank you for confirming your arrival at the health facility."
 msgstr "Asante kwa kuthibitisha kufika kwako katika Kituo cha Afya"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:102
+#: custom/ilsgateway/tanzania/reminders/__init__.py:105
 #, python-format
 msgid "Thank you for confirming your arrival at %(facility)s."
 msgstr "Asante kwa kuthibitisha kufika kwako katika %(facility)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:105
+#: custom/ilsgateway/tanzania/reminders/__init__.py:108
 msgid ""
 "Welcome to ILSGateway. Available commands are soh, delivered, not delivered, "
 "submitted, not submitted, language, sw, en, stop, supervision, la"
@@ -25468,27 +25473,27 @@ msgstr ""
 "nimepokea, sijapokea, nimetuma, sijatuma, lugha sw, lugha en, acha, "
 "usimamizi, um"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:112
+#: custom/ilsgateway/tanzania/reminders/__init__.py:115
 msgid "To set your language, send LANGUAGE <CODE>"
 msgstr "Kubadilisha lugha, tuma LUGHA <KIFUPISHO>"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:113
+#: custom/ilsgateway/tanzania/reminders/__init__.py:116
 msgid ""
 "You must JOIN or IDENTIFY yourself before you can set your language "
 "preference"
 msgstr "Lazima kujiunga kwanza kabla ya kuchagua lugha unayotaka"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:114
+#: custom/ilsgateway/tanzania/reminders/__init__.py:117
 #, python-format
 msgid "I will speak to you in %(language)s."
 msgstr "Nitaongea na wewe kwa %(language)s."
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:115
+#: custom/ilsgateway/tanzania/reminders/__init__.py:118
 #, python-format
 msgid "Sorry, I don't speak \"%(language)s\"."
 msgstr "Samahani, sielewi \"%(language)s\""
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:118
+#: custom/ilsgateway/tanzania/reminders/__init__.py:121
 msgid ""
 "You have requested to stop reminders to this number. Send 'help' to this "
 "number for instructions on how to reactivate."
@@ -25496,7 +25501,7 @@ msgstr ""
 "Umesitisha kukumbushwa kwenye hii namba. tafadhali tuma 'msaada' kupata "
 "maelekezo jinsi ya kujiunga tena"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:123
+#: custom/ilsgateway/tanzania/reminders/__init__.py:126
 msgid ""
 "If you have submitted your R&R, respond \"submitted\". If you have received "
 "your delivery, respond \"delivered\""
@@ -25504,7 +25509,7 @@ msgstr ""
 "Kama umetuma R&R fomu yako jibu 'nimetuma', kama umepokea vifaa jibu "
 "'nimepokea'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:129
+#: custom/ilsgateway/tanzania/reminders/__init__.py:132
 msgid ""
 "To test a reminder, send \"test [remindername] [msd code]\"; valid tests are "
 "soh, delivery, randr. Remember to setup your contact details!"
@@ -25512,12 +25517,12 @@ msgstr ""
 "_To test a reminder, send \"test [remindername] [msd code]\"; valid tests "
 "are soh, delivery, randr. Remember to setup your contact details!"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:132
+#: custom/ilsgateway/tanzania/reminders/__init__.py:135
 #, python-format
 msgid "Invalid msd code %(code)s"
 msgstr "Namba ya MSD sio sahihi %(code)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:135
+#: custom/ilsgateway/tanzania/reminders/__init__.py:138
 #, fuzzy
 msgid ""
 "Please send in your adjustments in the format 'la <product> +-<amount> +-"
@@ -25526,7 +25531,7 @@ msgstr ""
 "Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
 "<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:137
+#: custom/ilsgateway/tanzania/reminders/__init__.py:140
 #, fuzzy
 msgid ""
 "Sorry, invalid format.  The message should be in the format 'la <product> +-"
@@ -25535,7 +25540,7 @@ msgstr ""
 "Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
 "<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:139
+#: custom/ilsgateway/tanzania/reminders/__init__.py:142
 #, fuzzy
 msgid ""
 "Thank you. Have you received supervision this month? Please reply "
@@ -25544,7 +25549,7 @@ msgstr ""
 "Asante. Je umefanyiwa usimamizi kwa mwezi huu? Tafadhali jibu 'usimamizi "
 "ndiyo' au 'usimamizi hapana'"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:142
+#: custom/ilsgateway/tanzania/reminders/__init__.py:145
 #, fuzzy, python-format
 msgid ""
 "Thank you %(contact_name)s for reporting stockouts of %(product_names)s for "
@@ -25553,7 +25558,7 @@ msgstr ""
 "Asante %(contact_name)s kwa kutuma taarifa ya kupokea vifaa vya "
 "%(facility_name)s"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:148
+#: custom/ilsgateway/tanzania/reminders/__init__.py:151
 #, python-format
 msgid ""
 "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s did not "
@@ -25563,7 +25568,7 @@ msgstr ""
 "%(not_submitted)s/%(total)s hawajawasilisha R&R, %(not_responding)s/"
 "%(total)s hawajajibu ujumbe"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:152
+#: custom/ilsgateway/tanzania/reminders/__init__.py:155
 #, python-format
 msgid ""
 "SOH - %(submitted)s/%(total)s reported, %(not_responding)s/%(total)s did not "
@@ -25572,7 +25577,7 @@ msgstr ""
 "Hesabu ya mkono: %(submitted)s/%(total)s wametoa taarifa ya hmk, "
 "%(not_responding)s/%(total)s hawajajibu ujumbe"
 
-#: custom/ilsgateway/tanzania/reminders/__init__.py:156
+#: custom/ilsgateway/tanzania/reminders/__init__.py:159
 #, python-format
 msgid ""
 "Deliveries - %(received)s/%(total)s received, %(not_received)s/%(total)s did "
