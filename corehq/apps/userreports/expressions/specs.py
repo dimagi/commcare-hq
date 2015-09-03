@@ -76,6 +76,25 @@ class ConditionalExpressionSpec(JsonObject):
             return self._false_expression(item, context)
 
 
+class SwitchExpressionSpec(JsonObject):
+    type = TypeProperty('switch')
+    switch_on = DictProperty(required=True)
+    cases = DictProperty(required=True)
+    default = DictProperty(required=True)
+
+    def configure(self, switch_on_expression, case_expressions, default_expression):
+        self._switch_on_expression = switch_on_expression
+        self._case_expressions = case_expressions
+        self._default_expression = default_expression
+
+    def __call__(self, item, context=None):
+        switch_value = self._switch_on_expression(item, context)
+        for c in self.cases:
+            if switch_value == c:
+                return self._case_expressions[c](item, context)
+        return self._default_expression(item, context)
+
+
 class IteratorExpressionSpec(JsonObject):
     type = TypeProperty('iterator')
     expressions = ListProperty(required=True)
