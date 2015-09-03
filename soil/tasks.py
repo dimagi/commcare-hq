@@ -29,10 +29,10 @@ def prepare_download(download_id, payload_func, content_disposition,
         payload = payload_func(process=prepare_download)
     except TypeError:
         payload = payload_func()
-    expose_cached_download(payload, expiry, content_type=content_type,
-                    content_disposition=content_disposition,
-                    download_id=download_id)
-    
+    expose_cached_download(payload, expiry, mimetype=content_type,
+                           content_disposition=content_disposition,
+                           download_id=download_id)
+
 
 @periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def heartbeat():
