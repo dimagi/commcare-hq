@@ -1,19 +1,4 @@
 {% load i18n %}
-<div ng-show="!isSelectGroups">
-   <div class="label label-default label-lg">
-        <i class="fa fa-info-circle"></i>
-        {% blocktrans %}
-            You may either select <strong>User Types</strong> OR a <strong>Group</strong> for export.
-        {% endblocktrans %}
-   </div>
-   <button type="button"
-           class="btn btn-default"
-           ng-show="!isSelectGroups && hasGroups"
-           ng-click="isSelectGroups = true; isFormInvalid();">
-       <i class="fa fa-users"></i>
-       {% trans 'Select Group' %}
-   </button>
-</div>
 <p ng-show="!!groupsLoading">
     <i class="fa fa-spinner fa-spin"></i> {% trans "Loading Groups" %}
 </p>
