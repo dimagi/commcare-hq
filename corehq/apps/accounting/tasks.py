@@ -421,13 +421,22 @@ def pay_autopay_invoices():
 @task
 def send_autopay_card_removed_email(billing_account, old_user, new_user):
     """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
+    from corehq.apps.domain.views import EditExistingBillingAccountView
 
     subject = ugettext("Your card is no longer being used to auto-pay for {billing_account}").format(
         billing_account=billing_account.name)
 
+    try:
+        old_user_name = WebUser.get_by_username(old_user).first_name
+    except ResourceNotFound:
+        old_user_name = old_user
+
     context = {
         'new_user': new_user,
+        'old_user_name': old_user_name,
         'billing_account_name': billing_account.name,
+        'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                             args=[billing_account.created_by_domain])
     }
 
     send_HTML_email(
