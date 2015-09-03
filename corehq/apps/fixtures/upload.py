@@ -10,8 +10,9 @@ from corehq.apps.fixtures.models import FixtureTypeField, FixtureDataType, Fixtu
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
+from corehq.util.spreadsheets.excel import WorksheetNotFound, \
+    WorkbookJSONReader
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from soil import DownloadBase
 from corehq.apps.locations.models import SQLLocation
 

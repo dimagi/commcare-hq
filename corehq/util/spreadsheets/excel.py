@@ -1,7 +1,6 @@
-import csv
-
 from tempfile import NamedTemporaryFile
 import openpyxl
+from dimagi.utils import csv
 
 
 # a *DictReader responsds to __init__(self, file), __iter__, and fieldnames
@@ -279,9 +278,6 @@ class WorkbookJSONReader(object):
             )
         return tuple(all_sheet_data)
 
-# Utils for writing
-
-
 
 def flatten_json_to_path(obj, path=()):
     if isinstance(obj, dict):
@@ -294,6 +290,7 @@ def flatten_json_to_path(obj, path=()):
                 yield item
     else:
         yield (path, obj)
+
 
 def format_header(path, value):
     # pretty sure making a string-builder would be slower than concatenation
@@ -308,12 +305,15 @@ def format_header(path, value):
         value = 'yes' if value else 'no'
     return s, value
 
+
 def flatten_json(obj):
     for key, value in flatten_json_to_path(obj):
         yield format_header(key, value)
 
+
 def json_to_headers(obj):
     return [key for key, value in sorted(flatten_json(obj), key=lambda t: alphanumeric_sort_key(t[0]))]
+
 
 def alphanumeric_sort_key(key):
     """

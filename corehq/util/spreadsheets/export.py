@@ -1,5 +1,6 @@
 from couchexport.export import get_writer
 
+
 class WorkBook(object):
     _undefined = '---'
     @property

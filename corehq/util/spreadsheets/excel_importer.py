@@ -1,4 +1,4 @@
-from dimagi.utils.excel import WorkbookJSONReader
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from soil import DownloadBase
 
 

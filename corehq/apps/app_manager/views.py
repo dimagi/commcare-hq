@@ -12,6 +12,7 @@ import json
 import yaml
 from collections import defaultdict, OrderedDict, namedtuple
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from soil import DownloadBase
 from xml.dom.minidom import parseString
 
@@ -132,7 +133,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
-from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
