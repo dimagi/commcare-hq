@@ -1299,7 +1299,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id_xpath = session_var(form.session_var_for_action('open_case'))
+                case_id_xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
