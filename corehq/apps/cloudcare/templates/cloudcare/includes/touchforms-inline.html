@@ -6,10 +6,11 @@
 
 <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
 <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
 <script src="{% static 'formplayer/script/xforgasm.js' %}"></script>
 <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
 <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
-<script src="{% static 'formplayer/script/build/fullform-ui.templates.js' %}"></script>
 <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
 
 <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
@@ -18,3 +19,5 @@
 
 <script src="{% static "cloudcare/js/util.js" %}"></script>
 <script src="{% static 'cloudcare/js/touchforms-inline.js' %}"></script>
+
+{% include 'formplayer/fullform-ui/templates.html' %}
