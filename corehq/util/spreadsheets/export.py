@@ -3,6 +3,7 @@ from couchexport.export import get_writer
 
 class WorkBook(object):
     _undefined = '---'
+
     @property
     def undefined(self):
         return self._undefined

@@ -1,11 +1,8 @@
 from tempfile import NamedTemporaryFile
 import openpyxl
-from dimagi.utils import csv
 
 
-# a *DictReader responsds to __init__(self, file), __iter__, and fieldnames
-def CsvDictReader(file):
-    return csv.DictReader(file)
+# a *DictReader responds to __init__(self, file), __iter__, and fieldnames
 
 
 class Excel2007DictReader(object):
@@ -24,9 +21,11 @@ class Excel2007DictReader(object):
         self.worksheet = self.wb.worksheets[0]
         self.fieldnames = []
         self.fieldnames = [cell.value for cell in self.worksheet.iter_rows().next()]
+
     def __iter__(self):
         rows = self.worksheet.iter_rows()
         rows.next()
+
         def to_string(thing):
             if isinstance(thing, int):
                 return unicode(thing)
@@ -103,7 +102,7 @@ class IteratorJSONReader(object):
         else:
             field = field.strip()
 
-            if not obj.has_key(field):
+            if field not in obj:
                 obj[field] = {}
 
             cls.set_field_value(obj[field], subfield, value)
@@ -119,7 +118,7 @@ class IteratorJSONReader(object):
             cls.set_field_value(dud, field, value)
             (field, value), = dud.items()
 
-            if not obj.has_key(field):
+            if field not in obj:
                 obj[field] = []
             if value not in (None, ''):
                 obj[field].append(value)
@@ -151,7 +150,7 @@ class IteratorJSONReader(object):
 
         # set for any flat type
         field = field.strip()
-        if obj.has_key(field):
+        if field in obj:
             raise JSONReaderError(
                 'You have a repeat field: %s' % field
             )
@@ -179,6 +178,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                 break
             else:
                 width += 1
+
         def iterator():
             def _convert_float(value):
                 """
