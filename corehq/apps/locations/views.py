@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -640,11 +641,13 @@ class LocationImportView(BaseLocationView):
             return self.get(request, *args, **kwargs)
 
         domain = args[0]
-        suffix = '.{}'.format(upload.name.rsplit('.', 1)[-1])
 
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_cached_download(upload.read(), expiry=1*60*60,
-                suffix=suffix)
+        file_ref = expose_cached_download(
+            upload.read(),
+            expiry=1*60*60,
+            file_extension=file_extention_from_filename(upload.name),
+        )
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
