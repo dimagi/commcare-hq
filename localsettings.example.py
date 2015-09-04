@@ -80,7 +80,6 @@ BITLY_APIKEY = '*******'
 _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Uncomment below when signing the JAR
 # JAR_SIGN = {
-#     'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
 #     'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
 #     'key_alias': "javarosakey",
 #     'store_pass': "*******",
