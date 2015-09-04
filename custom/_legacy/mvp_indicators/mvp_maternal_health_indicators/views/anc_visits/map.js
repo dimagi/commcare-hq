@@ -43,6 +43,23 @@ function (doc) {
             }
         }
 
+        if ((indicators.muac_m && indicators.muac_m.value) || 
+            (indicators.update_muac && indicators.update_muac.value &&
+            ((indicators.muac && indicators.muac.value) ||
+            (indicators.smuac && indicators.smuac.value)))) {
+                var muac = parseFloat(indicators.muac.value),
+                    smuac = parseFloat(indicators.smuac.value),
+                    muac_m = parseFloat(indicators.muac_m.value),
+                    update_muac = indicators.update_muac.value;
+                if (muac !=="" || (update_muac == "yes" && (muac !=="" || smuac !==""))) {
+                    indicator_emits["muac"] = case_id;
+
+                    if ((muac || muac_m) < 210 || smuac < 21){
+                        indicator_emits["moderate_muac"] = case_id;
+                    }
+                }
+        }
+
         emit_special(doc, visit_date, indicator_emits, []);
     }
 }
