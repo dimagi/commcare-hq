@@ -4,6 +4,8 @@ from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from corehq.toggles import LEGACY_SYNC_SUPPORT
+from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -590,14 +592,29 @@ class SimplifiedSyncLog(AbstractSyncLog):
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
-                # todo: this here to avoid having to manually clean up after
-                # http://manage.dimagi.com/default.asp?179664
-                # it should be removed when there are no longer any instances of the assertion
-                if self.date < datetime(2015, 8, 25):
-                    _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
-                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
-                        self._id, to_remove)
-                    )
+                def _should_fail_softly():
+                    # old versions of commcare (< 2.10ish) didn't purge on form completion
+                    # so can still modify cases that should no longer be on the phone.
+                    def _domain_has_toggle_set():
+                        request = get_request()
+                        domain = request.domain if request else None
+                        return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
+
+                    def _sync_log_was_old():
+                        # todo: this here to avoid having to manually clean up after
+                        # http://manage.dimagi.com/default.asp?179664
+                        # it should be removed when there are no longer any instances of the assertion
+                        if self.date < datetime(2015, 8, 25):
+                            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+                            _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
+                                self._id, to_remove)
+                            )
+                            return True
+                        return False
+                    return _domain_has_toggle_set() or _sync_log_was_old()
+
+                if _should_fail_softly():
+                    pass
                 else:
                     raise
 
