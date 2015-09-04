@@ -1,6 +1,6 @@
-DOMAIN_INDEX = "hqdomains_201508027_1117"
-DOMAIN_MAPPING={'_meta': {'comment': 'j$ modified on 5/12/2015',
-           'created': None},
+DOMAIN_INDEX = "hqdomains_20150904_0410"
+DOMAIN_MAPPING = {'_meta': {'comment': 'danny modified on 9/4/2015',
+                            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
                   "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -192,6 +192,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'j$ modified on 5/12/2015',
                 'is_snapshot': {'type': 'boolean'},
                 'is_test': {'type': 'string'},
                 'is_starter_app': {'type': 'boolean'},
+                'last_modified': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                                  'type': 'date'},
                 'license': {'type': 'string'},
                 'migrations': {'dynamic': False,
                                'properties': {'doc_type': {'index': 'not_analyzed',
