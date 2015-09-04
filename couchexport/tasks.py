@@ -120,7 +120,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
 
         payload = tmp.payload
-        expose_cached_download(payload, expiry,
+        expose_cached_download(payload, expiry, format.extension,
                         mimetype=format.mimetype,
                         content_disposition='attachment; filename="%s"' % escaped_filename,
                         extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
