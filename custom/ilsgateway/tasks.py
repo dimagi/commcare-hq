@@ -17,6 +17,7 @@ from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
+from custom.ilsgateway.temporary import fix_stock_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
@@ -179,6 +180,11 @@ def clear_report_data(domain):
     Alert.objects.filter(location_id__in=locations_ids).delete()
     SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
     ReportRun.objects.filter(domain=domain).delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def fix_stock_data_task(domain):
+    fix_stock_data(domain)
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

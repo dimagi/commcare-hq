@@ -33,18 +33,18 @@ from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data
+from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes, \
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
     ProductAvailabilityData
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
-from custom.logistics.views import BaseConfigView, BaseRemindersTester
+from custom.logistics.views import BaseConfigView
 
 
 class GlobalStats(BaseDomainView):
@@ -248,6 +248,13 @@ def ils_clear_stock_data(request, domain):
 @require_POST
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def fix_stock_data_view(request, domain):
+    fix_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 
