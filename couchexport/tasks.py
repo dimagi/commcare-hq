@@ -22,6 +22,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
         expose_cached_download(
             "Sorry, the export failed for %s, please try again later" % custom_export._id,
             expiry,
+            None,
             content_disposition="",
             mimetype="text/html",
             download_id=download_id
@@ -128,7 +129,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         tmp.delete()
     else:
         # this just gives you a link saying there wasn't anything there
-        expose_cached_download("Sorry, there wasn't any data.", expiry,
+        expose_cached_download("Sorry, there wasn't any data.", expiry, None,
                         content_disposition="",
                         mimetype="text/html",
                         download_id=download_id).save(expiry)
