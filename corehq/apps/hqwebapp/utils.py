@@ -35,7 +35,7 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-class InvitationView():
+class InvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     inv_id = None
     inv_type = Invitation
@@ -43,7 +43,9 @@ class InvitationView():
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
 
     def added_context(self):
-        return {}
+        return {
+            'create_domain': False,
+        }
 
     def validate_invitation(self, invitation):
         pass
@@ -168,7 +170,9 @@ class InvitationView():
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        return render(request, self.template, {"form": form})
+        context = self.added_context()
+        context.update({"form": form})
+        return render(request, self.template, context)
 
 
 def get_bulk_upload_form(context, context_key="bulk_upload"):

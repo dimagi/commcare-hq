@@ -634,10 +634,12 @@ class UserInvitationView(InvitationView):
     need = ["domain"]
 
     def added_context(self):
-        return {
+        context = super(UserInvitationView, self).added_context()
+        context.update({
             'domain': self.domain,
             'invite_type': _('Project'),
-        }
+        })
+        return context
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain

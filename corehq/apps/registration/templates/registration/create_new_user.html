@@ -22,13 +22,13 @@
             {% include "registration/partials/field.html" with field=form.password %}
             {% include "registration/partials/field.html" with field=form.email_opt_in %}
             {% include "registration/partials/field.html" with field=form.eula_confirmed %}
-            {% for hidden in form.hidden_fields %}
-                {{ hidden }}
-            {% endfor %}
             {% if create_domain %}
                 <h4>{% trans "Create your first project" %}</h4>
                 {% include "registration/partials/field.html" with field=form.hr_name %}
-                {% endif %}
+            {% endif %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
         </fieldset>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-large disable-on-submit">
