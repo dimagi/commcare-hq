@@ -144,6 +144,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                 break
             else:
                 width += 1
+        self.worksheet.calculate_dimension(force=True)
 
         def iterator():
             def _convert_float(value):
