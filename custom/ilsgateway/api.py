@@ -132,7 +132,6 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
     def get_supplypointstatuses(self, domain, facility=None, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
         location = None
-
         if facility:
             try:
                 location = SQLLocation.objects.get(domain=domain, external_id=facility)
@@ -143,11 +142,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         for supplypointstatus in supplypointstatuses:
             if not location:
                 try:
-                    location = SQLLocation.objects.get(
+                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, SQLLocation.objects.get(
                         domain=domain,
                         external_id=supplypointstatus['supply_point']
-                    )
-                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, location))
+                    )))
                 except SQLLocation.DoesNotExist:
                     continue
             else:
@@ -167,11 +165,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         for deliverygroupreport in deliverygroupreports:
             if not location:
                 try:
-                    location = SQLLocation.objects.get(
+                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, SQLLocation.objects.get(
                         domain=domain,
                         external_id=deliverygroupreport['supply_point']
-                    )
-                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, location))
+                    )))
                 except SQLLocation.DoesNotExist:
                     continue
             else:
