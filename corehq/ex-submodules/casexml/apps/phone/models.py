@@ -745,12 +745,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
         Migrate from the old SyncLog format to this one.
         """
         if isinstance(other_sync_log, SyncLog):
+            previous_log_footprint = set(other_sync_log.get_footprint_of_cases_on_phone())
+
             def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
-                new_sync_log.case_ids_on_phone.add(case_state.case_id)
-                for index in case_state.indices:
-                    new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
-                if is_dependent:
-                    new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+                if case_state.case_id in previous_log_footprint:
+                    new_sync_log.case_ids_on_phone.add(case_state.case_id)
+                    for index in case_state.indices:
+                        new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                    if is_dependent:
+                        new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
 
             ret = cls.wrap(other_sync_log.to_json())
             for case_state in other_sync_log.cases_on_phone:
@@ -758,8 +761,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             dependent_case_ids = set()
             for case_state in other_sync_log.dependent_cases_on_phone:
-                _add_state_contributions(ret, case_state, is_dependent=True)
-                dependent_case_ids.add(case_state.case_id)
+                if case_state.case_id in previous_log_footprint:
+                    _add_state_contributions(ret, case_state, is_dependent=True)
+                    dependent_case_ids.add(case_state.case_id)
 
             # try to prune any dependent cases - the old format does this on
             # access, but the new format does it ahead of time and always assumes
@@ -772,6 +776,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
 
+            ret.migrated_from = other_sync_log.to_json()
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
