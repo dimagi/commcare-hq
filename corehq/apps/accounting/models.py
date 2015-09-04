@@ -356,7 +356,7 @@ class BillingAccount(models.Model):
     def update_autopay_user(self, new_user):
         from corehq.apps.accounting.tasks import send_autopay_card_removed_email, send_autopay_card_added_email
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
-            """If there was already an autopay user, send them an email that they have been removed"""
+            # If there was already an autopay user, send them an email that they have been removed
             send_autopay_card_removed_email.delay(self, old_user=self.auto_pay_user, new_user=new_user)
 
         self.auto_pay_user = new_user
@@ -1888,7 +1888,6 @@ class BillingRecordBase(models.Model):
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
-            'auto_pay_user': self.invoice.subscription.account.auto_pay_user,
         }
         return context
 
@@ -2068,6 +2067,7 @@ class BillingRecord(BillingRecordBase):
             except StripePaymentMethod.DoesNotExist:
                 last_4 = None
             context.update({
+                'auto_pay_user': self.invoice.subscription.account.auto_pay_user,
                 'last_4': last_4,
             })
 
