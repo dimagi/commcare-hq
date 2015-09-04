@@ -31,6 +31,7 @@ from corehq.apps.fixtures.utils import is_field_name_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
+from corehq.util.files import file_extention_from_filename
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
@@ -304,9 +305,11 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         replace = 'replace' in request.POST
 
-        suffix = '.{}'.format(request.file.name.rsplit('.', 1)[-1])
-        file_ref = expose_cached_download(request.file.read(), expiry=1*60*60,
-                                          suffix=suffix)
+        file_ref = expose_cached_download(
+            request.file.read(),
+            file_extension=file_extention_from_filename(request.file.name),
+            expiry=1*60*60,
+        )
 
         # catch basic validation in the synchronous UI
         try:
