@@ -62,8 +62,12 @@ def phone_timezones_have_been_processed():
 
 
 def phone_timezones_should_be_processed():
-    if _thread_local._force_phone_timezones_should_be_processed:
-        return True
+    try:
+        if _thread_local._force_phone_timezones_should_be_processed:
+            return True
+    except AttributeError:
+        pass
+
     if settings.UNIT_TESTING:
         override = getattr(
             settings, 'PHONE_TIMEZONES_SHOULD_BE_PROCESSED', None)
@@ -74,7 +78,6 @@ def phone_timezones_should_be_processed():
 
 
 _thread_local = threading.local()
-_thread_local._force_phone_timezones_should_be_processed = False
 
 
 class _ForcePhoneTimezonesShouldBeProcessed(object):
