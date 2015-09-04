@@ -4,16 +4,16 @@ from soil.heartbeat import heartbeat_enabled, is_alive
 from django.conf import settings
 
 
-def expose_cached_download(payload, expiry, mimetype=None,
+def expose_cached_download(payload, expiry, file_extension, mimetype=None,
                            content_disposition=None, download_id=None,
-                           extras=None, suffix=None):
+                           extras=None):
     """
     Expose a cache download object.
     """
     ref = CachedDownload.create(payload, expiry, mimetype=mimetype,
                                 content_disposition=content_disposition,
                                 download_id=download_id, extras=extras,
-                                suffix=suffix)
+                                suffix=file_extension)
     ref.save(expiry)
     return ref
 

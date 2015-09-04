@@ -39,7 +39,7 @@ class DownloadBase(object):
         self.download_id = download_id or uuid.uuid4().hex
         self.cache_backend = cache_backend
         # legacy default
-        self.suffix = suffix or '.xls'
+        self.suffix = suffix or ''
 
     def get_cache(self):
         return cache.get_cache(self.cache_backend)

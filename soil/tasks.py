@@ -30,7 +30,7 @@ def prepare_download(download_id, payload_func, content_disposition,
         payload = payload_func(process=prepare_download)
     except TypeError:
         payload = payload_func()
-    expose_cached_download(payload, expiry, mimetype=content_type,
+    expose_cached_download(payload, expiry, None, mimetype=content_type,
                            content_disposition=content_disposition,
                            download_id=download_id)
 
