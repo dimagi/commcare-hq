@@ -55,10 +55,6 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
-    email_opt_in = forms.BooleanField(required=False,
-                                      initial=True,
-                                      label="",
-                                      help_text=_("Opt into our monthly newsletter about new features and other CommCare updates."))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,

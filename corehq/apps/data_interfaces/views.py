@@ -12,7 +12,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
+from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
 from django.utils.decorators import method_decorator
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq import CaseReassignmentInterface

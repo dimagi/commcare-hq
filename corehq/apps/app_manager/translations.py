@@ -13,7 +13,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
+from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _

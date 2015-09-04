@@ -1,7 +1,8 @@
 from django.forms.forms import Form
 from django.forms.fields import *
 from django.core.exceptions import ValidationError
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+from corehq.util.spreadsheets.excel import WorksheetNotFound, \
+    WorkbookJSONReader
 from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 

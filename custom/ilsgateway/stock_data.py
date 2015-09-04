@@ -47,18 +47,21 @@ class ILSStockDataSynchronization(StockDataSynchronization):
                 'stock_transaction',
                 get_objects_function=self.endpoint.get_stocktransactions,
                 sync_function=sync_stock_transaction,
-                date_filter_name='date'
+                date_filter_name='date',
+                is_date_range=True
             ),
             ApiSyncObject(
                 'supply_point_status',
                 get_objects_function=self.endpoint.get_supplypointstatuses,
                 sync_function=process_supply_point_status,
-                date_filter_name='status_date'
+                date_filter_name='status_date',
+                is_date_range=True
             ),
             ApiSyncObject(
                 'delivery_group',
                 get_objects_function=self.endpoint.get_deliverygroupreports,
                 sync_function=process_delivery_group_report,
-                date_filter_name='report_date'
+                date_filter_name='report_date',
+                is_date_range=True
             )
         ]
