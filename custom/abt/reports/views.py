@@ -1,4 +1,7 @@
+import json
 from StringIO import StringIO
+
+from django.http import HttpResponse
 
 import openpyxl
 from openpyxl.formatting import CellIsRule
@@ -69,3 +72,9 @@ class FormattedSupervisoryReport(ConfigurableReport):
         f = StringIO()
         workbook.save(f)
         return f
+
+    @property
+    def email_response(self):
+        return HttpResponse(json.dumps({
+            'report': '',
+        }))
