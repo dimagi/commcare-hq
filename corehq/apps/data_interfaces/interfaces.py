@@ -90,8 +90,8 @@ class FormManagementMode(object):
     ARCHIVE_MODE = "archive"
     RESTORE_MODE = "restore"
 
-    filter_options = [(ARCHIVE_MODE, ugettext_lazy('Normal Forms')), 
-            (RESTORE_MODE, ugettext_lazy('Archived Forms'))]
+    filter_options = [(ARCHIVE_MODE, ugettext_lazy('Normal Forms')),
+                      (RESTORE_MODE, ugettext_lazy('Archived Forms'))]
 
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:

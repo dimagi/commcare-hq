@@ -68,4 +68,3 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         raise Exception("No formids supplied")
     response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
     return response
-
