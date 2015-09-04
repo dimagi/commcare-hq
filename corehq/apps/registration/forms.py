@@ -71,11 +71,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         if not kwargs.get('initial', {}).get('create_domain', True):
-            self.fields['hr_name'].required = False
-            if kwargs.get('initial', {}).get('hr_name'):
-                self.fields['hr_name'].widget = BootstrapDisabledInput(attrs={'class': 'input-xlarge'})
-            else:
-                self.fields['hr_name'].widget = forms.HiddenInput()
+            self.fields['hr_name'].widget = forms.HiddenInput()
 
     def clean_email(self):
         data = self.cleaned_data['email'].strip().lower()
