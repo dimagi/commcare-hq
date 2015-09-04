@@ -38,6 +38,9 @@ class WebUsersSyncTest(TestCase):
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
 
+        for user in CommCareUser.by_domain(TEST_DOMAIN):
+            user.delete()
+
     def test_create_webuser(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
             webuser = EWSUser(json.loads(f.read())[0])

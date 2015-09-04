@@ -70,7 +70,7 @@ class EWSUser(JsonObject):
     sms_notifications = BooleanProperty()
     organization = StringProperty()
     groups = ListProperty(item_type=Group)
-    contact = ObjectProperty(item_type=SMSUser)
+    contact = ObjectProperty(item_type=SMSUser, default=None)
 
 
 class Location(JsonObject):
