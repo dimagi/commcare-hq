@@ -759,6 +759,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
 
+            ret.migrated_from = other_sync_log.to_json()
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
