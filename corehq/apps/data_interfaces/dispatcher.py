@@ -45,11 +45,12 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
     @datespan_default
     def dispatch(self, request, *args, **kwargs):
         from corehq.apps.importer.base import ImportCases
-        from .interfaces import BulkArchiveFormInterface
+        from .interfaces import BulkFormManagementInterface
 
         if kwargs['report_slug'] == ImportCases.slug:
             return self.bulk_import_case_dispatch(request, *args, **kwargs)
-        elif kwargs['report_slug'] == BulkArchiveFormInterface.slug and not kwargs.get('skip_permissions_check'):
+        elif (kwargs['report_slug'] == BulkFormManagementInterface.slug and
+              not kwargs.get('skip_permissions_check')):
             return self.bulk_form_management_dispatch(request, *args, **kwargs)
 
         return super(EditDataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)

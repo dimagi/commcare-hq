@@ -155,20 +155,20 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
         return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
-class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
+class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
 
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
 
     def __init__(self, request, **kwargs):
-        super(BulkArchiveFormInterface, self).__init__(request, **kwargs)
+        super(BulkFormManagementInterface, self).__init__(request, **kwargs)
         self.fields = self.fields + ['corehq.apps.data_interfaces.interfaces.ArchiveOrNormalFormFilter']
         self.mode = FormManagementMode(request.GET.get('archive_or_restore'))
 
     @property
     def template_context(self):
-        context = super(BulkArchiveFormInterface, self).template_context
+        context = super(BulkFormManagementInterface, self).template_context
         context.update({
             "form_query_string": self.request.GET.urlencode(),
             "mode": self.mode,
@@ -224,6 +224,8 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
 
     @property
     def form_ids_response(self):
+        # returns a list of form_ids
+        # this is called using ReportDispatcher.dispatch(render_as='form_ids', ***)
         from corehq.elastic import es_query
         from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -231,6 +233,7 @@ class BulkArchiveFormInterface(SubmitHistoryMixin, DataInterface, ProjectReport)
             params={'domain.exact': self.domain},
             q=self.filters_as_es_query(),
             es_url=XFORM_INDEX + '/xform/_search',
+            fields=['_id'],
         )
         form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]
         return form_ids

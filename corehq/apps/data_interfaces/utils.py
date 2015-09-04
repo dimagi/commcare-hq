@@ -43,7 +43,9 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
 def archive_forms_old(domain, user, uploaded_data):
     # used by excel archive forms
     form_ids = [row.get('form_id') for row in uploaded_data]
-    return archive_or_restore_forms(domain, user, form_ids, 'archive', from_excel=True)
+    from .interfaces import FormManagementMode
+    mode = FormManagementMode(FormManagementMode.ARCHIVE_MODE)
+    return archive_or_restore_forms(domain, user, form_ids, mode, from_excel=True)
 
 
 def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None, from_excel=False):
