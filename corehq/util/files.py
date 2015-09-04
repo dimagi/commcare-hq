@@ -1,2 +1,5 @@
 def file_extention_from_filename(filename):
-    return '.{}'.format(filename.rsplit('.', 1)[-1])
+    extension = filename.rsplit('.', 1)[-1]
+    if extension:
+        return '.{}'.format(extension)
+    return ''
