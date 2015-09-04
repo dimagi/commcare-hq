@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from django.conf import settings
+
 if not settings.configured:
     settings.configure(DEBUG=True)
 
@@ -9,7 +10,6 @@ from mock import patch, MagicMock, call, NonCallableMock
 from unittest2 import TestCase
 
 from dimagi.utils.create_unique_filter import create_unique_filter
-from dimagi.utils.excel import IteratorJSONReader
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.loosechange import AssocArray
@@ -22,20 +22,6 @@ class DimagiUtilsTestCase(TestCase):
         l = [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
         self.assertEquals(filter(create_unique_filter(lambda x: x['id']), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}])
         self.assertEquals(filter(create_unique_filter(lambda x: id(x)), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}])
-
-    def test_IteratorJSONReader(self):
-        def normalize(it):
-            r = []
-            for row in IteratorJSONReader(it):
-                r.append(sorted(row.items()))
-            return r
-
-        self.assertEquals(normalize([]), [])
-
-        self.assertEquals(normalize([['A', 'B', 'C'], ['1', '2', '3']]), [[('A', '1'), ('B', '2'), ('C', '3')]])
-
-        self.assertEquals((normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'], ['1', '2', '3', '4', 'yes']]))
-               , [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]])
 
     def test_memoized_function(self):
         @memoized
