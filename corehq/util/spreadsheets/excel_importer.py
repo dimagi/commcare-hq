@@ -17,8 +17,6 @@ class ExcelImporter(object):
 
         download_ref = DownloadBase.get(file_ref_id)
         self.workbook = WorkbookJSONReader(download_ref.get_filename())
-        for ws in self.workbook.worksheets:
-            ws.worksheet.calculate_dimension(force=True)
 
     def mark_complete(self):
         if self.task:
