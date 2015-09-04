@@ -564,18 +564,19 @@ class EWSApi(APISynchronization):
             'date_joined': force_to_datetime(ews_webuser.date_joined),
             'password_hashed': True,
         }
+        sql_location = None
         location_id = None
         if ews_webuser.location:
             try:
-                location = SQLLocation.objects.get(domain=self.domain, external_id=ews_webuser.location)
-                location_id = location.location_id
+                sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ews_webuser.location)
+                location_id = sql_location.location_id
             except SQLLocation.DoesNotExist:
                 pass
 
         if user is None:
             try:
                 user = WebUser.create(domain=None, username=username,
-                                      password=ews_webuser.password, email=ews_webuser.email,
+                                      password=ews_webuser.password, email=ews_webuser.email.lower(),
                                       **user_dict)
                 user.add_domain_membership(self.domain, location_id=location_id)
             except Exception as e:
@@ -589,6 +590,12 @@ class EWSApi(APISynchronization):
 
         if dm.location_id != location_id:
             dm.location_id = location_id
+
+        if ews_webuser.contact:
+            contact = self.sms_user_sync(ews_webuser.contact)
+            if sql_location:
+                contact.set_location(sql_location.couch_location)
+                contact.save()
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id

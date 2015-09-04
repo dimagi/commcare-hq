@@ -66,12 +66,18 @@ class WebUsersSyncTest(TestCase):
         ewsghana_webuser = self.api_object.web_user_sync(webuser)
         web_users = list(WebUser.by_domain(TEST_DOMAIN))
         self.assertEqual(1, len(web_users))
-        self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
         facility_manager_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Facility manager')[0]
         dm = web_users[0].get_domain_membership(TEST_DOMAIN)
         self.assertEqual(facility_manager_role.get_id, dm.role_id)
         location = SQLLocation.objects.get(external_id=1, domain=TEST_DOMAIN)
         self.assertEqual(ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id, location.location_id)
+
+        sms_users = list(CommCareUser.by_domain(TEST_DOMAIN))
+        self.assertEqual(len(sms_users), 1)
+
+        sms_user = sms_users[0]
+
+        self.assertEqual(sms_user.location_id, location.location_id)
 
     def test_create_web_reporter(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
