@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
 from corehq.apps.fixtures.upload import DELETE_HEADER
-from corehq.util.files import file_extention_from_filename
 from couchexport.export import export_raw
 from couchexport.models import Format
 
