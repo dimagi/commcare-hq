@@ -1,6 +1,6 @@
 from celery.task import task
 from corehq.apps.products.bulk import import_products
-from dimagi.utils.excel_importer import SingleExcelImporter
+from corehq.util.spreadsheets.excel_importer import SingleExcelImporter
 
 
 @task
