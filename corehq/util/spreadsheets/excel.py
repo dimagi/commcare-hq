@@ -172,7 +172,7 @@ class WorkbookJSONReader(object):
         if isinstance(f, basestring):
             filename = f
         elif not isinstance(f, file):
-            tmp = NamedTemporaryFile(mode='wb', suffix='xlsx', delete=False)
+            tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             filename = tmp.name
             tmp.write(f.read())
             tmp.close()
