@@ -1,3 +1,4 @@
+from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
@@ -519,6 +520,7 @@ class AliasedElasticPillow(BulkPillow):
     seen_types = {}
     es_meta = {}
     es_timeout = 3  # in seconds
+    default_mapping = None  # the default elasticsearch mapping to use for this
     bulk = False
     online = True  # online=False is for in memory (no ES) connectivity for testing purposes
 
@@ -526,21 +528,41 @@ class AliasedElasticPillow(BulkPillow):
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates = True
 
+
+
     def __init__(self, create_index=True, online=True, **kwargs):
         """
         create_index if the index doesn't exist on the ES cluster
         """
         super(AliasedElasticPillow, self).__init__(**kwargs)
+        # online=False is used in unit tests
         self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
         if self.online:
+            self.initialize_mapping_if_necessary()
             self.seen_types = self.get_index_mapping()
             pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
             self.seen_types = {}
+
+    def initialize_mapping_if_necessary(self):
+        mapping = self.get_index_mapping()
+        if not mapping:
+            pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
+            mapping = copy(self.default_mapping)
+            mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+            mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
+            if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                # API confirms OK, trust it.
+                pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
+                # manually update in memory dict
+                # todo: get rid of seen_types
+                self.seen_types[self.es_type] = {}
+        else:
+            pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
     def index_exists(self):
         if not self.online:
