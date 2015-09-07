@@ -815,9 +815,6 @@ class AliasedElasticPillow(BulkPillow):
         return "%s.%s.%s.%s" % (
             self.__module__, self.__class__.__name__, self.get_unique_id(), self._get_machine_id())
 
-    def get_mapping_from_type(self, doc_dict):
-        raise NotImplementedError("This must be implemented in this subclass!")
-
 
 class NetworkPillow(BasicPillow):
     """
