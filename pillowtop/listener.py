@@ -646,6 +646,9 @@ class AliasedElasticPillow(BulkPillow):
         """
         try:
             # if type is never seen, apply mapping for said type
+            # todo: since es types are no longer dependent on the underlying document
+            # this entire set of logic should be able to be deleted and moved to a single
+            # pillow bootstrap check.
             if not self._type_exists(doc_dict):
                 # cz note: this always returns a one-element dictionary like this:
                 # { self.es_type: self.default_mapping }
