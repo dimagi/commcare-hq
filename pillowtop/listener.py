@@ -645,10 +645,13 @@ class AliasedElasticPillow(BulkPillow):
         domain and case type
         """
         try:
+            # if type is never seen, apply mapping for said type
             if not self._type_exists(doc_dict):
-                # if type is never seen, apply mapping for said type
+                # cz note: this always returns a one-element dictionary like this:
+                # { self.es_type: self.default_mapping }
                 type_mapping = self.get_mapping_from_type(doc_dict)
-                # update metadata
+
+                # update metadata on the type
                 type_mapping[self.get_type_string(doc_dict)]['_meta'][
                     'created'] = datetime.isoformat(datetime.utcnow())
                 mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
@@ -772,6 +775,9 @@ class AliasedElasticPillow(BulkPillow):
         return self.get_type_string(doc_dict) in self.seen_types
 
     def get_type_string(self, doc_dict):
+        # todo: this method is overridden in 5 places and every single one just returns
+        # self.es_type. The notion that this is somehow doc_dict dependent has been
+        # entirely removed from the code
         raise NotImplementedError("Please implement a custom type string resolver")
 
     def get_doc_path_typed(self, doc_dict):
