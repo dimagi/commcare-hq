@@ -82,10 +82,10 @@ Two important ones are `AliasedElasticPillow` and `PythonPillow`.
 AliasedElasticPillow
 --------------------
 
-AliasedElasticPillow conceptually maps the following functions:
+`AliasedElasticPillow` conceptually maps the following functions:
 
 ```
-chnage_trigger --> if the document is being deleted, delete it in elasticsearch as well. otherwise return it from couch.
+change_trigger --> if the document is being deleted, delete it in elasticsearch as well. otherwise return it from couch.
 change_transform --> do some fancy stuff with indices and then save to elastic
 ```
 

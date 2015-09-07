@@ -1,3 +1,4 @@
+from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
@@ -516,9 +517,9 @@ class AliasedElasticPillow(BulkPillow):
     es_index = ""
     es_type = ""
     es_alias = ''
-    seen_types = {}
     es_meta = {}
     es_timeout = 3  # in seconds
+    default_mapping = None  # the default elasticsearch mapping to use for this
     bulk = False
     online = True  # online=False is for in memory (no ES) connectivity for testing purposes
 
@@ -531,16 +532,32 @@ class AliasedElasticPillow(BulkPillow):
         create_index if the index doesn't exist on the ES cluster
         """
         super(AliasedElasticPillow, self).__init__(**kwargs)
+        # online=False is used in unit tests
         self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
         if self.online:
-            self.seen_types = self.get_index_mapping()
-            pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
+            self.initialize_mapping_if_necessary()
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
-            self.seen_types = {}
+
+    def initialize_mapping_if_necessary(self):
+        """
+        Initializes the elasticsearch mapping for this pillow if it is not found.
+        """
+        mapping = self.get_index_mapping()
+        if not mapping:
+            pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
+            mapping = copy(self.default_mapping)
+            mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+            mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
+            if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                # API confirms OK, trust it.
+                pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
+        else:
+            pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
     def index_exists(self):
         if not self.online:
@@ -645,20 +662,6 @@ class AliasedElasticPillow(BulkPillow):
         domain and case type
         """
         try:
-            if not self._type_exists(doc_dict):
-                # if type is never seen, apply mapping for said type
-                type_mapping = self.get_mapping_from_type(doc_dict)
-                # update metadata
-                type_mapping[self.get_type_string(doc_dict)]['_meta'][
-                    'created'] = datetime.isoformat(datetime.utcnow())
-                mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
-                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                    # API confirms OK, trust it.
-                    pillow_logging.info(
-                        "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
-                    # manually update in memory dict
-                    self.seen_types[self.get_type_string(doc_dict)] = {}
-
             if not self.bulk:
                 doc_path = self.get_doc_path_typed(doc_dict)
 
@@ -753,7 +756,7 @@ class AliasedElasticPillow(BulkPillow):
                             yield {
                                 "index": {
                                     "_index": self.es_index,
-                                    "_type": self.get_type_string(tr),
+                                    "_type": self.es_type,
                                     "_id": tr['_id']
                                 }
                             }
@@ -763,22 +766,12 @@ class AliasedElasticPillow(BulkPillow):
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
 
-    def _type_exists(self, doc_dict):
-        """
-        Verify whether the server has indexed this type
-        """
-        # We can assume at startup that the mapping from the server is loaded,
-        # so in memory will be up to date.
-        return self.get_type_string(doc_dict) in self.seen_types
-
-    def get_type_string(self, doc_dict):
-        raise NotImplementedError("Please implement a custom type string resolver")
-
     def get_doc_path_typed(self, doc_dict):
+        # todo: the type is silly here but changing it would require a big reindex
         return "%(index)s/%(type_string)s/%(id)s" % (
             {
                 'index': self.es_index,
-                'type_string': self.get_type_string(doc_dict),
+                'type_string': self.es_type,
                 'id': doc_dict['_id']
             })
 
@@ -788,12 +781,10 @@ class AliasedElasticPillow(BulkPillow):
         """
         if isinstance(doc_id_or_dict, basestring):
             doc_id = doc_id_or_dict
-            doc_type = self.es_type
         else:
             assert isinstance(doc_id_or_dict, dict)
             doc_id = doc_id_or_dict['_id']
-            doc_type = self.get_type_string(doc_id_or_dict)
-        return self.get_es_new().exists(self.es_index, doc_id, doc_type)
+        return self.get_es_new().exists(self.es_index, doc_id, self.es_type)
 
     @memoized
     def get_name(self):
@@ -803,9 +794,6 @@ class AliasedElasticPillow(BulkPillow):
         """
         return "%s.%s.%s.%s" % (
             self.__module__, self.__class__.__name__, self.get_unique_id(), self._get_machine_id())
-
-    def get_mapping_from_type(self, doc_dict):
-        raise NotImplementedError("This must be implemented in this subclass!")
 
 
 class NetworkPillow(BasicPillow):
