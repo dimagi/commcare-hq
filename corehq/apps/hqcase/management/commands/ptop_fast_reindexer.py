@@ -279,9 +279,7 @@ class PtopReindexer(NoArgsCommand):
         Iterative view indexing - use --bulk for faster reindex.
         :return:
         """
-        # todo: should this use self.view_data_file_iter() instead?
-        # currently some reindexers run full_couch_view_iter twice
-        for ix, item in enumerate(self.full_couch_view_iter()):
+        for ix, item in enumerate(self.view_data_file_iter()):
             self.log("\tProcessing item %s (%d)" % (item['id'], ix))
             self.process_row(item, ix)
 
