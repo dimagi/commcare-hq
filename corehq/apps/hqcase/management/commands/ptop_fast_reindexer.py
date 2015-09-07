@@ -161,7 +161,6 @@ class PtopReindexer(NoArgsCommand):
 
         current_db_seq = self.pillow.couch_db.info()['update_seq']
 
-
         # Write sequence file to disk
         seq_filename = self.get_seq_filename()
         self.log('Writing sequence file to disk: {}'.format(seq_filename))
@@ -246,7 +245,8 @@ class PtopReindexer(NoArgsCommand):
             self.pillow.set_checkpoint({'seq': seq})
 
         self.post_load_hook()
-
+        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
+                                             readonly=True)
         if self.bulk:
             self.log("Preparing Bulk Payload")
             self.load_bulk()
@@ -290,9 +290,6 @@ class PtopReindexer(NoArgsCommand):
         json_iter = self.view_data_file_iter()
 
         bulk_slice = []
-        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
-                                             readonly=True)
-
         for curr_counter, json_doc in enumerate(json_iter):
             if curr_counter < start:
                 continue
