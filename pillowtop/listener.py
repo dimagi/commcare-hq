@@ -667,26 +667,6 @@ class AliasedElasticPillow(BulkPillow):
         domain and case type
         """
         try:
-            # if type is never seen, apply mapping for said type
-            # todo: since es types are no longer dependent on the underlying document
-            # this entire set of logic should be able to be deleted and moved to a single
-            # pillow bootstrap check.
-            if not self._type_exists(doc_dict):
-                # cz note: this always returns a one-element dictionary like this:
-                # { self.es_type: self.default_mapping }
-                type_mapping = self.get_mapping_from_type(doc_dict)
-
-                # update metadata on the type
-                type_mapping[self.get_type_string(doc_dict)]['_meta'][
-                    'created'] = datetime.isoformat(datetime.utcnow())
-                mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
-                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                    # API confirms OK, trust it.
-                    pillow_logging.info(
-                        "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
-                    # manually update in memory dict
-                    self.seen_types[self.get_type_string(doc_dict)] = {}
-
             if not self.bulk:
                 doc_path = self.get_doc_path_typed(doc_dict)
 
