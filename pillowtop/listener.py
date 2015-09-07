@@ -544,6 +544,9 @@ class AliasedElasticPillow(BulkPillow):
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
     def initialize_mapping_if_necessary(self):
+        """
+        Initializes the elasticsearch mapping for this pillow if it is not found.
+        """
         mapping = self.get_index_mapping()
         if not mapping:
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
