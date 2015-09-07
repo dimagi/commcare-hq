@@ -517,7 +517,6 @@ class AliasedElasticPillow(BulkPillow):
     es_index = ""
     es_type = ""
     es_alias = ''
-    seen_types = {}
     es_meta = {}
     es_timeout = 3  # in seconds
     default_mapping = None  # the default elasticsearch mapping to use for this
@@ -541,12 +540,10 @@ class AliasedElasticPillow(BulkPillow):
         if create_index and not index_exists:
             self.create_index()
         if self.online:
+            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
             self.initialize_mapping_if_necessary()
-            self.seen_types = self.get_index_mapping()
-            pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
-            self.seen_types = {}
 
     def initialize_mapping_if_necessary(self):
         mapping = self.get_index_mapping()
@@ -558,9 +555,6 @@ class AliasedElasticPillow(BulkPillow):
             if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
                 # API confirms OK, trust it.
                 pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
-                # manually update in memory dict
-                # todo: get rid of seen_types
-                self.seen_types[self.es_type] = {}
         else:
             pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
