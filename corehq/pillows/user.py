@@ -52,14 +52,6 @@ class UserPillow(AliasedElasticPillow):
     def get_unique_id(self):
         return USER_INDEX
 
-    def get_mapping_from_type(self, doc_dict):
-        """
-        Define mapping uniquely to the user_type document.
-        """
-        return {
-            self.get_type_string(doc_dict): self.default_mapping
-        }
-
     def get_type_string(self, doc_dict):
         return self.es_type
 
