@@ -527,8 +527,6 @@ class AliasedElasticPillow(BulkPillow):
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates = True
 
-
-
     def __init__(self, create_index=True, online=True, **kwargs):
         """
         create_index if the index doesn't exist on the ES cluster
