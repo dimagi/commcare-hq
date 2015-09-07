@@ -771,14 +771,6 @@ class AliasedElasticPillow(BulkPillow):
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
 
-    def _type_exists(self, doc_dict):
-        """
-        Verify whether the server has indexed this type
-        """
-        # We can assume at startup that the mapping from the server is loaded,
-        # so in memory will be up to date.
-        return self.get_type_string(doc_dict) in self.seen_types
-
     def get_type_string(self, doc_dict):
         # todo: this method is overridden in 5 places and every single one just returns
         # self.es_type. The notion that this is somehow doc_dict dependent has been
