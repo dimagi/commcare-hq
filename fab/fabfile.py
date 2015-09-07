@@ -720,6 +720,15 @@ def clean_releases(keep=3):
         sudo('rm -rf {}/{}'.format(env.releases, release))
 
 
+@task
+def force_update_static():
+    _require_target()
+    execute(_do_collectstatic, use_current_release=True)
+    execute(_do_compress, use_current_release=True)
+    execute(update_manifest, use_current_release=True)
+    execute(services_restart)
+
+
 def _tag_commit():
     sh.git.fetch("origin", env.code_branch)
     deploy_time = datetime.datetime.utcnow()
@@ -890,25 +899,25 @@ def flip_es_aliases():
 
 @parallel
 @roles(ROLES_STATIC)
-def _do_compress():
+def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
-    with cd(env.code_root):
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env)
     update_manifest(save=True)
 
 
 @parallel
 @roles(ROLES_STATIC)
-def _do_collectstatic():
+def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
-    with cd(env.code_root):
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
         sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
 
 
 @roles(ROLES_DJANGO)
 @parallel
-def update_manifest(save=False, soft=False):
+def update_manifest(save=False, soft=False, use_current_release=False):
     """
     Puts the manifest.json file with the references to the compressed files
     from the proxy machines to the web workers. This must be done on the WEB WORKER, since it
@@ -917,8 +926,8 @@ def update_manifest(save=False, soft=False):
     save=True saves the manifest.json file to redis, otherwise it grabs the
     manifest.json file from redis and inserts it into the staticfiles dir.
     """
-    withpath = env.code_root
-    venv = env.virtualenv_root
+    withpath = env.code_root if not use_current_release else env.code_current
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
 
     args = ''
     if save:
