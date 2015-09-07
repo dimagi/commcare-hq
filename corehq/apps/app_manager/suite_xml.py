@@ -259,7 +259,7 @@ class TextOrDisplay(XmlObject):
 
     def __init__(self, node=None, context=None,
                  menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
-                 media_image=None, media_audio=None, **kwargs):
+                 media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
         text = Text(locale_id=menu_locale_id) if menu_locale_id else None
 
@@ -278,6 +278,10 @@ class TextOrDisplay(XmlObject):
         if media_text:
             self.display = LocalizedMediaDisplay(
                 media_text=[text] + media_text if text else media_text
+            )
+        elif for_action_menu and text:
+            self.display = LocalizedMediaDisplay(
+                media_text=[text]
             )
         elif text:
             self.text = text
@@ -1405,7 +1409,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 media_audio=bool(len(case_list_form.all_audio_paths())),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
-                stack=Stack()
+                stack=Stack(),
+                for_action_menu=True,
             )
         else:
             detail.action = Action(

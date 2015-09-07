@@ -151,17 +151,34 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
             audio_locale_id=audio_locale_id,
         )
 
-    def test_no_media(self):
-        XML = """
-        <partial>
-            <text>
-                <locale id="forms.m0f0"/>
-            </text>
-        </partial>
-        """
-        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./entry/command[@id='m0-f0']/")
+    def XML_without_media(self, menu_locale_id, for_action_menu=False):
+        if for_action_menu:
+            XML_template = """
+            <partial>
+                <display>
+                    <text>
+                        <locale id="{menu_locale_id}"/>
+                    </text>
+                </display>
+            </partial>
+            """
+        else:
+            XML_template = """
+            <partial>
+                <text>
+                    <locale id="{menu_locale_id}"/>
+                </text>
+            </partial>
+            """
+
+        return XML_template.format(
+            menu_locale_id=menu_locale_id,
+        )
 
     def test_form_suite(self):
+        no_media_xml = self.XML_without_media("forms.m0f0")
+        self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "./entry/command[@id='m0-f0']/text")
+
         self.form.set_icon('en', self.image_path)
         self.form.set_audio('en', self.audio_path)
 
@@ -176,6 +193,9 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
         self._test_correct_audio_translations(self.app, self.form, audio_locale)
 
     def test_module_suite(self):
+        no_media_xml = self.XML_without_media("modules.m0")
+        self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "././menu[@id='m0']/text")
+
         self.module.set_icon('en', self.image_path)
         self.module.set_audio('en', self.audio_path)
 
@@ -193,6 +213,13 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
         app = AppFactory.case_list_form_app_factory().app
         app.build_spec = self.min_spec
 
+        no_media_xml = self.XML_without_media("case_list_form.m0", for_action_menu=True)
+        self.assertXmlPartialEqual(
+            no_media_xml,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action/display"
+        )
+
         app.get_module(0).case_list_form.set_icon('en', self.image_path)
         app.get_module(0).case_list_form.set_audio('en', self.audio_path)
 
@@ -207,6 +234,10 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_list_menu_media(self):
         self.module.case_list.show = True
+
+        no_media_xml = self.XML_without_media("case_lists.m0")
+        self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "./entry/command[@id='m0-case-list']/")
+
         self.module.case_list.set_icon('en', self.image_path)
         self.module.case_list.set_audio('en', self.audio_path)
 
