@@ -95,6 +95,3 @@ class HQPillow(AliasedElasticPillow):
         """
 
         return doc_dict.get('domain', None)
-
-    def get_type_string(self, doc_dict):
-        return self.es_type

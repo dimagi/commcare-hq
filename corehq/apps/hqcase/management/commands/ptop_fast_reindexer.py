@@ -352,7 +352,6 @@ class ElasticReindexer(PtopReindexer):
             self.log("Recreating index")
             self.indexing_pillow.create_index()
             self.indexing_pillow.initialize_mapping_if_necessary()
-            self.indexing_pillow.seen_types = {}
 
     def post_load_hook(self):
         if not self.in_place:

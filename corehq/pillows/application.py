@@ -43,6 +43,3 @@ class AppPillow(AliasedElasticPillow):
         """
         return self.calc_mapping_hash({"es_meta": self.es_meta,
                                        "mapping": self.default_mapping})
-
-    def get_type_string(self, doc_dict):
-        return self.es_type

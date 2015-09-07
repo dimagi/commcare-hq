@@ -52,8 +52,6 @@ class UserPillow(AliasedElasticPillow):
     def get_unique_id(self):
         return USER_INDEX
 
-    def get_type_string(self, doc_dict):
-        return self.es_type
 
 class GroupToUserPillow(BulkPillow):
     couch_filter = "groups/all_groups"
