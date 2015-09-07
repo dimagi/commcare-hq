@@ -82,9 +82,6 @@ class HQPillow(AliasedElasticPillow):
         }
     }
 
-    def __init__(self, **kwargs):
-        super(HQPillow, self).__init__(**kwargs)
-
     @memoized
     def calc_meta(self):
         """
