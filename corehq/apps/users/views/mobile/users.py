@@ -822,7 +822,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        task_ref = expose_cached_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),
