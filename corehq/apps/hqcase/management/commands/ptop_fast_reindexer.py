@@ -7,6 +7,7 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.listener import BulkPillow
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -152,7 +153,6 @@ class PtopReindexer(NoArgsCommand):
         """
         Loads entire view, saves to file, set pillowtop checkpoint
         """
-
         # Set pillowtop checkpoint for doc_class
         # though this might cause some superfluous reindexes of docs,
         # we're going to set the checkpoint BEFORE we start our operation so that any changes
@@ -189,8 +189,8 @@ class PtopReindexer(NoArgsCommand):
 
     def _bootstrap(self, options):
         self.resume = options['resume']
-        self.bulk = options['bulk']
         self.pillow = self.pillow_class()
+        self.bulk = options['bulk'] and isinstance(self.pillow, BulkPillow)
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
@@ -319,6 +319,7 @@ class PtopReindexer(NoArgsCommand):
         while retries < MAX_TRIES:
             try:
                 self.log('Sending chunk to ES')
+                assert isinstance(self.pillow, BulkPillow)
                 self.pillow.process_bulk(filtered_slice)
                 break
             except Exception as ex:
