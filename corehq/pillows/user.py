@@ -1,11 +1,11 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import es_query, ES_URLS, stream_es_query, get_es
+from corehq.elastic import ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BulkPillow
+from pillowtop.listener import AliasedElasticPillow, BasicPillow
 from django.conf import settings
 
 
@@ -53,7 +53,7 @@ class UserPillow(AliasedElasticPillow):
         return USER_INDEX
 
 
-class GroupToUserPillow(BulkPillow):
+class GroupToUserPillow(BasicPillow):
     couch_filter = "groups/all_groups"
     document_class = CommCareUser
 
@@ -77,13 +77,10 @@ class GroupToUserPillow(BulkPillow):
     def change_transport(self, doc_dict):
         pass
 
-    def send_bulk(self, payload):
-        pass
 
-
-class UnknownUsersPillow(BulkPillow):
+class UnknownUsersPillow(BasicPillow):
     """
-        This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
@@ -140,9 +137,6 @@ class UnknownUsersPillow(BulkPillow):
             self.es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
-        pass
-
-    def send_bulk(self, payload):
         pass
 
 
