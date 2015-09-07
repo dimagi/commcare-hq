@@ -39,35 +39,34 @@ class FormattedSupervisoryReport(ConfigurableReport):
         max_row = worksheet.max_row
         max_column = get_column_letter(worksheet.max_column)
 
-        # total column
-        worksheet.conditional_formatting.add(
-            'B2:B%d' % (max_row - 1),
-            CellIsRule(
-                operator='greaterThan',
-                formula=['PERCENTILE($B$2:$B$%d,0.95)' % (worksheet.max_row - 1)],
-                fill=red,
+        def percentile_fill(start_column, start_row, end_column, end_row,
+                            percentile, fill):
+            format_range = {
+                'start_column': start_column,
+                'start_row': start_row,
+                'end_column': end_column,
+                'end_row': end_row,
+            }
+            worksheet.conditional_formatting.add(
+                "%(start_column)s%(start_row)d:%(end_column)s%(end_row)d" % format_range,
+                CellIsRule(
+                    operator='greaterThan',
+                    formula=[(
+                        'PERCENTILE($%(start_column)s$%(start_row)d:'
+                        '$%(end_column)s$%(end_row)d,{})'
+                    ).format(percentile) % format_range],
+                    fill=fill
+                )
             )
-        )
+
+        # total column
+        percentile_fill('B', 2, 'B', max_row - 1, 0.95, red)
 
         # total row
-        worksheet.conditional_formatting.add(
-            'C%d:%s%d' % (max_row, max_column, max_row),
-            CellIsRule(
-                operator='greaterThan',
-                formula=['PERCENTILE($C$%d:$%s$%d,0.90)' % (max_row, max_column, max_row)],
-                fill=red,
-            )
-        )
+        percentile_fill('C', max_row, max_column, max_row, 0.90, red)
 
         # body
-        worksheet.conditional_formatting.add(
-            'C2:%s%d' % (max_column, max_row - 1),
-            CellIsRule(
-                operator='greaterThan',
-                formula=['PERCENTILE($C$2:$%s$%d,0.90)' % (max_column, max_row - 1)],
-                fill=red,
-            )
-        )
+        percentile_fill('C', 2, max_column, max_row - 1, 0.90, red)
 
         f = StringIO()
         workbook.save(f)
