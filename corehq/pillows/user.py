@@ -5,7 +5,7 @@ from corehq.elastic import ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BasicPillow
+from pillowtop.listener import AliasedElasticPillow, BasicPillow, PythonPillow
 from django.conf import settings
 
 
@@ -53,13 +53,15 @@ class UserPillow(AliasedElasticPillow):
         return USER_INDEX
 
 
-class GroupToUserPillow(BasicPillow):
-    couch_filter = "groups/all_groups"
+class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
 
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
         self.couch_db = Group.get_db()
+
+    def python_filter(self, doc):
+        return doc.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_trigger(self, changes_dict):
         es = get_es()
