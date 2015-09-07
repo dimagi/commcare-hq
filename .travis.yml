@@ -10,8 +10,7 @@ env:
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
   matrix:
-    - TEST_RUNNER=testrunner.GroupTestRunnerCatchall
-    - TEST_RUNNER=testrunner.GroupTestRunner0
+    - TEST_RUNNER=django.test.runner.DiscoverRunner
 branches:
   only:
     - master
