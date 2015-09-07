@@ -761,7 +761,7 @@ class AliasedElasticPillow(BulkPillow):
                             yield {
                                 "index": {
                                     "_index": self.es_index,
-                                    "_type": self.get_type_string(tr),
+                                    "_type": self.es_type,
                                     "_id": tr['_id']
                                 }
                             }
@@ -771,17 +771,12 @@ class AliasedElasticPillow(BulkPillow):
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
 
-    def get_type_string(self, doc_dict):
-        # todo: this method is overridden in 5 places and every single one just returns
-        # self.es_type. The notion that this is somehow doc_dict dependent has been
-        # entirely removed from the code
-        raise NotImplementedError("Please implement a custom type string resolver")
-
     def get_doc_path_typed(self, doc_dict):
+        # todo: the type is silly here but changing it would require a big reindex
         return "%(index)s/%(type_string)s/%(id)s" % (
             {
                 'index': self.es_index,
-                'type_string': self.get_type_string(doc_dict),
+                'type_string': self.es_type,
                 'id': doc_dict['_id']
             })
 
@@ -791,12 +786,10 @@ class AliasedElasticPillow(BulkPillow):
         """
         if isinstance(doc_id_or_dict, basestring):
             doc_id = doc_id_or_dict
-            doc_type = self.es_type
         else:
             assert isinstance(doc_id_or_dict, dict)
             doc_id = doc_id_or_dict['_id']
-            doc_type = self.get_type_string(doc_id_or_dict)
-        return self.get_es_new().exists(self.es_index, doc_id, doc_type)
+        return self.get_es_new().exists(self.es_index, doc_id, self.es_type)
 
     @memoized
     def get_name(self):
