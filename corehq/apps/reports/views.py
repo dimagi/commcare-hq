@@ -167,13 +167,10 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
             or request.couch_user.get_viewable_reports()):
         raise Http404
 
-    all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
-    good_configs = []
-    for config in all_configs:
-        if config.is_configurable_report and not config.configurable_report:
-            continue
-
-        good_configs.append(config)
+    good_configs = filter(
+        lambda config: config.report,
+        ReportConfig.by_domain_and_owner(domain, user._id)
+    )
 
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like

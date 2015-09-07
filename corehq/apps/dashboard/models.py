@@ -278,20 +278,21 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
 
     @property
     def paginated_items(self):
-        reports = ReportConfig.by_domain_and_owner(
+        configs = ReportConfig.by_domain_and_owner(
             self.request.domain, self.request.couch_user._id,
             limit=self.limit, skip=self.skip
         )
-        for report in reports:
-            yield self._fmt_item(
-                report.name,
-                report.url,
-                description="%(desc)s (%(date)s)" % {
-                    'desc': report.description,
-                    'date': report.date_description,
-                },
-                full_name=report.full_name
-            )
+        for config in configs:
+            if config.report:
+                yield self._fmt_item(
+                    config.name,
+                    config.url,
+                    description="%(desc)s (%(date)s)" % {
+                        'desc': config.description,
+                        'date': config.date_description,
+                    },
+                    full_name=config.full_name
+                )
 
 
 class AppsPaginatedContext(BasePaginatedTileContextProcessor):
