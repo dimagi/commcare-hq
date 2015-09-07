@@ -1,6 +1,5 @@
 from copy import copy, deepcopy
 import json
-from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -14,7 +13,11 @@ from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_all_report_configs
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    ReportConfigurationNotFoundError,
+)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -25,6 +28,7 @@ from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.pillows.utils import get_deleted_doc_types
+from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -262,8 +266,8 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def config(self):
         try:
-            return DataSourceConfiguration.get(self.config_id)
-        except ResourceNotFound:
+            return get_datasource_config(self.config_id, self.domain)[0]
+        except DataSourceConfigurationNotFoundError:
             raise BadSpecError(_('The data source referenced by this report could not be found.'))
 
     @property
@@ -453,3 +457,34 @@ class StaticReportConfiguration(JsonObject):
                 return wrapped.custom_configurable_report
         raise BadSpecError(_('The report configuration referenced by this report could '
                              'not be found.'))
+
+
+def get_datasource_config(config_id, domain):
+    is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+    if is_static:
+        config = StaticDataSourceConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            raise DataSourceConfigurationNotFoundError
+    else:
+        try:
+            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+        except DocumentNotFound:
+            raise DataSourceConfigurationNotFoundError
+    return config, is_static
+
+
+def get_report_config(config_id, domain):
+    is_static = any(
+        config_id.startswith(prefix)
+        for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+    )
+    if is_static:
+        config = StaticReportConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            raise ReportConfigurationNotFoundError
+    else:
+        try:
+            config = get_document_or_not_found(ReportConfiguration, domain, config_id)
+        except DocumentNotFound:
+            raise ReportConfigurationNotFoundError
+    return config, is_static
