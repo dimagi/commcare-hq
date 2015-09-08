@@ -130,7 +130,6 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
-    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
@@ -153,15 +152,14 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
         _log_mailchimp_error(e)
 
     new_user.subscribed_to_commcare_users = False
-    if email_opt_in:
-        try:
-            safe_subscribe_user_to_mailchimp_list(
-                new_user,
-                settings.MAILCHIMP_COMMCARE_USERS_ID
-            )
-            new_user.subscribed_to_commcare_users = True
-        except Exception as e:
-            _log_mailchimp_error(e)
+    try:
+        safe_subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_COMMCARE_USERS_ID
+        )
+        new_user.subscribed_to_commcare_users = True
+    except Exception as e:
+        _log_mailchimp_error(e)
 
     new_user.eula.signed = True
     new_user.eula.date = now

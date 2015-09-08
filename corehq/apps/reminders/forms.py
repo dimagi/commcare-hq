@@ -28,6 +28,8 @@ from corehq.apps.hqwebapp.crispy import (
 )
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
+from corehq.util.spreadsheets.excel import WorksheetNotFound, \
+    WorkbookJSONReader
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -77,7 +79,6 @@ from .models import (
 from dimagi.utils.parsing import string_to_datetime
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.models import Form as CCHQForm

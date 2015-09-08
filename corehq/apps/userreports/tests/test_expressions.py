@@ -208,6 +208,50 @@ class ConditionalExpressionTest(SimpleTestCase):
         }))
 
 
+class SwitchExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        spec = {
+            'type': 'switch',
+            'switch_on': {
+                'type': 'property_name',
+                'property_name': 'test',
+            },
+            'cases': {
+                'strawberry': {
+                    'type': 'constant',
+                    'constant': 'banana'
+                },
+                'apple': {
+                    'type': 'property_name',
+                    'property_name': 'apple'
+                }
+            },
+            'default': {
+                'type': 'constant',
+                'constant': 'orange'
+            },
+        }
+        self.expression = ExpressionFactory.from_spec(spec)
+
+    def testCases(self):
+        self.assertEqual('banana', self.expression({
+            'test': 'strawberry',
+        }))
+        self.assertEqual('foo', self.expression({
+            'test': 'apple',
+            'apple': 'foo'
+        }))
+        self.assertEqual(None, self.expression({
+            'test': 'apple',
+        }))
+
+    def testDefault(self):
+        self.assertEqual('orange', self.expression({
+            'test': 'value not in cases',
+        }))
+
+
 class IteratorExpressionTest(SimpleTestCase):
 
     def setUp(self):

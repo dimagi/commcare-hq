@@ -20,8 +20,6 @@ class MockEndpoint(ILSGatewayEndpoint):
             return self._from_json('sample_products.json', **kwargs)
         elif 'stocktransactions' in url:
             meta, objects = self._from_json('sample_stocktransactions.json', **kwargs)
-            if 'date__lte' in filters:
-                raise Exception()
             if filters.get('supply_point'):
                 objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
             return meta, objects

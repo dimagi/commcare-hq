@@ -30,4 +30,5 @@ urlpatterns = patterns('custom.ilsgateway.views',
         ProductAvailabilityDeleteView.as_view(),
         name='product_availability_delete'
     ),
+    url(r'^fix_stock_data/$', 'fix_stock_data_view', name='fix_stock_data')
 )

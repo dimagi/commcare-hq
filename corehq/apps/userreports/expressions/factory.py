@@ -5,7 +5,7 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
-    IdentityExpressionSpec, IteratorExpressionSpec
+    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -31,6 +31,16 @@ def _conditional_expression(spec, context):
         _make_filter(wrapped.test, context),
         ExpressionFactory.from_spec(wrapped.expression_if_true, context),
         ExpressionFactory.from_spec(wrapped.expression_if_false, context),
+    )
+    return wrapped
+
+
+def _switch_expression(spec, context):
+    wrapped = SwitchExpressionSpec.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.switch_on, context),
+        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.iteritems()},
+        ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped
 
@@ -70,6 +80,7 @@ class ExpressionFactory(object):
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
         'iterator': _iterator_expression,
+        'switch': _switch_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

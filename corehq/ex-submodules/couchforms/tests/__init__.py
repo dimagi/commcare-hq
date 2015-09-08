@@ -4,6 +4,7 @@ from couchforms.jsonobject_extensions import GeoPointProperty
 try:
     from .test_archive import *
     from .test_meta import *
+    from .test_doc_types import *
     from .test_duplicates import *
     from .test_edits import *
     from .test_namespaces import *

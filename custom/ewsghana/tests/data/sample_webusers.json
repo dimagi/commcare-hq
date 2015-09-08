@@ -32,7 +32,21 @@
     "username": "test2",
     "groups": [
         {"name": "facility_manager"}
-    ]
+    ],
+    "contact":{
+        "backend": "smsgh",
+        "date_updated": "2014-12-05T00:00:00",
+        "email": null,
+        "family_name": "",
+        "id": 1580,
+        "is_active": "True",
+        "language": "",
+        "name": "test1",
+        "phone_numbers":["+1233232"],
+        "role": null,
+        "supply_point": null,
+        "to": "7000"
+    }
   },
   {
     "date_joined": "2013-01-09T11:07:06.941715",
