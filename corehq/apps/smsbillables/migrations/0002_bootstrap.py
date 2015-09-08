@@ -18,6 +18,20 @@ from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway impor
     bootstrap_twilio_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_unicel_gateway import \
     bootstrap_unicel_gateway
+from corehq.apps.smsbillables.management.commands.bootstrap_moz_gateway import \
+    bootstrap_moz_gateway
+from corehq.apps.smsbillables.management.commands.bootstrap_test_gateway import \
+    bootstrap_test_gateway
+from corehq.apps.smsbillables.management.commands.bootstrap_telerivet_gateway import \
+    bootstrap_telerivet_gateway
+from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway_incoming import \
+    bootstrap_twilio_gateway_incoming
+from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
+    bootstrap_yo_gateway
+from corehq.apps.smsbillables.management.commands.add_moz_zero_charge import \
+    add_moz_zero_charge
+from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway_update import \
+    bootstrap_grapevine_gateway_update
 
 
 def sync_sms_docs(apps, schema_editor):
@@ -41,6 +55,13 @@ def bootstrap_sms(apps, schema_editor):
     bootstrap_twilio_gateway(apps)
     bootstrap_unicel_gateway(apps)
     call_command('bootstrap_usage_fees')
+    bootstrap_moz_gateway(apps)
+    bootstrap_test_gateway(apps)
+    bootstrap_telerivet_gateway(apps)
+    bootstrap_twilio_gateway_incoming(apps)
+    bootstrap_yo_gateway(apps)
+    add_moz_zero_charge(apps)
+    bootstrap_grapevine_gateway_update(apps)
 
 
 class Migration(migrations.Migration):

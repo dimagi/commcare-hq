@@ -10,10 +10,10 @@ from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_twilio_gateway_incoming(orm):
-    currency_class = orm['accounting.Currency'] if orm else Currency
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_twilio_gateway_incoming(apps):
+    currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     # https://www.twilio.com/sms/pricing/us
     SmsGatewayFee.create_new(
