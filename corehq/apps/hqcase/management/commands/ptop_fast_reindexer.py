@@ -7,6 +7,7 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.listener import BulkPillow
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -152,7 +153,6 @@ class PtopReindexer(NoArgsCommand):
         """
         Loads entire view, saves to file, set pillowtop checkpoint
         """
-
         # Set pillowtop checkpoint for doc_class
         # though this might cause some superfluous reindexes of docs,
         # we're going to set the checkpoint BEFORE we start our operation so that any changes
@@ -160,7 +160,6 @@ class PtopReindexer(NoArgsCommand):
         # finish.
 
         current_db_seq = self.pillow.couch_db.info()['update_seq']
-
 
         # Write sequence file to disk
         seq_filename = self.get_seq_filename()
@@ -189,8 +188,8 @@ class PtopReindexer(NoArgsCommand):
 
     def _bootstrap(self, options):
         self.resume = options['resume']
-        self.bulk = options['bulk']
         self.pillow = self.pillow_class()
+        self.bulk = options['bulk'] and isinstance(self.pillow, BulkPillow)
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
@@ -246,7 +245,8 @@ class PtopReindexer(NoArgsCommand):
             self.pillow.set_checkpoint({'seq': seq})
 
         self.post_load_hook()
-
+        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
+                                             readonly=True)
         if self.bulk:
             self.log("Preparing Bulk Payload")
             self.load_bulk()
@@ -279,9 +279,7 @@ class PtopReindexer(NoArgsCommand):
         Iterative view indexing - use --bulk for faster reindex.
         :return:
         """
-        # todo: should this use self.view_data_file_iter() instead?
-        # currently some reindexers run full_couch_view_iter twice
-        for ix, item in enumerate(self.full_couch_view_iter()):
+        for ix, item in enumerate(self.view_data_file_iter()):
             self.log("\tProcessing item %s (%d)" % (item['id'], ix))
             self.process_row(item, ix)
 
@@ -292,9 +290,6 @@ class PtopReindexer(NoArgsCommand):
         json_iter = self.view_data_file_iter()
 
         bulk_slice = []
-        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
-                                             readonly=True)
-
         for curr_counter, json_doc in enumerate(json_iter):
             if curr_counter < start:
                 continue
@@ -319,6 +314,7 @@ class PtopReindexer(NoArgsCommand):
         while retries < MAX_TRIES:
             try:
                 self.log('Sending chunk to ES')
+                assert isinstance(self.pillow, BulkPillow)
                 self.pillow.process_bulk(filtered_slice)
                 break
             except Exception as ex:
@@ -351,7 +347,7 @@ class ElasticReindexer(PtopReindexer):
             self.indexing_pillow.delete_index()
             self.log("Recreating index")
             self.indexing_pillow.create_index()
-            self.indexing_pillow.seen_types = {}
+            self.indexing_pillow.initialize_mapping_if_necessary()
 
     def post_load_hook(self):
         if not self.in_place:

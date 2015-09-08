@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import partial
 import logging
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task
+from django.conf import settings
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
@@ -11,12 +13,19 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
+from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
+from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
+from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
+from custom.ilsgateway.temporary import fix_stock_data
+from custom.ilsgateway.utils import send_for_day, send_for_all_domains
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
     GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
+from dimagi.utils.dates import get_business_day_of_month
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
@@ -173,6 +182,11 @@ def clear_report_data(domain):
     ReportRun.objects.filter(domain=domain).delete()
 
 
+@task(queue='background_queue', ignore_result=True)
+def fix_stock_data_task(domain):
+    fix_stock_data(domain)
+
+
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task(queue='background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
@@ -219,3 +233,129 @@ def report_run(domain, locations=None, strict=True):
         run.complete = True
         run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
+
+facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
+district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
+                                    location_type='DISTRICT')
+
+
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def first_facility_delivery_task():
+    facility_delivery_partial(15)
+
+
+@periodic_task(run_every=crontab(day_of_month="20-22", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def second_facility_delivery_task():
+    facility_delivery_partial(22)
+
+
+@periodic_task(run_every=crontab(day_of_month="26-30", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def third_facility_delivery_task():
+    facility_delivery_partial(30)
+
+
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def first_district_delivery_task():
+    district_delivery_partial(13)
+
+
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def second_district_delivery_task():
+    district_delivery_partial(20)
+
+
+@periodic_task(run_every=crontab(day_of_month="26-28", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def third_district_delivery_task():
+    district_delivery_partial(28)
+
+
+facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrReminder, location_type='FACILITY')
+district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
+
+
+@periodic_task(run_every=crontab(day_of_month="3-5", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def first_facility():
+    """Last business day before or on 5th day of the Submission month, 8:00am"""
+    facility_randr_partial(5)
+
+
+@periodic_task(run_every=crontab(day_of_month="8-10", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def second_facility():
+    """Last business day before or on 10th day of the submission month, 8:00am"""
+    facility_randr_partial(10)
+
+
+@periodic_task(run_every=crontab(day_of_month="10-12", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def third_facility():
+    """Last business day before or on 12th day of the submission month, 8:00am"""
+    facility_randr_partial(12)
+
+
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def first_district():
+    district_randr_partial(13)
+
+
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=8, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def second_district():
+    district_randr_partial(15)
+
+
+@periodic_task(run_every=crontab(day_of_month="14-16", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def third_district():
+    district_randr_partial(16)
+
+
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=15),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def supervision_task():
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day == last_business_day.day:
+        send_for_all_domains(last_business_day, SupervisionReminder)
+
+
+def get_last_and_nth_business_day(date, n):
+    last_month = datetime(date.year, date.month, 1) - timedelta(days=1)
+    last_month_last_day = get_business_day_of_month(month=last_month.month, year=last_month.year, count=-1)
+    nth_business_day = get_business_day_of_month(month=date.month, year=date.year, count=n)
+    return last_month_last_day, nth_business_day
+
+
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def first_soh_task():
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day == last_business_day.day:
+        send_for_all_domains(last_business_day, SOHReminder)
+
+
+@periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def second_soh_task():
+    now = datetime.utcnow()
+    last_month_last_day, first_business_day = get_last_and_nth_business_day(now, 1)
+    if now.day == first_business_day.day:
+        send_for_all_domains(last_month_last_day, SOHReminder)
+
+
+@periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def third_soh_task():
+    now = datetime.utcnow()
+    last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
+    if now.day == fifth_business_day.day:
+        send_for_all_domains(last_month_last_day, SOHReminder)

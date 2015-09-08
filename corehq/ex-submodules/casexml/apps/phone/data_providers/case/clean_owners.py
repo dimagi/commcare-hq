@@ -122,7 +122,8 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
-
+        # this is a shortcut to prune closed cases we just sent down before saving the sync log
+        self.restore_state.current_sync_log.prune_dependent_cases()
         return response
 
     def get_case_ids_for_owner(self, owner_id):

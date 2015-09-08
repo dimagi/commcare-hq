@@ -463,15 +463,6 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS = PredictablyRandomToggle(
-    'enable_owner_cleanliness_flags',
-    'Enable tracking ownership cleanliness on submission',
-    TAG_EXPERIMENTAL,
-    randomness=.20,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
-)
-
 OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
     'enable_owner_cleanliness_restore',
     'Enable restoring with updated owner cleanliness logic.',
@@ -620,13 +611,6 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DROPBOX_SYNC = StaticToggle(
-    'dropbox_sync',
-    'Allows users to sync their file downloads to Dropbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 EMAIL_IN_REMINDERS = StaticToggle(
     'email_in_reminders',
     'Send emails from reminders',
@@ -634,16 +618,46 @@ EMAIL_IN_REMINDERS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FIXTURE_CASE_SELECTION = StaticToggle(
+    'fixture_case',
+    'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'ews_invalid_report_response',
     'Send response about invalid stock on hand',
-    TAG_UNKNOWN,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
 
 BROADCAST_TO_LOCATIONS = StaticToggle(
     'broadcast_to_locations',
     'Send broadcasts to locations',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+EWS_BROADCAST_BY_ROLE = StaticToggle(
+    'ews_broadcast_by_role',
+    'EWS: Filter broadcast recipients by role',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SMS_PERFORMANCE_FEEDBACK = StaticToggle(
+    'sms_performance_feedback',
+    'Enable SMS-based performance feedback',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+LEGACY_SYNC_SUPPORT = StaticToggle(
+    'legacy_sync_support',
+    "Support mobile sync bugs in older projects (2.9 and below).",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

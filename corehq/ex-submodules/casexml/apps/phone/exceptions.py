@@ -21,8 +21,8 @@ class BadStateException(RestoreException):
         self.case_ids = case_ids
 
     def __str__(self):
-        return "Phone state hash mismatch. Server hash: %s, Phone hash: %s. Server cases: [%s]" % \
-            (self.server_hash, self.phone_hash, ", ".join(self.case_ids))
+        return "Phone state hash mismatch. Server hash: %s, Phone hash: %s. # of cases: [%s]" % \
+            (self.server_hash, self.phone_hash, len(self.case_ids))
 
 
 class BadVersionException(RestoreException):
@@ -57,4 +57,8 @@ class InvalidDomainError(OwnershipCleanlinessError):
 
 
 class InvalidOwnerIdError(OwnershipCleanlinessError):
+    pass
+
+
+class SimplifiedSyncAssertionError(Exception):
     pass

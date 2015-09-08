@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.http import Http404
 import pytz
 from django.conf import settings
-from django.utils.importlib import import_module
+from importlib import import_module
 from django.utils import html, safestring
 
 from corehq.apps.groups.models import Group
@@ -124,7 +124,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id)
+                username = get_username_from_forms(domain, user_id).lower()
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if user_filter[temp_user.filter_flag].show:
                     users.append(temp_user)

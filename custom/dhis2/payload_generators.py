@@ -47,13 +47,13 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         return {'Content-type': 'application/json'}
 
     def _update_instance(self, dhis2_api, case):
-            instance = dhis2_api.get_te_inst(case['external_id'])
-            instance.update({dhis2_attr: case[cchq_attr]
-                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
-                             if getattr(case, cchq_attr, None)})
-            if 'Gender' in instance:
-                instance['Gender'] = instance['Gender'].capitalize()
-            dhis2_api.update_te_inst(instance)
+        instance = dhis2_api.get_te_inst(case['external_id'])
+        instance.update({dhis2_attr: case[cchq_attr]
+                         for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                         if getattr(case, cchq_attr, None)})
+        if 'Gender' in instance:
+            instance['Gender'] = instance['Gender'].capitalize()
+        dhis2_api.update_te_inst(instance)
 
     def get_payload(self, repeat_record, form):
         from casexml.apps.case.xform import cases_referenced_by_xform

@@ -45,6 +45,11 @@ def doc_types():
     }
 
 
+def all_known_formlike_doc_types():
+    # also pulls in extra doc types from filters/xforms.js
+    return set(doc_types().keys()) | set(['XFormInstance-Deleted', 'HQSubmission'])
+
+
 def get(doc_id):
     import warnings
     warnings.warn(
@@ -121,6 +126,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     date_header = DefaultProperty()
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
+
+    class Meta:
+        app_label = 'couchforms'
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -464,3 +472,6 @@ class UnfinishedSubmissionStub(models.Model):
     timestamp = models.DateTimeField()
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+
+    class Meta:
+        app_label = 'couchforms'

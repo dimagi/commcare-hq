@@ -12,6 +12,7 @@ from corehq.apps.es.domains import DomainES
 from tastypie import fields
 from tastypie.exceptions import NotFound
 import operator
+from dimagi.utils.dates import force_to_datetime
 
 
 def _get_domain(bundle):
@@ -28,6 +29,20 @@ def get_truth(inp, relate, cut):
     else:
         cut_datetime = datetime.strptime(cut, '%Y-%m-%d')
         return ops[relate](inp, cut_datetime)
+
+
+class DomainQuerySetAdapter(object):
+
+    def __init__(self, es_query):
+        self.es_query = es_query
+
+    def count(self):
+        return self.es_query.size(0).run().total
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return map(Domain.wrap, self.es_query.start(item.start).size(item.stop - item.start).run().hits)
+        raise ValueError('Invalid type of argument. Item should be an instance of slice class.')
 
 
 class DomainMetadataResource(HqBaseResource):
@@ -79,13 +94,15 @@ class DomainMetadataResource(HqBaseResource):
             filters = {}
             if hasattr(bundle.request, 'GET'):
                 filters = bundle.request.GET
-            domains = list(Domain.get_all())
-            if filters:
-                for key, value in filters.iteritems():
-                    args = key.split('__')
-                    if args and args[0] == 'last_modified':
-                        domains = [domain for domain in domains if get_truth(domain.last_modified, args[1], value)]
-            return domains
+
+            params = {}
+            if 'last_modified__lte' in filters:
+                params['lte'] = force_to_datetime(filters['last_modified__lte'])
+
+            if 'last_modified__gte' in filters:
+                params['gte'] = force_to_datetime(filters['last_modified__gte'])
+
+            return DomainQuerySetAdapter(DomainES().last_modified(**params).sort('last_modified'))
 
     class Meta(CustomResourceMeta):
         authentication = AdminAuthentication()

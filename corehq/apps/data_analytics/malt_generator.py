@@ -14,7 +14,7 @@ from django.db.models import Count
 from django.http.response import Http404
 
 
-logger = logging.getLogger('build_malt_table')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
@@ -14,30 +13,36 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from corehq.feature_previews import CALLCENTER
-from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import UserTime
+from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
 
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
-    @property
-    def midnights(self):
-        """Returns a list containing a datetime for midnight in the domains timezone
-        on either side of the current date.
+    def midnights(self, utcnow=None):
+        """Returns a list containing two datetimes in UTC that corresponds to midnight
+        in the domains timezone on either side of the current UTC datetime.
+        i.e. [<previous midnight in TZ>, <next midnight in TZ>]
+
+        >>> d = DomainLite('', 'Asia/Kolkata', '')
+        >>> d.midnights(datetime(2015, 8, 27, 18, 30, 0  ))
+        [datetime.datetime(2015, 8, 26, 18, 30), datetime.datetime(2015, 8, 27, 18, 30)]
+        >>> d.midnights(datetime(2015, 8, 27, 18, 31, 0  ))
+        [datetime.datetime(2015, 8, 27, 18, 30), datetime.datetime(2015, 8, 28, 18, 30)]
         """
+        utcnow = utcnow or datetime.utcnow()
         tz = pytz.timezone(self.default_timezone)
-        now = datetime.utcnow()
-        midnight_utc = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        midnight_tz1 = UserTime(midnight_utc, tz).server_time().done()
-        midnight_tz2 = midnight_tz1 + timedelta(days=(1 if midnight_tz1 < now else -1))
-        return sorted([midnight_tz1, midnight_tz2])
+        current_time_tz = ServerTime(utcnow).user_time(tz).done()
+        midnight_tz1 = current_time_tz.replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight_tz_utc1 = UserTime(midnight_tz1).server_time().done()
+        midnight_tz_utc2 = midnight_tz_utc1 + timedelta(days=(1 if midnight_tz_utc1 < utcnow else -1))
+        return sorted([midnight_tz_utc1, midnight_tz_utc2])
 
 
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
-def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
+def sync_user_case(commcare_user, case_type, owner_id):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -56,7 +61,7 @@ def sync_user_case(commcare_user, case_type, owner_id, copy_user_data=True):
                 return False
 
         # remove any keys that aren't valid XML element names
-        fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)} if copy_user_data else {}
+        fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)}
 
         # language or phone_number can be null and will break
         # case submission
@@ -126,8 +131,7 @@ def sync_usercase(user):
         sync_user_case(
             user,
             USERCASE_TYPE,
-            user.get_id,
-            copy_user_data=False
+            user.get_id
         )
 
 

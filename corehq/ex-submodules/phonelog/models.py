@@ -19,6 +19,7 @@ class DeviceReportEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True, null=True)
 
     class Meta:
+        app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
             ("domain", "date"),
@@ -33,6 +34,7 @@ class UserEntry(models.Model):
     username = models.CharField(max_length=100, db_index=True)
 
     class Meta:
+        app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
 
 

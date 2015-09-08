@@ -13,6 +13,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
@@ -219,6 +220,8 @@ def update_calculated_properties():
             "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
             "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
             "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+            "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+            "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
@@ -414,6 +417,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
         expose_cached_download(
             FileWrapper(open(fpath)),
             expiry=(1 * 60 * 60),
+            file_extension=file_extention_from_filename(fpath),
             **common_kwargs
         )
 

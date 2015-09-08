@@ -51,7 +51,7 @@ def create_models_for_stock_report(domain, stock_report_helper):
     """
     Save stock report and stock transaction models to the database.
     """
-    assert stock_report_helper._form.domain == domain
+    assert stock_report_helper.domain == domain
     if stock_report_helper.tag not in stockconst.VALID_REPORT_TYPES:
         return
     report = _create_model_for_stock_report(domain, stock_report_helper)

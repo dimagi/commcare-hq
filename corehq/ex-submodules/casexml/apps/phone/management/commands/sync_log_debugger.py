@@ -17,6 +17,21 @@ class Command(BaseCommand):
                     dest='debugger',
                     default=False,
                     help="Drop into a debugger at the end of running the command for manual queries"),
+        make_option('--check',
+                    action='store',
+                    dest='check_hash',
+                    default=None,
+                    help="Run a hash check"),
+        make_option('--index',
+                    action='store',
+                    dest='index',
+                    default=0,
+                    help="Index of log to hash check"),
+        make_option('--depth',
+                    action='store',
+                    dest='depth',
+                    default=1,
+                    help="Depth of hash check"),
     )
 
     def handle(self, *args, **options):
@@ -66,6 +81,33 @@ class Command(BaseCommand):
             intersection_of_ids = set().intersection(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
             import pdb
             pdb.set_trace()
+
+        if options['check_hash']:
+            log_to_check = logs[options['index']]
+            result = _brute_force_search(
+                log_to_check.case_ids_on_phone, options['check_hash'], depth=options['depth']
+            )
+            if result:
+                print 'check successful - missing ids {}'.format(result)
+            else:
+                print 'no match found'
+
+
+def _brute_force_search(case_id_set, expected_hash, diff=None, depth=1):
+    # utility for brute force searching for a hash
+    diff = diff or set()
+    if _get_hash(case_id_set) == expected_hash:
+        return diff
+    else:
+        if depth > 0:
+            for id in case_id_set:
+                list_to_check = case_id_set - set([id])
+                newdiff = diff | set([id])
+                result = _brute_force_search(list_to_check, expected_hash, newdiff, depth-1)
+                if result:
+                    return result
+        else:
+            return None
 
 
 def _get_hash(ids):

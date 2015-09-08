@@ -78,6 +78,7 @@ constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
@@ -145,6 +146,41 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
 Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
+
+##### Switch Expression
+
+This expression returns the value of the expression for the case that matches the switch on expression. Note that case values may only be strings at this time.
+```json
+{
+    "type": "switch",
+    "switch_on": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "cases": {
+        "north": {
+            "type": "constant",
+            "constant": 4000
+        },
+        "south": {
+            "type": "constant",
+            "constant": 2500
+        },
+        "east": {
+            "type": "constant",
+            "constant": 3300
+        },
+        "west": {
+            "type": "constant",
+            "constant": 65
+        },
+    },
+    "default": {
+        "type": "constant",
+        "constant": 0
+    }
+}
+```
 
 ##### Iterator Expression
 
@@ -651,6 +687,23 @@ numeric_percent | Percentage as a number                         | 33
 decimal         | Fraction as a decimal number                   | .333
 
 
+### The "aggregation" column property
+
+The aggregation column property defines how the column should be aggregated.
+If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+
+The following table documents the other aggregation options, which can be used in aggregate reports.
+
+Format          | Description
+--------------- | -----------------------------------------------
+simple          | No aggregation
+avg             | Average (statistical mean) of the values
+count_unique    | Count the unique values found
+count           | Count all rows
+min             | Choose the minimum value
+max             | Choose the maximum value
+sum             | Sum the values
+
 #### Column IDs
 
 Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
@@ -704,6 +757,10 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Calculating Column Totals
+
+To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
+
 ### Internationalization
 Report columns can be translated into multiple languages. To specify translations
 for a column header, use an object as the `display` value in the configuration
@@ -736,11 +793,32 @@ Valid `display` languages are any of the two or three letter language codes avai
 
 ## Aggregation
 
-TODO: finish aggregation docs
+Aggregation in reports is done using a list of columns to aggregate on.
+The columns represent what will be grouped in the report, and should be the `column_id`s of valid report columns.
+In most simple reports you will only have one level of aggregation. See examples below.
+
+### No aggregation
+
+```json
+["doc_id"]
+```
+
+### Aggregate by 'username' column
+
+```json
+["username"]
+```
+
+### Aggregate by two columns
+
+```json
+["column1", "column2"]
+```
 
 ## Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. The currently supported transform types are shown below:
+Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+The currently supported transform types are shown below:
 
 ### Displaying username instead of user ID
 
@@ -967,13 +1045,36 @@ They conform to a slightly different style:
 }
 ```
 
-Having defined the data source you need to add the path to the data source file to the `CUSTOM_DATA_SOURCES`
-setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
+Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
+setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
 can use the UI to rebuild the data source (requires Celery to be running).
 
+
+## Static configurable reports
+
+Configurable reports can also be defined in the source repository.  Static configurable reports have
+the following style:
+```
+{
+    "domains": ["my-domain"],
+    "data_source_table": "my_table",
+    "report_id": "my-report",
+    "config": {
+        ... put the normal report configuration here
+    }
+}
+```
+
+## Custom configurable reports
+
+Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
+the report using a custom Django template or with custom Excel formatting, define a subclass of
+`ConfigurableReport` and override the necessary functions.  Then include the python path to the class
+in the field `custom_configurable_report` of the static report and don't forget to include the static
+report in `STATIC_DATA_SOURCES` in `settings.py`.
 
 ## Extending User Configurable Reports
 

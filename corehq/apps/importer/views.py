@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.util.files import file_extention_from_filename
 from soil.util import expose_cached_download
 from soil import DownloadBase
 from soil.heartbeat import heartbeat_enabled, is_alive
@@ -66,7 +67,11 @@ def excel_config(request, domain):
                             'Excel 97/2000 .xls file.')
 
     # stash content in the default storage for subsequent views
-    file_ref = expose_cached_download(uploaded_file_handle.read(), expiry=1*60*60)
+    file_ref = expose_cached_download(
+        uploaded_file_handle.read(),
+        expiry=1*60*60,
+        file_extension=file_extention_from_filename(uploaded_file_handle.name),
+    )
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
     spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
 

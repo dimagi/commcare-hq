@@ -86,12 +86,9 @@ production:
   should_migrate: True
 
   new_relic_enabled:
-    - hqdjango6.internal.commcarehq.org
-    - hqdjango7.internal.commcarehq.org
-    - hqdjango8.internal.commcarehq.org
-    - hqdjango9.internal.commcarehq.org
-    - hqdjango10.internal.commcarehq.org
-    - hqdjango11.internal.commcarehq.org
+    - hqdjango12.internal.commcarehq.org
+    - hqdjango13.internal.commcarehq.org
+    - hqdjango14.internal.commcarehq.org
     - hqcelery1.internal.commcarehq.org
     - hqcelery0.internal.commcarehq.org
 
@@ -143,7 +140,7 @@ staging:
       flower: {}
 
 zambia:
-  environment: production
+  environment: zambia
   should_migrate: True
 
   celery_processes:

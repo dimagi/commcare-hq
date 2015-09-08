@@ -75,6 +75,8 @@ class FacilityInCharge(models.Model):
     user_id = models.CharField(max_length=128, db_index=True)
     location = models.ForeignKey(SQLLocation)
 
+    class Meta:
+        app_label = 'ewsghana'
 
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):

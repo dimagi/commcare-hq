@@ -1,7 +1,7 @@
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM
+from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT
 from custom.ilsgateway.tests import ILSTestScript
 from custom.ilsgateway.tests.handlers.utils import add_products
 
@@ -221,3 +221,12 @@ class ILSSoHTest(ILSTestScript):
             "contact_name": self.user1.full_name, "facility_name": self.loc1.name, "product_list": "bp dx qi"
         }}
         self.run_script(script)
+
+    def test_stock_on_hand_invalid_code(self):
+        script = """
+            5551234 > hmk asdds 100 ff 100
+            5551234 < %(soh_bad_format)s
+        """ % {'soh_bad_format': unicode(SOH_BAD_FORMAT)}
+        self.run_script(script)
+
+        self.assertEqual(StockState.objects.get(sql_product__code='ff').stock_on_hand, 100)

@@ -1,0 +1,78 @@
+{% load i18n %}
+{% load xforms_extras %}
+
+<div data-bind="with: fixtureSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+    <legend>
+        {% trans "Fixture Case Selection" %}
+    </legend>
+    <form class="form form-horizontal">
+        <div class="control-group">
+            <label class="control-label">{% trans "Enable Fixture Filtering" %}
+                <span class="hq-help-template" data-title="{% trans "Fixture Case Selection" %}"data-content="{% trans "Enabling this allows you to filter the case list based on a fixture selection and an xpath expression that consumes that selection" %}"
+            ></span>
+            </label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: active"/>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Fixture Type" %}
+                <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+            </label>
+            <div class="controls">
+                <select type="text" name="fixture_type" data-bind="value: fixtureType">
+                    <option value="">Select One</option>
+                    {% for fixture in fixtures %}
+                    <option value="{{ fixture }}">{{ fixture }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Display Column" %}
+                <span class="hq-help-template" data-title="{% trans "Display Column" %}"data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}"></span>
+            </label>
+            <div class="controls">
+                <select type="text" name="display_column" data-bind="value: displayColumn">
+                    <option value="">Select One</option>
+                    {% for fc in fixture_columns %}
+                    <option value="{{ fc }}">{{ fc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "Localize Display Column" %}
+                <span class="hq-help-template" data-title="{% trans "Localize Display Column" %}"data-content="{% trans "Set this checkbox to indicate that the fixture does not contain the display string, but a reference to the localization string" %}"
+            ></span>
+            </label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: localize"/>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">
+                {% trans "Variable Column" %}
+                <span class="hq-help-template" data-title="{% trans "Variable Column" %}"data-content="{% trans "This Column will be used as the variable which is input into the xpath expression below" %}"></span>
+            </label>
+            <div class="controls">
+                <select type="text" name="variable_column" data-bind="value: variableColumn">
+                    <option value="">Select One</option>
+                    {% for fc in fixture_columns %}
+                    <option value="{{ fc }}">{{ fc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "XPath filtering expression" %}
+            <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+            </label>
+            <div class="controls">
+                <input type="text"name="case_type" data-bind="value: xpath" />
+            </div>
+        </div>
+    </form>
+</div>

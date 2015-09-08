@@ -2,6 +2,8 @@ from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
+    alphanumeric_sort_key
 from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
@@ -10,8 +12,6 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.excel import (flatten_json, json_to_headers,
-    alphanumeric_sort_key)
 from soil import DownloadBase
 
 from corehq import privileges

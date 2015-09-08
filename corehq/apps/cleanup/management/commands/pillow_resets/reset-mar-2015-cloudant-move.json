@@ -16,7 +16,7 @@
         "corehq.pillows.reportcase.ReportCasePillow",
         "corehq.pillows.reportxform.ReportXFormPillow",
         "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow",
-        "corehq.apps.userreports.pillow.CustomDataSourcePillow",
+        "corehq.apps.userreports.pillow.StaticDataSourcePillow",
         "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
         "custom.bihar.models.CareBiharFluffPillow",
         "custom.opm.models.OpmCaseFluffPillow",

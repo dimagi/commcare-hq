@@ -3,6 +3,7 @@ import tempfile
 
 from django.test import SimpleTestCase
 from StringIO import StringIO
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -12,7 +13,6 @@ from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
     expected_bulk_app_sheet_headers
-from dimagi.utils.excel import WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
@@ -111,7 +111,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         ("Modules_and_forms", (
-            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", "icon_filepath", "audio_filepath", "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -124,8 +124,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_headers_bad_column = (  # bad column is default-fra
         ("Modules_and_forms", (
             "Type", "sheet_name", "default_en", "default_fra",
-            "label_for_cases_en", "label_for_cases_fra", "icon_filepath",
-            "audio_filepath", "unique_id"
+            "label_for_cases_en", "label_for_cases_fra", "icon_filepath_en", "icon_filepath_fra",
+            "audio_filepath_en", "audio_filepath_fra" , "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -138,8 +138,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_data = (
         ("Modules_and_forms", (
-          ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
-          ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
+          ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+          ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("module1", (
           ("name", "list", "Name", "Nom"),
@@ -161,15 +161,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_no_change_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'label_for_cases_en', 'label_for_cases_fra', 'icon_filepath', 'audio_filepath', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'label_for_cases_en', 'label_for_cases_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
         ('Modules_and_forms',
-         (('Module', 'module1', 'My & awesome module', '', 'Cases', 'Cases', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
-          ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
+         (('Module', 'module1', 'My & awesome module', '', 'Cases', 'Cases', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+          ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
          (('name', 'list', 'Name', ''),
           ('name', 'detail', 'Name', ''),
@@ -278,7 +278,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
     maxDiff = None
 
     excel_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'label_for_cases_en', 'icon_filepath', 'audio_filepath', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'label_for_cases_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
         ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
     )

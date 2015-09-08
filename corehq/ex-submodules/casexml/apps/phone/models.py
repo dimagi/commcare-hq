@@ -3,7 +3,9 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, SimplifiedSyncAssertionError
+from corehq.toggles import LEGACY_SYNC_SUPPORT
+from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -209,6 +211,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def test_only_clear_cases_on_phone(self):
         raise NotImplementedError()
 
+    def test_only_get_dependent_cases_on_phone(self):
+        raise NotImplementedError()
+
 
 class SyncLog(AbstractSyncLog):
     """
@@ -314,14 +319,24 @@ class SyncLog(AbstractSyncLog):
 
     def archive_case(self, case_id):
         state = self.get_case_state(case_id)
-        self.cases_on_phone.remove(state)
-        self._case_state_map.reset_cache(self)
-        all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
-                       for i in case_state.indices]
-        if any([i.referenced_id == case_id for i in all_indices]):
-            self.dependent_cases_on_phone.append(state)
-            self._dependent_case_state_map.reset_cache(self)
-        return state
+        if state:
+            self.cases_on_phone.remove(state)
+            self._case_state_map.reset_cache(self)
+            all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
+                           for i in case_state.indices]
+            if any([i.referenced_id == case_id for i in all_indices]):
+                self.dependent_cases_on_phone.append(state)
+                self._dependent_case_state_map.reset_cache(self)
+            return state
+        else:
+            state = self.get_dependent_case_state(case_id)
+            if state:
+                all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
+                               for i in case_state.indices]
+                if not any([i.referenced_id == case_id for i in all_indices]):
+                    self.dependent_cases_on_phone.remove(state)
+                    self._dependent_case_state_map.reset_cache(self)
+                    return state
 
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
@@ -442,6 +457,9 @@ class SyncLog(AbstractSyncLog):
 
     def test_only_clear_cases_on_phone(self):
         self.cases_on_phone = []
+
+    def test_only_get_dependent_cases_on_phone(self):
+        return self.dependent_cases_on_phone
 
 
 PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
@@ -569,21 +587,32 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if to_remove != case_id:
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices.values():
-                    assert index in candidates_to_remove, \
-                        "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                    if not _domain_has_legacy_toggle_set():
+                        assert index in candidates_to_remove, \
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
-                # todo: this here to avoid having to manually clean up after
-                # http://manage.dimagi.com/default.asp?179664
-                # it should be removed when there are no longer any instances of the assertion
-                if self.date < datetime(2015, 8, 25):
-                    _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
-                    _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
-                        self._id, to_remove)
-                    )
+                def _should_fail_softly():
+                    def _sync_log_was_old():
+                        # todo: this here to avoid having to manually clean up after
+                        # http://manage.dimagi.com/default.asp?179664
+                        # it should be removed when there are no longer any instances of the assertion
+                        if self.date < datetime(2015, 8, 25):
+                            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+                            _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
+                                self._id, to_remove)
+                            )
+                            return True
+                        return False
+                    return _domain_has_legacy_toggle_set() or _sync_log_was_old()
+
+                if _should_fail_softly():
+                    pass
                 else:
-                    raise
+                    raise SimplifiedSyncAssertionError('case {} already removed from sync log {}'.format(
+                        to_remove, self._id,
+                    ))
 
             self.dependent_case_ids_on_phone.remove(to_remove)
 
@@ -693,18 +722,34 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 ))
                 raise
 
+    def prune_dependent_cases(self):
+        """
+        Attempt to prune any dependent cases from the sync log.
+        """
+        # this is done when migrating from old formats or during initial sync
+        # to prune non-relevant dependencies
+        for dependent_case_id in list(self.dependent_case_ids_on_phone):
+            # need this additional check since the case might have already been pruned/remove
+            # as a result of pruning the child case
+            if dependent_case_id in self.dependent_case_ids_on_phone:
+                # this will be a no-op if the case cannot be pruned due to dependencies
+                self.prune_case(dependent_case_id)
+
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
         Migrate from the old SyncLog format to this one.
         """
         if isinstance(other_sync_log, SyncLog):
+            previous_log_footprint = set(other_sync_log.get_footprint_of_cases_on_phone())
+
             def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
-                new_sync_log.case_ids_on_phone.add(case_state.case_id)
-                for index in case_state.indices:
-                    new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
-                if is_dependent:
-                    new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
+                if case_state.case_id in previous_log_footprint:
+                    new_sync_log.case_ids_on_phone.add(case_state.case_id)
+                    for index in case_state.indices:
+                        new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                    if is_dependent:
+                        new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
 
             ret = cls.wrap(other_sync_log.to_json())
             for case_state in other_sync_log.cases_on_phone:
@@ -712,15 +757,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             dependent_case_ids = set()
             for case_state in other_sync_log.dependent_cases_on_phone:
-                _add_state_contributions(ret, case_state, is_dependent=True)
-                dependent_case_ids.add(case_state.case_id)
+                if case_state.case_id in previous_log_footprint:
+                    _add_state_contributions(ret, case_state, is_dependent=True)
+                    dependent_case_ids.add(case_state.case_id)
 
-            for dependent_case_id in dependent_case_ids:
-                # try to prune any dependent cases - the old format does this on
-                # access, but the new format does it ahead of time and always assumes
-                # its current state is accurate.
-                # this will be a no-op if the case cannot be pruned due to dependencies
-                ret.prune_case(dependent_case_id)
+            # try to prune any dependent cases - the old format does this on
+            # access, but the new format does it ahead of time and always assumes
+            # its current state is accurate.
+            ret.prune_dependent_cases()
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
@@ -728,6 +772,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             del ret['cases_on_phone']
             del ret['dependent_cases_on_phone']
 
+            ret.migrated_from = other_sync_log.to_json()
             return ret
         else:
             return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
@@ -738,6 +783,18 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def test_only_clear_cases_on_phone(self):
         self. case_ids_on_phone = set()
+
+    def test_only_get_dependent_cases_on_phone(self):
+        # hack - just for tests
+        return [CaseState(case_id=id) for id in self.dependent_case_ids_on_phone]
+
+
+def _domain_has_legacy_toggle_set():
+    # old versions of commcare (< 2.10ish) didn't purge on form completion
+    # so can still modify cases that should no longer be on the phone.
+    request = get_request()
+    domain = request.domain if request else None
+    return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
 def get_properly_wrapped_sync_log(doc_id):
@@ -782,4 +839,5 @@ class OwnershipCleanlinessFlag(models.Model):
         return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]
 
     class Meta:
+        app_label = 'phone'
         unique_together = [('domain', 'owner_id')]

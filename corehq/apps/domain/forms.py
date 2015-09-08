@@ -828,6 +828,8 @@ class HQPasswordResetForm(forms.Form):
     def save(self, domain_override=None,
              subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None):
         """
@@ -1505,6 +1507,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
@@ -1524,8 +1527,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             )
         else:
             self.fields['end_date'].initial = self.current_subscription.date_end
+            self.fields['software_plan_edition'].initial = plan_edition
             self.helper.layout = crispy.Layout(
-                TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
