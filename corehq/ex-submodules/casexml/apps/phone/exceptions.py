@@ -58,3 +58,6 @@ class InvalidDomainError(OwnershipCleanlinessError):
 
 class InvalidOwnerIdError(OwnershipCleanlinessError):
     pass
+
+class SimplifiedSyncAssertionError(Exception):
+    pass

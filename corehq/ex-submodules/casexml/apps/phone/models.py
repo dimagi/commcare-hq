@@ -3,7 +3,7 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, SimplifiedSyncAssertionError
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
@@ -587,19 +587,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if to_remove != case_id:
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices.values():
-                    assert index in candidates_to_remove, \
-                        "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                    if not _domain_has_legacy_toggle_set():
+                        assert index in candidates_to_remove, \
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
                 def _should_fail_softly():
-                    # old versions of commcare (< 2.10ish) didn't purge on form completion
-                    # so can still modify cases that should no longer be on the phone.
-                    def _domain_has_toggle_set():
-                        request = get_request()
-                        domain = request.domain if request else None
-                        return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
-
                     def _sync_log_was_old():
                         # todo: this here to avoid having to manually clean up after
                         # http://manage.dimagi.com/default.asp?179664
@@ -611,12 +605,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             )
                             return True
                         return False
-                    return _domain_has_toggle_set() or _sync_log_was_old()
+                    return _domain_has_legacy_toggle_set() or _sync_log_was_old()
 
                 if _should_fail_softly():
                     pass
                 else:
-                    raise
+                    raise SimplifiedSyncAssertionError('case {} already removed from sync log {}'.format(
+                        to_remove, self._id,
+                    ))
 
             self.dependent_case_ids_on_phone.remove(to_remove)
 
@@ -791,6 +787,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def test_only_get_dependent_cases_on_phone(self):
         # hack - just for tests
         return [CaseState(case_id=id) for id in self.dependent_case_ids_on_phone]
+
+
+def _domain_has_legacy_toggle_set():
+    # old versions of commcare (< 2.10ish) didn't purge on form completion
+    # so can still modify cases that should no longer be on the phone.
+    request = get_request()
+    domain = request.domain if request else None
+    return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
 def get_properly_wrapped_sync_log(doc_id):
