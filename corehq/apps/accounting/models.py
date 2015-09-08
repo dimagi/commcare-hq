@@ -1790,17 +1790,10 @@ class Invoice(InvoiceBase):
                     filter(date_due=date_due))
         return invoices
 
-    def pay_invoice(self, amount, payment_record):
-        """ Creates a CreditAdjustment (thru adding credits) and updates the invoice balance """
-        CreditLine.add_credit(
-            payment_record.amount,
-            account=self.subscription.account,
-            payment_record=payment_record,
-        )
-        CreditLine.add_credit(
-            -payment_record.amount,
-            account=self.subscription.account,
+    def pay_invoice(self, payment_record):
+        CreditLine.make_payment_towards_invoice(
             invoice=self,
+            payment_record=payment_record,
         )
 
         self.update_balance()
@@ -2455,6 +2448,21 @@ class CreditLine(models.Model):
     def _validate_add_amount(amount):
         if not isinstance(amount, Decimal):
             raise ValueError("Amount must be a Decimal.")
+
+    @classmethod
+    def make_payment_towards_invoice(cls, invoice, payment_record):
+        """ Make a payment for a billing account towards an invoice """
+        billing_account = invoice.subscription.account
+        cls.add_credit(
+            payment_record.amount,
+            account=billing_account,
+            payment_record=payment_record,
+        )
+        cls.add_credit(
+            -payment_record.amount,
+            account=billing_account,
+            invoice=invoice,
+        )
 
 
 class PaymentMethod(models.Model):

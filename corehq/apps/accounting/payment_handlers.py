@@ -403,7 +403,7 @@ class AutoPayInvoicePaymentHandler(object):
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
             else:
-                invoice.pay_invoice(amount, payment_record)
+                invoice.pay_invoice(payment_record)
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
