@@ -54,9 +54,6 @@ class CasePillow(HQPillow):
             'mapping': self.default_mapping,
         })
 
-    def get_type_string(self, doc_dict):
-        return self.es_type
-
     def change_transform(self, doc_dict):
         doc_ret = copy.deepcopy(doc_dict)
         if not doc_ret.get("owner_id"):

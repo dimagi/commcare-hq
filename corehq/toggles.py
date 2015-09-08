@@ -654,3 +654,10 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+LEGACY_SYNC_SUPPORT = StaticToggle(
+    'legacy_sync_support',
+    "Support mobile sync bugs in older projects (2.9 and below).",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)

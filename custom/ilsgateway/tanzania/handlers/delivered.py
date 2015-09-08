@@ -42,7 +42,7 @@ class DeliveredHandler(GenericStockReportHandler):
                                          status_value=SupplyPointStatusValues.RECEIVED,
                                          status_date=datetime.utcnow())
 
-    def get_success_message(self, data):
+    def get_message(self, data):
         products = sorted([
             (SQLProduct.objects.get(product_id=tx.product_id).code, tx.quantity)
             for tx in data['transactions']

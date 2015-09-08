@@ -71,8 +71,14 @@ class TestStockTransactionSync(TestCase):
     def test_stock_data_migration(self):
         stock_data_task(self.stock_api_object)
         self.assertEqual(SupplyPointStatus.objects.all().count(), 5)
+        self.assertEqual(
+            SupplyPointStatus.objects.all().values_list('location_id', flat=True).distinct().count(), 2
+        )
         self.assertEqual(StockTransaction.objects.filter(report__domain=TEST_DOMAIN).count(), 16)
         self.assertEqual(DeliveryGroupReport.objects.all().count(), 4)
+        self.assertEqual(
+            DeliveryGroupReport.objects.all().values_list('location_id', flat=True).distinct().count(), 2
+        )
         self.assertEqual(StockState.objects.all().count(), 6)
         self.assertEqual(StockReport.objects.all().count(), 2)
 
@@ -86,8 +92,14 @@ class TestStockTransactionSync(TestCase):
         )
         stock_data_task(self.stock_api_object)
         self.assertEqual(SupplyPointStatus.objects.all().count(), 5)
+        self.assertEqual(
+            SupplyPointStatus.objects.all().values_list('location_id', flat=True).distinct().count(), 2
+        )
         self.assertEqual(StockTransaction.objects.filter(report__domain=TEST_DOMAIN).count(), 15)
         self.assertEqual(DeliveryGroupReport.objects.all().count(), 4)
+        self.assertEqual(
+            DeliveryGroupReport.objects.all().values_list('location_id', flat=True).distinct().count(), 2
+        )
         self.assertEqual(StockState.objects.all().count(), 6)
         self.assertEqual(StockReport.objects.all().count(), 2)
 

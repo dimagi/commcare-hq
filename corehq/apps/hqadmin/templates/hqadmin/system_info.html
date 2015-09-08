@@ -69,6 +69,7 @@
                 self.clearTimer();
                 self.loading(true);
                 $.getJSON(url, function (data) {
+                    self.error(null);
                     var objects = _(data).map(function (item) {
                         return new model(item);
                     });
