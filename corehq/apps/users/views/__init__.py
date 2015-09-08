@@ -768,7 +768,13 @@ class DomainRequestView(BasePageView):
     def page_context(self):
         domain = Domain.get_by_name(self.request.domain)
         if self.request_form is None:
-            self.request_form = DomainRequestForm(initial={'domain': domain.name})
+            initial = {'domain': domain.name}
+            if self.request.user.is_authenticated():
+                initial.update({
+                    'email': self.request.user.get_username(),
+                    'full_name': self.request.user.get_full_name(),
+                })
+            self.request_form = DomainRequestForm(initial=initial)
         return {
             'domain': domain.name,
             'domain_name': domain.display_name(),
