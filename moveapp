@@ -1,4 +1,0 @@
-#!/bin/bash
-APP=$1
-scripts/git-good-move corehq/apps/$APP corehq/messaging/smsbackends/$APP
-grep -l --include '*.py' -R "corehq\.apps\.$APP" . | xargs sed -i '' "s/corehq\.apps\.$APP/corehq\.messaging\.smsbackends\.$APP/g"
