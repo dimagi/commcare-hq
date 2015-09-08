@@ -17,6 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_site_domain
+from django.utils.html import strip_tags
 
 from django_prbac.models import Role
 
@@ -354,18 +355,69 @@ class BillingAccount(models.Model):
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
     def update_autopay_user(self, new_user):
-        from corehq.apps.accounting.tasks import send_autopay_card_removed_email, send_autopay_card_added_email
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
-            # If there was already an autopay user, send them an email that they have been removed
-            send_autopay_card_removed_email.delay(self, old_user=self.auto_pay_user, new_user=new_user)
+            self._send_autopay_card_removed_email(new_user=new_user)
 
         self.auto_pay_user = new_user
         self.save()
-        send_autopay_card_added_email.delay(self, new_user)
+        self._send_autopay_card_added_email()
 
     def remove_autopay_user(self):
         self.auto_pay_user = None
         self.save()
+
+    def _send_autopay_card_removed_email(self, new_user):
+        """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
+        from corehq.apps.domain.views import EditExistingBillingAccountView
+        old_user = self.auto_pay_user
+        subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
+            billing_account=self.name)
+        try:
+            old_user_name = WebUser.get_by_username(old_user).first_name
+        except ResourceNotFound:
+            old_user_name = old_user
+
+        context = {
+            'new_user': new_user,
+            'old_user_name': old_user_name,
+            'billing_account_name': self.name,
+            'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                                 args=[self.created_by_domain])
+        }
+
+        send_html_email_async(
+            subject,
+            old_user,
+            render_to_string('accounting/autopay_card_removed.html', context),
+            text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
+        )
+
+    def _send_autopay_card_added_email(self):
+        """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
+        from corehq.apps.domain.views import EditExistingBillingAccountView
+        subject = _("Your card is being used to auto-pay for {billing_account}").format(
+            billing_account=self.name)
+        try:
+            new_user_name = WebUser.get_by_username(self.auto_pay_user).first_name
+        except ResourceNotFound:
+            new_user_name = self.auto_pay_user
+
+        context = {
+            'name': new_user_name,
+            'email': self.auto_pay_user,
+            'domain': self.created_by_domain,
+            'last_4': getattr(self.autopay_card, 'last4', None),
+            'billing_account_name': self.name,
+            'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
+                                                 args=[self.created_by_domain])
+        }
+
+        send_html_email_async(
+            subject,
+            self.auto_pay_user,
+            render_to_string('accounting/invoice_autopay_setup.html', context),
+            text_content=strip_tags(render_to_string('accounting/invoice_autopay_setup.html', context)),
+        )
 
 
 class BillingContactInfo(models.Model):
