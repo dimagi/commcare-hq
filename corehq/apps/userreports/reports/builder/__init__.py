@@ -135,14 +135,14 @@ def make_owner_name_indicator(column_id):
                                 "type": "property_name",
                                 "property_name": "doc_type"
                             },
-                            "related_doc_type": "CouchUser",
+                            "related_doc_type": "WebUser",
                             "doc_id_expression": {
                                 "type": "property_name",
                                 "property_name": "owner_id"
                             }
                         },
                         "type": "boolean_expression",
-                        "property_value": "CouchUser",
+                        "property_value": "WebUser",
                     },
                     "expression_if_true": {
                         "value_expression": {
@@ -150,7 +150,7 @@ def make_owner_name_indicator(column_id):
                             "property_name": "username"
                         },
                         "type": "related_doc",
-                        "related_doc_type": "CouchUser",
+                        "related_doc_type": "WebUser",
                         "doc_id_expression": {
                             "type": "property_name",
                             "property_name": "owner_id"
