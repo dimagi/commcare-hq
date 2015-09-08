@@ -2443,12 +2443,12 @@ class DomainRequest(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
 
     @classmethod
-    def by_domain(cls, domain):
-        return DomainRequest.objects.filter(domain=domain, is_approved=False)
+    def by_domain(cls, domain, is_approved=False):
+        return DomainRequest.objects.filter(domain=domain)
 
     @classmethod
-    def by_email(cls, domain, email):
-        return DomainRequest.by_domain(domain).filter(email=email).first()
+    def by_email(cls, domain, email, is_approved=False):
+        return DomainRequest.by_domain(domain, is_approved).filter(email=email).first()
 
     def send_approval_email(self):
         domain_name = Domain.get_by_name(self.domain).display_name()
@@ -2517,9 +2517,16 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                                args=[self.domain, self.get_id])
         params = {"domain": self.domain, "url": url, 'days': remaining_days,
                   "inviter": self.get_inviter().formatted_name}
-        text_content = render_to_string("domain/email/domain_invite.txt", params)
-        html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+
+        domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
+        if domain_request is None:
+            text_content = render_to_string("domain/email/domain_invite.txt", params)
+            html_content = render_to_string("domain/email/domain_invite.html", params)
+            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+        else:
+            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+            html_content = render_to_string("domain/email/domain_request_approval.html", params)
+            subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],
