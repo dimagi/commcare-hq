@@ -42,7 +42,7 @@ class DomainQuerySetAdapter(object):
     def __getitem__(self, item):
         if isinstance(item, slice):
             return map(Domain.wrap, self.es_query.start(item.start).size(item.stop - item.start).run().hits)
-        raise ValueError()
+        raise ValueError('Invalid type of argument. Item should be an instance of slice class.')
 
 
 class DomainMetadataResource(HqBaseResource):
