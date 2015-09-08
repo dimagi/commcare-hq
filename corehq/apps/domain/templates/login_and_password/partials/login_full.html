@@ -4,7 +4,7 @@
         {% include "login_and_password/partials/login_form.html" %}
     </div>
     <div class="span4">
-        <aside class="well">
+        <aside class="well clearfix">
             <h2>{% blocktrans %}Are you new to {{ SITE_NAME }}?{% endblocktrans %}<br /><small>{% trans "Sign up today, it's free!" %}</small></h2>
             {% if not allow_domain_requests %}
               <p>
@@ -13,9 +13,7 @@
               </p>
             {% endif %}
               <p>{% blocktrans %}Don't have a {{ SITE_NAME }} account? Sign up for free and get started today!{% endblocktrans %}</p>
-            <div class="row">
-              <a style="float: right; margin-top: 7px;" 
-                 class="btn btn-success btn-large" 
+              <a class="btn btn-success btn-large pull-right"
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
@@ -23,12 +21,11 @@
                  {% endif %}
               >
                 {% if allow_domain_requests %}
-                  {% trans "Request Access" %}
+                  {% blocktrans %}Request Access to {{ hr_name }}{% endblocktrans %}
                 {% else %}
                   {% trans "Sign Up" %}
                 {% endif %}
               </a>
-            </div>
         </aside>
     </div>
 </div>
