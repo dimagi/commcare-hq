@@ -17,8 +17,11 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
-    UserReportsError, TableNotFoundWarning,
-    UserReportsFilterError)
+    BadSpecError,
+    UserReportsError,
+    TableNotFoundWarning,
+    UserReportsFilterError,
+)
 from corehq.apps.userreports.models import (
     STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
@@ -367,10 +370,18 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     def dispatch(self, request, report_config_id, **kwargs):
         domain = kwargs['domain']
         request.domain = domain
-        return self._report_class(domain, report_config_id)().dispatch(request, report_config_id, **kwargs)
+        try:
+            report_class = self._report_class(domain, report_config_id)
+        except BadSpecError:
+            raise Http404
+        return report_class().dispatch(request, report_config_id, **kwargs)
 
     def get_report(self, domain, slug, config_id):
-        return self._report_class(domain, config_id).get_report(domain, slug, config_id)
+        try:
+            report_class = self._report_class(domain, config_id)
+        except BadSpecError:
+            return None
+        return report_class.get_report(domain, slug, config_id)
 
     @classmethod
     def url_pattern(cls):
