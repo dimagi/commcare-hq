@@ -1,9 +1,6 @@
 [submodule "submodules/couchforms-src"]
 	path = submodules/couchforms-src
 	url = git://github.com/dimagi/couchforms.git
-[submodule "submodules/couchexport-src"]
-	path = submodules/couchexport-src
-	url = git://github.com/dimagi/couchexport.git
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
 	url = git://github.com/dimagi/dimagi-utils.git
