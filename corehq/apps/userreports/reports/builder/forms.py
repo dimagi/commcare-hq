@@ -655,9 +655,9 @@ class ConfigureNewReportBase(forms.Form):
                 # This will likely require implementing data source filters.
                 FilterViewModel(
                     exists_in_current_version=True,
-                    property='owner_id',
+                    property='computed/owner_name',
                     data_source_field=None,
-                    display_text='owner_id',
+                    display_text='owner name',
                     format='Choice',
                 ),
             ]
