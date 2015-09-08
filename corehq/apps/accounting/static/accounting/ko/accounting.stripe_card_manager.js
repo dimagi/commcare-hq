@@ -124,8 +124,9 @@ var StripeCard = function(card, baseUrl){
             data: data
         }).success(function(data){
             cardManager.wrap(data);
-        }).fail(function(){
-            alert("something went horribly wrong");
+        }).fail(function(data){
+            var response = JSON.parse(data.responseText);
+            alert(response.error);
         });
     };
 };

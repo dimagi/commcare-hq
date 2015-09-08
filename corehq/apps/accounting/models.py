@@ -402,7 +402,7 @@ class BillingAccount(models.Model):
         except ResourceNotFound:
             new_user_name = self.auto_pay_user
         try:
-            last_4 = self.autopay_card.last_4
+            last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
             last_4 = None
 
