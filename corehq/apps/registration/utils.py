@@ -101,23 +101,23 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
     """
     if old_email:
         users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
-        couch_users = CouchUser.view(
+        couch_users_who_had_old_email = CouchUser.view(
             'users/by_username',
              keys=list(users_with_old_email),
              include_docs=True,
              reduce=False,
          ).all()
     else:
-        couch_users = []
+        couch_users_who_had_old_email = []
 
     if user.subscribed_to_commcare_users:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users_who_had_old_email
                                            if couch_user.subscribed_to_commcare_users]
         if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
             safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
 
     if not user.email_opt_out:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users_who_had_old_email
                                            if not couch_user.email_opt_out]
         if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
             safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=old_email)
