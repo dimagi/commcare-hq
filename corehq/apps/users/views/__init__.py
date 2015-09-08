@@ -787,8 +787,10 @@ class DomainRequestView(BasePageView):
                     domain_request = DomainRequest(**data)
                     domain_request.send_request_email()
                     domain_request.save()
-                    messages.success(request, _("Request created. "
-                        "You will receive an email when the request is approved."))
+                    domain = Domain.get_by_name(domain_request.domain)
+                    return render(request, "users/confirmation_sent.html", {
+                        'hr_name': domain.display_name() if domain else domain_request.domain,
+                    })
         return self.get(request, *args, **kwargs)
 
 
