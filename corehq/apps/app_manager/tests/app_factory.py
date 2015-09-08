@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex
+    AutoSelectCase, CaseIndex, PreloadAction
 
 
 class AppFactory(object):
@@ -66,7 +66,7 @@ class AppFactory(object):
         return form
 
     @staticmethod
-    def form_updates_case(form, case_type=None, parent_case_type=None, update=None):
+    def form_updates_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
         if form.form_type == 'module_form':
             form.requires = 'case'
             form.actions.update_case = UpdateCaseAction(update=update)
@@ -83,11 +83,12 @@ class AppFactory(object):
         else:
             case_type = case_type or form.get_module().case_type
             index = len([load for load in form.actions.load_update_cases if load.case_type == case_type])
-            action = LoadUpdateAction(
-                case_type=case_type,
-                case_tag='load_{}_{}'.format(case_type, index),
-                case_properties=update,
-            )
+            kwargs = {'case_type': case_type, 'case_tag': 'load_{}_{}'.format(case_type, index)}
+            if update:
+                kwargs['case_properties'] = update
+            if preload:
+                kwargs['preload'] = preload
+            action = LoadUpdateAction(**kwargs)
 
             if parent_case_type:
                 parent_action = form.actions.load_update_cases[-1]
@@ -95,6 +96,24 @@ class AppFactory(object):
                 action.case_index = CaseIndex(tag=parent_action.case_tag)
 
             form.actions.load_update_cases.append(action)
+
+    @staticmethod
+    def form_preloads_case(form, case_type=None, parent_case_type=None, preload=None):
+        if form.form_type == 'module_form':
+            form.requires = 'case'
+            form.actions.case_preload = PreloadAction(preload=preload)
+            form.actions.case_preload.condition.type = 'always'
+
+            if parent_case_type:
+                module = form.get_module()
+                module.parent_select.active = True
+                parent_select_module = next(
+                    module for module in module.get_app().get_modules()
+                    if module.case_type == parent_case_type
+                )
+                module.parent_select.module_id = parent_select_module.unique_id
+        else:
+            return AppFactory.form_updates_case(form, case_type, parent_case_type, preload=preload)
 
     @staticmethod
     def form_opens_case(form, case_type=None, is_subcase=False):
