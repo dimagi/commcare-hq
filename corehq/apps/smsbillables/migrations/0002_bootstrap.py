@@ -38,7 +38,7 @@ def sync_sms_docs(apps, schema_editor):
     # hack: manually force sync SMS design docs before
     # we try to load from them. the bootstrap commands are dependent on these.
     # import ipdb; ipdb.set_trace()
-    sync_docs.sync(apps.get_app_config('sms').get_models(), verbosity=2)
+    pass
 
 
 def bootstrap_currency(apps, schema_editor):
@@ -49,6 +49,7 @@ def bootstrap_currency(apps, schema_editor):
 
 
 def bootstrap_sms(apps, schema_editor):
+    sync_docs.sync(apps.get_app_config('sms').get_models(), verbosity=2)
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
