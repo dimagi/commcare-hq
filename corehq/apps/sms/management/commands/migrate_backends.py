@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from corehq.apps.sms.mixin import MobileBackend
-from corehq.apps.mach.api import MachBackend
-from corehq.apps.unicel.api import UnicelBackend
-from corehq.apps.tropo.api import TropoBackend
+from corehq.messaging.smsbackends.mach.api import MachBackend
+from corehq.messaging.smsbackends.unicel.api import UnicelBackend
+from corehq.messaging.smsbackends.tropo.api import TropoBackend
 from corehq.apps.sms.backend.http_api import HttpBackend
 from corehq.apps.sms.test_backend import TestSMSBackend
 from django.conf import settings
@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 backend.outbound_module = None
                 backend.outbound_params = None
                 backend.save()
-            elif backend.outbound_module == "corehq.apps.tropo.api":
+            elif backend.outbound_module == "corehq.messaging.smsbackends.tropo.api":
                 backend = TropoBackend.wrap(backend.to_json())
                 backend.doc_type = "TropoBackend"
                 backend.domain = None

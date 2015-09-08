@@ -4,7 +4,7 @@ import xlrd
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.apps.mach.api import MachBackend
+from corehq.messaging.smsbackends.mach.api import MachBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
