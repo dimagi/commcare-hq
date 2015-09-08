@@ -1,6 +1,7 @@
 from decimal import Decimal
 import logging
 
+from django.conf import settings
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
@@ -12,10 +13,10 @@ from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_test_gateway(orm):
-    default_currency = (orm['accounting.Currency'] if orm else Currency).get_default()
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_test_gateway(apps):
+    default_currency, _ = (apps.get_model('accounting', 'Currency') if apps else Currency).objects.get_or_create(code=settings.DEFAULT_CURRENCY)
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(
         TestSMSBackend.get_api_id(),
