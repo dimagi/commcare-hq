@@ -39,15 +39,17 @@ class TestBillingAccount(BaseAccountingTest):
     def test_autopay_user(self):
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
+        mail.outbox = []
         autopay_user = generator.arbitrary_web_user()
         self.billing_account.update_autopay_user(autopay_user.username)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(self.billing_account.auto_pay_enabled)
         self.assertEqual(self.billing_account.auto_pay_user, autopay_user.username)
 
+        mail.outbox = []
         other_autopay_user = generator.arbitrary_web_user()
         self.billing_account.update_autopay_user(other_autopay_user.username)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user.username)
 
     def tearDown(self):
@@ -175,7 +177,8 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.billing_account = generator.billing_account(self.dimagi_user, self.web_user)
         self.billing_account_2 = generator.billing_account(self.dimagi_user, self.web_user)
 
-        self.payment_method = StripePaymentMethod(web_user=self.web_user, customer_id=self.fake_stripe_customer.id)
+        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
+                                                  customer_id=self.fake_stripe_customer.id)
         self.payment_method.save()
 
     def test_set_autopay(self, fake_customer):
@@ -185,7 +188,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account)
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
-        self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
+        self.assertEqual(self.billing_account.auto_pay_user, self.web_user.username)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account_2)
@@ -193,11 +196,11 @@ class TestStripePaymentMethod(BaseAccountingTest):
                                                    "auto_pay_{}".format(self.billing_account_2.id): 'True'})
 
         other_web_user = generator.arbitrary_web_user()
-        other_payment_method = StripePaymentMethod(web_user=other_web_user)
+        other_payment_method = StripePaymentMethod(web_user=other_web_user.username)
         different_fake_card = FakeStripeCard()
 
         other_payment_method.set_autopay(different_fake_card, self.billing_account)
-        self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
+        self.assertEqual(self.billing_account.auto_pay_user, other_web_user.username)
         self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
         self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
 

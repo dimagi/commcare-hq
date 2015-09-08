@@ -237,6 +237,7 @@ class FakeStripeCard(mock.MagicMock):
     def __init__(self):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
+        self.last_4 = '1234'
 
     @property
     def metadata(self):

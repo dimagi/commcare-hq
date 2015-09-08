@@ -401,12 +401,16 @@ class BillingAccount(models.Model):
             new_user_name = WebUser.get_by_username(self.auto_pay_user).first_name
         except ResourceNotFound:
             new_user_name = self.auto_pay_user
+        try:
+            last_4 = self.autopay_card.last_4
+        except StripePaymentMethod.DoesNotExist:
+            last_4 = None
 
         context = {
             'name': new_user_name,
             'email': self.auto_pay_user,
             'domain': self.created_by_domain,
-            'last_4': getattr(self.autopay_card, 'last4', None),
+            'last_4': last_4,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
                                                  args=[self.created_by_domain])
