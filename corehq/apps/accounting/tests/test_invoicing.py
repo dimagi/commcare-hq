@@ -16,7 +16,7 @@ from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
     SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
-    InvoiceBaseManager,
+    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD,
 )
 
 
@@ -131,6 +131,76 @@ class TestInvoice(BaseInvoiceTestCase):
             invoice.date_end
         )
         domain.delete()
+
+    def test_date_due_not_set_small_invoice(self):
+        """Date Due doesn't get set if the invoice is small"""
+        subscription_length = 5  # months
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.STANDARD,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan,
+        )
+
+        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date_small)
+        small_invoice = subscription.invoice_set.first()
+
+        self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
+        self.assertIsNone(small_invoice.date_due)
+
+    def test_date_due_set_large_invoice(self):
+        """Date Due only gets set for a large invoice (> $100)"""
+        subscription_length = 5  # months
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.ADVANCED,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan,
+        )
+
+        invoice_date_large = utils.months_from_date(subscription.date_start, 3)
+        tasks.generate_invoices(invoice_date_large)
+        large_invoice = subscription.invoice_set.last()
+
+        self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
+        self.assertIsNotNone(large_invoice.date_due)
+
+    def test_date_due_gets_set_autopay(self):
+        """Date due always gets set for autopay """
+        subscription_length = 4
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.STANDARD,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        autopay_subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan
+        )
+
+        autopay_subscription.account.update_autopay_user(self.billing_contact.username)
+        invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date_autopay)
+
+        autopay_invoice = autopay_subscription.invoice_set.last()
+        self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
+        self.assertIsNotNone(autopay_invoice.date_due)
 
 
 class TestContractedInvoices(BaseInvoiceTestCase):
