@@ -38,6 +38,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
@@ -490,9 +491,15 @@ def db_comparisons(request):
 @require_POST
 @require_superuser_or_developer
 def reset_pillow_checkpoint(request):
-    pillow = get_pillow_by_name(request.POST["pillow_name"])
+    pillow_name = request.POST["pillow_name"]
+    pillow = get_pillow_by_name(pillow_name)
     if pillow:
-        pillow.reset_checkpoint()
+        try:
+            supervisor = PillowtopSupervisorApi()
+            pillow.reset_checkpoint()
+            supervisor.restart_pillow(pillow_name)
+        except SupervisorException as e:
+            messages.error(request, "Failed to restart pillow: {}".format(str(e)))
 
     return redirect("system_info")
 
