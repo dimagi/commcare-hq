@@ -69,8 +69,12 @@ class AppFactory(object):
     def form_updates_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
         if form.form_type == 'module_form':
             form.requires = 'case'
-            form.actions.update_case = UpdateCaseAction(update=update)
-            form.actions.update_case.condition.type = 'always'
+            if update:
+                form.actions.update_case = UpdateCaseAction(update=update)
+                form.actions.update_case.condition.type = 'always'
+            if preload:
+                form.actions.case_preload = PreloadAction(preload=preload)
+                form.actions.case_preload.condition.type = 'always'
 
             if parent_case_type:
                 module = form.get_module()
@@ -99,21 +103,7 @@ class AppFactory(object):
 
     @staticmethod
     def form_preloads_case(form, case_type=None, parent_case_type=None, preload=None):
-        if form.form_type == 'module_form':
-            form.requires = 'case'
-            form.actions.case_preload = PreloadAction(preload=preload)
-            form.actions.case_preload.condition.type = 'always'
-
-            if parent_case_type:
-                module = form.get_module()
-                module.parent_select.active = True
-                parent_select_module = next(
-                    module for module in module.get_app().get_modules()
-                    if module.case_type == parent_case_type
-                )
-                module.parent_select.module_id = parent_select_module.unique_id
-        else:
-            return AppFactory.form_updates_case(form, case_type, parent_case_type, preload=preload)
+        return AppFactory.form_updates_case(form, case_type, parent_case_type, preload=preload)
 
     @staticmethod
     def form_opens_case(form, case_type=None, is_subcase=False):
