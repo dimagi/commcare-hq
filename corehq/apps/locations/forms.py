@@ -78,6 +78,7 @@ class LocationForm(forms.Form):
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
+        kwargs['initial']['location_type'] = self.location.location_type
         kwargs['initial']['parent_id'] = self.location.parent_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
