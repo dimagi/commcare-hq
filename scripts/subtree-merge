@@ -1,0 +1,20 @@
+#!/bin/bash
+
+MODULE_NAME=$1
+MODULE_URI=$2
+OLD_PATH=$3
+NEW_PATH=$4
+
+function subtree-merge() {
+  module_name=$1
+  module_uri=$2
+  old_path=$3
+  new_path=$4
+
+  git remote add -f $module_name $module_uri
+  git merge -s ours --no-commit $module_name/master
+  git read-tree --prefix=$new_path -u $module_name/master:$old_path
+  git commit -m "subtree merge $module_name:$old_path into $new_path"
+}
+
+subtree-merge $MODULE_NAME $MODULE_URI $OLD_PATH $NEW_PATH
