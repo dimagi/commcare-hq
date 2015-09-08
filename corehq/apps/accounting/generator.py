@@ -4,6 +4,7 @@ from decimal import Decimal
 import random
 import datetime
 import uuid
+import mock
 
 from django.conf import settings
 from django.core.management import call_command
@@ -111,11 +112,13 @@ def arbitrary_subscribable_plan():
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
                                            min_num_months=None, is_immediately_active=False,
                                            delay_invoicing_until=None, save=True,
-                                           service_type=SubscriptionType.NOT_SET):
+                                           service_type=SubscriptionType.NOT_SET,
+                                           subscription_length=None,
+                                           plan_version=None,):
     # make sure the first month is never a full month (for testing)
     date_start = date_start.replace(day=max(2, date_start.day))
 
-    subscription_length = random.randint(min_num_months or 3, 25)
+    subscription_length = subscription_length or random.randint(min_num_months or 3, 25)
     date_end_year, date_end_month = add_months(date_start.year, date_start.month, subscription_length)
     date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
 
@@ -125,7 +128,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
     subscription = Subscription(
         account=billing_account,
-        plan_version=arbitrary_subscribable_plan(),
+        plan_version=plan_version or arbitrary_subscribable_plan(),
         subscriber=subscriber,
         salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
@@ -228,3 +231,30 @@ def create_excess_community_users(domain):
                                       community_plan.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users
+
+
+class FakeStripeCard(mock.MagicMock):
+    def __init__(self):
+        super(FakeStripeCard, self).__init__()
+        self._metadata = {}
+        self.last_4 = '1234'
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        """Stripe returns everything as JSON. This will do for testing"""
+        self._metadata = {k: str(v) for k, v in value.iteritems()}
+
+    def save(self):
+        pass
+
+
+class FakeStripeCustomer(mock.MagicMock):
+    def __init__(self, cards):
+        super(FakeStripeCustomer, self).__init__()
+        self.id = uuid.uuid4().hex.lower()[:25]
+        self.cards = mock.MagicMock()
+        self.cards.data = cards

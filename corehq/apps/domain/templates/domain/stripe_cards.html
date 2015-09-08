@@ -1,0 +1,93 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<fieldset>
+    <legend>{% trans 'Saved Credit Cards' %}</legend>
+    <table class='table'>
+        <thead>
+            <tr>
+                <th style="width:20%;"></th>
+                <th style="width:20%;"></th>
+                <th style="width:20%;"></th>
+                <th style="width:20%;"></th>
+                <th style="width:20%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ko foreach: cards -->
+                <tr>
+                    <td>
+                        <i class="icon-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
+                    </td>
+                    <td>
+                        ************<strong><span data-bind="text: last4"></span></strong>
+                    </td>
+                    <td><span data-bind="text: exp_month"></span>/<span data-bind="text: exp_year"></span></td>
+                    <td>
+                        <span class="label label-success"
+                              data-bind="visible: is_autopay">
+                            {% trans 'Autopay card' %}
+                        </span>
+                        <button data-bind="visible: is_autopay,
+                                           click: unSetAutopay,
+                                           enable: $parent.autoPayButtonEnabled"
+                                class='btn btn-danger autopay-button'>
+                            {% trans 'Remove' %}
+                        </button>
+                        <button data-bind="visible: !is_autopay(),
+                                           click: setAutopay,
+                                           enable: $parent.autoPayButtonEnabled"
+                                class='btn autopay-button'>
+                            {% trans 'Set as autopay card' %}
+                        </button>
+                    </td>
+                    <td>
+                        <button data-bind="click: toggleDeleteConfirmation,
+                                           visible: !showDeleteConfirmation()"
+                                class="btn btn-danger">
+                            <i class="icon-remove"></i> {% trans 'Delete Card' %}
+                        </button>
+                        <div class="alert"
+                             style="margin-bottom:0;"
+                             data-bind="visible: showDeleteConfirmation">
+                            {% trans 'Actually remove this card?' %}<br/>
+                            <button type="button" class="btn btn-danger"
+                                    data-bind="click: deleteCard">
+                                <i class="icon-remove"></i> {% trans 'Yes, Remove' %}
+                            </button>
+                            <button type="button" class="btn"
+                                    data-bind="click: toggleDeleteConfirmation">
+                                {% trans 'Cancel' %}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+              <!-- /ko -->
+        </tbody>
+    </table>
+</fieldset>
+
+<!-- ko with: newCard -->
+<button type='button' class="btn btn-success new-card" data-toggle="modal" href="#card-modal">
+    <i class='icon-plus'></i> {% trans 'Add Card' %}
+</button>
+<div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+{% include 'accounting/partials/new_stripe_card_template.html' %}
+<!-- /ko -->
+
+<div class="modal hide" id="success-modal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans "Add New Credit Card" %}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="alert alert-success">
+            {% trans "Your request was successful!" %}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button style="" type="button" class="btn" data-dismiss="modal">
+            {% trans 'Close' %}
+        </button>
+    </div>
+</div>
