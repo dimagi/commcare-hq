@@ -12,7 +12,6 @@ from corehq.apps.es.domains import DomainES
 from tastypie import fields
 from tastypie.exceptions import NotFound
 import operator
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -42,8 +41,7 @@ class DomainQuerySetAdapter(object):
 
     def __getitem__(self, item):
         if isinstance(item, slice):
-            doc_ids = self.es_query.start(item.start).size(item.stop - item.start).run().doc_ids
-            return map(Domain.wrap, iter_docs(Domain.get_db(), doc_ids))
+            return map(Domain.wrap, self.es_query.start(item.start).size(item.stop - item.start).run().hits)
         raise ValueError()
 
 
@@ -104,7 +102,7 @@ class DomainMetadataResource(HqBaseResource):
             if 'last_modified__gte' in filters:
                 params['gte'] = force_to_datetime(filters['last_modified__gte'])
 
-            return DomainQuerySetAdapter(DomainES().last_modified(**params).sort('last_modified').fields('_id'))
+            return DomainQuerySetAdapter(DomainES().last_modified(**params).sort('last_modified'))
 
     class Meta(CustomResourceMeta):
         authentication = AdminAuthentication()
