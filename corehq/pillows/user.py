@@ -1,11 +1,12 @@
+from casexml.apps.case.xform import is_device_report
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BasicPillow, PythonPillow
+from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
 
@@ -80,12 +81,11 @@ class GroupToUserPillow(PythonPillow):
         pass
 
 
-class UnknownUsersPillow(BasicPillow):
+class UnknownUsersPillow(PythonPillow):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
     include_docs_when_preindexing = False
 
     def __init__(self, **kwargs):
@@ -94,12 +94,9 @@ class UnknownUsersPillow(BasicPillow):
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
-    def get_fields_from_emitted_dict(self, emitted_dict):
-        domain = emitted_dict['key'][1]
-        user_id = emitted_dict['value'].get('user_id')
-        username = emitted_dict['value'].get('username')
-        xform_id = emitted_dict['id']
-        return user_id, username, domain, xform_id
+    def python_filter(self, doc):
+        # designed to exactly mimic the behavior of couchforms/filters/xforms.js
+        return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
         form_meta = doc.get('form', {}).get('meta', {})
@@ -114,11 +111,8 @@ class UnknownUsersPillow(BasicPillow):
         return self.user_db.doc_exist(user_id)
 
     def change_trigger(self, changes_dict):
-        if 'key' in changes_dict:
-            user_id, username, domain, xform_id = self.get_fields_from_emitted_dict(changes_dict)
-        else:
-            doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
-            user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+        doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
+        user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
 
         if user_id in WEIRD_USER_IDS:
             user_id = None
