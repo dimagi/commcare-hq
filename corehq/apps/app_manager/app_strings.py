@@ -74,13 +74,17 @@ def _create_custom_app_strings(app, lang, for_default=False):
         if audio:
             yield id_strings.module_audio_locale(module), audio
 
+        _provide_translatable = lambda string, lang: {lang: string}
+        _default_translatable = lambda string: _provide_translatable(string, "default")
+        _en_translatable = lambda string: _provide_translatable(string, "en")
+
         if hasattr(module, 'report_configs'):
             for config in module.report_configs:
                 yield id_strings.report_command(config.uuid), trans(config.header)
-                yield id_strings.report_name(config.uuid), config.report.title
-                yield id_strings.report_menu(), 'Reports'
-                yield id_strings.report_name_header(), 'Report Name'
-                yield id_strings.report_description_header(), 'Report Description'
+                yield id_strings.report_name(config.uuid), trans(_default_translatable(config.report.title))
+                yield id_strings.report_menu(), trans(_en_translatable('Reports'))
+                yield id_strings.report_name_header(), trans(_en_translatable('Report Name'))
+                yield id_strings.report_description_header(), trans(_en_translatable('Report Description'))
                 for column in config.report.report_columns:
                     yield (
                         id_strings.report_column_header(config.uuid, column.column_id),
