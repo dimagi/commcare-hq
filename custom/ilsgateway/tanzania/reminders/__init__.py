@@ -50,6 +50,8 @@ SOH_PARTIAL_CONFIRM = _(
     'Thank you %(contact_name)s for reporting your stock on hand for %(facility_name)s.'
     '  Still missing %(product_list)s.'
 )
+SOH_BAD_FORMAT = _("Sorry, invalid format. "
+                   "The message should be in the format 'soh <product> <amount> <product> <amount>...'")
 
 
 SUPERVISION_HELP = _(
@@ -194,7 +196,7 @@ class Languages(object):
 def update_statuses(supply_point_ids, type, value):
     for supply_point_id in supply_point_ids:
         now = datetime.utcnow()
-        SupplyPointStatus.objects.create(supply_point=supply_point_id,
+        SupplyPointStatus.objects.create(location_id=supply_point_id,
                                          status_type=type,
                                          status_value=value,
                                          status_date=now)

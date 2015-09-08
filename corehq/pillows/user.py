@@ -52,26 +52,6 @@ class UserPillow(AliasedElasticPillow):
     def get_unique_id(self):
         return USER_INDEX
 
-    def get_mapping_from_type(self, doc_dict):
-        """
-        Define mapping uniquely to the user_type document.
-        See below on why date_detection is False
-
-        NOTE: DO NOT MODIFY THIS UNLESS ABSOLUTELY NECESSARY. A CHANGE BELOW WILL GENERATE A NEW
-        HASH FOR THE INDEX NAME REQUIRING A REINDEX+RE-ALIAS. THIS IS A SERIOUSLY RESOURCE
-        INTENSIVE OPERATION THAT REQUIRES SOME CAREFUL LOGISTICS TO MIGRATE
-        """
-        #the meta here is defined for when the case index + type is created for the FIRST time
-        #subsequent data added to it will be added automatically, but date_detection is necessary
-        # to be false to prevent indexes from not being created due to the way we store dates
-        #all are strings EXCEPT the core case properties which we need to explicitly define below.
-        #that way date sort and ranges will work with canonical date formats for queries.
-        return {
-            self.get_type_string(doc_dict): self.default_mapping
-        }
-
-    def get_type_string(self, doc_dict):
-        return self.es_type
 
 class GroupToUserPillow(BulkPillow):
     couch_filter = "groups/all_groups"

@@ -25,15 +25,18 @@ from django_prbac.utils import has_privilege
 
 @login_and_domain_required
 def dashboard_default(request, domain):
+    return HttpResponseRedirect(default_dashboard_url(request, domain))
+
+
+def default_dashboard_url(request, domain):
     couch_user = getattr(request, 'couch_user', None)
     if couch_user and user_has_custom_top_menu(domain, couch_user):
-        return HttpResponseRedirect(reverse('saved_reports', args=[domain]))
+        return reverse('saved_reports', args=[domain])
 
     if not domain_has_apps(domain):
-        return HttpResponseRedirect(
-            reverse('default_app', args=[domain]))
-    return HttpResponseRedirect(
-        reverse(DomainDashboardView.urlname, args=[domain]))
+        return reverse('default_app', args=[domain])
+
+    return reverse(DomainDashboardView.urlname, args=[domain])
 
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):

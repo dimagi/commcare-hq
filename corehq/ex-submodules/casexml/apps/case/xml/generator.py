@@ -139,9 +139,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
-        # owner id introduced in v2
-        # default to user_id for 1.3 compatibility
-        element.append(safe_element('owner_id', self.case.owner_id or self.case.user_id))
+        from corehq.apps.users.cases import get_owner_id
+        element.append(safe_element('owner_id', get_owner_id(self.case)))
 
     def add_custom_properties(self, element):
         if self.case.external_id:

@@ -45,16 +45,23 @@ class ApplicationDataSourceUIHelper(object):
             source_choices.append(("form", _("Form")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
-                                                   choices=source_choices,
-                                                   widget=forms.Select(choices=source_choices))
+        if enable_cases and enable_forms:
+            self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
+                                                       choices=source_choices,
+                                                       widget=forms.Select(choices=source_choices))
+        else:
+            self.source_type_field = forms.ChoiceField(choices=source_choices,
+                                                       widget=forms.HiddenInput(),
+                                                       initial=source_choices[0][0])
+
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
-        self.application_field.choices = [
-            (app_id, source['name']) for app_id, source in self.all_sources.items()
-        ]
+        self.application_field.choices = sorted(
+            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
+            key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
+        )
         self.source_field.choices = []
 
         def _add_choices(field, choices):
@@ -78,6 +85,7 @@ class ApplicationDataSourceUIHelper(object):
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
+            value: source,
             options: sourcesMap[application()][sourceType()],
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value}

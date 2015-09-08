@@ -35,6 +35,9 @@ class StockReport(models.Model):
     def __unicode__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
+    class Meta:
+        app_label = 'stock'
+
 
 class StockTransaction(models.Model):
     report = models.ForeignKey(StockReport)
@@ -83,6 +86,7 @@ class StockTransaction(models.Model):
         ).order_by('-report__date', '-pk')
 
     class Meta:
+        app_label = 'stock'
         index_together = [
             ['case_id', 'product_id', 'section_id']
         ]
@@ -96,5 +100,8 @@ class DocDomainMapping(models.Model):
     doc_id = models.CharField(max_length=100, db_index=True, primary_key=True)
     doc_type = models.CharField(max_length=100, db_index=True)
     domain_name = models.CharField(max_length=100, db_index=True)
+
+    class Meta:
+        app_label = 'stock'
 
 from .signals import *

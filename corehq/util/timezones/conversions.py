@@ -142,6 +142,3 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
         return value.replace(tzinfo=pytz.utc)
     else:
         return _adjust_utc_datetime_to_timezone(value, phone_tz)
-
-
-USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS = True

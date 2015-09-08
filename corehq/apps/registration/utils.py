@@ -3,6 +3,7 @@ import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -129,7 +130,6 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
-    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
@@ -152,15 +152,14 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
         _log_mailchimp_error(e)
 
     new_user.subscribed_to_commcare_users = False
-    if email_opt_in:
-        try:
-            safe_subscribe_user_to_mailchimp_list(
-                new_user,
-                settings.MAILCHIMP_COMMCARE_USERS_ID
-            )
-            new_user.subscribed_to_commcare_users = True
-        except Exception as e:
-            _log_mailchimp_error(e)
+    try:
+        safe_subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_COMMCARE_USERS_ID
+        )
+        new_user.subscribed_to_commcare_users = True
+    except Exception as e:
+        _log_mailchimp_error(e)
 
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -237,7 +236,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.save()
         send_domain_registration_email(request.user.email,
                                        dom_req.domain,
-                                       dom_req.activation_guid)
+                                       dom_req.activation_guid,
+                                       request.user.get_full_name())
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
@@ -291,40 +291,20 @@ USERS_LINK = 'http://groups.google.com/group/commcare-users'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid):
+def send_domain_registration_email(recipient, domain_name, guid, username):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-
-    message_plaintext = u"""
-Welcome to CommCareHQ!
-
-Please click this link:
-{registration_link}
-to activate your new project.  You will not be able to use your project until you have confirmed this email address.
-
-Project name: "{domain}"
-
-Username:  "{username}"
-
-""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
-
-    message_html = u"""
-<h1>Welcome to CommCare HQ!</h1>
-<p>Please <a href="{registration_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
-<p><strong>Project name:</strong> {domain}</p>
-<p><strong>Username:</strong> {username}</p>
-""" + REGISTRATION_EMAIL_BODY_HTML
 
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
-        "username": recipient,
+        "username": username,
         "users_link": USERS_LINK,
         "wiki_link": WIKI_LINK,
     }
-    message_plaintext = message_plaintext.format(**params)
-    message_html = message_html.format(**params)
+    message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
+    message_html = render_to_string('registration/email/confirm_account.html', params)
 
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 

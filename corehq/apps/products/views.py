@@ -1,6 +1,7 @@
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
+from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
 from couchdbkit import ResourceNotFound
@@ -290,8 +291,11 @@ class UploadProductView(BaseCommTrackManageView):
 
         domain = args[0]
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_cached_download(upload.read(),
-                                   expiry=1*60*60)
+        file_ref = expose_cached_download(
+            upload.read(),
+            expiry=1*60*60,
+            file_extension=file_extention_from_filename(upload.name)
+        )
         task = import_products_async.delay(
             domain,
             file_ref.download_id,

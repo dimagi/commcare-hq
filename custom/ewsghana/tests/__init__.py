@@ -15,3 +15,4 @@ from .test_delete_domain import *
 from .test_reminders import *
 from .test_alerts import *
 from .test_urgent_alerts import *
+from .handlers.undo import *

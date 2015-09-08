@@ -30,7 +30,8 @@ def report_completion_check(user):
 
 # sends overstock, understock, or SOH without receipts alerts
 def stock_alerts(transactions, user):
-    report_helper = ProductsReportHelper(user.sql_location, transactions)
+    sql_location = user.sql_location
+    report_helper = ProductsReportHelper(sql_location, transactions)
     products_below = report_helper.low_supply()
     stockouts = report_helper.stockouts()
     overstocked = report_helper.overstocked()

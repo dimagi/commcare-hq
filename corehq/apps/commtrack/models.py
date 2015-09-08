@@ -661,6 +661,7 @@ class StockState(models.Model):
         )
 
     class Meta:
+        app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
 
 

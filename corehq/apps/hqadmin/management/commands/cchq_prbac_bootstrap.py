@@ -153,6 +153,10 @@ class Command(BaseCommand):
         Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
         Role(slug=privileges.DATA_CLEANUP, name='Data Cleanup Tools',
              description='Tools for cleaning up data, including editing submissions and archiving forms.'),
+        Role(slug=privileges.TEMPLATED_INTENTS, name='Templated Intents',
+             description='Provides a dropdown for Android App Callouts'),
+        Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
+             description='Allows for specifying custom intents'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -189,12 +193,14 @@ class Command(BaseCommand):
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
         privileges.DATA_CLEANUP,
+        privileges.TEMPLATED_INTENTS,
     ]
 
     advanced_plan_features = pro_plan_features + [
         privileges.CUSTOM_BRANDING,
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
+        privileges.CUSTOM_INTENTS,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

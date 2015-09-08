@@ -3,7 +3,7 @@ from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from corehq.apps.userreports.models import CustomDataSourceConfiguration
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
 from django.utils.translation import ugettext as _
 
@@ -48,8 +48,8 @@ class FunctionalityChecklistMeta(QueryMeta):
         self.columns.append(column.sql_column)
 
     def get_asha_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(
-            CustomDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        config = StaticDataSourceConfiguration.by_id(
+            StaticDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
         )
         return get_indicator_table(config, custom_metadata=metadata)
 

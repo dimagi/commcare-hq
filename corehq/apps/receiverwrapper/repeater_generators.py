@@ -1,4 +1,5 @@
 import json
+from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
 
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
@@ -41,7 +42,8 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         del payload_doc['actions']
-        return json.dumps(payload_doc.get_json(lite=True))
+        data = payload_doc.get_json(lite=True)
+        return json.dumps(data, cls=DjangoJSONEncoder)
 
 
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)

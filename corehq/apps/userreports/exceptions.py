@@ -36,3 +36,11 @@ class UserReportsFilterError(UserReportsError):
 
 class SortConfigurationError(UserReportsError):
     pass
+
+
+class DataSourceConfigurationNotFoundError(UserReportsError):
+    pass
+
+
+class ReportConfigurationNotFoundError(UserReportsError):
+    pass

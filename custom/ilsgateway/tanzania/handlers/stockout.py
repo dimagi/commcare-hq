@@ -14,7 +14,7 @@ class StockoutFormatter(Formatter):
 class StockoutHandler(GenericStockReportHandler):
     formatter = StockoutFormatter
 
-    def get_success_message(self, data):
+    def get_message(self, data):
         return STOCKOUT_CONFIRM % {
             'contact_name': self.verified_contact.owner.full_name,
             'product_names': self.msg.text.split(' ', 1)[1],

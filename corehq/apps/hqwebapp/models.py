@@ -2,9 +2,9 @@ from collections import namedtuple
 from urllib import urlencode
 from corehq.toggles import OPENLMIS
 
-from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
@@ -361,6 +361,12 @@ class DashboardTab(UITab):
                 return domain_has_apps(self.domain)
         return False
 
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.dashboard.views import default_dashboard_url
+        return default_dashboard_url(self._request, self.domain)
+
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
@@ -462,6 +468,12 @@ class SetupTab(UITab):
                 self.project.commtrack_enabled)
 
     @property
+    @memoized
+    def url(self):
+        from corehq.apps.commtrack.views import default_commtrack_url
+        return default_commtrack_url(self.domain)
+
+    @property
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
@@ -553,6 +565,15 @@ class SetupTab(UITab):
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
+
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.data_interfaces.views import default_data_view_url
+        try:
+            return default_data_view_url(self._request, self.domain)
+        except Http404:
+            return None
 
     @property
     @memoized
@@ -705,7 +726,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.default"
+    view = "corehq.apps.sms.views.compose_message"
 
     @property
     def is_viewable(self):
@@ -730,9 +751,6 @@ class MessagingTab(UITab):
 
         def reminder_subtitle(form=None, **context):
             return form['nickname'].value
-
-        def keyword_subtitle(keyword=None, **context):
-            return keyword.keyword
 
         reminders_urls = []
         if self.can_access_reminders:
@@ -807,6 +825,7 @@ class MessagingTab(UITab):
             })
 
         if self.can_access_reminders:
+
             reminders_urls.append({
                 'title': _("Reminders in Error"),
                 'url': reverse('reminders_in_error', args=[self.domain]),
@@ -855,6 +874,15 @@ class MessagingTab(UITab):
             items.append((_("Messages"), messages_urls))
         if reminders_urls:
             items.append((_("Data Collection and Reminders"), reminders_urls))
+        if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
+            # add performance URLs
+            items.append((_("Performance Messaging"), [
+                {
+                    'title': _('Configure Performance Messages'),
+                    'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
+                    'show_in_dropdown': True,
+                },
+            ]))
 
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
@@ -1631,6 +1659,9 @@ class MaintenanceAlert(models.Model):
     active = models.BooleanField(default=False)
 
     text = models.TextField()
+
+    class Meta:
+        app_label = 'hqwebapp'
 
     @property
     def html(self):

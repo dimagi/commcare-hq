@@ -16,7 +16,7 @@ from django.http import (
 )
 import iso8601
 from redis import RedisError
-from corehq.apps.tzmigration import phone_timezones_should_be_processed
+from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -131,12 +131,12 @@ def adjust_datetimes(data, parent=None, key=None):
             pass
         else:
             if phone_timezones_should_be_processed():
-                parent[key] = json_format_datetime(
+                parent[key] = unicode(json_format_datetime(
                     matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
-                )
+                ))
             else:
-                parent[key] = json_format_datetime(
-                    matching_datetime.replace(tzinfo=None))
+                parent[key] = unicode(json_format_datetime(
+                    matching_datetime.replace(tzinfo=None)))
 
     elif isinstance(data, dict):
         for key, value in data.items():
@@ -451,6 +451,11 @@ class SubmissionPost(object):
         return doc
 
     def run(self):
+        if timezone_migration_in_progress(self.domain):
+            # keep submissions on the phone
+            # until ready to start accepting again
+            return HttpResponse(status=503), None, []
+
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
 

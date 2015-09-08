@@ -12,9 +12,9 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from dimagi.utils.excel import WorkbookJSONReader, JSONReaderError
+from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
 from django.utils.decorators import method_decorator
-from openpyxl.shared.exc import InvalidFileException
+from openpyxl.utils.exceptions import InvalidFileException
 from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
 from corehq.apps.data_interfaces.forms import (
@@ -37,16 +37,19 @@ def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
 
+    return HttpResponseRedirect(default_data_view_url(request, domain))
+
+
+def default_data_view_url(request, domain):
     if request.couch_user.can_view_reports():
-        return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                            args=[domain, ExcelExportReport.slug]))
+        return reverse(DataInterfaceDispatcher.name(), args=[domain, ExcelExportReport.slug])
+
     exportable_reports = request.couch_user.get_exportable_reports(domain)
     if exportable_reports:
-        return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                            args=[domain, exportable_reports[0]]))
+        return reverse(DataInterfaceDispatcher.name(), args=[domain, exportable_reports[0]])
+
     if request.couch_user.can_edit_data():
-        return HttpResponseRedirect(reverse(EditDataInterfaceDispatcher.name(),
-                                            args=[domain, CaseReassignmentInterface.slug]))
+        return reverse(EditDataInterfaceDispatcher.name(), args=[domain, CaseReassignmentInterface.slug])
     raise Http404()
 
 

@@ -1,0 +1,81 @@
+{
+    "#export_tag": [
+        "domain",
+        "type"
+    ],
+    "_id": "{case_id}",
+    "_rev": "1-7017a92edb372bbad7c0636531ac5041",
+    "actions": [
+        {
+            "action_type": "create",
+            "attachments": {},
+            "date": "2013-03-09T06:30:09.007000Z",
+            "deprecated": false,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2015-05-06T16:19:50.925558Z",
+            "sync_log_id": null,
+            "updated_known_properties": {
+                "type": "case"
+            },
+            "updated_unknown_properties": {},
+            "user_id": "test",
+            "xform_id": "{instance_id}",
+            "xform_name": "Visit",
+            "xform_xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2013-03-09T06:30:09.007000Z",
+            "deprecated": false,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2015-05-06T16:19:50.925558Z",
+            "sync_log_id": null,
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "gps_location": "",
+                "last_visit": "2013-03-09",
+                "last_visit_counsel_topics": "sanitation",
+                "malaria_assessment_date": "2013-03-09",
+                "num_ec": "1",
+                "toilet_assessment_date": "2013-03-09"
+            },
+            "user_id": "test",
+            "xform_id": "{instance_id}",
+            "xform_name": "Visit",
+            "xform_xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B"
+        }
+    ],
+    "case_attachments": {},
+    "closed": false,
+    "closed_by": "",
+    "closed_on": null,
+    "computed_": {},
+    "computed_modified_on_": null,
+    "doc_type": "CommCareCase",
+    "domain": "foo",
+    "export_tag": [],
+    "external_id": "",
+    "gps_location": "",
+    "indices": [],
+    "initial_processing_complete": true,
+    "last_visit": "2013-03-09",
+    "last_visit_counsel_topics": "sanitation",
+    "malaria_assessment_date": "2013-03-09",
+    "modified_on": "2013-03-09T06:30:09.007000Z",
+    "name": "",
+    "num_ec": "1",
+    "opened_by": "test",
+    "opened_on": "2013-03-09T06:30:09.007000Z",
+    "owner_id": "",
+    "server_modified_on": "2015-05-06T16:19:50.956918Z",
+    "toilet_assessment_date": "2013-03-09",
+    "type": "case",
+    "user_id": "test",
+    "version": "2.0",
+    "xform_ids": [
+        "{instance_id}"
+    ]
+}

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from couchdbkit import ResourceNotFound
+from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
     DuplicateFixtureTagException, FixtureAPIException
 from django.core.validators import ValidationError
@@ -9,8 +10,9 @@ from corehq.apps.fixtures.models import FixtureTypeField, FixtureDataType, Fixtu
 from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
+from corehq.util.spreadsheets.excel import WorksheetNotFound, \
+    WorkbookJSONReader
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from soil import DownloadBase
 from corehq.apps.locations.models import SQLLocation
 
@@ -142,9 +144,8 @@ class FixtureWorkbook(object):
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
             raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
-        except Exception:
+        except InvalidFileException:
             raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
-
 
     def get_types_sheet(self):
         try:

@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.http import Http404
 import pytz
 from django.conf import settings
-from django.utils.importlib import import_module
+from importlib import import_module
 from django.utils import html, safestring
 
 from corehq.apps.groups.models import Group

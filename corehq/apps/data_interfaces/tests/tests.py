@@ -3,12 +3,12 @@ from datetime import datetime
 
 from django.test import TestCase
 from django.test import Client
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchforms.models import XFormInstance
 from django_prbac.models import UserRole, Role, Grant
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms
-from dimagi.utils.excel import WorkbookJSONReader
 from corehq import privileges, toggles
 from corehq.apps.accounting import generator
 
