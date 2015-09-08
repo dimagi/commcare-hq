@@ -348,3 +348,29 @@ class AdvancedSubModuleTests(SimpleTestCase, TestFileMixin):
         upd_guppy_form.actions.load_update_cases[1].case_tag = 'load_goldfish_renamed'
 
         self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
+
+
+class BasicSubModuleTests(SimpleTestCase, TestFileMixin):
+    file_path = ('data', 'suite')
+
+    def test_parent_preload(self):
+        """
+        Test parent case is correctly set in preloads when first form of parent module updates a case
+        """
+        factory = AppFactory(build_version='2.9')
+        upd_goldfish_mod, upd_goldfish_form = factory.new_basic_module('upd_goldfish', 'gold-fish')
+        factory.form_updates_case(upd_goldfish_form)
+
+        guppy_mod, guppy_form = factory.new_basic_module(
+            'upd_guppy',
+            'guppy',
+            parent_module=upd_goldfish_mod,
+        )
+        guppy_form.source = self.get_xml('original_form', override_path=('data',))
+        factory.form_preloads_case(
+            guppy_form,
+            'guppy',
+            parent_case_type='gold-fish',
+            preload={'/data/question1': 'parent/question1'})
+
+        self.assertXmlEqual(self.get_xml('child-module-preload-parent-ref'), guppy_form.render_xform())
