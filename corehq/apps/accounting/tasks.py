@@ -9,9 +9,7 @@ from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
-from django.utils.html import strip_tags
 
-from corehq.util.view_utils import absolute_reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
