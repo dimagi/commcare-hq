@@ -106,6 +106,7 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
              keys=list(users_with_old_email),
              include_docs=True,
              reduce=False,
+             limit=100,  # if more than 100 people had this email then we are out of luck
          ).all()
     else:
         couch_users_who_had_old_email = []
