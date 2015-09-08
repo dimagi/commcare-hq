@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
+import pytz
 from corehq.apps.hqadmin.models import PillowCheckpointSeqStore
 from pillowtop.utils import get_pillow_by_name
 
@@ -44,5 +45,5 @@ class Command(BaseCommand):
         old_seq_name = utcnow.strftime('%Y%m%d_%H%M%S_seq')
         checkpoint[old_seq_name] = checkpoint['seq']
         checkpoint['seq'] = new_seq
-        checkpoint['timestamp'] = utcnow.isoformat()
+        checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         pillow.couch_db.save_doc(checkpoint)
