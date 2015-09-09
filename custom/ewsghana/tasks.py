@@ -24,7 +24,6 @@ from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain,
     bootstrap_domain
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-import settings
 
 
 EXTENSIONS = {
@@ -49,7 +48,7 @@ EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 34
 
 
 @periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def migration_task():
     for config in EWSGhanaConfig.get_all_steady_sync_configs():
         if config.enabled:
@@ -60,7 +59,7 @@ def migration_task():
 
 # Alert when facilities have not been reported continuously for 3 weeks
 @periodic_task(run_every=crontab(hour=10, minute=00),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def on_going_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -69,7 +68,7 @@ def on_going_non_reporting():
 
 # Ongoing STOCKOUTS at SDP and RMS
 @periodic_task(run_every=crontab(hour=10, minute=25),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def on_going_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -79,7 +78,7 @@ def on_going_stockout():
 
 # Urgent Non-Reporting
 @periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def urgent_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -88,7 +87,7 @@ def urgent_non_reporting():
 
 # Urgent Stockout
 @periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def urgent_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -96,7 +95,7 @@ def urgent_stockout():
 
 
 @periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=58),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def first_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -104,7 +103,7 @@ def first_soh_reminder():
 
 
 @periodic_task(run_every=crontab(day_of_week=0, hour=13, minute=57),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def second_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -112,7 +111,7 @@ def second_soh_reminder():
 
 
 @periodic_task(run_every=crontab(day_of_week=2, hour=13, minute=54),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def third_soh_to_super():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -120,7 +119,7 @@ def third_soh_to_super():
 
 
 @periodic_task(run_every=crontab(day_of_month="2", hour=14, minute=6),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def stockout_notification_to_web_supers():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -128,7 +127,7 @@ def stockout_notification_to_web_supers():
 
 
 @periodic_task(run_every=crontab(day_of_month="28", hour=14, minute=15),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def reminder_to_submit_rrirv():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
@@ -136,7 +135,7 @@ def reminder_to_submit_rrirv():
 
 
 @periodic_task(run_every=crontab(month_of_year='1,4,7,10', day_of_month=4, hour=10, minute=3),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+               queue='background_queue')
 def reminder_to_visit_website():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
