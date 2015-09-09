@@ -367,12 +367,10 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
-    'soil',
     'custom.apps.crs_reports',
     'custom.m4change',
 
     # submodules with tests that run on travis
-    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
