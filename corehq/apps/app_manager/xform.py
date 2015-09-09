@@ -1434,7 +1434,7 @@ class XForm(WrappedNode):
         Adds the necessary hidden properties, fixture references, and calculations to
         get the global next visit date for schedule modules
         """
-        forms = [f for f in form.get_module().get_forms()
+        forms = [f for f in form.get_phase().get_forms()
                  if getattr(f, 'schedule') and f.schedule.enabled]
         forms_due = []
         for form in forms:
