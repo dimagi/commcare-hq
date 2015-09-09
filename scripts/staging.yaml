@@ -52,9 +52,7 @@ branches:
 #  - FormArchive # Sravan 7/22
   - ckeditor # J$ 7/24
   - quickcache-user-roles  # Ethan 8/13
-  - optmize-deploy+knockout-js2 # Ben 8/24
   - knockout-js # Ben 8/17
-  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
 submodules:
