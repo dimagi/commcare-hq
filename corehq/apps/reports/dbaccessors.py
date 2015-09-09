@@ -1,5 +1,5 @@
 import json
-import settings
+from django.conf import settings
 from corehq.apps.reports.models import HQExportSchema
 
 
