@@ -1,4 +1,5 @@
 from __future__ import division
+import inspect
 import warnings
 from datetime import datetime
 from dateutil.parser import parse
@@ -50,13 +51,13 @@ def get_all_pillows(instantiate=True):
     return pillowtops
 
 
-def get_pillow_by_name(pillow_class_name):
+def get_pillow_by_name(pillow_class_name, instantiate=False):
     settings = import_settings()
     if hasattr(settings, 'PILLOWTOPS'):
         for k, v in settings.PILLOWTOPS.items():
             for full_str in v:
                 if pillow_class_name in full_str:
-                    return import_pillow_string(full_str)
+                    return import_pillow_string(full_str, instantiate=instantiate)
 
 
 def force_seq_int(seq):
@@ -70,15 +71,24 @@ def force_seq_int(seq):
 
 
 def get_all_pillows_json():
-    pillows = get_all_pillows()
-    return [get_pillow_json(pillow) for pillow in pillows]
+    pillow_classes = get_all_pillows(instantiate=False)
+    return [get_pillow_json(pillow_class) for pillow_class in pillow_classes]
 
 
-def get_pillow_json(pillow_or_name):
-    if isinstance(pillow_or_name, basestring):
-        pillow = get_pillow_by_name(pillow_or_name)
+def get_pillow_json(pillow_or_class_or_name):
+    from pillowtop.listener import AliasedElasticPillow
+
+    def instantiate(pillow_class):
+        return pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
+
+    if isinstance(pillow_or_class_or_name, basestring):
+        pillow_class = get_pillow_by_name(pillow_or_class_or_name, instantiate=False)
+        pillow = instantiate(pillow_class)
+    elif inspect.isclass(pillow_or_class_or_name):
+        pillow = instantiate(pillow_or_class_or_name)
     else:
-        pillow = pillow_or_name
+        pillow = pillow_or_class_or_name
+
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.get('timestamp')
     if timestamp:

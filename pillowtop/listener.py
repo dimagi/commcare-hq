@@ -521,7 +521,7 @@ class AliasedElasticPillow(BulkPillow):
     es_timeout = 3  # in seconds
     default_mapping = None  # the default elasticsearch mapping to use for this
     bulk = False
-    online = True  # online=False is for in memory (no ES) connectivity for testing purposes
+    online = True  # online=False is for in memory (no ES) connectivity for testing purposes or for admin operations
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
