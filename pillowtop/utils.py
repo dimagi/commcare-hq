@@ -68,10 +68,12 @@ def force_seq_int(seq):
 
 
 def get_all_pillows_json():
-    pillows = get_all_pillows()
+    from pillowtop.listener import AliasedElasticPillow
+    pillow_classes = get_all_pillows(instantiate=False)
     pillows_json = []
     db_seqs = {}
-    for pillow in pillows:
+    for pillow_class in pillow_classes:
+        pillow = pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
         checkpoint = pillow.get_checkpoint()
         timestamp = checkpoint.get('timestamp')
         if timestamp:
