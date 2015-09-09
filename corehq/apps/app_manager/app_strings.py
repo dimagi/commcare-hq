@@ -81,6 +81,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.report_menu(), 'Reports'
                 yield id_strings.report_name_header(), 'Report Name'
                 yield id_strings.report_description_header(), 'Report Description'
+                yield id_strings.report_last_sync(), 'Last Sync'
                 for column in config.report.report_columns:
                     yield (
                         id_strings.report_column_header(config.uuid, column.column_id),
