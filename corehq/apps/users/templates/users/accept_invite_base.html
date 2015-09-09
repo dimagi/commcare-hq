@@ -40,7 +40,7 @@
             </div>
             <div class="span4">
                 <aside class="well">
-                    <h3>Not {{ user.username }}?</h3>
+                    <h3>{% blocktrans %}Not {{ formatted_username|safe }}?{% endblocktrans %}</h3>
                     <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
                     {% trans "or" %}<br />
                     <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
@@ -68,7 +68,6 @@
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
                         {% include "users/partial/field.html" with field=form.hr_name %}
-                        {% include "users/partial/field.html" with field=form.email_opt_in %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}
                     </fieldset>
                     <div class="form-actions">

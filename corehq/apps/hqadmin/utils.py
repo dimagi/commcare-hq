@@ -3,7 +3,7 @@ from pillowtop.utils import get_all_pillows, force_seq_int
 
 from .models import PillowCheckpointSeqStore
 
-EPSILON = 100000
+EPSILON = 10000000
 
 
 def pillow_seq_store():
@@ -14,8 +14,11 @@ def pillow_seq_store():
             notify_exception(
                 None,
                 message='Found seq number lower than previous for {}. '
-                        'This could mean we are in a rewind state'.format(store.checkpoint_id)
-            )
+                        'This could mean we are in a rewind state'.format(store.checkpoint_id),
+                details={
+                    'pillow checkpoint seq': checkpoint['seq'],
+                    'stored seq': store.seq
+                })
         else:
             store.seq = checkpoint['seq']
             store.save()

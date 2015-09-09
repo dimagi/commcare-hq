@@ -7,6 +7,7 @@ import logging
 from optparse import make_option
 
 # Django imports
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 
@@ -18,6 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+
+
+def cchq_prbac_bootstrap(apps, schema_editor):
+    """Convenience function for use in data migrations.
+    Example operation:
+        migrations.RunPython(cchq_prbac_bootstrap)
+    """
+    call_command('cchq_prbac_bootstrap')
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
@@ -143,6 +153,10 @@ class Command(BaseCommand):
         Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
         Role(slug=privileges.DATA_CLEANUP, name='Data Cleanup Tools',
              description='Tools for cleaning up data, including editing submissions and archiving forms.'),
+        Role(slug=privileges.TEMPLATED_INTENTS, name='Templated Intents',
+             description='Provides a dropdown for Android App Callouts'),
+        Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
+             description='Allows for specifying custom intents'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -179,12 +193,14 @@ class Command(BaseCommand):
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
         privileges.DATA_CLEANUP,
+        privileges.TEMPLATED_INTENTS,
     ]
 
     advanced_plan_features = pro_plan_features + [
         privileges.CUSTOM_BRANDING,
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
+        privileges.CUSTOM_INTENTS,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

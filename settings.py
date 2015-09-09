@@ -125,6 +125,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -264,6 +265,7 @@ HQ_APPS = (
     'corehq.apps.yo',
     'corehq.apps.telerivet',
     'corehq.apps.mach',
+    'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -336,6 +338,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
+    'custom.guinea_backup',
 )
 
 TEST_APPS = ()
@@ -364,12 +367,10 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
-    'soil',
     'custom.apps.crs_reports',
     'custom.m4change',
 
     # submodules with tests that run on travis
-    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -443,7 +444,6 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -457,6 +457,7 @@ PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
+DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
@@ -1106,6 +1107,7 @@ COUCHDB_APPS = [
     'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
+    ('performance_sms', 'meta'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
@@ -1261,7 +1263,7 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.CustomDataSourcePillow',
+        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
@@ -1308,12 +1310,13 @@ PILLOWTOPS = {
 }
 
 
-CUSTOM_UCR_REPORTS = [
+STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json')
 ]
 
 
-CUSTOM_DATA_SOURCES = [
+STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),

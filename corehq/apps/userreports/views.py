@@ -27,7 +27,13 @@ from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
-from corehq.apps.userreports.exceptions import BadBuilderConfigError, BadSpecError, UserQueryError
+from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    ReportConfigurationNotFoundError,
+    UserQueryError,
+)
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -39,7 +45,9 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
-    CustomDataSourceConfiguration,
+    StaticDataSourceConfiguration,
+    get_datasource_config,
+    get_report_config,
 )
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -63,14 +71,17 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
-    is_static = config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
-    if is_static:
-        config = CustomDataSourceConfiguration.by_id(config_id)
-        if not config or config.domain != domain:
-            raise Http404()
-    else:
-        config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    return config, is_static
+    try:
+        return get_datasource_config(config_id, domain)
+    except DataSourceConfigurationNotFoundError:
+        raise Http404
+
+
+def get_report_config_or_404(config_id, domain):
+    try:
+        return get_report_config(config_id, domain)
+    except ReportConfigurationNotFoundError:
+        raise Http404
 
 
 @login_and_domain_required
@@ -248,7 +259,7 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.<br/><strong>Numeric</strong>: select this if the property is a number.'),
+            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
         return context
 
@@ -384,7 +395,7 @@ def import_report(request, domain):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -487,7 +498,7 @@ def rebuild_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    del config._doc['_rev']
+    config._doc.pop('_rev', None)
     return json_response(config)
 
 
@@ -570,7 +581,7 @@ def process_url_params(params, columns):
 @login_or_basic
 @require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
     q = adapter.get_query_object()
     table = adapter.get_table()
@@ -604,13 +615,13 @@ def export_data_source(request, domain, config_id):
 
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, _ = get_datasource_config_or_404(config_id, domain)
     return json_response({'isBuilt': config.meta.build.finished})
 
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report, _ = get_report_config_or_404(report_id, domain)
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
@@ -643,7 +654,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
-    custom_data_sources = list(CustomDataSourceConfiguration.by_domain(domain))
+    custom_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
         'reports': ReportConfiguration.by_domain(domain),

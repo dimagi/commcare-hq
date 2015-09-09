@@ -174,11 +174,14 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            try:
-                from corehq.apps.prelogin.views import HomePublicView
-                url = reverse(HomePublicView.urlname)
-            except ImportError:
-                # this happens when the prelogin app is not included.
+            if settings.ENABLE_PRELOGIN_SITE:
+                try:
+                    from corehq.apps.prelogin.views import HomePublicView
+                    url = reverse(HomePublicView.urlname)
+                except ImportError:
+                    # this happens when the prelogin app is not included.
+                    url = reverse('landing_page')
+            else:
                 url = reverse('landing_page')
     else:
         if domain:
@@ -197,7 +200,8 @@ def redirect_to_default(req, domain=None):
                         req.couch_user, domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('dashboard_default', args=[domain])
+                    from corehq.apps.dashboard.views import dashboard_default
+                    return dashboard_default(req, domain)
 
             else:
                 raise Http404
@@ -339,6 +343,7 @@ def _login(req, domain_name, template_name):
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'allow_domain_requests': domain.allow_domain_requests,
         })
 
     authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm

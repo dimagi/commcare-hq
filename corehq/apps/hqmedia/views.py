@@ -19,6 +19,7 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
@@ -285,7 +286,11 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status.save()
         else:
             self.uploaded_file.file.seek(0)
-            saved_file = expose_cached_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+            saved_file = expose_cached_download(
+                self.uploaded_file.file.read(),
+                expiry=BulkMultimediaStatusCache.cache_expiry,
+                file_extension=file_extention_from_filename(self.uploaded_file.name),
+            )
             processing_id = saved_file.download_id
             status = BulkMultimediaStatusCache(processing_id)
             status.save()

@@ -3,9 +3,10 @@ import itertools
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.conf import settings
 import shlex
-from subprocess import Popen, PIPE
+from subprocess import PIPE
 from tempfile import NamedTemporaryFile
 import os
+from dimagi.utils.subprocess_manager import subprocess_context
 
 
 class JadDict(dict):
@@ -74,10 +75,12 @@ def sign_jar(jad, jar):
             step_two = 'java -jar "%s" -addcert -alias %s -keystore "%s" -storepass %s -inputjad "%s" -outputjad "%s"' % \
                             (jad_tool, key_alias, key_store, store_pass, jad_file.name, jad_file.name)
 
-            for step in (step_one, step_two):
-                p = Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
-                err = p.stderr.read().strip()
-                if err != '': raise Exception(err)
+            with subprocess_context() as subprocess:
+                for step in (step_one, step_two):
+                    p = subprocess.Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
+                    _, stderr = p.communicate()
+                    if stderr.strip():
+                        raise Exception(stderr)
 
             with open(jad_file.name) as f:
                 txt = f.read()

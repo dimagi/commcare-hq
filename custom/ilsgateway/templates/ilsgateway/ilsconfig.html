@@ -180,6 +180,15 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="fix_stock_data">
+                        {% trans "Fix stock data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -243,6 +252,12 @@
 
         $("#change_runner_date_to_last_migration").click(function() {
             var url = '{% url 'change_runner_date_to_last_migration' domain %}';
+            var successMessage = "{% trans "Started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_stock_data").click(function() {
+            var url = '{% url 'fix_stock_data' domain %}';
             var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });

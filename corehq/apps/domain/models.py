@@ -10,8 +10,6 @@ from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import \
-    USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -38,7 +36,7 @@ from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
-from django.utils.importlib import import_module
+from importlib import import_module
 from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
@@ -243,6 +241,7 @@ class Domain(Document, SnapshotMixin):
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
+    allow_domain_requests = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
 
@@ -671,7 +670,8 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
-        if not self._rev and USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS:
+        if not self._rev:
+            # mark any new domain as timezone migration complete
             set_migration_complete(self.name)
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
@@ -1234,6 +1234,9 @@ class TransferDomainRequest(models.Model):
     TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
+
+    class Meta:
+        app_label = 'domain'
 
     @property
     @memoized

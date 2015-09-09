@@ -23,8 +23,8 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq import privileges
 from corehq import toggles
+from corehq.util.spreadsheets.excel import alphanumeric_sort_key
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.excel import alphanumeric_sort_key
 
 
 class GroupNotFoundException(Exception):

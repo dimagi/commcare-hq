@@ -71,7 +71,7 @@
                     {% with property_hash|dict_lookup:export.name as properties %}
                       {% if properties.size %}
                         <a  data-toggle='modal' href="#export-download-status"
-                            {% if export.app.id %}
+                            {% if export.app_id %}
                                 data-downloadurl='{% url "form_multimedia_export" domain %}?app_id={{export.app_id}}&amp;export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'
                             {% else %}
                                 data-downloadurl='{% url "form_multimedia_export" domain %}?export_id={{properties.export_id}}&amp;{{ get_filter_params.urlencode|safe }}&amp;name={{export.name}}'

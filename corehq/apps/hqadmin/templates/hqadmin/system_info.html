@@ -69,6 +69,7 @@
                 self.clearTimer();
                 self.loading(true);
                 $.getJSON(url, function (data) {
+                    self.error(null);
                     var objects = _(data).map(function (item) {
                         return new model(item);
                     });
@@ -76,7 +77,7 @@
                         objects = _(objects).sortBy(function (x) { return x[sort_by]; })
                     }
                     self.models(objects);
-                    if (self.autoRefresh) {
+                    if (self.autoRefresh()) {
                         self.timer = setTimeout(self.refresh, self.interval);
                     }
                 })
@@ -86,7 +87,7 @@
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
                     self.error("Error: " + err);
-                    self.autoRefresh = false;
+                    self.autoRefresh(false);
                     self.timer = null;
                 })
                 .always(function (){
@@ -200,6 +201,12 @@
                     model.autoRefresh(self.refreshStatus());
                 });
             };
+
+            self.refreshAll = function () {
+                $.each(self.models, function (index, model) {
+                    model.refresh();
+                });
+            };
         };
 
         var autoRefresh = new AutoRefreshModel();
@@ -213,7 +220,7 @@
             autoRefresh.addModel(pillowtopViewModel);
             autoRefresh.addModel(dbComparisonsViewModel);
 
-            autoRefresh.toggleRefresh();
+            autoRefresh.refreshAll();
             ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
         });
 
@@ -324,6 +331,9 @@
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
             </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
@@ -372,6 +382,9 @@
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
             </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
@@ -399,6 +412,9 @@
             Couch Tasks
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
@@ -438,6 +454,9 @@
             Couch Tasks
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
@@ -481,6 +500,9 @@
             Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
             <small data-bind="if: loading()">
                 <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
             </small>
         </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>

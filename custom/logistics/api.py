@@ -239,7 +239,7 @@ class APISynchronization(object):
         if user is None:
             try:
                 user = WebUser.create(domain=None, username=username,
-                                      password=ilsgateway_webuser.password, email=ilsgateway_webuser.email,
+                                      password=ilsgateway_webuser.password, email=ilsgateway_webuser.email.lower(),
                                       **user_dict)
                 user.add_domain_membership(self.domain, location_id=location_id)
                 user.save()

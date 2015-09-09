@@ -12,6 +12,7 @@ var BroadcastViewModel = function (initial_values) {
     self.subject = ko.observable(initial_values.subject);
     self.message = ko.observable(initial_values.message);
     self.form_unique_id = ko.observable(initial_values.form_unique_id);
+    self.role = ko.observable(initial_values.role);
 
     self.showDateAndTimeSelect = ko.computed(function () {
         return self.timing() === 'LATER';

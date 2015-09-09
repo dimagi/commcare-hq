@@ -27,6 +27,7 @@ try:
     from .test_broken_build import *
     from .test_translations import *
     from corehq.apps.app_manager.tests.test_case_meta import *
+    from corehq.apps.app_manager.tests.test_schedule import *
     from corehq.apps.app_manager.tests.test_case_list_form import *
     from corehq.apps.app_manager.tests.test_form_workflow import *
     from corehq.apps.app_manager.tests.test_case_list_lookup import *

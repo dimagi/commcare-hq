@@ -260,7 +260,7 @@ class ProductsReportHelper(object):
         return [
             transaction
             for transaction in self.transactions
-            if transaction.action == 'receipts' and transaction.quantity != '0'
+            if transaction.action == 'receipts' and transaction.quantity != 0
         ]
 
 

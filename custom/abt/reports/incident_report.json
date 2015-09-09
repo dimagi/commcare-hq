@@ -1,0 +1,93 @@
+{  
+   "domains":[
+        "airs",
+        "abtmali",
+        "airsmadagascar",
+        "airsethiopia"
+    ],
+   "data_source_table":"supervisory",
+   "report_id":"incident-report",
+   "custom_configurable_report":"custom.abt.reports.views.FormattedSupervisoryReport",
+   "config":{
+      "domain":"abtmali",
+      "config_id":"static-supervisory-indicators",
+      "description":"",
+      "title":"Incident Report",
+      "sort_expression":[  
+
+      ],
+      "visible":false,
+      "configured_charts":[  
+
+      ],
+      "aggregation_columns":[  
+         "flag"
+      ],
+      "filters":[  
+         {
+            "display": "Form Name",
+            "field": "form_name",
+            "type": "dynamic_choice_list",
+            "datatype": "string",
+            "compare_as_string": true,
+            "required": false,
+            "slug": "form_name"
+         }
+      ],
+      "report_meta":{  
+         "doc_type":"ReportMeta",
+         "builder_report_type":null,
+         "created_by_builder":false
+      },
+      "columns":[  
+         {  
+            "description":null,
+            "field":"flag",
+            "format":"default",
+            "transform":{  
+
+            },
+            "column_id":"flag",
+            "alias":null,
+            "calculate_total":false,
+            "type":"field",
+            "display":{  
+               "en":"Incident"
+            },
+            "aggregation":"simple"
+         },
+         {  
+            "description":null,
+            "alias":null,
+            "format":"default",
+            "transform":{  
+
+            },
+            "aggregation":"count_unique",
+            "field":"inserted_at",
+            "calculate_total":true,
+            "column_id":"total",
+            "type":"field",
+            "display":{  
+               "en":"Total"
+            }
+         },
+         {  
+            "max_expansion":50,
+            "description":null,
+            "format":"default",
+            "aggregation":"sum",
+            "column_id":"location",
+            "field":"level_4",
+            "transform":{  
+
+            },
+            "calculate_total":true,
+            "type":"expanded",
+            "display":{  
+               "en":""
+            }
+         }
+      ]
+   }
+}

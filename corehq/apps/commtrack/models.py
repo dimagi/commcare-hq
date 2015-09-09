@@ -13,6 +13,7 @@ from django.db.models.signals import post_save
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 
 from dimagi.ext.couchdbkit import *
+from dimagi.ext import jsonobject
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
@@ -310,37 +311,44 @@ def force_empty_string_to_null(value):
         return value
 
 
-class StockReportHelper(object):
+class StockReportHelper(jsonobject.JsonObject):
     """
     Intermediate class for dealing with stock XML
     """
 
-    def __init__(self, form, timestamp, tag, transactions):
-        self._form = form
-        self.form_id = form._id
-        self.timestamp = timestamp
-        self.tag = tag
-        self.transactions = transactions
-        self.server_date = form.received_on
+    domain = jsonobject.StringProperty()
+    form_id = jsonobject.StringProperty()
+    timestamp = jsonobject.DateTimeProperty()
+    tag = jsonobject.StringProperty()
+    transactions = jsonobject.ListProperty(lambda: StockTransactionHelper)
+    server_date = jsonobject.DateTimeProperty()
+
+    @classmethod
+    def make_from_form(cls, form, timestamp, tag, transactions):
+        return cls(
+            domain=form.domain,
+            form_id=form.get_id,
+            timestamp=timestamp,
+            tag=tag,
+            transactions=transactions,
+            server_date=form.received_on,
+        )
 
 
-class StockTransactionHelper(object):
+class StockTransactionHelper(jsonobject.JsonObject):
     """
     Helper class for transactions
     """
 
-    def __init__(self, product_id=None, action=None, subaction=None,
-                 domain=None, quantity=None, location_id=None, timestamp=None,
-                 case_id=None, section_id=None):
-        self.quantity = quantity
-        self.location_id = location_id
-        self.timestamp = timestamp
-        self.case_id = case_id
-        self.section_id = section_id
-        self.domain = domain
-        self.action = action
-        self.subaction = subaction
-        self.product_id = product_id
+    product_id = jsonobject.StringProperty()
+    action = jsonobject.StringProperty()
+    subaction = jsonobject.StringProperty()
+    domain = jsonobject.StringProperty()
+    quantity = jsonobject.DecimalProperty()
+    location_id = jsonobject.StringProperty()
+    timestamp = jsonobject.DateTimeProperty()
+    case_id = jsonobject.StringProperty()
+    section_id = jsonobject.StringProperty()
 
     @property
     def relative_quantity(self):
@@ -653,6 +661,7 @@ class StockState(models.Model):
         )
 
     class Meta:
+        app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
 
 

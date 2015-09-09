@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex
+    AutoSelectCase, CaseIndex, PreloadAction
 
 
 class AppFactory(object):
@@ -12,12 +12,12 @@ class AppFactory(object):
     >>> factory.form_opens_case(form1)
 
     >>> module2, form2 = factory.new_basic_module('update_case', 'person')
-    >>> factory.form_updates_case(form2, case_type='house')
+    >>> factory.form_requires_case(form2, case_type='house')
     >>> factory.form_opens_case(form2, is_subcase=True)
 
     >>> module3, form3 = factory.new_advanced_module('advanced', 'person')
-    >>> factory.form_updates_case(form3, case_type='house')
-    >>> factory.form_updates_case(form3, case_type='person', parent_case_type='house')
+    >>> factory.form_requires_case(form3, case_type='house')
+    >>> factory.form_requires_case(form3, case_type='person', parent_case_type='house')
     >>> factory.form_opens_case(form3, case_type='child', is_subcase=True)
     """
     def __init__(self, domain='test', name='Untitled Application', version=APP_V2, build_version=None):
@@ -60,16 +60,21 @@ class AppFactory(object):
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
         index = len(module.forms)
-        form = module.new_form('{} form {}'.format(slug, index), lang='en')
+        form = module.new_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
+        form.source = ''  # set form source since we changed the unique_id
         return form
 
     @staticmethod
-    def form_updates_case(form, case_type=None, parent_case_type=None):
+    def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
         if form.form_type == 'module_form':
             form.requires = 'case'
-            form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
-            form.actions.update_case.condition.type = 'always'
+            if update:
+                form.actions.update_case = UpdateCaseAction(update=update)
+                form.actions.update_case.condition.type = 'always'
+            if preload:
+                form.actions.case_preload = PreloadAction(preload=preload)
+                form.actions.case_preload.condition.type = 'always'
 
             if parent_case_type:
                 module = form.get_module()
@@ -82,11 +87,12 @@ class AppFactory(object):
         else:
             case_type = case_type or form.get_module().case_type
             index = len([load for load in form.actions.load_update_cases if load.case_type == case_type])
-            action = LoadUpdateAction(
-                case_type=case_type,
-                case_tag='load_{}_{}'.format(case_type, index),
-                case_properties={'question1': '/data/question1'},
-            )
+            kwargs = {'case_type': case_type, 'case_tag': 'load_{}_{}'.format(case_type, index)}
+            if update:
+                kwargs['case_properties'] = update
+            if preload:
+                kwargs['preload'] = preload
+            action = LoadUpdateAction(**kwargs)
 
             if parent_case_type:
                 parent_action = form.actions.load_update_cases[-1]
@@ -118,6 +124,22 @@ class AppFactory(object):
                 action.case_indices = [CaseIndex(tag=form.actions.load_update_cases[-1].case_tag)]
 
             form.actions.open_cases.append(action)
+
+    @classmethod
+    def case_list_form_app_factory(cls):
+        factory = cls(build_version='2.9')
+
+        case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
+        factory.form_requires_case(update_case_form)
+
+        register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+        factory.form_opens_case(register_form)
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'New Case'
+        }
+        return factory
 
     @staticmethod
     def advanced_form_autoloads(form, mode, value_key, value_source=None):

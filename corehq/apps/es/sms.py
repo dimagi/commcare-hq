@@ -20,6 +20,7 @@ class SMSES(HQESQuery):
             to_couch_user,
             to_commcare_user_or_case,
             received,
+            direction,
         ] + super(SMSES, self).builtin_filters
 
     def user_facet(self, size=None):
@@ -27,11 +28,15 @@ class SMSES(HQESQuery):
 
 
 def incoming_messages():
-    return filters.term("direction", "i")
+    return direction("i")
 
 
 def outgoing_messages():
-    return filters.term("direction", "o")
+    return direction("o")
+
+
+def direction(direction_):
+    return filters.term("direction", direction_)
 
 
 def to_commcare_user():

@@ -87,6 +87,9 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
+    class Meta:
+        app_label = 'locations'
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
@@ -180,6 +183,12 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
 
+class OnlyUnarchivedLocationManager(LocationManager):
+    def get_queryset(self):
+        return (super(OnlyUnarchivedLocationManager, self).get_query_set()
+                .filter(is_archived=False))
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
@@ -205,6 +214,8 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+    # This should really be the default location manager
+    active_objects = OnlyUnarchivedLocationManager()
 
     @property
     def get_id(self):
@@ -231,6 +242,7 @@ class SQLLocation(MPTTModel):
         self._products = value
 
     class Meta:
+        app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
     def __unicode__(self):
