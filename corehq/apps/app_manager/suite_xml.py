@@ -591,6 +591,8 @@ class Detail(OrderedXmlObject, IdNode):
     ROOT_NAME = 'detail'
     ORDER = ('title', 'lookup', 'details', 'fields')
 
+    nodeset = StringField('@nodeset')
+
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
     fields = NodeListField('field', Field)
