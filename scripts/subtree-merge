@@ -19,7 +19,10 @@ function subtree-merge() {
 
 subtree-merge $MODULE_NAME $MODULE_URI $OLD_PATH $NEW_PATH
 
-echo "Merge complete. If this was a submodule, remember to also remove it, e.g.:"
+echo "Merge complete. If this was a submodule, remember to also"
+echo "- remove it, e.g.:"
 echo "  git rm --cached submodules/django-soil-src"
 echo "  rm -rf submodules/django-soil-src"
 echo "  vim .gitmodules  # remove 'submodules/django-soil-src' section"
+echo "- ensure its tests run along with the rest of commcarehq's tests, e.g."
+echo "  vim settings.py  # remove from APPS_TO_EXCLUDE_FROM_TESTS
