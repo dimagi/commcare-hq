@@ -359,21 +359,12 @@ def webworkers():
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def install_npm_packages():
     """Install required NPM packages for server"""
     with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
         with shell_env(HOME=env.home):
             sudo("npm install")
-
-
-@roles(ROLES_ALL_SRC)
-@parallel
-def create_virtualenvs():
-    """set up virtualenv on remote host"""
-    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
-
-    args = '--distribute --no-site-packages'
-    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
 
 
 @task
@@ -462,8 +453,8 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch')
-        sudo("git submodule foreach 'git fetch'")
+        sudo('git fetch origin {}'.format(env.code_branch))
+        sudo("git submodule foreach 'git fetch origin {}'".format(env.code_branch))
         sudo('git checkout %(code_branch)s' % env)
         sudo('git reset --hard origin/%(code_branch)s' % env)
         sudo('git submodule sync')
@@ -779,6 +770,7 @@ def awesome_deploy(confirm="yes"):
 
 @task
 @roles(ROLES_ALL_SRC)
+@parallel
 def update_touchforms():
     # npm bin allows you to specify the locally installed version instead of having to install grunt globally
     with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
