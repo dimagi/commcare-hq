@@ -3445,6 +3445,7 @@ class ReportAppConfig(DocumentSchema):
 
         return Detail(custom_xml=suite_xml.Detail(
             id='reports.{}.data'.format(self.uuid),
+            nodeset='rows/row',
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
             ),
