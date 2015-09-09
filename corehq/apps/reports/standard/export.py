@@ -63,8 +63,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @memoized
     def get_saved_exports(self):
-        exports = stale_get_exports(self.domain)
-        exports = filter(lambda x: x.type == "form", exports)
+        exports = FormExportSchema.get_stale_exports(self.domain)
         if not self.can_view_deid:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -316,8 +315,7 @@ class CaseExportReport(ExportReport):
         return self.request.GET.copy()
 
     def get_saved_exports(self):
-        exports = stale_get_exports(self.domain).all()
-        exports = filter(lambda x: x.type == "case", exports)
+        exports = CaseExportSchema.get_stale_exports(self.domain)
         return sorted(exports, key=lambda x: x.name)
 
     @property
@@ -401,10 +399,7 @@ class DataExportInterface(GenericReportView):
     @property
     @memoized
     def saved_exports(self):
-        exports = [
-            self.export_schema.wrap(doc.to_json())
-            for doc in filter(lambda x: x.type == self.export_type, stale_get_exports(self.domain))
-        ]
+        exports = self.export_schema.get_stale_exports(self.domain)
         for export in exports:
             export.download_url = (
                 self.download_page_url_root + '?export_id=' + export._id
