@@ -589,7 +589,7 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'lookup', 'fields')
+    ORDER = ('title', 'lookup', 'details', 'fields')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
