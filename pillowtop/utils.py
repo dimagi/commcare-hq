@@ -1,4 +1,5 @@
 from __future__ import division
+import inspect
 import warnings
 from datetime import datetime
 from dateutil.parser import parse
@@ -50,11 +51,13 @@ def get_all_pillows(instantiate=True):
     return pillowtops
 
 
-def get_pillow_by_name(pillow_class_name):
-    all_pillows = get_all_pillows()
-    for pillow in all_pillows:
-        if pillow.__class__.__name__ == pillow_class_name:
-            return pillow
+def get_pillow_by_name(pillow_class_name, instantiate=False):
+    settings = import_settings()
+    if hasattr(settings, 'PILLOWTOPS'):
+        for k, v in settings.PILLOWTOPS.items():
+            for full_str in v:
+                if pillow_class_name in full_str:
+                    return import_pillow_string(full_str, instantiate=instantiate)
 
 
 def force_seq_int(seq):
@@ -68,38 +71,44 @@ def force_seq_int(seq):
 
 
 def get_all_pillows_json():
-    from pillowtop.listener import AliasedElasticPillow
     pillow_classes = get_all_pillows(instantiate=False)
-    pillows_json = []
-    db_seqs = {}
-    for pillow_class in pillow_classes:
-        pillow = pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
-        checkpoint = pillow.get_checkpoint()
-        timestamp = checkpoint.get('timestamp')
-        if timestamp:
-            time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
-            hours_since_last = time_since_last.total_seconds() // 3600
+    return [get_pillow_json(pillow_class) for pillow_class in pillow_classes]
 
-            try:
-                # remove microsecond portion
-                time_since_last = str(time_since_last)
-                time_since_last = time_since_last[0:time_since_last.index('.')]
-            except ValueError:
-                pass
-        else:
-            time_since_last = ''
-            hours_since_last = None
 
-        db_uri = pillow.couch_db.uri
-        if db_uri not in db_seqs:
-            db_seqs[db_uri] = force_seq_int(pillow.get_db_seq())
+def get_pillow_json(pillow_or_class_or_name):
+    from pillowtop.listener import AliasedElasticPillow
 
-        pillows_json.append({
-            'name': pillow.__class__.__name__,
-            'seq': force_seq_int(checkpoint.get('seq')),
-            'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-            'db_seq': db_seqs[db_uri],
-            'time_since_last': time_since_last,
-            'hours_since_last': hours_since_last
-        })
-    return pillows_json
+    def instantiate(pillow_class):
+        return pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
+
+    if isinstance(pillow_or_class_or_name, basestring):
+        pillow_class = get_pillow_by_name(pillow_or_class_or_name, instantiate=False)
+        pillow = instantiate(pillow_class)
+    elif inspect.isclass(pillow_or_class_or_name):
+        pillow = instantiate(pillow_or_class_or_name)
+    else:
+        pillow = pillow_or_class_or_name
+
+    checkpoint = pillow.get_checkpoint()
+    timestamp = checkpoint.get('timestamp')
+    if timestamp:
+        time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
+        hours_since_last = time_since_last.total_seconds() // 3600
+
+        try:
+            # remove microsecond portion
+            time_since_last = str(time_since_last)
+            time_since_last = time_since_last[0:time_since_last.index('.')]
+        except ValueError:
+            pass
+    else:
+        time_since_last = ''
+        hours_since_last = None
+    return {
+        'name': pillow.__class__.__name__,
+        'seq': force_seq_int(checkpoint.get('seq')),
+        'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
+        'db_seq': force_seq_int(pillow.get_db_seq()),
+        'time_since_last': time_since_last,
+        'hours_since_last': hours_since_last
+    }
