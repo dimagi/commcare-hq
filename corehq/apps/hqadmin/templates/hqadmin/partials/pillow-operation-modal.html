@@ -12,9 +12,12 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-info" type="submit" data-bind="click: go, css: { disabled: pillow_model.running }">
+        <button class="btn btn-info" type="submit" data-bind="
+            click: go,
+            css: { disabled: pillow_model.operation_in_progress },
+            disable: pillow_model.operation_in_progress">
             {% trans "Go!" %}
-            <i class="icon-refresh icon-spin" data-bind="visible: pillow_model.running"></i>
+            <i class="icon-refresh icon-spin" data-bind="visible: pillow_model.operation_in_progress"></i>
         </button>
         <a href="#" class="btn" data-dismiss="modal">{% trans "Close" %}</a>
     </div>

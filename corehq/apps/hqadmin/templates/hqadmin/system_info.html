@@ -168,7 +168,7 @@
             self.show_supervisor_info = ko.observable();
             self.supervisor_state = ko.observable();
             self.supervisor_message = ko.observable();
-            self.running = ko.observable(false);
+            self.operation_in_progress = ko.observable(false);
 
             self.update = function (data) {
                 self.name(data.name);
@@ -182,16 +182,16 @@
 
             self.update(pillow);
 
-            self.supervisor_status = ko.computed(function () {
+            self.process_running = ko.computed(function () {
                 return self.supervisor_state() === 'RUNNING';
             });
 
             self.start_stop_text = ko.computed(function () {
-                return self.supervisor_status() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
+                return self.process_running() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
             });
 
             self.button_class = ko.computed(function () {
-                if (self.running() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED')) {
+                if (self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED')) {
                     return 'disabled';
                 } else {
                     return '';
@@ -258,7 +258,7 @@
             };
 
             self.start_stop = function () {
-                self.show_pillow_dialog(self.supervisor_status() ? 'stop' : 'start');
+                self.show_pillow_dialog(self.process_running() ? 'stop' : 'start');
             };
 
             self.refresh = function () {
@@ -266,12 +266,12 @@
             };
 
             self.perform_operation = function(operation) {
-                self.running(true);
+                self.operation_in_progress(true);
                 $.post('{% url "pillow_operation_api" %}', {
                     'pillow_name': self.name,
                     'operation': operation
                 }, function( data ) {
-                    self.running(false);
+                    self.operation_in_progress(false);
                     self.update(data);
 
                     $('#pillow_operation_modal').modal('hide');
@@ -490,17 +490,17 @@
                         <button class="btn" type="button" data-bind="
                             css: button_class,
                             click: reset_checkpoint,
-                            disable: running">{% trans "Reset" %}</button>
+                            disable: operation_in_progress">{% trans "Reset" %}</button>
                         <button class="btn" type="button" data-bind="
                             css: button_class,
                             click: start_stop,
                             text: start_stop_text,
-                            disable: running"></button>
+                            disable: operation_in_progress"></button>
                         <button class="btn" type="button" data-bind="
                             css: button_class,
                             click: refresh,
-                            disable: running">
-                            <i class="icon-refresh" data-bind="css: {'icon-spin': running}"></i>
+                            disable: operation_in_progress">
+                            <i class="icon-refresh" data-bind="css: {'icon-spin': operation_in_progress}"></i>
                         </button>
                     </td>
                 </tr>
