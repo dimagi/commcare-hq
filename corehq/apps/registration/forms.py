@@ -66,7 +66,9 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
-        if not kwargs.get('initial', {}).get('create_domain', True) or self.data.get('create_domain', True) == "False":
+        initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
+        data_create_domain = self.data.get('create_domain', "True")
+        if not initial_create_domain or data_create_domain == "False":
             self.fields['hr_name'].widget = forms.HiddenInput()
 
     def clean_email(self):
