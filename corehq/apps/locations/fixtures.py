@@ -69,7 +69,7 @@ class LocationFixtureProvider(object):
         a fixture with ALL locations for the domain.
         """
         if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-            locations = SQLLocation.objects.filter(domain=user.domain)
+            locations = SQLLocation.active_objects.filter(domain=user.domain)
         else:
             locations = []
             user_location = user.sql_location
@@ -78,12 +78,13 @@ class LocationFixtureProvider(object):
                 locations.append(user_location)
 
                 # add all descendants as well
-                locations += user_location.get_descendants()
+                locations += (user_location.get_descendants()
+                                           .filter(is_archived=False))
 
             if user.project.supports_multiple_locations_per_user:
                 # this might add duplicate locations but we filter that out later
                 location_ids = [loc._id for loc in user.locations]
-                locations += SQLLocation.objects.filter(
+                locations += SQLLocation.active_objects.filter(
                     location_id__in=location_ids
                 )
 
