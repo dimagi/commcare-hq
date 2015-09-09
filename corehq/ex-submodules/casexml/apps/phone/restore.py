@@ -185,7 +185,8 @@ class FileRestoreResponse(RestoreResponse):
         return stream_response(open(self.get_filename(), 'r'), headers)
 
 
-class CachedResponse(object):
+class CachedPayload(object):
+
     def __init__(self, payload):
         self.payload = payload
         self.payload_path = None
@@ -198,7 +199,7 @@ class CachedResponse(object):
         elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
-    def exists(self):
+    def __nonzero__(self):
         return bool(self.payload)
 
     def as_string(self):
@@ -207,11 +208,31 @@ class CachedResponse(object):
         finally:
             self.payload.close()
 
+    def get_content_length(self):
+        if self.payload_path:
+            return os.path.getsize(self.payload_path)
+        return None
+
+    def as_file(self):
+        return self.payload
+
+
+class CachedResponse(object):
+    def __init__(self, payload):
+        self.payload = payload
+
+    def exists(self):
+        return bool(self.payload)
+
+    def as_string(self):
+        return self.payload.as_string()
+
     def get_http_response(self):
         headers = {}
-        if self.payload_path:
-            headers['Content-Length'] = os.path.getsize(self.payload_path)
-        return stream_response(self.payload, headers)
+        content_length = self.payload.get_content_length()
+        if content_length is not None:
+            headers['Content-Length'] = content_length
+        return stream_response(self.payload.as_file(), headers)
 
 
 class RestoreParams(object):
@@ -499,9 +520,9 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version, stream=True)
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True))
         else:
-            payload = self.cache.get(self._initial_cache_key())
+            payload = CachedPayload(self.cache.get(self._initial_cache_key()))
 
         return CachedResponse(payload)
 
