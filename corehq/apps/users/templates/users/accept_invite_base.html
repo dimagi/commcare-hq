@@ -64,7 +64,9 @@
                         </div>
                     {% endfor %}
                     <fieldset>
-                        <h4>{% trans "Set up your account" %}</h4>
+                        {% if create_domain %}
+                            <h4>{% trans "Set up your account" %}</h4>
+                        {% endif %}
                         <legend>{% trans 'New User Information' %}</legend>
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
