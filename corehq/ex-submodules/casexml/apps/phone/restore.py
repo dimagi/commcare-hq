@@ -4,6 +4,7 @@ from uuid import uuid4
 import shutil
 import hashlib
 from couchdbkit import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
@@ -187,7 +188,8 @@ class FileRestoreResponse(RestoreResponse):
 
 class CachedPayload(object):
 
-    def __init__(self, payload):
+    def __init__(self, payload, is_initial):
+        self.is_initial = is_initial
         self.payload = payload
         self.payload_path = None
         if isinstance(payload, dict):
@@ -215,6 +217,21 @@ class CachedPayload(object):
 
     def as_file(self):
         return self.payload
+
+    def finalize(self):
+        # When serving a cached initial payload we should still generate a new sync log
+        # This is to avoid issues with multiple devices ending up syncing to the same
+        # sync log, which causes all kinds of assertion errors when the two devices
+        # touch the same cases
+        if self and self.is_initial:
+            # read up to
+            try:
+                file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
+                self.payload = file_reference.file
+                self.payload_path = file_reference.path
+            except Exception, e:
+                # don't fail hard if anything goes wrong since this is an edge case optimization
+                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
 
 
 class CachedResponse(object):
@@ -520,10 +537,11 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True))
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
         else:
-            payload = CachedPayload(self.cache.get(self._initial_cache_key()))
+            payload = CachedPayload(self.cache.get(self._initial_cache_key()), is_initial=True)
 
+        payload.finalize()
         return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
