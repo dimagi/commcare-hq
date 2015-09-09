@@ -1447,10 +1447,17 @@ class XForm(WrappedNode):
                 u'jr://fixture/{}'.format(form_xpath.fixture_id)
             )
 
-            self.add_bind(
-                nodeset=u'/data/{}'.format(name),
-                calculate=form_xpath.xpath_phase_set
-            )
+            if form.get_phase().id == 1:
+                self.add_bind(
+                    nodeset=u'/data/{}'.format(name),
+                    calculate=form_xpath.first_visit_phase_set
+                )
+            else:
+                self.add_bind(
+                    nodeset=u'/data/{}'.format(name),
+                    calculate=form_xpath.xpath_phase_set
+                )
+
             self.data_node.append(_make_elem(name))
 
         self.add_bind(
