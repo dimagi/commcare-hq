@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -96,25 +97,32 @@ def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
 
 def handle_changed_mailchimp_email(user, old_email, new_email):
     """
-        Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
-        If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
+    Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
+    If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
     """
-    users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
 
-    couch_users = CouchUser.view('users/by_username',
-                                 keys=list(users_with_old_email),
-                                 include_docs=True,
-                                 reduce=False,
-                                 ).all()
+    @memoized
+    def get_users_who_have_email(email):
+        if email:
+            users_with_old_email = User.objects.filter(email=email).values_list('username', flat=True)
+            return CouchUser.view(
+                'users/by_username',
+                 keys=list(users_with_old_email),
+                 include_docs=True,
+                 reduce=False,
+                 limit=100,  # if more than 100 people had this email then we are out of luck
+             ).all()
+        else:
+            return []
 
     if user.subscribed_to_commcare_users:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in get_users_who_have_email(old_email)
                                            if couch_user.subscribed_to_commcare_users]
         if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
             safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
 
     if not user.email_opt_out:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
+        users_subscribed_with_old_email = [couch_user.get_id for couch_user in get_users_who_have_email(old_email)
                                            if not couch_user.email_opt_out]
         if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
             safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=old_email)
@@ -129,7 +137,6 @@ def handle_changed_mailchimp_email(user, old_email, new_email):
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
-    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
@@ -150,15 +157,14 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
         _log_mailchimp_error(e)
 
     new_user.subscribed_to_commcare_users = False
-    if email_opt_in:
-        try:
-            safe_subscribe_user_to_mailchimp_list(
-                new_user,
-                settings.MAILCHIMP_COMMCARE_USERS_ID
-            )
-            new_user.subscribed_to_commcare_users = True
-        except Exception as e:
-            _log_mailchimp_error(e)
+    try:
+        safe_subscribe_user_to_mailchimp_list(
+            new_user,
+            settings.MAILCHIMP_COMMCARE_USERS_ID
+        )
+        new_user.subscribed_to_commcare_users = True
+    except Exception as e:
+        _log_mailchimp_error(e)
 
     new_user.eula.signed = True
     new_user.eula.date = now

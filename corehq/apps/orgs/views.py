@@ -252,9 +252,7 @@ class OrgInvitationView(InvitationView):
 
     def added_context(self):
         context = super(OrgInvitationView, self).added_context()
-        context.update({
-            'organization': self.organization
-        })
+        context.update({'organization': self.organization})
         return context
 
     def validate_invitation(self, invitation):

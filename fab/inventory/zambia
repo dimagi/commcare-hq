@@ -1,0 +1,35 @@
+[proxy]
+wvz.commcarehq.org
+
+[webworkers]
+wvz.commcarehq.org
+
+[couchdb]
+wvz.commcarehq.org
+
+[postgresql]
+wvz.commcarehq.org
+
+[rabbitmq]
+wvz.commcarehq.org
+
+[celery]
+# ansible makes the first thing in this list the flower url
+# a little bit redundant with with more explicit settings in environments.yml
+# but ansible doesn't currently have access to that
+wvz.commcarehq.org
+
+[pillowtop]
+wvz.commcarehq.org
+
+[touchforms]
+wvz.commcarehq.org
+
+[redis]
+wvz.commcarehq.org
+
+[elasticsearch]
+wvz.commcarehq.org
+
+[shared_dir_host]
+wvz.commcarehq.org

@@ -329,12 +329,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
 
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
-                              MultiFormDrilldownMixin, DatespanMixin):
+                              MultiFormDrilldownMixin, DatespanMixin,
+                              CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter'
     ]
     fix_left_col = True
@@ -411,6 +413,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     def _get_num_submissions(self, user_id, xmlns, app_id):
         key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
+                                  by_submission_time=self.by_submission_time,
                                   app_id=app_id)
         data = get_db().view(
             'reports_forms/all_forms',
@@ -627,6 +630,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     def raw_user_link_url(self):
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
+
+    @property
+    def template_context(self):
+        context = super(DailyFormStatsReport, self).template_context
+        context.update({
+            'hide_lastyear': True,
+        })
+        return context
 
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,

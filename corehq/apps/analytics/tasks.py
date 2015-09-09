@@ -81,8 +81,6 @@ def _link_account_with_cookie(form_id, webuser, cookies, meta):
             'lastname': webuser.last_name,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
-        if 'opt_into_emails' in meta:
-            data['opt_into_emails'] = meta['opt_into_emails']
 
         req = requests.post(
             url,

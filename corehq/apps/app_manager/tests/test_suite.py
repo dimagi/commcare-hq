@@ -476,7 +476,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         module.fixture_select.variable_column = 'my_variable_column'
         module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
 
-        factory.form_updates_case(form)
+        factory.form_requires_case(form)
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
@@ -491,7 +491,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         module.fixture_select.variable_column = 'my_variable_column'
         module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
 
-        factory.form_updates_case(form)
+        factory.form_requires_case(form)
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-localization'), factory.app.create_suite())
 
@@ -505,7 +505,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         m0.fixture_select.variable_column = 'var_name'
         m0.fixture_select.xpath = 'province = $fixture_value'
 
-        factory.form_updates_case(m0f0)
+        factory.form_requires_case(m0f0)
 
         m1, m1f0 = factory.new_basic_module('child', 'child')
         m1.fixture_select.active = True
@@ -514,7 +514,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         m1.fixture_select.variable_column = 'var_name'
         m1.fixture_select.xpath = 'city = $fixture_value'
 
-        factory.form_updates_case(m1f0, parent_case_type='parent')
+        factory.form_requires_case(m1f0, parent_case_type='parent')
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-parent-child'), factory.app.create_suite())
 
@@ -767,7 +767,7 @@ class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
         self.suite_xml_is_usercase_in_use_mock.return_value = False
 
         __, update_form = self.factory.new_basic_module('update_mother', 'mother')
-        self.factory.form_updates_case(update_form)
+        self.factory.form_requires_case(update_form)
         update_form.form_filter = '#case/due_date <= today()'
 
         expected = """

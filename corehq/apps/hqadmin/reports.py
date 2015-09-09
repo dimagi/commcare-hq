@@ -666,7 +666,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project", prop_name="name.exact"),
+            DataTablesColumn(_("Project"), prop_name="name.exact"),
+            DataTablesColumn(_("Date Created"), prop_name="date_created"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
@@ -728,20 +729,20 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
         CALCS_ROW_INDEX = {
-            4: "cp_n_active_cc_users",
-            5: "cp_n_cc_users",
-            6: "cp_n_users_submitted_form",
-            7: "cp_n_60_day_cases",
-            8: "cp_n_active_cases",
-            9: "cp_n_inactive_cases",
-            10: "cp_n_cases",
-            11: "cp_n_forms",
-            14: "cp_n_web_users",
-            27: "cp_n_out_sms",
-            28: "cp_n_in_sms",
-            29: "cp_n_sms_ever",
-            30: "cp_n_sms_in_30_d",
-            31: "cp_n_sms_out_30_d",
+            5: "cp_n_active_cc_users",
+            6: "cp_n_cc_users",
+            7: "cp_n_users_submitted_form",
+            8: "cp_n_60_day_cases",
+            9: "cp_n_active_cases",
+            10: "cp_n_inactive_cases",
+            11: "cp_n_cases",
+            12: "cp_n_forms",
+            15: "cp_n_web_users",
+            28: "cp_n_out_sms",
+            29: "cp_n_in_sms",
+            30: "cp_n_sms_ever",
+            31: "cp_n_sms_in_30_d",
+            32: "cp_n_sms_out_30_d",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -773,6 +774,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
+                    format_date((dom.get("date_created")), _('No date')),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date((dom.get('deployment') or {}).get('date'), _('No date')),
                     (dom.get("deployment") or {}).get('countries') or _('No countries'),

@@ -26,7 +26,7 @@ def get_timestamp_millis(date):
 _assert = soft_assert('droberts' + '@' + 'dimagi.com')
 
 
-def iso_string_to_datetime(iso_string):
+def iso_string_to_datetime(iso_string, strict=False):
     """
     parse datetime string in iso format with or without microseconds,
     always with both date and time
@@ -46,10 +46,14 @@ def iso_string_to_datetime(iso_string):
             return datetime.datetime.strptime(iso_string, fmt)
         except ValueError:
             pass
-    _assert(False, 'iso_string_to_datetime input not in expected format',
-            iso_string)
-    from dimagi.utils.parsing import string_to_utc_datetime
-    return string_to_utc_datetime(iso_string)
+
+    if strict:
+        raise ValueError('iso_string_to_datetime input not in expected format: {}'.format(iso_string))
+    else:
+        _assert(False, 'iso_string_to_datetime input not in expected format',
+                iso_string)
+        from dimagi.utils.parsing import string_to_utc_datetime
+        return string_to_utc_datetime(iso_string)
 
 
 def iso_string_to_date(iso_string):

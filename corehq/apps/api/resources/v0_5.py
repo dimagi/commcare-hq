@@ -448,7 +448,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
             "section_id": ('exact'),
         }
 
-        fields = ['product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
+        fields = ['case_id', 'product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
         include_resource_uri = False
 
     def build_filters(self, filters=None):

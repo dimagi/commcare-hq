@@ -874,7 +874,18 @@ class CaseReminderHandler(Document):
                 return False
 
             for key, value in self.user_data_filter.iteritems():
-                if recipient.user_data.get(key) not in value:
+                if key not in recipient.user_data:
+                    return False
+
+                # value is always a list
+                value_set = set(value)
+                user_data_value = recipient.user_data.get(key)
+                if isinstance(user_data_value, list):
+                    user_data_value_set = set(user_data_value)
+                else:
+                    user_data_value_set = set([user_data_value])
+
+                if user_data_value_set.isdisjoint(value_set):
                     return False
 
             return True

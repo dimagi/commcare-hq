@@ -43,8 +43,12 @@ class InvitationView(object):
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
 
     def added_context(self):
+        username = self.request.user.username
+        # Add zero-width space for better line breaking
+        username = username.replace("@", "&#x200b;@")
         return {
             'create_domain': False,
+            'formatted_username': username,
         }
 
     def validate_invitation(self, invitation):
@@ -165,7 +169,7 @@ class InvitationView(object):
                     form = NewWebUserRegistrationForm(initial={
                         'email': invitation.email,
                         'hr_name': domain.display_name() if domain else invitation.domain,
-                        'create_domain': False
+                        'create_domain': False,
                     })
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
@@ -205,7 +209,7 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
           [{'description': u'Grant other CommCare HQ users access
                             to your project and manage user roles.',
             'show_in_dropdown': True,
-            'subpages': [{'title': u'Invite Web User',
+            'subpages': [{'title': u'Add Web User',
                           'urlname': 'invite_web_user'},
                          {'title': <function web_username at 0x10982a9b0>,
                           'urlname': 'user_account'},

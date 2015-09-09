@@ -6,6 +6,7 @@ import json
 import tempfile
 import re
 import itertools
+from corehq.util.spreadsheets.export import WorkBook
 import langcodes
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
@@ -64,7 +65,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.export import WorkBook
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
                                   string_to_datetime, json_format_date)

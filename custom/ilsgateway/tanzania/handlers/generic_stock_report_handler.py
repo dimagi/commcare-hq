@@ -20,7 +20,7 @@ class GenericStockReportHandler(KeywordHandler):
             self.formatter()
         ).parse(self.msg.text)
 
-    def get_success_message(self, data):
+    def get_message(self, data):
         raise NotImplemented()
 
     def on_success(self):
@@ -42,7 +42,7 @@ class GenericStockReportHandler(KeywordHandler):
                     return True
                 process(domain.name, data)
                 self.on_success()
-                self.respond(self.get_success_message(data))
+                self.respond(self.get_message(data))
             except NotAUserClassError:
                 return True
             except Exception, e:  # todo: should we only trap SMSErrors?

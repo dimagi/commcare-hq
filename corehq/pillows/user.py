@@ -1,11 +1,12 @@
+from casexml.apps.case.xform import is_device_report
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import es_query, ES_URLS, stream_es_query, get_es
+from corehq.elastic import ES_URLS, stream_es_query, get_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BulkPillow
+from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
 
@@ -52,34 +53,16 @@ class UserPillow(AliasedElasticPillow):
     def get_unique_id(self):
         return USER_INDEX
 
-    def get_mapping_from_type(self, doc_dict):
-        """
-        Define mapping uniquely to the user_type document.
-        See below on why date_detection is False
 
-        NOTE: DO NOT MODIFY THIS UNLESS ABSOLUTELY NECESSARY. A CHANGE BELOW WILL GENERATE A NEW
-        HASH FOR THE INDEX NAME REQUIRING A REINDEX+RE-ALIAS. THIS IS A SERIOUSLY RESOURCE
-        INTENSIVE OPERATION THAT REQUIRES SOME CAREFUL LOGISTICS TO MIGRATE
-        """
-        #the meta here is defined for when the case index + type is created for the FIRST time
-        #subsequent data added to it will be added automatically, but date_detection is necessary
-        # to be false to prevent indexes from not being created due to the way we store dates
-        #all are strings EXCEPT the core case properties which we need to explicitly define below.
-        #that way date sort and ranges will work with canonical date formats for queries.
-        return {
-            self.get_type_string(doc_dict): self.default_mapping
-        }
-
-    def get_type_string(self, doc_dict):
-        return self.es_type
-
-class GroupToUserPillow(BulkPillow):
-    couch_filter = "groups/all_groups"
+class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
 
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
         self.couch_db = Group.get_db()
+
+    def python_filter(self, doc):
+        return doc.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_trigger(self, changes_dict):
         es = get_es()
@@ -97,16 +80,12 @@ class GroupToUserPillow(BulkPillow):
     def change_transport(self, doc_dict):
         pass
 
-    def send_bulk(self, payload):
-        pass
 
-
-class UnknownUsersPillow(BulkPillow):
+class UnknownUsersPillow(PythonPillow):
     """
-        This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
     include_docs_when_preindexing = False
 
     def __init__(self, **kwargs):
@@ -115,12 +94,9 @@ class UnknownUsersPillow(BulkPillow):
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
-    def get_fields_from_emitted_dict(self, emitted_dict):
-        domain = emitted_dict['key'][1]
-        user_id = emitted_dict['value'].get('user_id')
-        username = emitted_dict['value'].get('username')
-        xform_id = emitted_dict['id']
-        return user_id, username, domain, xform_id
+    def python_filter(self, doc):
+        # designed to exactly mimic the behavior of couchforms/filters/xforms.js
+        return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
         form_meta = doc.get('form', {}).get('meta', {})
@@ -135,11 +111,8 @@ class UnknownUsersPillow(BulkPillow):
         return self.user_db.doc_exist(user_id)
 
     def change_trigger(self, changes_dict):
-        if 'key' in changes_dict:
-            user_id, username, domain, xform_id = self.get_fields_from_emitted_dict(changes_dict)
-        else:
-            doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
-            user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+        doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
+        user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
 
         if user_id in WEIRD_USER_IDS:
             user_id = None
@@ -160,9 +133,6 @@ class UnknownUsersPillow(BulkPillow):
             self.es.put(es_path + user_id, data=doc)
 
     def change_transport(self, doc_dict):
-        pass
-
-    def send_bulk(self, payload):
         pass
 
 

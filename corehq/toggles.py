@@ -305,13 +305,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PAGINATE_WEB_USERS = StaticToggle(
-    'paginate_web_users',
-    'Paginate Web Users',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
@@ -653,4 +646,11 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'Enable SMS-based performance feedback',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+LEGACY_SYNC_SUPPORT = StaticToggle(
+    'legacy_sync_support',
+    "Support mobile sync bugs in older projects (2.9 and below).",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

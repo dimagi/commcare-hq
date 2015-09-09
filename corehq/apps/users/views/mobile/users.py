@@ -41,6 +41,8 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
+from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
+    WorksheetNotFound, WorkbookJSONReader
 
 from couchexport.models import Format
 from corehq.apps.users.forms import (CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -56,7 +58,6 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
@@ -821,7 +822,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        task_ref = expose_cached_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),
