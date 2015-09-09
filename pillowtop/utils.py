@@ -71,29 +71,34 @@ def force_seq_int(seq):
 
 def get_all_pillows_json():
     pillows = get_all_pillows()
-    pillows_json = []
-    for pillow in pillows:
-        checkpoint = pillow.get_checkpoint()
-        timestamp = checkpoint.get('timestamp')
-        if timestamp:
-            time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
-            hours_since_last = time_since_last.total_seconds() // 3600
+    return [get_pillow_json(pillow) for pillow in pillows]
 
-            try:
-                # remove microsecond portion
-                time_since_last = str(time_since_last)
-                time_since_last = time_since_last[0:time_since_last.index('.')]
-            except ValueError:
-                pass
-        else:
-            time_since_last = ''
-            hours_since_last = None
-        pillows_json.append({
-            'name': pillow.__class__.__name__,
-            'seq': force_seq_int(checkpoint.get('seq')),
-            'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-            'db_seq': force_seq_int(pillow.get_db_seq()),
-            'time_since_last': time_since_last,
-            'hours_since_last': hours_since_last
-        })
-    return pillows_json
+
+def get_pillow_json(pillow_or_name):
+    if isinstance(pillow_or_name, basestring):
+        pillow = get_pillow_by_name(pillow_or_name)
+    else:
+        pillow = pillow_or_name
+    checkpoint = pillow.get_checkpoint()
+    timestamp = checkpoint.get('timestamp')
+    if timestamp:
+        time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
+        hours_since_last = time_since_last.total_seconds() // 3600
+
+        try:
+            # remove microsecond portion
+            time_since_last = str(time_since_last)
+            time_since_last = time_since_last[0:time_since_last.index('.')]
+        except ValueError:
+            pass
+    else:
+        time_since_last = ''
+        hours_since_last = None
+    return {
+        'name': pillow.__class__.__name__,
+        'seq': force_seq_int(checkpoint.get('seq')),
+        'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
+        'db_seq': force_seq_int(pillow.get_db_seq()),
+        'time_since_last': time_since_last,
+        'hours_since_last': hours_since_last
+    }
