@@ -70,6 +70,7 @@ def force_seq_int(seq):
 def get_all_pillows_json():
     pillows = get_all_pillows()
     pillows_json = []
+    db_seqs = {}
     for pillow in pillows:
         checkpoint = pillow.get_checkpoint()
         timestamp = checkpoint.get('timestamp')
@@ -86,11 +87,16 @@ def get_all_pillows_json():
         else:
             time_since_last = ''
             hours_since_last = None
+
+        db_uri = pillow.couch_db.uri
+        if db_uri not in db_seqs:
+            db_seqs[db_uri] = force_seq_int(pillow.get_db_seq())
+
         pillows_json.append({
             'name': pillow.__class__.__name__,
             'seq': force_seq_int(checkpoint.get('seq')),
             'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-            'db_seq': force_seq_int(pillow.get_db_seq()),
+            'db_seq': db_seqs[db_uri],
             'time_since_last': time_since_last,
             'hours_since_last': hours_since_last
         })
