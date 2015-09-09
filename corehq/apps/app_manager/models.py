@@ -3315,7 +3315,6 @@ class ReportAppConfig(DocumentSchema):
     def get_details(self):
         yield (self.select_detail_id, self.select_details(), True)
         yield (self.summary_detail_id, self.summary_details(), True)
-        yield (self.data_detail_id, self.data_details(), True)
 
     def select_details(self):
         return Detail(custom_xml=suite_xml.Detail(
@@ -3424,10 +3423,11 @@ class ReportAppConfig(DocumentSchema):
                         ),
                     ],
                 ),
+                self.data_detail(),
             ],
         ).serialize())
 
-    def data_details(self):
+    def data_detail(self):
         def _column_to_field(column):
             return suite_xml.Field(
                 header=suite_xml.Header(
@@ -3443,14 +3443,14 @@ class ReportAppConfig(DocumentSchema):
                 ),
             )
 
-        return Detail(custom_xml=suite_xml.Detail(
+        return suite_xml.Detail(
             id='reports.{}.data'.format(self.uuid),
             nodeset='rows/row',
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
-        ).serialize())
+        )
 
     def get_entry(self):
         return suite_xml.Entry(

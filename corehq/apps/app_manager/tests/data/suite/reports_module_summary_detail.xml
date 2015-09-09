@@ -63,5 +63,48 @@
         </template>
       </field>
     </detail>
+    <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data" nodeset="rows/row">
+      <title>
+        <text>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
+        </text>
+      </title>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.owner"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='owner']"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.count"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='count']"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.is_starred"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='is_starred']"/>
+          </text>
+        </template>
+      </field>
+    </detail>
   </detail>
 </partial>
