@@ -69,8 +69,6 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/couchexport-src:
-    branches: []
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
@@ -78,8 +76,6 @@ submodules:
   submodules/pillowtop-src:
     branches: []
   submodules/dimagi-utils-src:
-    branches: []
-  submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
