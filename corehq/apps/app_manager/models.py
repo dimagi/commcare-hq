@@ -3332,7 +3332,8 @@ class ReportAppConfig(DocumentSchema):
                     ),
                     template=suite_xml.Template(
                         text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
+                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                        )
                     ),
                 )
             ]
@@ -3385,7 +3386,8 @@ class ReportAppConfig(DocumentSchema):
                     ),
                     template=suite_xml.Template(
                         text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
+                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                        )
                     ),
                 ),
                 suite_xml.Field(
