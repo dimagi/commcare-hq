@@ -1,7 +1,7 @@
 from celery.task import task
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.locations.bulk import import_locations
-from dimagi.utils.excel_importer import MultiExcelImporter
+from corehq.util.spreadsheets.excel_importer import MultiExcelImporter
 
 
 @task

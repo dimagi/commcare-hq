@@ -10,8 +10,6 @@ from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import \
-    USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -671,7 +669,8 @@ class Domain(Document, SnapshotMixin):
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
-        if not self._rev and USE_NEW_TZ_BEHAVIOR_ON_NEW_DOMAINS:
+        if not self._rev:
+            # mark any new domain as timezone migration complete
             set_migration_complete(self.name)
         super(Domain, self).save(**params)
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache

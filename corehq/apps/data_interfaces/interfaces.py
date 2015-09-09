@@ -206,9 +206,10 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
 
     @property
     def rows(self):
-        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+        results = self.es_results.get('hits', {}).get('hits', [])
 
-        for form in submissions:
+        for result in results:
+            form = result['_source']
             display = FormDisplay(form, self)
             checkbox = mark_safe(
                 """<input type="checkbox" class="xform-checkbox"

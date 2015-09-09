@@ -7,7 +7,7 @@ from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import Gen
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
 
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus
-from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_PARTIAL_CONFIRM
+from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT
 
 
 def parse_report(val):
@@ -65,7 +65,9 @@ class SOHHandler(GenericStockReportHandler):
 
     formatter = SohFormatter
 
-    def get_success_message(self, data):
+    def get_message(self, data):
+        if data['error']:
+            return SOH_BAD_FORMAT
         reported_earlier = StockState.objects.filter(
             case_id=self.sql_location.couch_location.linked_supply_point().get_id,
             last_modified_date__gte=datetime.utcnow() - timedelta(days=7)

@@ -17,8 +17,11 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
-    UserReportsError, TableNotFoundWarning,
-    UserReportsFilterError)
+    BadSpecError,
+    UserReportsError,
+    TableNotFoundWarning,
+    UserReportsFilterError,
+)
 from corehq.apps.userreports.models import (
     STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
@@ -215,10 +218,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     def get_ajax(self, request, domain=None, **kwargs):
         try:
-            data = self.data_source
-            data.set_filter_values(self.filter_values)
-            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-            total_records = data.get_total_records()
+            data_source = self.data_source
+            data_source.set_filter_values(self.filter_values)
+            data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+            total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -244,7 +247,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
         end = min(datatables_params.start + datatables_params.count, total_records)
-        page = list(data.get_data())[datatables_params.start:end]
+        data = list(data_source.get_data())
+        page = data[datatables_params.start:end]
 
         json_response = {
             'aaData': page,
@@ -252,11 +256,11 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data.has_total_row:
+        if data_source.has_total_row:
             json_response.update({
                 "total_row": get_total_row(
-                    page, data.aggregation_columns, data.column_configs,
-                    get_expanded_columns(data.column_configs, data.config)
+                    data, data_source.aggregation_columns, data_source.column_configs,
+                    get_expanded_columns(data_source.column_configs, data_source.config)
                 ),
             })
         return self.render_json_response(json_response)
@@ -312,12 +316,17 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
-        columns = [column.column_id for column in self.spec.report_columns]
-        rows = [[raw_row[column] for column in columns] for raw_row in raw_rows]
+
+        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_ids = []
+        for column in self.spec.report_columns:
+            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+
+        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = (
             [get_total_row(
                 raw_rows, data.aggregation_columns, data.column_configs,
-                get_expanded_columns(data.column_configs, data.config)
+                column_id_to_expanded_column_ids
             )]
             if data.has_total_row else []
         )
@@ -351,17 +360,28 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     slug = prefix = 'custom_configurable'
     map_name = 'CUSTOM_UCR'
 
-    def dispatch(self, request, *args, **kwargs):
-        domain = kwargs.get('domain')
-        report_config_id = kwargs.get('report_config_id')
+    @staticmethod
+    def _report_class(domain, config_id):
         class_path = StaticReportConfiguration.report_class_by_domain_and_id(
-            domain, report_config_id
+            domain, config_id
         )
-        report_class = to_function(class_path)
-        report_class_obj = report_class()
+        return to_function(class_path)
+
+    def dispatch(self, request, report_config_id, **kwargs):
+        domain = kwargs['domain']
         request.domain = domain
-        del kwargs['report_config_id']
-        return report_class_obj.dispatch(request, report_config_id, **kwargs)
+        try:
+            report_class = self._report_class(domain, report_config_id)
+        except BadSpecError:
+            raise Http404
+        return report_class().dispatch(request, report_config_id, **kwargs)
+
+    def get_report(self, domain, slug, config_id):
+        try:
+            report_class = self._report_class(domain, config_id)
+        except BadSpecError:
+            return None
+        return report_class.get_report(domain, slug, config_id)
 
     @classmethod
     def url_pattern(cls):

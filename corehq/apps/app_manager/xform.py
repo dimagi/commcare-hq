@@ -1299,7 +1299,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id_xpath = session_var(form.session_var_for_action('open_case'))
+                case_id_xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
@@ -1340,7 +1340,12 @@ class XForm(WrappedNode):
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
-                self.add_case_preloads(actions['case_preload'].preload)
+                self.add_case_preloads(
+                    actions['case_preload'].preload,
+                    # (As above) case_id_xpath is set based on an assumption about the way suite_xml.py determines
+                    # the case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
+                    case_id_xpath=case_id_xpath
+                )
 
         if 'subcases' in actions:
             subcases = actions['subcases']

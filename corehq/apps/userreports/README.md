@@ -78,6 +78,7 @@ constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
@@ -145,6 +146,41 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
 Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
+
+##### Switch Expression
+
+This expression returns the value of the expression for the case that matches the switch on expression. Note that case values may only be strings at this time.
+```json
+{
+    "type": "switch",
+    "switch_on": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "cases": {
+        "north": {
+            "type": "constant",
+            "constant": 4000
+        },
+        "south": {
+            "type": "constant",
+            "constant": 2500
+        },
+        "east": {
+            "type": "constant",
+            "constant": 3300
+        },
+        "west": {
+            "type": "constant",
+            "constant": 65
+        },
+    },
+    "default": {
+        "type": "constant",
+        "constant": 0
+    }
+}
+```
 
 ##### Iterator Expression
 
@@ -1010,7 +1046,7 @@ They conform to a slightly different style:
 ```
 
 Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
-setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
+setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you

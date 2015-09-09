@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 import logging
 from celery.schedules import crontab
@@ -17,6 +17,7 @@ from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
+from custom.ilsgateway.temporary import fix_stock_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
@@ -181,6 +182,11 @@ def clear_report_data(domain):
     ReportRun.objects.filter(domain=domain).delete()
 
 
+@task(queue='background_queue', ignore_result=True)
+def fix_stock_data_task(domain):
+    fix_stock_data(domain)
+
+
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task(queue='background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
@@ -322,7 +328,7 @@ def supervision_task():
 
 
 def get_last_and_nth_business_day(date, n):
-    last_month = datetime(date.year, date.month, 1) - datetime.timedelta(days=1)
+    last_month = datetime(date.year, date.month, 1) - timedelta(days=1)
     last_month_last_day = get_business_day_of_month(month=last_month.month, year=last_month.year, count=-1)
     nth_business_day = get_business_day_of_month(month=date.month, year=date.year, count=n)
     return last_month_last_day, nth_business_day

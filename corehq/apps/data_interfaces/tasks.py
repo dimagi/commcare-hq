@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
+from corehq.util.soft_assert.api import soft_assert
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from dimagi.utils.django.email import send_HTML_email
@@ -64,7 +65,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         xform_ids = get_ids_from_url(form_ids_or_query_string, domain, couch_user)
 
     if not xform_ids:
-        # should never be the case
-        raise Exception("No formids supplied")
+        soft_assert(notify_admins=True, exponential_backoff=False)
+        return {'messages': {'errors': [_('No Forms are supplied')]}}
+
     response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
     return response

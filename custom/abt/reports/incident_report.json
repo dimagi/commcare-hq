@@ -7,6 +7,7 @@
     ],
    "data_source_table":"supervisory",
    "report_id":"incident-report",
+   "custom_configurable_report":"custom.abt.reports.views.FormattedSupervisoryReport",
    "config":{
       "domain":"abtmali",
       "config_id":"static-supervisory-indicators",
@@ -23,7 +24,15 @@
          "flag"
       ],
       "filters":[  
-
+         {
+            "display": "Form Name",
+            "field": "form_name",
+            "type": "dynamic_choice_list",
+            "datatype": "string",
+            "compare_as_string": true,
+            "required": false,
+            "slug": "form_name"
+         }
       ],
       "report_meta":{  
          "doc_type":"ReportMeta",
