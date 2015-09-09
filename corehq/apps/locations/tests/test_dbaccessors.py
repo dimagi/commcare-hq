@@ -5,7 +5,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
                            get_all_users_by_location, users_have_locations,
-                           get_all_users_with_locations)
+                           get_users_assigned_to_locations)
 from .util import make_loc, delete_all_locations
 
 
@@ -71,9 +71,9 @@ class TestUsersByLocation(TestCase):
         self.assertFalse(users_have_locations('no-locations'))
         domain2.delete()
 
-    def test_get_all_users_with_locations(self):
+    def test_get_users_assigned_to_locations(self):
         other_user = CommCareUser.create(self.domain, 'other', 'password')
-        users = get_all_users_with_locations(self.domain)
+        users = get_users_assigned_to_locations(self.domain)
         self.assertItemsEqual(
             [u._id for u in users],
             [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]

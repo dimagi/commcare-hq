@@ -52,7 +52,7 @@ def users_have_locations(domain):
     ).one())
 
 
-def get_all_users_with_locations(domain):
+def get_users_assigned_to_locations(domain):
     from corehq.apps.users.models import CouchUser
     results = CouchUser.get_db().view(
         'locations/users_by_location_id',
