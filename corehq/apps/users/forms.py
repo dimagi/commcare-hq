@@ -397,7 +397,7 @@ class NewMobileWorkerForm(forms.Form):
     )
     first_name = forms.CharField(
         max_length=50,
-        required=True,
+        required=False,
         label=ugettext_noop("First Name")
     )
     last_name = forms.CharField(
@@ -437,11 +437,12 @@ class NewMobileWorkerForm(forms.Form):
                 ),
                 crispy.Field(
                     'first_name',
-                    ng_required="true",
+                    ng_required="false",
                     ng_model='mobileWorker.first_name'
                 ),
                 crispy.Field(
                     'last_name',
+                    ng_required="false",
                     ng_model='mobileWorker.last_name'
                 ),
                 crispy.Field(
