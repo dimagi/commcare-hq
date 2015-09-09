@@ -38,8 +38,8 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, get_all_pillow_status, \
-    get_pillow_status
+from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
+    pillow_supervisor_status
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
@@ -389,7 +389,7 @@ def system_ajax(request):
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        supervisor_status = get_all_pillow_status([meta['name'] for meta in pillow_meta])
+        supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
         for meta in pillow_meta:
             meta.update(supervisor_status[meta['name']])
         return json_response(sorted(pillow_meta, key=lambda m: m['name']))
@@ -508,7 +508,7 @@ def pillow_operation_api(request):
             'success': error is None,
             'message': error,
         }
-        response.update(get_pillow_status(pillow_name))
+        response.update(pillow_supervisor_status(pillow_name))
         if pillow:
             response.update(get_pillow_json(pillow))
         return json_response(response)

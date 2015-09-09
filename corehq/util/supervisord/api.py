@@ -189,11 +189,11 @@ class PillowtopSupervisorApi(HQSupervisorApi):
         return self.restart_process(info.host, info.name)
 
 
-def get_pillow_status(pillow_name):
-    return get_all_pillow_status([pillow_name])[pillow_name]
+def pillow_supervisor_status(pillow_name):
+    return all_pillows_supervisor_status([pillow_name])[pillow_name]
 
 
-def get_all_pillow_status(pillow_names):
+def all_pillows_supervisor_status(pillow_names):
     def status(state, message=None):
         return {
             'supervisor_state': state,
