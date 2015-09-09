@@ -2,13 +2,13 @@
 {% blocktrans %}Hi!{% endblocktrans %}
 
 {% blocktrans %}
-    {{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ.
-    This invitation expires in {{ days }} day(s).
+    {{ inviter }} has approved your request to join the {{ domain }} project space at CommCareHQ.
+    This approval expires in {{ days }} day(s).
 {% endblocktrans %}
 
 {% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}
 
-{% blocktrans %}To accept this invitation go to: {{ url }}{% endblocktrans %}
+{% blocktrans %}To confirm this approval go to: {{ url }}{% endblocktrans %}
 
 {% blocktrans %}
     If you think this is a mistake, you can go ahead and ignore this email.
