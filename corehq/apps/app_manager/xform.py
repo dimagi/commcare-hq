@@ -1668,6 +1668,7 @@ class XForm(WrappedNode):
                     reference_id,
                     parent_meta['action'].case_type,
                     ref,
+                    case_index.relationship,
                 )
 
             if action.close_condition.type != 'never':
