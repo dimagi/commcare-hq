@@ -130,12 +130,6 @@ def track_confirmed_account_on_hubspot(webuser):
 
 
 def track_workflow(email, event, properties=None):
-    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-    track_workflow_task.delay(email, event, properties, timestamp)
-
-
-@task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_workflow_task(email, event, properties=None, timestamp=0):
     """
     Record an event in KISSmetrics.
     :param email: The email address by which to identify the user.
@@ -143,6 +137,12 @@ def track_workflow_task(email, event, properties=None, timestamp=0):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
+    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+    _track_workflow_task.delay(email, event, properties, timestamp)
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
