@@ -47,8 +47,6 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
-#  - reverseLanguageMedia # Sravan 6/10
-#  - FormArchive # Sravan 7/22
   - ckeditor # J$ 7/24
   - quickcache-user-roles  # Ethan 8/13
   - knockout-js # Ben 8/17
