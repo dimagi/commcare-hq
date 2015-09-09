@@ -215,7 +215,6 @@ class EWSApi(APISynchronization):
 
     def _create_supply_point_from_location(self, supply_point, location):
         if not SupplyPointCase.get_by_location(location):
-            location.save()
             return SupplyPointCase.get_or_create_by_location(Loc(_id=location.get_id,
                                                              name=supply_point.name,
                                                              external_id=str(supply_point.id),
