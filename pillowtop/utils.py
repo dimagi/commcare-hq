@@ -51,10 +51,12 @@ def get_all_pillows(instantiate=True):
 
 
 def get_pillow_by_name(pillow_class_name):
-    all_pillows = get_all_pillows()
-    for pillow in all_pillows:
-        if pillow.__class__.__name__ == pillow_class_name:
-            return pillow
+    settings = import_settings()
+    if hasattr(settings, 'PILLOWTOPS'):
+        for k, v in settings.PILLOWTOPS.items():
+            for full_str in v:
+                if pillow_class_name in full_str:
+                    return import_pillow_string(full_str)
 
 
 def force_seq_int(seq):
