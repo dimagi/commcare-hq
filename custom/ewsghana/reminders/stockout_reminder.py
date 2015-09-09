@@ -13,10 +13,9 @@ class StockoutReminder(Reminder):
         return user.user_data.get('sms_notifications', False) and user.get_verified_number()
 
     def _get_stockouts(self, case_id):
-        products = []
-        for stock_state in StockState.objects.filter(case_id=case_id, stock_on_hand=0):
-            products.append(stock_state.sql_product.name)
-        return products
+        return StockState.objects.filter(
+            case_id=case_id, stock_on_hand=0
+        ).values_list('sql_product__name', flat=True)
 
     def get_message(self, recipient):
         web_user = recipient.owner
