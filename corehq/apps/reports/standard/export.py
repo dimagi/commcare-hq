@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from corehq.apps.reports.dbaccessors import stale_get_exports
+from corehq.apps.reports.dbaccessors import stale_get_export_count
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -356,7 +356,7 @@ class DeidExportReport(FormExportReportBase):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return stale_get_exports(domain, include_docs=False, limit=1).count() > 0
+        return stale_get_export_count(domain) > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
