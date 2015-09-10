@@ -1,7 +1,6 @@
 import os
 import xmlrpclib
 from amqplib.client_0_8.method_framing import defaultdict
-from ansible.inventory import InventoryParser
 from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import StringProperty, IntegerProperty
