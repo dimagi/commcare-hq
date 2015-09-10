@@ -4,6 +4,7 @@ from uuid import uuid4
 import shutil
 import hashlib
 from couchdbkit import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
@@ -185,8 +186,10 @@ class FileRestoreResponse(RestoreResponse):
         return stream_response(open(self.get_filename(), 'r'), headers)
 
 
-class CachedResponse(object):
-    def __init__(self, payload):
+class CachedPayload(object):
+
+    def __init__(self, payload, is_initial):
+        self.is_initial = is_initial
         self.payload = payload
         self.payload_path = None
         if isinstance(payload, dict):
@@ -198,7 +201,7 @@ class CachedResponse(object):
         elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
-    def exists(self):
+    def __nonzero__(self):
         return bool(self.payload)
 
     def as_string(self):
@@ -207,11 +210,46 @@ class CachedResponse(object):
         finally:
             self.payload.close()
 
+    def get_content_length(self):
+        if self.payload_path:
+            return os.path.getsize(self.payload_path)
+        return None
+
+    def as_file(self):
+        return self.payload
+
+    def finalize(self):
+        # When serving a cached initial payload we should still generate a new sync log
+        # This is to avoid issues with multiple devices ending up syncing to the same
+        # sync log, which causes all kinds of assertion errors when the two devices
+        # touch the same cases
+        if self and self.is_initial:
+            # read up to
+            try:
+                file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
+                self.payload = file_reference.file
+                self.payload_path = file_reference.path
+            except Exception, e:
+                # don't fail hard if anything goes wrong since this is an edge case optimization
+                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
+
+
+class CachedResponse(object):
+    def __init__(self, payload):
+        self.payload = payload
+
+    def exists(self):
+        return bool(self.payload)
+
+    def as_string(self):
+        return self.payload.as_string()
+
     def get_http_response(self):
         headers = {}
-        if self.payload_path:
-            headers['Content-Length'] = os.path.getsize(self.payload_path)
-        return stream_response(self.payload, headers)
+        content_length = self.payload.get_content_length()
+        if content_length is not None:
+            headers['Content-Length'] = content_length
+        return stream_response(self.payload.as_file(), headers)
 
 
 class RestoreParams(object):
@@ -499,10 +537,11 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version, stream=True)
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
         else:
-            payload = self.cache.get(self._initial_cache_key())
+            payload = CachedPayload(self.cache.get(self._initial_cache_key()), is_initial=True)
 
+        payload.finalize()
         return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):

@@ -1,14 +1,8 @@
-from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_all_sync_logs_docs
 from casexml.apps.phone.models import get_properly_wrapped_sync_log, get_sync_log_class_by_format
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
-from casexml.apps.phone.xml import SYNC_XMLNS
-
-
-def synclog_id_from_restore_payload(restore_payload):
-    element = ElementTree.fromstring(restore_payload)
-    return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
+from casexml.apps.phone.xml import synclog_id_from_restore_payload
 
 
 def synclog_from_restore_payload(restore_payload):
@@ -34,7 +28,14 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
 
         returns: the xml payload of the sync operation
     """
-    config = RestoreConfig(
+    return get_restore_config(
+        project, user, restore_id, version, state_hash, items, overwrite_cache, force_cache
+    ).get_payload().as_string()
+
+
+def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
+                       items=False, overwrite_cache=False, force_cache=False):
+    return RestoreConfig(
         project=project,
         user=user,
         params=RestoreParams(
@@ -48,7 +49,6 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
             force_cache=force_cache,
         )
     )
-    return config.get_payload().as_string()
 
 
 def generate_restore_response(project, user, restore_id="", version=V1, state_hash="", items=False):
