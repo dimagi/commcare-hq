@@ -9,7 +9,7 @@ from corehq.elastic import stream_es_query
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
-from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
+from couchexport.models import DefaultExportSchema, Format, SavedExportSchema
 from couchexport.util import SerializableFunction
 
 from soil import DownloadBase
@@ -136,8 +136,9 @@ class ApplicationBulkExport(BulkExport):
             return []
         self.export_objects = []
         for schema_index in export_tags:
-            self.export_objects.append(FakeSavedExportSchema(index=schema_index,
-                                                             filter_function=SerializableFunction()))
+            self.export_objects.append(
+                DefaultExportSchema(index=schema_index,
+                                    filter_function=SerializableFunction()))
 
     def generate_table_headers(self, schemas, checkpoints):
         headers = []

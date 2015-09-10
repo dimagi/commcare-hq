@@ -56,7 +56,7 @@ from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.models import FakeSavedExportSchema, SavedBasicExport
+from couchexport.models import DefaultExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
                                    export_response)
 from couchexport.tasks import rebuild_schemas
@@ -96,7 +96,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
     ReportNotification,
-    FakeFormExportSchema,
+    DefaultFormExportSchema,
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -358,10 +358,10 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         assert(export_tag[0] == domain)
         # hack - also filter instances here rather than mess too much with trying to make this
         # look more like a FormExportSchema
-        export_class = FakeSavedExportSchema
+        export_class = DefaultExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
-            export_class = FakeFormExportSchema
+            export_class = DefaultFormExportSchema
 
         export_object = export_class(index=export_tag)
 

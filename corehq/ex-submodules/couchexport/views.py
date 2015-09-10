@@ -4,7 +4,7 @@ from couchexport.export import Format
 from django.http import HttpResponse
 import json
 from couchexport.shortcuts import export_data_shared
-from couchexport.models import GroupExportConfiguration, SavedBasicExport, FakeSavedExportSchema
+from couchexport.models import GroupExportConfiguration, SavedBasicExport, DefaultExportSchema
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import unicodedata
@@ -26,7 +26,7 @@ def export_data_async(request, filter=None, **kwargs):
     previous_export_id = request.GET.get("previous_export", None)
 
     export_tag = _export_tag_or_bust(request)
-    export_object = FakeSavedExportSchema(index=export_tag)
+    export_object = DefaultExportSchema(index=export_tag)
 
     return export_object.export_data_async(
         filter=filter,

@@ -487,7 +487,8 @@ class BaseSavedExportSchema(Document):
         first_row = list(list(tables)[0])[1]
         return [(self.table_name, first_row)]
 
-class FakeSavedExportSchema(BaseSavedExportSchema):
+
+class DefaultExportSchema(BaseSavedExportSchema):
     index = JsonProperty()
     type = StringProperty()
 
@@ -896,7 +897,7 @@ class GroupExportConfiguration(Document):
         main configs + the custom export configs.
         """
         for full in self.full_exports:
-            yield FakeSavedExportSchema(index=full.index, type=full.type)
+            yield DefaultExportSchema(index=full.index, type=full.type)
         for custom in self.get_custom_exports():
             yield custom
 
