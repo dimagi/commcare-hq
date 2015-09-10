@@ -5,6 +5,7 @@
 {% block report-title %}System Info{% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 {% endblock %}
@@ -270,16 +271,23 @@
                     self.operation_in_progress(false);
                     self.update(data);
 
-                    $('#pillow_operation_modal').modal('hide');
-                    if (data.success) {
-                        if (operation !== 'refresh') {
-                            alert_user("Operation success: " + data.operation + " on " + data.pillow_name, 'success');
-                        }
-                    } else {
+                    if (!data.success) {
                         alert_user("Operation failed: " + data.operation + " on "
                                 + data.pillow_name + ', ' + data.message, 'error');
                     }
-                }, "json");
+                }, "json")
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.operation_in_progress(false);
+                    self.supervisor_state('(unavailable)');
+                    self.supervisor_message(err);
+                }).always(function() {
+                    $('#pillow_operation_modal').modal('hide');
+                    $("#" + self.name() +" td").effect("highlight", {}, 2000);
+                });
             }
         }
 
@@ -460,11 +468,11 @@
                 </tr>
             </thead>
             <tbody data-bind="foreach: models">
-                <tr data-bind="css: overall_status">
+                <tr data-bind="css: overall_status, attr: {id: name}">
                     <td><code data-bind="text: name"></code></td>
                     <td>
                             <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
-                            <span data-bind="makeHqHelp: { name: 'Infos', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
+                            <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
                     </td>
                     <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
                     <td>
