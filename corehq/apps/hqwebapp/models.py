@@ -1073,16 +1073,16 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views import (
                 EditWebUserView,
-                ListWebUsersView,
+                get_web_user_list_view,
             )
             items.append((_('Project Users'), [
                 {
-                    'title': ListWebUsersView.page_title,
-                    'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+                    'title': get_web_user_list_view(self._request).page_title,
+                    'url': reverse(get_web_user_list_view(self._request).urlname, args=[self.domain]),
                     'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                     'subpages': [
                         {
-                            'title': _("Add Web User"),
+                            'title': _("Invite Web User"),
                             'urlname': 'invite_web_user'
                         },
                         {

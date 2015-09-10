@@ -50,9 +50,6 @@
                     $scope.notLoaded = false;
                 }
             }
-            else {
-                throw data.error;
-            }
         };
 
         self.retry = function () {
