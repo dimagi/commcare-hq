@@ -77,7 +77,7 @@ class Titles(object):
 
     @classmethod
     def get_name_from_privilege(cls, privilege):
-        return {
+        titles = {
             LOOKUP_TABLES: _("Lookup Tables"),
             API_ACCESS: _("API Access"),
             CLOUDCARE: _("Web-Based Apps (CloudCare)"),
@@ -100,4 +100,12 @@ class Titles(object):
             TEMPLATED_INTENTS: _('Templated Intents'),
             CUSTOM_INTENTS: _('Custom Intents'),
             DATA_CLEANUP: _('Data Cleanup Tools'),
-        }.get(privilege, privilege)
+        }
+        if privilege in titles:
+            return titles[privilege]
+        else:
+            from corehq.util.soft_assert import soft_assert
+            _assert = soft_assert(notify_admins=True)
+            _assert(False, '{} does not have a title defined, users are '
+                           'seeing the slug itself.'.format(privilege))
+            return privilege
