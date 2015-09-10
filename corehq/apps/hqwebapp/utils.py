@@ -46,7 +46,10 @@ class InvitationView(object):
         username = self.request.user.username
         # Add zero-width space for better line breaking
         username = username.replace("@", "&#x200b;@")
-        return {'formatted_username': username}
+        return {
+            'create_domain': False,
+            'formatted_username': username,
+        }
 
     def validate_invitation(self, invitation):
         pass
@@ -171,7 +174,9 @@ class InvitationView(object):
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        return render(request, self.template, {"form": form})
+        context = self.added_context()
+        context.update({"form": form})
+        return render(request, self.template, context)
 
 
 def get_bulk_upload_form(context, context_key="bulk_upload"):
