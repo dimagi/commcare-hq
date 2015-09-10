@@ -135,10 +135,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
+            logger.warn("assertion failed: %s" % msg)
             if self.strict:
                 raise SyncLogAssertionError(case_id, msg)
             else:
-                logging.warn("assertion failed: %s" % msg)
                 self.has_assert_errors = True
 
     @classmethod
