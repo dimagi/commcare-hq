@@ -66,7 +66,12 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check:
             from corehq.apps.importer.base import ImportCases
-            if report.split('.')[-1] in [ImportCases.__name__]:
+            from corehq.apps.data_interfaces.interfaces import BulkFormManagementInterface
+            report_name = report.split('.')[-1]
+            if report_name == ImportCases.__name__:
                 if not has_privilege(request, privileges.BULK_CASE_MANAGEMENT):
+                    return False
+            if report_name == BulkFormManagementInterface.__name__:
+                if not has_privilege(request, privileges.DATA_CLEANUP):
                     return False
         return request.couch_user.can_edit_data(domain)
