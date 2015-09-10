@@ -190,12 +190,8 @@
                 return self.process_running() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
             });
 
-            self.button_class = ko.computed(function () {
-                if (self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED')) {
-                    return 'disabled';
-                } else {
-                    return '';
-                }
+            self.disabled = ko.computed(function() {
+                return self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED');
             });
 
             self.supervisor_state_css = ko.computed(function() {
@@ -488,18 +484,15 @@
                     </td>
                     <td>
                         <button class="btn" type="button" data-bind="
-                            css: button_class,
                             click: reset_checkpoint,
-                            disable: operation_in_progress">{% trans "Reset" %}</button>
+                            disable: disabled">{% trans "Reset" %}</button>
                         <button class="btn" type="button" data-bind="
-                            css: button_class,
                             click: start_stop,
                             text: start_stop_text,
-                            disable: operation_in_progress"></button>
+                            disable: disabled"></button>
                         <button class="btn" type="button" data-bind="
-                            css: button_class,
                             click: refresh,
-                            disable: operation_in_progress">
+                            disable: disabled">
                             <i class="icon-refresh" data-bind="css: {'icon-spin': operation_in_progress}"></i>
                         </button>
                     </td>
