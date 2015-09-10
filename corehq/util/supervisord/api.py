@@ -33,18 +33,6 @@ class ProcessInfo(JsonObject):
     pid = IntegerProperty()
 
 
-def get_inventory():
-    filename = os.path.join('fab', 'inventory', settings.SERVER_ENVIRONMENT)
-    return {
-        name: [host.name for host in group.get_hosts()]
-        for name, group in InventoryParser(filename).groups.items()
-    }
-
-
-def get_inventory_group(group):
-    return get_inventory().get(group, [])
-
-
 def wrap_exception():
     def decorate(func):
         def call_function(*args, **kwargs):
@@ -116,7 +104,7 @@ class HQSupervisorApi(object):
         self.inventory_group = inventory_group
         self.servers = {
             host: SupervisorApi(host)
-            for host in get_inventory_group(inventory_group)
+            for host in settings.SUPERVISOR_HOSTS[inventory_group]
         }
 
     @staticmethod
