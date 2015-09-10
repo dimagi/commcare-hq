@@ -5,14 +5,12 @@ from django.test import TestCase
 from mock import MagicMock
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormDeprecated, XFormInstance, \
     UnfinishedSubmissionStub
 
-from ..generic import GenericXFormInstance
 from ..interfaces import FormProcessorInterface
 
 

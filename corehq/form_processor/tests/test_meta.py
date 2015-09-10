@@ -21,8 +21,8 @@ class TestMeta(TestCase):
         xform_generic = xform.to_generic()
 
         self.assertNotEqual(None, xform_generic.metadata)
-        self.assertEqual(date(2010,07,22), xform_generic.metadata.timeStart.date())
-        self.assertEqual(date(2010,07,23), xform_generic.metadata.timeEnd.date())
+        self.assertEqual(date(2010, 07, 22), xform_generic.metadata.timeStart.date())
+        self.assertEqual(date(2010, 07, 23), xform_generic.metadata.timeEnd.date())
         self.assertEqual("admin", xform_generic.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform_generic.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform_generic.metadata.appVersion)

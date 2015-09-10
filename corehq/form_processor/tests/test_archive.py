@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from couchforms.models import XFormInstance, XFormArchived
 from couchforms.signals import xform_archived, xform_unarchived
-from couchforms import fetch_and_wrap_form
 
 from ..generic import GenericXFormInstance, GenericFormAttachment
 from ..interfaces import FormProcessorInterface

@@ -72,8 +72,7 @@ class FormProcessorInterface(object):
         xform.save()
 
     @staticmethod
-    def post_xform(instance_xml, attachments=None, process=None,
-                            domain='test-domain'):
+    def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
         """
         create a new xform and releases the lock
 

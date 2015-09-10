@@ -1,6 +1,5 @@
 from django.test import TestCase
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormError
 
 from ..interfaces import FormProcessorInterface
 
