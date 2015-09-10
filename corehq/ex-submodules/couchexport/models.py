@@ -378,6 +378,8 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
+            if not col.show:
+                continue  # ignore hidden columns
             if issubclass(type(col), ComplexExportColumn):
                 for header in col.get_headers():
                     headers.append(header)
@@ -434,6 +436,8 @@ class ExportTable(DocumentSchema):
             id = None
             cells = []
             for column, val in self.get_items_in_order(row):
+                if not column.show:
+                    continue  # don't add this column to the export
                 # TRANSFORM BABY!
                 if apply_transforms:
                     if column.transform and not isinstance(val, Constant):
