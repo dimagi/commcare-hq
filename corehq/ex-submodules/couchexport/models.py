@@ -516,7 +516,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
                          use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
-        from couchexport.export import get_writer, format_tables, create_intermediate_tables, get_export_components, get_headers
+        from couchexport.export import get_writer, get_export_components, get_headers, get_formatted_rows
         from django.core.cache import cache
         import hashlib
 
@@ -556,8 +556,9 @@ class DefaultExportSchema(BaseSavedExportSchema):
                     if self.transform:
                         doc = self.transform(doc)
 
-                    writer.write(self.remap_tables(format_tables(create_intermediate_tables(doc, updated_schema),
-                                                                 include_headers=False, separator=separator)))
+                    writer.write(self.remap_tables(get_formatted_rows(
+                        doc, updated_schema, include_headers=False,
+                        separator=separator)))
                     if process:
                         DownloadBase.set_progress(process, i + 1, total_docs)
                 writer.close()
@@ -701,7 +702,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None,
                          apply_transforms=True, limit=0, **kwargs):
-        from couchexport.export import get_writer, format_tables, create_intermediate_tables
+        from couchexport.export import get_writer, get_formatted_rows
         if not format:
             format = self.default_format or Format.XLS_2007
 
@@ -733,10 +734,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                 if self.transform and apply_transforms:
                     doc = self.transform(doc)
                 formatted_tables = self.trim(
-                    format_tables(
-                        create_intermediate_tables(doc, updated_schema),
-                        separator="."
-                    ),
+                    get_formatted_rows(doc, updated_schema, separator="."),
                     doc,
                     apply_transforms=apply_transforms
                 )
