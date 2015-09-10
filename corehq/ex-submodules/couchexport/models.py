@@ -14,7 +14,7 @@ from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list
+    get_schema_index_view_keys, force_tag_to_list, SerializableFunction
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -353,14 +353,23 @@ class ExportTable(DocumentSchema):
         return dict((c.index, c.get_display()) for c in self.columns)
 
     def get_column_configuration(self, all_cols):
-        selected_cols = set()
+        configured_cols = set()
+        from corehq.apps.export.custom_export_helpers import (
+            USERNAME_TRANSFORM, CASENAME_TRANSFORM, OWNERNAME_TRANSFORM)
+        special_transforms = [
+            USERNAME_TRANSFORM, CASENAME_TRANSFORM, OWNERNAME_TRANSFORM
+        ]
         for c in self.columns:
             if c.doc_type in display_column_types:
-                selected_cols.add(c.index)
-                yield c.to_config_format()
+                selected = True
+                if (isinstance(c.transform, SerializableFunction)
+                    and c.transform.dumps_simple() in special_transforms):
+                    selected = c.show
+                configured_cols.add(c.index)
+                yield c.to_config_format(selected=selected)
 
         for c in all_cols:
-            if c not in selected_cols:
+            if c not in configured_cols:
                 column = ExportColumn(index=c)
                 column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
                 yield column.to_config_format(selected=False)
