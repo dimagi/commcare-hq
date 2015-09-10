@@ -235,8 +235,8 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
-                        column.isSpecial = ko.computed(function () {
-                            return !!ko.utils.unwrapObservable(column.special);
+                        column.isCaseName = ko.computed(function () {
+                            return ko.utils.unwrapObservable(column.special) === 'case_name';
                         });
                         column.showOptions = ko.observable(false);
                         column.newOption = ko.observable("");
@@ -314,8 +314,7 @@
                                         transform: column.transform() || null, // it doesn't save '' well
                                         is_sensitive: Boolean(is_sensitive),
                                         show: ko.utils.unwrapObservable(column.selected),
-                                        selected: ko.utils.unwrapObservable(column.selected),
-                                        is_special: column.isSpecial()
+                                        selected: ko.utils.unwrapObservable(column.selected)
                                 };
                                 if (self.export_type() === 'form') {
                                     if (self.custom_export.split_multiselects() && column.allOptions()) {
@@ -666,7 +665,7 @@
                                             <select data-bind="
                                                 value: transform || '',
                                                 foreach: $root.deid_options,
-                                                visible: (index() !== 'id' || transform()) && !isSpecial()
+                                                visible: (index() !== 'id' || transform()) && !isCaseName()
                                             ">
                                                 <option data-bind="value: value, text: label"></option>
                                             </select>
