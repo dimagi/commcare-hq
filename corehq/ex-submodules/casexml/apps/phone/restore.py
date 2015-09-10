@@ -224,7 +224,6 @@ class CachedPayload(object):
         # sync log, which causes all kinds of assertion errors when the two devices
         # touch the same cases
         if self and self.is_initial:
-            # read up to
             try:
                 file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
                 self.payload = file_reference.file

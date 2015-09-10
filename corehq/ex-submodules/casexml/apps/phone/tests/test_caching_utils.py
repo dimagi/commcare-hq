@@ -8,7 +8,7 @@ from casexml.apps.phone.cache_utils import extract_synclog_id_from_filelike_payl
 from casexml.apps.phone.exceptions import SyncLogCachingError
 from casexml.apps.phone.models import SimplifiedSyncLog, get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.dummy import dummy_restore_xml
-from casexml.apps.phone.xml import synclog_id_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 
 
 class CacheUtilsTest(SimpleTestCase):
