@@ -25,6 +25,8 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.form_processor.generic import GenericXFormInstance, GenericMetadata
+from corehq.form_processor.utils import ToFromGeneric
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
@@ -106,7 +108,7 @@ class XFormOperation(DocumentSchema):
 
 
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
-                    CouchDocLockableMixIn):
+                    CouchDocLockableMixIn, ToFromGeneric):
     """An XForms instance."""
     domain = StringProperty()
     app_id = StringProperty()
@@ -244,6 +246,19 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                     time.sleep(SLEEP)
                 else:
                     raise
+
+    def to_generic(self):
+        generic = GenericXFormInstance(self.to_json())
+        generic.metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
+        if '_id' in self:
+            generic.id = self['_id']
+        return generic
+
+    @classmethod
+    def from_generic(cls, generic_xform):
+        xform_json = generic_xform.to_json()
+        xform_json.pop('metadata', None)
+        return cls.wrap(xform_json)
 
     def xpath(self, path):
         """
