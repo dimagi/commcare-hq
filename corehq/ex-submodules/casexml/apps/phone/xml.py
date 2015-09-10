@@ -107,8 +107,3 @@ def get_data_element(name, dict):
         sub_el.attrib = {"key": k}
         elem.append(sub_el)
     return elem
-
-
-def synclog_id_from_restore_payload(restore_payload):
-    element = ElementTree.fromstring(restore_payload)
-    return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
