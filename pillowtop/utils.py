@@ -51,7 +51,7 @@ def get_all_pillows(instantiate=True):
     return pillowtops
 
 
-def get_pillow_by_name(pillow_class_name, instantiate=False):
+def get_pillow_by_name(pillow_class_name, instantiate=True):
     settings = import_settings()
     if hasattr(settings, 'PILLOWTOPS'):
         for k, v in settings.PILLOWTOPS.items():
