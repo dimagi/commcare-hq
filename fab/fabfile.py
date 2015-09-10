@@ -453,8 +453,8 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin {}'.format(env.code_branch))
-        sudo("git submodule foreach 'git fetch origin {}'".format(env.code_branch))
+        sudo('git fetch')
+        sudo("git submodule foreach 'git fetch'")
         sudo('git checkout %(code_branch)s' % env)
         sudo('git reset --hard origin/%(code_branch)s' % env)
         sudo('git submodule sync')
