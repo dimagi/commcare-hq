@@ -947,10 +947,9 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
-SUPERVISOR_HOSTS = {
+ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
-
 
 try:
     # try to see if there's an environmental variable set for local_settings

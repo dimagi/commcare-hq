@@ -103,7 +103,7 @@ class HQSupervisorApi(object):
         self.inventory_group = inventory_group
         self.servers = {
             host: SupervisorApi(host)
-            for host in settings.SUPERVISOR_HOSTS[inventory_group]
+            for host in settings.ENVIRONMENT_HOSTS[inventory_group]
         }
 
     @staticmethod
