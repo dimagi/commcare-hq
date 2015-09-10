@@ -4,6 +4,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.logging import notify_error
 from pillow_retry.models import PillowError
 from pillowtop.utils import import_pillow_string, get_pillow_by_name
 from celery.utils.log import get_task_logger
@@ -41,11 +42,12 @@ def process_pillow_retry(error_doc_id):
             pillow = get_pillow_by_name(pillow_class_name)
 
         if not pillow:
-            logger.warning("Could not find pillowtop class '%s'" % pillow_class)
+            notify_error("Could not find pillowtop class '%s' while attempting a retry." % pillow_class)
             try:
-                error_doc.delete()
+                error_doc.total_attempts = PillowError.multi_attempts_cutoff() + 1
             finally:
                 release_lock(lock, True)
+                return
 
         change = error_doc.change_dict
         if pillow.include_docs:
