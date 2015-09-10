@@ -901,18 +901,20 @@ def flip_es_aliases():
 @roles(ROLES_STATIC)
 def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env)
-    update_manifest(save=True)
+        sudo('{}/bin/python manage.py compress --force'.format(venv))
+    update_manifest(save=True, use_current_release=use_current_release)
 
 
 @parallel
 @roles(ROLES_STATIC)
 def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
+        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
 
 @roles(ROLES_DJANGO)
