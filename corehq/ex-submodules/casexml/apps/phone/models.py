@@ -367,12 +367,6 @@ class SyncLog(AbstractSyncLog):
                     else:
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    self._assert(
-                        self.phone_is_holding_case(case._id),
-                        "phone doesn't have case being updated: %s" % case._id,
-                        case._id,
-                    )
-
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
@@ -385,8 +379,6 @@ class SyncLog(AbstractSyncLog):
                     if self.phone_has_case(case.get_id):
                         case_state = self.get_case_state(case.get_id)
                     else:
-                        self._assert(self.phone_has_dependent_case(case._id),
-                                     "phone doesn't have referenced case: %s" % case._id)
                         case_state = self.get_dependent_case_state(case.get_id)
                     # reconcile indices
                     if case_state:
