@@ -3315,7 +3315,6 @@ class ReportAppConfig(DocumentSchema):
     def get_details(self):
         yield (self.select_detail_id, self.select_details(), True)
         yield (self.summary_detail_id, self.summary_details(), True)
-        yield (self.data_detail_id, self.data_details(), True)
 
     def select_details(self):
         return Detail(custom_xml=suite_xml.Detail(
@@ -3377,49 +3376,58 @@ class ReportAppConfig(DocumentSchema):
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
-            fields=[
-                suite_xml.Field(
-                    header=suite_xml.Header(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
-                        )
+            details=[
+                suite_xml.Detail(
+                    title=suite_xml.Text(
+                        locale=suite_xml.Locale(id=id_strings.report_menu()),
                     ),
-                    template=suite_xml.Template(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
-                        )
-                    ),
-                ),
-                suite_xml.Field(
-                    header=suite_xml.Header(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
-                        )
-                    ),
-                    template=suite_xml.Template(
-                        text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='description'))
-                    ),
-                ),
-            ] + list(_get_graph_fields()) + [
-                suite_xml.Field(
-                    header=suite_xml.Header(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_last_sync())
-                        )
-                    ),
-                    template=suite_xml.Template(
-                        text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(
-                                function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                    fields=[
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_name_header())
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                                )
+                            ),
+                        ),
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_description_header()),
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    xpath=suite_xml.Xpath(function='description')
+                                )
+                            ),
+                        ),
+                    ] + list(_get_graph_fields()) + [
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_last_sync())
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    xpath=suite_xml.Xpath(
+                                        function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                                    )
+                                )
                             )
-                        )
-                    )
+                        ),
+                    ],
                 ),
-            ]
+                self.data_detail(),
+            ],
         ).serialize())
 
-    def data_details(self):
+    def data_detail(self):
         def _column_to_field(column):
             return suite_xml.Field(
                 header=suite_xml.Header(
@@ -3435,17 +3443,17 @@ class ReportAppConfig(DocumentSchema):
                 ),
             )
 
-        return Detail(custom_xml=suite_xml.Detail(
+        return suite_xml.Detail(
             id='reports.{}.data'.format(self.uuid),
+            nodeset='rows/row',
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
-        ).serialize())
+        )
 
     def get_entry(self):
         return suite_xml.Entry(
-            form='fixmeclayton',
             command=suite_xml.Command(
                 id='reports.{}'.format(self.uuid),
                 text=suite_xml.Text(
@@ -3460,14 +3468,6 @@ class ReportAppConfig(DocumentSchema):
                     nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
                     value='./@id',
                 ),
-                # you are required to select something - even if you don't use it
-                suite_xml.SessionDatum(
-                    detail_select=self.data_detail_id,
-                    id='throwaway_{}'.format(self.uuid),
-                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
-                    value="''",
-                )
-
             ]
         )
 
