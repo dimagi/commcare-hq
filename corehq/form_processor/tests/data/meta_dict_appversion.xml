@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/badmetauser" uiVersion="1" version="200">
+  <q2_participant_gender/>
+  <q3_participant_age_in_years/>
+  <q4_participant_pregnant_or_has_child></q4_participant_pregnant_or_has_child>
+  <q5_participant_currently_using_cm></q5_participant_currently_using_cm>
+  <q6_participant_current_contraceptive_method></q6_participant_current_contraceptive_method>
+  <q7_plan_to_delay_pregnancy_next_year></q7_plan_to_delay_pregnancy_next_year>
+  <q8_participant_and_partner_use_condom_during_intercourse>
+    </q8_participant_and_partner_use_condom_during_intercourse>
+  <q9_participant_have_sim_with_dedicated_number_and_mobile_phone_access>
+    </q9_participant_have_sim_with_dedicated_number_and_mobile_phone_access>
+  <q10_participant_read_and_write_portuguese></q10_participant_read_and_write_portuguese>
+  <q11_can_participant_receive_and_send_sms_messages>
+    </q11_can_participant_receive_and_send_sms_messages>
+  <q12_participant_read_informed_consent_and_agree_to_participant>
+    </q12_participant_read_informed_consent_and_agree_to_participant>
+  <contact_phone_number></contact_phone_number>
+  <registration_confirmation></registration_confirmation>
+  <contact_phone_number_is_verified></contact_phone_number_is_verified>
+  <reg_date_now>2013-09-01</reg_date_now>
+  <reg_date>2013-09-01</reg_date>
+  <reg_date_day_of_week></reg_date_day_of_week>
+  <start_offset></start_offset>
+  <reminder_start_date>2013-09-24</reminder_start_date>
+  <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n1:deviceID>commconnect</n1:deviceID>
+    <n1:timeStart>2013-07-19T21:21:31.188Z</n1:timeStart>
+    <n1:timeEnd>2013-07-20T00:02:27.493Z</n1:timeEnd>
+    <n1:username>some_username@test.commcarehq.org</n1:username>
+    <n1:userID>f7f0c79e-8b79-11df-b7de-005056c00008</n1:userID>
+    <n1:instanceID>5d3d01561f584e85b53669a48bfc6039</n1:instanceID>
+    <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+  </n1:meta>
+</data>
