@@ -1,11 +1,12 @@
 from datetime import timedelta
-from couchexport.util import SerializableFunction
 from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
 
+
 def deid_ID(val, doc):
     return DeidGenerator(val, 'id').random_hash()
+
 
 @memoized
 class JSONPath(object):
@@ -19,6 +20,7 @@ class JSONPath(object):
             except KeyError:
                 pass
 
+
 def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id'):
     key = JSONPath(key_path).search(doc)
     if not key:
@@ -27,8 +29,10 @@ def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id'):
     orig_date = string_to_datetime(val)
     return (orig_date + timedelta(days=offset)).date()
 
+
 def deid_remove(val, doc):
     return Ellipsis
+
 
 def deid_map(doc, config):
     doc_copy = doc.copy()
@@ -43,8 +47,3 @@ def deid_map(doc, config):
         if ctx[final_part] == Ellipsis:
             del ctx[final_part]
     return doc_copy
-
-OPTIONS = map(lambda (name, f): (name, SerializableFunction.to_path(f)), [
-    ('Sensitive ID', deid_ID),
-    ('Sensitive Date', deid_date),
-])
