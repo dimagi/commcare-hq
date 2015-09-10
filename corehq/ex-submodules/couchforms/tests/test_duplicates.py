@@ -1,17 +1,16 @@
 import os
 from django.test import TestCase
 from couchforms.models import XFormInstance
-from couchforms.tests.testutils import post_xform_to_couch
+
+from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.generic import GenericXFormInstance
 
 
 class DuplicateFormTest(TestCase):
     ID = '7H46J37FGH3'
 
     def tearDown(self):
-        try:
-            XFormInstance.get_db().delete_doc(self.ID)
-        except:
-            pass
+        XFormInstance.get_db().flush()
 
     def _get_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
@@ -20,40 +19,38 @@ class DuplicateFormTest(TestCase):
 
     def test_basic_duplicate(self):
         xml_data = self._get_file()
-        doc = post_xform_to_couch(xml_data)
-        self.assertEqual(self.ID, doc.get_id)
-        self.assertEqual("XFormInstance", doc.doc_type)
-        doc.domain = 'test-domain'
-        doc.save()
+        xform = FormProcessorInterface.post_xform(xml_data)
+        self.assertEqual(self.ID, xform.to_generic().id)
+        self.assertEqual("XFormInstance", xform.to_generic().doc_type)
+        self.assertEqual("test-domain", xform.to_generic().domain)
 
-        doc = post_xform_to_couch(xml_data, domain='test-domain')
-        self.assertNotEqual(self.ID, doc.get_id)
-        self.assertEqual("XFormDuplicate", doc.doc_type)
-        self.assertTrue(self.ID in doc.problem)
-
-        dupe_id = doc.get_id
-
-        XFormInstance.get_db().delete_doc(self.ID)
-        XFormInstance.get_db().delete_doc(dupe_id)
+        xform = FormProcessorInterface.post_xform(xml_data, domain='test-domain')
+        self.assertNotEqual(self.ID, xform.to_generic().id)
+        self.assertEqual("XFormDuplicate", xform.to_generic().doc_type)
+        self.assertTrue(self.ID in xform.to_generic().problem)
 
     def test_wrong_doc_type(self):
         domain = 'test-domain'
-        XFormInstance.get_db().save_doc({
-            '_id': self.ID,
-            'doc_type': 'Foo',
-            'domain': domain,
-        })
+        generic_xform = GenericXFormInstance(
+            doc_type='Foo',
+            domain=domain,
+        )
+        xform = FormProcessorInterface.create_from_generic(generic_xform)
 
-        doc = post_xform_to_couch(instance=self._get_file(), domain=domain)
-        self.assertNotEqual(doc.get_id, self.ID)
+        instance = self._get_file()
+        instance = instance.replace(self.ID, xform.to_generic().id)
+        xform = FormProcessorInterface.post_xform(instance, domain=domain)
+        self.assertNotEqual(xform.to_generic().id, self.ID)
 
     def test_wrong_domain(self):
         domain = 'test-domain'
-        XFormInstance.get_db().save_doc({
-            '_id': self.ID,
-            'doc_type': 'XFormInstance',
-            'domain': 'wrong-domain',
-        })
+        generic_xform = GenericXFormInstance(
+            doc_type='XFormInstance',
+            domain='wrong-domain',
+        )
+        xform = FormProcessorInterface.create_from_generic(generic_xform)
 
-        doc = post_xform_to_couch(instance=self._get_file(), domain=domain)
-        self.assertNotEqual(doc.get_id, self.ID)
+        instance = self._get_file()
+        instance = instance.replace(self.ID, xform.to_generic().id)
+        xform = FormProcessorInterface.post_xform(instance, domain=domain)
+        self.assertNotEqual(xform.to_generic().id, self.ID)

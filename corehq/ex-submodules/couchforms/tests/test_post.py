@@ -5,12 +5,16 @@ from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 from couchforms.models import XFormInstance
-from couchforms.tests.testutils import create_and_save_xform
+
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class PostTest(TestCase):
 
     maxDiff = None
+
+    def tearDown(self):
+        XFormInstance.get_db().flush()
 
     def _test(self, name, any_id_ok=False, tz_differs=False):
         with open(os.path.join(os.path.dirname(__file__), 'data', '{name}.xml'.format(name=name))) as f:
@@ -25,21 +29,14 @@ class PostTest(TestCase):
                                '{name}.json'.format(name=expected_name))) as f:
             result = json.load(f)
 
-        with create_and_save_xform(instance) as doc_id:
-            xform = XFormInstance.get(doc_id)
-            try:
-                xform_json = xform.to_json()
-                result['received_on'] = xform_json['received_on']
-                result['_rev'] = xform_json['_rev']
-                if any_id_ok:
-                    result['_id'] = xform_json['_id']
-                self.assertDictEqual(xform_json, result)
-            except Exception:
-                # to help when bootstrapping a new test case
-                print json.dumps(xform_json)
-                raise
-            finally:
-                xform.delete()
+        xform = FormProcessorInterface.post_xform(instance)
+        xform_json = xform.to_generic().to_json()
+        result['received_on'] = xform_json['received_on']
+        result['_rev'] = xform_json['_rev']
+        if any_id_ok:
+            result['_id'] = xform_json['_id']
+
+        self.assertDictEqual(xform_json, result)
 
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
