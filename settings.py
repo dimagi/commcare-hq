@@ -942,6 +942,14 @@ DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
 
+# Supervisor RPC
+SUPERVISOR_RPC_ENABLED = False
+SUBSCRIPTION_USERNAME = None
+SUBSCRIPTION_PASSWORD = None
+
+ENVIRONMENT_HOSTS = {
+    'pillowtop': ['localhost']
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings
