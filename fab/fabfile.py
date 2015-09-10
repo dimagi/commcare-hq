@@ -32,6 +32,7 @@ import posixpath
 import sh
 import sys
 import time
+import yaml
 from collections import defaultdict
 from distutils.util import strtobool
 
@@ -41,7 +42,6 @@ from fabric.colors import blue, red
 from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
-import yaml
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -682,6 +682,75 @@ def copy_tf_localsettings():
         '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
             env.code_current, env.code_root
         ))
+
+
+@task
+def rollback():
+    """
+    Rolls back the servers to the previous release if it exists and is same across servers
+    """
+    number_of_releases = execute(get_number_of_releases)
+    if not all(map(lambda n: n > 1, number_of_releases)):
+        print red('Aborting because there are not enough previous releases.')
+        exit()
+
+    releases = execute(get_previous_release)
+
+    unique_releases = set(releases.values())
+    if len(unique_releases) != 1:
+        print red('Aborting because not all hosts would rollback to same release')
+        exit()
+
+    unique_release = unique_releases.pop()
+
+    if not unique_release:
+        print red('Aborting because release path is empty. '
+            'This probably means there are no releases to rollback to.')
+        exit()
+
+    if not console.confirm('Do you wish to rollback to release: {}'.format(unique_release), default=False):
+        print blue('Exiting.')
+        exit()
+
+    exists = execute(ensure_release_exists, unique_release)
+
+    if all(exists.values()):
+        print blue('Updating current and restarting services')
+        execute(update_current, unique_release)
+        execute(services_restart)
+        execute(mark_last_release_unsuccessful)
+    else:
+        print red('Aborting because not all hosts have release')
+        exit()
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def get_number_of_releases():
+    with cd(env.root):
+        return int(sudo("wc -l {} | awk '{{ print $1 }}'".format(RELEASE_RECORD)))
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def mark_last_release_unsuccessful():
+    # Removes last line from RELEASE_RECORD file
+    with cd(env.root):
+        sudo("sed -i .bak '$d' {}".format(RELEASE_RECORD))
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def ensure_release_exists(release):
+    return files.exists(release)
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def get_previous_release():
+    # Gets second to last line in RELEASES.txt
+    with cd(env.root):
+        return sudo('tail -2 {} | head -n 1'.format(RELEASE_RECORD))
 
 
 @task
