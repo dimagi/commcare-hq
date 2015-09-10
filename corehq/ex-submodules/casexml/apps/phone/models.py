@@ -3,7 +3,7 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, SimplifiedSyncAssertionError
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
@@ -593,13 +593,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
+                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+
                 def _should_fail_softly():
                     def _sync_log_was_old():
                         # todo: this here to avoid having to manually clean up after
                         # http://manage.dimagi.com/default.asp?179664
                         # it should be removed when there are no longer any instances of the assertion
                         if self.date < datetime(2015, 8, 25):
-                            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
                             _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
                                 self._id, to_remove)
                             )
@@ -610,9 +611,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if _should_fail_softly():
                     pass
                 else:
-                    raise SimplifiedSyncAssertionError('case {} already removed from sync log {}'.format(
-                        to_remove, self._id,
-                    ))
+                    # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
+                    # we should convert back to a real Exception when we stop getting any of these
+                    _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
 
             self.dependent_case_ids_on_phone.remove(to_remove)
 

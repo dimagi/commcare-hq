@@ -60,9 +60,5 @@ class InvalidOwnerIdError(OwnershipCleanlinessError):
     pass
 
 
-class SimplifiedSyncAssertionError(Exception):
-    pass
-
-
 class SyncLogCachingError(Exception):
     pass
