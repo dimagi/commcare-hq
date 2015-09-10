@@ -15,6 +15,7 @@ from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
+from corehq.apps.reports.dbaccessors import stale_get_exports_json
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -753,12 +754,21 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+    @classmethod
+    def get_stale_exports(cls, domain):
+        return [
+            cls.wrap(export)
+            for export in stale_get_exports_json(domain)
+            if export['type'] == cls._default_type
+        ]
+
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
     split_multiselects = BooleanProperty(default=False)
+    _default_type = 'form'
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
@@ -883,6 +893,7 @@ class FormDeidExportSchema(FormExportSchema):
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
+    _default_type = 'case'
 
     @property
     def filter(self):

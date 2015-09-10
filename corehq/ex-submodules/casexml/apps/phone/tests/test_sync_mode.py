@@ -664,8 +664,6 @@ class SyncTokenCachingTest(SyncBaseTest):
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
-        self.assertEqual(original_payload.as_string(), cached_payload.as_string())
-
     @run_with_all_restore_configs
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(

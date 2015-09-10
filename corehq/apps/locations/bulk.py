@@ -241,7 +241,7 @@ class LocationImporter(object):
 
     def submit_form(self, parent, form_data, existing, location_type, consumption):
         location = existing or Location(domain=self.domain, parent=parent)
-        form = LocationForm(location, form_data)
+        form = LocationForm(location, form_data, is_new=not bool(existing))
         form.strict = False  # optimization hack to turn off strict validation
         if form.is_valid():
             # don't save if there is nothing to save

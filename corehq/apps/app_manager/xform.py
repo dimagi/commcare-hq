@@ -6,7 +6,7 @@ from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
 )
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
@@ -1340,7 +1340,12 @@ class XForm(WrappedNode):
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
-                self.add_case_preloads(actions['case_preload'].preload)
+                self.add_case_preloads(
+                    actions['case_preload'].preload,
+                    # (As above) case_id_xpath is set based on an assumption about the way suite_xml.py determines
+                    # the case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
+                    case_id_xpath=case_id_xpath
+                )
 
         if 'subcases' in actions:
             subcases = actions['subcases']
@@ -1453,6 +1458,12 @@ class XForm(WrappedNode):
             calculate=u'date(min({}))'.format(','.join(forms_due))
         )
         self.data_node.append(_make_elem(SCHEDULE_GLOBAL_NEXT_VISIT_DATE))
+
+        self.add_bind(
+            nodeset=u'/data/{}'.format(SCHEDULE_NEXT_DUE),
+            calculate=QualifiedScheduleFormXPath.next_visit_date(forms, case)
+        )
+        self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
     def create_casexml_2_advanced(self, form):
         from corehq.apps.app_manager.util import split_path

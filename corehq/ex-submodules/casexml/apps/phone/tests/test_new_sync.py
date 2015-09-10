@@ -187,7 +187,6 @@ class TestNewSyncSpecifics(TestCase):
         factory = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id})
         # create a parent and child case (with index) from one user
         parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
-        parent_id, child_id = ['parent', 'child']
         factory.create_or_update_cases([
             CaseStructure(
                 case_id=child_id,

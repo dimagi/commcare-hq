@@ -3332,7 +3332,8 @@ class ReportAppConfig(DocumentSchema):
                     ),
                     template=suite_xml.Template(
                         text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
+                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                        )
                     ),
                 )
             ]
@@ -3385,7 +3386,8 @@ class ReportAppConfig(DocumentSchema):
                     ),
                     template=suite_xml.Template(
                         text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
+                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                        )
                     ),
                 ),
                 suite_xml.Field(
@@ -3399,7 +3401,22 @@ class ReportAppConfig(DocumentSchema):
                             xpath=suite_xml.Xpath(function='description'))
                     ),
                 ),
-            ] + list(_get_graph_fields())
+            ] + list(_get_graph_fields()) + [
+                suite_xml.Field(
+                    header=suite_xml.Header(
+                        text=suite_xml.Text(
+                            locale=suite_xml.Locale(id=id_strings.report_last_sync())
+                        )
+                    ),
+                    template=suite_xml.Template(
+                        text=suite_xml.Text(
+                            xpath=suite_xml.Xpath(
+                                function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                            )
+                        )
+                    )
+                ),
+            ]
         ).serialize())
 
     def data_details(self):

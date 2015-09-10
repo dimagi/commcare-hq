@@ -122,7 +122,7 @@ def average_lead_time(facility_id, window_date):
 
 
 def needed_status_types(org_summary):
-    facility = Location.get(docid=org_summary.location_id)
+    facility = Location.get(org_summary.location_id)
     return [status_type for status_type in const.NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
@@ -156,7 +156,7 @@ def not_responding_facility(org_summary):
 def update_product_availability_facility_data(org_summary):
     # product availability
 
-    facility = Location.get(docid=org_summary.location_id)
+    facility = Location.get(org_summary.location_id)
     assert facility.location_type == "FACILITY"
     prods = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
     for p in prods:
@@ -344,7 +344,7 @@ def process_facility_statuses(facility_id, statuses, alerts=True):
     data warehouse tables. This should only be called on supply points
     that are facilities.
     """
-    facility = Location.get(docid=facility_id)
+    facility = Location.get(facility_id)
     for status in statuses:
         warehouse_date = _get_window_date(status.status_type, status.status_date)
         if _is_valid_status(facility, status.status_date, status.status_type):
