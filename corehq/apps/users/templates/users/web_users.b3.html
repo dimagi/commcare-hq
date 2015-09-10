@@ -1,0 +1,636 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block js %}
+<script type="text/javascript"
+        src="{% new_static 'users/js/roles.b3.js' %}"></script>
+<script type="text/javascript"
+        src="{% new_static 'users/js/web_users_list.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+(function (angular, undefined) {
+    'use strict';
+    var usersApp = angular.module('usersApp', ['hq.web_users']);
+    usersApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+}(window.angular));
+</script>
+<script>
+    $(function () {
+        function selectText(element) {
+            /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
+            var doc = document;
+            var text = element[0];
+
+            if (doc.body.createTextRange) { // ms
+                var range = doc.body.createTextRange();
+                range.moveToElementText(text);
+                range.select();
+            } else if (window.getSelection) { // moz, opera, webkit
+                var selection = window.getSelection();
+                var range = doc.createRange();
+                range.selectNodeContents(text);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+        $('#adminEmails').on('shown.bs.collapse', function () {
+            selectText($('#adminEmails .panel-body'));
+            $(window).trigger('scroll');
+        });
+    });
+</script>
+<script>
+    $(function () {
+        $('#restrict_users').on('change', function () {
+            var $saveButton = $('#save_restrict_option');
+            $saveButton
+                    .removeAttr('disabled')
+                    .removeClass('disabled btn-default')
+                    .addClass('btn-success')
+                    .text('{% trans "Save" %}');
+        });
+        $('#save_restrict_option').click(function(e) {
+            var post_url = '{% url "location_restriction_for_users" domain %}';
+            $(this).text('Saving ...');
+            $.post(post_url,
+                {restrict_users: $('#restrict_users')[0].checked},
+                function(data, status) {
+                    $('#save_restrict_option')
+                            .text('{% trans "Saved" %}')
+                            .removeClass('btn-success')
+                            .attr('disabled', 'disabled')
+                            .addClass('disabled btn-default');
+            });
+            e.preventDefault();
+        });
+
+        $('.resend-invite').click(function (e) {
+            $(this).addClass('disabled').attr('disabled', 'disabled');
+            var post_url = '{% url "reinvite_web_user" domain %}';
+            var doc_id = this.getAttribute('data-invite');
+            var self = this;
+            $.post(post_url, {invite: doc_id},
+                function(data) {
+                    $(self).parent().text(data.response);
+                    self.remove();
+                }
+            );
+            e.preventDefault();
+        });
+
+        var $userRolesTable = $('#user-roles-table');
+        $userRolesTable.userRoles({
+            userRoles: {{ user_roles|JSON }},
+            defaultRole: {{ default_role|JSON }},
+            saveUrl: '{% url "post_user_role" domain %}',
+            deleteUrl: '{% url "delete_user_role" domain %}',
+            reportOptions: {{ report_list|JSON }},
+            allowEdit: {{ can_edit_roles|BOOL }}
+        });
+        $userRolesTable.show();
+
+        $('#modal-delete-invite').on('show.bs.modal', function () {
+            var id = $(this).data('id');
+            $('#confirm-delete').click(function () {
+                $(this).addClass('disabled').attr('disabled', 'disabled');
+                var post_url = '{% url "delete_invitation" domain %}';
+                $.post(post_url, {invite: id},
+                    function(data) {
+                        $("a[data-id='" + id + "']").parents("tr").remove();
+                        $('#modal-delete-invite').data('id', id).modal('hide');
+                         $(this).removeClass('disabled');
+                    }
+                );
+            });
+        });
+
+        $('.delete-invitation').on('click', function(e) {
+            var id = $(this).data('id');
+            $('#modal-delete-invite').data('id', id).modal('show');
+            e.preventDefault();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <p class="lead">
+        {% blocktrans %}
+            Web Users can manage and view data on CommCare HQ.
+            However, these users cannot submit forms from phones
+            using the CommCare Application.
+        {% endblocktrans %}
+        <div class="btn-toolbar">
+            <a class="btn btn-success"
+               href="{% url "invite_web_user" domain %}">
+                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
+            </a>
+        </div>
+    </p>
+    <div ng-app="usersApp">
+        <div class="panel panel-default" ng-controller="paginatedListController">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <input type="text"
+                                   class="form-control"
+                                   ng-model="query"
+                                   placeholder="{% trans "Filter Users..." %}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default"
+                                        ng-click="filterUsers()"
+                                        type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-responsive"
+                       style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "E-mail" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Phone Numbers" %}</th>
+                            <th>{% trans "Remove" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-show="notLoaded">
+                            <td colspan="5">{% trans "Loading Users..." %}</td>
+                        </tr>
+                        <tr ng-repeat="user in paginatedItems">
+                            {% angularjs %}
+                            <td><a href="{{ user.editUrl }}">{{ user.email }}</a></td>
+                            <td>{{ user.role }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>
+                                <ul>
+                                    <li ng-repeat="number in user.phoneNumbers">{{ number }}</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <div ng-show="user.removeUrl">
+                                    <button type="button"
+                                            class="btn btn-danger"
+                                            data-toggle="modal"
+                                            data-target="#remove_membership_{{ user.id }}">
+                                        <i class="fa fa-remove"></i> {% trans "Remove Membership" %}
+                                    </button>
+                                    <div id="remove_membership_{{ user.id }}"
+                                         class="modal fade">
+                                        <div class="modal-dialog">
+                                            <form class="modal-content"
+                                                  action="{{ user.removeUrl }}"
+                                                  method="post">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        <span class="sr-only">{% trans "Close" %}</span>
+                                                    </button>
+                                                    <h4 class="modal-title">{% trans "Remove User Membership" %}: {{ user.name }}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
+                                                    <ul class="dl-horizontal">
+                                                        <dt>{% trans "E-mail" %}</dt>
+                                                        <dd>{{ user.email }}</dd>
+                                                        <dt>{% trans "Name" %}</dt>
+                                                        <dd>{{ user.name }}</dd>
+                                                        <dt>{% trans "Membership" %}</dt>
+                                                        <dd>{{ user.domain }}</dd>
+                                                        <dt>{% trans "Role" %}</dt>
+                                                        <dd>{{ user.role }}</dd>
+                                                    </ul>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button"
+                                                            class="btn btn-default"
+                                                            data-dismiss="modal">
+                                                        {% trans "Cancel" %}
+                                                    </button>
+                                                    <button type="submit"
+                                                            class="btn btn-danger">
+                                                        {% trans "Remove Membership" %}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endangularjs %}
+                        </tr>
+                    </tbody>
+                </table>
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"></pagination>
+
+                {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox"
+                                   id="restrict_users"
+                                   name="restrict_users"
+                                   value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}/>
+                            {% trans "Restrict Web User access based on location" %}
+                        </label>
+                        <button type="button"
+                                class="btn btn-sm btn-default disabled"
+                                id="save_restrict_option">
+                            {% trans "Saved" %}
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if invitations %}
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% trans 'Pending Invitations' %}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-responsive">
+                    <thead>
+                        <tr>
+                            <th>{% trans "E-mail" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Date" %} (UTC)</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for invitation in invitations %}
+                        <tr>
+                            <td>
+                                {{ invitation.email }}
+                            </td>
+                            <td>
+                                {{ invitation.role_label }}
+                            </td>
+                            <td>
+                                {{ invitation.invited_on }}
+                                {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
+                                <span class="label label-info">
+                                    {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
+                                </span>
+                                {% else %}
+                                <span class="label label-important">
+                                     {% trans "Expired" %}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>
+                                    <a href="#" class="resend-invite btn btn-default"
+                                       data-invite={{ invitation.get_id }}>
+                                        {% trans "Resend Invitation" %}
+                                    </a>
+                                    <a href="#" class="btn btn-danger delete-invitation"
+                                       data-id={{ invitation.get_id }}>
+                                        {% trans "Delete Invitation" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="modal-delete-invite"
+             class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button"
+                                class="close"
+                                data-bind="click: $root.unsetRoleBeingDeleted">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans "Close" %}</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Delete invitation" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>{% trans "Are you sure you want to delete this invitation?" %}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <a class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="panel panel-default" id="user-roles-table" style="display: none;">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans 'Roles' %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped table-responsive">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>
+                          {% trans "Edit Web Users" %}
+                          <span class="hq-help-template"
+                                data-title="Edit {% hq_web_user %}s"
+                                data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Mobile Workers" %}
+                          <span class="hq-help-template"
+                                data-title="Edit {% commcare_user %}s"
+                                data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Data" %}
+                          <span class="hq-help-template"
+                                data-title="Edit Data"
+                                data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Apps" %}
+                          <span class="hq-help-template"
+                                data-title="Edit Apps"
+                                data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Reports" %}
+                          <span class="hq-help-template"
+                                data-title="View Reports"
+                                data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
+                        </th>
+                        <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: userRoles">
+                    <tr>
+                        <th>
+                            <span data-bind="visible: name, text: name"></span>
+                            <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+                        </th>
+                        <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
+                        <td>
+                            <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
+                            <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
+                                Only
+                                <ul data-bind="foreach: reportPermissions.specific">
+                                    <li data-bind="html: name, visible: value"></li>
+                                </ul>
+                            </div>
+                            <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
+                        </td>
+                        <td data-bind="visible: $root.allowEdit">
+                            <button class="btn btn-default" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
+                                <i class="fa fa-edit"></i>
+                                {% trans "Edit Role" %}
+                            </button>
+                            <button class="btn btn-default" data-bind="css: {disabled: !$data._id || $data.hasUsersAssigned}, click: $data._id ? $root.setRoleBeingDeleted : null">
+                                <i class="fa fa-trash"></i>
+                                {% trans "Delete Role" %}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            {% if can_edit_roles %}
+                <button class="btn btn-default"
+                        data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add Role" %}
+                </button>
+                <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
+                    <div data-bind="with: roleBeingDeleted"
+                         class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button"
+                                        class="close"
+                                        data-bind="click: $root.unsetRoleBeingDeleted">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">{% trans "Close" %}</span>
+                                </button>
+                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+                            </div>
+                            <div class="modal-body">
+                                <h4 data-bind="text: modalConfirmation"></h4>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: $root.unsetRoleBeingDeleted">
+                                    {% trans "Cancel" %}
+                                </button>
+                                <div data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog">
+                    <div data-bind="with: roleBeingEdited"
+                         class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button"
+                                        class="close"
+                                        data-bind="click: $root.unsetRoleBeingEdited">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">{% trans "Close" %}</span>
+                                </button>
+                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label"
+                                               for="role-name">
+                                            {% trans "Role Name" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <input data-bind="value: name"
+                                                   type="text"
+                                                   id="role-name"
+                                                   class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Web Users" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_web_users" />
+                                                    {% trans "Allow role to edit Web Users." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Mobile Workers" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_commcare_users" />
+                                                    {% trans "Allow role to edit Mobile Workers." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Data" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_data" />
+                                                    {% trans "Allow role to edit Data." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Applications" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_apps" />
+                                                    {% trans "Allow role to edit Applications." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "View All Reports" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: reportPermissions.all" />
+                                                    {% trans "Allow role to view all reports." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group"
+                                         data-bind="visible: !reportPermissions.all()">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "View Specific Reports" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="panel panel-default">
+                                                <div class="panel-heading">
+                                                    {% trans "Select which reports the role can view:" %}
+                                                </div>
+                                                <div class="panel-body"
+                                                     data-bind="foreach: reportPermissions.specific, visibleFade: !reportPermissions.all()">
+                                                    <div class="checkbox">
+                                                        <label>
+                                                            <input type="checkbox" data-bind="checked: value"/>
+                                                            <span data-bind="html: name"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: $root.unsetRoleBeingEdited">
+                                    {% trans "Cancel" %}
+                                </button>
+                                <div data-bind="saveButton2: $root.modalSaveButton.state,
+                                                saveOptions: $root.modalSaveButton.saveOptions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if user.is_superuser %}
+        <div class="panel panel-default">
+            <div class="panel-heading"
+                 role="tab"
+                 id="adminEmailsHeading">
+                <h4 class="panel-title">
+                    <a class="collapsed"
+                       data-toggle="collapse"
+                       href="#adminEmails"
+                       aria-expanded="false"
+                       aria-controls="adminEmails">
+                        {% trans "Copy and paste admin emails" %}
+                    </a>
+                </h4>
+            </div>
+            <div id="adminEmails"
+                 class="panel-collapse collapse"
+                 role="tabpanel"
+                 aria-labelledby="adminEmailsHeading">
+                <div class="panel-body">
+                    {% for user in web_users %}
+                        {% if user.is_domain_admin %}
+                            {% if user.first_name or user.last_name %}
+                                "{{ user.first_name }} {{ user.last_name }}"
+                                &lt;{{ user.username }}&gt;,
+                            {% else %}
+                                {{ user.username }},
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}
+

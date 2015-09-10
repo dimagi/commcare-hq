@@ -325,7 +325,7 @@ var COMMCAREHQ = (function () {
 function setUpIeWarning() {
     'use strict';
     var $warning;
-    if (/msie/i.test(navigator.userAgent) || /windows/i.test(navigator.userAgent)) {
+    if ($.browser.msie) {
         $warning = $('<div/>').addClass('ie-warning');
         $('<span>This application does not work well on Microsoft Internet Explorer. ' +
             'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
