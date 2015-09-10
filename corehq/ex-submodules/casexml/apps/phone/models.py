@@ -356,6 +356,7 @@ class SyncLog(AbstractSyncLog):
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
+                logger.debug('OLD {}: {}'.format(case._id, action.action_type))
                 if action.action_type == const.CASE_ACTION_CREATE:
                     self._assert(not self.phone_has_case(case._id),
                                  'phone has case being created: %s' % case._id)
