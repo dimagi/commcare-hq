@@ -120,6 +120,7 @@ def get_writer(format):
     except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
 
+
 def export_from_tables(tables, file, format, max_column_size=2000):
     tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
@@ -339,8 +340,6 @@ def _create_intermediate_tables(docs, schema):
 
     return tables
 
-def nice(column_name):
-    return "/".join(column_name)
 
 class FormattedRow(object):
     """
