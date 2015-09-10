@@ -347,6 +347,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
+        if not self.is_configurable_report:
+            kwargs['permissions_check'] = self._dispatcher.permissions_check
+
         return kwargs
 
     @property
