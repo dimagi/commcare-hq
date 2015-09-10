@@ -142,7 +142,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(request, **kwargs)
+                return self.get_ajax(request)
             self.content_type = None
             self.add_warnings(request)
             return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
@@ -216,7 +216,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def headers(self):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
 
-    def get_ajax(self, request, domain=None, **kwargs):
+    def get_ajax(self, request):
         try:
             data_source = self.data_source
             data_source.set_filter_values(self.filter_values)
