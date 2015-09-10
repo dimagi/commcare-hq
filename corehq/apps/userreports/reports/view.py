@@ -129,10 +129,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return self.spec.ui_filters
 
     @cls_to_view_login_and_domain
-    def dispatch(self, request, report_config_id, **kwargs):
+    def dispatch(self, request, domain, subreport_slug, **kwargs):
         self.request = request
-        self.domain = request.domain
-        self.report_config_id = report_config_id
+        self.domain = domain
+        self.report_config_id = subreport_slug
         self.lang = self.request.couch_user.language or default_language()
         user = request.couch_user
         if self.has_permissions(self.domain, user):
@@ -271,7 +271,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
-        pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
     @property
@@ -367,14 +367,13 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         )
         return to_function(class_path)
 
-    def dispatch(self, request, report_config_id, **kwargs):
-        domain = kwargs['domain']
-        request.domain = domain
+    def dispatch(self, request, domain, subreport_slug, **kwargs):
+        report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
         except BadSpecError:
             raise Http404
-        return report_class().dispatch(request, report_config_id, **kwargs)
+        return report_class().dispatch(request, domain, report_config_id, **kwargs)
 
     def get_report(self, domain, slug, config_id):
         try:
@@ -386,5 +385,5 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
-        pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
