@@ -690,7 +690,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     case_update.is_live = False
 
         def _add_index(index):
-            logger.debug('adding index {} -> {} ({}).'.format(index.case_id, index.referenced_id, index.identifier))
+            logger.debug('adding index {} -> {} ({}).'.format(
+                index.case_id, index.referenced_id, index.identifier))
             self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
