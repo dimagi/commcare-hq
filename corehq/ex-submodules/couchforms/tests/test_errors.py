@@ -36,10 +36,10 @@ class CaseProcessingErrorsTest(TestCase):
         xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.to_generic().id == 'abc-easy-as-123']
+                          if xform_error.id == 'abc-easy-as-123']
         self.assertEqual(len(related_errors), 1)
         related_error = related_errors[0]
-        self.assertEqual(related_error.to_generic().problem,
+        self.assertEqual(related_error.problem,
                          'IllegalCaseId: case_id must not be empty')
 
     def test_uses_referrals(self):
@@ -70,8 +70,8 @@ class CaseProcessingErrorsTest(TestCase):
         xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.to_generic().id == 'abc-easy-as-456']
+                          if xform_error.id == 'abc-easy-as-456']
         self.assertEqual(len(related_errors), 1)
         related_error = related_errors[0]
-        self.assertEqual(related_error.to_generic().problem,
+        self.assertEqual(related_error.problem,
                 'UsesReferrals: Sorry, referrals are no longer supported!')

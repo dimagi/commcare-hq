@@ -17,8 +17,7 @@ class TestMeta(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertNotEqual(None, xform_generic.metadata)
         self.assertEqual(date(2010, 07, 22), xform_generic.metadata.timeStart.date())
@@ -49,8 +48,7 @@ class TestMeta(TestCase):
 
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(xform_generic.metadata.appVersion, '2.0')
         self.assertEqual(xform_generic.metadata.to_json(), {
@@ -70,8 +68,7 @@ class TestMeta(TestCase):
     def testMetaBadUsername(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(xform_generic.metadata.appVersion, '2.0')
 
@@ -91,8 +88,7 @@ class TestMeta(TestCase):
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(xform_generic.metadata.appVersion, '2.0')
 
@@ -113,8 +109,7 @@ class TestMeta(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_location.xml")
         xml_data = open(file_path, "rb").read()
 
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(
             xform_generic.metadata.location,
@@ -143,8 +138,7 @@ class TestMeta(TestCase):
     def test_empty_gps_location(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_empty_location.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(
             xform_generic.metadata.location,
@@ -156,8 +150,7 @@ class TestMeta(TestCase):
     def testMetaDateInDatetimeFields(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "date_in_meta.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        xform_generic = xform.to_generic()
+        xform_generic = FormProcessorInterface.post_xform(xml_data)
 
         self.assertEqual(datetime(2014, 7, 10), xform_generic.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform_generic.metadata.timeEnd)

@@ -249,7 +249,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def to_generic(self):
         generic = GenericXFormInstance(self.to_json())
-        generic.metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
+        generic._metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
         if '_id' in self:
             generic.id = self['_id']
         return generic

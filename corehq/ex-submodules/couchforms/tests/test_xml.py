@@ -26,6 +26,6 @@ class XMLElementTest(TestCase):
                 sample_value=value.encode(encoding),
             )
             xform = FormProcessorInterface.post_xform(xml_data)
-            self.assertEqual(value, xform.to_generic().form['test'])
+            self.assertEqual(value, xform.form['test'])
             elem = FormProcessorInterface.get_xml_element(xform)
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)

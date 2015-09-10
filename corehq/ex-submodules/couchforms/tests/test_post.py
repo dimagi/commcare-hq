@@ -30,17 +30,21 @@ class PostTest(TestCase):
             result = json.load(f)
 
         xform = FormProcessorInterface.post_xform(instance)
-        xform_json = xform.to_generic().to_json()
+        xform_json = xform.to_json()
         result['received_on'] = xform_json['received_on']
         result['_rev'] = xform_json['_rev']
+        result['_attachments'] = None
+        xform_json['_attachments'] = None
         if any_id_ok:
             result['_id'] = xform_json['_id']
+            result['id'] = xform_json['id']
 
         self.assertDictEqual(xform_json, result)
 
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
+        XFormInstance.get_db().flush()
 
     def test_decimalmeta(self):
         self._test('decimalmeta', any_id_ok=True)

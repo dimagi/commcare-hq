@@ -6,6 +6,8 @@ from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
 
+from .utils import to_generic
+
 
 class FormProcessorInterface(object):
     """
@@ -14,6 +16,7 @@ class FormProcessorInterface(object):
     """
 
     @staticmethod
+    @to_generic
     def create_from_generic(generic_xform, generic_attachment=None):
         xform = XFormInstance.from_generic(generic_xform)
         xform.save()
@@ -22,27 +25,31 @@ class FormProcessorInterface(object):
         return xform
 
     @staticmethod
-    def xpath(xform, xpath):
-        return xform.xpath(xpath)
-
-    @staticmethod
     def get_attachment(xform_id, attachment_name):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
 
     @staticmethod
-    def archive_xform(xform, user=None):
+    def archive_xform(xform_generic, user=None):
+        xform = FormProcessorInterface._get_xform(xform_generic.id)
         return xform.archive(user=user)
 
     @staticmethod
-    def unarchive_xform(xform, user=None):
+    def unarchive_xform(xform_generic, user=None):
+        xform = FormProcessorInterface._get_xform(xform_generic.id)
         return xform.unarchive(user=user)
 
     @staticmethod
-    def get_xml_element(xform):
+    def get_xml_element(xform_generic):
+        xform = FormProcessorInterface._get_xform(xform_generic.id)
         return xform.get_xml_element()
 
     @staticmethod
+    @to_generic
     def get_xform(xform_id):
+        return FormProcessorInterface._get_xform(xform_id)
+
+    @staticmethod
+    def _get_xform(xform_id):
         db = XFormInstance.get_db()
         doc = db.get(xform_id)
         if doc['doc_type'] in doc_types():
@@ -52,10 +59,12 @@ class FormProcessorInterface(object):
         raise ResourceNotFound(xform_id)
 
     @staticmethod
+    @to_generic
     def get_case(case_id):
         return CommCareCase.get(case_id)
 
     @staticmethod
+    @to_generic
     def get_by_doc_type(domain, doc_type):
         return XFormError.view(
             'domain/docs',
@@ -66,12 +75,16 @@ class FormProcessorInterface(object):
         ).all()
 
     @staticmethod
-    def update_properties(xform, **properties):
+    @to_generic
+    def update_properties(xform_generic, **properties):
+        xform = FormProcessorInterface._get_xform(xform_generic.id)
         for prop, value in properties.iteritems():
             setattr(xform, prop, value)
         xform.save()
+        return xform
 
     @staticmethod
+    @to_generic
     def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
         """
         create a new xform and releases the lock

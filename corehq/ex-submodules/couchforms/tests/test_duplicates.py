@@ -20,14 +20,14 @@ class DuplicateFormTest(TestCase):
     def test_basic_duplicate(self):
         xml_data = self._get_file()
         xform = FormProcessorInterface.post_xform(xml_data)
-        self.assertEqual(self.ID, xform.to_generic().id)
-        self.assertEqual("XFormInstance", xform.to_generic().doc_type)
-        self.assertEqual("test-domain", xform.to_generic().domain)
+        self.assertEqual(self.ID, xform.id)
+        self.assertEqual("XFormInstance", xform.doc_type)
+        self.assertEqual("test-domain", xform.domain)
 
         xform = FormProcessorInterface.post_xform(xml_data, domain='test-domain')
-        self.assertNotEqual(self.ID, xform.to_generic().id)
-        self.assertEqual("XFormDuplicate", xform.to_generic().doc_type)
-        self.assertTrue(self.ID in xform.to_generic().problem)
+        self.assertNotEqual(self.ID, xform.id)
+        self.assertEqual("XFormDuplicate", xform.doc_type)
+        self.assertTrue(self.ID in xform.problem)
 
     def test_wrong_doc_type(self):
         domain = 'test-domain'
@@ -38,9 +38,9 @@ class DuplicateFormTest(TestCase):
         xform = FormProcessorInterface.create_from_generic(generic_xform)
 
         instance = self._get_file()
-        instance = instance.replace(self.ID, xform.to_generic().id)
+        instance = instance.replace(self.ID, xform.id)
         xform = FormProcessorInterface.post_xform(instance, domain=domain)
-        self.assertNotEqual(xform.to_generic().id, self.ID)
+        self.assertNotEqual(xform.id, self.ID)
 
     def test_wrong_domain(self):
         domain = 'test-domain'
@@ -51,6 +51,6 @@ class DuplicateFormTest(TestCase):
         xform = FormProcessorInterface.create_from_generic(generic_xform)
 
         instance = self._get_file()
-        instance = instance.replace(self.ID, xform.to_generic().id)
+        instance = instance.replace(self.ID, xform.id)
         xform = FormProcessorInterface.post_xform(instance, domain=domain)
-        self.assertNotEqual(xform.to_generic().id, self.ID)
+        self.assertNotEqual(xform.id, self.ID)

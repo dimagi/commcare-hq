@@ -1,5 +1,5 @@
 import datetime
-from jsonobject import (
+from dimagi.ext.jsonobject import (
     JsonObject,
     StringProperty,
     DictProperty,
@@ -83,7 +83,32 @@ class GenericXFormInstance(JsonObject):
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
-    metadata = ObjectProperty(GenericMetadata)
+    _metadata = None
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    def get_data(self, xpath):
+        """
+        Get data from a document from an xpath, returning None if the value isn't found.
+        Copied from safe_index
+        """
+        return GenericXFormInstance._get_data(self, xpath.split('/'))
+
+    @staticmethod
+    def _get_data(xform, keys):
+        if len(keys) == 1:
+            # first check dict lookups, in case of conflicting property names
+            # with methods (e.g. case/update --> a dict's update method when
+            # it should be the case block's update block.
+            try:
+                if keys[0] in xform:
+                    return xform[keys[0]]
+            except Exception:
+                return getattr(xform, keys[0], None)
+        else:
+            return GenericXFormInstance._get_data(GenericXFormInstance._get_data(xform, [keys[0]]), keys[1:])
 
 
 class GenericFormAttachment(JsonObject):

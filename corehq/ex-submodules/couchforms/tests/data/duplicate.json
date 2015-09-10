@@ -9,6 +9,7 @@
         }
     },
     "_id": "7H46J37FGH3",
+    "id": "7H46J37FGH3",
     "_rev": "1-ce4eda776ac0510cdaf4a8de4f71db21",
     "computed_": {},
     "computed_modified_on_": null,
@@ -71,9 +72,11 @@
     "auth_context": {},
     "build_id": null,
     "date_header": null,
-    "domain": null,
+    "domain": "test-domain",
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null
+    "submit_ip": null,
+    "deprecated_form_id": null,
+    "orig_id": null
 }
