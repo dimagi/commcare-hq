@@ -5,56 +5,106 @@
         <locale id="cchq.report_menu"/>
       </text>
     </title>
-    <field>
-      <header>
+    <detail>
+      <title>
         <text>
-          <locale id="cchq.report_name_header"/>
+          <locale id="cchq.report_menu"/>
         </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="name"/>
-        </text>
-      </template>
-    </field>
-    <field>
-      <header>
-        <text>
-          <locale id="cchq.report_description_header"/>
-        </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="description"/>
-        </text>
-      </template>
-    </field>
-    <field>
-      <header>
-        <text/>
-      </header>
-      <template form="graph">
-        <graph type="bar">
-          <series nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']/rows/row">
+      </title>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.report_name_header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.report_description_header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="description"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text/>
+        </header>
+        <template form="graph">
+          <graph type="bar">
+            <series nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']/rows/row">
+              <configuration/>
+              <x function="column[@id='owner']" />
+              <y function="column[@id='tickets']" />
+            </series>
             <configuration/>
-            <x function="column[@id='owner']" />
-            <y function="column[@id='tickets']" />
-          </series>
-          <configuration/>
-        </graph>
-      </template>
-    </field>
-    <field>
-      <header>
+          </graph>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.report_last_sync"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"/>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <detail id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data" nodeset="rows/row">
+      <title>
         <text>
-          <locale id="cchq.report_last_sync"/>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
         </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"/>
-        </text>
-      </template>
-    </field>
+      </title>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.owner"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='owner']"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.count"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='count']"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <header>
+          <text>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.headers.is_starred"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="column[@id='is_starred']"/>
+          </text>
+        </template>
+      </field>
+    </detail>
   </detail>
 </partial>

@@ -4,6 +4,12 @@
 {% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script>
         function format_date(datestring) {
@@ -143,13 +149,66 @@
             }
         }
 
+        function PillowOperationViewModel(pillow_model, operation) {
+            var self = this;
+            self.pillow_model = pillow_model;
+            self.operation = operation;
+            self.title = operation + ' for ' + pillow_model.name();
+
+            self.go = function () {
+                self.pillow_model.perform_operation(operation);
+            }
+        }
+
         function PillowModel(pillow) {
             var self = this;
-            self.name = pillow.name;
-            self.seq = pillow.seq;
-            self.db_seq = pillow.db_seq;
-            self.time_since_last = pillow.time_since_last;
-            self.status = (function() {
+            self.name = ko.observable();
+            self.seq = ko.observable();
+            self.db_seq = ko.observable();
+            self.time_since_last = ko.observable();
+            self.show_supervisor_info = ko.observable();
+            self.supervisor_state = ko.observable();
+            self.supervisor_message = ko.observable();
+            self.operation_in_progress = ko.observable(false);
+
+            self.update = function (data) {
+                self.name(data.name);
+                self.seq(data.seq);
+                self.db_seq(data.db_seq);
+                self.time_since_last(data.time_since_last);
+                self.show_supervisor_info(!!data.supervisor_state);
+                self.supervisor_state(data.supervisor_state||'(unavailable)');
+                self.supervisor_message(data.supervisor_message);
+            };
+
+            self.update(pillow);
+
+            self.process_running = ko.computed(function () {
+                return self.supervisor_state() === 'RUNNING';
+            });
+
+            self.start_stop_text = ko.computed(function () {
+                return self.process_running() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
+            });
+
+            self.disabled = ko.computed(function() {
+                return self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED');
+            });
+
+            self.supervisor_state_css = ko.computed(function() {
+                switch (self.supervisor_state()) {
+                    case ('(unavailable)'):
+                        return '';
+                    case ('RUNNING'):
+                        return 'label-success';
+                    case ('STOPPED'):
+                        return 'label-warning';
+                    default:
+                        return 'label-important';
+                }
+            });
+
+            self.checkpoint_status_css = ko.computed(function() {
                 var hours = pillow.hours_since_last;
                 switch (true) {
                     case (hours <= 1):
@@ -161,10 +220,75 @@
                     default:
                         return 'label-important';
                 }
-            })();
+            });
+
+            self.overall_status = ko.computed(function() {
+                var status_combined = self.checkpoint_status_css() + self.supervisor_state_css();
+                if (status_combined.indexOf('important') !== -1) {
+                    return 'error';
+                } else if (status_combined.indexOf('warning') !== -1) {
+                    return 'warning';
+                } else if (status_combined.indexOf('info') !== -1) {
+                    return 'info';
+                } else if (status_combined.indexOf('success') !== -1) {
+                    return 'success';
+                }
+            });
+
             self.show_progress = function () {
-                    return (self.seq * 100) / self.db_seq <= 99;
+                return (self.seq * 100) / self.db_seq <= 99;
             };
+
+            self.show_pillow_dialog = function (operation) {
+                var element = $('#pillow_operation_modal').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new PillowOperationViewModel(self, operation), element);
+                $('#pillow_operation_modal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
+            };
+
+            self.reset_checkpoint = function () {
+                self.show_pillow_dialog('reset_checkpoint');
+            };
+
+            self.start_stop = function () {
+                self.show_pillow_dialog(self.process_running() ? 'stop' : 'start');
+            };
+
+            self.refresh = function () {
+                self.perform_operation('refresh');
+            };
+
+            self.perform_operation = function(operation) {
+                self.operation_in_progress(true);
+                $.post('{% url "pillow_operation_api" %}', {
+                    'pillow_name': self.name,
+                    'operation': operation
+                }, function( data ) {
+                    self.operation_in_progress(false);
+                    self.update(data);
+
+                    if (!data.success) {
+                        alert_user("Operation failed: " + data.operation + " on "
+                                + data.pillow_name + ', ' + data.message, 'error');
+                    }
+                }, "json")
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.operation_in_progress(false);
+                    self.supervisor_state('(unavailable)');
+                    self.supervisor_message(err);
+                }).always(function() {
+                    $('#pillow_operation_modal').modal('hide');
+                    $("#" + self.name() +" td").effect("highlight", {}, 2000);
+                });
+            }
         }
 
         function DbComparisons(data) {
@@ -224,11 +348,6 @@
             ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
         });
 
-        $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
-            var pillowName = $(this).val();
-            $(".modal-header h3").text(pillowName);
-            $(".modal-body #pillow_name").val(pillowName);
-        });
     </script>
 
 
@@ -340,6 +459,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Supervisor Status</th>
                     <th>Time since last checkpoint</th>
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
@@ -348,9 +468,13 @@
                 </tr>
             </thead>
             <tbody data-bind="foreach: models">
-                <tr>
+                <tr data-bind="css: overall_status, attr: {id: name}">
                     <td><code data-bind="text: name"></code></td>
-                    <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
+                    <td>
+                            <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
+                            <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
+                    </td>
+                    <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
                     <td>
                         <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
                             <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
@@ -367,9 +491,18 @@
                         / <span data-bind="text: db_seq"></span>
                     </td>
                     <td>
-                        <a class="btn btn-info pull-right reset_pillow_checkpoint_btn" data-bind="value: name" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
-                            {% trans "Reset" %}
-                        </a>
+                        <button class="btn" type="button" data-bind="
+                            click: reset_checkpoint,
+                            disable: disabled">{% trans "Reset" %}</button>
+                        <button class="btn" type="button" data-bind="
+                            click: start_stop,
+                            text: start_stop_text,
+                            disable: disabled"></button>
+                        <button class="btn" type="button" data-bind="
+                            click: refresh,
+                            disable: disabled">
+                            <i class="icon-refresh" data-bind="css: {'icon-spin': operation_in_progress}"></i>
+                        </button>
                     </td>
                 </tr>
             </tbody>
@@ -546,5 +679,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
+    {% include "hqadmin/partials/pillow-operation-modal.html" %}
 {% endblock %}

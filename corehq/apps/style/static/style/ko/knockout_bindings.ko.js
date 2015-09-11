@@ -513,17 +513,18 @@ ko.bindingHandlers.valueOrNoneUI = {
 };
 
 ko.bindingHandlers.makeHqHelp = {
-    init: function (element, valueAccessor) {
+    update: function (element, valueAccessor) {
         var opts = valueAccessor(),
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
+        $(element).find('.hq-help').remove();
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
-            placement: placement || 'right',
+            placement: placement || 'right'
         }).appendTo(element);
     }
 };

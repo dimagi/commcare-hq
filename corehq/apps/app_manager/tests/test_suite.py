@@ -663,7 +663,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
             app.create_suite(),
-            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
