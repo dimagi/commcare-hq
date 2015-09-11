@@ -76,7 +76,7 @@ class CallCenterIndicators(object):
 
     def __init__(self, domain_name, domain_timezone, cc_case_type, user,
                  custom_cache=None, override_date=None, override_cases=None,
-                 override_cache=False):
+                 override_cache=False, indicator_config=None):
         self.domain = domain_name
         self.user = user
         self.data = defaultdict(dict)
@@ -85,7 +85,7 @@ class CallCenterIndicators(object):
         self.override_cases = override_cases
         self.override_cache = override_cache
 
-        self.config = CallCenterIndicatorConfig.for_domain(domain_name)
+        self.config = indicator_config or CallCenterIndicatorConfig.for_domain(domain_name)
 
         try:
             self.timezone = pytz.timezone(domain_timezone)
@@ -268,7 +268,7 @@ class CallCenterIndicators(object):
             legacy_name='{}{}'.format(legacy_prefix, range_name.title()) if legacy_prefix else None
         )
 
-    def _add_case_data_by_type(self, queryset, indicator_prefix, range_name, add_missing_types):
+    def _add_case_data_by_type(self, queryset, indicator_prefix, range_name, all_types=None):
         """
         Given a QuerySet containing data for case based indicators generate the 'by_case'
         indicators before adding them to the data set.
@@ -292,11 +292,11 @@ class CallCenterIndicators(object):
             self._reformat_and_add(data, '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
             seen_types.add(case_type)
 
-        if add_missing_types:
-            # add data for case types with no data
-            unseen_cases = self.case_types - seen_types
-            for case_type in unseen_cases:
-                self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+        all_types = all_types or self.case_types
+        # add data for case types with no data
+        unseen_cases = all_types - seen_types
+        for case_type in unseen_cases:
+            self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
     def _case_query_opened_closed(self, opened_or_closed, values, filters, lower, upper):
         """
@@ -356,7 +356,7 @@ class CallCenterIndicators(object):
 
     def add_case_data(self, query_fn, slug, indicator_config, type_column='type', legacy_prefix=None):
         include_types = indicator_config.all_types or indicator_config.types
-        include_total = indicator_config.total.active,
+        include_total = indicator_config.total.active
         limit_types = indicator_config.types
 
         q_type_exclude = {type_column: self.cc_case_type}
@@ -365,19 +365,20 @@ class CallCenterIndicators(object):
                 lower, upper = self.date_ranges[range_name]
                 results = query_fn(['case_owner', 'type'], ~Q(**q_type_exclude), lower, upper)
                 self._add_case_data_total(results, slug, range_name, legacy_prefix=legacy_prefix)
-                self._add_case_data_by_type(results, slug, range_name, add_missing_types=True)
+                self._add_case_data_by_type(results, slug, range_name)
         else:
-            for range_name in indicator_config.total.date_ranges:
-                lower, upper = self.date_ranges[range_name]
-                total_results = query_fn(['case_owner'], ~Q(**q_type_exclude), lower, upper)
-                self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
+            if include_total:
+                for range_name in indicator_config.total.date_ranges:
+                    lower, upper = self.date_ranges[range_name]
+                    total_results = query_fn(['case_owner'], ~Q(**q_type_exclude), lower, upper)
+                    self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
 
             if include_types:
-                for range_name, types in indicator_config.types_by_date_range():
+                for range_name, types in indicator_config.types_by_date_range().items():
                     q_type_in = {'{}__in'.format(type_column): types}
                     lower, upper = self.date_ranges[range_name]
                     type_results = query_fn(['case_owner', 'type'], Q(**q_type_in), lower, upper)
-                    self._add_case_data_by_type(type_results, slug, range_name, add_missing_types=False)
+                    self._add_case_data_by_type(type_results, slug, range_name, all_types=types)
 
     def add_case_total_legacy(self):
         """
@@ -473,12 +474,13 @@ class CallCenterIndicators(object):
                 self.add_case_data(query_fn, CASES_CLOSED, self.config.cases_closed)
 
             if self.config.cases_active.active:
+                legacy_prefix = LEGACY_CASES_UPDATED if self.config.cases_active.include_legacy else None
                 self.add_case_data(
                     self._case_query_active,
                     CASES_ACTIVE,
                     self.config.cases_total,
                     type_column='case_type',
-                    legacy_prefix=LEGACY_CASES_UPDATED
+                    legacy_prefix=legacy_prefix
                 )
 
             cache_timeout = seconds_till_midnight(self.timezone)

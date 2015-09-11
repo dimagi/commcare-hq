@@ -7,6 +7,7 @@ from dimagi.ext.couchdbkit import *
 
 TypeRange = namedtuple('TypeRange', 'type, range_slug')
 
+
 class BasicIndicator(DocumentSchema):
     active = BooleanProperty()
     date_ranges = StringListProperty()
@@ -23,12 +24,13 @@ class ByTypeIndicator(BasicIndicator):
     types = SchemaListProperty(TypedIndicator)
 
     def types_by_date_range(self):
-        types_list = [
-            TypeRange(type_, date_range) for type_ in self.types
+        types_list = sorted([
+            TypeRange(type_.type, date_range) for type_ in self.types
             for date_range in type_.date_ranges
-        ]
+            if type_.active
+        ], key=lambda x: x.range_slug)
         return {
-            range_slug: [type_.type for type_ in group]
+            range_slug: {type_.type for type_ in group}
             for range_slug, group in itertools.groupby(types_list, lambda x: x.range_slug)
         }
 
@@ -54,9 +56,9 @@ class CallCenterIndicatorConfig(Document):
         return res[0] if len(res) else cls.default_config(domain)
 
     @classmethod
-    def default_config(cls, domain):
+    def default_config(cls, domain, include_legacy=True):
         def default_basic():
-            return BasicIndicator(active=True, date_ranges=DATE_RANGES, include_legacy=True)
+            return BasicIndicator(active=True, date_ranges=DATE_RANGES, include_legacy=include_legacy)
 
         def default_typed():
             return ByTypeIndicator(
@@ -64,7 +66,7 @@ class CallCenterIndicatorConfig(Document):
                 date_ranges=DATE_RANGES,
                 total=default_basic(),
                 all_types=True,
-                include_legacy=True
+                include_legacy=include_legacy
             )
 
         return cls(

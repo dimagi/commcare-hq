@@ -1,8 +1,10 @@
 from collections import namedtuple
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
+from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
 from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
@@ -43,21 +45,23 @@ def create_cases_for_types(domain, case_types):
             ).as_string(), domain)
 
 
-def get_indicators(prefix, values, infix=None, is_legacy=False):
+def get_indicators(prefix, values, case_type=None, is_legacy=False, limit_ranges=None):
     """
     Generate indicators e.g. cases_opened_week0, cases_opened_{case_type}_week0 etc.
     """
-    ranges = ['week0', 'week1', 'month0', 'month1']
+    ranges = DATE_RANGES
+    limit_ranges = limit_ranges or DATE_RANGES
     data = {}
     separator = '' if is_legacy else '_'
-    infix = '{}{}{}'.format(separator, infix, separator) if infix else separator
+    infix = '{}{}{}'.format(separator, case_type, separator) if case_type else separator
     for i, r in enumerate(ranges):
-        r = r.title() if is_legacy else r
-        indicator_name = '{prefix}{infix}{suffix}'.format(
-            prefix=prefix,
-            infix=infix,
-            suffix=r)
-        data[indicator_name] = values[i]
+        if r in limit_ranges:
+            r = r.title() if is_legacy else r
+            indicator_name = '{prefix}{infix}{suffix}'.format(
+                prefix=prefix,
+                infix=infix,
+                suffix=r)
+            data[indicator_name] = values[i]
 
     return data
 
@@ -65,28 +69,46 @@ def get_indicators(prefix, values, infix=None, is_legacy=False):
 StaticIndicators = namedtuple('StaticIndicators', 'name, values, is_legacy, infix')
 
 
-def expected_standard_indicators(no_data=False):
-    expected = {'totalCases': 0L if no_data else 5L}
-    expected_values = [
-        StaticIndicators('formsSubmitted', [2L, 4L, 7L, 0L], True, None),
-        StaticIndicators('forms_submitted', [2L, 4L, 7L, 0L], False, None),
-        StaticIndicators('cases_total', [4L, 4L, 6L, 5L], False, None),
-        StaticIndicators('cases_opened', [0L, 1L, 3L, 5L], False, None),
-        StaticIndicators('cases_closed', [0L, 0L, 2L, 2L], False, None),
-        StaticIndicators('cases_active', [0L, 1L, 3L, 5L], False, None),
-        StaticIndicators('casesUpdated', [0L, 1L, 3L, 5L], True, None),
-        StaticIndicators('cases_total', [1L, 1L, 3L, 0L], False, 'person'),
-        StaticIndicators('cases_total', [3L, 3L, 3L, 5L], False, 'dog'),
-        StaticIndicators('cases_opened', [0L, 1L, 3L, 0L], False, 'person'),
-        StaticIndicators('cases_opened', [0L, 0L, 0L, 5L], False, 'dog'),
-        StaticIndicators('cases_closed', [0L, 0L, 2L, 0L], False, 'person'),
-        StaticIndicators('cases_closed', [0L, 0L, 0L, 2L], False, 'dog'),
-        StaticIndicators('cases_active', [0L, 1L, 3L, 0L], False, 'person'),
-        StaticIndicators('cases_active', [0L, 0L, 0L, 5L], False, 'dog')
-    ]
+def expected_standard_indicators(no_data=False, include_legacy=True, include_totals=True, case_types=None, limit_ranges=None):
+    case_types = case_types if case_types is not None else ['person', 'dog']
+    expected = {}
+    expected_values = []
+    if include_totals:
+        expected_values.extend([
+            StaticIndicators('forms_submitted', [2L, 4L, 7L, 0L], False, None),
+            StaticIndicators('cases_total', [4L, 4L, 6L, 5L], False, None),
+            StaticIndicators('cases_opened', [0L, 1L, 3L, 5L], False, None),
+            StaticIndicators('cases_closed', [0L, 0L, 2L, 2L], False, None),
+            StaticIndicators('cases_active', [0L, 1L, 3L, 5L], False, None),
+        ])
+
+    if 'dog' in case_types:
+        expected_values.extend ([
+            StaticIndicators('cases_total', [3L, 3L, 3L, 5L], False, 'dog'),
+            StaticIndicators('cases_opened', [0L, 0L, 0L, 5L], False, 'dog'),
+            StaticIndicators('cases_closed', [0L, 0L, 0L, 2L], False, 'dog'),
+            StaticIndicators('cases_active', [0L, 0L, 0L, 5L], False, 'dog')
+        ])
+
+    if 'person' in case_types:
+        expected_values.extend ([
+            StaticIndicators('cases_total', [1L, 1L, 3L, 0L], False, 'person'),
+            StaticIndicators('cases_opened', [0L, 1L, 3L, 0L], False, 'person'),
+            StaticIndicators('cases_closed', [0L, 0L, 2L, 0L], False, 'person'),
+            StaticIndicators('cases_active', [0L, 1L, 3L, 0L], False, 'person'),
+        ])
+
+    if include_legacy:
+        expected_values.extend([
+            StaticIndicators('formsSubmitted', [2L, 4L, 7L, 0L], True, None),
+            StaticIndicators('casesUpdated', [0L, 1L, 3L, 5L], True, None),
+        ])
+
+        expected['totalCases'] = 0L if no_data else 5L
+
     for val in expected_values:
         values = [0L] * 4 if no_data else val.values
-        expected.update(get_indicators(val.name, values, val.infix, val.is_legacy))
+        expected.update(get_indicators(val.name, values, val.infix, val.is_legacy, limit_ranges))
 
     return expected
 
@@ -154,6 +176,103 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
+
+    def test_standard_indicators_no_legacy(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+            indicator_config=config
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(include_legacy=False))
+
+    def test_standard_indicators_case_totals_only(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config.cases_total.all_types = False
+        config.cases_opened.all_types = False
+        config.cases_closed.all_types = False
+        config.cases_active.all_types = False
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+            indicator_config=config
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(
+                include_legacy=False,
+                include_totals=True,
+                case_types=[])
+        )
+        
+    def test_standard_indicators_case_dog_only(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config.forms_updated.active = False
+
+        def dog_only(conf):
+            conf.total.active = False
+            conf.all_types = False
+            conf.types = [TypedIndicator(active=True, date_ranges=[WEEK0, MONTH0], type='dog')]
+
+        dog_only(config.cases_total)
+        dog_only(config.cases_opened)
+        dog_only(config.cases_closed)
+        dog_only(config.cases_active)
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+            indicator_config=config
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(
+                include_legacy=False,
+                include_totals=False,
+                case_types=['dog'],
+                limit_ranges=[WEEK0, MONTH0])
+        )
+
+    def test_standard_indicators_case_week1_only(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config.forms_updated.date_ranges = [WEEK1]
+        config.cases_total.total.date_ranges = [WEEK1]
+        config.cases_opened.total.date_ranges = [WEEK1]
+        config.cases_closed.total.date_ranges = [WEEK1]
+        config.cases_active.total.date_ranges = [WEEK1]
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+            indicator_config=config
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(
+                include_legacy=False,
+                include_totals=True,
+                limit_ranges=[WEEK1])
+        )
 
     def test_sync_log(self):
         user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
