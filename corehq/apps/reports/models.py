@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
+import functools
 import logging
 from urllib import urlencode
 from django.http import Http404
@@ -460,17 +461,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            response = self._dispatcher.dispatch(
-                request,
-                render_as='email',
-                **self.view_kwargs
-            )
+            dispatch_func = functools.partial(self._dispatcher.dispatch, request, **self.view_kwargs)
+            response = dispatch_func(render_as='email')
             if attach_excel is True:
-                file_obj = self._dispatcher.dispatch(
-                    request,
-                    render_as='excel',
-                    **self.view_kwargs
-                )
+                file_obj = response = dispatch_func(render_as='excel')
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
