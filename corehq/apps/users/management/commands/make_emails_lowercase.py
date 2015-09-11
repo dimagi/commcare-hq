@@ -15,5 +15,8 @@ class Command(BaseCommand):
             if doc['email'] and not doc['email'].islower():
                 print doc['email']
                 doc['email'] = doc['email'].lower()
-                user = CouchUser.wrap_correctly(doc)
-                user.save()
+                try:
+                    user = CouchUser.wrap_correctly(doc)
+                    user.save()
+                except:
+                    print doc['_id'], "failed to save"
