@@ -11,37 +11,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
 from dimagi.utils.decorators.memoized import memoized
 import logging
+from corehq.apps.callcenter.const import *
 
 logger = logging.getLogger('callcenter')
-
-PCI_CHILD_FORM = 'http://openrosa.org/formdesigner/85823851-3622-4E9E-9E86-401500A39354'
-PCI_MOTHER_FORM = 'http://openrosa.org/formdesigner/366434ec56aba382966f77639a2414bbc3c56cbc'
-AAROHI_CHILD_FORM = 'http://openrosa.org/formdesigner/09486EF6-04C8-480C-BA11-2F8887BBBADD'
-AAROHI_MOTHER_FORM = 'http://openrosa.org/formdesigner/6C63E53D-2F6C-4730-AA5E-BAD36B50A170'
-INFOMOVAL_FIND_PATIENT_FORM = 'http://openrosa.org/formdesigner/DA10DCC2-8240-4101-B964-6F5424BD2B86'
-INFOMOVAL_REGISTER_CONTACT_FORM = 'http://openrosa.org/formdesigner/c0671536f2087bb80e460d57f60c98e5b785b955'
-INFOMOVAL_HOME_VISIT_FORM = 'http://openrosa.org/formdesigner/74BD43B5-5253-4855-B195-F3F049B8F8CC'
-
-
-TYPE_DURATION = 'duration'
-TYPE_SUM = 'sum'
-
-PER_DOMAIN_FORM_INDICATORS = {
-    'aarohi': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': AAROHI_MOTHER_FORM},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': AAROHI_CHILD_FORM},
-        {'slug': 'motherDuration', 'type': TYPE_DURATION, 'xmlns': AAROHI_MOTHER_FORM},
-    ],
-    'pci-india': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': PCI_MOTHER_FORM},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
-    ],
-    'infomovel': [
-        {'slug': 'findPatientForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_FIND_PATIENT_FORM},
-        {'slug': 'registerContactForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_REGISTER_CONTACT_FORM},
-        {'slug': 'homeVisitForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_HOME_VISIT_FORM},
-    ]
-}
 
 
 def seconds_till_midnight(timezone):
@@ -88,7 +60,7 @@ class CallCenterIndicators(object):
     3. Get all cached data for the users.
     4. Users who we need to calculate data for = (all users assigned to current user) - (cached users)
 
-    See https://help.commcarehq.or/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application
+    See https://help.commcarehq.org/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application
     for user docs.
 
     :param domain:          the domain object
@@ -128,10 +100,10 @@ class CallCenterIndicators(object):
         daysago30 = self.reference_date - timedelta(days=30)
         daysago60 = self.reference_date - timedelta(days=60)
         return [
-            ('week0', weekago, self.reference_date),
-            ('week1', weekago2, weekago),
-            ('month0', daysago30, self.reference_date),
-            ('month1', daysago60, daysago30),
+            (WEEK0, weekago, self.reference_date),
+            (WEEK1, weekago2, weekago),
+            (MONTH0, daysago30, self.reference_date),
+            (MONTH1, daysago60, daysago30),
         ]
 
     def _date_filters(self, date_field, lower, upper):
@@ -329,7 +301,7 @@ class CallCenterIndicators(object):
                 user_id__in=self.users_needing_data) \
             .annotate(count=Count('case_id'))
 
-        self._add_data(results, 'totalCases')
+        self._add_data(results, LEGACY_TOTAL_CASES)
 
     def add_cases_total_data(self, range_name, lower, upper):
         """
@@ -348,7 +320,7 @@ class CallCenterIndicators(object):
             .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
             .annotate(count=Count('case_id'))
 
-        self._add_case_data(results, 'cases_total', range_name)
+        self._add_case_data(results, CASES_TOTAL, range_name)
 
     def add_cases_opened_closed_data(self, range_name, lower, upper):
         """
@@ -360,9 +332,9 @@ class CallCenterIndicators(object):
             cases_closed_{period}
             cases_closed_{case_type}_{period}
         """
-        for oc in ['opened', 'closed']:
-            results = self._case_query_opened_closed(oc, lower, upper)
-            self._add_case_data(results, 'cases_{}'.format(oc), range_name)
+        for state, name in [('opened', CASES_OPENED), ('closed', CASES_CLOSED)]:
+            results = self._case_query_opened_closed(state, lower, upper)
+            self._add_case_data(results, name, range_name)
 
     def add_cases_active_data(self, range_name, lower, upper):
         """
@@ -382,7 +354,7 @@ class CallCenterIndicators(object):
                 date__lt=upper
             ).annotate(count=Count('case', distinct=True))
 
-        self._add_case_data(results, 'cases_active', range_name, legacy_prefix='casesUpdated')
+        self._add_case_data(results, CASES_ACTIVE, range_name, legacy_prefix=LEGACY_CASES_UPDATED)
 
     def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
         """
@@ -423,9 +395,9 @@ class CallCenterIndicators(object):
             )\
             .annotate(count=Count('instance_id'))
 
-        self._add_data(results, 'forms_submitted_{}'.format(range_name))
+        self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
         #  maintained for backwards compatibility
-        self._add_data(results, 'formsSubmitted{}'.format(range_name.title()))
+        self._add_data(results, '{}{}'.format(LEGACY_FORMS_SUBMITTED, range_name.title()))
 
         if self.domain in PER_DOMAIN_FORM_INDICATORS:
             for custom in PER_DOMAIN_FORM_INDICATORS[self.domain]:
