@@ -4,7 +4,7 @@ from couchdbkit import Database
 class CachedCouchDB(Database):
     """
     A couchdb implementation that supports preloading a cache and a bit of
-    additional controls on topof that.
+    additional controls on top of that.
 
     This is useful when you need to iterate through some thing one at a time
     but want to get gains of bulk-loading documents.
