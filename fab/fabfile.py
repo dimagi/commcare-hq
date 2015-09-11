@@ -632,7 +632,8 @@ def update_current(release=None):
     """
     Updates the current release to the one specified or to the code_root
     """
-    if not files.exists(env.code_root):
+    if ((not release and not files.exists(env.code_root)) or
+            (release and not files.exists(release))):
         utils.abort('About to update current to non-existant release')
 
     sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
@@ -728,7 +729,7 @@ def get_number_of_releases():
 def mark_last_release_unsuccessful():
     # Removes last line from RELEASE_RECORD file
     with cd(env.root):
-        sudo("sed -i .bak '$d' {}".format(RELEASE_RECORD))
+        sudo("sed -i '$d' {}".format(RELEASE_RECORD))
 
 
 @roles(ROLES_ALL_SRC)
