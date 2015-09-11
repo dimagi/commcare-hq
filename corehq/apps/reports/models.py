@@ -347,6 +347,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
+        if not self.is_configurable_report:
+            kwargs['permissions_check'] = self._dispatcher.permissions_check
+
         return kwargs
 
     @property
@@ -457,34 +460,17 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            if self.is_configurable_report:
-                response = self._dispatcher.dispatch(
-                    request,
-                    self.subreport_slug,
-                    render_as='email',
-                    **self.view_kwargs
-                )
-            else:
-                response = self._dispatcher.dispatch(
-                    request,
-                    render_as='email',
-                    permissions_check=self._dispatcher.permissions_check,
-                    **self.view_kwargs
-                )
+            response = self._dispatcher.dispatch(
+                request,
+                render_as='email',
+                **self.view_kwargs
+            )
             if attach_excel is True:
-                if self.is_configurable_report:
-                    file_obj = self._dispatcher.dispatch(
-                        request, self.subreport_slug,
-                        render_as='excel',
-                        **self.view_kwargs
-                    )
-                else:
-                    file_obj = self._dispatcher.dispatch(
-                        request,
-                        render_as='excel',
-                        permissions_check=self._dispatcher.permissions_check,
-                        **self.view_kwargs
-                    )
+                file_obj = self._dispatcher.dispatch(
+                    request,
+                    render_as='excel',
+                    **self.view_kwargs
+                )
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
