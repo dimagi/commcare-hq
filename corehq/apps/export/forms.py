@@ -7,7 +7,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import group_filter, users_matching_filter, \
     users_filter, datespan_export_filter, app_export_filter, case_group_filter, \
-    case_users_filter
+    case_users_filter, datespan_from_beginning
 from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.style.forms.widgets import Select2MultipleChoiceWidget, \
     DateRangePickerWidget
@@ -201,6 +201,10 @@ class FilterExportDownloadForm(forms.Form):
         ) % {
             'timezone': self.timezone,
         }
+        default_datespan = datespan_from_beginning(self.domain, 7, self.timezone)
+        self.fields['date_range'].widget = DateRangePickerWidget(
+            default_datespan=default_datespan
+        )
 
         initial = kwargs.get('initial', {})
         if initial.get('export_id'):
