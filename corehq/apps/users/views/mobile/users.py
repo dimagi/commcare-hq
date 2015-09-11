@@ -20,7 +20,7 @@ from django.http import HttpResponseRedirect, HttpResponse,\
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -936,3 +936,7 @@ def download_commcare_users(request, domain):
         )
 
     return response
+
+class CommCareUserSelfRegistrationView(TemplateView):
+    template_name = "users/mobile/commcare_user_self_register.html"
+    urlname = "commcare_user_self_register"

@@ -2,9 +2,11 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from dimagi.utils.decorators.memoized import memoized
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -16,8 +18,30 @@ from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
+from Crypto.Signature import PKCS1_PSS
 
 logger = logging.getLogger(__name__)
+
+
+@memoized
+def get_hq_private_key():
+    if settings.HQ_PRIVATE_KEY:
+        return RSA.importKey(settings.HQ_PRIVATE_KEY)
+
+    raise Exception('No private key found in localsettings.HQ_PRIVATE_KEY')
+
+
+def sign(message):
+    """
+    Signs the SHA256 hash of message with HQ's private key, and returns
+    the binary signature. The scheme used is RSASSA-PSS.
+    """
+    private_key = get_hq_private_key()
+    sha256_hash = SHA256.new(message)
+    signature = PKCS1_PSS.new(private_key).sign(sha256_hash)
+    return signature
 
 
 def send_confirmation_email(invitation):

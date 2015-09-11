@@ -1483,3 +1483,7 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+# Override with the PEM export of an RSA private key, for use with any
+# encryption or signing that HQ does.
+HQ_PRIVATE_KEY = None

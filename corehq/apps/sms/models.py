@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+import base64
 import logging
+import uuid
 from dimagi.ext.couchdbkit import *
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import models
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -13,8 +16,12 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
+    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    apply_leniency)
 from corehq.apps.sms import util as smsutil
+from corehq.apps.sms.messages import MSG_MOBILE_WORKER_INVITATION, get_message
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from django.utils.translation import ugettext_noop
@@ -1203,3 +1210,81 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
+
+
+class SelfRegistrationInvitation(models.Model):
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    phone_number = models.CharField(max_length=30, null=False, db_index=True)
+    token = models.CharField(max_length=126, null=False, db_index=True)
+    app_id = models.CharField(max_length=126, null=True)
+    expiration_dt = models.DateField(null=False)
+
+    def send(self, odk_url=None):
+        from corehq.apps.hqwebapp.utils import sign
+        from corehq.apps.sms.api import send_sms
+        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
+
+        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token])
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_INVITATION, context=(registration_url,))
+        )
+
+        if odk_url:
+            send_sms(
+                self.domain,
+                None,
+                self.phone_number,
+                'ccapp: %s, signature: %s' % (odk_url, base64.b64encode(sign(odk_url)))
+            )
+
+    @classmethod
+    def get_app_odk_url(cls, domain, app_id):
+        """
+        Get the latest starred build for the app and return it's
+        odk install url.
+        """
+        app = get_app(domain, app_id, latest=True)
+        return app.get_short_odk_url(with_media=True)
+
+    @classmethod
+    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
+            days_until_expiration=30):
+        success_numbers = []
+        invalid_format_numbers = []
+        numbers_in_use = []
+
+        odk_url = None
+        if app_id:
+            odk_url = cls.get_app_odk_url(domain, app_id)
+
+        for phone_number in phone_numbers:
+            phone_number = apply_leniency(phone_number)
+            try:
+                CommCareMobileContactMixin.validate_number_format(phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(phone_number)
+                continue
+
+            if VerifiedNumber.by_phone(phone_number, include_pending=True):
+                numbers_in_use.append(phone_number)
+                continue
+
+            expiration_dt = (datetime.utcnow().date() +
+                timedelta(days=days_until_expiration))
+
+            invitation = cls.objects.create(
+                domain=domain,
+                phone_number=phone_number,
+                token=uuid.uuid4().hex,
+                app_id=app_id,
+                expiration_dt=expiration_dt,
+            )
+
+            invitation.send(odk_url=odk_url)
+            success_numbers.append(phone_number)
+
+        return (success_numbers, invalid_format_numbers, numbers_in_use)
