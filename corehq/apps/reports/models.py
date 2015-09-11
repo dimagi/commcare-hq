@@ -25,7 +25,7 @@ from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -926,7 +926,7 @@ class CaseExportSchema(HQExportSchema):
         return props
 
 
-class FakeFormExportSchema(FakeSavedExportSchema):
+class DefaultFormExportSchema(DefaultExportSchema):
 
     def remap_tables(self, tables):
         # kill the weird confusing stuff, and rename the main table to something sane
