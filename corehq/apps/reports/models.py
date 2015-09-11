@@ -464,7 +464,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             dispatch_func = functools.partial(self._dispatcher.dispatch, request, **self.view_kwargs)
             response = dispatch_func(render_as='email')
             if attach_excel is True:
-                file_obj = response = dispatch_func(render_as='excel')
+                file_obj = dispatch_func(render_as='excel')
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
