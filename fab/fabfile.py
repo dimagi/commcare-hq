@@ -358,16 +358,6 @@ def webworkers():
 
 
 @task
-@roles(ROLES_ALL_SRC)
-@parallel
-def install_npm_packages():
-    """Install required NPM packages for server"""
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        with shell_env(HOME=env.home):
-            sudo("npm install")
-
-
-@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
@@ -578,9 +568,6 @@ def _deploy_without_asking():
 
         if not done:
             raise PreindexNotFinished()
-
-        _execute_with_timing(install_npm_packages)
-        _execute_with_timing(update_touchforms)
 
         # handle static files
         _execute_with_timing(version_static)
@@ -837,15 +824,6 @@ def awesome_deploy(confirm="yes"):
         print('┻┻┻┻┻┻')
 
     _deploy_without_asking()
-
-
-@task
-@roles(ROLES_ALL_SRC)
-@parallel
-def update_touchforms():
-    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
 @roles(ROLES_ALL_SRC)
