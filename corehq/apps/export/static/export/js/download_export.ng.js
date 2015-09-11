@@ -56,6 +56,8 @@
         $scope.groupsError = false;
         self._groupRetries = 0;
 
+        $scope.prepareExportError = null;
+
         self._handleGroupError = function () {
             $scope.groupsLoading = false;
             $scope.groupsError = true;
@@ -98,6 +100,7 @@
         };
 
         $scope.prepareExport = function () {
+            $scope.prepareExportError = null;
             $scope.preparingExport = true;
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
@@ -110,12 +113,20 @@
                         $scope.downloadInProgress = true;
                         exportDownloadService.startDownload(data.download_id);
                     } else {
-                        // todo deal with error
+                        self._handlePrepareError(data);
                     }
                 })
-                .error(function () {
-                        // todo deal with error
-                });
+                .error(self._handlePrepareError);
+        };
+
+        self._handlePrepareError = function (data) {
+            if (data && data.error) {
+                // The server returned an error message.
+                $scope.prepareExportError = data.error;
+            } else {
+                $scope.prepareExportError = "default";
+            }
+            $scope.preparingExport = false;
         };
 
         $scope.$watch(function () {
@@ -139,6 +150,7 @@
             $scope.dropboxUrl = null;
             $scope.downloadUrl = null;
             $scope.progress = {};
+            $scope.showCeleryError = false;
             $element.progress().css('width', '0%');
             $element.progress().removeClass('progress-bar-success');
         };
@@ -180,6 +192,12 @@
         }, function (status) {
             $scope.showDownloadStatus = status;
         });
+
+        $scope.$watch(function () {
+            return exportDownloadService.showCeleryError;
+        }, function (status) {
+            $scope.showCeleryError = status;
+        });
     };
     download_export.controller(exportsControllers);
 
@@ -192,6 +210,8 @@
             self._numErrors = 0;
             self.downloadStatusData = null;
             self.showDownloadStatus = false;
+            self.downloadError = null;
+            self.showCeleryError = false;
         };
 
         self.resetDownload();
@@ -206,16 +226,29 @@
                         if (data.has_file && data.is_ready) {
                             $interval.cancel(self._promise);
                         }
-                    } else {
-                        self._dealWithErrors();
+                        if (data.progress && data.progress.error) {
+                            $interval.cancel(self._promise);
+                        }
+                    }
+                    if (data.error) {
+                        self._dealWithErrors(data);
+                    }
+                    if (_.isNull(data.is_alive)) {
+                        // celery process is down
+                        $interval.cancel(self._promise);
+                        self.showCeleryError = true;
                     }
                 })
                 .error(self._dealWithErrors);
         };
 
-        self._dealWithErrors = function () {
+        self._dealWithErrors = function (data) {
             if (self._numErrors > 3) {
-                console.log('deal with error');
+                if (data && data.error) {
+                    self.downloadError = data.error;
+                } else {
+                    self.downloadError = "default";
+                }
                 $interval.cancel(self._promise);
             }
             self._numErrors ++;
