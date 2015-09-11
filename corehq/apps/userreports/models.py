@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import json
+from corehq.db import DEFAULT_ENGINE_ID
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -62,6 +63,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     Each data source can back an arbitrary number of reports.
     """
     domain = StringProperty(required=True)
+    engine_id = StringProperty(default=DEFAULT_ENGINE_ID)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
