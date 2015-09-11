@@ -48,8 +48,8 @@ class ReportingRates(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            reported_percent = round((data['reported']) * 100 / (data['total'] or 1))
-            non_reported_percent = round((data['non_reported']) * 100 / (data['total'] or 1))
+            reported_percent = round((data['reported']) * 100 / float(data['total'] or 1))
+            non_reported_percent = round((data['non_reported']) * 100 / float(data['total'] or 1))
             reported_formatted = ("%d" if reported_percent.is_integer() else "%.1f") % reported_percent
             non_reported_formatted = ("%d" if non_reported_percent.is_integer() else "%.1f") % non_reported_percent
 
@@ -99,21 +99,21 @@ class ReportingDetails(ReportingRatesData):
         data = self.rows
         chart_data = []
         if data:
-            complete_percent = round((data['complete']) * 100 / (data['total'] or 1))
-            incomplete_percent = round((data['incomplete']) * 100 / (data['total'] or 1))
+            complete_percent = round((data['complete']) * 100 / float(data['total'] or 1))
+            incomplete_percent = round((data['incomplete']) * 100 / float(data['total'] or 1))
             complete_formatted = ("%d" if complete_percent.is_integer() else "%.1f") % complete_percent
             incomplete_formatted = ("%d" if incomplete_percent.is_integer() else "%.1f") % incomplete_percent
             chart_data = [
                 dict(value=complete_formatted,
-                    label=_('Complete %s%%') % complete_formatted,
-                    description=_("%s%% (%d) Complete Reports in %s") %
-                        (complete_formatted, data['complete'], self.datetext()),
-                    color='green'),
+                     label=_('Complete %s%%') % complete_formatted,
+                     description=_("%s%% (%d) Complete Reports in %s") %
+                                  (complete_formatted, data['complete'], self.datetext()),
+                     color='green'),
                 dict(value=incomplete_formatted,
-                    label=_('Incomplete %s%%') % incomplete_formatted,
-                    description=_("%s%% (%d) Incomplete Reports in %s") %
-                        (incomplete_formatted, data['incomplete'], self.datetext()),
-                    color='purple'),
+                     label=_('Incomplete %s%%') % incomplete_formatted,
+                     description=_("%s%% (%d) Incomplete Reports in %s") %
+                                  (incomplete_formatted, data['incomplete'], self.datetext()),
+                     color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
         pie_chart.tooltips = False
@@ -169,7 +169,7 @@ class SummaryReportingRates(ReportingRatesData):
                         values['all'],
                         values['complete'] + values['incomplete'],
                         '%d%%' % (100 * (values['complete'] + values['incomplete']) / (values['all'] or 1)),
-                        '%d%%' % (100 * values['complete'] / (values['all'] or 1))
+                        '%d%%' % (100 * values['complete'] / ((values['complete'] + values['incomplete']) or 1))
                     ]
                 )
         return rows
