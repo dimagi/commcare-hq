@@ -467,6 +467,13 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 file_obj = dispatch_func(render_as='excel')
             else:
                 file_obj = None
+            if response.status_code == 302:
+                return _("We are sorry, but your saved report '%(config_name)s' "
+                         "is no longer accessible because the owner %(username)s "
+                         "is no longer active.") % {
+                    'config_name': self.name,
+                    'username': self.owner.username
+                }, None
             return json.loads(response.content)['report'], file_obj
         except PermissionDenied:
             return _(
