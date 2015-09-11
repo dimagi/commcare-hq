@@ -99,5 +99,5 @@ class Titles(object):
             REPORT_BUILDER: _('User Configurable Report Builder'),
             TEMPLATED_INTENTS: _('Templated Intents'),
             CUSTOM_INTENTS: _('Custom Intents'),
-            DATA_CLEANUP: _('Data Cleanup Tools'),
+            DATA_CLEANUP: _('Data Management'),
         }.get(privilege, privilege)
