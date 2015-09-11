@@ -27,8 +27,10 @@ from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
 )
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -449,6 +451,11 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     @memoized
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain, 7, self.timezone)
+
+    @property
+    @memoized
     def download_export_form(self):
         return FilterFormExportDownloadForm(
             self.domain,
@@ -471,6 +478,11 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
             'max_column_size': self.max_column_size,
+            'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
+                'startdate': self.default_datespan.startdate.strftime('%Y-%m-%d'),
+                'enddate': self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                'separator': DateRangePickerWidget.separator,
+            }
         }
 
     @property
