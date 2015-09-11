@@ -25,10 +25,12 @@
 
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
+    download_export.constant('defaultDateRange', null);
 
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
-        $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService
+        $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
+        defaultDateRange
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
@@ -42,6 +44,10 @@
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
         $element.user_type().select2('val', ['mobile']);
+
+        if (!_.isNull(defaultDateRange)) {
+            $scope.formData.date_range = defaultDateRange;
+        }
 
         $scope.preparingExport = false;
 
