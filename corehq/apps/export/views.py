@@ -17,12 +17,13 @@ from corehq.apps.export.custom_export_helpers import make_custom_export_helper, 
     FormCustomExportHelper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm, \
-    FilterExportDownloadForm, FilterFormExportDownloadForm
+    FilterExportDownloadForm, FilterFormExportDownloadForm, \
+    FilterCaseExportDownloadForm, ExportFilterFormException
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exportfilters import default_form_filter
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.models import FormExportSchema, CaseExportSchema
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
@@ -428,15 +429,13 @@ class CreateCaseExportView(BaseProjectDataView):
         }
 
 
-class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
-    urlname = 'export_download_forms'
-    page_title = ugettext_noop("Download Form Export")
-    template_name = 'export/download_form_export.html'
+class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
+    template_name = 'export/download_export.html'
 
     @method_decorator(use_bootstrap3())
     @method_decorator(use_select2())
     def dispatch(self, *args, **kwargs):
-        return super(DownloadFormExportView, self).dispatch(*args, **kwargs)
+        return super(BaseDownloadExportView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
@@ -455,24 +454,6 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         return datespan_from_beginning(self.domain, 7, self.timezone)
 
     @property
-    @memoized
-    def download_export_form(self):
-        return FilterFormExportDownloadForm(
-            self.domain,
-            self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
-        )
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': _("Export Forms"),
-            'url': '#',
-        }]
-
-    @property
     def page_context(self):
         return {
             'download_export_form': self.download_export_form,
@@ -486,12 +467,11 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         }
 
     @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.export_id])
-
-    @property
-    def export_list(self):
-        return [self.download_export_form.format_export_data(self.export)]
+    def download_export_form(self):
+        """Should return a memoized instance that is a subclass of
+        FilterExportDownloadForm.
+        """
+        raise NotImplementedError("You must implement download_export_form.")
 
     @property
     @memoized
@@ -501,6 +481,14 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.export_id])
+
+    @property
+    def export_list(self):
+        return [self.download_export_form.format_export_data(self.export)]
 
     @property
     def max_column_size(self):
@@ -513,6 +501,21 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
     def can_view_deid(self):
         return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+    def get_filters(self, filter_form_data):
+        """Should return a SerializableFunction object to be passed to the
+        exports framework for filtering the final download.
+        """
+        raise NotImplementedError(
+            "Must return a SerializableFunction for get_filters."
+        )
+
+    def get_export_object(self, export_id):
+        """Must return either a FormExportSchema or CaseExportSchema object
+        """
+        raise NotImplementedError(
+            "Must implement get_export_object."
+        )
+
     @allow_remote_invocation
     def get_group_options(self, in_data):
         groups = map(
@@ -522,78 +525,6 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
         return {
             'success': True,
             'groups': groups,
-        }
-
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        """Uses the current exports download framework (with some nasty filters)
-        to return the current download id to POLL for the download status.
-        A successful request returns:
-        {
-            'success': True,
-            'download_id': '<some uuid>',
-        }
-        """
-        # todo
-        # - eventually combine users + group field, but to do that exports
-        #   might need a revamp, so leaving that for later.
-        try:
-            exports = in_data['exports']
-            form_data = in_data['form_data']
-        except (KeyError, TypeError):
-            return {
-                'error': ("Request requires a list of exports and filters."),
-            }
-
-        if form_data['type_or_group'] != 'group':
-            # make double sure that group is none
-            form_data['group'] = ''  
-
-        filter_form = FilterFormExportDownloadForm(
-            self.domain, self.timezone, form_data)
-
-        if not filter_form.is_valid():
-            return {
-                'error': _("Form did not validate."),
-            }
-
-        form_filter = filter_form.get_form_filter()
-        export_filter = SerializableFunction(default_form_filter,
-                                             filter=form_filter)
-
-        export_data = exports[0]
-        export_object = FormExportSchema.get(export_data['export_id'])
-        export_object.update_schema()
-
-        # if the export is de-identified (is_safe), check that
-        # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.can_view_deid:
-            return {
-                'error': _(
-                    "You do not have permission to download de-identified "
-                    "exports."
-                )
-            }
-
-        max_column_size = int(in_data.get('max_column_size', 2000))
-
-        filename = export_data.get('filename', export_object.name)
-        filename += ' ' + date.today().isoformat()
-
-        format = export_object.default_format
-        download = DownloadBase()
-        download.set_task(couchexport.tasks.export_async.delay(
-            export_object,
-            download.download_id,
-            format=format,
-            filter=export_filter,
-            filename=filename,
-            previous_export_id=None,
-            max_column_size=max_column_size,
-        ))
-        return {
-            'success': True,
-            'download_id': download.download_id,
         }
 
     @allow_remote_invocation
@@ -618,3 +549,142 @@ class DownloadFormExportView(JSONResponseMixin, BaseProjectDataView):
             })
         context['is_poll_successful'] = True
         return context
+
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        """Uses the current exports download framework (with some nasty filters)
+        to return the current download id to POLL for the download status.
+        A successful request returns:
+        {
+            'success': True,
+            'download_id': '<some uuid>',
+        }
+        """
+        # todo
+        # - eventually combine users + group field, but to do that exports
+        #   might need a revamp, so leaving that for later.
+        try:
+            exports = in_data['exports']
+            filter_form_data = in_data['form_data']
+        except (KeyError, TypeError):
+            return {
+                'error': ("Request requires a list of exports and filters."),
+            }
+
+        if filter_form_data['type_or_group'] != 'group':
+            # make double sure that group is none
+            filter_form_data['group'] = ''
+
+        try:
+            export_filter = self.get_filters(filter_form_data)
+        except ExportFilterFormException:
+            return {
+                'error': _("Form did not validate."),
+            }
+
+        export_data = exports[0]
+        export_object = self.get_export_object(export_data['export_id'])
+        export_object.update_schema()
+
+        # if the export is de-identified (is_safe), check that
+        # the requesting domain has access to the deid feature.
+        if export_object.is_safe and not self.can_view_deid:
+            return {
+                'error': _(
+                    "You do not have permission to download de-identified "
+                    "exports."
+                )
+            }
+
+        max_column_size = int(in_data.get('max_column_size', 2000))
+
+        filename = export_data.get('filename', export_object.name)
+        filename += ' ' + date.today().isoformat()
+
+        download = DownloadBase()
+        download.set_task(couchexport.tasks.export_async.delay(
+            export_object,
+            download.download_id,
+            format=export_object.default_format,
+            filter=export_filter,
+            filename=filename,
+            previous_export_id=None,
+            max_column_size=max_column_size,
+        ))
+        return {
+            'success': True,
+            'download_id': download.download_id,
+        }
+
+
+class DownloadFormExportView(BaseDownloadExportView):
+    """View to download a SINGLE Form Export with filters.
+    """
+    urlname = 'export_download_forms'
+    page_title = ugettext_noop("Download Form Export")
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return FilterFormExportDownloadForm(
+            self.domain,
+            self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
+        )
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Export Forms"),
+            'url': '#',
+        }]
+
+    def get_filters(self, filter_form_data):
+        filter_form = FilterFormExportDownloadForm(
+            self.domain, self.timezone, filter_form_data)
+        if not filter_form.is_valid():
+            raise ExportFilterFormException()
+        form_filter = filter_form.get_form_filter()
+        export_filter = SerializableFunction(default_form_filter,
+                                             filter=form_filter)
+        return export_filter
+
+    def get_export_object(self, export_id):
+        return FormExportSchema.get(export_id)
+
+
+class DownloadCaseExportView(BaseDownloadExportView):
+    """View to download a SINGLE Case Export with Filters
+    """
+    urlname = 'export_download_cases'
+    page_title = ugettext_noop("Download Case Export")
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return FilterCaseExportDownloadForm(
+            self.domain,
+            self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
+        )
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Export Cases"),
+            'url': '#',
+        }]
+
+    def get_filters(self, filter_form_data):
+        filter_form = FilterCaseExportDownloadForm(
+            self.domain, self.timezone, filter_form_data)
+        if not filter_form.is_valid():
+            raise ExportFilterFormException()
+        return filter_form.get_case_filter()
+
+    def get_export_object(self, export_id):
+        return CaseExportSchema.get(export_id)
