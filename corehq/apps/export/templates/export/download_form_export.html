@@ -65,6 +65,7 @@
     }]);
     downloadExportsApp.constant('exportList', {{ export_list|JSON }});
     downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
+    downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
 }(window.angular));
 </script>
 {% endblock %}
@@ -103,6 +104,23 @@
                 </div>
                 <div class="form-actions" ng-show="!downloadInProgress">
                     <div class="col-sm-5 col-sm-offset-3">
+                        {% angularjs %}
+                        <div class="alert alert-warning"
+                             ng-show="!!prepareExportError">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <span ng-if="prepareExportError === 'default'">
+                                {% blocktrans %}
+                                Sorry, there was a problem reaching the server.
+                                Please try again or
+                                <a href="#reportIssueModal"
+                                   data-toggle="modal">Report an Issue</a>.
+                                {% endblocktrans %}
+                            </span>
+                            <span ng-if="prepareExportError !== 'default'">
+                                {{ prepareExportError }}
+                            </span>
+                        </div>
+                        {% endangularjs %}
                         <button type="submit"
                                 class="btn btn-primary"
                                 ng-show="!preparingExport"
@@ -124,7 +142,25 @@
             <div class="form-actions"
                  ng-show="!!showDownloadStatus">
                 <div class="col-sm-9 col-lg-5 col-sm-offset-3">
-                    <div class="row">
+                    <div class="row"
+                         ng-show="!!showCeleryError">
+                        <div class="col-sm-12">
+                            <div class="alert alert-warning">
+                                <i class="fa fa-cog fa-spin"></i>
+                                <strong>{% trans "Server maintenance in progress. Please try again later." %}</strong>
+                                <p>
+                                    {% blocktrans %}
+                                        If the problem persists, please
+                                        <a href="#reportIssueModal"
+                                           data-toggle="modal">
+                                            Report an Issue</a>.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row"
+                         ng-show="!showCeleryError">
                         <div class="col-sm-3 col-md-4">
                             {% angularjs %}
                             <form class="form-inline download-form"
@@ -160,7 +196,7 @@
                         </div>
                         <div class="col-sm-9 col-md-8"
                              style="padding-top: 10px;"
-                             ng-show="!isDownloaded">
+                             ng-show="!isDownloaded && !showCeleryError">
                             <div class="label label-danger label-lg"
                                  ng-show="!!progress.error">
                                 <i class="fa fa-exclamation-triangle"></i>
@@ -199,7 +235,9 @@
                             </button>
                         </div>
                     </div>
-                    <p class="alert alert-info" style="margin-top: 10px;">
+                    <p class="alert alert-info"
+                       style="margin-top: 10px;"
+                       ng-show="!showCeleryError">
                         <i class="fa fa-info-circle"></i>
                         {% blocktrans %}
                             If you are downloading a large file over
