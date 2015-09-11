@@ -53,7 +53,6 @@ branches:
   - update-signup # Jenny 9/9
   - FormArchive # sravan 9/10
   - cleanup-dispatch # Nick P 9/10
-  - which-static # Jenny 9/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
