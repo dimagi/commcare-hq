@@ -90,7 +90,6 @@ class UnknownUsersPillow(PythonPillow):
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
-        self.couch_db = XFormInstance.get_db()
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
