@@ -22,6 +22,10 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
+class ExportFilterFormException(Exception):
+    pass
+
+
 class CreateFormExportForm(forms.Form):
     application = forms.ChoiceField()
     module = forms.ChoiceField()
@@ -315,14 +319,18 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
         # '&export_tag=["'+self.domain+'","'+xmlns+'","' + fileName +'"]' +
         return form_filter
 
+
     def format_export_data(self, export):
+        from corehq.apps.export.views import EditCustomFormExportView
         return {
             'export_id': export.get_id,
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_type': 'form',
             'name': export.name,
-            'edit_url': '#',  #todo
+            'edit_url': reverse(EditCustomFormExportView.urlname,
+                                args=(self.domain, export.get_id)),
         }
+
 
 class FilterCaseExportDownloadForm(FilterExportDownloadForm):
 
@@ -336,3 +344,12 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
                                     users=self._get_filtered_users(),
                                     groups=case_sharing_groups)
 
+    def format_export_data(self, export):
+        from corehq.apps.export.views import EditCustomCaseExportView
+        return {
+            'export_id': export.get_id,
+            'export_type': 'case',
+            'name': export.name,
+            'edit_url': reverse(EditCustomCaseExportView.urlname,
+                                args=(self.domain, export.get_id)),
+        }
