@@ -7,6 +7,7 @@ from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
+from dimagi.utils.dates import DateSpan
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -198,9 +199,11 @@ class DateRangePickerWidget(Input):
     }
     separator = ugettext_noop(' to ')
 
-    def __init__(self, attrs=None, range_labels=None, separator=None):
+    def __init__(self, attrs=None, range_labels=None, separator=None,
+                 default_datespan=None):
         self.range_labels = range_labels or self.range_labels
         self.separator = separator or self.separator
+        self.default_datespan = default_datespan
         super(DateRangePickerWidget, self).__init__(attrs=attrs)
 
     def render(self, name, value, attrs=None):
@@ -214,14 +217,21 @@ class DateRangePickerWidget(Input):
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');
                     $('#%(elem_id)s').createBootstrap3DateRangePicker(
-                        report_labels, separator
+                        report_labels, separator, '%(startdate)s',
+                        '%(enddate)s'
                     );
                 });
             </script>
         """ % {
             'elem_id': final_attrs.get('id'),
             'separator': self.separator,
-            'range_labels_json': json.dumps(self.range_labels)
+            'range_labels_json': json.dumps(self.range_labels),
+            'startdate': (self.default_datespan.startdate.strftime('%m/%d/%Y')
+                          if isinstance(self.default_datespan, DateSpan)
+                          else ''),
+            'enddate': (self.default_datespan.enddate.strftime('%m/%d/%Y')
+                        if isinstance(self.default_datespan, DateSpan)
+                        else ''),
         }
         output = """
             <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
