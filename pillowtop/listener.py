@@ -20,6 +20,7 @@ import sys
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
+from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
 from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
@@ -124,7 +125,11 @@ class BasicPillow(object):
             try:
                 for change in changes_stream:
                     if change:
-                        self.processor(change)
+                        try:
+                            self.processor(change)
+                        except Exception as e:
+                            notify_exception(None, u'processor error {}'.format(e))
+                            raise
                     else:
                         self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
             except PillowtopCheckpointReset:
