@@ -135,10 +135,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
+            logger.warn("assertion failed: %s" % msg)
             if self.strict:
                 raise SyncLogAssertionError(case_id, msg)
             else:
-                logging.warn("assertion failed: %s" % msg)
                 self.has_assert_errors = True
 
     @classmethod
@@ -356,6 +356,7 @@ class SyncLog(AbstractSyncLog):
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
+                logger.debug('OLD {}: {}'.format(case._id, action.action_type))
                 if action.action_type == const.CASE_ACTION_CREATE:
                     self._assert(not self.phone_has_case(case._id),
                                  'phone has case being created: %s' % case._id)
@@ -366,12 +367,6 @@ class SyncLog(AbstractSyncLog):
                     else:
                         removed_states[case._id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
-                    self._assert(
-                        self.phone_is_holding_case(case._id),
-                        "phone doesn't have case being updated: %s" % case._id,
-                        case._id,
-                    )
-
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
@@ -384,8 +379,6 @@ class SyncLog(AbstractSyncLog):
                     if self.phone_has_case(case.get_id):
                         case_state = self.get_case_state(case.get_id)
                     else:
-                        self._assert(self.phone_has_dependent_case(case._id),
-                                     "phone doesn't have referenced case: %s" % case._id)
                         case_state = self.get_dependent_case_state(case.get_id)
                     # reconcile indices
                     if case_state:
@@ -651,55 +644,93 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
         skipped = set()
         to_prune = set()
+
+        class CaseUpdate(object):
+            def __init__(self, case_id):
+                self.case_id = case_id
+                self.is_live = True
+                self.indices_to_add = []
+                self.indices_to_delete = []
+
+        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id'])
+
+        # this is a variable used via closures in the function below
+        owner_id_map = {}
+        def get_latest_owner_id(case_id, action=None):
+            # "latest" just means as this forms actions are played through
+            if action is not None:
+                owner_id_from_action = action.updated_known_properties.get("owner_id")
+                if owner_id_from_action:
+                    owner_id_map[case_id] = owner_id_from_action
+            return owner_id_map.get(case_id, None)
+
+        all_updates = {}
         for case in case_list:
+            if case._id not in all_updates:
+                logger.debug('initializing update for case {}'.format(case._id))
+                all_updates[case._id] = CaseUpdate(case_id=case._id)
+
+            case_update = all_updates[case._id]
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
-                owner_id = action.updated_known_properties.get("owner_id")
-                phone_owns_case = not owner_id or owner_id in self.owner_ids_on_phone
-                log_has_case = case._id not in skipped
-                if action.action_type == const.CASE_ACTION_CREATE:
-                    if phone_owns_case:
-                        self._add_primary_case(case._id)
-                        made_changes = True
-                    else:
-                        skipped.add(case._id)
-                elif action.action_type == const.CASE_ACTION_UPDATE:
-                    if not phone_owns_case and log_has_case:
-                        # we must have just changed the owner_id to something we didn't own
-                        # we can try pruning this case since it's no longer relevant
-                        to_prune.add(case._id)
-                        made_changes = True
-                    else:
-                        if phone_owns_case and not log_has_case:
-                            # this can happen if a create sets the owner id to something invalid
-                            # and an update in the same block/form sets it back to valid
-                            self._add_primary_case(case._id)
-                            made_changes = True
-                        if case._id in self.dependent_case_ids_on_phone:
-                            self.dependent_case_ids_on_phone.remove(case._id)
-                            made_changes = True
-                elif action.action_type == const.CASE_ACTION_INDEX:
-                    # we should never have to do anything with case IDs here since the
-                    # indexed case should already be on the phone.
-                    # however, we should update our index tree accordingly
+                owner_id = get_latest_owner_id(case._id, action)
+                case_update.is_live = not owner_id or owner_id in self.owner_ids_on_phone
+                if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
-                            self.index_tree.set_index(case._id, index.identifier, index.referenced_id)
-                            if index.referenced_id not in self.case_ids_on_phone:
-                                self.case_ids_on_phone.add(index.referenced_id)
-                                self.dependent_case_ids_on_phone.add(index.referenced_id)
+                            case_update.indices_to_add.append(
+                                ShortIndex(case._id, index.identifier, index.referenced_id)
+                            )
                         else:
-                            self.index_tree.delete_index(case._id, index.identifier)
-                        made_changes = True
+                            case_update.indices_to_delete.append(
+                                ShortIndex(case._id, index.identifier, None)
+                            )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    if log_has_case:
-                        # this case is being closed. we can try pruning this case since it's no longer relevant
-                        to_prune.add(case._id)
-                        made_changes = True
+                    case_update.is_live = False
 
-        for case_to_prune in to_prune:
-            self.prune_case(case_to_prune)
+        def _add_index(index):
+            logger.debug('adding index {} -> {} ({}).'.format(
+                index.case_id, index.referenced_id, index.identifier))
+            self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+            if index.referenced_id not in self.case_ids_on_phone:
+                self.case_ids_on_phone.add(index.referenced_id)
+                self.dependent_case_ids_on_phone.add(index.referenced_id)
+
+        non_live_updates = []
+        for case in case_list:
+            case_update = all_updates[case._id]
+            if case_update.is_live:
+                logger.debug('case {} is live.'.format(case_update.case_id))
+                if case._id not in self.case_ids_on_phone:
+                    self._add_primary_case(case._id)
+                    made_changes = True
+                elif case._id in self.dependent_case_ids_on_phone:
+                    self.dependent_case_ids_on_phone.remove(case._id)
+                    made_changes = True
+
+                for index in case_update.indices_to_add:
+                    _add_index(index)
+                    made_changes = True
+                for index in case_update.indices_to_delete:
+                    self.index_tree.delete_index(index.case_id, index.identifier)
+                    made_changes = True
+            else:
+                # process the non-live updates after all live are already processed
+                non_live_updates.append(case_update)
+
+        for update in non_live_updates:
+            logger.debug('case {} is NOT live.'.format(update.case_id))
+            if update.case_id in self.case_ids_on_phone:
+                # try pruning the case
+                self.prune_case(update.case_id)
+                if update.case_id in self.case_ids_on_phone:
+                    # if unsuccessful, process the rest of the update
+                    for index in case_update.indices_to_add:
+                        _add_index(index)
+                    for index in case_update.indices_to_delete:
+                        self.index_tree.delete_index(index.case_id, index.identifier)
+                made_changes = True
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
