@@ -59,7 +59,6 @@ class GroupToUserPillow(PythonPillow):
 
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
-        self.couch_db = Group.get_db()
 
     def python_filter(self, doc):
         return doc.get('doc_type', None) in ('Group', 'Group-Deleted')
@@ -90,7 +89,6 @@ class UnknownUsersPillow(PythonPillow):
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
-        self.couch_db = XFormInstance.get_db()
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
+import functools
 import logging
 from urllib import urlencode
 from django.http import Http404
@@ -15,6 +16,7 @@ from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
+from corehq.apps.reports.dbaccessors import stale_get_exports_json
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -24,7 +26,7 @@ from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -346,6 +348,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
+        if not self.is_configurable_report:
+            kwargs['permissions_check'] = self._dispatcher.permissions_check
+
         return kwargs
 
     @property
@@ -456,34 +461,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            if self.is_configurable_report:
-                response = self._dispatcher.dispatch(
-                    request,
-                    self.subreport_slug,
-                    render_as='email',
-                    **self.view_kwargs
-                )
-            else:
-                response = self._dispatcher.dispatch(
-                    request,
-                    render_as='email',
-                    permissions_check=self._dispatcher.permissions_check,
-                    **self.view_kwargs
-                )
+            dispatch_func = functools.partial(self._dispatcher.dispatch, request, **self.view_kwargs)
+            response = dispatch_func(render_as='email')
             if attach_excel is True:
-                if self.is_configurable_report:
-                    file_obj = self._dispatcher.dispatch(
-                        request, self.subreport_slug,
-                        render_as='excel',
-                        **self.view_kwargs
-                    )
-                else:
-                    file_obj = self._dispatcher.dispatch(
-                        request,
-                        render_as='excel',
-                        permissions_check=self._dispatcher.permissions_check,
-                        **self.view_kwargs
-                    )
+                file_obj = dispatch_func(render_as='excel')
             else:
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
@@ -753,12 +734,21 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+    @classmethod
+    def get_stale_exports(cls, domain):
+        return [
+            cls.wrap(export)
+            for export in stale_get_exports_json(domain)
+            if export['type'] == cls._default_type
+        ]
+
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
     split_multiselects = BooleanProperty(default=False)
+    _default_type = 'form'
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
@@ -883,6 +873,7 @@ class FormDeidExportSchema(FormExportSchema):
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
+    _default_type = 'case'
 
     @property
     def filter(self):
@@ -915,7 +906,7 @@ class CaseExportSchema(HQExportSchema):
         return props
 
 
-class FakeFormExportSchema(FakeSavedExportSchema):
+class DefaultFormExportSchema(DefaultExportSchema):
 
     def remap_tables(self, tables):
         # kill the weird confusing stuff, and rename the main table to something sane

@@ -58,6 +58,9 @@ class Command(BaseCommand):
                     if isinstance(wrapped_log, SyncLog):
                         log_names.append('migrated-{}'.format(log_name))
                         logs.append(SimplifiedSyncLog.from_other_format(wrapped_log))
+                    elif getattr(wrapped_log, 'migrated_from', None):
+                        log_names.append('migrated_from-{}'.format(log_name))
+                        logs.append(properly_wrap_sync_log(wrapped_log.to_json()['migrated_from']))
 
         print 'state hashes'
         for i in range(len(log_names)):

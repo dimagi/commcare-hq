@@ -13,7 +13,7 @@
       </header>
       <template>
         <text>
-          <xpath function="name"/>
+          <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
         </text>
       </template>
     </field>

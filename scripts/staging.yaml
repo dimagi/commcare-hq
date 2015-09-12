@@ -47,17 +47,12 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
-  - languageMedia # Sravan 6/10 (Exactly one of languageMedia and reverseLanguageMedia should be included.)
-#  - reverseLanguageMedia # Sravan 6/10
-#  - web-user-requests # Jenny, July 16
-#  - FormArchive # Sravan 7/22
-  - ckeditor # J$ 7/24
-  - quickcache-user-roles  # Ethan 8/13
-  - optmize-deploy+knockout-js2 # Ben 8/24
   - knockout-js # Ben 8/17
-  - optmize-deploy # Ben 8/18 if you want to rollback the changes to the new deploy, you’ll have to deploy nginx to staging so it properly points at the old static files directory
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
+  - update-signup # Jenny 9/9
+  - FormArchive # sravan 9/10
+  - cleanup-dispatch # Nick P 9/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -69,8 +64,6 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/couchexport-src:
-    branches: []
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
@@ -78,8 +71,6 @@ submodules:
   submodules/pillowtop-src:
     branches: []
   submodules/dimagi-utils-src:
-    branches: []
-  submodules/django-soil-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
