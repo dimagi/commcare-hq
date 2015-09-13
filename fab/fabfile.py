@@ -909,6 +909,7 @@ def restart_services():
 
 
 @roles(ROLES_ALL_SERVICES)
+@parallel
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -931,6 +932,7 @@ def _migrate():
 
 
 @roles(ROLES_DB_ONLY)
+@parallel
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -1132,6 +1134,7 @@ def stop_pillows():
 
 
 @roles(ROLES_CELERY)
+@parallel
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):
