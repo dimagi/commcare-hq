@@ -42,7 +42,7 @@ class DownloadBase(object):
         self.suffix = suffix or ''
 
     def get_cache(self):
-        return cache.get_cache(self.cache_backend)
+        return cache.caches[self.cache_backend]
 
     def get_content(self):
         raise NotImplemented("Use CachedDownload or FileDownload!")
@@ -63,7 +63,7 @@ class DownloadBase(object):
     def get(cls, download_id):
         if hasattr(settings, 'CACHES'):
             for backend in settings.CACHES.keys():
-                res = cache.get_cache(backend).get(download_id, None)
+                res = cache.caches[backend].get(download_id, None)
                 if res is not None:
                     return res
             return None
@@ -189,7 +189,7 @@ class CachedDownload(DownloadBase):
             payload = ''.join(payload)
         download_id = uuid.uuid4().hex
         ret = cls(download_id, **kwargs)
-        cache.get_cache(ret.cache_backend).set(download_id, payload, expiry)
+        cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret
 
 class FileDownload(DownloadBase):
