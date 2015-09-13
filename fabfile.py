@@ -7,4 +7,5 @@ if __name__ == '__main__':
         test_pillow_settings(sys.argv[2], settings.PILLOWTOPS)
 else:
     from fab.fabfile import *
+    from fab.chief import *
 

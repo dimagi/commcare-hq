@@ -43,6 +43,8 @@ from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 import yaml
 
+from .decorators import chief_hook
+
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
 ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
@@ -55,6 +57,7 @@ ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
+ROLES_CHIEF = ['chief']
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
@@ -70,11 +73,6 @@ RSYNC_EXCLUDE = (
 RELEASE_RECORD = 'RELEASES.txt'
 env.linewise = True
 env.colorize_errors = True
-
-if not hasattr(env, 'code_branch'):
-    print ("code_branch not specified, using 'master'. "
-           "You can set it with '--set code_branch=<branch>'")
-    env.code_branch = 'master'
 
 env.roledefs = {
     'django_celery': [],
@@ -160,6 +158,7 @@ def _setup_path():
     # using posixpath to ensure unix style slashes.
     # See bug-ticket: http://code.fabfile.org/attachments/61/posixpath.patch
     env.root = posixpath.join(env.home, 'www', env.environment)
+    env.chief_dir = posixpath.join(env.home, 'chief', env.environment)
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
@@ -184,6 +183,17 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env)
 
 
+def clear_code_branch():
+    env.pop('code_branch', None)
+
+
+def init_code_branch():
+    if not hasattr(env, 'code_branch'):
+        print ("code_branch not specified, using 'master'. "
+               "You can set it with '--set code_branch=<branch>'")
+        env.code_branch = 'master'
+
+
 def load_env(env_name):
     def get_env_dict(path):
         if os.path.isfile(path):
@@ -203,6 +213,7 @@ def load_env(env_name):
 
 @task
 def india():
+    init_code_branch()
     env.inventory = os.path.join('fab', 'inventory', 'india')
     load_env('india')
     execute(env_common)
@@ -211,6 +222,7 @@ def india():
 @task
 def zambia():
     """Our production server in wv zambia."""
+    init_code_branch()
     load_env('zambia')
     env.hosts = ['41.72.118.18']
 
@@ -237,8 +249,17 @@ def zambia():
 
 
 @task
+def localhost():
+    init_code_branch()
+    load_env('localhost')
+    env.inventory = os.path.join('fab', 'inventory', 'local')
+    execute(env_common)
+
+
+@task
 def production():
     """www.commcarehq.org"""
+    init_code_branch()
     if env.code_branch != 'master':
         branch_message = (
             "Woah there bud! You're using branch {env.code_branch}. "
@@ -255,6 +276,7 @@ def production():
 @task
 def staging():
     """staging.commcarehq.org"""
+    init_code_branch()
     if env.code_branch == 'master':
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
@@ -272,6 +294,7 @@ def preview():
     production data in a safe preview environment on remote host
 
     """
+    init_code_branch()
     env.inventory = os.path.join('fab', 'inventory', 'preview')
     load_env('preview')
     execute(env_common)
@@ -323,6 +346,7 @@ def env_common():
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
     rabbitmq = servers['rabbitmq']
+    chief = servers.get('chief', [])
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
 
@@ -340,6 +364,7 @@ def env_common():
         'django_pillowtop': pillowtop,
         'formsplayer': touchforms,
         'staticfiles': proxy,
+        'chief': chief,
         'lb': [],
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
@@ -350,6 +375,7 @@ def env_common():
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
     env.supervisor_roles = ROLES_ALL_SRC
+    env.is_chief_deploy = False
 
 
 @task
@@ -413,6 +439,7 @@ def preindex_views():
     _preindex_views()
 
 
+@chief_hook('Preindexing views')
 def _preindex_views():
     if not env.should_migrate:
         utils.abort((
@@ -428,6 +455,26 @@ def _preindex_views():
         ) % env)
         version_static()
 
+
+def _pull_latest():
+    sudo('git pull origin master'.format(env.code_branch))
+    sudo('git remote prune origin')
+    sudo('git submodule update --init')
+    sudo("git submodule foreach --recursive 'git checkout master; git pull origin master'")
+
+
+def _update_git_repo():
+    sudo('git remote prune origin')
+    sudo('git fetch')
+    sudo("git submodule foreach 'git fetch'")
+    sudo('git checkout %(code_branch)s' % env)
+    sudo('git reset --hard origin/%(code_branch)s' % env)
+    sudo('git submodule sync')
+    sudo('git submodule update --init --recursive')
+    # remove all untracked files, including submodules
+    sudo("git clean -ffd")
+    # remove all .pyc files in the project
+    sudo("find . -name '*.pyc' -delete")
 
 
 @roles(ROLES_ALL_SRC)
@@ -461,17 +508,7 @@ def update_code(use_current_release=False):
                 sudo('git clone {} {}'.format(env.code_repo, env.code_root))
 
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('git remote prune origin')
-        sudo('git fetch')
-        sudo("git submodule foreach 'git fetch'")
-        sudo('git checkout %(code_branch)s' % env)
-        sudo('git reset --hard origin/%(code_branch)s' % env)
-        sudo('git submodule sync')
-        sudo('git submodule update --init --recursive')
-        # remove all untracked files, including submodules
-        sudo("git clean -ffd")
-        # remove all .pyc files in the project
-        sudo("find . -name '*.pyc' -delete")
+        _update_git_repo()
 
 
 @roles(ROLES_DB_ONLY)
@@ -548,6 +585,7 @@ def _confirm_translated():
 
 
 @task
+@chief_hook('Setting up release directory')
 def setup_release():
     _execute_with_timing(create_code_dir)
     _execute_with_timing(update_code)
@@ -592,9 +630,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_touchforms)
 
         # handle static files
-        _execute_with_timing(version_static)
-        _execute_with_timing(_do_collectstatic)
-        _execute_with_timing(_do_compress)
+        _execute_with_timing(_prepare_static_files)
 
         _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
@@ -637,6 +673,7 @@ def _deploy_without_asking():
 @task
 @roles(ROLES_ALL_SRC)
 @parallel
+@chief_hook('Updating current release sym link')
 def update_current(release=None):
     """
     Updates the current release to the one specified or to the code_root
@@ -687,6 +724,15 @@ def copy_tf_localsettings():
 @task
 @roles(ROLES_ALL_SRC)
 @parallel
+def get_releases(n=3):
+    with cd(env.root):
+        return sudo('tail -n {} {}'.format(n, RELEASE_RECORD)).split()
+
+
+@task
+@roles(ROLES_ALL_SRC)
+@parallel
+@chief_hook('Cleaning releases')
 def clean_releases(keep=3):
     """
     Cleans old and failed deploys from the ~/www/<environment>/releases/ directory
@@ -820,6 +866,7 @@ def update_virtualenv():
 
 @roles(ROLES_ALL_SERVICES)
 @parallel
+@chief_hook('Clearing services directory')
 def clear_services_dir():
     """
     remove old confs from directory first
@@ -868,6 +915,7 @@ def restart_services():
 
 
 @roles(ROLES_ALL_SERVICES)
+@chief_hook('Restarting services')
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -880,6 +928,7 @@ def services_restart():
 
 
 @roles(ROLES_DB_ONLY)
+@chief_hook('Migrating database')
 def _migrate():
     """run south migration on remote environment"""
     _require_target()
@@ -890,6 +939,7 @@ def _migrate():
 
 
 @roles(ROLES_DB_ONLY)
+@chief_hook('Flip ES aliases')
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -917,6 +967,7 @@ def _do_collectstatic(use_current_release=False):
 
 @roles(ROLES_DJANGO)
 @parallel
+@chief_hook('Updating manifest')
 def update_manifest(save=False, soft=False, use_current_release=False):
     """
     Puts the manifest.json file with the references to the compressed files
@@ -939,6 +990,13 @@ def update_manifest(save=False, soft=False, use_current_release=False):
         sudo('{venv}/bin/python manage.py {cmd}'.format(venv=venv, cmd=cmd),
             user=env.sudo_user
         )
+
+
+@chief_hook('Preparing static files')
+def _prepare_static_files():
+    version_static()
+    _do_collectstatic()
+    _do_compress()
 
 
 @roles(ROLES_DJANGO)
@@ -1060,6 +1118,7 @@ def set_supervisor_config():
     _set_supervisor_config()
 
 
+@chief_hook('Setting supervisor configuration')
 def _set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     _require_target()
@@ -1082,6 +1141,7 @@ def _supervisor_command(command):
 
 
 @roles(ROLES_PILLOWTOP)
+@chief_hook('Stopping pillows')
 def stop_pillows():
     _require_target()
     with cd(env.code_root):
@@ -1089,6 +1149,7 @@ def stop_pillows():
 
 
 @roles(ROLES_CELERY)
+@chief_hook('Stopping celery')
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):
@@ -1097,6 +1158,7 @@ def stop_celery_tasks():
 
 @roles(ROLES_ALL_SRC)
 @parallel
+@chief_hook('Updating translation')
 def do_update_translations():
     with cd(env.code_root):
         update_locale_command = '{virtualenv_root}/bin/python manage.py update_django_locales'.format(

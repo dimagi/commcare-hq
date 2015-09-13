@@ -14,7 +14,10 @@ base:
 
   # list of servers where the NewRelic app agent should be running
   new_relic_enabled: []
-  
+
+chief:
+  environment: chief
+
 development:
   should_migrate: True
 
@@ -45,9 +48,15 @@ development:
         concurrency: 1
       flower: {}
 
+localhost:
+  environment: localhost
+  should_migrate: False
+  url: localhost
+
 india:
   environment: india
   should_migrate: True
+  url: staging.commcarehq.org
 
   celery_processes:
     '*':
@@ -84,6 +93,7 @@ preview:
 production:
   environment: production
   should_migrate: True
+  url: www.commcarehq.org
 
   new_relic_enabled:
     - hqdjango12.internal.commcarehq.org
@@ -122,6 +132,7 @@ production:
 staging:
   environment: staging
   should_migrate: True
+  url: staging.commcarehq.org
 
   celery_processes:
     '*':

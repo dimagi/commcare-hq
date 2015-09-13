@@ -17,6 +17,7 @@ from corehq.apps.accounting.utils import (
     is_accounting_admin
 )
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.chief.views import ChiefStatusPage
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
@@ -1568,6 +1569,7 @@ class AdminTab(UITab):
         submenu_context.extend([
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            dropdown_dict(_("Chief Deploy"), url=reverse(ChiefStatusPage.urlname)),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("Django Admin"), url="/admin")
         ])

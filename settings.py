@@ -212,6 +212,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.chief',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',

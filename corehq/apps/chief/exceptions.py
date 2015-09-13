@@ -1,0 +1,2 @@
+class DeployAlreadyInProgress(Exception):
+    pass
