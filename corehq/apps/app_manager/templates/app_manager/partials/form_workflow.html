@@ -65,8 +65,7 @@
                 ">
                 <i class="icon-trash"></i>
             </button>
-            <input type="hidden" data_bind="value: formLink.autoLink" name="auto_links"/>
-            <input type="hidden" data_bind="value: formLink.datums" name="datums"/>
+            <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
             <div class="alert alert-wraning" data-bind="visible: !formLink.autoLink()">
                 <p>
                     {% trans "This form requires manual linking." %}
@@ -77,16 +76,16 @@
                 <p data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0">
                     {% trans "No additional linking required." %}
                 </p>
-            </div>
-            <div class="well" data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-                <div class="control-group">
-                    <label class="control-label">
-                        <span data-bind="text: name"></span><br/>
-                        <small>{% trans "Case Type: " %}</small><small data-bind="text: caseType"></small>
-                    </label>
-                    <div class="controls">
-                        <textarea placeholder="XPath Expression" rows="1" data-bind="text: xpath, value: xpath">
-                        </textarea>
+                <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span data-bind="text: name"></span><br/>
+                            <small>{% trans "Case Type: " %}</small><small data-bind="text: caseType"></small>
+                        </label>
+                        <div class="controls">
+                            <textarea name="_xpath" placeholder="XPath Expression" rows="1" data-bind="text: xpath, value: xpath">
+                            </textarea>
+                        </div>
                     </div>
                 </div>
             </div>

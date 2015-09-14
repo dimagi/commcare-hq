@@ -178,7 +178,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     SchedulePhaseForm,
     FixtureSelect,
-)
+    FormDatum)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -2171,9 +2171,19 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
-            request.POST.getlist('auto_links'),
+            [
+                json.loads(datum_json) if datum_json else []
+                for datum_json in request.POST.getlist('datums_json')
+            ],
         )
-        form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
+        form.form_links = [FormLink(
+            xpath=link[0],
+            form_id=link[1],
+            datums=[
+                FormDatum(name=datum['name'], xpath=datum['xpath'])
+                for datum in link[2]
+            ]
+        ) for link in form_links]
 
     _handle_media_edits(request, form, should_edit, resp, lang)
 
