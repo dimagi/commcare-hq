@@ -68,7 +68,8 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches: 
+      - submod-test
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
