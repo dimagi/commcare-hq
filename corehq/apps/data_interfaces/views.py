@@ -478,7 +478,7 @@ class XFormManagementView(DataInterfaceSection):
     def post(self, request, *args, **kwargs):
         form_ids_or_query_string = self.get_form_ids_or_query_string(request)
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(None, None, 1*60*60)
+        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
