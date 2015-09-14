@@ -132,7 +132,8 @@ def _create_model_for_stock_transaction(report, transaction_helper):
     return txn
 
 
-StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_actions'])
+CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
+StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
 
 
 def _empty_actions():
@@ -140,7 +141,7 @@ def _empty_actions():
 
 
 def get_stock_actions(xform):
-    if is_device_report(xform) or is_deprecation(xform):
+    if is_device_report(xform):
         return _empty_actions()
 
     stock_report_helpers = list(unpack_commtrack(xform))
@@ -158,14 +159,22 @@ def get_stock_actions(xform):
 
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
-    case_actions = []
-    for case_id in case_ids:
-        case_action = CommCareCaseAction.from_parsed_action(
-            submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
-        )
-        case_actions.append((case_id, case_action))
+    case_action_intents = []
 
-    return StockFormActions(stock_report_helpers, case_actions)
+    for case_id in case_ids:
+        if is_deprecation(xform):
+            case_action_intents.append(CaseActionIntent(
+                case_id=case_id, form_id=xform._id, is_deprecation=True, action=None
+            ))
+        else:
+            case_action = CommCareCaseAction.from_parsed_action(
+                submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
+            )
+            case_action_intents.append(CaseActionIntent(
+                case_id=case_id, form_id=xform._id, is_deprecation=False, action=case_action
+            ))
+
+    return StockFormActions(stock_report_helpers, case_action_intents)
 
 
 @log_exception()
@@ -178,11 +187,11 @@ def process_stock(xforms, case_db=None):
 
     sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
     stock_report_helpers = []
-    case_actions = []
+    case_action_intents = []
     for xform in sorted_forms:
         actions_for_form = get_stock_actions(xform)
         stock_report_helpers += actions_for_form.stock_report_helpers
-        case_actions += actions_for_form.case_actions
+        case_action_intents += actions_for_form.case_action_intents
 
     # omitted: normalize_transactions (used for bulk requisitions?)
 
@@ -192,19 +201,22 @@ def process_stock(xforms, case_db=None):
 
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
-    for case_id, case_action in case_actions:
-        case = case_db.get(case_id)
+    for action_intent in case_action_intents:
+        case_id = action_intent.case_id
+        case = case_db.get(action_intent.case_id)
         relevant_cases.append(case)
         if case is None:
             raise IllegalCaseId(
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        # hack: clear the sync log id so this modification always counts
-        # since consumption data could change server-side
-        case_action.sync_log_id = ''
-        case.actions.append(case_action)
-        case_db.mark_changed(case)
+        if not action_intent.is_deprecation:
+            case_action = action_intent.action
+            # hack: clear the sync log id so this modification always counts
+            # since consumption data could change server-side
+            case_action.sync_log_id = ''
+            case.actions.append(case_action)
+            case_db.mark_changed(case)
 
     return StockProcessingResult(
         xform=xform,
