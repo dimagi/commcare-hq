@@ -1,4 +1,3 @@
-from unittest import skip
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase
@@ -99,7 +98,6 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(case.xform_ids, [form_id])
         self.assertEqual(case.actions[0].xform_id, form_id)
 
-    @skip('This is a test for a workflow that is not yet supported')
     def test_edit_submissions_simple(self):
         initial_quantity = 100
         form_id = submit_case_blocks(

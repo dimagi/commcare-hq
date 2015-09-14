@@ -43,10 +43,22 @@ class StockProcessingResult(object):
 
         # create the django models
         for stock_report_helper in self.stock_report_helpers:
-            if not stock_report_helper.deprecated:
+            if stock_report_helper.deprecated:
+                delete_models_for_stock_report(self.domain, stock_report_helper)
+            else:
                 create_models_for_stock_report(self.domain, stock_report_helper)
 
 
+@transaction.atomic
+def delete_models_for_stock_report(domain, stock_report_helper):
+    """
+    Delete all stock reports and stock transaction models associated with the helper from the database.
+    """
+    assert stock_report_helper.domain == domain
+    StockReport.objects.filter(domain=domain, form_id=stock_report_helper.form_id).delete()
+
+
+@transaction.atomic
 @transaction.atomic
 def create_models_for_stock_report(domain, stock_report_helper):
     """
