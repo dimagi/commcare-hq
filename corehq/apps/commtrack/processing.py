@@ -6,7 +6,6 @@ from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.models import StockTransaction, StockReport
-from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.parsing import unpack_commtrack
 from couchforms.util import is_deprecation
 from dimagi.utils.decorators.log_exception import log_exception
