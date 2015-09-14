@@ -59,7 +59,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
 from corehq.apps.commtrack.models import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
-from couchforms.util import adjust_datetimes
+from couchforms.util import adjust_datetimes, is_deprecation
 from xml2json.lib import convert_xml_to_json
 
 
@@ -144,6 +144,7 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             section_id=ledger_instruction.section_id,
             subaction=subaction if subaction and subaction != action else None,
             location_id=None,
+            is_deprecation=is_deprecation(form),
         )
 
     # details of transaction generation

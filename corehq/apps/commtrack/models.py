@@ -357,6 +357,7 @@ class StockTransactionHelper(jsonobject.JsonObject):
     timestamp = jsonobject.DateTimeProperty()
     case_id = jsonobject.StringProperty()
     section_id = jsonobject.StringProperty()
+    is_deprecation = jsonobject.BooleanProperty()
 
     @property
     def relative_quantity(self):
