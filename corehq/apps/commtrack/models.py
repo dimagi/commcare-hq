@@ -778,6 +778,6 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    result = process_stock(xform)
+    result = process_stock([xform])
     result.commit()
     CommCareCase.get_db().bulk_save(result.relevant_cases)

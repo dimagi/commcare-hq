@@ -162,10 +162,11 @@ def get_stock_actions(xform):
 
 
 @log_exception()
-def process_stock(xform, case_db=None):
+def process_stock(xforms, case_db=None):
     """
     process the commtrack xml constructs in an incoming submission
     """
+    xform = xforms[0]
     case_db = case_db or CaseDbCache()
     assert isinstance(case_db, CaseDbCache)
 
@@ -275,7 +276,6 @@ def rebuild_stock_state(case_id, section_id, product_id):
     and the quantity and stock_on_hand fields of StockTransaction
     when they are calculated from previous state
     (as opposed to part of the explict transaction)
-
     """
 
     for action in plan_rebuild_stock_state(case_id, section_id, product_id):
