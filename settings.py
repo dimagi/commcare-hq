@@ -1490,3 +1490,9 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+
+if 'locmem' not in CACHES:
+    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+if 'dummy' not in CACHES:
+    CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}

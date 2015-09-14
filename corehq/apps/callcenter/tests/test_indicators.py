@@ -15,7 +15,7 @@ from django.core import cache
 
 CASE_TYPE = 'cc_flw'
 
-locmem_cache = cache.caches['django.core.cache.backends.locmem.LocMemCache']
+locmem_cache = cache.caches['locmem']
 
 
 def create_domain_and_user(domain_name, username):
