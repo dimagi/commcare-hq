@@ -1392,16 +1392,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 return d
 
     def get_datums_meta_for_form_generic(self, form):
-            if form.form_type == 'module_form':
-                datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
-            elif form.form_type == 'advanced_form':
-                datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
-                datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
-            else:
-                raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
-                    form.form_type, form.unique_id
-                ))
-            return datums_meta
+        if form.form_type == 'module_form':
+            datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+        elif form.form_type == 'advanced_form':
+            datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+            datums_meta.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
+        else:
+            raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+                form.form_type, form.unique_id
+            ))
+        return datums_meta
 
     def _add_action_to_detail(self, detail, module):
         # add form action to detail
