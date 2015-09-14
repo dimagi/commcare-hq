@@ -4662,13 +4662,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.show_user_registration:
             yield self.get_user_registration() if bare else {
                 'type': 'user_registration',
-                'form': self.get_user_registration()
+                'form': self.get_user_registration(),
             }
         for module in self.get_modules():
             for form in module.get_forms():
                 yield form if bare else {
                     'type': 'module_form',
                     'module': module,
+                    'module_unique_id': module.unique_id,
                     'form': form
                 }
 
