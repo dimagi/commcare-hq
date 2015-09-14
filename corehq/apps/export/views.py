@@ -688,3 +688,116 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     def get_export_object(self, export_id):
         return CaseExportSchema.get(export_id)
+
+
+class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
+    template_name = 'export/export_list.html'
+
+    @method_decorator(use_bootstrap3())
+    @method_decorator(use_select2())
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportListView, self).dispatch(*args, **kwargs)
+
+    @property
+    def can_view_deid(self):
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+
+    @memoized
+    def get_saved_exports(self):
+        exports = FormExportSchema.get_stale_exports(self.domain)
+        if not self.can_view_deid:
+            exports = filter(lambda x: not x.is_safe, exports)
+        return sorted(exports, key=lambda x: x.name)
+
+    @property
+    @memoized
+    def create_export_form(self):
+        return CreateFormExportForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'create_export_form': self.create_export_form,
+            'create_export_form_title': _("Select a Form to Export"),
+        }
+
+    def get_create_export_url(self):
+        return reverse(CreateFormExportView.urlname, args=(self.domain,))
+
+    def fmt_export_data(self, export):
+        return {
+            'id': export.get_id,
+            'isDeid': export.is_safe,
+            'name': export.name,
+            'formname': export.formname,
+            'addedToBulk': False,
+            'editUrl': reverse(EditCustomFormExportView.urlname,
+                               args=(self.domain, export.get_id)),
+            'downloadUrl': reverse(DownloadFormExportView.urlname,
+                                   args=(self.domain, export.get_id)),
+        }
+
+    @allow_remote_invocation
+    def get_exports_list(self, in_data):
+        saved_exports = self.get_saved_exports()
+        saved_exports = map(self.fmt_export_data, saved_exports)
+        return {
+            'success': True,
+            'exports': saved_exports,
+        }
+
+    @allow_remote_invocation
+    def get_initial_form_data(self, in_data):
+        try:
+            apps = get_apps_in_domain(self.domain)
+            app_choices = map(
+                lambda a: {'id': a._id, 'text': a.name},
+                apps
+            )
+            modules = {}
+            forms = {}
+
+            def _fmt_name(n):
+                if isinstance(n, dict):
+                    return n.get(default_lang, _("Untitled"))
+                if isinstance(n, basestring):
+                    return n
+                return _("Untitled")
+
+            for app in apps:
+                default_lang = app.default_language
+                modules[app._id] = map(
+                    lambda m: {
+                        'id': m.unique_id,
+                        'text': _fmt_name(m.name),
+                    },
+                    app.modules
+                )
+                forms[app._id] = map(
+                    lambda f: {
+                        'id': f['form'].get_unique_id(),
+                        'text': _fmt_name(f['form'].name),
+                        'module': f.get('module_unique_id', '_registration'),
+                    },
+                    app.get_forms(bare=False)
+                )
+        except Exception as e:
+            return {
+                'error': _("Problem getting Create Export Form: %s") % e.message,
+            }
+        return {
+            'success': True,
+            'apps': app_choices,
+            'modules': modules,
+            'forms': forms,
+            'placeholders': {
+                'application': _("Select Application"),
+                'module': _("Select Module"),
+                'form': _("Select Form"),
+            }
+        }
+
+
+class FormExportListView(BaseExportListView):
+    urlname = 'list_form_exports'
+    page_title = ugettext_noop("Form Exports")
