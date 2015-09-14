@@ -17,12 +17,14 @@
             </div>
         {% endfor %}
         <fieldset>
-            <h4>{% trans "Set up your account" %}</h4>
+            {% if create_domain %}
+                <legend>{% trans "New user information" %}</legend>
+            {% endif %}
             {% include "registration/partials/field.html" with field=form.email %}
             {% include "registration/partials/field.html" with field=form.password %}
             {% include "registration/partials/field.html" with field=form.eula_confirmed %}
             {% if create_domain %}
-                <h4>{% trans "Create your first project" %}</h4>
+                <legend>{% trans "Create your first project" %}</legend>
                 {% include "registration/partials/field.html" with field=form.hr_name %}
             {% endif %}
             {% for hidden in form.hidden_fields %}

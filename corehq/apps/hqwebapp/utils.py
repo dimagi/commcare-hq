@@ -3,6 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -156,10 +157,16 @@ class InvitationView(object):
                     # create the new user
                     user = activate_new_user(form)
                     user.save()
-                    messages.success(request, _("User account for %s created! You may now login.")
-                                                % form.cleaned_data["email"])
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
-                    return HttpResponseRedirect(reverse("login"))
+                    authenticated = authenticate(username=form.cleaned_data["email"],
+                                                 password=form.cleaned_data["password"])
+                    if authenticated is not None and authenticated.is_active:
+                        login(request, authenticated)
+                    if isinstance(invitation, DomainInvitation):
+                        return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
+                    else:
+                        return HttpResponseRedirect(reverse("homepage"))
             else:
                 if isinstance(invitation, DomainInvitation):
                     if CouchUser.get_by_username(invitation.email):
