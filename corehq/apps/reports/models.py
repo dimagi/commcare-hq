@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 import functools
 import logging
@@ -164,6 +164,9 @@ class TempCommCareUser(CommCareUser):
 
     class Meta:
         app_label = 'reports'
+
+
+ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -432,10 +435,13 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         """
         try:
             if self.report is None:
-                return _("The report used to create this scheduled report is no"
-                         " longer available on CommCare HQ.  Please delete this"
-                         " scheduled report and create a new one using an available"
-                         " report."), None
+                return ReportContent(
+                    _("The report used to create this scheduled report is no"
+                      " longer available on CommCare HQ.  Please delete this"
+                      " scheduled report and create a new one using an available"
+                      " report."),
+                    None,
+                )
         except Exception:
             pass
 
@@ -468,36 +474,58 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             else:
                 file_obj = None
             if response.status_code == 302:
-                return _("We are sorry, but your saved report '%(config_name)s' "
-                         "is no longer accessible because the owner %(username)s "
-                         "is no longer active.") % {
-                    'config_name': self.name,
-                    'username': self.owner.username
-                }, None
-            return json.loads(response.content)['report'], file_obj
+                return ReportContent(
+                    _(
+                        "We are sorry, but your saved report '%(config_name)s' "
+                        "is no longer accessible because the owner %(username)s "
+                        "is no longer active."
+                    ) % {
+                        'config_name': self.name,
+                        'username': self.owner.username
+                    },
+                    None,
+                )
+            return ReportContent(json.loads(response.content)['report'], file_obj)
         except PermissionDenied:
-            return _(
-                "We are sorry, but your saved report '%(config_name)s' "
-                "is no longer accessible because your subscription does "
-                "not allow Custom Reporting. Please talk to your Project "
-                "Administrator about enabling Custom Reports. If you "
-                "want CommCare HQ to stop sending this message, please "
-                "visit %(saved_reports_url)s to remove this "
-                "Emailed Report."
-            ) % {
-                'config_name': self.name,
-                'saved_reports_url': absolute_reverse('saved_reports',
-                                                      args=[request.domain]),
-            }, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer accessible because your subscription does "
+                    "not allow Custom Reporting. Please talk to your Project "
+                    "Administrator about enabling Custom Reports. If you "
+                    "want CommCare HQ to stop sending this message, please "
+                    "visit %(saved_reports_url)s to remove this "
+                    "Emailed Report."
+                ) % {
+                    'config_name': self.name,
+                    'saved_reports_url': absolute_reverse(
+                        'saved_reports', args=[request.domain]
+                    ),
+                },
+                None,
+            )
         except Http404:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "can not be generated since you do not have the correct permissions. "
-                     "Please talk to your Project Administrator about getting permissions for this"
-                     "report.") % {'config_name': self.name}, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "can not be generated since you do not have the correct permissions. "
+                    "Please talk to your Project Administrator about getting permissions for this"
+                    "report."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
         except UnsupportedSavedReportError:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "is no longer available. If you think this is a mistake, please report an issue."
-                     ) % {'config_name': self.name}, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer available. If you think this is a mistake, please report an issue."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
@@ -505,7 +533,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report': self.report_slug,
                 'report config': self.get_id
             })
-            return _("An error occurred while generating this report."), None
+            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_configurable_report(self):
