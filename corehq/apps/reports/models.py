@@ -468,12 +468,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         try:
             dispatch_func = functools.partial(self._dispatcher.dispatch, request, **self.view_kwargs)
-            response = dispatch_func(render_as='email')
+            email_response = dispatch_func(render_as='email')
             if attach_excel is True:
                 file_obj = dispatch_func(render_as='excel')
             else:
                 file_obj = None
-            if response.status_code == 302:
+            if email_response.status_code == 302:
                 return ReportContent(
                     _(
                         "We are sorry, but your saved report '%(config_name)s' "
@@ -485,7 +485,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                     },
                     None,
                 )
-            return ReportContent(json.loads(response.content)['report'], file_obj)
+            return ReportContent(json.loads(email_response.content)['report'], file_obj)
         except PermissionDenied:
             return ReportContent(
                 _(
