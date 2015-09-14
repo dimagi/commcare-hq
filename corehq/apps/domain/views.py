@@ -58,7 +58,8 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType
+    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    StripePaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -755,7 +756,18 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
+            'cards': self._get_cards(),
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'card_base_url': reverse(CardsView.url_name, args=[self.domain]),
         }
+
+    def _get_cards(self):
+        user = self.request.user.username
+        payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method.all_cards_serialized(self.account)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -952,7 +964,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
             )
 
     def get_or_create_payment_method(self):
-        return PaymentMethod.objects.get_or_create(
+        return StripePaymentMethod.objects.get_or_create(
             web_user=self.domain_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
@@ -1463,6 +1475,15 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return account
 
     @property
+    def payment_method(self):
+        user = self.request.user.username
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method
+
+    @property
     @memoized
     def is_form_post(self):
         return 'company_name' in self.request.POST
@@ -1493,6 +1514,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_account_info_form,
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'cards': self.payment_method.all_cards_serialized(self.account)
         }
 
     def post(self, request, *args, **kwargs):
@@ -2691,3 +2714,74 @@ def _send_request_notification_email(request, org, dom):
     except Exception:
         logging.warning("Can't send notification email, "
                         "but the message was:\n%s" % text_content)
+
+
+class BaseCardView(DomainAccountingSettings):
+
+    @property
+    def payment_method(self):
+        payment_method, __ = StripePaymentMethod.objects.get_or_create(
+            web_user=self.request.user.username,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method
+
+    def _generic_error(self):
+        error = ("Something went wrong while processing your request. "
+                 "We're working quickly to resolve the issue. "
+                 "Please try again in a few hours.")
+        return json_response({'error': error}, status_code=500)
+
+    def _stripe_error(self, e):
+        body = e.json_body
+        err = body['error']
+        return json_response({'error': err['message'],
+                              'cards': self.payment_method.all_cards_serialized(self.account)},
+                             status_code=502)
+
+
+class CardView(BaseCardView):
+    """View for dealing with a single Credit Card"""
+    url_name = "card_view"
+
+    def post(self, request, domain, card_token):
+        try:
+            card = self.payment_method.get_card(card_token)
+            if request.POST.get("is_autopay") == 'true':
+                self.payment_method.set_autopay(card, self.account)
+            elif request.POST.get("is_autopay") == 'false':
+                self.payment_method.unset_autopay(card, self.account)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
+        except Exception as e:
+            return self._generic_error()
+
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+    def delete(self, request, domain, card_token):
+        try:
+            self.payment_method.remove_card(card_token)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
+
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+class CardsView(BaseCardView):
+    """View for dealing Credit Cards"""
+    url_name = "cards_view"
+
+    def get(self, request, domain):
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+    def post(self, request, domain):
+        stripe_token = request.POST.get('token')
+        autopay = request.POST.get('autopay') == 'true'
+        try:
+            self.payment_method.create_card(stripe_token, self.account, autopay)
+        except self.payment_method.STRIPE_GENERIC_ERROR as e:
+            return self._stripe_error(e)
+        except Exception as e:
+            return self._generic_error()
+
+        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
