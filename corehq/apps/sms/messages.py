@@ -29,7 +29,9 @@ MSG_OPTED_IN = "sms.opt.in"
 MSG_OPTED_OUT = "sms.opt.out"
 MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
 MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
-MSG_MOBILE_WORKER_INVITATION = "sms.invitation.mobile.start"
+MSG_MOBILE_WORKER_INVITATION_START = "sms.invitation.mobile.start"
+MSG_MOBILE_WORKER_ANDROID_INVITATION = "sms.invitation.mobile.android"
+MSG_MOBILE_WORKER_JAVA_INVITATION = "sms.invitation.mobile.java"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -62,7 +64,11 @@ _MESSAGES = {
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
     MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
     MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
-    MSG_MOBILE_WORKER_INVITATION: ugettext_noop("Welcome to CommCareHQ! Please follow this link to register: {0}"),
+    MSG_MOBILE_WORKER_INVITATION_START: ugettext_noop("Welcome to CommCareHQ! What type of phone are you "
+        "using? Reply 1 for Android, 2 for other."),
+    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please follow this link to register: {0}"),
+    MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Please reply with an SMS saying 'join {0} worker "
+        "[username]', entering your requested username in place of [username]"),
 }
 
 def get_message(msg_id, verified_number=None, context=None):

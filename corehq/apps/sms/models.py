@@ -20,11 +20,13 @@ from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency)
 from corehq.apps.sms import util as smsutil
-from corehq.apps.sms.messages import MSG_MOBILE_WORKER_INVITATION, get_message
+from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
+    get_message)
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -1213,13 +1215,50 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
 
 class SelfRegistrationInvitation(models.Model):
+    PHONE_TYPE_ANDROID = 'android'
+    PHONE_TYPE_OTHER = 'other'
+    PHONE_TYPE_CHOICES = (
+        (PHONE_TYPE_ANDROID, ugettext_lazy('Android')),
+        (PHONE_TYPE_OTHER, ugettext_lazy('Other')),
+    )
+
     domain = models.CharField(max_length=126, null=False, db_index=True)
     phone_number = models.CharField(max_length=30, null=False, db_index=True)
     token = models.CharField(max_length=126, null=False, db_index=True)
     app_id = models.CharField(max_length=126, null=True)
-    expiration_dt = models.DateField(null=False)
+    expiration_date = models.DateField(null=False)
+    created_date = models.DateTimeField(null=False)
+    odk_url = models.CharField(max_length=126, null=True)
+    phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
+    registered_date = models.DateTimeField(null=True)
 
-    def send(self, odk_url=None):
+    @property
+    def already_registered(self):
+        return self.registered_date is not None
+
+    def completed(self):
+        self.registered_date = datetime.utcnow()
+        self.save()
+
+    def send_step1_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_INVITATION_START)
+        )
+
+    def send_step2_java_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,))
+        )
+
+    def send_step2_android_sms(self):
         from corehq.apps.hqwebapp.utils import sign
         from corehq.apps.sms.api import send_sms
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
@@ -1230,16 +1269,61 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION, context=(registration_url,))
+            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,))
         )
 
-        if odk_url:
+        if self.odk_url:
             send_sms(
                 self.domain,
                 None,
                 self.phone_number,
-                'ccapp: %s, signature: %s' % (odk_url, base64.b64encode(sign(odk_url)))
+                'ccapp: %s, signature: %s' % (self.odk_url, base64.b64encode(sign(self.odk_url)))
             )
+
+    def expire(self):
+        self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
+        self.save()
+
+    @classmethod
+    def get_unexpired_invitations(cls, phone_number):
+        current_date = datetime.utcnow().date()
+        return cls.objects.filter(
+            phone_number=phone_number,
+            expiration_date__gte=current_date,
+            registered_date__isnull=True
+        )
+
+    @classmethod
+    def expire_invitations(cls, phone_number):
+        """
+        Expire all invitations for the given phone number that have not
+        yet expired.
+        """
+        for invitation in cls.get_unexpired_invitations(phone_number):
+            invitation.expire()
+
+    @classmethod
+    def by_phone(cls, phone_number, expire_duplicates=True):
+        """
+        Look up the unexpired invitation for the given phone number.
+        In the case of duplicates, only the most recent invitation
+        is returned.
+        If expire_duplicates is True, then any duplicates are automatically
+        expired.
+        Returns the invitation, or None if no unexpired invitations exist.
+        """
+        phone_number = apply_leniency(phone_number)
+        result = cls.get_unexpired_invitations(phone_number).order_by('-created_date')
+
+        if len(result) == 0:
+            return None
+
+        invitation = result[0]
+        if expire_duplicates and len(result) > 1:
+            for i in result[1:]:
+                i.expire()
+
+        return invitation
 
     @classmethod
     def get_app_odk_url(cls, domain, app_id):
@@ -1273,7 +1357,9 @@ class SelfRegistrationInvitation(models.Model):
                 numbers_in_use.append(phone_number)
                 continue
 
-            expiration_dt = (datetime.utcnow().date() +
+            cls.expire_invitations(phone_number)
+
+            expiration_date = (datetime.utcnow().date() +
                 timedelta(days=days_until_expiration))
 
             invitation = cls.objects.create(
@@ -1281,10 +1367,12 @@ class SelfRegistrationInvitation(models.Model):
                 phone_number=phone_number,
                 token=uuid.uuid4().hex,
                 app_id=app_id,
-                expiration_dt=expiration_dt,
+                expiration_date=expiration_date,
+                created_date=datetime.utcnow(),
+                odk_url=odk_url,
             )
 
-            invitation.send(odk_url=odk_url)
+            invitation.send_step1_sms()
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)

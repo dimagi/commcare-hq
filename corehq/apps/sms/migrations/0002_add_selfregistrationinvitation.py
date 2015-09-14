@@ -19,7 +19,11 @@ class Migration(migrations.Migration):
                 ('phone_number', models.CharField(max_length=30, db_index=True)),
                 ('token', models.CharField(max_length=126, db_index=True)),
                 ('app_id', models.CharField(max_length=126, null=True)),
-                ('expiration_dt', models.DateField()),
+                ('expiration_date', models.DateField()),
+                ('created_date', models.DateTimeField()),
+                ('odk_url', models.CharField(max_length=126, null=True)),
+                ('phone_type', models.CharField(max_length=20, null=True, choices=[(b'android', 'Android'), (b'other', 'Other')])),
+                ('registered_date', models.DateTimeField(null=True)),
             ],
             options={
             },

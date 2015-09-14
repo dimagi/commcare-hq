@@ -951,6 +951,10 @@ ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
 
+# Override with the PEM export of an RSA private key, for use with any
+# encryption or signing that HQ does.
+HQ_PRIVATE_KEY = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -1489,7 +1493,3 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-
-# Override with the PEM export of an RSA private key, for use with any
-# encryption or signing that HQ does.
-HQ_PRIVATE_KEY = None
