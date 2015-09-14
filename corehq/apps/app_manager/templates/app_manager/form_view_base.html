@@ -202,6 +202,7 @@
                     labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
                     options.forms = {{ linkable_forms|JSON}}
                     options.formLinks = {{ form.form_links|JSON }}
+                    options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
                 {% endif %}
 
                 {% if allow_form_workflow %}
