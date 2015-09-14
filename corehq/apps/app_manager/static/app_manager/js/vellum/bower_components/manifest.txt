@@ -6,7 +6,7 @@
 ├── MediaUploader#dacf28f419
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.1)
-├── chai#3.2.0
+├── chai#3.2.0 (3.3.0 available)
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
 ├── jsdiff#1.4.0 (latest is 2.1.1)
