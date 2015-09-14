@@ -1241,6 +1241,9 @@ class WorkflowHelper(object):
         return entries, datums
 
 
+FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
+
+
 class SuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Suite File"
     sections = (
@@ -1431,23 +1434,23 @@ class SuiteGenerator(SuiteGeneratorBase):
         target_form_dm = self.get_datums_meta_for_form_generic(form)
         source_form_dm = self.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
-            if target_meta['requires_selection']:
+            if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
                 try:
                     [source_dm] = [
                         source_meta for source_meta in source_form_dm
-                        if source_meta['case_type'] == target_meta['case_type']
+                        if source_meta.case_type == target_meta.case_type
                     ]
                 except ValueError:
                     raise SuiteError("Form selected as case list form requires a case "
                                      "but no matching case could be found: {}".format(form.unique_id))
                 else:
                     frame.add_datum(StackDatum(
-                        id=target_meta['datum'].id,
-                        value=session_var(source_dm['datum'].id))
+                        id=target_meta.datum.id,
+                        value=session_var(source_dm.datum.id))
                     )
             else:
-                s_datum = target_meta['datum']
+                s_datum = target_meta.datum
                 frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
@@ -1858,7 +1861,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 if isinstance(module, Module):
                     for datum_meta in self.get_datum_meta_module(module, use_filter=False):
-                        e.datums.append(datum_meta['datum'])
+                        e.datums.append(datum_meta.datum)
                 elif isinstance(module, AdvancedModule):
                     e.datums.append(SessionDatum(
                         id='case_id_case_%s' % module.case_type,
@@ -1919,17 +1922,17 @@ class SuiteGenerator(SuiteGeneratorBase):
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
             case = UserCaseXPath().case()
-            datums.append({
-                'datum': SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
-                'case_type': USERCASE_TYPE,
-                'requires_selection': False,
-                'action': None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
-            })
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                case_type=USERCASE_TYPE,
+                requires_selection=False,
+                action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
+            ))
         return datums
 
     @staticmethod
     def any_usercase_datums(datums):
-        return any(d['case_type'] == USERCASE_TYPE for d in datums)
+        return any(d.case_type == USERCASE_TYPE for d in datums)
 
     @staticmethod
     def get_new_case_id_datums_meta(form):
@@ -1940,35 +1943,35 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form.form_type == 'module_form':
             actions = form.active_actions()
             if 'open_case' in actions:
-                datums.append({
-                    'datum': SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'),
-                    'case_type': form.get_module().case_type,
-                    'requires_selection': False,
-                    'action': actions['open_case']
-                })
+                datums.append(FormDatumMeta(
+                    datum=SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'),
+                    case_type=form.get_module().case_type,
+                    requires_selection=False,
+                    action=actions['open_case']
+                ))
 
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
                     # see XForm.create_casexml_2
                     if not subcase.repeat_context:
-                        datums.append({
-                            'datum': SessionDatum(
+                        datums.append(FormDatumMeta(
+                            datum=SessionDatum(
                                 id=form.session_var_for_action(subcase), function='uuid()'
                             ),
-                            'case_type': subcase.case_type,
-                            'requires_selection': False,
-                            'action': subcase
-                        })
+                            case_type=subcase.case_type,
+                            requires_selection=False,
+                            action=subcase
+                        ))
         elif form.form_type == 'advanced_form':
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:
-                    datums.append({
-                        'datum': SessionDatum(id=action.case_session_var, function='uuid()'),
-                        'case_type': action.case_type,
-                        'requires_selection': False,
-                        'action': action
-                    })
+                    datums.append(FormDatumMeta(
+                        datum=SessionDatum(id=action.case_session_var, function='uuid()'),
+                        case_type=action.case_type,
+                        requires_selection=False,
+                        action=action
+                    ))
 
         return datums
 
@@ -1994,7 +1997,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         datums = self.get_case_datums_basic_module(module, form)
         for datum in datums:
-            e.datums.append(datum['datum'])
+            e.datums.append(datum.datum)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             SuiteGenerator.add_case_sharing_assertion(e)
@@ -2047,22 +2050,25 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
-                datums.append({
-                    'datum': SessionDatum(
+                datums.append(FormDatumMeta(
+                    datum=SessionDatum(
                         id=id_strings.fixture_session_var(datum['module']),
                         nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
                         value=datum['module'].fixture_select.variable_column,
                         detail_select=id_strings.fixture_detail(datum['module'])
-                    )
-                })
+                    ),
+                    case_type=None,
+                    requires_selection=True,
+                    action='fixture_select'
+                ))
                 filter_xpath_template = datum['module'].fixture_select.xpath
                 fixture_value = session_var(id_strings.fixture_session_var(datum['module']))
                 fixture_select_filter = "[{}]".format(
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
-            datums.append({
-                'datum': SessionDatum(
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(
                     id=datum['session_var'],
                     nodeset=(SuiteGenerator.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
                              + parent_filter + fixture_select_filter),
@@ -2075,10 +2081,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_persistent=detail_persistent,
                     detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
                 ),
-                'case_type': datum['case_type'],
-                'requires_selection': True,
-                'action': 'update_case'
-            })
+                case_type=datum['case_type'],
+                requires_selection=True,
+                action='update_case'
+            ))
         return datums
 
     @staticmethod
@@ -2152,7 +2158,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         datums.extend(SuiteGenerator.get_new_case_id_datums_meta(form))
 
         for datum_meta in datums:
-            e.datums.append(datum_meta['datum'])
+            e.datums.append(datum_meta.datum)
 
         # assertions come after session
         e.assertions.extend(assertions)
@@ -2216,12 +2222,12 @@ class SuiteGenerator(SuiteGeneratorBase):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 datum, assertions = SuiteGenerator.get_auto_select_datums_and_assertions(action, auto_select, form)
-                datums.append({
-                    'datum': datum,
-                    'case_type': None,
-                    'requires_selection': False,
-                    'action': action
-                })
+                datums.append(FormDatumMeta(
+                    datum=datum,
+                    case_type=None,
+                    requires_selection=False,
+                    action=action
+                ))
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
@@ -2231,12 +2237,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                     )
                 else:
                     parent_filter = ''
-                datums.append({
-                    'datum': get_manual_datum(action, parent_filter),
-                    'case_type': action.case_type,
-                    'requires_selection': True,
-                    'action': action
-                })
+                datums.append(FormDatumMeta(
+                    datum=get_manual_datum(action, parent_filter),
+                    case_type=action.case_type,
+                    requires_selection=True,
+                    action=action
+                ))
 
         if module.get_app().commtrack_enabled:
             try:
@@ -2248,17 +2254,17 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                     target_module = get_target_module(last_action.case_type, last_action.details_module, True)
 
-                    datums.append({
-                        'datum': SessionDatum(
+                    datums.append(FormDatumMeta(
+                        datum=SessionDatum(
                             id='product_id',
                             nodeset=nodeset,
                             value="./@id",
                             detail_select=self.get_detail_id_safe(target_module, 'product_short')
                         ),
-                        'case_type': None,
-                        'requires_selection': True,
-                        'action': None
-                    })
+                        case_type=None,
+                        requires_selection=True,
+                        action=None
+                    ))
             except IndexError:
                 pass
 
@@ -2290,8 +2296,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     new = session_var(change['new_id'])
                     setattr(datum, attr, xpath.replace(old, new))
 
-            datum = datum_meta['datum']
-            action = datum_meta['action']
+            datum = datum_meta.datum
+            action = datum_meta.action
             if action:
                 if hasattr(action, 'case_indices'):
                     # This is an advanced module
@@ -2318,21 +2324,21 @@ class SuiteGenerator(SuiteGeneratorBase):
             case type of the datum in this form).
             """
             changed_id = {}
-            parent_datum = parent_datum_meta_['datum']
-            action = this_datum_meta_['action']
+            parent_datum = parent_datum_meta_.datum
+            action = this_datum_meta_.action
             if action:
                 if parent_datum.id in datum_ids_:
                     datum = datum_ids_[parent_datum.id]
-                    new_id = '_'.join((datum['datum'].id, datum['case_type']))
+                    new_id = '_'.join((datum.datum.id, datum.case_type))
                     # Only advanced module actions have a case_tag attribute.
                     case_tag = getattr(action, 'case_tag', 'basic')
                     changed_id = {
                         case_tag: {
-                            'old_id': datum['datum'].id,
+                            'old_id': datum.datum.id,
                             'new_id': new_id,
                         }
                     }
-                    datum['datum'].id = new_id
+                    datum.datum.id = new_id
             return changed_id
 
         def get_changed_id(this_datum_meta_, parent_datum_meta_):
@@ -2343,13 +2349,13 @@ class SuiteGenerator(SuiteGeneratorBase):
             ID "case_id" in the parent module.
             """
             changed_id = {}
-            action = this_datum_meta_['action']
+            action = this_datum_meta_.action
             if action:
                 case_tag = getattr(action, 'case_tag', 'basic')
                 changed_id = {
                     case_tag: {
-                        "old_id": this_datum_meta_['datum'].id,
-                        "new_id": parent_datum_meta_['datum'].id
+                        "old_id": this_datum_meta_.datum.id,
+                        "new_id": parent_datum_meta_.datum.id
                     }
                 }
             return changed_id
@@ -2382,7 +2388,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             # 2. Match the datum ID for datums that appear in the same position and
             #    will be loading the same case type
             # see advanced_app_features#child-modules in docs
-            datum_ids = {d['datum'].id: d for d in datums}
+            datum_ids = {d.datum.id: d for d in datums}
             index = 0
             changed_ids_by_case_tag = defaultdict(list)
             for this_datum_meta, parent_datum_meta in list(izip_longest(datums, parent_datums)):
@@ -2391,16 +2397,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 update_refs(this_datum_meta, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
-                if this_datum_meta['datum'].id != parent_datum_meta['datum'].id:
-                    if not parent_datum_meta['requires_selection']:
+                if this_datum_meta.datum.id != parent_datum_meta.datum.id:
+                    if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
                         datums.insert(index, parent_datum_meta)
-                    elif this_datum_meta['case_type'] == parent_datum_meta['case_type']:
+                    elif this_datum_meta.case_type == parent_datum_meta.case_type:
                         append_update(changed_ids_by_case_tag,
                                       rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
                         append_update(changed_ids_by_case_tag,
                                       get_changed_id(this_datum_meta, parent_datum_meta))
-                        this_datum_meta['datum'].id = parent_datum_meta['datum'].id
+                        this_datum_meta.datum.id = parent_datum_meta.datum.id
                 index += 1
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
@@ -2556,8 +2562,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                         if form.requires_case():
                             form_datums = self.get_datums_meta_for_form_generic(form)
                             var_name = next(
-                                meta['datum'].id for meta in reversed(form_datums)
-                                if meta['action'] and meta['requires_selection']
+                                meta.datum.id for meta in reversed(form_datums)
+                                if meta.action and meta.requires_selection
                             )
                             case = CaseIDXPath(session_var(var_name)).case()
                         else:
