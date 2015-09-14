@@ -132,9 +132,14 @@ def _create_model_for_stock_transaction(report, transaction_helper):
     return txn
 
 
+StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'stock_case_actions'])
+
+def _empty_actions():
+    return StockFormActions([], [])
+
 def get_stock_actions(xform):
     if is_device_report(xform):
-        return [], []
+        return _empty_actions()
 
     stock_report_helpers = list(unpack_commtrack(xform))
     transaction_helpers = [
@@ -143,7 +148,7 @@ def get_stock_actions(xform):
         for transaction_helper in stock_report_helper.transactions
     ]
     if not transaction_helpers:
-        return [], []
+        return _empty_actions()
 
     # list of cases that had stock reports in the form
     case_ids = list(set(transaction_helper.case_id
@@ -158,7 +163,7 @@ def get_stock_actions(xform):
         )
         case_actions.append((case_id, case_action))
 
-    return stock_report_helpers, case_actions
+    return StockFormActions(stock_report_helpers, case_actions)
 
 
 @log_exception()
