@@ -3447,7 +3447,7 @@ class ReportAppConfig(DocumentSchema):
             id='reports.{}.data'.format(self.uuid),
             nodeset='rows/row',
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
+                locale=suite_xml.Locale(id=id_strings.report_data_table()),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
         )
