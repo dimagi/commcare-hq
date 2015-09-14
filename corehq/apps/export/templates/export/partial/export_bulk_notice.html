@@ -1,0 +1,24 @@
+{% load i18n %}
+<div class="alert alert-info"
+     ng-show="!!showBulkExportDownload">
+    <form class="form form-inline"
+          method="post"
+          ng-submit="handleSubmitBulkDownload()">
+        <div class="row">
+            <div class="col-sm-3 col-lg-2">
+                <button type="submit"
+                        class="btn btn-primary btn-lg"
+                        style="width: 100%;">
+                    <i class="fa fa-download"></i>
+                    {% trans 'Bulk Download' %}
+                </button>
+            </div>
+            <div class="col-sm-9 col-lg-10">
+                <p style="margin-top: 13px;">{% blocktrans %}
+                    All of the selected exports will be downloaded in a single Excel file,
+                    with each export as a separate sheet.
+                {% endblocktrans %}</p>
+            </div>
+        </div>
+    </form>
+</div>
