@@ -144,7 +144,6 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             section_id=ledger_instruction.section_id,
             subaction=subaction if subaction and subaction != action else None,
             location_id=None,
-            is_deprecation=is_deprecation(form),
         )
 
     # details of transaction generation

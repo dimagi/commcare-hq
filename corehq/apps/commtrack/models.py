@@ -27,6 +27,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
+from couchforms.util import is_deprecation
 from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
@@ -323,16 +324,19 @@ class StockReportHelper(jsonobject.JsonObject):
     tag = jsonobject.StringProperty()
     transactions = jsonobject.ListProperty(lambda: StockTransactionHelper)
     server_date = jsonobject.DateTimeProperty()
+    deprecated = jsonobject.BooleanProperty()
 
     @classmethod
     def make_from_form(cls, form, timestamp, tag, transactions):
+        deprecated = is_deprecation(form)
         return cls(
             domain=form.domain,
-            form_id=form.get_id,
+            form_id=form.get_id if not deprecated else form.orig_id,
             timestamp=timestamp,
             tag=tag,
             transactions=transactions,
             server_date=form.received_on,
+            deprecated=deprecated,
         )
 
     def validate(self):
@@ -357,7 +361,6 @@ class StockTransactionHelper(jsonobject.JsonObject):
     timestamp = jsonobject.DateTimeProperty()
     case_id = jsonobject.StringProperty()
     section_id = jsonobject.StringProperty()
-    is_deprecation = jsonobject.BooleanProperty()
 
     @property
     def relative_quantity(self):
