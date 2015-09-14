@@ -178,12 +178,9 @@ def process_stock(xforms, case_db=None):
     stock_report_helpers, case_actions = get_stock_actions(xform)
     # omitted: normalize_transactions (used for bulk requisitions?)
 
-    # validate product ids
-    if any(transaction_helper.product_id in ('', None)
-            for stock_report_helper in stock_report_helpers
-            for transaction_helper in stock_report_helper.transactions):
-        raise MissingProductId(
-            _('Product IDs must be set for all ledger updates!'))
+    # validate the parsed transactions
+    for stock_report_helper in stock_report_helpers:
+        stock_report_helper.validate()
 
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved

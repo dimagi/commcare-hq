@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.apps.commtrack.exceptions import MissingProductId
 
 from dimagi.ext.couchdbkit import *
 from dimagi.ext import jsonobject
@@ -333,6 +334,13 @@ class StockReportHelper(jsonobject.JsonObject):
             transactions=transactions,
             server_date=form.received_on,
         )
+
+    def validate(self):
+        """
+        Validates this object as best we can and raises Exceptions if we find anything invalid .
+        """
+        if any(transaction_helper.product_id in ('', None) for transaction_helper in self.transactions):
+            raise MissingProductId(_('Product IDs must be set for all ledger updates!'))
 
 
 class StockTransactionHelper(jsonobject.JsonObject):
