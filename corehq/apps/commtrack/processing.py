@@ -8,6 +8,7 @@ from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.parsing import unpack_commtrack
+from couchforms.util import is_deprecation
 from dimagi.utils.decorators.log_exception import log_exception
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
@@ -140,7 +141,7 @@ def _empty_actions():
 
 
 def get_stock_actions(xform):
-    if is_device_report(xform):
+    if is_device_report(xform) or is_deprecation(xform):
         return _empty_actions()
 
     stock_report_helpers = list(unpack_commtrack(xform))
@@ -173,11 +174,17 @@ def process_stock(xforms, case_db=None):
     """
     process the commtrack xml constructs in an incoming submission
     """
-    xform = xforms[0]
     case_db = case_db or CaseDbCache()
     assert isinstance(case_db, CaseDbCache)
 
-    stock_report_helpers, case_actions = get_stock_actions(xform)
+    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    stock_report_helpers = []
+    case_actions = []
+    for xform in sorted_forms:
+        actions_for_form = get_stock_actions(xform)
+        stock_report_helpers += actions_for_form.stock_report_helpers
+        case_actions += actions_for_form.case_actions
+
     # omitted: normalize_transactions (used for bulk requisitions?)
 
     # validate the parsed transactions
