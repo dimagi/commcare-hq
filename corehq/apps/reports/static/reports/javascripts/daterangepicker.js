@@ -26,6 +26,9 @@ $(function() {
             ranges: ranges,
             separator: separator
         });
+
+	$('[name="daterangepicker_start"]').removeAttr("disabled");
+	$('[name="daterangepicker_end"]').removeAttr("disabled");
     };
     $.fn.createDefaultDateRangePicker = function () {
         this.createDateRangePicker(
