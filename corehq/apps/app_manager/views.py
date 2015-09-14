@@ -3148,26 +3148,6 @@ def formdefs(request, domain, app_id):
     else:
         return json_response(formdefs)
 
-def _questions_for_form(request, form, langs):
-    class FakeMessages(object):
-        def __init__(self):
-            self.messages = defaultdict(list)
-
-        def add_message(self, type, message):
-            self.messages[type].append(message)
-
-        def error(self, request, message, *args, **kwargs):
-            self.add_message('error', message)
-
-        def warning(self, request, message, *args, **kwargs):
-            self.add_message('warning', message)
-
-    m = FakeMessages()
-
-    _, context = get_form_view_context_and_template(request, form, langs, None, messages=m)
-    xform_questions = context['xform_questions']
-    return xform_questions, m.messages
-
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
