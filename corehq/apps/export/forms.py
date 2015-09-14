@@ -27,75 +27,57 @@ class ExportFilterFormException(Exception):
 
 
 class CreateFormExportForm(forms.Form):
-    application = forms.ChoiceField()
-    module = forms.ChoiceField()
-    form = forms.ChoiceField()
+    application = forms.CharField(required=False)
+    module = forms.CharField(required=False)
+    form = forms.CharField(required=False)
 
     def __init__(self, domain, *args, **kwargs):
         super(CreateFormExportForm, self).__init__(*args, **kwargs)
-        apps = get_apps_in_domain(domain)
-        self.fields['application'].choices = ([
-            ('', _('Select Application...')),
-        ] if len(apps) > 1 else []) + [
-            (app._id, app.name) for app in apps
-        ]
-        self.fields['module'].choices = [
-            (module.unique_id, module.name)
-            for app in apps if hasattr(app, 'modules')
-            for module in app.modules
-        ]
-        self.fields['form'].choices = [
-            (form.get_unique_id(), form.name)
-            for app in apps
-            for form in app.get_forms()
-        ]
+        # apps = get_apps_in_domain(domain)
+        # self.fields['application'].choices = ([
+        #     ('', _('Select Application...')),
+        # ] if len(apps) > 1 else []) + [
+        #     (app._id, app.name) for app in apps
+        # ]
+        # self.fields['module'].choices = [
+        #     (module.unique_id, module.name)
+        #     for app in apps if hasattr(app, 'modules')
+        #     for module in app.modules
+        # ]
+        # self.fields['form'].choices = [
+        #     (form.get_unique_id(), form.name)
+        #     for app in apps
+        #     for form in app.get_forms()
+        # ]
 
         self.helper = FormHelper()
-        self.helper.form_id = "create-export-form"
-        self.helper.form_class = "form-horizontal"
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-2'
+        self.helper.field_class = 'col-sm-10'
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Select Form'),
-                crispy.Field(
-                    'application',
-                    data_bind='value: appId',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'module',
-                        data_bind=(
-                            "options: moduleOptions, "
-                            "optionsText: 'text', "
-                            "optionsValue: 'value', "
-                            "value: moduleId"
-                        ),
-                    ),
-                    data_bind="visible: appId",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'form',
-                        data_bind=(
-                            "options: formOptions, "
-                            "optionsText: 'text', "
-                            "optionsValue: 'value', "
-                            "value: formId"
-                        ),
-                    ),
-                    data_bind="visible: moduleId",
-                ),
+            crispy.Field(
+                'application',
+                placeholder=_("Select Application"),
+                ng_model="createForm.application",
+                ng_change="updateModules()",
+                ng_required="true",
+            ),
+            crispy.Field(
+                'module',
+                placeholder=_("Select Module"),
+                ng_model="createForm.module",
+                ng_disabled="!createForm.application",
+                ng_change="updateForms()",
+                ng_required="true",
             ),
             crispy.Div(
-                FormActions(
-                    crispy.ButtonHolder(
-                        crispy.Submit(
-                            'create_export',
-                            _('Next'),
-                        ),
-                    ),
+                crispy.Field(
+                    'form',
+                    ng_model="createForm.form",
+                    ng_disabled="!createForm.module",
+                    ng_required="true",
                 ),
-                data_bind="visible: formId",
             ),
         )
 
