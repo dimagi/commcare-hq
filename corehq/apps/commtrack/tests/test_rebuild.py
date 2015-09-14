@@ -5,6 +5,7 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.processing import rebuild_stock_state
+from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 
 
@@ -96,3 +97,26 @@ class RebuildStockStateTest(TestCase):
         case = CommCareCase.get(case_id)
         self.assertEqual(case.xform_ids, [form_id])
         self.assertEqual(case.actions[0].xform_id, form_id)
+
+    def test_edit_submissions_simple(self):
+        initial_quantity = 100
+        form_id = submit_case_blocks(
+            case_blocks=get_single_balance_block(quantity=initial_quantity, **self._stock_state_key),
+            domain=self.domain,
+        )
+        stock_state, latest_txn, all_txns = self._get_stats()
+        self.assertEqual(stock_state.stock_on_hand, initial_quantity)
+        self.assertEqual(latest_txn.stock_on_hand, initial_quantity)
+        self.assertEqual(all_txns.count(), 1)
+
+        # change the value to 50
+        edit_quantity = 50
+        submit_case_blocks(
+            case_blocks=get_single_balance_block(quantity=edit_quantity, **self._stock_state_key),
+            domain=self.domain,
+            form_id=form_id,
+        )
+        stock_state, latest_txn, all_txns = self._get_stats()
+        self.assertEqual(stock_state.stock_on_hand, edit_quantity)
+        self.assertEqual(latest_txn.stock_on_hand, edit_quantity)
+        self.assertEqual(all_txns.count(), 1)
