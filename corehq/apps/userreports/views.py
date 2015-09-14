@@ -45,6 +45,7 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
+    StaticReportConfiguration,
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
@@ -654,9 +655,10 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
+    static_reports = list(StaticReportConfiguration.by_domain(domain))
     custom_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain),
+        'reports': ReportConfiguration.by_domain(domain) + static_reports,
         'data_sources': DataSourceConfiguration.by_domain(domain) + custom_data_sources,
     }
