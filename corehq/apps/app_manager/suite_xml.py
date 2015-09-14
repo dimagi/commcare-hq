@@ -1072,14 +1072,27 @@ class WorkflowHelper(object):
 
     def form_workflow_frames(self, if_prefix, module, form):
         from corehq.apps.app_manager.models import (
-            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
+            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
+        def frame_children_for_module(module_):
+            frame_children = []
+            root = id_strings.ROOT
+            if module_.root_module:
+                root = id_strings.menu_id(module_.root_module)
+                frame_children.extend(self.get_frame_children(module_.root_module.get_form(0), module_only=True))
+            module_command = id_strings.menu_id(module_)
+            frame_children.extend([module_command] if module_command != root else [])
+            return frame_children
+
         stack_frames = []
         if form.post_form_workflow == WORKFLOW_ROOT:
             stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
         elif form.post_form_workflow == WORKFLOW_MODULE:
-            module_command = id_strings.menu_id(module)
-            frame_children = [module_command] if module_command != id_strings.ROOT else []
+            frame_children = frame_children_for_module(module)
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            root_module = module.root_module
+            frame_children = frame_children_for_module(root_module)
             stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
         elif form.post_form_workflow == WORKFLOW_PREVIOUS:
             frame_children = self.get_frame_children(form)
