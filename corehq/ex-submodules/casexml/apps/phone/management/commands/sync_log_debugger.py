@@ -88,7 +88,7 @@ class Command(BaseCommand):
         if options['check_hash']:
             log_to_check = logs[options['index']]
             result = _brute_force_search(
-                log_to_check.case_ids_on_phone, options['check_hash'], depth=options['depth']
+                log_to_check.case_ids_on_phone, options['check_hash'], depth=int(options['depth'])
             )
             if result:
                 print 'check successful - missing ids {}'.format(result)
