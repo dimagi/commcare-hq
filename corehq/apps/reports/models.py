@@ -446,24 +446,24 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             pass
 
         from django.http import HttpRequest, QueryDict
-        request = HttpRequest()
-        request.couch_user = self.owner
-        request.user = self.owner.get_django_user()
-        request.domain = self.domain
-        request.couch_user.current_domain = self.domain
-        request.couch_user.language = lang
+        mock_request = HttpRequest()
+        mock_request.couch_user = self.owner
+        mock_request.user = self.owner.get_django_user()
+        mock_request.domain = self.domain
+        mock_request.couch_user.current_domain = self.domain
+        mock_request.couch_user.language = lang
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
             mock_query_string_parts.append(urlencode(self.filters, True))
             mock_query_string_parts.append(urlencode(self.get_date_range(), True))
-        request.GET = QueryDict('&'.join(mock_query_string_parts))
+        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
-        CCHQPRBACMiddleware.apply_prbac(request)
+        CCHQPRBACMiddleware.apply_prbac(mock_request)
 
         try:
-            dispatch_func = functools.partial(self._dispatcher.dispatch, request, **self.view_kwargs)
+            dispatch_func = functools.partial(self._dispatcher.dispatch, mock_request, **self.view_kwargs)
             email_response = dispatch_func(render_as='email')
             if email_response.status_code == 302:
                 return ReportContent(
@@ -494,7 +494,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 ) % {
                     'config_name': self.name,
                     'saved_reports_url': absolute_reverse(
-                        'saved_reports', args=[request.domain]
+                        'saved_reports', args=[mock_request.domain]
                     ),
                 },
                 None,
