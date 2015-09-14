@@ -453,15 +453,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.couch_user.current_domain = self.domain
         request.couch_user.language = lang
 
-        request.GET = QueryDict(
-            self.query_string
-            + '&filterSet=true'
-            + ('&'
-               + urlencode(self.filters, True)
-               + '&'
-               + urlencode(self.get_date_range(), True)
-               if self.is_configurable_report else '')
-        )
+        mock_query_string_parts = [self.query_string, 'filterSet=true']
+        if self.is_configurable_report:
+            mock_query_string_parts.append(urlencode(self.filters, True))
+            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
+        request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(request)
