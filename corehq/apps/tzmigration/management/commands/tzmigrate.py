@@ -1,6 +1,5 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete
@@ -9,7 +8,6 @@ from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     prepare_case_json, FormJsonDiff, commit_plan
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance
 
 
 def _is_datetime(string):
