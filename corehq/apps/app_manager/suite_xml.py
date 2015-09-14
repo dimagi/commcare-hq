@@ -726,7 +726,7 @@ class StackFrameMeta(object):
     def add_child(self, child):
         if isinstance(child, basestring) and not isinstance(child, XPath):
             child = XPath.string(child)
-        if isinstance(child, DatumMeta):
+        if isinstance(child, WorkflowDatumMeta):
             child = child.to_stack_datum()
         self.children.append(child)
 
@@ -748,7 +748,7 @@ class StackFrameMeta(object):
 
 
 @total_ordering
-class DatumMeta(object):
+class WorkflowDatumMeta(object):
     """
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
@@ -1035,7 +1035,7 @@ class WorkflowHelper(object):
                                     raise
                             else:
                                 used.add(source_meta)
-                                meta = DatumMeta.from_session_datum(source_meta)
+                                meta = WorkflowDatumMeta.from_session_datum(source_meta)
                                 frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                                 frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                         else:
@@ -1047,7 +1047,7 @@ class WorkflowHelper(object):
                                     raise
                             else:
                                 used.add(source_meta)
-                                datum_meta = DatumMeta.from_session_datum(target_dm)
+                                datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
                                 frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
 
                     # return any source datums that were not already added to the target
@@ -1087,7 +1087,7 @@ class WorkflowHelper(object):
             # since we want to go the 'previous' screen we need to drop the last
             # datum
             last = frame_children.pop()
-            while isinstance(last, DatumMeta) and not last.requires_selection:
+            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
                 # keep removing last element until we hit a command
                 # or a non-autoselect datum
                 last = frame_children.pop()
@@ -1125,7 +1125,7 @@ class WorkflowHelper(object):
         """
         datum_index = -1
         for child in target_frame_elements:
-            if not isinstance(child, DatumMeta) or not child.requires_selection:
+            if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
                 yield child
             else:
                 datum_index += 1
@@ -1236,7 +1236,7 @@ class WorkflowHelper(object):
                 datums[module_id][form_id] = []
             else:
                 for d in e.datums:
-                    datums[module_id][form_id].append(DatumMeta.from_session_datum(d))
+                    datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
 
         return entries, datums
 
