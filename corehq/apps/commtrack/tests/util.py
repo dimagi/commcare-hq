@@ -214,6 +214,17 @@ def get_single_balance_block(case_id, product_id, quantity, date_string=None, se
     ).strip()
 
 
+def get_single_transfer_block(src_id, dest_id, product_id, quantity, date_string=None, section_id='stock'):
+    date_string = date_string or json_format_date(datetime.utcnow())
+    return """
+<transfer xmlns="http://commcarehq.org/ledger/v1" src="{src_id}" dest="{dest_id}" date="{date}" section-id="{section_id}">
+    <entry id="{product_id}" quantity="{quantity}" />
+</transfer >""".format(
+        src_id=src_id, dest_id=dest_id, product_id=product_id, quantity=quantity,
+        date=date_string, section_id=section_id,
+    ).strip()
+
+
 def fake_sms(user, text):
     """
     Fake a commtrack SMS submission for a user.
