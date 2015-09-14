@@ -19,6 +19,7 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, Com
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -164,6 +165,10 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
+    @property
+    def show_extra_columns(self):
+        return self.request.user and SUPPORT.enabled(self.request.user.username)
+
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         if project and project.commtrack_enabled:
@@ -183,6 +188,9 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
             ),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
         ]
+        if self.show_extra_columns:
+            h.append(DataTablesColumn(_("Sync Log")))
+
         h.extend([DataTablesColumn(field) for field in self.other_fields])
         return DataTablesHeader(*h)
 
@@ -192,9 +200,12 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
         for form in submissions:
             display = FormDisplay(form, self)
-            yield [
+            row = [
                 display.form_data_link,
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
-            ] + display.other_columns
+            ]
+            if self.show_extra_columns:
+                row.append(form.get('last_sync_token', ''))
+            yield row + display.other_columns
