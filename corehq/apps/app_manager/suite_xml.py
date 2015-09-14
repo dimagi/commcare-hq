@@ -1099,8 +1099,11 @@ class WorkflowHelper(object):
                 target_form = self.app.get_form(link.form_id)
                 target_module = target_form.get_module()
 
-                frame_children = self.get_frame_children(target_form)
-                frame_children = WorkflowHelper.get_datums_matched_to_source(frame_children, source_form_datums)
+                target_frame_children = self.get_frame_children(target_form)
+                if link.datums:
+                    frame_children = WorkflowHelper.get_datums_matched_to_manual_values(target_frame_children, link.datums)
+                else:
+                    frame_children = WorkflowHelper.get_datums_matched_to_source(target_frame_children, source_form_datums)
 
                 if target_module in module.get_child_modules():
                     parent_frame_children = self.get_frame_children(module.get_form(0), module_only=True)
@@ -1139,6 +1142,25 @@ class WorkflowHelper(object):
                         yield child.to_stack_datum(source_id=source_datum.id)
                     else:
                         yield child.to_stack_datum()
+
+    @staticmethod
+    def get_datums_matched_to_manual_values(target_frame_elements, manual_values):
+        """
+        Attempt to match the target session variables with ones that the user
+        has entered manually
+        """
+        manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
+        for child in target_frame_elements:
+            if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
+                yield child
+            else:
+                manual_values = manual_values_by_name.get(child.id)
+                if manual_values:
+                    yield StackDatum(id=child.id, value=manual_values)
+                else:
+                    raise SuiteError("Unable to link forms, missing form variable: {}".format(
+                        child.id
+                    ))
 
     def get_frame_children(self, target_form, module_only=False):
         """
