@@ -2,6 +2,7 @@ from collections import namedtuple
 import logging
 from django.db import transaction
 from django.utils.translation import ugettext as _
+from casexml.apps.case.cleanup import deprecate_actions_for_form
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
@@ -164,7 +165,7 @@ def get_stock_actions(xform):
     for case_id in case_ids:
         if is_deprecation(xform):
             case_action_intents.append(CaseActionIntent(
-                case_id=case_id, form_id=xform._id, is_deprecation=True, action=None
+                case_id=case_id, form_id=xform.orig_id, is_deprecation=True, action=None
             ))
         else:
             case_action = CommCareCaseAction.from_parsed_action(
@@ -210,13 +211,20 @@ def process_stock(xforms, case_db=None):
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        if not action_intent.is_deprecation:
+        if action_intent.is_deprecation:
+            # just remove the old stock actions for the form from the case
+            case.actions = [
+                a for a in case.actions if not
+                (a.xform_id == action_intent.form_id and a.action_type == CASE_ACTION_COMMTRACK)
+            ]
+        else:
             case_action = action_intent.action
             # hack: clear the sync log id so this modification always counts
             # since consumption data could change server-side
             case_action.sync_log_id = ''
             case.actions.append(case_action)
-            case_db.mark_changed(case)
+
+        case_db.mark_changed(case)
 
     return StockProcessingResult(
         xform=xform,
