@@ -58,6 +58,7 @@ submodules:
     # just so we always get latest master
     branches:
       - new-libs # Ben 9/3
+      - submod-test # Ben
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
