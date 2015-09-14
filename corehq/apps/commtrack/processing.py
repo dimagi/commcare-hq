@@ -43,7 +43,8 @@ class StockProcessingResult(object):
 
         # create the django models
         for stock_report_helper in self.stock_report_helpers:
-            create_models_for_stock_report(self.domain, stock_report_helper)
+            if not stock_report_helper.deprecated:
+                create_models_for_stock_report(self.domain, stock_report_helper)
 
 
 @transaction.atomic
