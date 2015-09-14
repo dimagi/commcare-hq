@@ -59,7 +59,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
 from corehq.apps.commtrack.models import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
-from couchforms.util import adjust_datetimes, is_deprecation
+from couchforms.util import adjust_datetimes
 from xml2json.lib import convert_xml_to_json
 
 
