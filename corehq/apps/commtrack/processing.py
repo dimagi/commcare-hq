@@ -132,10 +132,12 @@ def _create_model_for_stock_transaction(report, transaction_helper):
     return txn
 
 
-StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'stock_case_actions'])
+StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_actions'])
+
 
 def _empty_actions():
     return StockFormActions([], [])
+
 
 def get_stock_actions(xform):
     if is_device_report(xform):
