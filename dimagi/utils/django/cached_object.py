@@ -239,7 +239,7 @@ class CachedObject(object):
 
     @property
     def rcache(self):
-        return MOCK_REDIS_CACHE or cache.get_cache('redis')
+        return MOCK_REDIS_CACHE or cache.caches['redis']
 
 
 class CachedImage(CachedObject):
