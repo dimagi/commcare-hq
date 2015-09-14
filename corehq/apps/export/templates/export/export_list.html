@@ -1,0 +1,216 @@
+{%  extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script type="text/javascript">
+(function (angular, undefined) {
+   'use strict';
+    var listExportsApp = angular.module('listExportsApp', ['hq.list_exports']);
+    listExportsApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div ng-app="listExportsApp">
+        <div ng-controller="ListExportsController"
+             ng-cloak>
+            <p class="lead">
+                {% blocktrans %}
+                    Exports are are a way to download data from CommCare HQ
+                    in a variety of formats (CSV, Excel, etc.) for use in
+                    third-party Data Analysis tools.
+                {% endblocktrans %}
+            </p>
+            <p ng-show="!_.isEmpty(exports) || !hasLoaded">
+                <a href="#createExportOptionsModal"
+                   data-toggle="modal"
+                   class="btn btn-success">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Create New Export" %}
+                </a>
+            </p>
+            <div class="alert alert-success"
+                 ng-show="_.isEmpty(exports) && !!hasLoaded">
+                <p class="lead"><strong>{% blocktrans %}
+                    It seems you haven't created any exports yet!
+                {% endblocktrans %}</strong></p>
+                <p><a href="#createExportOptionsModal"
+                      data-toggle="modal"
+                      class="btn btn-success">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Create New Export" %}
+                </a></p>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">{% trans "My Exports" %}</div>
+                <div class="panel-body">
+                    <div class="alert alert-info"
+                         ng-show="!hasLoaded">
+                        <p>
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <strong>{% trans 'Fetching List of Exports...' %}</strong>
+                        </p>
+                    </div>
+                    <div class="alert alert-info"
+                         ng-show="_.isEmpty(exports) && !!hasLoaded">
+                        <p>
+                            {% trans 'No Exports Created Yet.' %}
+                        </p>
+                    </div>
+                    {% include 'export/partial/export_bulk_notice.html' %}
+                    <table class="table table-striped"
+                           ng-show="!!hasLoaded && !_.isEmpty(exports)">
+                        <thead>
+                            <tr>
+                                <th class="col-sm-6">{% trans 'Name' %}</th>
+                                <th class="col-sm-1">{% trans 'Edit' %}</th>
+                                <th class="col-sm-2">{% trans 'Download' %}</th>
+                                <th class="col-sm-3">
+                                    {% trans 'Bulk Download:' %}
+                                    <button type="button"
+                                            class="btn btn-xs btn-default"
+                                            ng-click="selectAll()">
+                                        {% trans 'All' %}
+                                    </button> {% trans 'or' %}
+                                    <button type="button"
+                                            class="btn btn-xs btn-default"
+                                            ng-click="selectNone()">
+                                        {% trans 'None' %}
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% angularjs %}
+                            <tr ng-repeat="export in exports">
+                                <td>
+                                    <h4>{{ export.name }}
+                                        <label class="label label-default label-info"
+                                           ng-show="!!export.isDeid">
+                                        {% trans 'De-Identified' %}
+                                        </label></h4>
+                                    <p ng-show="!!export.formname">
+                                        <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
+                                    </p>
+                                </td>
+                                <td>
+                                    <a href="{{ export.editUrl }}"
+                                       class="btn btn-default"><i class="fa fa-pencil"></i>
+                                        {% trans 'Edit' %}</a>
+                                </td>
+                                <td>
+                                    <a href="{{ export.downloadUrl }}"
+                                       class="btn btn-primary"><i class="fa fa-download"></i>
+                                        {% trans 'Download' %}</a>
+                                </td>
+                                <td>
+                                    <label class="label label-primary label-md noselect"
+                                           style="cursor: pointer;"
+                                           for="add-to-bulk-{{ export.id }}">
+                                        <input type="checkbox"
+                                               ng-model="export.addedToBulk"
+                                               ng-change="updateBulkStatus()"
+                                               id="add-to-bulk-{{ export.id }}"
+                                               style="margin-top: 10px;" />
+                                        &nbsp;{% trans "Add to Bulk Download" %}
+                                    </label>
+                                </td>
+                            </tr>
+                            {% endangularjs %}
+                        </tbody>
+                    </table>
+                    {% include 'export/partial/export_bulk_notice.html' %}
+                </div>
+            </div>
+
+        </div>
+        <div class="modal fade"
+             id="createExportOptionsModal"
+             ng-controller="CreateFormExportController">
+            <div class="modal-dialog">
+                <form name="exportOptionsForm"
+                      class="form form-horizontal"
+                      ng-submit="handleCreateFormExport">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
+                            </button>
+                            <h4 class="modal-title">{{ create_export_form_title }}</h4>
+                        </div>
+                        <div class="modal-body"
+                             ng-show="!isLoaded">
+                            <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
+                        </div>
+                        <div class="modal-body"
+                             ng-show="!showNoAppsError && !formLoadError && !!isLoaded">
+                            {% crispy create_export_form %}
+                        </div>
+                        <div class="modal-body"
+                             ng-show="!!formLoadError">
+                            <div class="alert alert-warning">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <span ng-if="formLoadError === 'default'">
+                                    {% trans "There is an issue communicating with the server at this time." %}
+                                </span>
+                                <span ng-if="formLoadError !== 'default'">
+                                    {% angularjs %}{{ formLoadError }}{% endangularjs %}
+                                </span>
+                            </div>
+                            <p>
+                                {% blocktrans %}
+                                    If this problem persists, please <a href="#reportIssueModoal"
+                                        data-toggle="modal">Report an Issue</a> and include this error
+                                        message in the description.
+                                {% endblocktrans %}
+                            </p>
+                            <p>
+                                {% blocktrans %}
+                                    We apologize for the inconvenience, and thank you for your patience. Someone
+                                    on our development team is quickly working to resolve this issue.
+                                {% endblocktrans %}
+                            </p>
+                        </div>
+                        <div class="modal-body"
+                             ng-show="!!showNoAppsError">
+                            <p class="lead">
+                            {% blocktrans %}
+                                It seems as though you haven't submitted any data to CommCare HQ.
+                                Please deploy an Application and submit data before creating any exports.
+                            {% endblocktrans %}
+                            </p>
+                            <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
+                               target="_blank">
+                                <i class="fa fa-info-circle"></i>
+                                {% trans 'How to Create and Deploy a CommCare Application.' %}
+                            </a>
+                         </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    ng-show="!showNoAppsError && !formLoadError"
+                                    ng-disabled="!!exportOptionsForm.$invalid">
+                                {% trans "Create Export" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
