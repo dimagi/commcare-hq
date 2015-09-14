@@ -93,8 +93,8 @@ def configurable_reports_home(request, domain):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_report(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
-    return _edit_report_shared(request, domain, config)
+    config, is_static = get_report_config_or_404(report_id, domain)
+    return _edit_report_shared(request, domain, config, read_only=is_static)
 
 
 @login_and_domain_required
