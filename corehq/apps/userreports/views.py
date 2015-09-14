@@ -327,15 +327,15 @@ class ConfigureWorkerReport(ConfigureChartReport):
         return ConfigureWorkerReportForm
 
 
-def _edit_report_shared(request, domain, config):
+def _edit_report_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, data=request.POST)
+        form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             form.save(commit=True)
             messages.success(request, _(u'Report "{}" saved!').format(config.title))
             return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
-        form = ConfigurableReportEditForm(domain, config)
+        form = ConfigurableReportEditForm(domain, config, read_only)
     context = _shared_context(domain)
     context.update({
         'form': form,
