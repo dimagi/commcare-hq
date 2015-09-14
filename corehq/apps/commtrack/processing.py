@@ -2,7 +2,6 @@ from collections import namedtuple
 import logging
 from django.db import transaction
 from django.utils.translation import ugettext as _
-from casexml.apps.case.cleanup import deprecate_actions_for_form
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
