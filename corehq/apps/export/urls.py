@@ -8,7 +8,7 @@ from corehq.apps.export.views import (
     EditCustomCaseExportView,
     DeleteCustomExportView,
     DownloadFormExportView,
-    DownloadCaseExportView)
+    DownloadCaseExportView, FormExportListView)
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
@@ -16,6 +16,7 @@ urlpatterns = patterns(
     url(r"^create/case/$", CreateCaseExportView.as_view(), name=CreateCaseExportView.urlname),
     url(r"^customize/form/$", CreateCustomFormExportView.as_view(), name=CreateCustomFormExportView.urlname),
     url(r"^customize/case/$", CreateCustomCaseExportView.as_view(), name=CreateCustomCaseExportView.urlname),
+    url(r"^custom/list/form/$", FormExportListView.as_view(), name=FormExportListView.urlname),
     url(r"^custom/form/(?P<export_id>[\w\-]+)/download/$",
         DownloadFormExportView.as_view(), name=DownloadFormExportView.urlname),
     url(r"^custom/form/(?P<export_id>[\w\-]+)/edit/$", EditCustomFormExportView.as_view(),
