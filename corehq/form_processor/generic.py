@@ -6,7 +6,6 @@ from dimagi.ext.jsonobject import (
     BooleanProperty,
     DateTimeProperty,
     ListProperty,
-    ObjectProperty,
     IntegerProperty,
 )
 from jsonobject.base import DefaultProperty
