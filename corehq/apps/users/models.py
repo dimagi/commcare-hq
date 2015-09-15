@@ -1544,21 +1544,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def add_commcare_account(self, domain, device_id, user_data=None):
-        """
-        Adds a commcare account to this.
-        """
-        if self.domain and self.domain != domain:
-            raise self.Inconsistent("Tried to reinitialize commcare account to a different domain")
-        self.domain = domain
-        self.registering_device_id = device_id
-        self.user_data = user_data or {}
-        self.add_device_id(device_id=device_id)
-
-    def add_device_id(self, device_id, default=False, **kwargs):
-        """ Don't add phone devices if they already exist """
-        self.device_ids = _add_to_list(self.device_ids, device_id, default)
-
     def to_casexml_user(self):
         user = CaseXMLUser(
             user_id=self.userID,
