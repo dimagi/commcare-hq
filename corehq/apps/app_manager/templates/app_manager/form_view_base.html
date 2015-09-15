@@ -190,10 +190,10 @@
                     labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                     labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
                     labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
-                    labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
                     {% if module.root_module_id %}
                     labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
                     {% endif %}
+                    labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
 
                     var options = {
                         labels: labels,
