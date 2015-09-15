@@ -358,6 +358,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return file
 
 
+class CustomConfigurableReport(ConfigurableReport):
+    slug = 'custom_configurable'
+
+
 class CustomConfigurableReportDispatcher(ReportDispatcher):
     slug = prefix = 'custom_configurable'
     map_name = 'CUSTOM_UCR'
