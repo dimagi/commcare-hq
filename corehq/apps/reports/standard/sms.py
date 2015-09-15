@@ -1,5 +1,5 @@
 import cgi
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop
@@ -118,16 +118,12 @@ def _sms_count(user, startdate, enddate):
     # utilizable if we want to stick it somewhere else
     start_timestamp = json_format_datetime(startdate)
     end_timestamp = json_format_datetime(enddate)
-    ret = {}
-    for direction in [INCOMING, OUTGOING]:
-        count = SMS.objects.filter(
-            couch_recipient_doc_type=user.doc_type,
-            couch_recipient=user._id,
-            direction=direction,
-            date__range=(start_timestamp, end_timestamp),
-        ).count()
-        ret[direction] = count
-
+    direction_count = SMS.objects.filter(
+        couch_recipient_doc_type=user.doc_type,
+        couch_recipient=user._id,
+        date__range=(start_timestamp, end_timestamp),
+    ).values('direction').annotate(Count('direction'))
+    ret = {d['direction']: d['direction__count'] for d in direction_count}
     return ret
 
 
