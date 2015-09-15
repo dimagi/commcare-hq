@@ -59,7 +59,6 @@ def delete_models_for_stock_report(domain, stock_report_helper):
 
 
 @transaction.atomic
-@transaction.atomic
 def create_models_for_stock_report(domain, stock_report_helper):
     """
     Save stock report and stock transaction models to the database.
