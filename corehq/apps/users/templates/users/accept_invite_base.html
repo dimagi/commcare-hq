@@ -50,7 +50,8 @@
             <div class="page-header">
                 <h1>
                 {% blocktrans %}
-                {{ invite_type|capfirst }} Invitation, Account Required<br /><small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
+                {{ invite_type|capfirst }} Invitation, Account Required<br />
+                <small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
                 {% endblocktrans %}
                 </h1>
             </div>
@@ -63,12 +64,19 @@
                         </div>
                     {% endfor %}
                     <fieldset>
-                        <legend>{% trans 'New User Information' %}</legend>
-                        {% include "users/partial/field.html" with field=form.full_name %}
+                        {% if create_domain %}
+                            <legend>{% trans 'New user information' %}</legend>
+                        {% endif %}
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
-                        {% include "users/partial/field.html" with field=form.hr_name %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}
+                        {% if create_domain %}
+                            <legend>{% trans "Create your first project" %}</legend>
+                            {% include "registration/partials/field.html" with field=form.hr_name %}
+                        {% endif %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
                     </fieldset>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large">{% trans 'Create Account' %}</button>
