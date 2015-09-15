@@ -1136,9 +1136,10 @@ class WorkflowHelper(object):
 
                     # exclude frame children from the child module if they are already
                     # supplied by the parent module
+                    parent_ids = {parent.id for parent in parent_frame_children}
                     frame_children = parent_frame_children + [
                         child for child in frame_children
-                        if child not in parent_frame_children
+                        if child.id not in parent_ids
                     ]
 
                 stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
