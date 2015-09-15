@@ -104,7 +104,7 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
-        
+
     def test_return_to_parent_module(self):
         factory = AppFactory(build_version='2.9.0/latest')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')

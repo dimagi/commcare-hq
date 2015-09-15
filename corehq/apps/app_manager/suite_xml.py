@@ -744,6 +744,7 @@ class StackFrameMeta(object):
 
         return frame
 
+
 @total_ordering
 class CommandId(object):
     def __init__(self, command):
@@ -1089,6 +1090,7 @@ class WorkflowHelper(object):
         from corehq.apps.app_manager.models import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
+
         def frame_children_for_module(module_):
             frame_children = []
             if module_.root_module:
