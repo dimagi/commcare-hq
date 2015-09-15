@@ -79,11 +79,13 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
 def _make_couchdb_tuple(row, couch_database_url):
 
     if isinstance(row, basestring):
-        app_label = row
-        return app_label, couch_database_url
+        app_label, postfix = row, None
     else:
         app_label, postfix = row
+    if postfix:
         return app_label, '%s__%s' % (couch_database_url, postfix)
+    else:
+        return app_label, couch_database_url
 
 
 def make_couchdb_tuples(config, couch_database_url):
@@ -106,7 +108,8 @@ def get_extra_couchdbs(config, couch_database_url):
     for row in config:
         if isinstance(row, tuple):
             _, postfix = row
-            extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
+            if postfix:
+                extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
 
     return extra_dbs
 

@@ -1039,6 +1039,8 @@ _dynamic_db_settings = get_dynamic_db_settings(
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
+USERS_GROUPS_DB = None
+
 COUCHDB_APPS = [
     'adm',
     'announcements',
@@ -1068,7 +1070,7 @@ COUCHDB_APPS = [
     'facilities',
     'fluff_filter',
     'fixtures',
-    'groups',
+    ('groups', USERS_GROUPS_DB),
     'hqcase',
     'hqmedia',
     'hope',
@@ -1089,7 +1091,7 @@ COUCHDB_APPS = [
     'telerivet',
     'toggle',
     'translations',
-    'users',
+    ('users', USERS_GROUPS_DB),
     'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
