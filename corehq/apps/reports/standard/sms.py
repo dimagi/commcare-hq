@@ -38,7 +38,6 @@ from corehq.apps.sms.models import (
     WORKFLOW_PERFORMANCE,
     INCOMING,
     OUTGOING,
-    SMSLog,
     MessagingEvent,
     MessagingSubEvent,
     SMS,
@@ -109,9 +108,9 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         ]
 
 
-def _sms_count(user, startdate, enddate, message_type='SMSLog'):
+def _sms_count(user, startdate, enddate):
     """
-    Returns a dictionary of messages seen for a given type, user, and date
+    Returns a dictionary of messages seen for a given user, and date
     range of the format:
     {
         I: inbound_count,
@@ -123,11 +122,13 @@ def _sms_count(user, startdate, enddate, message_type='SMSLog'):
     end_timestamp = json_format_datetime(enddate)
     ret = {}
     for direction in [INCOMING, OUTGOING]:
-        results = SMSLog.get_db().view("sms/by_recipient",
-            startkey=[user.doc_type, user._id, message_type, direction, start_timestamp],
-            endkey=[user.doc_type, user._id, message_type, direction, end_timestamp],
-            reduce=True).all()
-        ret[direction] = results[0]['value'] if results else 0
+        count = SMS.objects.filter(
+            couch_recipient_doc_type=user.doc_type,
+            couch_recipient=user._id,
+            direction=direction,
+            date__range=(start_timestamp, end_timestamp),
+        ).count()
+        ret[direction] = count
 
     return ret
 
@@ -167,18 +168,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
-            # We need to store the contact type and the recipient ID in the contact link element, because
-            # MessageLogReport can only use the link, not the whole table cell dictionary, and so it won't have
-            # table_cell['raw'] available for export. export_table will read contacttype and recipientid
-            # attributes to populate those columns in the export spreadsheet.
-            ret = self.table_cell(
-                username,
-                '<a target="_blank" href="{url}" contacttype="{type}" recipientid="{id}">{username}</a>'.format(
-                    username=username,
-                    url=url,
-                    type=contact_type,
-                    id=recipient_id or ''
-                ))
+            ret = self.table_cell(username, '<a target="_blank" href="%s">%s</a>' % (url, username))
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
@@ -265,6 +255,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     ajax_pagination = True
 
     exportable = True
+    exportable_all = True
 
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
@@ -332,8 +323,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
                 and Domain.get_by_name(self.domain).uses_locations)
 
-    @property
-    def rows(self):
+    def _get_rows(self, paginate=True, contact_info=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
@@ -391,10 +381,10 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_timestamp(timestamp)
             return table_cell['html']
 
-        def get_contact_link(couch_recipient, couch_recipient_doc_type):
+        def get_contact_link(couch_recipient, couch_recipient_doc_type, raw=False):
             doc_info = self.get_recipient_info(couch_recipient_doc_type, couch_recipient, contact_cache)
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
-            return table_cell['html']
+            return table_cell['raw'] if raw else table_cell['html']
 
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
@@ -408,13 +398,13 @@ class MessageLogReport(BaseCommConnectLogReport):
         )
         data = filter_by_types(data)
         data = order_by_col(data)
-        if self.pagination:
+        if paginate and self.pagination:
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for message in data:
             yield [
                 get_timestamp(message.date),
-                get_contact_link(message.couch_recipient, message.couch_recipient_doc_type),
+                get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
@@ -422,17 +412,18 @@ class MessageLogReport(BaseCommConnectLogReport):
             ]
 
     @property
+    def rows(self):
+        return self._get_rows(paginate=True, contact_info=False)
+
+    @property
     def total_records(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
         enddate = json_format_datetime(self.datespan.enddate_utc)
-        result = SMSLog.view(
-            "sms/by_domain",
-            reduce=True,
-            startkey=[self.domain, 'SMSLog', startdate],
-            endkey=[self.domain, 'SMSLog', enddate],
-            include_docs=False
-        ).first()
-        return result['value'] if result else 0
+        count = SMS.objects.filter(
+            domain=self.domain,
+            date__range=(startdate, enddate),
+        ).count()
+        return count
 
     @property
     def shared_pagination_GET_params(self):
@@ -445,31 +436,8 @@ class MessageLogReport(BaseCommConnectLogReport):
         ]
 
     @property
-    def export_table(self):
-
-        def get_contact_info(contact_link):
-            """
-            Contact info is extracted from the contact link
-
-            We can't use the table cell dictionary's 'raw' key because rows don't contain table cells. Pagination
-            is done server-side, and rows are passed via AJAX and contain only strings.
-            """
-            try:
-                element = etree.fromstring(contact_link)
-                return element.text, element.get('contacttype'), element.get('recipientid')
-            except ParseError:
-                return contact_link, _("Unknown"), ''
-
-        result = super(BaseCommConnectLogReport, self).export_table
-        table = result[0][1]
-        table[0].append(_("Contact Type"))
-        table[0].append(_("Contact ID"))
-        for row in table[1:]:
-            username, contact_type, recipient_id = get_contact_info(row[1])
-            row[1] = username
-            row.append(contact_type)
-            row.append(recipient_id)
-        return result
+    def get_all_rows(self):
+        return self._get_rows(paginate=False, contact_info=True)
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
