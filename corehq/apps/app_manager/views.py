@@ -527,7 +527,6 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
 
     module_case_types = []
     app = form.get_app()
-    module = form.get_module()
     all_modules = list(app.get_modules())
     if is_user_registration:
         module_case_types = None
@@ -545,7 +544,7 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         form.get_unique_id()
         app.save()
 
-    form_has_schedule = isinstance(form, AdvancedForm) and module.has_schedule
+    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
         'is_user_registration': is_user_registration,
         'nav_form': form if not is_user_registration else '',
@@ -558,12 +557,14 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_workflow': not is_user_registration and not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+        module = form.get_module()
+
         def qualified_form_name(form, auto_link):
             module_name = trans(form.get_module().name, langs)
             form_name = trans(form.name, app.langs)
