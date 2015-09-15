@@ -363,8 +363,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             sort_col = self.request_params.get('iSortCol_0')
             if sort_col is not None and sort_col < len(col_fields):
                 data_ = data_.order_by(col_fields[sort_col])
-            if self.request_params.get('sSortDir_0') == 'desc':
-                data_ = data_.reverse()
+                if self.request_params.get('sSortDir_0') == 'desc':
+                    data_ = data_.reverse()
             return data_
 
         def get_phone_number(phone_number):
