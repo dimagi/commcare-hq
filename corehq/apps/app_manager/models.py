@@ -655,6 +655,11 @@ class ScheduleVisit(IndexedSchema):
         return _id + 1
 
 
+class FormDatum(DocumentSchema):
+    name = StringProperty()
+    xpath = StringProperty()
+
+
 class FormLink(DocumentSchema):
     """
     xpath:      xpath condition that must be true in order to open next form
@@ -662,6 +667,7 @@ class FormLink(DocumentSchema):
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    datums = SchemaListProperty(FormDatum)
 
 
 class FormSchedule(DocumentSchema):

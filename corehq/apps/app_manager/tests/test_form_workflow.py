@@ -5,7 +5,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_MODULE,
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
-)
+    FormDatum)
 from corehq.apps.app_manager.const import AUTO_SELECT_RAW
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -101,6 +101,36 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         m1f0.post_form_workflow = WORKFLOW_FORM
         m1f0.form_links = [
             FormLink(xpath="true()", form_id=m2f0.unique_id),
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
+
+    def test_manual_form_link(self):
+        factory = AppFactory(build_version='2.9.0/latest')
+        m0, m0f0 = factory.new_basic_module('enroll child', 'child')
+        factory.form_opens_case(m0f0)
+
+        m1, m1f0 = factory.new_basic_module('child visit', 'child')
+        factory.form_requires_case(m1f0)
+        factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
+
+        m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
+        factory.form_requires_case(m2f0, 'child')
+        factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id_new_child_0")
+            ]),
+        ]
+
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [
+            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+                FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
+                FormDatum(name='case_id_load_visit_0', xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
+            ]),
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")

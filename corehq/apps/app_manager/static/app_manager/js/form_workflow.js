@@ -6,6 +6,8 @@
     window.FormWorkflow = function(options) {
         var self = this;
 
+        self.formDatumsUrl = options.formDatumsUrl;
+
         // Human readable labels for the workflow types
         self.labels = options.labels;
 
@@ -30,7 +32,7 @@
             return new FormWorkflow.Form(f);
         });
         self.formLinks = ko.observableArray(_.map(options.formLinks, function(link) {
-            return new FormWorkflow.FormLink(link.xpath, link.form_id, self.forms);
+            return new FormWorkflow.FormLink(link.xpath, link.form_id, self, link.datums);
         }));
     };
 
@@ -57,9 +59,10 @@
     };
 
     FormWorkflow.prototype.onAddFormLink = function(workflow, event) {
-        // Default to linking to first form
-        var formId = workflow.forms.length ? workflow.forms[0].uniqueId : null;
-        this.formLinks.push(new FormWorkflow.FormLink('', formId, workflow.forms));
+        // Default to linking to first form that can be auto linked
+        var default_choice = _.find(workflow.forms, function(form) { return form.autoLink }),
+            formId = default_choice ? default_choice.uniqueId : null;
+        this.formLinks.push(new FormWorkflow.FormLink('', formId, workflow));
     };
 
     FormWorkflow.prototype.onDestroyFormLink = function(formLink, event) {
@@ -73,19 +76,79 @@
         if (_.contains(formLink.errors(), FormWorkflow.Errors.FORM_NOTFOUND)) {
             return "Unknown form";
         }
-        return;
     };
 
     FormWorkflow.Form = function(form) {
         this.name = form.name;
         this.uniqueId = form.unique_id;
+        this.autoLink = form.auto_link;
     };
 
-    FormWorkflow.FormLink = function(xpath, formId, forms) {
+    FormWorkflow.FormDatum = function(formLink, datum) {
+        var self = this;
+        self.formLink = formLink;
+        self.name = datum.name;
+        self.caseType = datum.case_type || 'unknown';
+        self.xpath = ko.observable(datum.xpath || '');
+        self.xpath.extend({ rateLimit: 200 });  // 1 update per 200 milliseconds
+        self.xpath.subscribe(function() {
+            self.formLink.serializeDatums();
+        });
+    };
+
+    FormWorkflow.FormLink = function(xpath, formId, workflow, datums) {
         var self = this;
         self.xpath = ko.observable(xpath);
         self.formId = ko.observable(formId);
-        self.forms = forms || [];
+        self.autoLink = ko.observable();
+        self.forms = workflow.forms || [];
+        self.datums = ko.observableArray();
+        self.datumsFetched = ko.observable(false);
+        self.serializedDatums = ko.observable('');
+
+        self.get_form_by_id = function(form_id) {
+            return _.find(self.forms, function(form){ return form.uniqueId === form_id; })
+        };
+
+        self.serializeDatums = function() {
+            var jsonDatums = JSON.stringify(_.map(self.datums(), function (datum) {
+                return {'name': datum.name, 'xpath': datum.xpath()}
+            }));
+            self.serializedDatums(jsonDatums);
+        };
+
+        self.datums.subscribe(function() {
+            self.serializeDatums();
+        });
+
+        self.wrap_datums = function(data) {
+            self.datumsFetched(true);
+            return _.map(data, function(datum) {
+                return new FormWorkflow.FormDatum(self, datum);
+            });
+        };
+
+       // initialize
+        self.autoLink(self.get_form_by_id(self.formId()).autoLink);
+        self.datums(self.wrap_datums(datums));
+
+        self.formId.subscribe(function(form_id) {
+            self.autoLink(self.get_form_by_id(form_id).autoLink);
+            self.datumsFetched(false);
+            self.datums([]);
+            self.serializedDatums('');
+        });
+
+        self.fetchDatums = function() {
+            $.get(
+                workflow.formDatumsUrl,
+                {form_id: self.formId()},
+                function (data) {
+                    self.datums(self.wrap_datums(data))
+                },
+                "json"
+            )
+        };
 
         self.errors = ko.computed(function() {
             var found,

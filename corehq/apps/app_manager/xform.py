@@ -1569,9 +1569,9 @@ class XForm(WrappedNode):
             gen = SuiteGenerator(form.get_app())
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             adjusted_datums = {
-                getattr(meta['action'], 'id', None): meta['datum'].id
+                getattr(meta.action, 'id', None): meta.datum.id
                 for meta in datums_meta
-                if meta['action']
+                if meta.action
             }
 
         for action in form.actions.get_load_update_actions():
