@@ -1091,12 +1091,13 @@ class WorkflowHelper(object):
         )
         def frame_children_for_module(module_):
             frame_children = []
-            root = id_strings.ROOT
             if module_.root_module:
-                root = id_strings.menu_id(module_.root_module)
-                frame_children.extend(self.get_frame_children(module_.root_module.get_form(0), module_only=True))
-            module_command = id_strings.menu_id(module_)
-            frame_children.extend([module_command] if module_command != root else [])
+                frame_children.extend(frame_children_for_module(module_.root_module))
+
+            this_module_children = self.get_frame_children(module_.get_form(0), module_only=True)
+            for child in this_module_children:
+                if child not in frame_children:
+                    frame_children.append(child)
             return frame_children
 
         stack_frames = []
