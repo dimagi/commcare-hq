@@ -358,7 +358,9 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return file
 
 
+# Base class for classes that provide custom rendering for UCRs
 class CustomConfigurableReport(ConfigurableReport):
+    # Ensures that links in saved reports will hit CustomConfigurableReportDispatcher
     slug = 'custom_configurable'
 
 
