@@ -195,7 +195,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.activation_guid = uuid.uuid1().hex
 
     name = form.cleaned_data['hr_name']
-    with CriticalSection(['request_domain_name_{}'.format(name)]):
+    with CriticalSection([u'request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
             name=name,
