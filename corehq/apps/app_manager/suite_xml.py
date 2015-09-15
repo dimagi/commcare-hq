@@ -982,12 +982,12 @@ class WorkflowHelper(object):
             for target_module in form.case_list_modules:
 
                 return_to = session_var(RETURN_TO)
-                target_command = XPath.string(id_strings.menu_id(target_module))
+                target_command = id_strings.menu_id(target_module)
 
                 def get_if_clause(case_count_xpath):
                     return XPath.and_(
                         return_to.count().eq(1),
-                        return_to.eq(target_command),
+                        return_to.eq(XPath.string(target_command)),
                         case_count_xpath
                     )
 
@@ -1074,14 +1074,14 @@ class WorkflowHelper(object):
                 if target_module.root_module_id:
                     # add stack children for the root module before adding any for the child module.
                     root_module = target_module.root_module
-                    root_module_command = XPath.string(id_strings.menu_id(root_module))
+                    root_module_command = CommandId(id_strings.menu_id(root_module))
                     frame_case_created.add_child(root_module_command)
                     frame_case_not_created.add_child(root_module_command)
 
                     source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
 
-                frame_case_created.add_child(target_command)
-                frame_case_not_created.add_child(target_command)
+                frame_case_created.add_child(CommandId(target_command))
+                frame_case_not_created.add_child(CommandId(target_command))
                 add_datums_for_target(target_module, source_form_dm)
 
         return stack_frames
