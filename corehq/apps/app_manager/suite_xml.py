@@ -724,8 +724,6 @@ class StackFrameMeta(object):
                 self.add_child(child)
 
     def add_child(self, child):
-        if isinstance(child, basestring) and not isinstance(child, XPath):
-            child = XPath.string(child)
         if isinstance(child, DatumMeta):
             child = child.to_stack_datum()
         self.children.append(child)
@@ -737,14 +735,31 @@ class StackFrameMeta(object):
         frame = CreateFrame(if_clause=self.if_clause)
 
         for child in self.children:
-            if isinstance(child, XPath):
-                frame.add_command(child)
+            if isinstance(child, CommandId):
+                frame.add_command(XPath.string(child.id))
             elif isinstance(child, StackDatum):
                 frame.add_datum(child)
             else:
                 raise Exception("Unexpected child type: {} ({})".format(type(child), child))
 
         return frame
+
+@total_ordering
+class CommandId(object):
+    def __init__(self, command):
+        self.id = command
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return 'ModuleCommand(id={})'.format(self.id)
 
 
 @total_ordering
@@ -1120,10 +1135,9 @@ class WorkflowHelper(object):
 
                     # exclude frame children from the child module if they are already
                     # supplied by the parent module
-                    child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
                     frame_children = parent_frame_children + [
                         child for child in frame_children
-                        if getattr(child, "id", child) not in child_ids_in_parent
+                        if child not in parent_frame_children
                     ]
 
                 stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
@@ -1193,10 +1207,10 @@ class WorkflowHelper(object):
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
 
-        frame_children = [module_command] if module_command != id_strings.ROOT else []
+        frame_children = [CommandId(module_command)] if module_command != id_strings.ROOT else []
         frame_children.extend(common_datums)
         if not module_only:
-            frame_children.append(target_form_command)
+            frame_children.append(CommandId(target_form_command))
             frame_children.extend(remaining_datums)
 
         return frame_children
