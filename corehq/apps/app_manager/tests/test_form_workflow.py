@@ -125,6 +125,8 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
             <stack>
               <create>
                 <command value="'m1'"/>
+                <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                <datum id="case_id_new_visit_0" value="uuid()"/>
               </create>
             </stack>
         </partial>
@@ -155,6 +157,7 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
                 <datum id="case_id_new_visit_0" value="uuid()"/>
                 <command value="'m2'"/>
+                <datum id="case_id_load_visit_0" value="instance('commcaresession')/session/data/case_id_load_visit_0"/>
               </create>
             </stack>
         </partial>
