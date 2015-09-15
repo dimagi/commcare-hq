@@ -1566,7 +1566,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
-            view_name = 'users/deleted_forms_by_user'
+            view_name = 'deleted_data/deleted_forms_by_user'
             startkey = [self.user_id]
         else:
             view_name = 'reports_forms/all_forms'
@@ -1601,7 +1601,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def _get_deleted_cases(self):
         case_ids = [r["id"] for r in CommCareCase.get_db().view(
-            'users/deleted_cases_by_user',
+            'deleted_data/deleted_cases_by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
