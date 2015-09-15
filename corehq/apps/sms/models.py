@@ -177,22 +177,14 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
         return 0
     
     @classmethod
-    def by_domain_date(cls, domain, start_date=None, end_date=None, limit=None, skip=None):
-        if end_date is None:
-            end_date = {}
+    def by_domain_date(cls, domain, start_date = None, end_date = {}):
         if cls.__name__ == "MessageLog":
             raise NotImplementedError("Log queries not yet implemented for base class")
-        kwargs = {}
-        if limit is not None:
-            kwargs['limit'] = limit
-        if skip is not None:
-            kwargs['skip'] = skip
         return cls.view("sms/by_domain",
-                        reduce=False,
-                        startkey=[domain, cls.__name__] + [start_date],
-                        endkey=[domain, cls.__name__] + [end_date],
-                        include_docs=True,
-                        **kwargs)
+                    reduce=False,
+                    startkey=[domain, cls.__name__] + [start_date],
+                    endkey=[domain, cls.__name__] + [end_date],
+                    include_docs=True)
 
     @classmethod
     def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
