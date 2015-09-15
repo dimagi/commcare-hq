@@ -153,8 +153,6 @@ class SerializableFunction(object):
             f.dumps_simple()
         else:
             return '%s.%s' % (f.__module__, f.__name__)
-# deprecated name
-FilterFunction = SerializableFunction
 
 
 class SerializableFunctionProperty(Property):

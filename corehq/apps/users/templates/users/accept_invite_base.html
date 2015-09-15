@@ -19,7 +19,7 @@
                         {% csrf_token %}
                         {{ form.as_table }}
                         <fieldset>
-                            <legend>{% trans "Accept Invite?" %}</legend>
+                            <legend>{% trans "Accept Invitation?" %}</legend>
                             <p>{% if invited_user %}<strong>{% trans "Note:" %}</strong>
                             {% blocktrans %}
                             You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want
@@ -27,8 +27,8 @@
                             {% else %}
                             {% trans "Would you like" %}
                             {% endif %}
-                            {% blocktrans %}
-                            to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ user.username }}</strong>?</p>
+                            {% blocktrans with user.username as username %}
+                            to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?</p>
                             {% endblocktrans %}
                         </fieldset>
                         <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
@@ -40,7 +40,7 @@
             </div>
             <div class="span4">
                 <aside class="well">
-                    <h3>{% blocktrans %}Not {{ formatted_username|safe }}?{% endblocktrans %}</h3>
+                    <h3>{% blocktrans with formatted_username|safe as username %}Not {{ username }}?{% endblocktrans %}</h3>
                     <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
                     {% trans "or" %}<br />
                     <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
@@ -49,9 +49,9 @@
         {% else %}
             <div class="page-header">
                 <h1>
-                {% blocktrans %}
-                {{ invite_type|capfirst }} Invitation, Account Required<br />
-                <small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
+                {% blocktrans with invite_type|capfirst as invite_type_title %}
+                    {{ invite_type_title }} Invitation, Account Required<br />
+                    <small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
                 {% endblocktrans %}
                 </h1>
             </div>

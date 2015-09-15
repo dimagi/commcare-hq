@@ -59,26 +59,22 @@ class GroupToUserPillow(PythonPillow):
 
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
-        self.couch_db = Group.get_db()
 
     def python_filter(self, doc):
         return doc.get('doc_type', None) in ('Group', 'Group-Deleted')
 
-    def change_trigger(self, changes_dict):
+    def change_transport(self, doc_dict):
         es = get_es()
-        user_ids = changes_dict["doc"].get("users", [])
+        user_ids = doc_dict.get("users", [])
         q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
         for user_source in stream_es_query(es_url=ES_URLS["users"], q=q, fields=["__group_ids", "__group_names"]):
             group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
             group_names = set(user_source.get('fields', {}).get("__group_names", []))
-            if changes_dict["doc"]["name"] not in group_names or changes_dict["doc"]["_id"] not in group_ids:
-                group_ids.add(changes_dict["doc"]["_id"])
-                group_names.add(changes_dict["doc"]["name"])
+            if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
+                group_ids.add(doc_dict["_id"])
+                group_names.add(doc_dict["name"])
                 doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
                 es.post("%s/user/%s/_update" % (USER_INDEX, user_source["_id"]), data={"doc": doc})
-
-    def change_transport(self, doc_dict):
-        pass
 
 
 class UnknownUsersPillow(PythonPillow):
@@ -90,7 +86,6 @@ class UnknownUsersPillow(PythonPillow):
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
-        self.couch_db = XFormInstance.get_db()
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
@@ -110,8 +105,8 @@ class UnknownUsersPillow(PythonPillow):
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
 
-    def change_trigger(self, changes_dict):
-        doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
+    def change_transport(self, doc_dict):
+        doc = doc_dict
         user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
 
         if user_id in WEIRD_USER_IDS:
@@ -131,9 +126,6 @@ class UnknownUsersPillow(PythonPillow):
             if domain:
                 doc["domain_membership"] = {"domain": domain}
             self.es.put(es_path + user_id, data=doc)
-
-    def change_transport(self, doc_dict):
-        pass
 
 
 def add_demo_user_to_user_index():

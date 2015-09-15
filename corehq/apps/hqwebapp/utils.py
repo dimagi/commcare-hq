@@ -114,6 +114,7 @@ class InvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
+        context = self.added_context()
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -144,7 +145,6 @@ class InvitationView(object):
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-                context = self.added_context()
                 context.update({
                     'mobile_user': mobile_user,
                     "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
@@ -181,7 +181,6 @@ class InvitationView(object):
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        context = self.added_context()
         context.update({"form": form})
         return render(request, self.template, context)
 

@@ -1,11 +1,12 @@
-import datetime
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
+
 from django.utils.translation import ugettext as _
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
 from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
@@ -36,7 +37,7 @@ class ConfigurableReportDataSource(SqlData):
         self._filter_values = {}
         self._order_by = []
         self.aggregation_columns = aggregation_columns
-        self._column_configs = SortedDict()
+        self._column_configs = OrderedDict()
         for column in columns:
             # should be caught in validation prior to reaching this
             assert column.column_id not in self._column_configs, \

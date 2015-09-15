@@ -73,7 +73,7 @@ from dimagi.utils.decorators.memoized import memoized
 def get_datasource_config_or_404(config_id, domain):
     try:
         return get_datasource_config(config_id, domain)
-    except DataSourceConfigurationNotFoundError:
+    except (DataSourceConfigurationNotFoundError, BadSpecError):
         raise Http404
 
 

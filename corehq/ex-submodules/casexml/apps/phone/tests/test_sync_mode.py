@@ -591,6 +591,32 @@ class SyncTokenUpdateTest(SyncBaseTest):
             self.assertTrue(sync_log.phone_is_holding_case(case._id))
 
     @run_with_all_restore_configs
+    def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
+        # create the parent
+        parent_id = self.factory.create_case()._id
+        # create an irrelevent child and close the parent
+        child_id = uuid.uuid4().hex
+        child_id = 'child'
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                    'owner_id': 'irrelevant_1',
+                    'update': {'owner_id': 'irrelevant_2'},
+                    'strict': False
+                },
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'close': True}),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        # they should both be gone
+        self._testUpdate(self.sync_log._id, {}, {})
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
@@ -663,8 +689,6 @@ class SyncTokenCachingTest(SyncBaseTest):
         restore_config = RestoreConfig(project=self.project, user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
-
-        self.assertEqual(original_payload.as_string(), cached_payload.as_string())
 
     @run_with_all_restore_configs
     def testCacheInvalidation(self):

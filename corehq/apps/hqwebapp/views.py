@@ -130,7 +130,7 @@ def hb_check():
 
 def redis_check():
     try:
-        redis = cache.get_cache('redis')
+        redis = cache.caches['redis']
         result = redis.set('serverup_check_key', 'test')
     except (InvalidCacheBackendError, ValueError):
         result = True  # redis not in use, ignore
