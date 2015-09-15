@@ -61,12 +61,14 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
     <stack>
       <create>
         <command value="'m2'"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -77,12 +79,14 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
     <stack>
       <create>
         <command value="'m2'"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -101,6 +105,8 @@
     <stack>
       <create>
         <command value="'m3'"/>
+        <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -119,6 +125,8 @@
     <stack>
       <create>
         <command value="'m3'"/>
+        <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
   </entry>
@@ -129,6 +137,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_load_patient_0" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_load_patient_1" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
@@ -136,6 +145,8 @@
     <stack>
       <create>
         <command value="'m4'"/>
+        <datum id="case_id_load_patient_0" value="instance('commcaresession')/session/data/case_id_load_patient_0"/>
+        <datum id="case_id_load_patient_1" value="instance('commcaresession')/session/data/case_id_load_patient_1"/>
       </create>
     </stack>
   </entry>
@@ -146,6 +157,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_load_patient_0" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_load_patient_1" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
@@ -154,6 +166,8 @@
     <stack>
       <create>
         <command value="'m4'"/>
+        <datum id="case_id_load_patient_0" value="instance('commcaresession')/session/data/case_id_load_patient_0"/>
+        <datum id="case_id_load_patient_1" value="instance('commcaresession')/session/data/case_id_load_patient_1"/>
       </create>
     </stack>
   </entry>
@@ -164,6 +178,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_load_patient_0" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_load_patient_1" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
@@ -179,6 +194,8 @@
     <stack>
       <create>
         <command value="'m4'"/>
+        <datum id="case_id_load_patient_0" value="instance('commcaresession')/session/data/case_id_load_patient_0"/>
+        <datum id="case_id_load_patient_1" value="instance('commcaresession')/session/data/case_id_load_patient_1"/>
       </create>
     </stack>
   </entry>

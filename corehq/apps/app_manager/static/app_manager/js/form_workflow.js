@@ -39,6 +39,7 @@
     FormWorkflow.Values = {
         DEFAULT: 'default',
         ROOT: 'root',
+        PARENT_MODULE: 'parent_module',
         MODULE: 'module',
         PREVIOUS_SCREEN: 'previous_screen',
         FORM: 'form',
