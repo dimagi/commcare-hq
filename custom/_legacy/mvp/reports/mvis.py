@@ -138,6 +138,8 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "facility_births_proportion", # A2 - 4
                     "low_birth_weight_proportion",
                     "family_planning_proportion", # A2 - 1
+                    "num_pregnant_routine_muac",
+                    "num_pregnant_moderate_muac",
                 ]
             },
             {
@@ -167,6 +169,15 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_fever_rdt_positive_medicated_proportion",
                     "under5_fever_rdt_negative_medicated_proportion",
                     "over5_positive_rdt_medicated_proportion",
+                ]
+            },
+            {
+                'category_title': "Pneumonia",
+                'category_slug': 'pneumonia',
+                'indicator_slugs': [
+                    "under5_fastbreating_proportion",
+                    "under5_fastbreating_treated_proportion",
+                    "under5_no_fastbreating_treated_proportion",
                 ]
             },
             {

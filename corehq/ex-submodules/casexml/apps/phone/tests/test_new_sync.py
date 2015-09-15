@@ -2,7 +2,8 @@ from datetime import datetime
 import uuid
 from django.test import TestCase, SimpleTestCase
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseFactory
+from jsonobject import JsonObject
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
@@ -10,7 +11,8 @@ from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORM
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.toggles import OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import OWNERSHIP_CLEANLINESS_RESTORE, LEGACY_SYNC_SUPPORT
+from corehq.util.global_request.api import set_request
 
 
 class TestSyncLogMigration(SimpleTestCase):
@@ -167,3 +169,61 @@ class TestChangingSyncMode(TestCase):
                                        params=RestoreParams(sync_log_id=sync_log._id))
         with self.assertRaises(IncompatibleSyncLogType):
             restore_config.get_payload()
+
+
+@override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=True)
+class TestNewSyncSpecifics(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = uuid.uuid4().hex
+        cls.project = Domain(name=cls.domain)
+        cls.user_id = uuid.uuid4().hex
+        cls.user = User(user_id=cls.user_id, username=uuid.uuid4().hex,
+                        password="changeme", date_joined=datetime(2014, 6, 6))
+
+    def test_legacy_support_toggle(self):
+        restore_config = RestoreConfig(self.project, user=self.user)
+        factory = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id})
+        # create a parent and child case (with index) from one user
+        parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
+        factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    relationship='parent',
+                    related_type='parent',
+                )],
+            )
+        ])
+        restore_payload = restore_config.get_payload().as_string()
+        self.assertTrue(child_id in restore_payload)
+        self.assertTrue(parent_id in restore_payload)
+        sync_log = synclog_from_restore_payload(restore_payload)
+        self.assertEqual(SimplifiedSyncLog, type(sync_log))
+        # make both cases irrelevant by changing the owner ids
+        factory.create_or_update_cases([
+            CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
+            CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
+        ], form_extras={'last_sync_token': sync_log._id})
+
+        # doing it again should fail since they are no longer relevant
+
+        # todo: add this back in when we add the assertion back. see SimplifiedSyncLog.prune_case
+        # with self.assertRaises(SimplifiedSyncAssertionError):
+        #     factory.create_or_update_cases([
+        #         CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
+        #         CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
+        #     ], form_extras={'last_sync_token': sync_log._id})
+
+        # enabling the toggle should prevent the failure the second time
+        # though we also need to hackily set the request object in the threadlocals
+        LEGACY_SYNC_SUPPORT.set(self.domain, True, namespace='domain')
+        request = JsonObject(domain=self.domain)
+        set_request(request)
+        factory.create_or_update_cases([
+            CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
+            CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
+        ], form_extras={'last_sync_token': sync_log._id})

@@ -37,9 +37,9 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
     def test_with_case_management_both_update(self):
         factory = AppFactory(build_version='2.9.0/latest')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
-        factory.form_updates_case(m0f0)
+        factory.form_requires_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
-        factory.form_updates_case(m1f0)
+        factory.form_requires_case(m1f0)
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
@@ -53,7 +53,7 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
-        factory.form_updates_case(m1f0)
+        factory.form_requires_case(m1f0)
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
@@ -67,7 +67,7 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
-        factory.form_updates_case(m1f0)
+        factory.form_requires_case(m1f0)
 
         m1f1 = factory.new_form(m1)
         factory.form_opens_case(m1f1)
@@ -86,12 +86,12 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         factory.form_opens_case(m0f0)
 
         m1, m1f0 = factory.new_basic_module('child visit', 'child')
-        factory.form_updates_case(m1f0)
+        factory.form_requires_case(m1f0)
         factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
 
         m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
-        factory.form_updates_case(m2f0, 'child')
-        factory.form_updates_case(m2f0, 'visit', parent_case_type='child')
+        factory.form_requires_case(m2f0, 'child')
+        factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
 
         m0f0.post_form_workflow = WORKFLOW_FORM
         m0f0.form_links = [
@@ -111,10 +111,10 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         factory.form_opens_case(m0f0)
 
         m1, m1f0 = factory.new_basic_module('child visit', 'child')
-        factory.form_updates_case(m1f0)
+        factory.form_requires_case(m1f0)
 
         m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
-        factory.form_updates_case(m2f0, 'child')
+        factory.form_requires_case(m2f0, 'child')
 
         # link to child -> edit child
         m2f0.post_form_workflow = WORKFLOW_FORM
@@ -132,30 +132,30 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
         m1, m1f0 = factory.new_basic_module('m1', 'patient')
         m1f1 = factory.new_form(m1)
         factory.form_opens_case(m1f0)
-        factory.form_updates_case(m1f1)
+        factory.form_requires_case(m1f1)
 
         m2, m2f0 = factory.new_basic_module('m2', 'patient')
         m2f1 = factory.new_form(m2)
-        factory.form_updates_case(m2f0)
-        factory.form_updates_case(m2f1)
+        factory.form_requires_case(m2f0)
+        factory.form_requires_case(m2f1)
 
         m3, m3f0 = factory.new_basic_module('m3', 'child')
         m3f1 = factory.new_form(m3)
-        factory.form_updates_case(m3f0, parent_case_type='patient')
-        factory.form_updates_case(m3f1)
+        factory.form_requires_case(m3f0, parent_case_type='patient')
+        factory.form_requires_case(m3f1)
 
         m4, m4f0 = factory.new_advanced_module('m4', 'patient')
-        factory.form_updates_case(m4f0, case_type='patient')
-        factory.form_updates_case(m4f0, case_type='patient')
+        factory.form_requires_case(m4f0, case_type='patient')
+        factory.form_requires_case(m4f0, case_type='patient')
 
         m4f1 = factory.new_form(m4)
-        factory.form_updates_case(m4f1, case_type='patient')
-        factory.form_updates_case(m4f1, case_type='patient')
-        factory.form_updates_case(m4f1, case_type='patient')
+        factory.form_requires_case(m4f1, case_type='patient')
+        factory.form_requires_case(m4f1, case_type='patient')
+        factory.form_requires_case(m4f1, case_type='patient')
 
         m4f2 = factory.new_form(m4)
-        factory.form_updates_case(m4f2, case_type='patient')
-        factory.form_updates_case(m4f2, case_type='patient')
+        factory.form_requires_case(m4f2, case_type='patient')
+        factory.form_requires_case(m4f2, case_type='patient')
         factory.advanced_form_autoloads(m4f2, AUTO_SELECT_RAW, 'case_id')
         for module in factory.app.get_modules():
             for form in module.get_forms():

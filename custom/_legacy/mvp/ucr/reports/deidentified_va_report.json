@@ -11,7 +11,7 @@
             {
 
                 "type": "date",
-                "field": "timeEnd",
+                "field": "death_year",
                 "slug": "date",
                 "display": "Date"
             }

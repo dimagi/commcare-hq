@@ -241,6 +241,7 @@ class Domain(Document, SnapshotMixin):
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
+    allow_domain_requests = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
 

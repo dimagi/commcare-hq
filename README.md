@@ -389,7 +389,7 @@ If you want to use CloudCare you will also need to run the Touchforms server and
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    ./manage.py run_gunicorn -w 3 --bind 0.0.0.0:8000
+    gunicorn deployment.gunicorn.commcarehq_wsgi:application -c deployment/gunicorn/gunicorn_conf.py -k gevent --bind 0.0.0.0:8000
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000

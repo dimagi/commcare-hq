@@ -30,6 +30,18 @@ def use_select2():
     return decorate
 
 
+def use_select2_v4():
+    def decorate(fn):
+        """
+        Use the 4.0 Version of select2 (still in testing phase)
+        """
+        def wrapped(request, *args, **kwargs):
+            request.use_select2_v4 = True
+            return fn(request, *args, **kwargs)
+        return wrapped
+    return decorate
+
+
 def use_knockout_js():
     def decorate(fn):
         """
