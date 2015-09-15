@@ -1,6 +1,4 @@
 import cgi
-from lxml.etree import ParseError
-from lxml import etree
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.http import Http404
