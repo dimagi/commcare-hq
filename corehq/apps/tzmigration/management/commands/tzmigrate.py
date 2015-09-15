@@ -36,8 +36,9 @@ class Command(BaseCommand):
 
     @staticmethod
     def require_only_option(sole_option, options):
-        assert all(option is False for key, option in options.items()
-                   if option != sole_option)
+        base_options = {option.dest for option in BaseCommand.option_list}
+        assert all(not value for key, value in options.items()
+                   if key not in base_options and key != sole_option)
 
     def handle(self, domain, **options):
         filepath = get_planning_db_filepath(domain)
