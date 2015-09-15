@@ -2,7 +2,8 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import set_migration_started, \
-    set_migration_complete
+    set_migration_complete, set_migration_not_started, get_migration_status, \
+    MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
     prepare_case_json, FormJsonDiff, commit_plan
@@ -48,7 +49,7 @@ class Command(BaseCommand):
             set_migration_started(domain)
         if options['ABORT']:
             self.require_only_option('ABORT', options)
-            set_migration_complete(domain)
+            set_migration_not_started(domain)
         if options['blow_away']:
             delete_planning_db(domain)
             self.stdout.write('Removed file {}\n'.format(filepath))
@@ -60,6 +61,7 @@ class Command(BaseCommand):
 
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
+            assert get_migration_status(domain, strict=True) == MigrationStatus.IN_PROGRESS
             commit_plan(domain, self.planning_db)
             set_migration_complete(domain)
 
