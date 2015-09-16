@@ -4,7 +4,7 @@ from corehq import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
@@ -13,7 +13,7 @@ from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
@@ -101,6 +101,28 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         return filter_relevant(SQLLocation.objects.filter(domain=domain, is_archived=False))
 
 
+def make_loc(code, name, domain, type, parent=None):
+    name = name or code
+    sql_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
+    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc.save()
+
+    if not sql_type.administrative:
+        SupplyPointCase.create_from_location(domain, loc)
+        loc.save()
+
+    sql_location = loc.sql_location
+    sql_location.products = []
+    sql_location.save()
+    return loc
+
+
+def assign_products_to_location(location, products):
+    sql_location = location.sql_location
+    sql_location.products = [SQLProduct.objects.get(product_id=product.get_id) for product in products]
+    sql_location.save()
+
+
 def prepare_domain(domain_name):
     from corehq.apps.commtrack.tests import bootstrap_domain
     domain = bootstrap_domain(domain_name)
@@ -160,10 +182,8 @@ TEST_BACKEND = 'test-backend'
 def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
                    backend=TEST_BACKEND, first_name='', last_name='',
-                   home_loc=None, user_data=None,
+                   home_loc=None, user_data=None, program_id=None
                    ):
-    from corehq.apps.commtrack.helpers import make_supply_point
-
     user_data = user_data or {}
     user = CommCareUser.create(
         domain,
@@ -175,13 +195,27 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
 
-    if not SupplyPointCase.get_by_location(home_loc):
-        make_supply_point(domain, home_loc)
-        home_loc.save()
     user.set_location(home_loc)
+    dm = user.get_domain_membership(domain)
+    dm.program_id = program_id
+    user.save()
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
+
+
+def bootstrap_web_user(domain, username, password, email, location, user_data, phone_number):
+    web_user = WebUser.create(
+        domain=domain,
+        username=username,
+        password=password,
+        email=email
+    )
+    web_user.user_data = user_data
+    web_user.set_location(domain, location)
+    web_user.save_verified_number(domain, phone_number, verified=True, backend_id=TEST_BACKEND)
+    web_user.save()
+    return web_user
 
 REORDER_LEVEL = Decimal("1.5")
 
