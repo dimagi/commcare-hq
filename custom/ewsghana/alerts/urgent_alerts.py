@@ -1,11 +1,10 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
-from django.db.models.aggregates import Count
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
+from custom.ewsghana.alerts.alert import Notification
 
 
 class UrgentAlert(object):
@@ -36,17 +35,23 @@ class UrgentStockoutAlert(UrgentAlert):
 
     def get_sql_products_list(self, sql_location):
         children = sql_location.get_descendants().filter(location_type__administrative=False)
-        all_count = children.count()
-
-        stockouts = StockState.objects.filter(
-            sql_location__in=children,
-            stock_on_hand=0
-        ).values('product_id').annotate(facilities=Count('case_id'))
+        product_result_map = defaultdict(lambda: {'stockouts': 0, 'total': 0})
+        for child in children:
+            products = set(child.products)
+            for product in products:
+                product_result_map[product]['total'] += 1
+            stockouts = StockState.objects.filter(
+                sql_location=child,
+                stock_on_hand=0,
+                sql_product__in=products
+            ).exclude(sql_product__is_archived=True)
+            for stockout in stockouts:
+                product_result_map[stockout.sql_product]['stockouts'] += 1
 
         return [
-            SQLProduct.objects.get(product_id=stockout['product_id'])
-            for stockout in stockouts
-            if stockout['facilities'] / float(all_count) > 0.5
+            sql_product
+            for sql_product, result in product_result_map.iteritems()
+            if result['total'] != 0 and result['stockouts'] / float(result['total']) > 0.5
         ]
 
     def get_message(self, location_name, user, sql_products=None):
@@ -62,13 +67,17 @@ class UrgentStockoutAlert(UrgentAlert):
             sorted([sql_product.name for sql_product in sql_products])
         ))
 
-    def send(self):
+    def get_notifications(self):
         for sql_location in self.get_sql_locations():
             products = self.get_sql_products_list(sql_location)
             for user in self.get_users(sql_location):
                 message = self.get_message(sql_location.name, user, products)
                 if message:
-                    send_sms_to_verified_number(user.get_verified_number(), message)
+                    yield Notification(user, message)
+
+    def send(self):
+        for notification in self.get_notifications():
+            notification.send()
 
 
 class UrgentNonReporting(UrgentAlert):
@@ -80,14 +89,19 @@ class UrgentNonReporting(UrgentAlert):
         reported = StockState.objects.filter(
             sql_location__in=children,
             last_modified_date__gte=thirty_days_ago
-        ).values_list('case_id', flat=True).distinct().count()
+        ).exclude(sql_product__is_archived=True).values_list('case_id', flat=True).distinct().count()
 
         if reported / total < 0.5:
             return URGENT_NON_REPORTING % sql_location.name
 
-    def send(self):
+    def get_notifications(self):
         for sql_location in self.get_sql_locations():
+            message = self.get_message(sql_location)
+            if not message:
+                continue
             for user in self.get_users(sql_location):
-                message = self.get_message(sql_location)
-                if message:
-                    send_sms_to_verified_number(user.get_verified_number(), message)
+                yield Notification(user, message)
+
+    def send(self):
+        for notification in self.get_notifications():
+            notification.send()

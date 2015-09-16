@@ -2,6 +2,18 @@ from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.sms.api import send_sms_to_verified_number
 
 
+class Notification(object):
+
+    def __init__(self, user, message):
+        self.user = user
+        self.message = message
+
+    def send(self):
+        verified_number = self.user.get_verified_number()
+        if verified_number and self.user.user_data.get('sms_notifications', False):
+            send_sms_to_verified_number(verified_number, self.message)
+
+
 class Alert(object):
 
     message = None
@@ -22,7 +34,7 @@ class Alert(object):
     def filter_user(self, user):
         raise NotImplemented()
 
-    def program_clause(self, user_program, reported_programs):
+    def program_clause(self, user_program, programs):
         raise NotImplemented()
 
     def get_message(self, user, data):
@@ -38,7 +50,7 @@ class Alert(object):
     def get_data(self, sql_location):
         raise NotImplemented()
 
-    def send(self):
+    def get_notifications(self):
         for sql_location in self.get_sql_locations():
             data = self.get_data(sql_location)
 
@@ -46,4 +58,8 @@ class Alert(object):
                 message = self.get_message(user, data)
 
                 if message:
-                    send_sms_to_verified_number(user.get_verified_number(), message)
+                    yield Notification(user, message)
+
+    def send(self):
+        for notification in self.get_notifications():
+            notification.send()
