@@ -24,13 +24,13 @@ from corehq.apps.sms.backend import test
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
 
-def create_stock_report(location, products_quantities):
+def create_stock_report(location, products_quantities, date=datetime.utcnow()):
     sql_location = location.sql_location
     report = StockReport.objects.create(
         form_id='ews-reminders-test',
         domain=sql_location.domain,
         type='balance',
-        date=datetime.utcnow()
+        date=date
     )
     for product_code, quantity in products_quantities.iteritems():
         StockTransaction(

@@ -40,7 +40,8 @@ class TestAlerts(TestCase):
             username='test1', phone_number='1111', home_loc=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
-                'role': []
+                'role': [],
+                'sms_notifications': True
             }
         )
 
@@ -48,7 +49,8 @@ class TestAlerts(TestCase):
             username='test2', phone_number='2222', home_loc=cls.national, domain=TEST_DOMAIN,
             first_name='test', last_name='test2',
             user_data={
-                'role': []
+                'role': [],
+                'sms_notifications': True
             }
         )
 
@@ -56,7 +58,8 @@ class TestAlerts(TestCase):
             username='test4', phone_number='4444', home_loc=cls.region, domain=TEST_DOMAIN,
             first_name='test', last_name='test4',
             user_data={
-                'role': []
+                'role': [],
+                'sms_notifications': True
             }
         )
 

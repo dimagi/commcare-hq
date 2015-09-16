@@ -106,9 +106,14 @@ def make_loc(code, name, domain, type, parent=None):
     sql_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
+
     if not sql_type.administrative:
         SupplyPointCase.create_from_location(domain, loc)
         loc.save()
+
+    sql_location = loc.sql_location
+    sql_location.products = []
+    sql_location.save()
     return loc
 
 
@@ -177,7 +182,7 @@ TEST_BACKEND = 'test-backend'
 def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
                    backend=TEST_BACKEND, first_name='', last_name='',
-                   home_loc=None, user_data=None,
+                   home_loc=None, user_data=None, program_id=None
                    ):
     user_data = user_data or {}
     user = CommCareUser.create(
@@ -191,6 +196,9 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
     )
 
     user.set_location(home_loc)
+    dm = user.get_domain_membership(domain)
+    dm.program_id = program_id
+    user.save()
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())

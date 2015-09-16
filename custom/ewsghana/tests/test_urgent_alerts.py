@@ -41,7 +41,8 @@ class TestUrgentAlerts(TestCase):
             username='test1', phone_number='1111', home_loc=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
-                'role': []
+                'role': [],
+                'sms_notifications': True
             }
         )
 
