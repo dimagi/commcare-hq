@@ -1,5 +1,6 @@
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.couch.database import iter_docs
 
 
 class Reminder(object):
@@ -11,7 +12,9 @@ class Reminder(object):
         raise NotImplemented()
 
     def get_users(self):
-        return CommCareUser.by_domain(self.domain)
+        user_ids = CommCareUser.ids_by_domain(self.domain)
+        for user_doc in iter_docs(CommCareUser.get_db(), user_ids):
+            yield CommCareUser.wrap(user_doc)
 
     def get_recipients(self):
         for user in self.get_users():
