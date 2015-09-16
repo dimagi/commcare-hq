@@ -565,7 +565,8 @@ def location_edited_receiver(sender, loc, moved, **kwargs):
     from custom.ilsgateway.tanzania.warehouse.updater import default_start_date, \
         process_non_facility_warehouse_data
 
-    if not ILSGatewayConfig.for_domain(loc.domain).enabled or not moved or not loc.previous_parents:
+    config = ILSGatewayConfig.for_domain(loc.domain)
+    if not config or not config.enabled or not moved or not loc.previous_parents:
         return
 
     last_run = ReportRun.last_success(loc.domain)
