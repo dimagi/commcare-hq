@@ -1,5 +1,5 @@
 import logging
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.locations.models import SQLLocation

@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized

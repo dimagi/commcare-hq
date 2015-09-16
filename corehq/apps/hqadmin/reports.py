@@ -2,7 +2,7 @@ import copy
 from datetime import datetime
 import json
 from dimagi.utils.decorators.memoized import memoized
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,

@@ -4,8 +4,9 @@ from decimal import Decimal
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq import privileges
 
-from corehq import Domain, privileges
+from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.apps.accounting.exceptions import (
     AccountingError,

@@ -6,7 +6,7 @@ from urllib import urlencode
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
