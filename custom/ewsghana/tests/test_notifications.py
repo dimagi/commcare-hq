@@ -288,7 +288,7 @@ class UrgentStockoutNotificationTestCase(TestCase):
         create_stock_report(self.facility, {'tp': 0})
         create_stock_report(self.other_facility, {'tp': 0})
         create_stock_report(self.last_facility, {'tp': 0})
-        
+
         generated = list(UrgentStockoutAlert(self.TEST_DOMAIN).get_notifications())
         self.assertEqual(len(generated), 1)
         self.assertEqual(generated[0].user.get_id, self.user.get_id)
@@ -531,7 +531,8 @@ class UrgentNonReportingNotificationTestCase(TestCase):
 
         generated = list(UrgentNonReporting(self.TEST_DOMAIN).get_notifications())
         self.assertEqual(len(generated), 2)
-        self.assertEqual({generated[0].user.get_id, generated[1].user.get_id}, {self.user.get_id, other_user.get_id})
+        self.assertEqual({generated[0].user.get_id, generated[1].user.get_id},
+                         {self.user.get_id, other_user.get_id})
 
 
 class SMSNotificationTestCase(TestCase):
