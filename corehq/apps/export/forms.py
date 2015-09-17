@@ -22,7 +22,7 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
-class ExportFilterFormException(Exception):
+class ExportFormValidationException(Exception):
     pass
 
 
