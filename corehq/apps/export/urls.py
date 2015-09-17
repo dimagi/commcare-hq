@@ -17,6 +17,7 @@ urlpatterns = patterns(
     url(r"^customize/form/$", CreateCustomFormExportView.as_view(), name=CreateCustomFormExportView.urlname),
     url(r"^customize/case/$", CreateCustomCaseExportView.as_view(), name=CreateCustomCaseExportView.urlname),
     url(r"^custom/list/form/$", FormExportListView.as_view(), name=FormExportListView.urlname),
+    url(r"^custom/list/case/$", CaseExportListView.as_view(), name=CaseExportListView.urlname),
     url(r"^custom/form/(?P<export_id>[\w\-]+)/download/$",
         DownloadFormExportView.as_view(), name=DownloadFormExportView.urlname),
     url(r"^custom/form/(?P<export_id>[\w\-]+)/edit/$", EditCustomFormExportView.as_view(),
