@@ -962,32 +962,38 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
     return details
 
 
+def _case_list_form_not_allowed_reason(module, allow=None):
+    if allow and not allow.allow:
+        return allow
+    elif not module.all_forms_require_a_case():
+        return AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
+    elif module.put_in_root:
+        return AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
+    else:
+        return AllowWithReason(True, '')
+
+
+class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
+    ALL_FORMS_REQUIRE_CASE = 1
+    MODULE_IN_ROOT = 2
+    PARENT_SELECT_ACTIVE = 3
+
+    @property
+    def message(self):
+        if self.reason == self.ALL_FORMS_REQUIRE_CASE:
+            return _('Not all forms in the module update a case.')
+        elif self.reason == self.MODULE_IN_ROOT:
+            return _("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
+        elif self.reason == self.PARENT_SELECT_ACTIVE:
+            return _("The module has 'Parent Selection' configured.")
+
+
 def get_module_view_context(app, module):
     case_property_builder = _setup_case_property_builder(app)
 
-    class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
-        ALL_FORMS_REQUIRE_CASE = 1
-        MODULE_IN_ROOT = 2
-        PARENT_SELECT_ACTIVE = 3
 
-        @property
-        def message(self):
-            if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-                return _('Not all forms in the module update a case.')
-            elif self.reason == self.MODULE_IN_ROOT:
-                return _("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
-            elif self.reason == self.PARENT_SELECT_ACTIVE:
-                return _("The module has 'Parent Selection' configured.")
 
-    def case_list_form_not_allowed_reason(allow=None):
-        if allow and not allow.allow:
-            return allow
-        elif not module.all_forms_require_a_case():
-            return AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
-        elif module.put_in_root:
-            return AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
-        else:
-            return AllowWithReason(True, '')
+
 
     if isinstance(module, CareplanModule):
         subcase_types = list(app.get_subcase_types(module.case_type))
@@ -1026,7 +1032,7 @@ def get_module_view_context(app, module):
             'fixtures': _get_fixture_types(app.domain),
             'details': _get_module_details_context(app, module, case_property_builder, case_type),
             'case_list_form_options': form_options,
-            'case_list_form_not_allowed_reason': case_list_form_not_allowed_reason(),
+            'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
             'valid_parent_modules': [
                 parent_module for parent_module in app.modules
                 if not getattr(parent_module, 'root_module_id', None)
@@ -1050,7 +1056,8 @@ def get_module_view_context(app, module):
         form_options = _case_list_form_options(app, module, case_type)
         # don't allow this for modules with parent selection until this mobile bug is fixed:
         # http://manage.dimagi.com/default.asp?178635
-        allow_case_list_form = case_list_form_not_allowed_reason(
+        allow_case_list_form = _case_list_form_not_allowed_reason(
+            module,
             AllowWithReason(not module.parent_select.active, AllowWithReason.PARENT_SELECT_ACTIVE)
         )
         return {
