@@ -850,21 +850,55 @@ def get_module_template(module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module):
+def _get_report_module_context(app, module):
+    def _report_to_config(report):
+        return {
+            'report_id': report._id,
+            'title': report.title,
+            'charts': [chart for chart in report.charts if
+                       chart.type == 'multibar'],
+            'filter_structure': report.filters,
+        }
+
+    all_reports = ReportConfiguration.by_domain(app.domain)
+    all_report_ids = set([r._id for r in all_reports])
+    invalid_report_references = filter(
+        lambda r: r.report_id not in all_report_ids, module.report_configs)
+    warnings = []
+    if invalid_report_references:
+        module.report_configs = filter(lambda r: r.report_id in all_report_ids,
+                                       module.report_configs)
+        warnings.append(
+            _(
+                'Your app contains references to reports that are deleted. These will be removed on save.')
+        )
+    return {
+        'all_reports': [_report_to_config(r) for r in all_reports],
+        'current_reports': [r.to_json() for r in module.report_configs],
+        'invalid_report_references': invalid_report_references,
+        'warnings': warnings,
+    }
+
+
+def _get_fixture_types(domain):
+    # TODO: Don't hit the DB here and when getting fixture columns
+    return [f.tag for f in FixtureDataType.by_domain(domain)]
+
+
+def _setup_case_property_builder(app):
     defaults = ('name', 'date-opened', 'status')
     if app.case_sharing:
         defaults += ('#owner_name',)
-
     per_type_defaults = None
     if is_usercase_in_use(app.domain):
         per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
-    builder = ParentCasePropertyBuilder(app, defaults=defaults, per_type_defaults=per_type_defaults)
-    subcase_types = list(app.get_subcase_types(module.case_type))
-    fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
-    fixture_columns = [field.field_name for fixture in FixtureDataType.by_domain(app.domain) for field in fixture.fields]
+    builder = ParentCasePropertyBuilder(app, defaults=defaults,
+                                        per_type_defaults=per_type_defaults)
+    return builder
 
-    def get_parent_modules(case_type_):
-        parent_types = builder.get_parent_types(case_type_)
+
+def get_parent_modules(app, module, case_property_builder, case_type_):
+        parent_types = case_property_builder.get_parent_types(case_type_)
         modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
@@ -873,6 +907,11 @@ def get_module_view_context(app, module):
             'name': mod.name,
             'is_parent': mod.unique_id in parent_module_ids,
         } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
+
+
+def get_module_view_context(app, module):
+    case_property_builder = _setup_case_property_builder(app)
+
 
     def case_list_form_options(case_type_):
         options = OrderedDict()
@@ -887,6 +926,7 @@ def get_module_view_context(app, module):
         return options
 
     def get_details(case_type_):
+        subcase_types = list(app.get_subcase_types(module.case_type))
         item = {
             'label': _('Case List'),
             'detail_label': _('Case Detail'),
@@ -897,9 +937,9 @@ def get_module_view_context(app, module):
             'long': module.case_details.long,
             'subcase_types': subcase_types,
         }
-        case_properties = builder.get_properties(case_type_)
+        case_properties = case_property_builder.get_properties(case_type_)
         if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
-            usercase_properties = prefix_usercase_properties(builder.get_properties(USERCASE_TYPE))
+            usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
             case_properties |= usercase_properties
 
         item['properties'] = sorted(case_properties)
@@ -952,16 +992,17 @@ def get_module_view_context(app, module):
             return AllowWithReason(True, '')
 
     if isinstance(module, CareplanModule):
+        subcase_types = list(app.get_subcase_types(module.case_type))
         return {
-            'parent_modules': get_parent_modules(CAREPLAN_GOAL),
-            'fixtures': fixtures,
+            'parent_modules': get_parent_modules(app, module, case_property_builder, CAREPLAN_GOAL),
+            'fixtures': _get_fixture_types(app.domain),
             'details': [
                 {
                     'label': _('Goal List'),
                     'detail_label': _('Goal Detail'),
                     'type': 'careplan_goal',
                     'model': 'case',
-                    'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
+                    'properties': sorted(case_property_builder.get_properties(CAREPLAN_GOAL)),
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
@@ -972,7 +1013,7 @@ def get_module_view_context(app, module):
                     'detail_label': _('Task Detail'),
                     'type': 'careplan_task',
                     'model': 'case',
-                    'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
+                    'properties': sorted(case_property_builder.get_properties(CAREPLAN_TASK)),
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
@@ -984,7 +1025,7 @@ def get_module_view_context(app, module):
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
         return {
-            'fixtures': fixtures,
+            'fixtures': _get_fixture_types(app.domain),
             'details': get_details(case_type),
             'case_list_form_options': form_options,
             'case_list_form_not_allowed_reason': case_list_form_not_allowed_reason(),
@@ -1000,29 +1041,13 @@ def get_module_view_context(app, module):
             } for schedule in module.get_schedule_phases()],
         }
     elif isinstance(module, ReportModule):
-        def _report_to_config(report):
-            return {
-                'report_id': report._id,
-                'title': report.title,
-                'charts': [chart for chart in report.charts if chart.type == 'multibar'],
-                'filter_structure': report.filters,
-            }
-        all_reports = ReportConfiguration.by_domain(app.domain)
-        all_report_ids = set([r._id for r in all_reports])
-        invalid_report_references = filter(lambda r: r.report_id not in all_report_ids, module.report_configs)
-        warnings = []
-        if invalid_report_references:
-            module.report_configs = filter(lambda r: r.report_id in all_report_ids, module.report_configs)
-            warnings.append(
-                _('Your app contains references to reports that are deleted. These will be removed on save.')
-            )
-        return {
-            'all_reports': [_report_to_config(r) for r in all_reports],
-            'current_reports': [r.to_json() for r in module.report_configs],
-            'invalid_report_references': invalid_report_references,
-            'warnings': warnings,
-        }
+        return _get_report_module_context(app, module)
     else:
+        fixture_columns = [
+            field.field_name
+            for fixture in FixtureDataType.by_domain(app.domain)
+            for field in fixture.fields
+        ]
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
         # don't allow this for modules with parent selection until this mobile bug is fixed:
@@ -1031,8 +1056,8 @@ def get_module_view_context(app, module):
             AllowWithReason(not module.parent_select.active, AllowWithReason.PARENT_SELECT_ACTIVE)
         )
         return {
-            'parent_modules': get_parent_modules(case_type),
-            'fixtures': fixtures,
+            'parent_modules': get_parent_modules(app, module, case_property_builder, case_type),
+            'fixtures': _get_fixture_types(app.domain),
             'fixture_columns': fixture_columns,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
