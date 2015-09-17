@@ -2,6 +2,7 @@ import json
 import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
@@ -31,24 +32,8 @@ class CreateFormExportForm(forms.Form):
     module = forms.CharField(required=False)
     form = forms.CharField(required=False)
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(CreateFormExportForm, self).__init__(*args, **kwargs)
-        # apps = get_apps_in_domain(domain)
-        # self.fields['application'].choices = ([
-        #     ('', _('Select Application...')),
-        # ] if len(apps) > 1 else []) + [
-        #     (app._id, app.name) for app in apps
-        # ]
-        # self.fields['module'].choices = [
-        #     (module.unique_id, module.name)
-        #     for app in apps if hasattr(app, 'modules')
-        #     for module in app.modules
-        # ]
-        # self.fields['form'].choices = [
-        #     (form.get_unique_id(), form.name)
-        #     for app in apps
-        #     for form in app.get_forms()
-        # ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -71,70 +56,51 @@ class CreateFormExportForm(forms.Form):
                 ng_change="updateForms()",
                 ng_required="true",
             ),
-            crispy.Div(
-                crispy.Field(
-                    'form',
-                    ng_model="createForm.form",
-                    ng_disabled="!createForm.module",
-                    ng_required="true",
-                ),
+            crispy.Field(
+                'form',
+                placeholder=_("Select Form"),
+                ng_model="createForm.form",
+                ng_disabled="!createForm.module",
+                ng_required="true",
             ),
         )
 
 
 class CreateCaseExportForm(forms.Form):
-    application = forms.ChoiceField()
-    case_type = forms.ChoiceField()
+    application = forms.CharField(required=False)
+    case_type = forms.CharField(
+        required=False,
+        help_text=mark_safe(
+            '<span ng-show="!!hasNoCaseTypes '
+            '&& !!createForm.application">{}</span>'.format(
+            ugettext_noop("""Note: This application does not appear to be using
+            <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management">
+            case management</a>.""")
+        )),
+    )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(CreateCaseExportForm, self).__init__(*args, **kwargs)
-        apps = get_apps_in_domain(domain)
-        self.fields['application'].choices = ([
-            ('', _('Select Application...')),
-        ] if len(apps) > 1 else []) + [
-            (app._id, app.name) for app in apps
-        ]
-        self.fields['case_type'].choices = [
-            (module.case_type, module.case_type)
-            for app in apps if hasattr(app, 'modules')
-            for module in app.modules
-            if module.case_type
-        ]
 
         self.helper = FormHelper()
-        self.helper.form_id = "create-export-form"
-        self.helper.form_class = "form-horizontal"
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-2'
+        self.helper.field_class = 'col-sm-10'
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Select Case Type'),
-                crispy.Field(
-                    'application',
-                    data_bind='value: appId',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'case_type',
-                        data_bind=(
-                            "options: caseTypeOptions, "
-                            "optionsText: 'text', "
-                            "optionsValue: 'value', "
-                            "value: case_type"
-                        ),
-                    ),
-                    data_bind="visible: appId",
-                ),
+            crispy.Field(
+                'application',
+                placeholder=_("Select Application"),
+                ng_model="createForm.application",
+                ng_change="updateCaseTypes()",
+                ng_required="true",
             ),
-            crispy.Div(
-                FormActions(
-                    crispy.ButtonHolder(
-                        crispy.Submit(
-                            'create_export',
-                            _('Next'),
-                        ),
-                    ),
-                ),
-                data_bind="visible: case_type",
+            crispy.Field(
+                'case_type',
+                placeholder=_("Select Case Type"),
+                ng_model="createForm.case_type",
+                ng_disabled="!createForm.application",
+                ng_required="true",
             ),
         )
 

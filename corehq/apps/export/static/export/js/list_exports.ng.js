@@ -55,7 +55,7 @@
             });
     };
 
-    exportsControllers.CreateFormExportController = function (
+    exportsControllers.CreateExportController = function (
         $scope, djangoRMI
     ) {
         var self = {};
@@ -63,6 +63,8 @@
         $scope.showNoAppsError = false;
         $scope.formLoadError = null;
         $scope.isLoaded = false;
+        $scope.hasNoCaseTypes = false;
+        $scope.isFetchingUrl = false;
 
         var $formElem = {
             get_app: function () {
@@ -73,16 +75,21 @@
             },
             get_form: function () {
                 return $('#id_form');
+            },
+            get_case_type: function () {
+                return $('#id_case_type');
             }
         };
         $scope.createForm = {
             application: '',
             module: '',
-            form: ''
+            form: '',
+            case_type: ''
         };
         self._placeholders = {};
         self._modules = {};
         self._forms = {};
+        self._case_types = {};
 
         var $formSelect = {
             clearApp: function () {
@@ -100,23 +107,41 @@
             },
             setModules: function (module_data) {
                 $scope.createForm.module = '';
-                $formElem.get_module().select2({
-                    data: module_data || [],
-                    triggerChange: true
-                }).select2('val', null).trigger('change');
-                $('#s2id_id_module')
-                    .find('.select2-choice').addClass('select2-default')
-                    .find('.select2-chosen').text(self._placeholders.module);
+                if ($formElem.get_module()) {
+                   $formElem.get_module().select2({
+                       data: module_data || [],
+                       triggerChange: true
+                   }).select2('val', null).trigger('change');
+                   $('#s2id_id_module')
+                       .find('.select2-choice').addClass('select2-default')
+                       .find('.select2-chosen').text(self._placeholders.module);
+                }
+
             },
             setForms: function (form_data) {
                 $scope.createForm.form = '';
-                $formElem.get_form().select2({
-                    data: form_data || [],
-                    triggerChange: true
-                }).select2('val', null).trigger('change');
-                $('#s2id_id_form')
-                    .find('.select2-choice').addClass('select2-default')
-                    .find('.select2-chosen').text(self._placeholders.form);
+                if ($formElem.get_form()) {
+                    $formElem.get_form().select2({
+                        data: form_data || [],
+                        triggerChange: true
+                    }).select2('val', null).trigger('change');
+                    $('#s2id_id_form')
+                        .find('.select2-choice').addClass('select2-default')
+                        .find('.select2-chosen').text(self._placeholders.form);
+                }
+            },
+            setCaseTypes: function (case_type_data) {
+                $scope.createForm.case_type = '';
+                if ($formElem.get_case_type()) {
+                   $formElem.get_case_type().select2({
+                       data: case_type_data || [],
+                       triggerChange: true
+                   }).select2('val', null).trigger('change');
+                   $('#s2id_id_case_type')
+                       .find('.select2-choice').addClass('select2-default')
+                       .find('.select2-chosen').text(self._placeholders.case_type);
+                }
+
             }
         };
 
@@ -124,7 +149,15 @@
             $formSelect.clearApp();
             $formSelect.setModules();
             $formSelect.setForms();
+            $formSelect.setCaseTypes();
         });
+
+        $scope.updateCaseTypes = function () {
+            console.log(self._case_types);
+            var case_types = self._case_types[$scope.createForm.application];
+            $scope.hasNoCaseTypes = _.isEmpty(case_types);
+            $formSelect.setCaseTypes(case_types);
+        };
 
         $scope.updateModules = function () {
             $formSelect.setModules(self._modules[$scope.createForm.application]);
@@ -141,9 +174,28 @@
             $formSelect.setForms(formOptions);
         };
 
-        $scope.handleCreateFormExport = function () {
-            console.log('create export');
-            console.log($scope.createForm);
+        $scope.handleCreateExport = function () {
+            $scope.isFetchingUrl = true;
+
+            // Immediately copy form data object so that if modal is
+            // accidentally dismissed, data is still properly sent to server
+            var formData = _.clone($scope.createForm);
+
+            djangoRMI.process_create_form({
+                createFormData: formData
+            })
+            .success(function (data) {
+                if (data.success) {
+                    window.location = data.url;
+                } else {
+                    $scope.isFetchingUrl = false;
+                    $scope.fetchingUrlError = data.error;
+                }
+            })
+            .error(function () {
+                $scope.isFetchingUrl = false;
+                $scope.fetchingUrlError = 'default';
+            });
         };
 
         self._numRetries = 0;
@@ -165,10 +217,12 @@
                         } else {
                             self._modules = data.modules;
                             self._forms = data.forms;
+                            self._case_types = data.case_types;
                             self._placeholders = data.placeholders;
                             $formSelect.setApps(data.apps);
                             $formSelect.setModules();
                             $formSelect.setForms();
+                            $formSelect.setCaseTypes();
                         }
                     } else {
                         $scope.formLoadError = data.error;
@@ -178,9 +232,6 @@
                 .error(self._handleError);
         };
         self._initializeForm();
-
-
-
     };
 
     list_exports.controller(exportsControllers);
