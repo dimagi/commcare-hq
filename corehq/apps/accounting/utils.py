@@ -4,6 +4,7 @@ import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.template.loader import render_to_string
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import ugettext_lazy as _
 from corehq import privileges
 
@@ -16,6 +17,7 @@ from corehq.apps.accounting.exceptions import (
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
+from corehq.apps.domain.views import DefaultProjectSettingsView
 
 
 EXCHANGE_RATE_DECIMAL_PLACES = 9
@@ -255,3 +257,10 @@ def make_anchor_tag(href, name, attrs={}):
         'attrs': attrs,
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
+
+
+def get_default_domain_url(domain):
+    return absolute_reverse(
+        DefaultProjectSettingsView.urlname,
+        args=[domain],
+    )
