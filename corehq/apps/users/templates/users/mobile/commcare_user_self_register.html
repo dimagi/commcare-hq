@@ -1,0 +1,34 @@
+{% extends "style/bootstrap2/base_mobile.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block title %}CommCareHQ Registration{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>CommCareHQ Registration</h1>
+</div>
+
+{% if invitation.already_registered %}
+<div>
+    <p>
+        Thank you for registering. Please <a href="{{ google_play_store_url }}">click here</a>
+        to go to the Google Play store and download CommCare.
+    </p>
+</div>
+{% elif not can_add_extra_mobile_workers %}
+<div>
+    <p>
+        ERROR: Cannot register another user because this project has exceeded its user
+        limit. Please contact an administrator.
+    </p>
+</div>
+{% else %}
+<div id="registration-form">
+    {% crispy form %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block mobile-logout %}{% endblock %}

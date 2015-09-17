@@ -1224,7 +1224,7 @@ class SelfRegistrationInvitation(models.Model):
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
     phone_number = models.CharField(max_length=30, null=False, db_index=True)
-    token = models.CharField(max_length=126, null=False, db_index=True)
+    token = models.CharField(max_length=126, null=False, unique=True, db_index=True)
     app_id = models.CharField(max_length=126, null=True)
     expiration_date = models.DateField(null=False)
     created_date = models.DateTimeField(null=False)
@@ -1301,6 +1301,13 @@ class SelfRegistrationInvitation(models.Model):
         """
         for invitation in cls.get_unexpired_invitations(phone_number):
             invitation.expire()
+
+    @classmethod
+    def by_token(cls, token):
+        try:
+            return cls.objects.get(token=token)
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def by_phone(cls, phone_number, expire_duplicates=True):

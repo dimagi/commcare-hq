@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
+from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
@@ -564,3 +565,55 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         self.account.date_confirmed_extra_charges = datetime.datetime.today()
         self.account.save()
         return True
+
+
+class SelfRegistrationForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain')
+
+        super(SelfRegistrationForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+
+        layout_fields = [
+            crispy.Fieldset(
+                _('Register'),
+                crispy.Field('username'),
+                crispy.Field('password'),
+                crispy.Field('password2'),
+            ),
+            FormActions(
+                StrictButton(
+                    _('Register'),
+                    css_class='btn-primary',
+                    type='submit',
+                )
+            ),
+        ]
+        self.helper.layout = crispy.Layout(*layout_fields)
+
+    username = TrimmedCharField(
+        required=True,
+        label=ugettext_lazy('Username'),
+    )
+    password = forms.CharField(
+        required=True,
+        label=ugettext_lazy('Password'),
+        widget=PasswordInput(),
+    )
+    password2 = forms.CharField(
+        required=True,
+        label=ugettext_lazy('Re-enter Password'),
+        widget=PasswordInput(),
+    )
+
+    def clean_username(self):
+        value = self.cleaned_data.get('username')
+        return value
+
+    def clean_password2(self):
+        if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
+            raise forms.ValidationError(_('Passwords do not match.'))

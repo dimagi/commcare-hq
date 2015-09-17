@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(max_length=126, db_index=True)),
                 ('phone_number', models.CharField(max_length=30, db_index=True)),
-                ('token', models.CharField(max_length=126, db_index=True)),
+                ('token', models.CharField(unique=True, max_length=126, db_index=True)),
                 ('app_id', models.CharField(max_length=126, null=True)),
                 ('expiration_date', models.DateField()),
                 ('created_date', models.DateTimeField()),
