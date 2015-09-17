@@ -4,6 +4,7 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 
@@ -550,6 +551,7 @@ class SoftwarePlan(models.Model):
     class Meta:
         app_label = 'accounting'
 
+    @quickcache(vary_on='self.pk', timeout=10)
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
