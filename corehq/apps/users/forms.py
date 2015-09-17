@@ -57,19 +57,20 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
 
     if len(username) > max_username_length:
         raise forms.ValidationError(name_too_long_message or
-            _('Username %s is too long.  Must be under %d characters.')
-            % (username, max_username_length))
+            _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
+            % {'username': username, 'max_length': max_username_length})
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
         raise forms.ValidationError(name_reserved_message or
-            _('The username %s is reserved for CommCare.') % username)
+            _('The username "%(username)s" is reserved for CommCare.')
+            % {'username': username})
 
     username = format_username(username, domain)
     validate_username(username)
 
     if CouchUser.username_exists(username):
         raise forms.ValidationError(name_exists_message or
-            _('Mobile Worker already exists'))
+            _('This Mobile Worker already exists.'))
 
     return username
 
