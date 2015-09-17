@@ -988,91 +988,114 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
             return _("The module has 'Parent Selection' configured.")
 
 
-def get_module_view_context(app, module):
+def _get_careplan_module_view_context(app, module):
     case_property_builder = _setup_case_property_builder(app)
+    subcase_types = list(app.get_subcase_types(module.case_type))
+    return {
+        'parent_modules': get_parent_modules(app, module,
+                                             case_property_builder,
+                                             CAREPLAN_GOAL),
+        'fixtures': _get_fixture_types(app.domain),
+        'details': [
+            {
+                'label': _('Goal List'),
+                'detail_label': _('Goal Detail'),
+                'type': 'careplan_goal',
+                'model': 'case',
+                'properties': sorted(
+                    case_property_builder.get_properties(CAREPLAN_GOAL)),
+                'sort_elements': module.goal_details.short.sort_elements,
+                'short': module.goal_details.short,
+                'long': module.goal_details.long,
+                'subcase_types': subcase_types,
+            },
+            {
+                'label': _('Task List'),
+                'detail_label': _('Task Detail'),
+                'type': 'careplan_task',
+                'model': 'case',
+                'properties': sorted(
+                    case_property_builder.get_properties(CAREPLAN_TASK)),
+                'sort_elements': module.task_details.short.sort_elements,
+                'short': module.task_details.short,
+                'long': module.task_details.long,
+                'subcase_types': subcase_types,
+            },
+        ],
+    }
 
 
+def _get_advanced_module_view_context(app, module):
+    case_property_builder = _setup_case_property_builder(app)
+    case_type = module.case_type
+    form_options = _case_list_form_options(app, module, case_type)
+    return {
+        'fixtures': _get_fixture_types(app.domain),
+        'details': _get_module_details_context(app, module,
+                                               case_property_builder,
+                                               case_type),
+        'case_list_form_options': form_options,
+        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(
+            module),
+        'valid_parent_modules': [
+            parent_module for parent_module in app.modules
+            if not getattr(parent_module, 'root_module_id', None)
+        ],
+        'child_module_enabled': True,
+        'schedule_phases': [{
+                                'id': schedule.id,
+                                'anchor': schedule.anchor,
+                                'forms': [form.schedule_form_id for form in
+                                          schedule.get_forms()],
+                            } for schedule in module.get_schedule_phases()],
+    }
 
 
+def _get_basic_module_view_context(app, module):
+    case_property_builder = _setup_case_property_builder(app)
+    fixture_columns = [
+        field.field_name
+        for fixture in FixtureDataType.by_domain(app.domain)
+        for field in fixture.fields
+    ]
+    case_type = module.case_type
+    form_options = _case_list_form_options(app, module, case_type)
+    # don't allow this for modules with parent selection until this mobile bug is fixed:
+    # http://manage.dimagi.com/default.asp?178635
+    allow_case_list_form = _case_list_form_not_allowed_reason(
+        module,
+        AllowWithReason(not module.parent_select.active,
+                        AllowWithReason.PARENT_SELECT_ACTIVE)
+    )
+    return {
+        'parent_modules': get_parent_modules(app, module,
+                                             case_property_builder, case_type),
+        'fixtures': _get_fixture_types(app.domain),
+        'fixture_columns': fixture_columns,
+        'details': _get_module_details_context(app, module,
+                                               case_property_builder,
+                                               case_type),
+        'case_list_form_options': form_options,
+        'case_list_form_not_allowed_reason': allow_case_list_form,
+        'valid_parent_modules': [parent_module
+                                 for parent_module in app.modules
+                                 if
+                                 not getattr(parent_module, 'root_module_id',
+                                             None) and
+                                 not parent_module == module],
+        'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+    }
 
+
+def get_module_view_context(app, module):
     if isinstance(module, CareplanModule):
-        subcase_types = list(app.get_subcase_types(module.case_type))
-        return {
-            'parent_modules': get_parent_modules(app, module, case_property_builder, CAREPLAN_GOAL),
-            'fixtures': _get_fixture_types(app.domain),
-            'details': [
-                {
-                    'label': _('Goal List'),
-                    'detail_label': _('Goal Detail'),
-                    'type': 'careplan_goal',
-                    'model': 'case',
-                    'properties': sorted(case_property_builder.get_properties(CAREPLAN_GOAL)),
-                    'sort_elements': module.goal_details.short.sort_elements,
-                    'short': module.goal_details.short,
-                    'long': module.goal_details.long,
-                    'subcase_types': subcase_types,
-                },
-                {
-                    'label': _('Task List'),
-                    'detail_label': _('Task Detail'),
-                    'type': 'careplan_task',
-                    'model': 'case',
-                    'properties': sorted(case_property_builder.get_properties(CAREPLAN_TASK)),
-                    'sort_elements': module.task_details.short.sort_elements,
-                    'short': module.task_details.short,
-                    'long': module.task_details.long,
-                    'subcase_types': subcase_types,
-                },
-            ],
-        }
+        return _get_careplan_module_view_context(app, module)
     elif isinstance(module, AdvancedModule):
-        case_type = module.case_type
-        form_options = _case_list_form_options(app, module, case_type)
-        return {
-            'fixtures': _get_fixture_types(app.domain),
-            'details': _get_module_details_context(app, module, case_property_builder, case_type),
-            'case_list_form_options': form_options,
-            'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
-            'valid_parent_modules': [
-                parent_module for parent_module in app.modules
-                if not getattr(parent_module, 'root_module_id', None)
-            ],
-            'child_module_enabled': True,
-            'schedule_phases': [{
-                'id': schedule.id,
-                'anchor': schedule.anchor,
-                'forms': [form.schedule_form_id for form in schedule.get_forms()],
-            } for schedule in module.get_schedule_phases()],
-        }
+        return _get_advanced_module_view_context(app, module)
     elif isinstance(module, ReportModule):
         return _get_report_module_context(app, module)
     else:
-        fixture_columns = [
-            field.field_name
-            for fixture in FixtureDataType.by_domain(app.domain)
-            for field in fixture.fields
-        ]
-        case_type = module.case_type
-        form_options = _case_list_form_options(app, module, case_type)
-        # don't allow this for modules with parent selection until this mobile bug is fixed:
-        # http://manage.dimagi.com/default.asp?178635
-        allow_case_list_form = _case_list_form_not_allowed_reason(
-            module,
-            AllowWithReason(not module.parent_select.active, AllowWithReason.PARENT_SELECT_ACTIVE)
-        )
-        return {
-            'parent_modules': get_parent_modules(app, module, case_property_builder, case_type),
-            'fixtures': _get_fixture_types(app.domain),
-            'fixture_columns': fixture_columns,
-            'details': _get_module_details_context(app, module, case_property_builder, case_type),
-            'case_list_form_options': form_options,
-            'case_list_form_not_allowed_reason': allow_case_list_form,
-            'valid_parent_modules': [parent_module
-                                     for parent_module in app.modules
-                                     if not getattr(parent_module, 'root_module_id', None) and
-                                     not parent_module == module],
-            'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-        }
+        return _get_basic_module_view_context(app, module)
 
 
 @retry_resource(3)
