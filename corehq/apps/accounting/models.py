@@ -822,7 +822,7 @@ class Subscriber(models.Model):
                 text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
             )
 
-        subscription_upgrade_or_downgrade.send_robust(self.domain, domain=self.domain)
+        subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
 
 
 class Subscription(models.Model):

@@ -25,8 +25,7 @@ def user_save_callback(sender, **kwargs):
 
 @receiver(commcare_domain_post_save)
 @receiver(subscription_upgrade_or_downgrade)
-def domain_save_callback(sender, **kwargs):
-    domain = kwargs.get("domain", None)
+def domain_save_callback(sender, domain):
     domain = ensure_domain_instance(domain)
     if domain:
         update_subscription_properties_by_domain(domain)
