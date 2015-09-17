@@ -839,7 +839,18 @@ def release_build(request, domain, app_id, saved_app_id):
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 
-def get_module_view_context_and_template(app, module):
+def get_module_template(module):
+    if isinstance(module, CareplanModule):
+        return "app_manager/module_view_careplan.html"
+    elif isinstance(module, AdvancedModule):
+        return "app_manager/module_view_advanced.html"
+    elif isinstance(module, ReportModule):
+        return 'app_manager/module_view_report.html'
+    else:
+        return "app_manager/module_view.html"
+
+
+def get_module_view_context(app, module):
     defaults = ('name', 'date-opened', 'status')
     if app.case_sharing:
         defaults += ('#owner_name',)
@@ -941,7 +952,7 @@ def get_module_view_context_and_template(app, module):
             return AllowWithReason(True, '')
 
     if isinstance(module, CareplanModule):
-        return "app_manager/module_view_careplan.html", {
+        return {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
             'fixtures': fixtures,
             'details': [
@@ -972,7 +983,7 @@ def get_module_view_context_and_template(app, module):
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
         form_options = case_list_form_options(case_type)
-        return "app_manager/module_view_advanced.html", {
+        return {
             'fixtures': fixtures,
             'details': get_details(case_type),
             'case_list_form_options': form_options,
@@ -1005,7 +1016,7 @@ def get_module_view_context_and_template(app, module):
             warnings.append(
                 _('Your app contains references to reports that are deleted. These will be removed on save.')
             )
-        return 'app_manager/module_view_report.html', {
+        return {
             'all_reports': [_report_to_config(r) for r in all_reports],
             'current_reports': [r.to_json() for r in module.report_configs],
             'invalid_report_references': invalid_report_references,
@@ -1019,7 +1030,7 @@ def get_module_view_context_and_template(app, module):
         allow_case_list_form = case_list_form_not_allowed_reason(
             AllowWithReason(not module.parent_select.active, AllowWithReason.PARENT_SELECT_ACTIVE)
         )
-        return "app_manager/module_view.html", {
+        return {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
             'fixture_columns': fixture_columns,
@@ -1116,7 +1127,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
 
         context.update(form_context)
     elif module:
-        template, module_context = get_module_view_context_and_template(app, module)
+        template = get_module_template(module)
+        module_context = get_module_view_context(app, module)
         context.update(module_context)
     elif app:
         template = "app_manager/app_view.html"
