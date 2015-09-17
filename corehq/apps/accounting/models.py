@@ -731,10 +731,10 @@ class Subscriber(models.Model):
     class Meta:
         app_label = 'accounting'
 
-    def __str__(self):
+    def __unicode__(self):
         if self.organization:
-            return "ORGANIZATION %s" % self.organization
-        return "DOMAIN %s" % self.domain
+            return u"ORGANIZATION %s" % self.organization
+        return u"DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
         assert new_plan_version
