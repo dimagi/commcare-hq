@@ -3,52 +3,51 @@ import copy
 import logging
 import hashlib
 import itertools
-from django.utils.decorators import method_decorator
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from lxml import etree
 import os
 import re
 import json
-import yaml
 from collections import defaultdict
-from corehq.apps.app_manager.views.module_view import get_module_template, \
-    get_module_view_context
-from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
-from soil import DownloadBase
 from xml.dom.minidom import parseString
 
+from lxml import etree
+import yaml
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.text import slugify
-from django.utils.translation import ugettext as _, get_language, ugettext_noop
+from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.cache import cache_control
+from django.utils.http import urlencode as django_urlencode
+from couchdbkit.exceptions import ResourceConflict
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from unidecode import unidecode
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
+from django.shortcuts import render
+from django.utils.http import urlencode
+from django.views.decorators.http import require_GET
+from django.conf import settings
+from couchdbkit.resource import ResourceNotFound
+from django.contrib import messages
+
+from corehq.apps.app_manager.views.module_view import get_module_template, \
+    get_module_view_context
+from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
+from soil import DownloadBase
 from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
-    AppEditingError,
     AppManagerException,
     BlankXFormError,
     ConflictingCaseTypeError,
-    FormNotFoundException,
-    IncompatibleFormTypeException,
-    ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
     ScheduleError,
 )
-
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.translations import (
-    expected_bulk_app_sheet_headers,
-    process_bulk_app_translation_upload,
-    expected_bulk_app_sheet_rows)
-from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -71,22 +70,9 @@ from corehq.apps.reports.formdetails.readable import (
     questions_in_hierarchy,
 )
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from django.utils.http import urlencode as django_urlencode
-from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
-from unidecode import unidecode
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
-from django.shortcuts import render
-from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download, absolute_reverse, json_error
 from dimagi.utils.django.cached_object import CachedObject
-from django.utils.http import urlencode
-from django.views.decorators.http import require_GET
-from django.conf import settings
-from couchdbkit.resource import ResourceNotFound
-from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.const import (
     APP_V1,
     APP_V2,
@@ -102,7 +88,6 @@ from corehq.apps.app_manager.util import (
     get_casedb_schema,
     get_session_schema,
     add_odk_profile_after_build,
-    commtrack_ledger_sections,
     get_commcare_versions,
     save_xform,
     get_settings_values,
@@ -113,11 +98,9 @@ from corehq.apps.app_manager.util import (
     get_usercase_properties,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
-from couchexport.export import FormattedRow, export_raw
+from couchexport.export import FormattedRow
 from couchexport.models import Format
-from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -125,12 +108,10 @@ from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
     XFormException,
-    XFormValidationError,
-    VELLUM_TYPES)
+    XFormValidationError)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
@@ -174,19 +155,15 @@ from corehq.apps.app_manager.models import (
     load_case_reserved_words,
     str_to_cls,
     ReportAppConfig,
-    SchedulePhaseForm,
     FixtureSelect,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from django.contrib import messages
-from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
+
 # Numbers in paths is prohibited, hence the use of importlib
-import importlib
-from corehq.apps.style.decorators import use_bootstrap3
 
 logger = logging.getLogger(__name__)
 
@@ -2973,95 +2950,6 @@ def _questions_for_form(request, form, langs):
     _, context = get_form_view_context_and_template(request, form, langs, None, messages=m)
     xform_questions = context['xform_questions']
     return xform_questions, m.messages
-
-
-class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    @method_decorator(use_bootstrap3())
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def main_context(self):
-        context = super(AppSummaryView, self).main_context
-        context.update({
-            'domain': self.domain,
-        })
-        return context
-
-    @property
-    def page_context(self):
-        if not self.app or self.app.doc_type == 'RemoteApp':
-            raise Http404()
-
-        form_name_map = {}
-        for module in self.app.get_modules():
-            for form in module.get_forms():
-                form_name_map[form.unique_id] = {
-                    'module_name': module.name,
-                    'form_name': form.name
-                }
-
-        return {
-            'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': form_name_map,
-            'langs': self.app.langs,
-        }
-
-    @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.app_id])
-
-    @allow_remote_invocation
-    def get_case_data(self, in_data):
-        return {
-            'response': self.app.get_case_metadata().to_json(),
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def get_form_data(self, in_data):
-        modules = []
-        for module in self.app.get_modules():
-            forms = []
-            for form in module.get_forms():
-                questions = form.get_questions(
-                    self.app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-                forms.append({
-                    'id': form.unique_id,
-                    'name': form.name,
-                    'questions': [FormQuestionResponse(q).to_json() for q in questions],
-                })
-
-            modules.append({
-                'id': module.unique_id,
-                'name': module.name,
-                'forms': forms
-            })
-        return {
-            'response': modules,
-            'success': True,
-        }
 
 
 @require_deploy_apps
