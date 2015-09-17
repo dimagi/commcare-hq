@@ -2,7 +2,7 @@ from django.conf import settings
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.template.loader import render_to_string
 from corehq.util.global_request import get_request
-from corehq.app.accounting.utils import get_default_domain_url
+from corehq.apps.accounting.utils import get_default_domain_url
 
 
 def send_subscription_change_alert(domain, new_subscription, old_subscription, internal_change):
