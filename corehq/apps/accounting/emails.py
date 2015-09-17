@@ -6,6 +6,7 @@ from corehq.app.accounting.utils import get_default_domain_url
 
 
 def send_subscription_change_alert(domain, new_subscription, old_subscription, internal_change):
+
     billing_account = (
         new_subscription.account if new_subscription else
         old_subscription.account if old_subscription else None
@@ -24,23 +25,20 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         'username': request.couch_user.username if request and request.couch_user else None,
         'referer': request.META.get('HTTP_REFERER') if request else None,
     }
-    env = ("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
-           if settings.SERVER_ENVIRONMENT == "staging" else "")
     email_subject = "{env}Subscription Change Alert: {domain} from {old_plan} to {new_plan}".format(
-        env=env,
+        env=("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+             if settings.SERVER_ENVIRONMENT == "staging" else ""),
         domain=email_context['domain'],
         old_plan=email_context['old_plan'],
         new_plan=email_context['new_plan'],
     )
 
+    sub_change_email_address = (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
+                                if internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
+
     send_html_email_async.delay(
         email_subject,
-        get_sub_change_email_address(internal_change),
+        sub_change_email_address(internal_change),
         render_to_string('accounting/subscription_change_email.html', email_context),
         text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
     )
-
-
-def get_sub_change_email_address(is_internal_change):
-    return (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
-            if is_internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
