@@ -582,7 +582,7 @@ class DefaultProductPlan(models.Model):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
-            default_product_plan = DefaultProductPlan.objects.get(
+            default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 product_type=product_type, edition=edition, is_trial=is_trial
             )
             return default_product_plan.plan.get_version()
