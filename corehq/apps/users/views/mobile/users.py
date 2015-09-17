@@ -632,8 +632,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            return CommCareAccountForm(self.request.POST)
-        return CommCareAccountForm()
+            return CommCareAccountForm(self.request.POST, domain=self.domain)
+        return CommCareAccountForm(domain=self.domain)
 
     @property
     def page_context(self):
@@ -712,9 +712,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     def new_commcare_user_form(self):
         if self.request.method == "POST":
             data = self.request.POST.dict()
-            data['domain'] = self.domain
-            return CommCareAccountForm(data)
-        return CommCareAccountForm()
+            return CommCareAccountForm(data, domain=self.domain)
+        return CommCareAccountForm(domain=self.domain)
 
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():

@@ -288,10 +288,12 @@ class CommCareAccountForm(forms.Form):
     username = forms.CharField(max_length=max_len_username, required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
-    domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
 
     def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain', None)
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -345,8 +347,7 @@ class CommCareAccountForm(forms.Form):
                     "Username %s is too long.  Must be under %d characters."
                     % (username, CommCareAccountForm.max_len_username))
             validate_username('%s@commcarehq.org' % username)
-            domain = self.cleaned_data['domain']
-            username = format_username(username, domain)
+            username = format_username(username, self.domain)
             num_couch_users = len(CouchUser.view("users/by_username",
                                                  key=username,
                                                  reduce=False))
