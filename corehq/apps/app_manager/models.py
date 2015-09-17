@@ -1124,9 +1124,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
         media_dict = getattr(self, media_attr)
         if not media_dict:
             return None
-        if lang in media_dict:
+        if media_dict.get(lang, ''):
             return media_dict[lang]
-        elif not strict:
+        if not strict:
             # if the queried lang key doesn't exist,
             # return the first in the sorted list
             for lang, item in sorted(media_dict.items()):
