@@ -249,24 +249,17 @@ def random_password():
 
 
 def process_username(username, domain):
-    """
-    Loosely based on code from apps/users/forms.py:255
-    """
-    from corehq.apps.users.forms import validate_username
+    from corehq.apps.users.forms import (clean_mobile_worker_username,
+        get_mobile_worker_max_username_length)
 
-    max_len_username = 80
-    if len(username) > max_len_username:
-        raise forms.ValidationError(get_message(MSG_USERNAME_TOO_LONG, context=(username, max_len_username)))
-    # Check if the username contains invalid characters w/ django checker
-    validate_username('%s@commcarehq.org' % username)
-    username = format_username(username, domain)
-    num_couch_users = len(CouchUser.view("users/by_username",
-                                         key=username,
-                                         reduce=False))
-    if num_couch_users > 0:
-        raise forms.ValidationError(get_message(MSG_DUPLICATE_USERNAME, context=(username,)))
+    max_length = get_mobile_worker_max_username_length(domain)
 
-    return username
+    return clean_mobile_worker_username(
+        domain,
+        username,
+        name_too_long_message=get_message(MSG_USERNAME_TOO_LONG, context=(username, max_length)),
+        name_exists_message=get_message(MSG_DUPLICATE_USERNAME, context=(username,))
+    )
 
 
 def is_registration_text(text):

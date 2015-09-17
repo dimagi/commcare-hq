@@ -623,8 +623,10 @@ class SelfRegistrationForm(forms.Form):
     )
 
     def clean_username(self):
-        value = self.cleaned_data.get('username')
-        return value
+        return clean_mobile_worker_username(
+            self.domain,
+            self.cleaned_data.get('username')
+        )
 
     def clean_password2(self):
         if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
