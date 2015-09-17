@@ -270,3 +270,152 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         elif self.reason == self.PARENT_SELECT_ACTIVE:
             return gettext_lazy("The module has 'Parent Selection' configured.")
 
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_module_attr(request, domain, app_id, module_id, attr):
+    """
+    Called to edit any (supported) module attribute, given by attr
+    """
+    attributes = {
+        "all": None,
+        "case_type": None, "put_in_root": None, "display_separately": None,
+        "name": None, "case_label": None, "referral_label": None,
+        'media_image': None, 'media_audio': None, 'has_schedule': None,
+        "case_list": ('case_list-show', 'case_list-label'),
+        "task_list": ('task_list-show', 'task_list-label'),
+        "case_list_form_id": None,
+        "case_list_form_label": None,
+        "case_list_form_media_image": None,
+        "case_list_form_media_audio": None,
+        'case_list-menu_item_media_image': None,
+        'case_list-menu_item_media_audio': None,
+        "parent_module": None,
+        "root_module_id": None,
+        "module_filter": None,
+    }
+
+    if attr not in attributes:
+        return HttpResponseBadRequest()
+
+    def should_edit(attribute):
+        if attribute == attr:
+            return True
+        if 'all' == attr:
+            if attributes[attribute]:
+                for param in attributes[attribute]:
+                    if not request.POST.get(param):
+                        return False
+                return True
+            else:
+                return request.POST.get(attribute) is not None
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
+    resp = {'update': {}, 'corrections': {}}
+    if should_edit("case_type"):
+        case_type = request.POST.get("case_type", None)
+        if is_valid_case_type(case_type):
+            old_case_type = module["case_type"]
+            module["case_type"] = case_type
+            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
+                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+                    cp_mod.case_type = case_type
+
+            def rename_action_case_type(mod):
+                for form in mod.forms:
+                    for action in form.actions.get_all_actions():
+                        if action.case_type == old_case_type:
+                            action.case_type = case_type
+
+            if isinstance(module, AdvancedModule):
+                rename_action_case_type(module)
+            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
+                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
+                    # only apply change if the module's case_type does not reference the old value
+                    rename_action_case_type(ad_mod)
+        elif case_type == USERCASE_TYPE:
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+        else:
+            return HttpResponseBadRequest("case type is improperly formatted")
+    if should_edit("put_in_root"):
+        module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_separately"):
+        module["display_separately"] = json.loads(request.POST.get("display_separately"))
+    if should_edit("parent_module"):
+        parent_module = request.POST.get("parent_module")
+        module.parent_select.module_id = parent_module
+
+    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
+            app.enable_module_filtering and
+            should_edit('module_filter')):
+        module['module_filter'] = request.POST.get('module_filter')
+
+    if should_edit('case_list_form_id'):
+        module.case_list_form.form_id = request.POST.get('case_list_form_id')
+    if should_edit('case_list_form_label'):
+        module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_form_media_image'):
+        new_path = _process_media_attribute(
+            'case_list_form_media_image',
+            resp,
+            request.POST.get('case_list_form_media_image')
+        )
+        module.case_list_form.set_icon(lang, new_path)
+
+    if should_edit('case_list_form_media_audio'):
+        new_path = _process_media_attribute(
+            'case_list_form_media_audio',
+            resp,
+            request.POST.get('case_list_form_media_audio')
+        )
+        module.case_list_form.set_audio(lang, new_path)
+
+    if should_edit('case_list-menu_item_media_image'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_image',
+            resp,
+            request.POST.get('case_list-menu_item_media_image')
+        )
+        module.case_list.set_icon(lang, val)
+    if should_edit('case_list-menu_item_media_audio'):
+        val = _process_media_attribute(
+            'case_list-menu_item_media_audio',
+            resp,
+            request.POST.get('case_list-menu_item_media_audio')
+        )
+        module.case_list.set_audio(lang, val)
+
+    for attribute in ("name", "case_label", "referral_label"):
+        if should_edit(attribute):
+            name = request.POST.get(attribute, None)
+            module[attribute][lang] = name
+            if should_edit("name"):
+                resp['update'].update({'.variable-module_name': module.name[lang]})
+    for SLUG in ('case_list', 'task_list'):
+        show = '{SLUG}-show'.format(SLUG=SLUG)
+        label = '{SLUG}-label'.format(SLUG=SLUG)
+        if request.POST.get(show) == 'true' and (request.POST.get(label) == ''):
+            # Show item, but empty label, was just getting ignored
+            return HttpResponseBadRequest("A label is required for {SLUG}".format(SLUG=SLUG))
+        if should_edit(SLUG):
+            module[SLUG].show = json.loads(request.POST[show])
+            module[SLUG].label[lang] = request.POST[label]
+
+    if should_edit("root_module_id"):
+        if not request.POST.get("root_module_id"):
+            module["root_module_id"] = None
+        else:
+            try:
+                app.get_module(module_id)
+                module["root_module_id"] = request.POST.get("root_module_id")
+            except ModuleNotFoundException:
+                messages.error(_("Unknown Module"))
+
+    _handle_media_edits(request, module, should_edit, resp, lang)
+
+    app.save(resp)
+    resp['case_list-show'] = module.requires_case_details()
+    return HttpResponse(json.dumps(resp))
+
