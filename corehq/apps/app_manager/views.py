@@ -909,63 +909,61 @@ def get_parent_modules(app, module, case_property_builder, case_type_):
         } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
 
+def _case_list_form_options(app, module, case_type_):
+    options = OrderedDict()
+    forms = [
+        form
+        for mod in app.get_modules() if module.unique_id != mod.unique_id
+        for form in mod.get_forms() if form.is_registration_form(case_type_)
+    ]
+    options['disabled'] = _("Don't Show")
+    options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+
+    return options
+
+
+def _get_module_details_context(app, module, case_property_builder, case_type_):
+    subcase_types = list(app.get_subcase_types(module.case_type))
+    item = {
+        'label': _('Case List'),
+        'detail_label': _('Case Detail'),
+        'type': 'case',
+        'model': 'case',
+        'sort_elements': module.case_details.short.sort_elements,
+        'short': module.case_details.short,
+        'long': module.case_details.long,
+        'subcase_types': subcase_types,
+    }
+    case_properties = case_property_builder.get_properties(case_type_)
+    if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
+        usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
+        case_properties |= usercase_properties
+
+    item['properties'] = sorted(case_properties)
+    item['fixture_select'] = module.fixture_select
+
+    if isinstance(module, AdvancedModule):
+        details = [item]
+        if app.commtrack_enabled:
+            details.append({
+                'label': _('Product List'),
+                'detail_label': _('Product Detail'),
+                'type': 'product',
+                'model': 'product',
+                'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                'sort_elements': module.product_details.short.sort_elements,
+                'short': module.product_details.short,
+                'subcase_types': subcase_types,
+            })
+    else:
+        item['parent_select'] = module.parent_select
+        details = [item]
+
+    return details
+
+
 def get_module_view_context(app, module):
     case_property_builder = _setup_case_property_builder(app)
-
-
-    def case_list_form_options(case_type_):
-        options = OrderedDict()
-        forms = [
-            form
-            for mod in app.get_modules() if module.unique_id != mod.unique_id
-            for form in mod.get_forms() if form.is_registration_form(case_type_)
-        ]
-        options['disabled'] = _("Don't Show")
-        options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
-
-        return options
-
-    def get_details(case_type_):
-        subcase_types = list(app.get_subcase_types(module.case_type))
-        item = {
-            'label': _('Case List'),
-            'detail_label': _('Case Detail'),
-            'type': 'case',
-            'model': 'case',
-            'sort_elements': module.case_details.short.sort_elements,
-            'short': module.case_details.short,
-            'long': module.case_details.long,
-            'subcase_types': subcase_types,
-        }
-        case_properties = case_property_builder.get_properties(case_type_)
-        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
-            usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
-            case_properties |= usercase_properties
-
-        item['properties'] = sorted(case_properties)
-        item['fixture_select'] = module.fixture_select
-
-        if isinstance(module, AdvancedModule):
-            details = [item]
-            if app.commtrack_enabled:
-                details.append({
-                    'label': _('Product List'),
-                    'detail_label': _('Product Detail'),
-                    'type': 'product',
-                    'model': 'product',
-                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': module.product_details.short.sort_elements,
-                    'short': module.product_details.short,
-                    'subcase_types': subcase_types,
-                })
-        else:
-            item['parent_select'] = module.parent_select
-            details = [item]
-
-        return details
-
-    # make sure all modules have unique ids
-    app.ensure_module_unique_ids(should_save=True)
 
     class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         ALL_FORMS_REQUIRE_CASE = 1
@@ -1023,10 +1021,10 @@ def get_module_view_context(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        form_options = case_list_form_options(case_type)
+        form_options = _case_list_form_options(app, module, case_type)
         return {
             'fixtures': _get_fixture_types(app.domain),
-            'details': get_details(case_type),
+            'details': _get_module_details_context(app, module, case_property_builder, case_type),
             'case_list_form_options': form_options,
             'case_list_form_not_allowed_reason': case_list_form_not_allowed_reason(),
             'valid_parent_modules': [
@@ -1049,7 +1047,7 @@ def get_module_view_context(app, module):
             for field in fixture.fields
         ]
         case_type = module.case_type
-        form_options = case_list_form_options(case_type)
+        form_options = _case_list_form_options(app, module, case_type)
         # don't allow this for modules with parent selection until this mobile bug is fixed:
         # http://manage.dimagi.com/default.asp?178635
         allow_case_list_form = case_list_form_not_allowed_reason(
@@ -1059,7 +1057,7 @@ def get_module_view_context(app, module):
             'parent_modules': get_parent_modules(app, module, case_property_builder, case_type),
             'fixtures': _get_fixture_types(app.domain),
             'fixture_columns': fixture_columns,
-            'details': get_details(case_type),
+            'details': _get_module_details_context(app, module, case_property_builder, case_type),
             'case_list_form_options': form_options,
             'case_list_form_not_allowed_reason': allow_case_list_form,
             'valid_parent_modules': [parent_module
@@ -1153,6 +1151,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update(form_context)
     elif module:
         template = get_module_template(module)
+        # make sure all modules have unique ids
+        app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module)
         context.update(module_context)
     elif app:
