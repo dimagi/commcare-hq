@@ -1,11 +1,15 @@
-from django.test import TestCase
+from contextlib import nested
+from django.test import SimpleTestCase
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
+from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache, \
+    GroupMemoizer
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from mock import patch
+from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 
 
@@ -83,12 +87,11 @@ class UserLocMapTest(CommTrackTest):
             self.assertEqual(get_supply_point.call_count, 1)
 
 
-class TestUserBulkUpload(TestCase):
+class TestUserBulkUpload(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         cls.domain = Domain(name='mydomain')
-        cls.domain.save()
         cls.user_specs = [{
             u'username': u'hello',
             u'user_id': u'should not update',
@@ -100,7 +103,58 @@ class TestUserBulkUpload(TestCase):
             u'email': None
         }]
 
+    def setUp(self):
+        def domain_has_privilege(domain, privilege):
+            return False
+
+        @classmethod
+        def UserFieldsView__get_validator(cls, domain):
+            return lambda dct: ''
+
+        def CommCareUser__save(_self):
+            self.users_by_username[_self.username] = _self
+
+        @classmethod
+        def CommCareUser__get_by_username(_self, username):
+            return self.users_by_username[username]
+
+        @classmethod
+        def CommCareUser__get_by_user_id(cls, user_id, domain):
+            return None
+
+        @classmethod
+        def CommCareUser__create(cls, domain, username, password, commit):
+            return CommCareUser(
+                domain=domain, username=username, password=password)
+
+        @classmethod
+        def Domain__get_by_name(cls, domain):
+            return self.domain
+
+        @classmethod
+        def Group__by_user(cls, domain, wrap):
+            return []
+
+        self.patches = [
+            patch('corehq.domain_has_privilege', domain_has_privilege),
+            patch.object(UserFieldsView, 'get_validator', UserFieldsView__get_validator),
+            patch.object(GroupMemoizer, 'load_all', lambda _self: None),
+            patch.object(GroupMemoizer, 'save_all', lambda _self: None),
+            patch.object(Group, 'by_user', Group__by_user),
+            patch.object(Domain, 'get_by_name', Domain__get_by_name),
+            patch.object(CommCareUser, 'get_by_user_id', CommCareUser__get_by_user_id),
+            patch.object(CommCareUser, 'create', CommCareUser__create),
+            patch.object(CommCareUser, 'save', CommCareUser__save),
+            patch.object(CommCareUser, 'get_by_username', CommCareUser__get_by_username),
+        ]
+
+        self.users_by_username = {}
+
     def test_upload_with_user_id(self):
+        with nested(*self.patches):
+            self._test_upload_with_user_id()
+
+    def _test_upload_with_user_id(self):
         bulk_upload_async(
             self.domain.name,
             list(self.user_specs),
