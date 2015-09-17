@@ -736,6 +736,8 @@ class Subscriber(models.Model):
         return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
+        assert new_plan_version
+        assert new_subscription
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
             web_user=web_user,
@@ -744,6 +746,7 @@ class Subscriber(models.Model):
         )
 
     def cancel_subscription(self, web_user, old_subscription):
+        assert old_subscription
         return self._apply_upgrades_and_downgrades(web_user=web_user, old_subscription=old_subscription)
 
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
