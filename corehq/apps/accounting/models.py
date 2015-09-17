@@ -816,18 +816,9 @@ class Subscriber(models.Model):
         if upgraded_privileges:
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
 
-        should_send_email = not (
-            (
-                new_subscription
-                and new_subscription.is_trial
-            )
-            or (
-                old_subscription
-                and old_subscription.is_trial
-                and not new_subscription
-            )
-        )
-
+        is_new_trial = new_subscription and new_subscription.is_trial
+        expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
+        should_send_email = not is_new_trial and not expired_trial
         if should_send_email:
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
