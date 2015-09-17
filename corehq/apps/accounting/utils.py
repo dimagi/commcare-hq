@@ -17,7 +17,6 @@ from corehq.apps.accounting.exceptions import (
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
-from corehq.apps.domain.views import DefaultProjectSettingsView
 
 
 EXCHANGE_RATE_DECIMAL_PLACES = 9
@@ -260,6 +259,7 @@ def make_anchor_tag(href, name, attrs={}):
 
 
 def get_default_domain_url(domain):
+    from corehq.apps.domain.views import DefaultProjectSettingsView
     return absolute_reverse(
         DefaultProjectSettingsView.urlname,
         args=[domain],
