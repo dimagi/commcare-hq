@@ -1,4 +1,5 @@
 import calendar
+from collections import namedtuple
 import datetime
 from decimal import Decimal
 from django.conf import settings
@@ -82,6 +83,9 @@ def get_privileges(plan_version):
     return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
+ChangeStatusResult = namedtuple('ChangeStatusResult', ['adjustment_reason', 'downgraded_privs', 'upgraded_privs'])
+
+
 def get_change_status(from_plan_version, to_plan_version):
     from_privs = (
         get_privileges(from_plan_version)
@@ -102,7 +106,7 @@ def get_change_status(from_plan_version, to_plan_version):
             adjustment_reason = Reason.UPGRADE
         elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
             adjustment_reason = Reason.DOWNGRADE
-    return adjustment_reason, downgraded_privs, upgraded_privs
+    return ChangeStatusResult(adjustment_reason, downgraded_privs, upgraded_privs)
 
 
 def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):

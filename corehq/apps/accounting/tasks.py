@@ -50,7 +50,7 @@ def activate_subscriptions(based_on_date=None):
         if not has_subscription_already_ended(subscription) and not subscription.is_active:
             subscription.is_active = True
             subscription.save()
-            _, _, upgraded_privs = get_change_status(None, subscription.plan_version)
+            upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
             subscription.subscriber.apply_upgrades_and_downgrades(
                 upgraded_privileges=upgraded_privs,
                 new_subscription=subscription,
