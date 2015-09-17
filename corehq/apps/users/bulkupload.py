@@ -23,7 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
 
-from .forms import CommCareAccountForm
+from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
 from .views.mobile.custom_data_fields import UserFieldsView
@@ -416,12 +416,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
-                        if len(raw_username(username)) > CommCareAccountForm.max_len_username:
+                        max_username_length = get_mobile_worker_max_username_length(domain)
+                        if len(raw_username(username)) > max_username_length:
                             ret['rows'].append({
                                 'username': username,
                                 'row': row,
                                 'flag': _("username cannot contain greater than %d characters" %
-                                          CommCareAccountForm.max_len_username)
+                                          max_username_length)
                             })
                             continue
                         if not is_password(password):

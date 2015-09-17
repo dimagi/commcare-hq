@@ -20,7 +20,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
 
@@ -36,6 +36,42 @@ import re
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
+UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+
+
+def get_mobile_worker_max_username_length(domain):
+    """
+    The auth_user table only allows for usernames up to 128 characters long.
+    The code used to allow for usernames up to 80 characters, but that
+    didn't properly take into consideration the fact that the domain and
+    site name vary.
+    """
+    return min(128 - len(cc_user_domain(domain)) - 1, 80)
+
+
+def clean_mobile_worker_username(domain, username, name_too_long_message=None,
+        name_reserved_message=None, name_exists_message=None):
+
+    max_username_length = get_mobile_worker_max_username_length(domain)
+
+    if len(username) > max_username_length:
+        raise forms.ValidationError(name_too_long_message or
+            _('Username %s is too long.  Must be under %d characters.')
+            % (username, max_username_length))
+
+    if username in UNALLOWED_MOBILE_WORKER_NAMES:
+        raise forms.ValidationError(name_reserved_message or
+            _('The username %s is reserved for CommCare.') % username)
+
+    username = format_username(username, domain)
+    validate_username(username)
+
+    if CouchUser.username_exists(username):
+        raise forms.ValidationError(name_exists_message or
+            _('Mobile Worker already exists'))
+
+    return username
 
 
 def wrapped_language_validation(value):
@@ -279,13 +315,7 @@ class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    # 128 is max length in DB
-    # 25 is domain max length
-    # @{domain}.commcarehq.org adds 16
-    # left over is 87 and 80 just sounds better
-    max_len_username = 80
-
-    username = forms.CharField(max_length=max_len_username, required=True)
+    username = forms.CharField(required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     phone_number = forms.CharField(max_length=80, required=False)
@@ -312,6 +342,12 @@ class CommCareAccountForm(forms.Form):
             )
         )
 
+    def clean_username(self):
+        return clean_mobile_worker_username(
+            self.domain,
+            self.cleaned_data.get('username')
+        )
+
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
         phone_number = re.sub('\s|\+|\-', '', phone_number)
@@ -320,12 +356,6 @@ class CommCareAccountForm(forms.Form):
         elif not re.match(r'\d+$', phone_number):
             raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
         return phone_number
-
-    def clean_username(self):
-        username = self.cleaned_data['username']
-        if username == 'admin' or username == 'demo_user':
-            raise forms.ValidationError("The username %s is reserved for CommCare." % username)
-        return username
 
     def clean(self):
         try:
@@ -337,25 +367,6 @@ class CommCareAccountForm(forms.Form):
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
 
-        try:
-            username = self.cleaned_data['username']
-        except KeyError:
-            pass
-        else:
-            if len(username) > CommCareAccountForm.max_len_username:
-                raise forms.ValidationError(
-                    "Username %s is too long.  Must be under %d characters."
-                    % (username, CommCareAccountForm.max_len_username))
-            validate_username('%s@commcarehq.org' % username)
-            username = format_username(username, self.domain)
-            num_couch_users = len(CouchUser.view("users/by_username",
-                                                 key=username,
-                                                 reduce=False))
-            if num_couch_users > 0:
-                raise forms.ValidationError("CommCare user already exists")
-
-            # set the cleaned username to user@domain.commcarehq.org
-            self.cleaned_data['username'] = username
         return self.cleaned_data
 
 import django
