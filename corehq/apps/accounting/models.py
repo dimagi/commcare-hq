@@ -551,7 +551,7 @@ class SoftwarePlan(models.Model):
     class Meta:
         app_label = 'accounting'
 
-    @quickcache(vary_on='self.pk', timeout=10)
+    @quickcache(vary_on=['self.pk'], timeout=10)
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
