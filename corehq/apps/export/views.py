@@ -18,7 +18,7 @@ from corehq.apps.export.custom_export_helpers import make_custom_export_helper, 
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm, \
     FilterExportDownloadForm, FilterFormExportDownloadForm, \
-    FilterCaseExportDownloadForm, ExportFilterFormException
+    FilterCaseExportDownloadForm, ExportFormValidationException
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
@@ -317,6 +317,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
+#todo delete
 class CreateFormExportView(BaseProjectDataView):
     urlname = 'create_form_export'
     page_title = ugettext_noop("Create Form Export")
@@ -577,7 +578,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
 
         try:
             export_filter = self.get_filters(filter_form_data)
-        except ExportFilterFormException:
+        except ExportFormValidationException:
             return {
                 'error': _("Form did not validate."),
             }
@@ -645,7 +646,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         filter_form = FilterFormExportDownloadForm(
             self.domain, self.timezone, filter_form_data)
         if not filter_form.is_valid():
-            raise ExportFilterFormException()
+            raise ExportFormValidationException()
         form_filter = filter_form.get_form_filter()
         export_filter = SerializableFunction(default_form_filter,
                                              filter=form_filter)
@@ -683,7 +684,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         filter_form = FilterCaseExportDownloadForm(
             self.domain, self.timezone, filter_form_data)
         if not filter_form.is_valid():
-            raise ExportFilterFormException()
+            raise ExportFormValidationException()
         return filter_form.get_case_filter()
 
     def get_export_object(self, export_id):
