@@ -8,7 +8,7 @@ from corehq.apps.export.views import (
     EditCustomCaseExportView,
     DeleteCustomExportView,
     DownloadFormExportView,
-    DownloadCaseExportView, FormExportListView)
+    DownloadCaseExportView, FormExportListView, CaseExportListView)
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
