@@ -735,7 +735,53 @@ class Subscriber(models.Model):
             return "ORGANIZATION %s" % self.organization
         return "DOMAIN %s" % self.domain
 
-    def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
+    def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
+        return self._apply_upgrades_and_downgrades(
+            new_plan_version=new_plan_version,
+            web_user=web_user,
+            new_subscription=new_subscription,
+            internal_change=is_internal_change,
+        )
+
+    def cancel_subscription(self, web_user, old_subscription):
+        return self._apply_upgrades_and_downgrades(web_user=web_user, old_subscription=old_subscription)
+
+    def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
+                            web_user, old_subscription, new_subscription, internal_change):
+        return self._apply_upgrades_and_downgrades(
+            downgraded_privileges=downgraded_privileges,
+            upgraded_privileges=upgraded_privileges,
+            new_plan_version=new_plan_version,
+            web_user=web_user,
+            old_subscription=old_subscription,
+            new_subscription=new_subscription,
+            internal_change=internal_change,
+        )
+
+    def activate_subscription(self, upgraded_privileges, subscription):
+        return self._apply_upgrades_and_downgrades(
+            upgraded_privileges=upgraded_privileges,
+            new_subscription=subscription,
+        )
+
+    def deactivate_subscription(self, downgraded_privileges, upgraded_privileges,
+                                old_subscription, new_subscription):
+        return self._apply_upgrades_and_downgrades(
+            downgraded_privileges=downgraded_privileges,
+            upgraded_privileges=upgraded_privileges,
+            old_subscription=old_subscription,
+            new_subscription=new_subscription,
+        )
+
+    def reactivate_subscription(self, new_plan_version, web_user, subscription):
+        return self._apply_upgrades_and_downgrades(
+            new_plan_version=new_plan_version,
+            web_user=web_user,
+            old_subscription=subscription,
+            new_subscription=subscription,
+        )
+
+    def _apply_upgrades_and_downgrades(self, downgraded_privileges=None,
                                       upgraded_privileges=None,
                                       new_plan_version=None,
                                       verbose=False,
@@ -929,10 +975,7 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        self.subscriber.apply_upgrades_and_downgrades(
-            web_user=web_user,
-            old_subscription=self,
-        )
+        self.subscriber.cancel_subscription(web_user=web_user, old_subscription=self)
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -1102,7 +1145,7 @@ class Subscription(models.Model):
 
         new_subscription.set_billing_account_entry_point()
 
-        self.subscriber.apply_upgrades_and_downgrades(
+        self.subscriber.change_subscription(
             downgraded_privileges=downgrades,
             upgraded_privileges=upgrades,
             new_plan_version=new_plan_version,
@@ -1138,11 +1181,10 @@ class Subscription(models.Model):
             if allowed_attr in kwargs.keys():
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
-        self.subscriber.apply_upgrades_and_downgrades(
+        self.subscriber.reactivate_subscription(
             new_plan_version=self.plan_version,
             web_user=web_user,
-            old_subscription=self,
-            new_subscription=self,
+            subscription=self,
         )
         SubscriptionAdjustment.record_adjustment(
             self, reason=SubscriptionAdjustmentReason.REACTIVATE,
@@ -1482,11 +1524,11 @@ class Subscription(models.Model):
         )
         subscription.is_active = is_active_subscription(date_start, date_end)
         if subscription.is_active:
-            subscriber.apply_upgrades_and_downgrades(
+            subscriber.create_subscription(
                 new_plan_version=plan_version,
                 web_user=web_user,
                 new_subscription=subscription,
-                internal_change=internal_change,
+                is_internal_change=internal_change,
             )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
