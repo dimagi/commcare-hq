@@ -785,12 +785,16 @@ class Subscriber(models.Model):
         )
 
     def _apply_upgrades_and_downgrades(self, downgraded_privileges=None,
-                                      upgraded_privileges=None,
-                                      new_plan_version=None,
-                                      web_user=None,
-                                      old_subscription=None,
-                                      new_subscription=None,
-                                      internal_change=False):
+                                       upgraded_privileges=None,
+                                       new_plan_version=None,
+                                       web_user=None,
+                                       old_subscription=None,
+                                       new_subscription=None,
+                                       internal_change=False):
+        """
+        downgraded_privileges is the list of privileges that should be removed
+        upgraded_privileges is the list of privileges that should be added
+        """
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -799,25 +803,15 @@ class Subscriber(models.Model):
             new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
 
         if downgraded_privileges is None or upgraded_privileges is None:
-            dp, up = get_change_status(None, new_plan_version)[1:]
-            downgraded_privileges = downgraded_privileges or dp
-            upgraded_privileges = upgraded_privileges or up
+            change_status_result = get_change_status(None, new_plan_version)
+            downgraded_privileges = downgraded_privileges or change_status_result.downgraded_privs
+            upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
         if downgraded_privileges:
-            downgrade_handler = DomainDowngradeActionHandler(
-                self.domain, new_plan_version, downgraded_privileges,
-                web_user=web_user,
-            )
-            if not downgrade_handler.get_response():
-                raise SubscriptionChangeError("The downgrade was not successful.")
+            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version, web_user)
 
         if upgraded_privileges:
-            upgrade_handler = DomainUpgradeActionHandler(
-                self.domain, new_plan_version, upgraded_privileges,
-                web_user=web_user,
-            )
-            if not upgrade_handler.get_response():
-                raise SubscriptionChangeError("The upgrade was not successful.")
+            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
 
         if not (
             (
@@ -871,6 +865,24 @@ class Subscriber(models.Model):
             )
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
+
+    @staticmethod
+    def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
+        downgrade_handler = DomainDowngradeActionHandler(
+            domain, new_plan_version, downgraded_privileges,
+            web_user=web_user,
+        )
+        if not downgrade_handler.get_response():
+            raise SubscriptionChangeError("The downgrade was not successful.")
+
+    @staticmethod
+    def _process_upgrade(domain, upgraded_privileges, new_plan_version, web_user):
+        upgrade_handler = DomainUpgradeActionHandler(
+            domain, new_plan_version, upgraded_privileges,
+            web_user=web_user,
+        )
+        if not upgrade_handler.get_response():
+            raise SubscriptionChangeError("The upgrade was not successful.")
 
 
 class Subscription(models.Model):
