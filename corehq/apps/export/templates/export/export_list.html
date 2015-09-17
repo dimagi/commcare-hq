@@ -136,15 +136,14 @@
                     {% include 'export/partial/export_bulk_notice.html' %}
                 </div>
             </div>
-
         </div>
         <div class="modal fade"
              id="createExportOptionsModal"
-             ng-controller="CreateFormExportController">
+             ng-controller="CreateExportController">
             <div class="modal-dialog">
                 <form name="exportOptionsForm"
                       class="form form-horizontal"
-                      ng-submit="handleCreateFormExport">
+                      ng-submit="handleCreateExport()">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">
@@ -157,8 +156,35 @@
                             <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
                         </div>
                         <div class="modal-body"
-                             ng-show="!showNoAppsError && !formLoadError && !!isLoaded">
+                             ng-show="!showNoAppsError && !formLoadError && !!isLoaded && !isFetchingUrl">
+                            <div class="alert alert-warning"
+                                 ng-show="!!fetchingUrlError">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong ng-if="fetchingUrlError === 'default'">
+                                    {% blocktrans %}
+                                        There was an issue fetching the export data.
+                                        Please check your internet connection.
+                                    {% endblocktrans %}
+                                </strong>
+                                <strong ng-if="fetchingUrlError !== 'default'">
+                                    {% angularjs %}{{ fetchingUrlError }}{% endangularjs %}
+                                </strong>
+                                <p>
+                                    If this problem persists,
+                                    please <a href="#reportIssueModal"
+                                              data-toggle="modal">Report an Issue</a>.
+                                </p>
+                            </div>
                             {% crispy create_export_form %}
+                        </div>
+                        <div class="modal-body"
+                             ng-show="!!isFetchingUrl">
+                            <p class="lead">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                {% blocktrans %}
+                                    Preparing Export Data...
+                                {% endblocktrans %}
+                            </p>
                         </div>
                         <div class="modal-body"
                              ng-show="!!formLoadError">
@@ -200,11 +226,14 @@
                             </a>
                          </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                            <button type="button"
+                                    class="btn btn-default"
+                                    data-dismiss="modal"
+                                    ng-disabled="!!isFetchingUrl">{% trans 'Cancel' %}</button>
                             <button type="submit"
                                     class="btn btn-success"
                                     ng-show="!showNoAppsError && !formLoadError"
-                                    ng-disabled="!!exportOptionsForm.$invalid">
+                                    ng-disabled="!!exportOptionsForm.$invalid || !!isFetchingUrl">
                                 {% trans "Create Export" %}
                             </button>
                         </div>
