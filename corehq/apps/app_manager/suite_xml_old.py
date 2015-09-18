@@ -15,6 +15,7 @@ from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, D
 from corehq.apps.app_manager.suite_xml.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.menus import MenuContributor
+from corehq.apps.app_manager.suite_xml.resources import FormResourceContributor, LocaleResourceContributor
 from corehq.apps.app_manager.suite_xml.scheduler import SchedulerContributor
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
 
@@ -101,50 +102,11 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @property
     def xform_resources(self):
-        first = []
-        last = []
-        for form_stuff in self.app.get_forms(bare=False):
-            form = form_stuff["form"]
-            if form_stuff['type'] == 'module_form':
-                path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
-                this_list = first
-            else:
-                path = './user_registration.xml'
-                this_list = last
-            resource = XFormResource(
-                id=id_strings.xform_resource(form),
-                version=form.get_version(),
-                local=path,
-                remote=path,
-            )
-            if form_stuff['type'] == 'module_form' and self.app.build_version >= '2.9':
-                resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
-                    module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
-                    form_name=trans(form["name"], langs=[self.app.default_language])
-                )
-            elif path == './user_registration.xml':
-                resource.descriptor=u"User Registration Form"
-            this_list.append(resource)
-        for x in first:
-            yield x
-        for x in last:
-            yield x
+        return FormResourceContributor(self.suite, self.app, self.modules).get_section_contributions()
 
     @property
     def locale_resources(self):
-        for lang in ["default"] + self.app.build_langs:
-            path = './{lang}/app_strings.txt'.format(lang=lang)
-            resource = LocaleResource(
-                language=lang,
-                id=id_strings.locale_resource(lang),
-                version=self.app.version,
-                local=path,
-                remote=path,
-            )
-            if self.app.build_version >= '2.9':
-                unknown_lang_txt = u"Unknown Language (%s)" % lang
-                resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
-            yield resource
+        return LocaleResourceContributor(self.suite, self.app, self.modules).get_section_contributions()
 
     def get_datums_meta_for_form_generic(self, form):
         if form.form_type == 'module_form':
