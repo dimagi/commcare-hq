@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
-from corehq.apps.app_manager.suite_xml.entries import EntriesHelper
 
 
 class BaseSuiteContributor(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, suite, app, modules):
+        from corehq.apps.app_manager.suite_xml.entries import EntriesHelper
         self.suite = suite
         self.app = app
         self.modules = modules

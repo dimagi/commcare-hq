@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 from itertools import izip_longest
+from corehq.apps.app_manager.suite_xml.generator import SuiteContributorByModule
 
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.exceptions import (
@@ -19,6 +20,11 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
 FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
+
+
+class EntriesContributor(SuiteContributorByModule):
+    def get_module_contributions(self, module):
+        return self.entries_helper.entry_for_module(module)
 
 
 class EntriesHelper(object):
@@ -143,94 +149,92 @@ class EntriesHelper(object):
         ]
         return datum, assertions
 
-    @property
-    def entries(self):
+    def entry_for_module(self, module):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        for module in self.modules:
-            for form in module.get_forms():
-                e = Entry()
-                e.form = form.xmlns
-                # Ideally all of this version check should happen in Command/Display class
-                if self.app.enable_localized_menu_media:
-                    e.command = LocalizedCommand(
-                        id=id_strings.form_command(form),
-                        menu_locale_id=id_strings.form_locale(form),
-                        media_image=bool(len(form.all_image_paths())),
-                        media_audio=bool(len(form.all_audio_paths())),
-                        image_locale_id=id_strings.form_icon_locale(form),
-                        audio_locale_id=id_strings.form_audio_locale(form),
-                    )
-                else:
-                    e.command = Command(
-                        id=id_strings.form_command(form),
-                        locale_id=id_strings.form_locale(form),
-                        media_image=form.default_media_image,
-                        media_audio=form.default_media_audio,
-                    )
-                config_entry = {
-                    'module_form': self.configure_entry_module_form,
-                    'advanced_form': self.configure_entry_advanced_form,
-                    'careplan_form': self.configure_entry_careplan_form,
-                }[form.form_type]
-                config_entry(module, e, form)
+        for form in module.get_forms():
+            e = Entry()
+            e.form = form.xmlns
+            # Ideally all of this version check should happen in Command/Display class
+            if self.app.enable_localized_menu_media:
+                e.command = LocalizedCommand(
+                    id=id_strings.form_command(form),
+                    menu_locale_id=id_strings.form_locale(form),
+                    media_image=bool(len(form.all_image_paths())),
+                    media_audio=bool(len(form.all_audio_paths())),
+                    image_locale_id=id_strings.form_icon_locale(form),
+                    audio_locale_id=id_strings.form_audio_locale(form),
+                )
+            else:
+                e.command = Command(
+                    id=id_strings.form_command(form),
+                    locale_id=id_strings.form_locale(form),
+                    media_image=form.default_media_image,
+                    media_audio=form.default_media_audio,
+                )
+            config_entry = {
+                'module_form': self.configure_entry_module_form,
+                'advanced_form': self.configure_entry_advanced_form,
+                'careplan_form': self.configure_entry_careplan_form,
+            }[form.form_type]
+            config_entry(module, e, form)
 
-                if (
-                    self.app.commtrack_enabled and
-                    session_var('supply_point_id') in getattr(form, 'source', "")
-                ):
-                    from corehq.apps.app_manager.models import AUTO_SELECT_LOCATION
-                    datum, assertions = EntriesHelper.get_userdata_autoselect(
-                        'commtrack-supply-point',
-                        'supply_point_id',
-                        AUTO_SELECT_LOCATION,
-                    )
-                    e.datums.append(datum)
-                    e.assertions.extend(assertions)
+            if (
+                self.app.commtrack_enabled and
+                session_var('supply_point_id') in getattr(form, 'source', "")
+            ):
+                from corehq.apps.app_manager.models import AUTO_SELECT_LOCATION
+                datum, assertions = EntriesHelper.get_userdata_autoselect(
+                    'commtrack-supply-point',
+                    'supply_point_id',
+                    AUTO_SELECT_LOCATION,
+                )
+                e.datums.append(datum)
+                e.assertions.extend(assertions)
 
-                results.append(e)
+            results.append(e)
 
-            if hasattr(module, 'case_list') and module.case_list.show:
-                e = Entry()
-                if self.app.enable_localized_menu_media:
-                    e.command = LocalizedCommand(
-                        id=id_strings.case_list_command(module),
-                        menu_locale_id=id_strings.case_list_locale(module),
-                        media_image=bool(len(module.case_list.all_image_paths())),
-                        media_audio=bool(len(module.case_list.all_audio_paths())),
-                        image_locale_id=id_strings.case_list_icon_locale(module),
-                        audio_locale_id=id_strings.case_list_audio_locale(module),
-                    )
-                else:
-                    e.command = Command(
-                        id=id_strings.case_list_command(module),
-                        locale_id=id_strings.case_list_locale(module),
-                        media_image=module.case_list.default_media_image,
-                        media_audio=module.case_list.default_media_audio,
-                    )
-                if isinstance(module, Module):
-                    for datum_meta in self.get_datum_meta_module(module, use_filter=False):
-                        e.datums.append(datum_meta.datum)
-                elif isinstance(module, AdvancedModule):
+        if hasattr(module, 'case_list') and module.case_list.show:
+            e = Entry()
+            if self.app.enable_localized_menu_media:
+                e.command = LocalizedCommand(
+                    id=id_strings.case_list_command(module),
+                    menu_locale_id=id_strings.case_list_locale(module),
+                    media_image=bool(len(module.case_list.all_image_paths())),
+                    media_audio=bool(len(module.case_list.all_audio_paths())),
+                    image_locale_id=id_strings.case_list_icon_locale(module),
+                    audio_locale_id=id_strings.case_list_audio_locale(module),
+                )
+            else:
+                e.command = Command(
+                    id=id_strings.case_list_command(module),
+                    locale_id=id_strings.case_list_locale(module),
+                    media_image=module.case_list.default_media_image,
+                    media_audio=module.case_list.default_media_audio,
+                )
+            if isinstance(module, Module):
+                for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                    e.datums.append(datum_meta.datum)
+            elif isinstance(module, AdvancedModule):
+                e.datums.append(SessionDatum(
+                    id='case_id_case_%s' % module.case_type,
+                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
+                    value="./@case_id",
+                    detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
+                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                ))
+                if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
-                        id='case_id_case_%s' % module.case_type,
-                        nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
-                        value="./@case_id",
-                        detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                        detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                        id='product_id',
+                        nodeset=ProductInstanceXpath().instance(),
+                        value="./@id",
+                        detail_select=self.details_helper.get_detail_id_safe(module, 'product_short')
                     ))
-                    if self.app.commtrack_enabled:
-                        e.datums.append(SessionDatum(
-                            id='product_id',
-                            nodeset=ProductInstanceXpath().instance(),
-                            value="./@id",
-                            detail_select=self.details_helper.get_detail_id_safe(module, 'product_short')
-                        ))
-                results.append(e)
+            results.append(e)
 
-            for entry in module.get_custom_entries():
-                results.append(entry)
+        for entry in module.get_custom_entries():
+            results.append(entry)
 
         return results
 

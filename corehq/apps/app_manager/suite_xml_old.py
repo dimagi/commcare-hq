@@ -1,52 +1,73 @@
-from collections import namedtuple, defaultdict
-from itertools import izip_longest, chain
-import os
-import re
+from collections import namedtuple
+from lxml import etree
 import urllib
 
-from xml.sax.saxutils import escape
-
-from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
-import itertools
+
 from corehq.apps.app_manager.suite_xml.careplan import CareplanMenuContributor
-from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
-from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, DetailContributor, DetailsHelper
-from corehq.apps.app_manager.suite_xml.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.details import DetailContributor, DetailsHelper
+from corehq.apps.app_manager.suite_xml.entries import EntriesContributor
 from corehq.apps.app_manager.suite_xml.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.menus import MenuContributor
 from corehq.apps.app_manager.suite_xml.resources import FormResourceContributor, LocaleResourceContributor
 from corehq.apps.app_manager.suite_xml.scheduler import SchedulerContributor
-from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
-
+from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
 from .exceptions import (
     MediaResourceError,
-    ParentModuleReferenceError,
-    SuiteError,
     SuiteValidationError,
 )
-from corehq.feature_previews import MODULE_FILTER
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT,
-    RETURN_TO, USERCASE_ID, USERCASE_TYPE, SCHEDULE_LAST_VISIT_DATE, SCHEDULE_DATE_CASE_OPENED,
-    SCHEDULE_NEXT_DUE, SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
-)
-from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError, FormNotFoundException
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
-    actions_use_usercase, is_usercase_in_use
-from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
-    autoset_owner_id_for_subcase
-from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
-    ScheduleFormXPath, QualifiedScheduleFormXPath
+from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.suite_xml.xml_models import *
+
+
+FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
+
+class SuiteGenerator(object):
+    descriptor = u"Suite File"
+    def __init__(self, app):
+        self.app = app
+        self.modules = list(app.get_modules())
+        self.details_helper = DetailsHelper(self.app, self.modules)
+        self.suite = Suite(
+            version=self.app.version,
+            descriptor=self.descriptor,
+        )
+
+    def generate_suite(self):
+        FormResourceContributor(self.suite, self.app, self.modules).contribute()
+        LocaleResourceContributor(self.suite, self.app, self.modules).contribute()
+        DetailContributor(self.suite, self.app, self.modules).contribute()
+
+        entries = EntriesContributor(self.suite, self.app, self.modules)
+        for module in self.modules:
+            self.suite.entries.extend(entries.get_module_contributions(module))
+
+        menus = MenuContributor(self.suite, self.app, self.modules)
+        careplan_menus = CareplanMenuContributor(self.suite, self.app, self.modules)
+        for module in self.modules:
+            self.suite.menus.extend(
+                careplan_menus.get_module_contributions(module)
+            )
+            self.suite.menus.extend(
+                menus.get_module_contributions(module)
+            )
+
+        self.suite.fixtures.extend(
+            FixtureContributor(self.suite, self.app, self.modules).get_section_contributions(),
+        )
+        self.suite.fixtures.extend(
+            SchedulerContributor(self.suite, self.app, self.modules).fixtures()
+        )
+
+        if self.app.enable_post_form_workflow:
+            WorkflowHelper(self.suite, self.app, self.modules).add_form_workflow()
+
+        EntryInstances(self.suite, self.app, self.modules).contribute()
+        return self.suite.serializeDocument(pretty=True)
 
 
 class SuiteGeneratorBase(object):
@@ -72,68 +93,6 @@ class SuiteGeneratorBase(object):
 
     def post_process(self, suite):
         pass
-
-
-FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
-
-
-class SuiteGenerator(SuiteGeneratorBase):
-    descriptor = u"Suite File"
-    sections = (
-        'xform_resources',
-        'locale_resources',
-        'details',
-        'entries',
-        'menus',
-        'fixtures',
-    )
-
-    def __init__(self, app):
-        super(SuiteGenerator, self).__init__(app)
-        self.details_helper = DetailsHelper(self.app, self.modules)
-
-    def post_process(self, suite):
-        if self.app.enable_post_form_workflow:
-            WorkflowHelper(suite, self.app, self.modules).add_form_workflow()
-
-        EntryInstances(suite, self.app, self.modules).contribute()
-
-    @property
-    def xform_resources(self):
-        return FormResourceContributor(self.suite, self.app, self.modules).get_section_contributions()
-
-    @property
-    def locale_resources(self):
-        return LocaleResourceContributor(self.suite, self.app, self.modules).get_section_contributions()
-
-    @property
-    @memoized
-    def details(self):
-        return DetailContributor(self.suite, self.app, self.modules).get_section_contributions()
-
-    @property
-    def entries(self):
-        return EntriesHelper(self.app, self.modules).entries
-
-    @property
-    @memoized
-    def menus(self):
-        menus = []
-        for module in self.modules:
-            menus.extend(
-                CareplanMenuContributor(self.suite, self.app, self.modules).get_module_contributions(module)
-            )
-            menus.extend(
-                MenuContributor(self.suite, self.app, self.modules).get_module_contributions(module)
-            )
-        return menus
-
-    @property
-    def fixtures(self):
-        return chain(
-            FixtureContributor(self.suite, self.app, self.modules).get_section_contributions(),
-            SchedulerContributor(self.suite, self.app, self.modules).fixtures()
-        )
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):
