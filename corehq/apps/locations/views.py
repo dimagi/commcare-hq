@@ -73,7 +73,7 @@ class BaseLocationView(BaseDomainView):
 
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
-    page_title = ugettext_noop("Locations")
+    page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
     @property
@@ -110,7 +110,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
 class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
-    page_title = ugettext_noop("Location Types")
+    page_title = ugettext_noop("Organization Levels")
     template_name = 'locations/settings.html'
 
     @method_decorator(can_edit_location_types)
@@ -176,7 +176,7 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing a location type property!"
+                assert prop in loc_type, "Missing an organization level property!"
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -200,7 +200,7 @@ class LocationTypesView(BaseLocationView):
                 if (SQLLocation.objects.filter(domain=self.domain,
                                                location_type=pk)
                                        .exists()):
-                    msg = _("You cannot delete location types that have locations")
+                    msg = _("You cannot delete organization levels that have locations")
                     messages.warning(self.request, msg)
                     return False
                 to_delete.append(pk)
@@ -680,7 +680,7 @@ def location_importer_job_poll(request, domain, download_id,
 @locations_access_required
 def location_export(request, domain):
     if not LocationType.objects.filter(domain=domain).exists():
-        messages.error(request, _("You need to define location types before "
+        messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
