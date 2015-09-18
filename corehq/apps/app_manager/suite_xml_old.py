@@ -12,6 +12,7 @@ from corehq.apps.app_manager.suite_xml.careplan import CareplanContributor
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
 from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, DetailContributor
 from corehq.apps.app_manager.suite_xml.fixtures import FixtureContributor
+from corehq.apps.app_manager.suite_xml.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.scheduler import SchedulerContributor
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
 
@@ -68,40 +69,6 @@ class SuiteGeneratorBase(object):
         pass
 
 
-def get_instance_factory(scheme):
-    return get_instance_factory._factory_map.get(scheme, preset_instances)
-get_instance_factory._factory_map = {}
-
-
-class register_factory(object):
-    def __init__(self, *schemes):
-        self.schemes = schemes
-
-    def __call__(self, fn):
-        for scheme in self.schemes:
-            get_instance_factory._factory_map[scheme] = fn
-        return fn
-
-
-INSTANCE_BY_ID = {
-    'groups': Instance(id='groups', src='jr://fixture/user-groups'),
-    'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
-    'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
-    'casedb': Instance(id='casedb', src='jr://instance/casedb'),
-    'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
-}
-
-@register_factory(*INSTANCE_BY_ID.keys())
-def preset_instances(instance_name):
-    return INSTANCE_BY_ID.get(instance_name, None)
-
-
-@register_factory('item-list', 'schedule', 'indicators', 'commtrack')
-@memoized
-def generic_fixture_instances(instance_name):
-    return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
-
-
 FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
 
 
@@ -128,10 +95,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if self.app.enable_post_form_workflow:
             WorkflowHelper(suite, self.app, self.modules).add_form_workflow()
 
-        details_by_id = self.get_detail_mapping()
-        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
-        for e in suite.entries:
-            self.add_referenced_instances(e, details_by_id, relevance_by_menu, menu_by_command)
+        EntryInstances(self.suite, self.app, self.modules).contribute()
 
     @property
     def xform_resources(self):
@@ -291,20 +255,6 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_detail_mapping(self):
         return {detail.id: detail for detail in self.details}
 
-    @memoized
-    def get_menu_relevance_mapping(self):
-        relevance_by_menu = defaultdict(list)
-        menu_by_command = {}
-        for menu in self.menus:
-            for command in menu.commands:
-                menu_by_command[command.id] = menu.id
-                if command.relevant:
-                    relevance_by_menu[menu.id].append(command.relevant)
-            if menu.relevant:
-                relevance_by_menu[menu.id].append(menu.relevant)
-
-        return relevance_by_menu, menu_by_command
-
     def get_detail_id_safe(self, module, detail_type):
         detail_id = id_strings.detail(
             module=module,
@@ -330,60 +280,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
         return SuiteGenerator.get_required_instances(xpaths)
-
-    @staticmethod
-    def get_required_instances(xpaths):
-        instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
-        instances = set()
-        for xpath in xpaths:
-            instance_names = re.findall(instance_re, xpath)
-            for instance_name in instance_names:
-                try:
-                    scheme, _ = instance_name.split(':', 1)
-                except ValueError:
-                    scheme = None
-
-                factory = get_instance_factory(scheme)
-                instance = factory(instance_name)
-                if instance:
-                    instances.add(instance)
-                else:
-                    raise UnknownInstanceError("Instance reference not recognized: {}".format(instance_name))
-        return instances
-
-    @staticmethod
-    def add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command):
-        detail_ids = set()
-        xpaths = set()
-
-        for datum in entry.datums:
-            detail_ids.add(datum.detail_confirm)
-            detail_ids.add(datum.detail_select)
-            xpaths.add(datum.nodeset)
-            xpaths.add(datum.function)
-        details = [details_by_id[detail_id] for detail_id in detail_ids
-                   if detail_id]
-
-        entry_id = entry.command.id
-        menu_id = menu_by_command[entry_id]
-        relevances = relevance_by_menu[menu_id]
-        xpaths.update(relevances)
-
-        for detail in details:
-            xpaths.update(detail.get_all_xpaths())
-        for assertion in entry.assertions:
-            xpaths.add(assertion.test)
-        if entry.stack:
-            for frame in entry.stack.frames:
-                xpaths.add(frame.if_clause)
-                if hasattr(frame, 'datums'):
-                    for datum in frame.datums:
-                        xpaths.add(datum.value)
-        xpaths.discard(None)
-
-        instances = SuiteGenerator.get_required_instances(xpaths)
-
-        entry.require_instance(*instances)
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):
