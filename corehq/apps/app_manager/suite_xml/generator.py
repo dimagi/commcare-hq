@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from corehq.apps.app_manager.suite_xml.entries import EntriesHelper
 
 
 class BaseSuiteContributor(object):
@@ -8,6 +9,7 @@ class BaseSuiteContributor(object):
         self.suite = suite
         self.app = app
         self.modules = modules
+        self.entries_helper = EntriesHelper(app, modules)
 
 
 class SuiteContributor(BaseSuiteContributor):

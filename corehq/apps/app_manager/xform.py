@@ -1565,8 +1565,8 @@ class XForm(WrappedNode):
         if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
-            from corehq.apps.app_manager.suite_xml import SuiteGenerator
-            gen = SuiteGenerator(form.get_app())
+            from corehq.apps.app_manager.suite_xml.entries import EntriesHelper
+            gen = EntriesHelper(form.get_app())
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             adjusted_datums = {
                 getattr(meta.action, 'id', None): meta.datum.id

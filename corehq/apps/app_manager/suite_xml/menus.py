@@ -51,7 +51,7 @@ class MenuContributor(SuiteContributorByModule):
                     command = Command(id=id_strings.form_command(form))
 
                     if form.requires_case():
-                        form_datums = self.get_datums_meta_for_form_generic(form)
+                        form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
                         var_name = next(
                             meta.datum.id for meta in reversed(form_datums)
                             if meta.action and meta.requires_selection

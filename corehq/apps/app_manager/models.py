@@ -25,6 +25,7 @@ from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
+from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml_old import SuiteGenerator, MediaSuiteGenerator
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -2657,7 +2658,7 @@ class AdvancedModule(ModuleBase):
 
                 if from_module.parent_select.active:
                     app = self.get_app()
-                    select_chain = SuiteGenerator.get_select_chain(app, from_module, include_self=False)
+                    select_chain = get_select_chain(app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(

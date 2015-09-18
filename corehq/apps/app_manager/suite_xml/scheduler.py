@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import SCHEDULE_DATE_CASE_OPENED, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE

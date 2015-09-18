@@ -4,15 +4,18 @@ import os
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
+from corehq.apps.app_manager.const import RETURN_TO
 
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.generator import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
-    Response, Detail
+    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum
 from corehq.apps.app_manager.suite_xml.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -146,6 +149,59 @@ class DetailContributor(SectionSuiteContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _add_action_to_detail(self, detail, module):
+        # add form action to detail
+        form = self.app.get_form(module.case_list_form.form_id)
+
+        if self.app.enable_localized_menu_media:
+            case_list_form = module.case_list_form
+            detail.action = LocalizedAction(
+                menu_locale_id=id_strings.case_list_form_locale(module),
+                media_image=bool(len(case_list_form.all_image_paths())),
+                media_audio=bool(len(case_list_form.all_audio_paths())),
+                image_locale_id=id_strings.case_list_form_icon_locale(module),
+                audio_locale_id=id_strings.case_list_form_audio_locale(module),
+                stack=Stack(),
+                for_action_menu=True,
+            )
+        else:
+            detail.action = Action(
+                display=Display(
+                    text=Text(locale_id=id_strings.case_list_form_locale(module)),
+                    media_image=module.case_list_form.default_media_image,
+                    media_audio=module.case_list_form.default_media_audio,
+                ),
+                stack=Stack()
+            )
+
+        frame = PushFrame()
+        frame.add_command(XPath.string(id_strings.form_command(form)))
+
+        target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
+        source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+        for target_meta in target_form_dm:
+            if target_meta.requires_selection:
+                # This is true for registration forms where the case being created is a subcase
+                try:
+                    [source_dm] = [
+                        source_meta for source_meta in source_form_dm
+                        if source_meta.case_type == target_meta.case_type
+                    ]
+                except ValueError:
+                    raise SuiteError("Form selected as case list form requires a case "
+                                     "but no matching case could be found: {}".format(form.unique_id))
+                else:
+                    frame.add_datum(StackDatum(
+                        id=target_meta.datum.id,
+                        value=session_var(source_dm.datum.id))
+                    )
+            else:
+                s_datum = target_meta.datum
+                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
+
+        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
+        detail.action.stack.add_frame(frame)
     
     def build_case_tile_detail(self, module, detail, detail_type):
         """
@@ -209,6 +265,53 @@ class DetailContributor(SectionSuiteContributor):
                 os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
         )) as f:
             return f.read().decode('utf-8')
+
+
+class DetailsHelper(object):
+    def __init__(self, app, modules=None):
+        self.app = app
+        self._modules = modules
+        self.active_details = self._active_details()
+
+    @property
+    @memoized
+    def modules(self):
+        return self._modules or self.app.get_modules()
+
+    def _active_details(self):
+        return {
+            id_strings.detail(module, detail_type)
+            for module in self.modules for detail_type, detail, enabled in module.get_details()
+            if enabled and detail.columns
+        }
+
+    def get_detail_id_safe(self, module, detail_type):
+        detail_id = id_strings.detail(
+            module=module,
+            detail_type=detail_type,
+        )
+        return detail_id if detail_id in self.active_details else None
+
+    def get_instances_for_module(self, module, additional_xpaths=None):
+        """
+        This method is used by CloudCare when filtering cases.
+        """
+        details = DetailContributor(None, self.app, self.modules).get_section_contributions()
+        detail_mapping = {detail.id: detail for detail in details}
+        details_by_id = detail_mapping
+        detail_ids = [self.get_detail_id_safe(module, detail_type)
+                      for detail_type, detail, enabled in module.get_details()
+                      if enabled]
+        detail_ids = filter(None, detail_ids)
+        xpaths = set()
+
+        if additional_xpaths:
+            xpaths.update(additional_xpaths)
+
+        for detail_id in detail_ids:
+            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+
+        return EntryInstances.get_required_instances(xpaths)
     
 
 def get_default_sort_elements(detail):
