@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -6,7 +7,7 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.generator import SectionSuiteContributor
-from corehq.apps.app_manager.suite_xml.models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
+from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
     Response, Detail
 from corehq.apps.app_manager.suite_xml.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column

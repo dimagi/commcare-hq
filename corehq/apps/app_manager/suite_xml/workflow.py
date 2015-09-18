@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from functools import total_ordering
 from os.path import commonprefix
@@ -8,7 +9,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.suite_xml.models import StackDatum, Stack, CreateFrame
+from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
 from dimagi.utils.decorators.memoized import memoized

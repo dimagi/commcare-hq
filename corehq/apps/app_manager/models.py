@@ -66,7 +66,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
     id_strings, commcare_settings
-from corehq.apps.app_manager.suite_xml import models as suite_models
+from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.util import (
     split_path,

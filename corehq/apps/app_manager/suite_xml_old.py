@@ -37,7 +37,7 @@ from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, sessio
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.suite_xml.models import *
+from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
 class SuiteGeneratorBase(object):

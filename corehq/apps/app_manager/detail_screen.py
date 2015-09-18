@@ -1,5 +1,5 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml import models as sx
+from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xpath import (
