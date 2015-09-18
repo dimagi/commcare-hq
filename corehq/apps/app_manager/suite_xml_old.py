@@ -11,6 +11,8 @@ from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.suite_xml.careplan import CareplanContributor
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
 from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, DetailContributor
+from corehq.apps.app_manager.suite_xml.fixtures import FixtureContributor
+from corehq.apps.app_manager.suite_xml.scheduler import SchedulerContributor
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
 
 from .exceptions import (
@@ -1185,55 +1187,10 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     @property
     def fixtures(self):
-        return chain(self._case_sharing_fixtures, self._schedule_fixtures)
-
-    @property
-    def _case_sharing_fixtures(self):
-        if self.app.case_sharing:
-            f = Fixture(id='user-groups')
-            f.user_id = 'demo_user'
-            groups = etree.fromstring("""
-                <groups>
-                    <group id="demo_user_group_id">
-                        <name>Demo Group</name>
-                    </group>
-                </groups>
-            """)
-            f.set_content(groups)
-            yield f
-
-    @property
-    def _schedule_fixtures(self):
-        schedule_modules = (module for module in self.modules
-                            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
-        schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())
-        schedule_forms = (form for phase in schedule_phases for form in phase.get_forms())
-
-        for form in schedule_forms:
-            schedule = form.schedule
-
-            if schedule is None:
-                raise (ScheduleError(_("There is no schedule for form {form_id}")
-                                     .format(form_id=form.unique_id)))
-
-            visits = [ScheduleFixtureVisit(id=visit.id,
-                                           due=visit.due,
-                                           starts=visit.starts,
-                                           expires=visit.expires,
-                                           repeats=visit.repeats,
-                                           increment=visit.increment)
-                      for visit in schedule.get_visits()]
-
-            schedule_fixture = ScheduleFixture(
-                id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
-                schedule=Schedule(
-                    starts=schedule.starts,
-                    expires=schedule.expires if schedule.expires else '',
-                    allow_unscheduled=schedule.allow_unscheduled,
-                    visits=visits,
-                )
-            )
-            yield schedule_fixture
+        return chain(
+            FixtureContributor(self.suite, self.app, self.modules).get_section_contributions(),
+            SchedulerContributor(self.suite, self.app, self.modules).fixtures()
+        )
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):

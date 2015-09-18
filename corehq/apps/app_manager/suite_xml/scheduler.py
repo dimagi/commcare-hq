@@ -1,10 +1,49 @@
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import SCHEDULE_DATE_CASE_OPENED, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
-from corehq.apps.app_manager.suite_xml.xml_models import DetailVariable
+from corehq.apps.app_manager.suite_xml.generator import SuiteContributor
+from corehq.apps.app_manager.suite_xml.xml_models import DetailVariable, ScheduleFixtureVisit, ScheduleFixture, Schedule
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xpath import ScheduleFormXPath
+
+
+class SchedulerContributor(SuiteContributor):
+    def contribute(self):
+        pass
+
+    def fixtures(self):
+        schedule_modules = (module for module in self.modules
+                            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
+        schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())
+        schedule_forms = (form for phase in schedule_phases for form in phase.get_forms())
+
+        for form in schedule_forms:
+            schedule = form.schedule
+
+            if schedule is None:
+                raise (ScheduleError(_("There is no schedule for form {form_id}")
+                                     .format(form_id=form.unique_id)))
+
+            visits = [ScheduleFixtureVisit(id=visit.id,
+                                           due=visit.due,
+                                           starts=visit.starts,
+                                           expires=visit.expires,
+                                           repeats=visit.repeats,
+                                           increment=visit.increment)
+                      for visit in schedule.get_visits()]
+
+            schedule_fixture = ScheduleFixture(
+                id=id_strings.schedule_fixture(form.get_module(), form.get_phase(), form),
+                schedule=Schedule(
+                    starts=schedule.starts,
+                    expires=schedule.expires if schedule.expires else '',
+                    allow_unscheduled=schedule.allow_unscheduled,
+                    visits=visits,
+                )
+            )
+            yield schedule_fixture
 
 
 def schedule_detail_variables(module, detail, detail_column_infos):
@@ -58,3 +97,4 @@ def schedule_detail_variables(module, detail, detail_column_infos):
 
         if len(forms_due) != len(set(forms_due)):
             raise ScheduleError(_("Your app has multiple forms with the same schedule abbreviation"))
+
