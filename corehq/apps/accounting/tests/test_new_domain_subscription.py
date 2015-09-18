@@ -1,5 +1,5 @@
 import datetime
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (

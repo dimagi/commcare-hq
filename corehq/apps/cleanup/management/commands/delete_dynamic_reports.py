@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 import sys
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):

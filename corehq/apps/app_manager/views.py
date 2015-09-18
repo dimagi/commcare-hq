@@ -12,6 +12,8 @@ import json
 import yaml
 from collections import defaultdict, OrderedDict, namedtuple
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
+from corehq.apps.hqwebapp.models import ApplicationsTab
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from soil import DownloadBase
 from xml.dom.minidom import parseString
@@ -22,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
+from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
@@ -720,7 +722,6 @@ def get_langs(request, app):
 
 
 def _clear_app_cache(request, domain):
-    from corehq import ApplicationsTab
     ApplicationBase.get_db().view('app_manager/applications_brief',
         startkey=[domain],
         limit=1,

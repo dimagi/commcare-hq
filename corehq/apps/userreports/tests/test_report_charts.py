@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ChartFactory
 from corehq.apps.userreports.reports.specs import PieChartSpec, MultibarChartSpec, MultibarAggregateChartSpec
