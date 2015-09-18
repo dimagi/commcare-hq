@@ -1,13 +1,17 @@
 from abc import ABCMeta, abstractmethod
 
 
-class SuiteContributor(object):
+class BaseSuiteContributor(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, suite, app, modules):
         self.suite = suite
         self.app = app
         self.modules = modules
+
+
+class SuiteContributor(BaseSuiteContributor):
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def contribute(self):
@@ -26,3 +30,12 @@ class SectionSuiteContributor(SuiteContributor):
     @abstractmethod
     def get_section_contributions(self):
         pass
+
+
+class SuiteContributorByModule(BaseSuiteContributor):
+    __metaclass__ = ABCMeta
+    section = None
+
+    @abstractmethod
+    def get_module_contributions(self, module):
+        return []

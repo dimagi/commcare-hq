@@ -8,11 +8,13 @@ from xml.sax.saxutils import escape
 
 from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
-from corehq.apps.app_manager.suite_xml.careplan import CareplanContributor
+import itertools
+from corehq.apps.app_manager.suite_xml.careplan import CareplanMenuContributor
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
 from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, DetailContributor
 from corehq.apps.app_manager.suite_xml.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.menus import MenuContributor
 from corehq.apps.app_manager.suite_xml.scheduler import SchedulerContributor
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
 
@@ -95,7 +97,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         if self.app.enable_post_form_workflow:
             WorkflowHelper(suite, self.app, self.modules).add_form_workflow()
 
-        EntryInstances(self.suite, self.app, self.modules).contribute()
+        EntryInstances(suite, self.app, self.modules).contribute()
 
     @property
     def xform_resources(self):
@@ -1002,83 +1004,14 @@ class SuiteGenerator(SuiteGeneratorBase):
     @property
     @memoized
     def menus(self):
-        # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanModule
-
         menus = []
         for module in self.modules:
-            if isinstance(module, CareplanModule):
-                menus.extend(CareplanContributor(self.suite, self.app, self.modules).menus)
-            elif hasattr(module, 'get_menus'):
-                for menu in module.get_menus():
-                    menus.append(menu)
-            else:
-                menu_kwargs = {
-                    'id': id_strings.menu_id(module),
-                }
-                if id_strings.menu_root(module):
-                    menu_kwargs['root'] = id_strings.menu_root(module)
-
-                if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-                        self.app.enable_module_filtering and
-                        getattr(module, 'module_filter', None)):
-                    menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
-
-                if self.app.enable_localized_menu_media:
-                    menu_kwargs.update({
-                        'menu_locale_id': id_strings.module_locale(module),
-                        'media_image': bool(len(module.all_image_paths())),
-                        'media_audio': bool(len(module.all_audio_paths())),
-                        'image_locale_id': id_strings.module_icon_locale(module),
-                        'audio_locale_id': id_strings.module_audio_locale(module),
-                    })
-                    menu = LocalizedMenu(**menu_kwargs)
-                else:
-                    menu_kwargs.update({
-                        'locale_id': id_strings.module_locale(module),
-                        'media_image': module.default_media_image,
-                        'media_audio': module.default_media_audio,
-                    })
-                    menu = Menu(**menu_kwargs)
-
-                def get_commands():
-                    for form in module.get_forms():
-                        command = Command(id=id_strings.form_command(form))
-
-                        if form.requires_case():
-                            form_datums = self.get_datums_meta_for_form_generic(form)
-                            var_name = next(
-                                meta.datum.id for meta in reversed(form_datums)
-                                if meta.action and meta.requires_selection
-                            )
-                            case = CaseIDXPath(session_var(var_name)).case()
-                        else:
-                            case = None
-
-                        if (
-                            getattr(form, 'form_filter', None) and
-                            not module.put_in_root and
-                            (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
-                        ):
-                            command.relevant = interpolate_xpath(form.form_filter, case)
-
-                        if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
-                            # If there is a schedule and another filter condition, disregard it...
-                            # Other forms of filtering are disabled in the UI
-
-                            schedule_filter_condition = self._schedule_filter_conditions(form, module, case)
-                            if schedule_filter_condition is not None:
-                                command.relevant = schedule_filter_condition
-
-                        yield command
-
-                    if hasattr(module, 'case_list') and module.case_list.show:
-                        yield Command(id=id_strings.case_list_command(module))
-
-                menu.commands.extend(get_commands())
-
-                menus.append(menu)
-
+            menus.extend(
+                CareplanMenuContributor(self.suite, self.app, self.modules).get_module_contributions(module)
+            )
+            menus.extend(
+                MenuContributor(self.suite, self.app, self.modules).get_module_contributions(module)
+            )
         return menus
 
     @property

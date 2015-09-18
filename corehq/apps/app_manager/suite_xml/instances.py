@@ -10,8 +10,8 @@ class EntryInstances(SuiteContributor):
     def contribute(self):
         details_by_id = self.get_detail_mapping()
         relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
-        for e in self.suite.entries:
-            self.add_referenced_instances(e, details_by_id, relevance_by_menu, menu_by_command)
+        for entry in self.suite.entries:
+            self.add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command)
 
     def get_detail_mapping(self):
         return {detail.id: detail for detail in self.suite.details}
@@ -39,8 +39,7 @@ class EntryInstances(SuiteContributor):
             detail_ids.add(datum.detail_select)
             xpaths.add(datum.nodeset)
             xpaths.add(datum.function)
-        details = [details_by_id[detail_id] for detail_id in detail_ids
-                   if detail_id]
+        details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id
         menu_id = menu_by_command[entry_id]
