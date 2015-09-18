@@ -1222,6 +1222,10 @@ class SelfRegistrationInvitation(models.Model):
         (PHONE_TYPE_OTHER, ugettext_lazy('Other')),
     )
 
+    STATUS_PENDING = 'pending'
+    STATUS_REGISTERED = 'registered'
+    STATUS_EXPIRED = 'expired'
+
     domain = models.CharField(max_length=126, null=False, db_index=True)
     phone_number = models.CharField(max_length=30, null=False, db_index=True)
     token = models.CharField(max_length=126, null=False, unique=True, db_index=True)
@@ -1235,6 +1239,22 @@ class SelfRegistrationInvitation(models.Model):
     @property
     def already_registered(self):
         return self.registered_date is not None
+
+    @property
+    def expired(self):
+        """
+        The invitation is valid until 11:59pm UTC on the expiration date.
+        """
+        return datetime.utcnow().date() > self.expiration_date
+
+    @property
+    def status(self):
+        if self.already_registered:
+            return self.STATUS_REGISTERED
+        elif self.expired:
+            return self.STATUS_EXPIRED
+        else:
+            return self.STATUS_PENDING
 
     def completed(self):
         self.registered_date = datetime.utcnow()

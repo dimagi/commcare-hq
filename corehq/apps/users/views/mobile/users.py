@@ -997,7 +997,11 @@ class CommCareUserSelfRegistrationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         self.validate_request()
-        if self.form.is_valid():
+        if (
+            not self.invitation.expired and
+            not self.invitation.already_registered and
+            self.form.is_valid()
+        ):
             user = CommCareUser.create(
                 self.domain,
                 self.form.cleaned_data.get('username'),

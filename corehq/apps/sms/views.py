@@ -36,7 +36,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent
+    LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
@@ -63,7 +63,7 @@ from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
@@ -101,6 +101,16 @@ class BaseMessagingSectionView(BaseDomainView):
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
+
+
+class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
+    """
+    Just like BaseMessagingSectionView, only requires access to inbound SMS
+    as well.
+    """
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
+    def dispatch(self, *args, **kwargs):
+        return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 @login_and_domain_required
@@ -1616,3 +1626,64 @@ class SMSSettingsView(BaseMessagingSectionView):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
+
+
+class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPaginatedViewMixin):
+    template_name = 'sms/manage_registration_invitations.html'
+    urlname = 'sms_manage_registration_invitations'
+    page_title = ugettext_lazy('Manage Registration Invitations')
+
+    limit_text = ugettext_noop("invitations per page")
+    empty_notification = ugettext_noop("No registration invitations sent yet.")
+    loading_message = ugettext_noop("Loading invitations...")
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def total(self):
+        return SelfRegistrationInvitation.objects.filter(domain=self.domain).count()
+
+    @property
+    def column_names(self):
+        return [
+            'Created On',
+            'Phone Number',
+            'Status',
+            'Expiration Date',
+            'Application',
+            'Phone Type',
+        ]
+
+    @property
+    def paginated_list(self):
+        invitations = SelfRegistrationInvitation.objects.filter(
+            domain=self.domain
+        ).order_by('-created_date')
+        for invitation in invitations[self.skip:self.skip + self.limit]:
+            yield {
+                'itemData': {
+                    'id': invitation.pk,
+                    'created_date': invitation.created_date,
+                    'phone_number': invitation.phone_number,
+                    'status': invitation.status,
+                    'expiration_date': invitation.expiration_date,
+                    'app_id': invitation.app_id,
+                    'phone_type': invitation.phone_type,
+                    'registered_date': invitation.registered_date,
+                },
+                'template': 'invitations-template',
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response

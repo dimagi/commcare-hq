@@ -16,11 +16,17 @@
         to go to the Google Play store and download CommCare.
     </p>
 </div>
+{% elif invitation.expired %}
+<div>
+    <p>
+        Your registration invitation has expired. Please contact your administrator.
+    </p>
+</div>
 {% elif not can_add_extra_mobile_workers %}
 <div>
     <p>
         ERROR: Cannot register another user because this project has exceeded its user
-        limit. Please contact an administrator.
+        limit. Please contact your administrator.
     </p>
 </div>
 {% else %}

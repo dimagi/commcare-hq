@@ -1,0 +1,14 @@
+{% extends 'style/bootstrap2/base_paginated_crud.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block pagination_templates %}
+<script type="text/html" id="invitations-template">
+    <td data-bind="text: created_date"></td>
+    <td data-bind="text: phone_number"></td>
+    <td data-bind="text: status"></td>
+    <td data-bind="text: expiration_date"></td>
+    <td data-bind="text: app_id"></td>
+    <td data-bind="text: phone_type"></td>
+</script>
+{% endblock %}
