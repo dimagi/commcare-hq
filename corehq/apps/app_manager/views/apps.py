@@ -80,7 +80,7 @@ def delete_app(request, domain, app_id):
         extra_tags='html'
     )
     app.save()
-    _clear_app_cache(request, domain)
+    clear_app_cache(request, domain)
     return back_to_main(request, domain)
 
 
@@ -95,7 +95,7 @@ def undo_delete_app(request, domain, record_id):
         record = DeleteApplicationRecord.get(record_id)
         record.undo()
         app_id = record.app_id
-    _clear_app_cache(request, domain)
+    clear_app_cache(request, domain)
     messages.success(request, 'Application successfully restored.')
     return back_to_main(request, domain, app_id=app_id)
 
@@ -116,7 +116,7 @@ def default_new_app(request, domain):
     form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
-    _clear_app_cache(request, domain)
+    clear_app_cache(request, domain)
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
 
@@ -203,7 +203,7 @@ def get_app_view_context(request, app):
     return context
 
 
-def _clear_app_cache(request, domain):
+def clear_app_cache(request, domain):
     from corehq import ApplicationsTab
     ApplicationBase.get_db().view('app_manager/applications_brief',
         startkey=[domain],
@@ -285,7 +285,7 @@ def copy_app(request, domain):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
-    _clear_app_cache(request, domain)
+    clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
@@ -302,7 +302,7 @@ def app_from_template(request, domain, slug):
 @require_can_edit_apps
 def import_app(request, domain, template="app_manager/import_app.html"):
     if request.method == "POST":
-        _clear_app_cache(request, domain)
+        clear_app_cache(request, domain)
         name = request.POST.get('name')
         compressed = request.POST.get('compressed')
 
@@ -388,7 +388,7 @@ def new_app(request, domain):
     if request.project.secure_submissions:
         app.secure_submissions = True
     app.save()
-    _clear_app_cache(request, domain)
+    clear_app_cache(request, domain)
     main_args = [request, domain, app.id]
     main_args.extend(form_args)
 
@@ -571,7 +571,7 @@ def edit_app_attr(request, domain, app_id, attr):
             setattr(app, attribute, value)
 
     if should_edit("name"):
-        _clear_app_cache(request, domain)
+        clear_app_cache(request, domain)
         name = hq_settings['name']
         resp['update'].update({
             '.variable-app_name': name,

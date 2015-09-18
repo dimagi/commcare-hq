@@ -66,6 +66,7 @@ from corehq.apps.app_manager.views.download import (
     download_user_registration,
     download_xform,
     DownloadCCZ,
+    validate_form_for_build,
 )
 from corehq.apps.app_manager.views.forms import (
     copy_form,
@@ -127,4 +128,9 @@ from corehq.apps.app_manager.views.translations import (
     download_bulk_ui_translations,
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
+)
+from corehq.apps.app_manager.views.form_designer import (
+    form_designer,
+    get_data_schema,
+    user_registration_source,
 )
