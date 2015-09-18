@@ -1039,7 +1039,9 @@ _dynamic_db_settings = get_dynamic_db_settings(
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
+NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = None
+
 
 COUCHDB_APPS = [
     'adm',
@@ -1070,7 +1072,6 @@ COUCHDB_APPS = [
     'facilities',
     'fluff_filter',
     'fixtures',
-    ('groups', USERS_GROUPS_DB),
     'hqcase',
     'hqmedia',
     'hope',
@@ -1091,7 +1092,6 @@ COUCHDB_APPS = [
     'telerivet',
     'toggle',
     'translations',
-    ('users', USERS_GROUPS_DB),
     'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
@@ -1131,13 +1131,18 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting'
+    'tdhtesting',
+
+    # users and groups
+    ('groups', USERS_GROUPS_DB),
+    ('users', USERS_GROUPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
+                                             [NEW_USERS_GROUPS_DB])
 
 INSTALLED_APPS += LOCAL_APPS
 

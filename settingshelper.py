@@ -97,7 +97,7 @@ def make_couchdb_tuples(config, couch_database_url):
     return [_make_couchdb_tuple(row, couch_database_url) for row in config]
 
 
-def get_extra_couchdbs(config, couch_database_url):
+def get_extra_couchdbs(config, couch_database_url, extra_db_names=()):
     """
     Create a mapping from database prefix to database url
 
@@ -105,11 +105,16 @@ def get_extra_couchdbs(config, couch_database_url):
     :param couch_database_url:  main database url
     """
     extra_dbs = {}
+    postfixes = []
     for row in config:
         if isinstance(row, tuple):
             _, postfix = row
             if postfix:
-                extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
+                postfixes.append(postfix)
+
+    postfixes.extend(extra_db_names)
+    for postfix in postfixes:
+        extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
 
     return extra_dbs
 
