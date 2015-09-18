@@ -631,6 +631,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
 
+    @property
+    def template_context(self):
+        context = super(DailyFormStatsReport, self).template_context
+        context.update({
+            'hide_lastyear': True,
+        })
+        return context
+
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):

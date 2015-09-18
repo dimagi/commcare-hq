@@ -1,8 +1,6 @@
 import functools
-from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
-from corehq.util.dates import iso_string_to_datetime
 
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -11,19 +9,17 @@ from corehq import feature_previews
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.filters.forms import MISSING_APP_ID, FormsByApplicationFilter
-from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
+from corehq.apps.reports.generic import (GenericTabularReport,
+                                         ProjectInspectionReportParamsMixin,
+                                         ElasticProjectInspectionReport)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.users.models import CouchUser
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
-from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
+from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -38,10 +34,10 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
 
-class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
-                    ProjectReportParametersMixin,
-                    CompletionOrSubmissionTimeMixin,  MultiFormDrilldownMixin,
-                    DatespanMixin):
+class SubmitHistoryMixin(ElasticProjectInspectionReport,
+                         ProjectReportParametersMixin,
+                         CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
+                         DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
@@ -63,33 +59,11 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
                 'corehq.apps.reports.filters.forms.FormDataFilter',
                 'corehq.apps.reports.filters.forms.CustomFieldFilter',
             ]
-        super(SubmitHistory, self).__init__(request, **kwargs)
-
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+        super(SubmitHistoryMixin, self).__init__(request, **kwargs)
 
     @property
     def other_fields(self):
         return filter(None, self.request.GET.get('custom_field', "").split(","))
-
-    @property
-    def headers(self):
-        h = [
-            DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
-            DataTablesColumn(
-                _("Submission Time") if self.by_submission_time
-                else _("Completion Time"),
-                prop_name=self.time_field
-            ),
-            DataTablesColumn(_("Form"), prop_name='form.@name'),
-        ]
-        h.extend([DataTablesColumn(field) for field in self.other_fields])
-        return DataTablesHeader(*h)
 
     @property
     def default_datespan(self):
@@ -141,34 +115,40 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
                 'term': {'__props_for_querying': prop.lower()}
             }
 
+    def _es_xform_filter(self):
+        return ADD_TO_ES_FILTER['forms']
+
+    def filters_as_es_query(self):
+        return {
+            'query': {
+                'range': {
+                    self.time_field: {
+                        'from': self.datespan.startdate_param,
+                        'to': self.datespan.enddate_param,
+                        'include_upper': False,
+                    }
+                }
+            },
+            'filter': {
+                'and': (self._es_xform_filter() +
+                        list(self._es_extra_filters()))
+            },
+            'sort': self.get_sorting_block(),
+        }
+
     @property
     @memoized
     def es_results(self):
         return es_query(
             params={'domain.exact': self.domain},
-            q={
-                'query': {
-                    'range': {
-                        self.time_field: {
-                            'from': self.datespan.startdate_param,
-                            'to': self.datespan.enddate_param,
-                            'include_upper': False,
-                        }
-                    }
-                },
-                'filter': {
-                    'and': (ADD_TO_ES_FILTER['forms'] +
-                            list(self._es_extra_filters()))
-                },
-                'sort': self.get_sorting_block(),
-            },
+            q=self.filters_as_es_query(),
             es_url=XFORM_INDEX + '/xform/_search',
             start_at=self.pagination.start,
             size=self.pagination.count,
         )
 
     def get_sorting_block(self):
-        sorting_block = super(SubmitHistory, self).get_sorting_block()
+        sorting_block = super(SubmitHistoryMixin, self).get_sorting_block()
         if sorting_block:
             return sorting_block
         else:
@@ -182,42 +162,50 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     def total_records(self):
         return int(self.es_results['hits']['total'])
 
+
+class SubmitHistory(SubmitHistoryMixin, ProjectReport):
+
+    @property
+    def show_extra_columns(self):
+        return self.request.user and SUPPORT.enabled(self.request.user.username)
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
+    @property
+    def headers(self):
+        h = [
+            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("Username"), prop_name='form.meta.username'),
+            DataTablesColumn(
+                _("Submission Time") if self.by_submission_time
+                else _("Completion Time"),
+                prop_name=self.time_field
+            ),
+            DataTablesColumn(_("Form"), prop_name='form.@name'),
+        ]
+        if self.show_extra_columns:
+            h.append(DataTablesColumn(_("Sync Log")))
+
+        h.extend([DataTablesColumn(field) for field in self.other_fields])
+        return DataTablesHeader(*h)
+
     @property
     def rows(self):
-        def form_data_link(instance_id):
-            return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
-                "url": absolute_reverse('render_form_data', args=[self.domain, instance_id]),
-                "text": _("View Form")
-            }
-
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
-            uid = form["form"]["meta"]["userID"]
-            username = form["form"]["meta"].get("username")
-            try:
-                if username not in ['demo_user', 'admin']:
-                    full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
-                    name = '"%s"' % full_name if full_name else ""
-                else:
-                    name = ""
-            except (ResourceNotFound, IncompatibleDocument):
-                name = "<b>[unregistered]</b>"
-
-            time = iso_string_to_datetime(safe_index(form, self.time_field.split('.')))
-            if self.by_submission_time:
-                user_time = ServerTime(time).user_time(self.timezone)
-            else:
-                user_time = PhoneTime(time, self.timezone).user_time(self.timezone)
-
-            init_cells = [
-                form_data_link(form["_id"]),
-                (username or _('No data for username')) + (" %s" % name if name else ""),
-                user_time.ui_string(USER_DATETIME_FORMAT_WITH_SEC),
-                xmlns_to_name(self.domain, form.get("xmlns"), app_id=form.get("app_id")),
+            display = FormDisplay(form, self)
+            row = [
+                display.form_data_link,
+                display.username,
+                display.submission_or_completion_time,
+                display.readable_form_name,
             ]
-
-            def cell(field):
-                return form["form"].get(field)
-            init_cells.extend([cell(field) for field in self.other_fields])
-            yield init_cells
+            if self.show_extra_columns:
+                row.append(form.get('last_sync_token', ''))
+            yield row + display.other_columns

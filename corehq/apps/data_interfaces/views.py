@@ -16,7 +16,8 @@ from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
 from django.utils.decorators import method_decorator
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
+from corehq.apps.data_interfaces.tasks import (
+    bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -26,10 +27,15 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
+from .dispatcher import require_form_management_privilege
+from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
+from django.shortcuts import render
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 
 
 @login_and_domain_required
@@ -453,3 +459,84 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 return HttpResponseRedirect(self.page_url)
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
+
+
+class XFormManagementView(DataInterfaceSection):
+    urlname = 'xform_management'
+    page_title = ugettext_noop('Form Management')
+
+    def get_form_ids_or_query_string(self, request):
+        if 'select_all' in self.request.POST:
+            # Altough evaluating form_ids and sending to task would be cleaner,
+            # heavier calls should be in in an async task instead
+            import urllib
+            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            return form_query_string
+        else:
+            return self.request.POST.getlist('xform_ids')
+
+    def post(self, request, *args, **kwargs):
+        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
+        mode = self.request.POST.get('mode')
+        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
+        task = bulk_form_management_async.delay(
+            mode,
+            self.domain,
+            self.request.couch_user,
+            form_ids_or_query_string
+        )
+        task_ref.set_task(task)
+
+        return HttpResponseRedirect(
+            reverse(
+                XFormManagementStatusView.urlname,
+                args=[self.domain, mode, task_ref.download_id]
+            )
+        )
+
+    @method_decorator(require_form_management_privilege)
+    def dispatch(self, request, *args, **kwargs):
+        return super(XFormManagementView, self).dispatch(request, *args, **kwargs)
+
+
+class XFormManagementStatusView(DataInterfaceSection):
+
+    urlname = 'xform_management_status'
+    page_title = ugettext_noop('Form Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(XFormManagementStatusView, self).main_context
+        mode = FormManagementMode(kwargs['mode'])
+
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': "{url}?mode={mode}".format(
+                url=reverse('xform_management_job_poll', args=[self.domain, kwargs['download_id']]),
+                mode=mode.mode_name),
+            'title': mode.status_page_title,
+            'error_text': mode.error_text,
+        })
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_data
+@require_form_management_privilege
+def xform_management_job_poll(request, domain, download_id,
+                              template="data_interfaces/partials/xform_management_status.html"):
+    mode = FormManagementMode(request.GET.get('mode'), validate=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    context.update({
+        'on_complete_short': mode.complete_short,
+        'mode': mode,
+        'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
+                                       args=[domain, BulkFormManagementInterface.slug])
+    })
+    return render(request, template, context)

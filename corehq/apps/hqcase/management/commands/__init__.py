@@ -43,7 +43,6 @@ class ReindexCommand(BaseCommand):
         pillow_instance.delete_index()
         print "Recreating index"
         pillow_instance.create_index()
-        pillow_instance.seen_types = {}
         print "Resetting %s Checkpoint" % self.pillow_name
 
         pillow_instance.reset_checkpoint()

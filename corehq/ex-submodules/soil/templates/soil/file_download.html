@@ -1,0 +1,33 @@
+{% extends "soil/base.html" %}
+{% block title %}
+    File Downloader
+{% endblock title %}
+{% block extrahead %}
+    <script type="text/javascript" src="{{ STATIC_URL }}/soil/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript">
+        var autoRefresh = '';
+        var pollDownloader = function () {
+            if ($('#ready_{{ download_id }}').length == 0)
+	        {
+                $.ajax("{% url 'ajax_job_poll' download_id %}", {
+                    success: function(data) {
+                        $("#display_{{ download_id }}").html(data);
+                    },
+                    error: function(data) {
+                        $("#display_{{ download_id }}").html(data.responseText);
+                        clearInterval(autoRefresh);
+                    }
+                });
+	        } else {
+	            clearInterval(autoRefresh);
+	        }
+        };
+        $(document).ready(function () {
+            autoRefresh = setInterval(pollDownloader, 2000);
+        });
+    </script>
+{% endblock extrahead %}
+{% block content %}
+    <h2>Preparing download. This may take some time...</h2>
+    <div class="downloader_container" id="display_{{ download_id }}"></div>
+{% endblock content %}

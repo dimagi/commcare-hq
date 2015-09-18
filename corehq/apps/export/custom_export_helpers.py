@@ -375,7 +375,7 @@ class CustomColumn(object):
         self.selected = selected
 
     def match(self, col):
-         return col['index'] == self.index and col['transform'] == self.transform
+        return col['index'] == self.index and col['transform'] == self.transform
 
     def format_for_javascript(self, col):
         # this is js --> js conversion so the name is pretty bad

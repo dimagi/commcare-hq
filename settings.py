@@ -367,12 +367,10 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
-    'soil',
     'custom.apps.crs_reports',
     'custom.m4change',
 
     # submodules with tests that run on travis
-    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -932,6 +930,7 @@ MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
+UCR_DATABASE_URL = None
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
@@ -944,6 +943,14 @@ DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
 
+# Supervisor RPC
+SUPERVISOR_RPC_ENABLED = False
+SUBSCRIPTION_USERNAME = None
+SUBSCRIPTION_PASSWORD = None
+
+ENVIRONMENT_HOSTS = {
+    'pillowtop': ['localhost']
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1287,7 +1294,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.RecapPassageFluffPillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
@@ -1483,3 +1490,9 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+
+if 'locmem' not in CACHES:
+    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+if 'dummy' not in CACHES:
+    CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
