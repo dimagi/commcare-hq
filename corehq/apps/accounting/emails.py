@@ -22,7 +22,7 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         'old_subscription': old_subscription,
         'new_subscription': new_subscription,
         'billing_account': billing_account,
-        'username': request.couch_user.username if request and request.couch_user else None,
+        'username': request.couch_user.username if getattr(request, 'couch_user', None) else None,
         'referer': request.META.get('HTTP_REFERER') if request else None,
     }
     email_subject = "{env}Subscription Change Alert: {domain} from {old_plan} to {new_plan}".format(
