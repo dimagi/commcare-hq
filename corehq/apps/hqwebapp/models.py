@@ -1144,7 +1144,7 @@ class ProjectUsersTab(UITab):
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 })
-            items.append((_('Locations'), locations_config))
+            items.append((_('Organization'), locations_config))
 
         return items
 
