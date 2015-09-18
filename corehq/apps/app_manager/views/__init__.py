@@ -76,6 +76,7 @@ from corehq.apps.app_manager.views.forms import (
     edit_form_actions,
     edit_form_attr,
     form_casexml,
+    get_form_datums,
     get_user_registration_source,
     get_xform_source,
     new_form,
