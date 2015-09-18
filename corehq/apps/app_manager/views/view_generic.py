@@ -1,5 +1,3 @@
-import itertools
-
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -7,9 +5,8 @@ from django.shortcuts import render
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
