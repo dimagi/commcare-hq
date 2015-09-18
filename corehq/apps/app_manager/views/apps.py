@@ -19,9 +19,10 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
     IncompatibleFormTypeException, RearrangeError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
-from corehq import ApplicationsTab, toggles, privileges
+from corehq import toggles, privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
+from corehq.apps.hqwebapp.models import ApplicationsTab
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.translations.models import Translation
@@ -204,7 +205,6 @@ def get_app_view_context(request, app):
 
 
 def clear_app_cache(request, domain):
-    from corehq import ApplicationsTab
     ApplicationBase.get_db().view('app_manager/applications_brief',
         startkey=[domain],
         limit=1,
