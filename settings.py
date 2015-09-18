@@ -1474,15 +1474,19 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
-        'domain', 'domainsync', 'export',
-        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor',
+        'corehq.apps.accounting', 'corehq.apps.api', 'corehq.apps.app_manager', 'corehq.apps.appstore',
+        'auditcare', 'custom.bihar', 'corehq.apps.builds', 'corehq.apps.cachehq',
+        'corehq.apps.callcenter', 'custom.apps.care_benin', 'casexml.apps.case',
+        'corehq.apps.casegroups', 'corehq.apps.cleanup', 'corehq.apps.cloudcare',
+        'corehq.apps.commtrack', 'corehq.apps.consumption', 'corehq.couchapps',
+        'couchlog', 'corehq.apps.crud', 'custom.apps.cvsu', 'django_digest',
+        'corehq.apps.domain', 'corehq.apps.domainsync', 'corehq.apps.export',
+        'corehq.apps.facilities', 'corehq.apps.fixtures', 'fluff.fluff_filter',
+        'touchforms.formplayer', 'formtranslate', 'custom.fri',
+        'corehq.apps.grapevine', 'corehq.apps.groups', 'custom.apps.gsid',
+        'custom.hope', 'corehq.apps.hqadmin', 'corehq.apps.hqcase',
+        'corehq.apps.hqcouchlog', 'corehq.apps.hqmedia', 'custom.care_pathways',
+        'custom.colalife', 'custom.common', 'compressor',
     ),
 )
 
