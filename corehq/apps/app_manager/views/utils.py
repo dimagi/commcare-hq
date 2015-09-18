@@ -52,7 +52,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         view_name = page
     else:
         view_name = {
-            1: 'default',
+            1: 'view_app',
             2: 'view_app',
             3: 'view_module',
             4: 'view_form',
