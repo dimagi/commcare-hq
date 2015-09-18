@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.models import (
     MessagingTab,
     ExchangeTab,
     OrgReportTab,
-    OrgSettingsTab, # separate menu?
+    OrgSettingsTab,  # separate menu?
     AdminTab
 )
 from corehq.apps.styleguide.tabs import SGExampleTab
@@ -27,7 +27,7 @@ MENU_TABS = (
     MessagingTab,
     ExchangeTab,
     OrgReportTab,
-    OrgSettingsTab, # separate menu?
+    OrgSettingsTab,  # separate menu?
     AdminTab,
     SGExampleTab,
 )

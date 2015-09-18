@@ -1,6 +1,5 @@
 from decimal import Decimal
 from django.db.models.query_utils import Q
-from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import StockState, SupplyPointCase

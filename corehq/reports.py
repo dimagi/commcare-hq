@@ -158,9 +158,9 @@ def _make_dynamic_report(report_config, keyprefix):
     slug = hashlib.sha1(':'.join(report_key)).hexdigest()[:12]
     kwargs = dict(report_config.kwargs)
     kwargs.update({
-            'name': report_config.name,
-            'slug': slug,
-        })
+        'name': report_config.name,
+        'slug': slug,
+    })
     if report_config.previewers_only:
         # note this is a classmethod that will be injected into the dynamic class below
         @classmethod
