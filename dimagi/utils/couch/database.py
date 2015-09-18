@@ -21,6 +21,7 @@ class DesignDoc(object):
                 views.append(view_name)
         return views
 
+
 def get_db(postfix=None):
     """
     Get the couch database.
@@ -31,7 +32,7 @@ def get_db(postfix=None):
     db_url = settings.COUCH_DATABASE
     if postfix:
         db_url = settings.EXTRA_COUCHDB_DATABASES[postfix]
-    return Database(db_url)
+    return Database(db_url, create=True)
 
 
 def get_design_docs(database):
