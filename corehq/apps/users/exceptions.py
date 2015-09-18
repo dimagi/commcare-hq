@@ -6,3 +6,7 @@ class NoAccountException(Exception):
 
 class InvalidLocationConfig(Exception):
     pass
+
+
+class UserUploadError(Exception):
+    pass

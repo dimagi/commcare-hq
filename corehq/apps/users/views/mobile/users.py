@@ -36,6 +36,7 @@ from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
+from corehq.apps.users.exceptions import UserUploadError
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
@@ -52,7 +53,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
-from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
