@@ -8,6 +8,7 @@ from xml.sax.saxutils import escape
 
 from django.utils.translation import ugettext_noop as _
 from django.core.urlresolvers import reverse
+from corehq.apps.app_manager.suite_xml.careplan import CareplanContributor
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
 from corehq.apps.app_manager.suite_xml.details import get_detail_column_infos, DetailContributor
 from corehq.apps.app_manager.suite_xml.workflow import WorkflowHelper
@@ -48,19 +49,18 @@ class SuiteGeneratorBase(object):
         self.app = app
         # this is actually so slow it's worth caching
         self.modules = list(self.app.get_modules())
-
-    def generate_suite(self):
-        suite = Suite(
+        self.suite = Suite(
             version=self.app.version,
             descriptor=self.descriptor,
         )
 
+    def generate_suite(self):
         def add_to_suite(attr):
-            getattr(suite, attr).extend(getattr(self, attr))
+            getattr(self.suite, attr).extend(getattr(self, attr))
 
         map(add_to_suite, self.sections)
-        self.post_process(suite)
-        return suite.serializeDocument(pretty=True)
+        self.post_process(self.suite)
+        return self.suite.serializeDocument(pretty=True)
 
     def post_process(self, suite):
         pass
@@ -246,7 +246,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     @property
     @memoized
     def details(self):
-        return DetailContributor(self, self.app, self.modules).get_section_contributions()
+        return DetailContributor(self.suite, self.app, self.modules).get_section_contributions()
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
@@ -1105,38 +1105,12 @@ class SuiteGenerator(SuiteGeneratorBase):
     @memoized
     def menus(self):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanModule, AdvancedForm
+        from corehq.apps.app_manager.models import CareplanModule
 
         menus = []
         for module in self.modules:
             if isinstance(module, CareplanModule):
-                update_menu = Menu(
-                    id=id_strings.menu_id(module),
-                    locale_id=id_strings.module_locale(module),
-                )
-
-                if not module.display_separately:
-                    parent = self.app.get_module_by_unique_id(module.parent_select.module_id)
-                    create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
-                    create_menu = Menu(
-                        id=id_strings.menu_id(parent),
-                        locale_id=id_strings.module_locale(parent),
-                    )
-                    create_menu.commands.append(Command(id=id_strings.form_command(create_goal_form)))
-                    menus.append(create_menu)
-
-                    update_menu.root = id_strings.menu_id(parent)
-                else:
-                    update_menu.commands.extend([
-                        Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
-                    ])
-
-                update_menu.commands.extend([
-                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'update'))),
-                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'create'))),
-                    Command(id=id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))),
-                ])
-                menus.append(update_menu)
+                menus.extend(CareplanContributor(self.suite, self.app, self.modules).menus)
             elif hasattr(module, 'get_menus'):
                 for menu in module.get_menus():
                     menus.append(menu)
