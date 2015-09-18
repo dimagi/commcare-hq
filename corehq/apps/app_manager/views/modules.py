@@ -1,15 +1,51 @@
 from collections import OrderedDict, namedtuple
-from django.utils.translation import gettext_lazy
-from corehq.apps.app_manager.const import USERCASE_TYPE, CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import CareplanModule, AdvancedModule, \
-    ReportModule
+import json
+import logging
+
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _, gettext_lazy
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.core.urlresolvers import reverse
+from django.views.decorators.http import require_GET
+from django.contrib import messages
+from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
+    handle_media_edits
+
+from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
+from corehq import toggles, feature_previews, ReportConfiguration
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.util import is_usercase_in_use, get_per_type_defaults, \
-    ParentCasePropertyBuilder, prefix_usercase_properties, \
-    commtrack_ledger_sections
+from corehq.apps.app_manager.const import (
+    CAREPLAN_GOAL,
+    CAREPLAN_TASK,
+    USERCASE_TYPE,
+    APP_V1)
+from corehq.apps.app_manager.util import (
+    is_valid_case_type,
+    is_usercase_in_use,
+    get_per_type_defaults, ParentCasePropertyBuilder,
+    prefix_usercase_properties, commtrack_ledger_sections)
+
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq import ReportConfiguration
-from corehq import toggles
+from dimagi.utils.web import json_response, json_request
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    CareplanModule,
+    DeleteModuleRecord,
+    DetailColumn,
+    DetailTab,
+    Module,
+    ModuleNotFoundException,
+    ParentSelect,
+    ReportModule,
+    SortElement,
+    ReportAppConfig,
+    FixtureSelect,
+)
+from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
+    require_can_edit_apps, require_deploy_apps
+
+logger = logging.getLogger(__name__)
 
 
 def get_module_template(module):
@@ -38,7 +74,7 @@ def _get_careplan_module_view_context(app, module):
     case_property_builder = _setup_case_property_builder(app)
     subcase_types = list(app.get_subcase_types(module.case_type))
     return {
-        'parent_modules': get_parent_modules(app, module,
+        'parent_modules': _get_parent_modules(app, module,
                                              case_property_builder,
                                              CAREPLAN_GOAL),
         'fixtures': _get_fixture_types(app.domain),
@@ -114,7 +150,7 @@ def _get_basic_module_view_context(app, module):
                         AllowWithReason.PARENT_SELECT_ACTIVE)
     )
     return {
-        'parent_modules': get_parent_modules(app, module,
+        'parent_modules': _get_parent_modules(app, module,
                                              case_property_builder, case_type),
         'fixtures': _get_fixture_types(app.domain),
         'fixture_columns': fixture_columns,
@@ -180,7 +216,7 @@ def _setup_case_property_builder(app):
     return builder
 
 
-def get_parent_modules(app, module, case_property_builder, case_type_):
+def _get_parent_modules(app, module, case_property_builder, case_type_):
         parent_types = case_property_builder.get_parent_types(case_type_)
         modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
@@ -357,7 +393,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_form_media_image'):
-        new_path = _process_media_attribute(
+        new_path = process_media_attribute(
             'case_list_form_media_image',
             resp,
             request.POST.get('case_list_form_media_image')
@@ -365,7 +401,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.set_icon(lang, new_path)
 
     if should_edit('case_list_form_media_audio'):
-        new_path = _process_media_attribute(
+        new_path = process_media_attribute(
             'case_list_form_media_audio',
             resp,
             request.POST.get('case_list_form_media_audio')
@@ -373,14 +409,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
-        val = _process_media_attribute(
+        val = process_media_attribute(
             'case_list-menu_item_media_image',
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
         module.case_list.set_icon(lang, val)
     if should_edit('case_list-menu_item_media_audio'):
-        val = _process_media_attribute(
+        val = process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
@@ -413,9 +449,265 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             except ModuleNotFoundException:
                 messages.error(_("Unknown Module"))
 
-    _handle_media_edits(request, module, should_edit, resp, lang)
+    handle_media_edits(request, module, should_edit, resp, lang)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
+
+
+def _new_advanced_module(request, domain, app, name, lang):
+    module = app.add_module(AdvancedModule.new_module(name, lang))
+    module_id = module.id
+    app.new_form(module_id, _("Untitled Form"), lang)
+
+    app.save()
+    response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(request, _('Caution: Advanced modules are a labs feature'))
+    return response
+
+
+def _new_report_module(request, domain, app, name, lang):
+    module = app.add_module(ReportModule.new_module(name, lang))
+    # by default add all reports
+    module.report_configs = [
+        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        for report in ReportConfiguration.by_domain(domain)
+    ]
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def delete_module(request, domain, app_id, module_unique_id):
+    "Deletes a module from an app"
+    app = get_app(domain, app_id)
+    try:
+        record = app.delete_module(module_unique_id)
+    except ModuleNotFoundException:
+        return bail(request, domain, app_id)
+    if record is not None:
+        messages.success(request,
+            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+            extra_tags='html'
+        )
+        app.save()
+    return back_to_main(request, domain, app_id=app_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def undo_delete_module(request, domain, record_id):
+    record = DeleteModuleRecord.get(record_id)
+    record.undo()
+    messages.success(request, 'Module successfully restored.')
+    return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
+
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_module_detail_screens(request, domain, app_id, module_id):
+    """
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    fixture_select and sort_elements.
+    """
+    params = json_request(request.POST)
+    detail_type = params.get('type')
+    short = params.get('short', None)
+    long = params.get('long', None)
+    tabs = params.get('tabs', None)
+    filter = params.get('filter', ())
+    custom_xml = params.get('custom_xml', None)
+    parent_select = params.get('parent_select', None)
+    fixture_select = params.get('fixture_select', None)
+    sort_elements = params.get('sort_elements', None)
+    use_case_tiles = params.get('useCaseTiles', None)
+    persist_tile_on_forms = params.get("persistTileOnForms", None)
+    pull_down_tile = params.get("enableTilePullDown", None)
+    case_list_lookup = params.get("case_list_lookup", None)
+
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+
+    if detail_type == 'case':
+        detail = module.case_details
+    elif detail_type == CAREPLAN_GOAL:
+        detail = module.goal_details
+    elif detail_type == CAREPLAN_TASK:
+        detail = module.task_details
+    else:
+        try:
+            detail = getattr(module, '{0}_details'.format(detail_type))
+        except AttributeError:
+            return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
+
+    if short is not None:
+        detail.short.columns = map(DetailColumn.wrap, short)
+        if use_case_tiles is not None:
+            detail.short.use_case_tiles = use_case_tiles
+        if persist_tile_on_forms is not None:
+            detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if pull_down_tile is not None:
+            detail.short.pull_down_tile = pull_down_tile
+        if case_list_lookup is not None:
+            _save_case_list_lookup_params(detail.short, case_list_lookup)
+
+    if long is not None:
+        detail.long.columns = map(DetailColumn.wrap, long)
+        if tabs is not None:
+            detail.long.tabs = map(DetailTab.wrap, tabs)
+    if filter != ():
+        # Note that we use the empty tuple as the sentinel because a filter
+        # value of None represents clearing the filter.
+        detail.short.filter = filter
+    if custom_xml is not None:
+        detail.short.custom_xml = custom_xml
+    if sort_elements is not None:
+        detail.short.sort_elements = []
+        for sort_element in sort_elements:
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.short.sort_elements.append(item)
+    if parent_select is not None:
+        module.parent_select = ParentSelect.wrap(parent_select)
+    if fixture_select is not None:
+        module.fixture_select = FixtureSelect.wrap(fixture_select)
+
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_report_module(request, domain, app_id, module_id):
+    """
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
+    """
+    params = json_request(request.POST)
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    assert isinstance(module, ReportModule)
+    module.name = params['name']
+    module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+    app.save()
+    return json_response('success')
+
+
+def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+    app = get_app(domain, app_id)
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        raise Http404()
+    errors = module.validate_for_build()
+    lang, langs = get_langs(request, app)
+
+    response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'app': app,
+        'build_errors': errors,
+        'not_actual_build': True,
+        'domain': domain,
+        'langs': langs,
+        'lang': lang
+    })
+    if ajax:
+        return json_response({'error_html': response_html})
+    return HttpResponse(response_html)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def new_module(request, domain, app_id):
+    "Adds a module to an app"
+    app = get_app(domain, app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
+    name = request.POST.get('name')
+    module_type = request.POST.get('module_type', 'case')
+    if module_type == 'case':
+        module = app.add_module(Module.new_module(name, lang))
+        module_id = module.id
+        app.new_form(module_id, "Untitled Form", lang)
+        app.save()
+        response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type in MODULE_TYPE_MAP:
+        fn = MODULE_TYPE_MAP[module_type][FN]
+        validations = MODULE_TYPE_MAP[module_type][VALIDATIONS]
+        error = next((v[1] for v in validations if v[0](app)), None)
+        if error:
+            messages.warning(request, error)
+            return back_to_main(request, domain, app_id=app.id)
+        else:
+            return fn(request, domain, app, name, lang)
+    else:
+        logger.error('Unexpected module type for new module: "%s"' % module_type)
+        return back_to_main(request, domain, app_id=app_id)
+
+
+def _new_careplan_module(request, domain, app, name, lang):
+    from corehq.apps.app_manager.util import new_careplan_module
+    target_module_index = request.POST.get('target_module_id')
+    target_module = app.get_module(target_module_index)
+    if not target_module.case_type:
+        name = target_module.name[lang]
+        messages.error(request, _("Please set the case type for the target module '{name}'.".format(name=name)))
+        return back_to_main(request, domain, app_id=app.id)
+    module = new_careplan_module(app, name, lang, target_module)
+    app.save()
+    response = back_to_main(request, domain, app_id=app.id, module_id=module.id)
+    response.set_cookie('suppress_build_errors', 'yes')
+    messages.info(request, _('Caution: Care Plan modules are a labs feature'))
+    return response
+
+
+def _save_case_list_lookup_params(short, case_list_lookup):
+    short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
+    short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
+    short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
+    short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
+    short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
+
+
+@require_GET
+@require_deploy_apps
+def view_module(request, domain, app_id, module_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id, module_id)
+
+
+common_module_validations = [
+    (lambda app: app.application_version == APP_V1,
+     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+]
+
+FN = 'fn'
+VALIDATIONS = 'validations'
+MODULE_TYPE_MAP = {
+    'careplan': {
+        FN: _new_careplan_module,
+        VALIDATIONS: common_module_validations + [
+            (lambda app: app.has_careplan_module,
+             _('This application already has a Careplan module'))
+        ]
+    },
+    'advanced': {
+        FN: _new_advanced_module,
+        VALIDATIONS: common_module_validations
+    },
+    'report': {
+        FN: _new_report_module,
+        VALIDATIONS: common_module_validations
+    }
+}

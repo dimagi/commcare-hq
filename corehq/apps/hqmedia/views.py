@@ -19,7 +19,6 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
-from corehq.apps.app_manager.views.download import download_index_files
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -641,6 +640,7 @@ class ViewMultimediaFile(View):
 
 
 def iter_index_files(app):
+    from corehq.apps.app_manager.views.download import download_index_files
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
     get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
