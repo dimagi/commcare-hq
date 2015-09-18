@@ -136,7 +136,7 @@ class TestUserBulkUpload(SimpleTestCase):
             return []
 
         self.patches = [
-            patch('corehq.domain_has_privilege', domain_has_privilege),
+            patch('corehq.apps.accounting.utils.domain_has_privilege', domain_has_privilege),
             patch.object(UserFieldsView, 'get_validator', UserFieldsView__get_validator),
             patch.object(GroupMemoizer, 'load_all', lambda _self: None),
             patch.object(GroupMemoizer, 'save_all', lambda _self: None),
