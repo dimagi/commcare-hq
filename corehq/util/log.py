@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import islice
-from logging import Handler, Filter, LoggerAdapter
+from logging import Filter
 import traceback
 from datetime import timedelta
 
