@@ -4,6 +4,7 @@ restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.0
 jsonobject-couchdbkit==0.7.0.0
+git+git://github.com/dimagi/couchdbkit.git@c446c31e352031532864fd72de646075c5b626d5
 celery==3.1.17
 decorator==3.3.2
 django==1.8.4
