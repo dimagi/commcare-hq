@@ -1,4 +1,5 @@
 from django.views.decorators.debug import sensitive_post_parameters
+from corehq.apps.hqwebapp.models import MySettingsTab
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
@@ -9,7 +10,6 @@ import langcodes
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq import MySettingsTab
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
 from django.core.urlresolvers import reverse
