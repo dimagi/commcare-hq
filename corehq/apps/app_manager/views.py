@@ -12,6 +12,8 @@ import json
 import yaml
 from collections import defaultdict, OrderedDict, namedtuple
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
+from corehq.apps.hqwebapp.models import ApplicationsTab
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from soil import DownloadBase
 from xml.dom.minidom import parseString
@@ -22,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
-from corehq import ApplicationsTab, toggles, privileges, feature_previews, ReportConfiguration
+from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
@@ -178,7 +180,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     SchedulePhaseForm,
     FixtureSelect,
-)
+    FormDatum)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -455,7 +457,7 @@ def get_schedule_context(form):
     return schedule_context
 
 
-def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
+def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
     form_errors = []
@@ -527,10 +529,11 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     module_case_types = []
     app = form.get_app()
+    all_modules = list(app.get_modules())
     if is_user_registration:
         module_case_types = None
     else:
-        for module in app.get_modules():
+        for module in all_modules:
             for case_type in module.get_case_types():
                 module_case_types.append({
                     'id': module.unique_id,
@@ -556,10 +559,38 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_workflow': not is_user_registration and not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
+
+    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+        module = form.get_module()
+
+        def qualified_form_name(form, auto_link):
+            module_name = trans(form.get_module().name, langs)
+            form_name = trans(form.name, app.langs)
+            star = '* ' if auto_link else '  '
+            return u"{}{} -> {}".format(star, module_name, form_name)
+
+        modules = filter(lambda m: m.case_type == module.case_type, all_modules)
+        if getattr(module, 'root_module_id', None) and module.root_module not in modules:
+            modules.append(module.root_module)
+        modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
+        auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
+
+        def linkable_form(candidate_form):
+            auto_link = candidate_form in auto_linkable_forms
+            return {
+                'unique_id': candidate_form.unique_id,
+                'name': qualified_form_name(candidate_form, auto_link),
+                'auto_link': auto_link
+            }
+
+        context['linkable_forms'] = [
+            linkable_form(candidate_form) for candidate_module in all_modules
+            for candidate_form in candidate_module.get_forms()
+        ]
 
     if isinstance(form, CareplanForm):
         context.update({
@@ -691,7 +722,6 @@ def get_langs(request, app):
 
 
 def _clear_app_cache(request, domain):
-    from corehq import ApplicationsTab
     ApplicationBase.get_db().view('app_manager/applications_brief',
         startkey=[domain],
         limit=1,
@@ -745,6 +775,29 @@ def get_apps_base_context(request, domain, app):
 
     return context
 
+@require_can_edit_apps
+def get_form_datums(request, domain, app_id):
+    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+    form_id = request.GET.get('form_id')
+    app = get_app(domain, app_id)
+    form = app.get_form(form_id)
+
+    def make_datum(datum):
+        return {'name': datum.datum.id, 'case_type': datum.case_type}
+
+    gen = SuiteGenerator(app)
+    datums = []
+    root_module = form.get_module().root_module
+    if root_module:
+        datums.extend([
+            make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(root_module.get_form(0))
+            if datum.requires_selection
+        ])
+    datums.extend([
+        make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(form)
+        if datum.requires_selection
+    ])
+    return json_response(datums)
 
 @cache_control(no_cache=True, no_store=True)
 @require_deploy_apps
@@ -1090,29 +1143,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if form:
-        template, form_context = get_form_view_context_and_template(request, form, context['langs'], is_user_registration)
+        template, form_context = get_form_view_context_and_template(request, domain, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
         })
-
-        if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-            def qualified_form_name(form):
-                module_name = trans(form.get_module().name, app.langs)
-                form_name = trans(form.name, app.langs)
-                return u"{} -> {}".format(module_name, form_name)
-
-            modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
-            if getattr(module, 'root_module_id', None) and module.root_module not in modules:
-                modules.append(module.root_module)
-            modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
-            linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
-            context.update({
-                'linkable_forms': map(
-                    lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
-                    linkable_forms
-                )
-            })
 
         context.update(form_context)
     elif module:
@@ -2137,9 +2172,20 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
             toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
-            request.POST.getlist('form_links_form_ids')
+            request.POST.getlist('form_links_form_ids'),
+            [
+                json.loads(datum_json) if datum_json else []
+                for datum_json in request.POST.getlist('datums_json')
+            ],
         )
-        form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
+        form.form_links = [FormLink(
+            xpath=link[0],
+            form_id=link[1],
+            datums=[
+                FormDatum(name=datum['name'], xpath=datum['xpath'])
+                for datum in link[2]
+            ]
+        ) for link in form_links]
 
     _handle_media_edits(request, form, should_edit, resp, lang)
 
@@ -3147,26 +3193,6 @@ def formdefs(request, domain, app_id):
         return response
     else:
         return json_response(formdefs)
-
-def _questions_for_form(request, form, langs):
-    class FakeMessages(object):
-        def __init__(self):
-            self.messages = defaultdict(list)
-
-        def add_message(self, type, message):
-            self.messages[type].append(message)
-
-        def error(self, request, message, *args, **kwargs):
-            self.add_message('error', message)
-
-        def warning(self, request, message, *args, **kwargs):
-            self.add_message('warning', message)
-
-    m = FakeMessages()
-
-    _, context = get_form_view_context_and_template(request, form, langs, None, messages=m)
-    xform_questions = context['xform_questions']
-    return xform_questions, m.messages
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):

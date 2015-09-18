@@ -2,7 +2,7 @@ import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from couchforms.models import XFormInstance
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig, \
     SupplyPointCase

@@ -219,6 +219,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def get_ajax(self, request):
         try:
             data_source = self.data_source
+            if len(data_source.columns) > 50:
+                raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
             data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
             total_records = data_source.get_total_records()
@@ -354,6 +356,12 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         file = StringIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
+
+
+# Base class for classes that provide custom rendering for UCRs
+class CustomConfigurableReport(ConfigurableReport):
+    # Ensures that links in saved reports will hit CustomConfigurableReportDispatcher
+    slug = 'custom_configurable'
 
 
 class CustomConfigurableReportDispatcher(ReportDispatcher):

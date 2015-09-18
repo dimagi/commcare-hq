@@ -1,5 +1,4 @@
 from django.conf.urls import patterns, url
-from corehq import SMSAdminInterfaceDispatcher
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
@@ -7,6 +6,7 @@ from corehq.apps.sms.views import (
     EditDomainGatewayView,
     SMSSettingsView,
 )
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),

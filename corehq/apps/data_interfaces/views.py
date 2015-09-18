@@ -15,7 +15,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
 from django.utils.decorators import method_decorator
 from openpyxl.utils.exceptions import InvalidFileException
-from corehq import CaseReassignmentInterface
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
@@ -28,7 +27,7 @@ from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
 from .dispatcher import require_form_management_privilege
-from .interfaces import FormManagementMode, BulkFormManagementInterface
+from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
@@ -478,7 +477,7 @@ class XFormManagementView(DataInterfaceSection):
     def post(self, request, *args, **kwargs):
         form_ids_or_query_string = self.get_form_ids_or_query_string(request)
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(None, expiry=1*60*60)
+        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,

@@ -443,8 +443,7 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch')
-        sudo("git submodule foreach 'git fetch'")
+        sudo('git fetch origin {}'.format(env.code_branch))
         sudo('git checkout %(code_branch)s' % env)
         sudo('git reset --hard origin/%(code_branch)s' % env)
         sudo('git submodule sync')
@@ -909,6 +908,7 @@ def restart_services():
 
 
 @roles(ROLES_ALL_SERVICES)
+@parallel
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -931,6 +931,7 @@ def _migrate():
 
 
 @roles(ROLES_DB_ONLY)
+@parallel
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -1132,6 +1133,7 @@ def stop_pillows():
 
 
 @roles(ROLES_CELERY)
+@parallel
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):

@@ -10,7 +10,7 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_3,
     CT_LEDGER_STOCK,
@@ -509,7 +509,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.app_manager.suite_xml import SuiteGenerator
 
     datums = SuiteGenerator.get_new_case_id_datums_meta(form)
-    session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
+    session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
             extra_datums = SuiteGenerator.get_extra_case_id_datums(form)

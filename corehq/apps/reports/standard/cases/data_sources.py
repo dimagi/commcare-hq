@@ -127,7 +127,7 @@ class CaseInfo(object):
     @property
     @memoized
     def owning_group(self):
-        mc = cache.get_cache('default')
+        mc = cache.caches['default']
         cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
             if mc.has_key(cache_key):
@@ -166,7 +166,7 @@ class CaseInfo(object):
     def _get_username(self, user_id):
         username = self.report.usernames.get(user_id)
         if not username:
-            mc = cache.get_cache('default')
+            mc = cache.caches['default']
             cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
 
             try:

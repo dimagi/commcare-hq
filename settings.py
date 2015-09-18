@@ -930,6 +930,7 @@ MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
+UCR_DATABASE_URL = None
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
@@ -1043,8 +1044,6 @@ COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 COUCHDB_APPS = [
-    'adm',
-    'announcements',
     'api',
     'app_manager',
     'appstore',
@@ -1297,7 +1296,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.RecapPassageFluffPillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
@@ -1464,7 +1463,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
+        'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
@@ -1493,3 +1492,9 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+
+if 'locmem' not in CACHES:
+    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+if 'dummy' not in CACHES:
+    CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
