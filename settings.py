@@ -369,6 +369,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'compressor',
 
     # submodules with tests that run on travis
     'ctable',
@@ -1486,7 +1487,7 @@ TRAVIS_TEST_GROUPS = (
         'corehq.apps.grapevine', 'corehq.apps.groups', 'custom.apps.gsid',
         'custom.hope', 'corehq.apps.hqadmin', 'corehq.apps.hqcase',
         'corehq.apps.hqcouchlog', 'corehq.apps.hqmedia', 'custom.care_pathways',
-        'custom.colalife', 'custom.common', 'compressor',
+        'custom.colalife', 'custom.common'
     ),
 )
 
