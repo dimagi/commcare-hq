@@ -364,7 +364,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if self.is_configurable_report:
-                url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
+                url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
                 url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
             return url_base + '?' + self.query_string

@@ -51,8 +51,7 @@ class FormExportTest(TestCase):
             'tables': [{
                 'index': '#',
                 'display': 'Export',
-                'columns': [{'index': 'form.name', 'display': 'Name',
-                             'show': True}],
+                'columns': [{'index': 'form.name', 'display': 'Name'}],
             }]
         })
 

@@ -99,9 +99,18 @@ from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
 WORKFLOW_MODULE = 'module'  # go to the current module's screen
 WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
 WORKFLOW_FORM = 'form'  # go straight to another form
+ALL_WORKFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_FORM,
+]
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -710,7 +719,7 @@ class FormBase(DocumentSchema):
     )
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
-        choices=[WORKFLOW_DEFAULT, WORKFLOW_ROOT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS, WORKFLOW_FORM]
+        choices=ALL_WORKFLOWS
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
@@ -1115,9 +1124,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
         media_dict = getattr(self, media_attr)
         if not media_dict:
             return None
-        if lang in media_dict:
+        if media_dict.get(lang, ''):
             return media_dict[lang]
-        elif not strict:
+        if not strict:
             # if the queried lang key doesn't exist,
             # return the first in the sorted list
             for lang, item in sorted(media_dict.items()):

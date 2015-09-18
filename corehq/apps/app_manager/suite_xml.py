@@ -724,8 +724,6 @@ class StackFrameMeta(object):
                 self.add_child(child)
 
     def add_child(self, child):
-        if isinstance(child, basestring) and not isinstance(child, XPath):
-            child = XPath.string(child)
         if isinstance(child, WorkflowDatumMeta):
             child = child.to_stack_datum()
         self.children.append(child)
@@ -737,14 +735,32 @@ class StackFrameMeta(object):
         frame = CreateFrame(if_clause=self.if_clause)
 
         for child in self.children:
-            if isinstance(child, XPath):
-                frame.add_command(child)
+            if isinstance(child, CommandId):
+                frame.add_command(XPath.string(child.id))
             elif isinstance(child, StackDatum):
                 frame.add_datum(child)
             else:
                 raise Exception("Unexpected child type: {} ({})".format(type(child), child))
 
         return frame
+    
+
+@total_ordering
+class CommandId(object):
+    def __init__(self, command):
+        self.id = command
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return 'ModuleCommand(id={})'.format(self.id)
 
 
 @total_ordering
@@ -966,12 +982,12 @@ class WorkflowHelper(object):
             for target_module in form.case_list_modules:
 
                 return_to = session_var(RETURN_TO)
-                target_command = XPath.string(id_strings.menu_id(target_module))
+                target_command = id_strings.menu_id(target_module)
 
                 def get_if_clause(case_count_xpath):
                     return XPath.and_(
                         return_to.count().eq(1),
-                        return_to.eq(target_command),
+                        return_to.eq(XPath.string(target_command)),
                         case_count_xpath
                     )
 
@@ -1058,28 +1074,43 @@ class WorkflowHelper(object):
                 if target_module.root_module_id:
                     # add stack children for the root module before adding any for the child module.
                     root_module = target_module.root_module
-                    root_module_command = XPath.string(id_strings.menu_id(root_module))
+                    root_module_command = CommandId(id_strings.menu_id(root_module))
                     frame_case_created.add_child(root_module_command)
                     frame_case_not_created.add_child(root_module_command)
 
                     source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
 
-                frame_case_created.add_child(target_command)
-                frame_case_not_created.add_child(target_command)
+                frame_case_created.add_child(CommandId(target_command))
+                frame_case_not_created.add_child(CommandId(target_command))
                 add_datums_for_target(target_module, source_form_dm)
 
         return stack_frames
 
     def form_workflow_frames(self, if_prefix, module, form):
         from corehq.apps.app_manager.models import (
-            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM
+            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
+
+        def frame_children_for_module(module_):
+            frame_children = []
+            if module_.root_module:
+                frame_children.extend(frame_children_for_module(module_.root_module))
+
+            this_module_children = self.get_frame_children(module_.get_form(0), module_only=True)
+            for child in this_module_children:
+                if child not in frame_children:
+                    frame_children.append(child)
+            return frame_children
+
         stack_frames = []
         if form.post_form_workflow == WORKFLOW_ROOT:
             stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
         elif form.post_form_workflow == WORKFLOW_MODULE:
-            module_command = id_strings.menu_id(module)
-            frame_children = [module_command] if module_command != id_strings.ROOT else []
+            frame_children = frame_children_for_module(module)
+            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+        elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            root_module = module.root_module
+            frame_children = frame_children_for_module(root_module)
             stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
         elif form.post_form_workflow == WORKFLOW_PREVIOUS:
             frame_children = self.get_frame_children(form)
@@ -1110,10 +1141,10 @@ class WorkflowHelper(object):
 
                     # exclude frame children from the child module if they are already
                     # supplied by the parent module
-                    child_ids_in_parent = {getattr(child, "id", child) for child in parent_frame_children}
+                    parent_ids = {parent.id for parent in parent_frame_children}
                     frame_children = parent_frame_children + [
                         child for child in frame_children
-                        if getattr(child, "id", child) not in child_ids_in_parent
+                        if child.id not in parent_ids
                     ]
 
                 stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
@@ -1202,10 +1233,10 @@ class WorkflowHelper(object):
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
 
-        frame_children = [module_command] if module_command != id_strings.ROOT else []
+        frame_children = [CommandId(module_command)] if module_command != id_strings.ROOT else []
         frame_children.extend(common_datums)
         if not module_only:
-            frame_children.append(target_form_command)
+            frame_children.append(CommandId(target_form_command))
             frame_children.extend(remaining_datums)
 
         return frame_children

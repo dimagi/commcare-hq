@@ -50,8 +50,7 @@ branches:
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
   - update-signup # Jenny 9/9
-  - FormArchive # sravan 9/10
-  - deploy-git # ben 9/13
+  - media-att # sravan 9/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

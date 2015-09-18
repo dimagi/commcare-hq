@@ -14,7 +14,7 @@ from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list, SerializableFunction
+    get_schema_index_view_keys, force_tag_to_list
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
@@ -353,23 +353,14 @@ class ExportTable(DocumentSchema):
         return dict((c.index, c.get_display()) for c in self.columns)
 
     def get_column_configuration(self, all_cols):
-        configured_cols = set()
-        from corehq.apps.export.custom_export_helpers import (
-            USERNAME_TRANSFORM, CASENAME_TRANSFORM, OWNERNAME_TRANSFORM)
-        special_transforms = [
-            USERNAME_TRANSFORM, CASENAME_TRANSFORM, OWNERNAME_TRANSFORM
-        ]
+        selected_cols = set()
         for c in self.columns:
             if c.doc_type in display_column_types:
-                selected = True
-                if (isinstance(c.transform, SerializableFunction)
-                    and c.transform.dumps_simple() in special_transforms):
-                    selected = c.show
-                configured_cols.add(c.index)
-                yield c.to_config_format(selected=selected)
+                selected_cols.add(c.index)
+                yield c.to_config_format()
 
         for c in all_cols:
-            if c not in configured_cols:
+            if c not in selected_cols:
                 column = ExportColumn(index=c)
                 column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
                 yield column.to_config_format(selected=False)
@@ -378,8 +369,6 @@ class ExportTable(DocumentSchema):
         from couchexport.export import FormattedRow
         headers = []
         for col in self.columns:
-            if (not col.show) and col.doc_type == 'ExportColumn':
-                continue  # ignore hidden columns
             if issubclass(type(col), ComplexExportColumn):
                 for header in col.get_headers():
                     headers.append(header)
@@ -436,8 +425,6 @@ class ExportTable(DocumentSchema):
             id = None
             cells = []
             for column, val in self.get_items_in_order(row):
-                if (not column.show) and column.doc_type == 'ExportColumn':
-                    continue  # don't add this column to the export
                 # TRANSFORM BABY!
                 if apply_transforms:
                     if column.transform and not isinstance(val, Constant):

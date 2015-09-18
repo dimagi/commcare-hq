@@ -8,10 +8,10 @@ from openpyxl.formatting import CellIsRule
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import CustomConfigurableReport
 
 
-class FormattedSupervisoryReport(ConfigurableReport):
+class FormattedSupervisoryReport(CustomConfigurableReport):
 
     @property
     def export_table(self):
