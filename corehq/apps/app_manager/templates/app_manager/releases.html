@@ -31,6 +31,7 @@
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
+            summary: '{% url "app_summary" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
@@ -141,7 +142,7 @@
                 <th>{% trans "CommCare Version" %}</th>
                 <th></th>
                 <th></th>
-                <th>{% trans "Comment" %}</th>
+                <th>{% trans "Changes" %}</th>
                 <th>
                     {% trans "Released" %}
                     <span class="hq-help-template"
@@ -250,6 +251,16 @@
                         <div data-bind="visible: comment_update_error()" class="alert alert-error">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
+                        {% if request.user.is_superuser %}
+                            <h6>
+                                {% blocktrans %}
+                                    View
+                                    <a data-bind="attr: {href: $root.url('summary', id)}">app summary</a>
+                                    or
+                                    <a data-bind="attr: {href: $root.url('source', id)}" class="view-source-files-link">source files</a>
+                                {% endblocktrans %}
+                            </h6>
+                        {% endif %}
                     </td>
                     <td class="build-is-released">
                         <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
@@ -515,25 +526,6 @@
                             <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
                                 <div class="accordion-inner">
                                     {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                    {% if request.user.is_superuser %}
-                        <div class="accordion-group">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse">
-                                    {% trans "Summary & Source" %}
-                                </a>
-                            </div>
-                            <div class="accordion-body collapse">
-                                <div class="accordion-inner">
-                                    <p><a href="{% url "app_summary" domain app.id %}">App Summary</a></p>
-                                    <p>
-                                        <a href="{% url "app_source" domain app.id %}" class="view-source-files-link" href="">
-                                            Source Files
-                                        </a>
-                                    </p>
                                 </div>
                             </div>
                         </div>
