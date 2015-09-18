@@ -12,7 +12,7 @@ from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
-from corehq import toggles, feature_previews, ReportConfiguration
+from corehq import toggles, feature_previews
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
@@ -26,6 +26,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties, commtrack_ledger_sections)
 
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
