@@ -99,7 +99,7 @@ class Command(BaseCommand):
         else:
             print '{}\n\n{}'.format(subject, message)
 
-rcache = cache.get_cache('redis')
+rcache = cache.caches['redis']
 PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'
 
 

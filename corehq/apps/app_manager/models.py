@@ -99,9 +99,18 @@ from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
 WORKFLOW_MODULE = 'module'  # go to the current module's screen
 WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
 WORKFLOW_FORM = 'form'  # go straight to another form
+ALL_WORKFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_FORM,
+]
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -655,6 +664,11 @@ class ScheduleVisit(IndexedSchema):
         return _id + 1
 
 
+class FormDatum(DocumentSchema):
+    name = StringProperty()
+    xpath = StringProperty()
+
+
 class FormLink(DocumentSchema):
     """
     xpath:      xpath condition that must be true in order to open next form
@@ -662,6 +676,7 @@ class FormLink(DocumentSchema):
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    datums = SchemaListProperty(FormDatum)
 
 
 class FormSchedule(DocumentSchema):
@@ -704,7 +719,7 @@ class FormBase(DocumentSchema):
     )
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
-        choices=[WORKFLOW_DEFAULT, WORKFLOW_ROOT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS, WORKFLOW_FORM]
+        choices=ALL_WORKFLOWS
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
@@ -1109,9 +1124,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
         media_dict = getattr(self, media_attr)
         if not media_dict:
             return None
-        if lang in media_dict:
+        if media_dict.get(lang, ''):
             return media_dict[lang]
-        elif not strict:
+        if not strict:
             # if the queried lang key doesn't exist,
             # return the first in the sorted list
             for lang, item in sorted(media_dict.items()):
@@ -3315,7 +3330,6 @@ class ReportAppConfig(DocumentSchema):
     def get_details(self):
         yield (self.select_detail_id, self.select_details(), True)
         yield (self.summary_detail_id, self.summary_details(), True)
-        yield (self.data_detail_id, self.data_details(), True)
 
     def select_details(self):
         return Detail(custom_xml=suite_xml.Detail(
@@ -3332,7 +3346,8 @@ class ReportAppConfig(DocumentSchema):
                     ),
                     template=suite_xml.Template(
                         text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
+                            locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                        )
                     ),
                 )
             ]
@@ -3376,33 +3391,58 @@ class ReportAppConfig(DocumentSchema):
             title=suite_xml.Text(
                 locale=suite_xml.Locale(id=id_strings.report_menu()),
             ),
-            fields=[
-                suite_xml.Field(
-                    header=suite_xml.Header(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_name_header()),
-                        )
+            details=[
+                suite_xml.Detail(
+                    title=suite_xml.Text(
+                        locale=suite_xml.Locale(id=id_strings.report_menu()),
                     ),
-                    template=suite_xml.Template(
-                        text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='name'))
-                    ),
+                    fields=[
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_name_header())
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_name(self.uuid))
+                                )
+                            ),
+                        ),
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_description_header()),
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    xpath=suite_xml.Xpath(function='description')
+                                )
+                            ),
+                        ),
+                    ] + list(_get_graph_fields()) + [
+                        suite_xml.Field(
+                            header=suite_xml.Header(
+                                text=suite_xml.Text(
+                                    locale=suite_xml.Locale(id=id_strings.report_last_sync())
+                                )
+                            ),
+                            template=suite_xml.Template(
+                                text=suite_xml.Text(
+                                    xpath=suite_xml.Xpath(
+                                        function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                                    )
+                                )
+                            )
+                        ),
+                    ],
                 ),
-                suite_xml.Field(
-                    header=suite_xml.Header(
-                        text=suite_xml.Text(
-                            locale=suite_xml.Locale(id=id_strings.report_description_header()),
-                        )
-                    ),
-                    template=suite_xml.Template(
-                        text=suite_xml.Text(
-                            xpath=suite_xml.Xpath(function='description'))
-                    ),
-                ),
-            ] + list(_get_graph_fields())
+                self.data_detail(),
+            ],
         ).serialize())
 
-    def data_details(self):
+    def data_detail(self):
         def _column_to_field(column):
             return suite_xml.Field(
                 header=suite_xml.Header(
@@ -3418,17 +3458,17 @@ class ReportAppConfig(DocumentSchema):
                 ),
             )
 
-        return Detail(custom_xml=suite_xml.Detail(
+        return suite_xml.Detail(
             id='reports.{}.data'.format(self.uuid),
+            nodeset='rows/row',
             title=suite_xml.Text(
-                locale=suite_xml.Locale(id=id_strings.report_name(self.uuid)),
+                locale=suite_xml.Locale(id=id_strings.report_data_table()),
             ),
             fields=[_column_to_field(c) for c in self.report.report_columns]
-        ).serialize())
+        )
 
     def get_entry(self):
         return suite_xml.Entry(
-            form='fixmeclayton',
             command=suite_xml.Command(
                 id='reports.{}'.format(self.uuid),
                 text=suite_xml.Text(
@@ -3443,14 +3483,6 @@ class ReportAppConfig(DocumentSchema):
                     nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
                     value='./@id',
                 ),
-                # you are required to select something - even if you don't use it
-                suite_xml.SessionDatum(
-                    detail_select=self.data_detail_id,
-                    id='throwaway_{}'.format(self.uuid),
-                    nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
-                    value="''",
-                )
-
             ]
         )
 

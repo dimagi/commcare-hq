@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import copy
-from datetime import datetime
+from datetime import datetime, date
 import uuid
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
@@ -239,10 +239,10 @@ class CaseBlock(dict):
                 return ''
             if isinstance(value, datetime):
                 return unicode(format_datetime(value))
-            elif isinstance(value, (basestring, int)):
+            elif isinstance(value, (basestring, int, date)):
                 return unicode(value)
             else:
-                raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(type(value), value))
+                raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))
 
         def dict_to_xml(block, dct):
             if dct.has_key('_attrib'):

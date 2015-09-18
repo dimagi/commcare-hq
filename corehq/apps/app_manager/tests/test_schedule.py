@@ -478,10 +478,10 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
         """
         self._fetch_sources()
         self._apply_schedule_phases()
-        all_forms = [self.form_1, self.form_2, self.form_3]
+        phase_forms = [self.form_1, self.form_2]
         xform_1 = self.form_1.wrapped_xform()
         self.form_1.add_stuff_to_xform(xform_1)
-        form_names = [u"/data/next_{}".format(f.schedule_form_id) for f in all_forms]
+        form_names = [u"/data/next_{}".format(f.schedule_form_id) for f in phase_forms]
 
         self.assertXmlPartialEqual(
             next_visit_date_partial.format(form_names=",".join(form_names), xmlns=self.xmlns),
@@ -489,7 +489,7 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
             '.'
         )
 
-        for form in all_forms:
+        for form in phase_forms:
             self.assertTrue(
                 len(xform_1.model_node.find(u"./bind[@nodeset='/data/next_{}']"
                                             .format(form.schedule_form_id)).render())

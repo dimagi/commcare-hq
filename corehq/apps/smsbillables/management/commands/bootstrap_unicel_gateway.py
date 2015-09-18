@@ -9,10 +9,10 @@ from corehq.apps.unicel.api import UnicelBackend
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_unicel_gateway(orm):
-    currency = (orm['accounting.Currency'] if orm else Currency).objects.get(code="INR")
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_unicel_gateway(apps):
+    currency = (apps.get_model('accounting.Currency') if apps else Currency).objects.get(code="INR")
+    sms_gateway_fee_class = apps.get_model('smsbillables.SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables.SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(UnicelBackend.get_api_id(), INCOMING, 0.50,
                              currency=currency,

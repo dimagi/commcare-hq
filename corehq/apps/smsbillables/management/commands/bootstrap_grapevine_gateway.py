@@ -11,10 +11,10 @@ from corehq.apps.smsbillables.utils import get_global_backends_by_class
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_grapevine_gateway(orm):
-    currency_class = orm['accounting.Currency'] if orm else Currency
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_grapevine_gateway(apps):
+    currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     relevant_backends = get_global_backends_by_class(GrapevineBackend)
     currency = currency_class.objects.get_or_create(code="ZAR")[0]

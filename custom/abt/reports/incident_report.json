@@ -3,10 +3,12 @@
         "airs",
         "abtmali",
         "airsmadagascar",
+        "airsrwanda",
         "airsethiopia"
     ],
    "data_source_table":"supervisory",
    "report_id":"incident-report",
+   "custom_configurable_report":"custom.abt.reports.views.FormattedSupervisoryReport",
    "config":{
       "domain":"abtmali",
       "config_id":"static-supervisory-indicators",

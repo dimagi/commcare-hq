@@ -6,7 +6,7 @@ from dimagi.utils import gitinfo
 from django.core import cache
 
 
-rcache = cache.get_cache('redis')
+rcache = cache.caches['redis']
 COMPRESS_PREFIX = '#compress_%s'
 CACHE_DIR = os.path.join(settings.STATIC_ROOT, 'CACHE')
 MANIFEST_FILE = os.path.join(CACHE_DIR, 'manifest.json')

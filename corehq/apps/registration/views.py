@@ -72,7 +72,7 @@ def register_user(request, domain_type=None):
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
-                track_workflow.delay(new_user.email, "Requested new account")
+                track_workflow(new_user.email, "Requested new account")
                 meta = {
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
@@ -308,7 +308,7 @@ def confirm_domain(request, guid=None):
             'Your account has been successfully activated.  Thank you for taking '
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
-    track_workflow.delay(requesting_user.email, "Confirmed new project")
+    track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 

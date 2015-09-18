@@ -98,29 +98,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update({"translations": app.translations.get(lang, {})})
 
     if form:
-        template, form_context = get_form_view_context_and_template(request, form, context['langs'], is_user_registration)
+        template, form_context = get_form_view_context_and_template(request, domain, form, context['langs'], is_user_registration)
         context.update({
             'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
         })
-
-        if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-            def qualified_form_name(form):
-                module_name = trans(form.get_module().name, app.langs)
-                form_name = trans(form.name, app.langs)
-                return u"{} -> {}".format(module_name, form_name)
-
-            modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
-            if getattr(module, 'root_module_id', None) and module.root_module not in modules:
-                modules.append(module.root_module)
-            modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
-            linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
-            context.update({
-                'linkable_forms': map(
-                    lambda f: {'unique_id': f.unique_id, 'name': qualified_form_name(f)},
-                    linkable_forms
-                )
-            })
 
         context.update(form_context)
     elif module:

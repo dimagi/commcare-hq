@@ -122,7 +122,6 @@ class TestXFormInstanceResource(APIResourceTest):
         """
         Any form in the appropriate domain should be in the list from the API.
         """
-
         # The actual infrastructure involves saving to CouchDB, having PillowTop
         # read the changes and write it to ElasticSearch.
 
@@ -136,10 +135,10 @@ class TestXFormInstanceResource(APIResourceTest):
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-        backend_form = XFormInstance(xmlns = 'fake-xmlns',
-                                     domain = self.domain.name,
-                                     received_on = datetime.utcnow(),
-                                     form = {
+        backend_form = XFormInstance(xmlns='fake-xmlns',
+                                     domain=self.domain.name,
+                                     received_on=datetime.utcnow(),
+                                     form={
                                          '#type': 'fake-type',
                                          '@xmlns': 'fake-xmlns'
                                      })

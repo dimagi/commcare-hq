@@ -280,7 +280,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return dict([
             (index.identifier, {
                 "case_type": index.referenced_type,
-                "case_id": index.referenced_id
+                "case_id": index.referenced_id,
+                "relationship": index.relationship,
             }) for index in (self.indices if not reversed else self.reverse_indices)
         ])
 

@@ -5,6 +5,7 @@ import json
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
+import itertools
 
 from lxml import etree
 from diff_match_patch import diff_match_patch
@@ -68,7 +69,7 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     load_case_reserved_words,
-)
+    FormDatum)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -278,9 +279,20 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
             toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
-            request.POST.getlist('form_links_form_ids')
+            request.POST.getlist('form_links_form_ids'),
+            [
+                json.loads(datum_json) if datum_json else []
+                for datum_json in request.POST.getlist('datums_json')
+            ],
         )
-        form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
+        form.form_links = [FormLink(
+            xpath=link[0],
+            form_id=link[1],
+            datums=[
+                FormDatum(name=datum['name'], xpath=datum['xpath'])
+                for datum in link[2]
+            ]
+        ) for link in form_links]
 
     handle_media_edits(request, form, should_edit, resp, lang)
 
@@ -348,7 +360,7 @@ def view_user_registration(request, domain, app_id):
     return view_generic(request, domain, app_id, is_user_registration=True)
 
 
-def get_form_view_context_and_template(request, form, langs, is_user_registration, messages=messages):
+def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
     form_errors = []
@@ -420,10 +432,11 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     module_case_types = []
     app = form.get_app()
+    all_modules = list(app.get_modules())
     if is_user_registration:
         module_case_types = None
     else:
-        for module in app.get_modules():
+        for module in all_modules:
             for case_type in module.get_case_types():
                 module_case_types.append({
                     'id': module.unique_id,
@@ -449,10 +462,38 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_workflow': is_user_registration and not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
+    
+    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+        module = form.get_module()
+
+        def qualified_form_name(form, auto_link):
+            module_name = trans(form.get_module().name, langs)
+            form_name = trans(form.name, app.langs)
+            star = '* ' if auto_link else '  '
+            return u"{}{} -> {}".format(star, module_name, form_name)
+
+        modules = filter(lambda m: m.case_type == module.case_type, all_modules)
+        if getattr(module, 'root_module_id', None) and module.root_module not in modules:
+            modules.append(module.root_module)
+        modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
+        auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
+
+        def linkable_form(candidate_form):
+            auto_link = candidate_form in auto_linkable_forms
+            return {
+                'unique_id': candidate_form.unique_id,
+                'name': qualified_form_name(candidate_form, auto_link),
+                'auto_link': auto_link
+            }
+
+        context['linkable_forms'] = [
+            linkable_form(candidate_form) for candidate_module in all_modules
+            for candidate_form in candidate_module.get_forms()
+        ]
 
     if isinstance(form, CareplanForm):
         context.update({
@@ -484,6 +525,29 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         return "app_manager/form_view.html", context
 
 
+@require_can_edit_apps
+def get_form_datums(request, domain, app_id):
+    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+    form_id = request.GET.get('form_id')
+    app = get_app(domain, app_id)
+    form = app.get_form(form_id)
+
+    def make_datum(datum):
+        return {'name': datum.datum.id, 'case_type': datum.case_type}
+
+    gen = SuiteGenerator(app)
+    datums = []
+    root_module = form.get_module().root_module
+    if root_module:
+        datums.extend([
+            make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(root_module.get_form(0))
+            if datum.requires_selection
+        ])
+    datums.extend([
+        make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(form)
+        if datum.requires_selection
+    ])
+    return json_response(datums)
 
 
 @require_GET

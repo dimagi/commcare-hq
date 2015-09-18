@@ -142,12 +142,11 @@ def _get_basic_module_view_context(app, module):
     ]
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type)
-    # don't allow this for modules with parent selection until this mobile bug is fixed:
     # http://manage.dimagi.com/default.asp?178635
+    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
     allow_case_list_form = _case_list_form_not_allowed_reason(
         module,
-        AllowWithReason(not module.parent_select.active,
-                        AllowWithReason.PARENT_SELECT_ACTIVE)
+        AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
     )
     return {
         'parent_modules': _get_parent_modules(app, module,

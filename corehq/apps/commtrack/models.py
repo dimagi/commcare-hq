@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.apps.commtrack.exceptions import MissingProductId
 
 from dimagi.ext.couchdbkit import *
 from dimagi.ext import jsonobject
@@ -26,6 +27,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
+from couchforms.util import is_deprecation
 from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
@@ -322,17 +324,27 @@ class StockReportHelper(jsonobject.JsonObject):
     tag = jsonobject.StringProperty()
     transactions = jsonobject.ListProperty(lambda: StockTransactionHelper)
     server_date = jsonobject.DateTimeProperty()
+    deprecated = jsonobject.BooleanProperty()
 
     @classmethod
     def make_from_form(cls, form, timestamp, tag, transactions):
+        deprecated = is_deprecation(form)
         return cls(
             domain=form.domain,
-            form_id=form.get_id,
+            form_id=form.get_id if not deprecated else form.orig_id,
             timestamp=timestamp,
             tag=tag,
             transactions=transactions,
             server_date=form.received_on,
+            deprecated=deprecated,
         )
+
+    def validate(self):
+        """
+        Validates this object as best we can and raises Exceptions if we find anything invalid .
+        """
+        if any(transaction_helper.product_id in ('', None) for transaction_helper in self.transactions):
+            raise MissingProductId(_('Product IDs must be set for all ledger updates!'))
 
 
 class StockTransactionHelper(jsonobject.JsonObject):
@@ -778,6 +790,6 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    result = process_stock(xform)
+    result = process_stock([xform])
     result.commit()
     CommCareCase.get_db().bulk_save(result.relevant_cases)
