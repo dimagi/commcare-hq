@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from django_digest.test import Client

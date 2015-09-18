@@ -23,7 +23,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import ConfigurableReport, privileges, Session, toggles
+from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
@@ -50,6 +50,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
@@ -59,6 +60,7 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.db import Session
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables

@@ -7,6 +7,7 @@ import json
 import tempfile
 import re
 import itertools
+from corehq.apps.domain.models import Domain
 from corehq.util.spreadsheets.export import WorkBook
 import langcodes
 from datetime import datetime, timedelta, date
@@ -43,7 +44,7 @@ from django.views.decorators.http import require_GET
 from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
-from corehq import toggles, Domain
+from corehq import toggles
 from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher

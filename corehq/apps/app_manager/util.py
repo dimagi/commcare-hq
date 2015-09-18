@@ -10,7 +10,7 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_3,
     CT_LEDGER_STOCK,
