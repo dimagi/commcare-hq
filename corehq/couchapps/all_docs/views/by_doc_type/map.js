@@ -25,5 +25,5 @@ function (doc) {
             return;
     }
 
-    emit(doc.doc_type, null);
+    emit([doc.doc_type, doc._id], null);
 }
