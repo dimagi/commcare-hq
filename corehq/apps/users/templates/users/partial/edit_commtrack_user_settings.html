@@ -9,7 +9,7 @@
         {% if commtrack_enabled %}
         <legend>{% trans 'CommCare Supply Settings' %}</legend>
         {% else %}
-        <legend>{% trans 'Location Settings' %}</legend>
+        <legend>{% trans 'Organization Settings' %}</legend>
         {% endif %}
         {% bootstrap_form_errors commtrack.update_form %}
         {% include 'hqstyle/forms/basic_fieldset.html' with form=commtrack.update_form %}
