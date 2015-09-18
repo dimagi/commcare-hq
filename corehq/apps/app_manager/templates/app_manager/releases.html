@@ -25,6 +25,7 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
+            compare: 'diff/___/and/___',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
@@ -258,6 +259,24 @@
                                     <a data-bind="attr: {href: $root.url('summary', id)}">app summary</a>
                                     or
                                     <a data-bind="attr: {href: $root.url('source', id)}" class="view-source-files-link">source files</a>
+                                    <br />
+                                    <a href="#" data-bind="click: function() {
+                                            $root.selectingVersion(id());
+                                        }, visible: !$root.selectingVersion()">
+                                        Compare with another version
+                                    </a>
+                                    <a href="#"
+                                       data-bind="visible: $root.selectingVersion() === id(), click: function() {$root.selectingVersion('')}">
+                                        Cancel
+                                    </a>
+                                    <a href="#" class="btn btn-mini btn-success"
+                                       data-bind="
+                                            click: function() {
+                                                window.alert($root.url('compare', $root.selectingVersion(), id()));
+                                            },
+                                            visible: $root.selectingVersion() && $root.selectingVersion() != id()">
+                                        Compare
+                                    </a>
                                 {% endblocktrans %}
                             </h6>
                         {% endif %}
