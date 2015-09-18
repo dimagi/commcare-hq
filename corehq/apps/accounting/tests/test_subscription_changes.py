@@ -1,12 +1,25 @@
 from corehq.apps.domain.models import Domain
+from django.test import SimpleTestCase
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
-)
+    Subscriber)
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
+
+
+class TestSubscriptionEmailLogic(SimpleTestCase):
+
+    def test_new_trial_with_no_previous(self):
+        self._run_test(None, Subscription(is_trial=True), False)
+
+    def test_non_trial_with_no_previous(self):
+        self._run_test(None, Subscription(is_trial=False), True)
+
+    def _run_test(self, old_sub, new_sub, expected_output):
+        self.assertEqual(expected_output, Subscriber.should_send_subscription_notification(old_sub, new_sub))
 
 
 class TestUserRoleSubscriptionChanges(BaseAccountingTest):

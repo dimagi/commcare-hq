@@ -787,9 +787,9 @@ class Subscriber(models.Model):
             new_subscription=subscription,
         )
 
-    def _apply_upgrades_and_downgrades(self, downgraded_privileges=None,
+    def _apply_upgrades_and_downgrades(self, new_plan_version=None,
+                                       downgraded_privileges=None,
                                        upgraded_privileges=None,
-                                       new_plan_version=None,
                                        web_user=None,
                                        old_subscription=None,
                                        new_subscription=None,
@@ -798,7 +798,6 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
 
@@ -816,13 +815,17 @@ class Subscriber(models.Model):
         if upgraded_privileges:
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
 
-        is_new_trial = new_subscription and new_subscription.is_trial
-        expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
-        should_send_email = not is_new_trial and not expired_trial
-        if should_send_email:
+        if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
+
+    @staticmethod
+    def should_send_subscription_notification(old_subscription, new_subscription):
+        is_new_trial = new_subscription and new_subscription.is_trial
+        expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
+        return not is_new_trial and not expired_trial
+
 
     @staticmethod
     def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
@@ -841,6 +844,7 @@ class Subscriber(models.Model):
         )
         if not upgrade_handler.get_response():
             raise SubscriptionChangeError("The upgrade was not successful.")
+
 
 class Subscription(models.Model):
     """
