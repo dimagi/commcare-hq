@@ -581,7 +581,7 @@ class FacilitySyncView(BaseSyncView):
 
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
-    page_title = ugettext_noop('Location Import Status')
+    page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
@@ -590,7 +590,7 @@ class LocationImportStatusView(BaseLocationView):
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("Location Import Status"),
+            'title': _("Organization Structure Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
@@ -602,7 +602,7 @@ class LocationImportStatusView(BaseLocationView):
 
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
-    page_title = ugettext_noop('Upload Locations from Excel')
+    page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
@@ -621,8 +621,8 @@ class LocationImportView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse(
                     "location_export", args=(self.domain,)),
-                "adjective": _("location"),
-                "plural_noun": _("locations"),
+                "adjective": _("Organization Structure"),
+                "plural_noun": _("Organization Structure"),
             },
             "manage_consumption": _get_manage_consumption(),
         }
@@ -671,7 +671,7 @@ def location_importer_job_poll(request, domain, download_id,
 
     context.update({
         'on_complete_short': _('Import complete.'),
-        'on_complete_long': _('Location importing has finished'),
+        'on_complete_long': _('Organization Structure importing has finished'),
 
     })
     return render(request, template, context)
