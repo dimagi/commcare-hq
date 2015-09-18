@@ -826,7 +826,6 @@ class Subscriber(models.Model):
         expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
         return not is_new_trial and not expired_trial
 
-
     @staticmethod
     def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
         downgrade_handler = DomainDowngradeActionHandler(
