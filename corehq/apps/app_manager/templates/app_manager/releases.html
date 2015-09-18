@@ -53,6 +53,7 @@
     function track_deploy_type(type) {
         ga_track_event('App Manager', 'Deploy Type', type);
     }
+    // TODO: update analytics?
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
@@ -69,13 +70,19 @@
     .build.build-unreleased {
         color: #888;
     }
-    .build.build-released {
-    }
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
     .build.build-latest-release .build-is-released:after{
         content: "Latest";
+    }
+    .build .edit-comment-pencil {
+        display: none;
+        margin-left: 5px;
+        position: absolute;
+    }
+    .build:hover .edit-comment-pencil {
+        display: inline;
     }
     .nowrap {
         white-space: nowrap;
@@ -96,14 +103,6 @@
     .released {
         color: #ffff00;
         text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
-    }
-    .build .edit-comment-pencil {
-        display: none;
-        margin-left: 5px;
-        position: absolute;
-    }
-    .build:hover .edit-comment-pencil {
-        display: inline;
     }
 </style>
 {% endblock %}
@@ -523,11 +522,19 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle view-source-files-link" data-bind="
-                                    attr: {href: $root.url('source', id)},
-                                ">
-                                    {% trans "View Source Files" %}
+                                <a class="accordion-toggle" data-toggle="collapse">
+                                    {% trans "Summary & Source" %}
                                 </a>
+                            </div>
+                            <div class="accordion-body collapse">
+                                <div class="accordion-inner">
+                                    <p><a href="{% url "app_summary" domain app.id %}">App Summary</a></p>
+                                    <p>
+                                        <a href="{% url "app_source" domain app.id %}" class="view-source-files-link" href="">
+                                            Source Files
+                                        </a>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     {% endif %}
