@@ -252,6 +252,27 @@ class SwitchExpressionTest(SimpleTestCase):
         }))
 
 
+class ArrayIndexExpressionTest(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.expression_spec = {
+            'type': 'array_index',
+            'array_expression': {
+                'type': 'property_name',
+                'property_name': 'my_array'
+            },
+            'index_expression': {
+                'type': 'constant',
+                'constant': 0
+            },
+        }
+        cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
+
+    def test_basic(self):
+        self.assertEqual('first', self.expression({'my_array': ['first', 'second', 'third']}))
+
+
 class IteratorExpressionTest(SimpleTestCase):
 
     def setUp(self):

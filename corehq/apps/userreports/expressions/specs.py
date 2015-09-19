@@ -76,6 +76,21 @@ class ConditionalExpressionSpec(JsonObject):
             return self._false_expression(item, context)
 
 
+class ArrayIndexExpressionSpec(JsonObject):
+    type = TypeProperty('array_index')
+    array_expression = DictProperty(required=True)
+    index_expression = DictProperty(required=True)
+
+    def configure(self, array_expression, index_expression):
+        self._array_expression = array_expression
+        self._index_expression = index_expression
+
+    def __call__(self, item, context=None):
+        array_value = self._array_expression(item, context)
+        index_value = self._index_expression(item, context)
+        return array_value[index_value]
+
+
 class SwitchExpressionSpec(JsonObject):
     type = TypeProperty('switch')
     switch_on = DictProperty(required=True)
