@@ -87,6 +87,9 @@ class ArrayIndexExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         array_value = self._array_expression(item, context)
+        if not isinstance(array_value, list):
+            return None
+
         index_value = self._index_expression(item, context)
         try:
             return array_value[index_value]

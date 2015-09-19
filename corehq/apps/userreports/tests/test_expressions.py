@@ -275,6 +275,9 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_array_out_of_bounds(self):
         self.assertEqual(None, self.expression({'my_array': []}))
 
+    def test_array_not_an_array(self):
+        self.assertEqual(None, self.expression({'my_array': {}}))
+
 
 class IteratorExpressionTest(SimpleTestCase):
 
