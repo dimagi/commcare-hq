@@ -106,7 +106,7 @@ class PaginateViewLogHandler(object):
 
 
 def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewLogHandler(), **kwargs):
+                  log_handler=PaginateViewLogHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 
@@ -127,34 +127,34 @@ def paginate_view(db, view_name, chunk_size,
     chunk_size is how many docs to fetch per request to couchdb
 
     """
-    if kwargs.get('reduce', True):
+    if view_kwargs.get('reduce', True):
         raise ValueError('paginate_view must be called with reduce=False')
 
-    if 'limit' in kwargs:
+    if 'limit' in view_kwargs:
         raise ValueError('paginate_view cannot be called with limit')
 
-    if 'skip' in kwargs:
+    if 'skip' in view_kwargs:
         raise ValueError('paginate_view cannot be called with skip')
 
-    kwargs['limit'] = chunk_size
+    view_kwargs['limit'] = chunk_size
     total_emitted = 0
     len_results = -1
     while len_results:
-        log_handler.view_starting(db, view_name, kwargs, total_emitted)
+        log_handler.view_starting(db, view_name, view_kwargs, total_emitted)
         start_time = datetime.datetime.utcnow()
-        results = db.view(view_name, **kwargs)
+        results = db.view(view_name, **view_kwargs)
         len_results = len(results)
 
         for result in results:
             yield result
 
         total_emitted += len_results
-        log_handler.view_ending(db, view_name, kwargs, total_emitted,
+        log_handler.view_ending(db, view_name, view_kwargs, total_emitted,
                                 datetime.datetime.utcnow() - start_time)
         if len_results:
-            kwargs['startkey'] = result['key']
-            kwargs['startkey_docid'] = result['id']
-            kwargs['skip'] = 1
+            view_kwargs['startkey'] = result['key']
+            view_kwargs['startkey_docid'] = result['id']
+            view_kwargs['skip'] = 1
 
 
 _override_db = threading.local()
