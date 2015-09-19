@@ -286,6 +286,9 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_invalid_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': 'troll'}))
 
+    def test_empty_index(self):
+        self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
+
 
 class IteratorExpressionTest(SimpleTestCase):
 
