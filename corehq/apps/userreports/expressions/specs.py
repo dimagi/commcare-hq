@@ -88,7 +88,10 @@ class ArrayIndexExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         array_value = self._array_expression(item, context)
         index_value = self._index_expression(item, context)
-        return array_value[index_value]
+        try:
+            return array_value[index_value]
+        except IndexError:
+            return None
 
 
 class SwitchExpressionSpec(JsonObject):

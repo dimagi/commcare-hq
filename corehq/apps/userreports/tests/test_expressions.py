@@ -264,13 +264,16 @@ class ArrayIndexExpressionTest(SimpleTestCase):
             },
             'index_expression': {
                 'type': 'constant',
-                'constant': 0
+                'constant': 1,
             },
         }
         cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
 
     def test_basic(self):
-        self.assertEqual('first', self.expression({'my_array': ['first', 'second', 'third']}))
+        self.assertEqual('second', self.expression({'my_array': ['first', 'second', 'third']}))
+
+    def test_array_out_of_bounds(self):
+        self.assertEqual(None, self.expression({'my_array': []}))
 
 
 class IteratorExpressionTest(SimpleTestCase):
