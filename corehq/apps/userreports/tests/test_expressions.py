@@ -278,6 +278,9 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_array_not_an_array(self):
         self.assertEqual(None, self.expression({'my_array': {}}))
 
+    def test_array_empty(self):
+        self.assertEqual(None, self.expression({'my_array': None}))
+
 
 class IteratorExpressionTest(SimpleTestCase):
 
