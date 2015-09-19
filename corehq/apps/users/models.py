@@ -22,6 +22,7 @@ from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
@@ -1262,16 +1263,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def save(self, **params):
         self.clear_quickcache_for_user()
-        # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
-        if by_username and by_username['id'] != self._id:
-            raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+        with CriticalSection(['username-check-%s' % self.username], timeout=120):
+            # test no username conflict
+            by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+            if by_username and by_username['id'] != self._id:
+                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-        if not self.to_be_deleted():
-            django_user = self.sync_to_django_user()
-            django_user.save()
+            if not self.to_be_deleted():
+                django_user = self.sync_to_django_user()
+                django_user.save()
 
-        super(CouchUser, self).save(**params)
+            super(CouchUser, self).save(**params)
 
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
