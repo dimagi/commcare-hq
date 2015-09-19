@@ -91,6 +91,9 @@ class ArrayIndexExpressionSpec(JsonObject):
             return None
 
         index_value = self._index_expression(item, context)
+        if not isinstance(index_value, int):
+            return None
+
         try:
             return array_value[index_value]
         except IndexError:
