@@ -263,23 +263,25 @@ class ArrayIndexExpressionTest(SimpleTestCase):
                 'property_name': 'my_array'
             },
             'index_expression': {
-                'type': 'constant',
-                'constant': 1,
+                'type': 'property_name',
+                'property_name': 'my_index',
             },
         }
         cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
 
     def test_basic(self):
-        self.assertEqual('second', self.expression({'my_array': ['first', 'second', 'third']}))
+        array = ['first', 'second', 'third']
+        for i, value in enumerate(array):
+            self.assertEqual(value, self.expression({'my_array': array, 'my_index': i}))
 
     def test_array_out_of_bounds(self):
-        self.assertEqual(None, self.expression({'my_array': []}))
+        self.assertEqual(None, self.expression({'my_array': [], 'my_index': 1}))
 
     def test_array_not_an_array(self):
-        self.assertEqual(None, self.expression({'my_array': {}}))
+        self.assertEqual(None, self.expression({'my_array': {}, 'my_index': 1}))
 
     def test_array_empty(self):
-        self.assertEqual(None, self.expression({'my_array': None}))
+        self.assertEqual(None, self.expression({'my_array': None, 'my_index': 1}))
 
 
 class IteratorExpressionTest(SimpleTestCase):
