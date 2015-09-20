@@ -46,7 +46,8 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
-        restore_config = RestoreConfig(self.project, user=self.user)
+        restore_config = RestoreConfig(self.project, user=self.user,
+                                       cache_settings=RestoreCacheSettings(overwrite_cache=True))
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.factory = CaseFactory(
             case_defaults={
