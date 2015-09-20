@@ -93,15 +93,6 @@ class UserLocMapping(object):
         return messages
 
 
-
-
-
-
-
-
-
-
-
 class GroupNameError(Exception):
     def __init__(self, blank_groups):
         self.blank_groups = blank_groups
