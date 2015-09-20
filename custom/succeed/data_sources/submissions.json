@@ -2,6 +2,7 @@
     "domains": ["succeed"],
     "config": {
         "referenced_doc_type": "XFormInstance",
+        "engine_id": "default",
         "table_id": "succeed_submissions",
         "display_name": "Patient Submissions",
          "configured_filter": {
