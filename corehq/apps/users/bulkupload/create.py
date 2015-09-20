@@ -259,9 +259,13 @@ class _Creator(object):
                     ))
                 )
 
-    def _do_most_of_create_users(self):
+    @property
+    @memoized
+    def custom_data_validator(self):
         from corehq.apps.users.views.mobile import UserFieldsView
-        custom_data_validator = UserFieldsView.get_validator(self.domain)
+        return UserFieldsView.get_validator(self.domain)
+
+    def _do_most_of_create_users(self):
         usernames = set()
         user_ids = set()
         allowed_group_names = [group.name for group in self.group_memoizer.groups]
@@ -271,15 +275,14 @@ class _Creator(object):
             self._set_progress(starting_progress + i)
             message = self._create_or_update_single_user(
                 user_spec=user_spec,
-                custom_data_validator=custom_data_validator,
                 usernames=usernames,
                 user_ids=user_ids,
                 allowed_group_names=allowed_group_names,
             )
             self.record_user_update(user_spec, message)
 
-    def _create_or_update_single_user(self, user_spec, custom_data_validator,
-                                      usernames, user_ids, allowed_group_names):
+    def _create_or_update_single_user(self, user_spec, usernames, user_ids,
+                                      allowed_group_names):
         try:
             user_spec = normalize_user_spec(user_spec, self.domain)
         except BadUsername:
@@ -320,24 +323,8 @@ class _Creator(object):
                         raise UserUploadError(_("Cannot create a new user with a blank password"))
                     user = CommCareUser.create(self.domain, user_spec.username, user_spec.password, commit=False)
                     status_message = 'created'
-                if user_spec.phone_number:
-                    user.add_phone_number(_fmt_phone(user_spec.phone_number), default=True)
-                if user_spec.name:
-                    user.set_full_name(user_spec.name)
-                if user_spec.data:
-                    error = custom_data_validator(user_spec.data)
-                    if error:
-                        raise UserUploadError(error)
-                    user.user_data.update(user_spec.data)
-                if user_spec.uncategorized_data:
-                    user.user_data.update(user_spec.uncategorized_data)
-                if user_spec.language:
-                    user.language = user_spec.language
-                if user_spec.email:
-                    user.email = user_spec.email
-                if user_spec.is_active is not None:
-                    user.is_active = user_spec.is_active
 
+                self._update_user_from_spec(user, user_spec)
                 user.save()
                 if self.can_access_locations and user_spec.location_code:
                     loc = self.location_cache.get(user_spec.location_code)
@@ -369,6 +356,25 @@ class _Creator(object):
                 status_message = unicode(e)
 
         return status_message
+
+    def _update_user_from_spec(self, user, user_spec):
+        if user_spec.phone_number:
+            user.add_phone_number(_fmt_phone(user_spec.phone_number), default=True)
+        if user_spec.name:
+            user.set_full_name(user_spec.name)
+        if user_spec.data:
+            error = self.custom_data_validator(user_spec.data)
+            if error:
+                raise UserUploadError(error)
+            user.user_data.update(user_spec.data)
+        if user_spec.uncategorized_data:
+            user.user_data.update(user_spec.uncategorized_data)
+        if user_spec.language:
+            user.language = user_spec.language
+        if user_spec.email:
+            user.email = user_spec.email
+        if user_spec.is_active is not None:
+            user.is_active = user_spec.is_active
 
 
 def _fmt_phone(phone_number):
