@@ -155,16 +155,18 @@ class TestUserBulkUpload(SimpleTestCase):
             self._test_upload_with_user_id()
 
     def _test_upload_with_user_id(self):
-        bulk_upload_async(
+        messages = bulk_upload_async(
             self.domain.name,
             list(self.user_specs),
             list([]),
             list([])
-        )
-
+        )['messages']['rows']
+        message = messages[0]['flag']
         user = CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
             self.user_specs[0]['username'],
             self.domain.name))
         self.assertNotEqual(self.user_specs[0]['user_id'], user._id)
         self.assertEqual(self.user_specs[0]['phone-number'], user.phone_number)
         self.assertEqual(self.user_specs[0]['name'], user.name)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(message, 'created')
