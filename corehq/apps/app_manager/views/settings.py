@@ -37,6 +37,7 @@ def edit_commcare_settings(request, domain, app_id):
         )
     return json_response(response)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
@@ -65,4 +66,3 @@ def edit_commcare_profile(request, domain, app_id):
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)
-

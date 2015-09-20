@@ -661,10 +661,10 @@ def iter_index_files(app):
         files = download_index_files(app)
     except Exception:
         errors = _(
-                "We were unable to get your files "
-                "because your Application has errors. "
-                "Please click Make New Version under Deploy "
-                "for feedback on how to fix these errors."
+            "We were unable to get your files "
+            "because your Application has errors. "
+            "Please click Make New Version under Deploy "
+            "for feedback on how to fix these errors."
         )
 
     return _files(files), errors
