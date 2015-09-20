@@ -162,7 +162,6 @@ class _Creator(object):
         return Domain.get_by_name(self.domain).supports_multiple_locations_per_user
 
     def create_or_update_users_groups_and_locations(self):
-
         self.create_or_update_groups()
 
         self.create_or_update_users()
@@ -193,17 +192,24 @@ class _Creator(object):
         self.record_error(_error_message)
 
     def create_or_update_groups(self):
+        group_specs = self._prune_group_specs()
+        for group_spec in group_specs:
+            self._create_or_update_single_group(group_spec)
+
+    def _prune_group_specs(self):
+        good_group_specs = []
         group_names = set()
         for group_spec in self.group_specs:
-            self._create_or_update_single_group(group_spec, group_names)
+            if group_spec.group_name in group_names:
+                self.record_error(
+                    _('Your spreadsheet has multiple groups called "%s" '
+                      'and only the first was processed') % group_spec.group_name)
+            else:
+                group_names.add(group_spec.group_name)
+                good_group_specs.append(group_spec)
+        return good_group_specs
 
-    def _create_or_update_single_group(self, group_spec, group_names):
-        # check that group_names are unique
-        if group_spec.group_name in group_names:
-            self.record_error('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_spec.group_name)
-            return
-        else:
-            group_names.add(group_spec.group_name)
+    def _create_or_update_single_group(self, group_spec):
 
         # check that there's a group_id or a group_name
         if not group_spec.group_id and not group_spec.group_name:
