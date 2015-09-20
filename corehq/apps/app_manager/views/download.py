@@ -315,13 +315,17 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     try:
         files = download_index_files(request.app)
     except Exception:
-        messages.error(request, _(
+        messages.error(
+            request,
+            _(
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
                 "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
-        ), extra_tags='html')
+            ),
+            extra_tags='html'
+        )
     return render(request, template, {
         'app': request.app,
         'files': files,

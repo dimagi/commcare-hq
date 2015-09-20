@@ -101,7 +101,7 @@ def copy_form(request, domain, app_id, module_id, form_id):
     try:
         app.copy_form(int(module_id), int(form_id), to_module_id)
     except ConflictingCaseTypeError:
-        messages.warning(request, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+        messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
     except BlankXFormError:
         # don't save!
@@ -126,11 +126,18 @@ def undo_delete_form(request, domain, record_id):
         record.undo()
         messages.success(request, 'Form successfully restored.')
     except ModuleNotFoundException:
-        messages.error(request,
-                       'Form could not be restored: module is missing.')
+        messages.error(
+            request,
+            'Form could not be restored: module is missing.'
+        )
 
-    return back_to_main(request, domain, app_id=record.app_id,
-                        module_id=record.module_id, form_id=record.form_id)
+    return back_to_main(
+        request,
+        domain,
+        app_id=record.app_id,
+        module_id=record.module_id,
+        form_id=record.form_id
+    )
 
 
 @no_conflict_require_POST
@@ -166,6 +173,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -205,9 +213,9 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
     resp = {}
 
     def should_edit(attribute):
-        if request.POST.has_key(attribute):
+        if attribute in request.POST:
             return True
-        elif request.FILES.has_key(attribute):
+        elif attribute in request.FILES:
             return True
         else:
             return False
@@ -376,7 +384,8 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
 
     if xform and xform.exists():
         if xform.already_has_meta():
-            messages.warning(request,
+            messages.warning(
+                request,
                 "This form has a meta block already! "
                 "It may be replaced by CommCare HQ's standard meta block."
             )
@@ -466,7 +475,7 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
-    
+
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         module = form.get_module()
 
@@ -499,8 +508,12 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         context.update({
             'mode': form.mode,
             'fixed_questions': form.get_fixed_questions(),
-            'custom_case_properties': [{'key': key, 'path': path} for key, path in form.custom_case_updates.items()],
-            'case_preload': [{'key': key, 'path': path} for key, path in form.case_preload.items()],
+            'custom_case_properties': [
+                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
+            ],
+            'case_preload': [
+                {'key': key, 'path': path} for key, path in form.case_preload.items()
+            ],
         })
         return "app_manager/form_view_careplan.html", context
     elif isinstance(form, AdvancedForm):
