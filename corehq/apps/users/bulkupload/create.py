@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from collections import namedtuple
 import logging
 
 from couchdbkit import BulkSaveError, ResourceNotFound, MultipleResultsFound
@@ -22,8 +23,70 @@ from .bulk_cache import SiteCodeToSupplyPointCache
 from .bulkupload import UserLocMapping
 
 
+class BadUsername(Exception):
+    pass
+
+
+class BadIsActive(Exception):
+    pass
+
+UserSpec = namedtuple('UserSpec', [
+    'data',
+    'email',
+    'group_names',
+    'language',
+    'name',
+    'password',
+    'phone_number',
+    'uncategorized_data',
+    'user_id',
+    'username',
+    'location_code',
+    'is_active',
+])
+
+
 def create_or_update_users_groups_and_locations(domain, user_specs, group_specs, location_specs, task=None):
+    user_specs_input = user_specs
+    user_specs = []
+    for user_spec in user_specs_input:
+        user_specs.append(UserSpec(
+            data=user_spec.get('data'),
+            email=user_spec.get('email'),
+            group_names=map(unicode, user_spec.get('group') or []),
+            language=user_spec.get('language'),
+            name=user_spec.get('name'),
+            password=user_spec.get('password'),
+            phone_number=user_spec.get('phone-number'),
+            uncategorized_data=user_spec.get('uncategorized_data'),
+            user_id=user_spec.get('user_id'),
+            username=user_spec.get('username'),
+            location_code=user_spec.get('location-sms-code', ''),
+            is_active=user_spec.get('is_active'),
+        ))
     return _Creator(domain, user_specs, group_specs, location_specs, task=task).create_or_update_users_groups_and_locations()
+
+
+def normalize_user_spec(user_spec, domain):
+    password = user_spec.password
+    username = user_spec.username
+    is_active = user_spec.is_active
+    password = unicode(password) if password else None
+    try:
+        username = normalize_username(str(username), domain)
+    except TypeError:
+        username = None
+    except ValidationError:
+        raise BadUsername()
+
+    if isinstance(user_spec.is_active, basestring):
+        try:
+            is_active = string_to_boolean(is_active)
+        except ValueError:
+            raise BadIsActive()
+
+    return user_spec._replace(
+        username=username, password=password, is_active=is_active)
 
 
 class _Creator(object):
@@ -203,62 +266,42 @@ class _Creator(object):
 
     def _create_or_update_single_user(self, user_spec, custom_data_validator,
                                       usernames, user_ids, allowed_group_names):
-        data = user_spec.get('data')
-        email = user_spec.get('email')
-        group_names = map(unicode, user_spec.get('group') or [])
-        language = user_spec.get('language')
-        name = user_spec.get('name')
-        password = user_spec.get('password')
-        phone_number = user_spec.get('phone-number')
-        uncategorized_data = user_spec.get('uncategorized_data')
-        user_id = user_spec.get('user_id')
-        username = user_spec.get('username')
-        location_code = user_spec.get('location-sms-code', '')
-
-        if password:
-            password = unicode(password)
         try:
-            username = normalize_username(str(username), self.domain)
-        except TypeError:
-            username = None
-        except ValidationError:
+            user_spec = normalize_user_spec(user_spec, self.domain)
+        except BadUsername:
             self.record_user_update({
-                'username': username,
+                'username': user_spec.username,
                 'row': user_spec,
                 'flag': _('username cannot contain spaces or symbols'),
             })
             return
+        except BadIsActive:
+            self.record_user_update({
+                'username': user_spec.username,
+                'row': user_spec,
+                'flag': _("'is_active' column can only contain 'true' or 'false'"),
+            })
+            return
+
         status_row = {
-            'username': raw_username(username) if username else None,
+            'username': raw_username(user_spec.username) if user_spec.username else None,
             'row': user_spec,
         }
 
-        is_active = user_spec.get('is_active')
-        if isinstance(is_active, basestring):
-            try:
-                is_active = string_to_boolean(is_active)
-            except ValueError:
-                self.record_user_update({
-                    'username': username,
-                    'row': user_spec,
-                    'flag': _("'is_active' column can only contain 'true' or 'false'"),
-                })
-                return
-
-        if username in usernames or user_id in user_ids:
+        if user_spec.username in usernames or user_spec.user_id in user_ids:
             status_row['flag'] = 'repeat'
-        elif not username and not user_id:
+        elif not user_spec.username and not user_spec.user_id:
             status_row['flag'] = 'missing-data'
         else:
             try:
-                if username:
-                    usernames.add(username)
-                if user_id:
-                    user_ids.add(user_id)
-                if user_id:
-                    user = CommCareUser.get_by_user_id(user_id, self.domain)
+                if user_spec.username:
+                    usernames.add(user_spec.username)
+                if user_spec.user_id:
+                    user_ids.add(user_spec.user_id)
+                if user_spec.user_id:
+                    user = CommCareUser.get_by_user_id(user_spec.user_id, self.domain)
                 else:
-                    user = CommCareUser.get_by_username(username)
+                    user = CommCareUser.get_by_username(user_spec.username)
 
                 def is_password(password):
                     if not password:
@@ -274,62 +317,62 @@ class _Creator(object):
                             'User with username %(username)r is '
                             'somehow in domain %(domain)r'
                         ) % {'username': user.username, 'domain': user.domain})
-                    if username and user.username != username:
-                        user.change_username(username)
-                    if is_password(password):
-                        user.set_password(password)
+                    if user_spec.username and user.username != user_spec.username:
+                        user.change_username(user_spec.username)
+                    if is_password(user_spec.password):
+                        user.set_password(user_spec.password)
                     status_row['flag'] = 'updated'
                 else:
-                    if len(raw_username(username)) > CommCareAccountForm.max_len_username:
+                    if len(raw_username(user_spec.username)) > CommCareAccountForm.max_len_username:
                         self.record_user_update({
-                            'username': username,
+                            'username': user_spec.username,
                             'row': user_spec,
                             'flag': _("username cannot contain greater than %d characters" %
                                       CommCareAccountForm.max_len_username)
                         })
                         return
-                    if not is_password(password):
+                    if not is_password(user_spec.password):
                         raise UserUploadError(_("Cannot create a new user with a blank password"))
-                    user = CommCareUser.create(self.domain, username, password, commit=False)
+                    user = CommCareUser.create(self.domain, user_spec.username, user_spec.password, commit=False)
                     status_row['flag'] = 'created'
-                if phone_number:
-                    user.add_phone_number(_fmt_phone(phone_number), default=True)
-                if name:
-                    user.set_full_name(name)
-                if data:
-                    error = custom_data_validator(data)
+                if user_spec.phone_number:
+                    user.add_phone_number(_fmt_phone(user_spec.phone_number), default=True)
+                if user_spec.name:
+                    user.set_full_name(user_spec.name)
+                if user_spec.data:
+                    error = custom_data_validator(user_spec.data)
                     if error:
                         raise UserUploadError(error)
-                    user.user_data.update(data)
-                if uncategorized_data:
-                    user.user_data.update(uncategorized_data)
-                if language:
-                    user.language = language
-                if email:
-                    user.email = email
-                if is_active is not None:
-                    user.is_active = is_active
+                    user.user_data.update(user_spec.data)
+                if user_spec.uncategorized_data:
+                    user.user_data.update(user_spec.uncategorized_data)
+                if user_spec.language:
+                    user.language = user_spec.language
+                if user_spec.email:
+                    user.email = user_spec.email
+                if user_spec.is_active is not None:
+                    user.is_active = user_spec.is_active
 
                 user.save()
-                if self.can_access_locations and location_code:
-                    loc = self.location_cache.get(location_code)
+                if self.can_access_locations and user_spec.location_code:
+                    loc = self.location_cache.get(user_spec.location_code)
                     if user.location_id != loc._id:
                         # this triggers a second user save so
                         # we want to avoid doing it if it isn't
                         # needed
                         user.set_location(loc)
-                if is_password(password):
+                if is_password(user_spec.password):
                     # Without this line, digest auth doesn't work.
                     # With this line, digest auth works.
                     # Other than that, I'm not sure what's going on
-                    user.get_django_user().check_password(password)
+                    user.get_django_user().check_password(user_spec.password)
 
                 for group_id in Group.by_user(user, wrap=False):
                     group = self.group_memoizer.get(group_id)
-                    if group.name not in group_names:
+                    if group.name not in user_spec.group_names:
                         group.remove_user(user, save=False)
 
-                for group_name in group_names:
+                for group_name in user_spec.group_names:
                     if group_name not in allowed_group_names:
                         raise UserUploadError(_(
                             "Can't add to group '%s' "
