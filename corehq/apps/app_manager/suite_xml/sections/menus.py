@@ -1,9 +1,8 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import ScheduleError
-from corehq.apps.app_manager.suite_xml.generator import SuiteContributorByModule
+from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
 from corehq.apps.app_manager.util import is_usercase_in_use
-from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from corehq.feature_previews import MODULE_FILTER
 

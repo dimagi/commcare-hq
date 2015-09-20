@@ -1,5 +1,5 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml.generator import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import SectionSuiteContributor
 from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping

@@ -1,5 +1,5 @@
 from lxml import etree
-from corehq.apps.app_manager.suite_xml.generator import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import SectionSuiteContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Fixture
 
 

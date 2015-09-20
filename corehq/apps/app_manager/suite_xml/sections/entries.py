@@ -1,6 +1,6 @@
 from collections import namedtuple, defaultdict
 from itertools import izip_longest
-from corehq.apps.app_manager.suite_xml.generator import SuiteContributorByModule
+from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.exceptions import (
@@ -29,7 +29,7 @@ class EntriesContributor(SuiteContributorByModule):
 
 class EntriesHelper(object):
     def __init__(self, app, modules=None):
-        from corehq.apps.app_manager.suite_xml.details import DetailsHelper
+        from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
         self.app = app
         self.modules = modules or app.get_modules()
         self.details_helper = DetailsHelper(self.app, self.modules)

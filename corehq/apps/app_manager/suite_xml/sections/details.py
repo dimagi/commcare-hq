@@ -7,11 +7,11 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from corehq.apps.app_manager.const import RETURN_TO
 
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
-from corehq.apps.app_manager.suite_xml.generator import SectionSuiteContributor
-from corehq.apps.app_manager.suite_xml.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.contributors import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
     Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum
-from corehq.apps.app_manager.suite_xml.scheduler import schedule_detail_variables
+from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
@@ -262,7 +262,7 @@ class DetailContributor(SectionSuiteContributor):
         through `String.format`.
         """
         with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
+                os.path.dirname(os.path.dirname(__file__)), "../../case_tile_templates", "tdh.txt"
         )) as f:
             return f.read().decode('utf-8')
 

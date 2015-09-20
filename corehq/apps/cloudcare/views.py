@@ -14,7 +14,7 @@ from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
-from corehq.apps.app_manager.suite_xml_old import SuiteGenerator
+from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import SessionDataHelper

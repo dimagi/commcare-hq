@@ -1,6 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.suite_xml.generator import SuiteContributorByModule
+from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command
 
 
