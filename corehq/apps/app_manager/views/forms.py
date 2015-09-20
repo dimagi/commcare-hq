@@ -527,7 +527,7 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
-    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
     app = get_app(domain, app_id)
     form = app.get_form(form_id)
@@ -535,16 +535,16 @@ def get_form_datums(request, domain, app_id):
     def make_datum(datum):
         return {'name': datum.datum.id, 'case_type': datum.case_type}
 
-    gen = SuiteGenerator(app)
+    helper = EntriesHelper(app)
     datums = []
     root_module = form.get_module().root_module
     if root_module:
         datums.extend([
-            make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(root_module.get_form(0))
+            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
             if datum.requires_selection
         ])
     datums.extend([
-        make_datum(datum) for datum in gen.get_datums_meta_for_form_generic(form)
+        make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ])
     return json_response(datums)
