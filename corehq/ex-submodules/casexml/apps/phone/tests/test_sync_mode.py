@@ -634,6 +634,49 @@ class SyncTokenUpdateTest(SyncBaseTest):
         )
 
 
+class ChangingOwnershipTest(SyncBaseTest):
+
+    def setUp(self):
+        super(ChangingOwnershipTest, self).setUp()
+        self.extra_owner_id = 'extra-owner-id'
+        self.user.additional_owner_ids = [self.extra_owner_id]
+        self.sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user)
+        )
+        self.assertTrue(self.extra_owner_id in self.sync_log.owner_ids_on_phone)
+
+        # since we got a new sync log, have to update the factory as well
+        self.factory.form_extras = {'last_sync_token': self.sync_log._id}
+
+    @run_with_all_restore_configs
+    def test_change_owner_list(self):
+        # create a case with the extra owner
+        case_id = self.factory.create_case(owner_id=self.extra_owner_id)._id
+
+        # make sure it's there
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case_id))
+
+        def _get_incremental_synclog_for_user(user, since):
+            incremental_restore_config = RestoreConfig(
+                self.project,
+                user=self.user,
+                params=RestoreParams(version=V2, sync_log_id=since),
+            )
+            return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
+
+        # make sure it's there on new sync
+        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=self.sync_log._id)
+        self.assertTrue(self.extra_owner_id in incremental_sync_log.owner_ids_on_phone)
+        self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
+
+        # remove the owner id and confirm that owner and case are removed on next sync
+        self.user.additional_owner_ids = []
+        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
+        self.assertFalse(self.extra_owner_id in incremental_sync_log.owner_ids_on_phone)
+        self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
+
+
 class SyncTokenCachingTest(SyncBaseTest):
 
     @run_with_all_restore_configs
