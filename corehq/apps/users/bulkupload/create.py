@@ -120,8 +120,13 @@ class _Creator(object):
     def record_error(self, error_string):
         self.errors_to_return.append(error_string)
 
-    def record_user_update(self, record):
-        self.user_statuses_to_return.append(record)
+    def record_user_update(self, user_spec, message):
+        username = raw_username(user_spec.username) if user_spec.username else None,
+        self.user_statuses_to_return.append({
+            'username': username,
+            'row': user_spec,
+            'flag': message,
+        })
 
     @property
     @memoized
@@ -277,29 +282,19 @@ class _Creator(object):
         try:
             user_spec = normalize_user_spec(user_spec, self.domain)
         except BadUsername:
-            self.record_user_update({
-                'username': user_spec.username,
-                'row': user_spec,
-                'flag': _('username cannot contain spaces or symbols'),
-            })
+            self.record_user_update(
+                user_spec, _('username cannot contain spaces or symbols'))
             return
         except BadIsActive:
-            self.record_user_update({
-                'username': user_spec.username,
-                'row': user_spec,
-                'flag': _("'is_active' column can only contain 'true' or 'false'"),
-            })
+            self.record_user_update(
+                user_spec,
+                _("'is_active' column can only contain 'true' or 'false'"))
             return
 
-        status_row = {
-            'username': raw_username(user_spec.username) if user_spec.username else None,
-            'row': user_spec,
-        }
-
         if user_spec.username in usernames or user_spec.user_id in user_ids:
-            status_row['flag'] = 'repeat'
+            status_row_flag = 'repeat'
         elif not user_spec.username and not user_spec.user_id:
-            status_row['flag'] = 'missing-data'
+            status_row_flag = 'missing-data'
         else:
             try:
                 if user_spec.username:
@@ -321,20 +316,19 @@ class _Creator(object):
                         user.change_username(user_spec.username)
                     if user_spec.password:
                         user.set_password(user_spec.password)
-                    status_row['flag'] = 'updated'
+                    status_row_flag = 'updated'
                 else:
                     if len(raw_username(user_spec.username)) > CommCareAccountForm.max_len_username:
-                        self.record_user_update({
-                            'username': user_spec.username,
-                            'row': user_spec,
-                            'flag': _("username cannot contain greater than %d characters" %
-                                      CommCareAccountForm.max_len_username)
-                        })
+                        self.record_user_update(
+                            user_spec,
+                            _("username cannot contain greater than %d characters")
+                            % CommCareAccountForm.max_len_username
+                        )
                         return
                     if not user_spec.password:
                         raise UserUploadError(_("Cannot create a new user with a blank password"))
                     user = CommCareUser.create(self.domain, user_spec.username, user_spec.password, commit=False)
-                    status_row['flag'] = 'created'
+                    status_row_flag = 'created'
                 if user_spec.phone_number:
                     user.add_phone_number(_fmt_phone(user_spec.phone_number), default=True)
                 if user_spec.name:
@@ -381,9 +375,9 @@ class _Creator(object):
                     self.group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
-                status_row['flag'] = unicode(e)
+                status_row_flag = unicode(e)
 
-        self.record_user_update(status_row)
+        self.record_user_update(user_spec, status_row_flag)
 
 
 def _fmt_phone(phone_number):
