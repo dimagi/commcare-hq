@@ -301,7 +301,6 @@ class _Creator(object):
                     usernames.add(user_spec.username)
                 if user_spec.user_id:
                     user_ids.add(user_spec.user_id)
-                if user_spec.user_id:
                     user = CommCareUser.get_by_user_id(user_spec.user_id, self.domain)
                 else:
                     user = CommCareUser.get_by_username(user_spec.username)
@@ -318,7 +317,7 @@ class _Creator(object):
                         user.set_password(user_spec.password)
                     status_row_flag = 'updated'
                 else:
-                    if len(raw_username(user_spec.username)) > CommCareAccountForm.max_len_username:
+                    if is_username_too_long(user_spec.username):
                         self.record_user_update(
                             user_spec,
                             _("username cannot contain greater than %d characters")
@@ -384,3 +383,7 @@ def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
+
+
+def is_username_too_long(username):
+    return len(raw_username(username)) > CommCareAccountForm.max_len_username
