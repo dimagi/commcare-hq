@@ -235,6 +235,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def all_ids(cls):
         return [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
                                                        reduce=False, include_docs=False)]
+
     @classmethod
     def all(cls):
         for result in iter_docs(cls.get_db(), cls.all_ids()):
