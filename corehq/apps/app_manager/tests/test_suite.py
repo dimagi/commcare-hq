@@ -723,7 +723,7 @@ class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.menus.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.sections.menus.is_usercase_in_use')
         self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
         self.factory = AppFactory(build_version='2.9')
 

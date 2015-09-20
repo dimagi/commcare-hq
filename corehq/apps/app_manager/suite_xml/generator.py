@@ -32,9 +32,16 @@ class SuiteGenerator(object):
         )
 
     def generate_suite(self):
-        FormResourceContributor(self.suite, self.app, self.modules).contribute()
-        LocaleResourceContributor(self.suite, self.app, self.modules).contribute()
-        DetailContributor(self.suite, self.app, self.modules).contribute()
+        contributors = [
+            FormResourceContributor(self.suite, self.app, self.modules),
+            LocaleResourceContributor(self.suite, self.app, self.modules),
+            DetailContributor(self.suite, self.app, self.modules)
+        ]
+        for contributor in contributors:
+            section = contributor.section
+            getattr(self.suite, section).extend(
+                contributor.get_section_elements()
+            )
 
         entries = EntriesContributor(self.suite, self.app, self.modules)
         for module in self.modules:
@@ -51,16 +58,16 @@ class SuiteGenerator(object):
             )
 
         self.suite.fixtures.extend(
-            FixtureContributor(self.suite, self.app, self.modules).get_section_contributions(),
+            FixtureContributor(self.suite, self.app, self.modules).get_section_elements(),
         )
         self.suite.fixtures.extend(
-            SchedulerContributor(self.suite, self.app, self.modules).fixtures()
+            SchedulerContributor(self.suite, self.app, self.modules).get_section_elements()
         )
 
         if self.app.enable_post_form_workflow:
-            WorkflowHelper(self.suite, self.app, self.modules).add_form_workflow()
+            WorkflowHelper(self.suite, self.app, self.modules).update_suite()
 
-        EntryInstances(self.suite, self.app, self.modules).contribute()
+        EntryInstances(self.suite, self.app, self.modules).update_suite()
         return self.suite.serializeDocument(pretty=True)
 
 

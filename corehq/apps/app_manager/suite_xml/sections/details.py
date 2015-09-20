@@ -7,7 +7,7 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from corehq.apps.app_manager.const import RETURN_TO
 
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
-from corehq.apps.app_manager.suite_xml.contributors import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
     Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum
@@ -19,10 +19,10 @@ from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
 
-class DetailContributor(SectionSuiteContributor):
+class DetailContributor(SectionContributor):
     section = 'details'
     
-    def get_section_contributions(self):
+    def get_section_elements(self):
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -262,7 +262,7 @@ class DetailContributor(SectionSuiteContributor):
         through `String.format`.
         """
         with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "../../case_tile_templates", "tdh.txt"
+                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
         )) as f:
             return f.read().decode('utf-8')
 
@@ -296,7 +296,7 @@ class DetailsHelper(object):
         """
         This method is used by CloudCare when filtering cases.
         """
-        details = DetailContributor(None, self.app, self.modules).get_section_contributions()
+        details = DetailContributor(None, self.app, self.modules).get_section_elements()
         detail_mapping = {detail.id: detail for detail in details}
         details_by_id = detail_mapping
         detail_ids = [self.get_detail_id_safe(module, detail_type)

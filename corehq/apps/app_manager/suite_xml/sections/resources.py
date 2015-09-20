@@ -1,14 +1,14 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml.contributors import SectionSuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
 
 
-class FormResourceContributor(SectionSuiteContributor):
+class FormResourceContributor(SectionContributor):
     section = 'xform_resources'
 
-    def get_section_contributions(self):
+    def get_section_elements(self):
         first = []
         last = []
         for form_stuff in self.app.get_forms(bare=False):
@@ -39,10 +39,10 @@ class FormResourceContributor(SectionSuiteContributor):
             yield x
 
 
-class LocaleResourceContributor(SectionSuiteContributor):
+class LocaleResourceContributor(SectionContributor):
     section = 'locale_resources'
 
-    def get_section_contributions(self):
+    def get_section_elements(self):
         for lang in ["default"] + self.app.build_langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
             resource = LocaleResource(

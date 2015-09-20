@@ -1,13 +1,13 @@
 from collections import defaultdict
 import re
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
 
 
-class EntryInstances(SuiteContributor):
-    def contribute(self):
+class EntryInstances(PostProcessor):
+    def update_suite(self):
         details_by_id = self.get_detail_mapping()
         relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
         for entry in self.suite.entries:

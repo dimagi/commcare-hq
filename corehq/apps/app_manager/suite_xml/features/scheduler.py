@@ -4,17 +4,14 @@ from corehq.apps.app_manager.const import SCHEDULE_DATE_CASE_OPENED, SCHEDULE_LA
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributor
+from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.xml_models import DetailVariable, ScheduleFixtureVisit, ScheduleFixture, Schedule
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xpath import ScheduleFormXPath
 
 
-class SchedulerContributor(SuiteContributor):
-    def contribute(self):
-        pass
-
-    def fixtures(self):
+class SchedulerContributor(SectionContributor):
+    def get_section_elements(self):
         schedule_modules = (module for module in self.modules
                             if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)
         schedule_phases = (phase for module in schedule_modules for phase in module.get_schedule_phases())

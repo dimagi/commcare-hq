@@ -12,26 +12,13 @@ class BaseSuiteContributor(object):
         self.entries_helper = EntriesHelper(app, modules)
 
 
-class SuiteContributor(BaseSuiteContributor):
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def contribute(self):
-        pass
-
-
-class SectionSuiteContributor(SuiteContributor):
+class SectionContributor(BaseSuiteContributor):
     __metaclass__ = ABCMeta
     section = None
 
-    def contribute(self):
-        suite_section = getattr(self.suite, self.section)
-        section_contributions = self.get_section_contributions()
-        suite_section.extend(section_contributions)
-
     @abstractmethod
-    def get_section_contributions(self):
-        pass
+    def get_section_elements(self):
+        return []
 
 
 class SuiteContributorByModule(BaseSuiteContributor):
@@ -41,3 +28,12 @@ class SuiteContributorByModule(BaseSuiteContributor):
     @abstractmethod
     def get_module_contributions(self, module):
         return []
+
+
+class PostProcessor(BaseSuiteContributor):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def update_suite(self):
+        pass
+

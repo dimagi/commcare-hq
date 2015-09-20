@@ -9,23 +9,22 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
 from dimagi.utils.decorators.memoized import memoized
 
 
-class WorkflowHelper(object):
+class WorkflowHelper(PostProcessor):
     def __init__(self, suite, app, modules):
-        self.suite = suite
-        self.app = app
-        self.modules = modules
+        super(WorkflowHelper, self).__init__(suite, app, modules)
 
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         self.root_module_datums = [datum for module in root_modules
                           for datum in self.get_module_datums(u'm{}'.format(module.id)).values()]
 
-    def add_form_workflow(self):
+    def update_suite(self):
         """
         post_form_workflow = 'module':
           * Add stack frame and a command with value = "module command"

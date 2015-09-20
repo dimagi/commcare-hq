@@ -4,7 +4,7 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.suite_xml.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
