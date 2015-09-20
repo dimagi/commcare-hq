@@ -9,9 +9,6 @@ from corehq.feature_previews import MODULE_FILTER
 
 class MenuContributor(SuiteContributorByModule):
     def get_module_contributions(self, module):
-        # avoid circular dependency
-        from corehq.apps.app_manager.models import AdvancedForm
-
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus():

@@ -356,7 +356,6 @@ class EntriesHelper(object):
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             EntriesHelper.add_case_sharing_assertion(e)
 
-
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
         datums_meta = get_select_chain_meta(self.app, module)
@@ -364,7 +363,9 @@ class EntriesHelper(object):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
             if parent_id:
-                parent_filter = EntriesHelper.get_parent_filter(datum['module'].parent_select.relationship, parent_id)
+                parent_filter = EntriesHelper.get_parent_filter(
+                    datum['module'].parent_select.relationship, parent_id
+                )
             else:
                 parent_filter = ''
 
@@ -411,7 +412,10 @@ class EntriesHelper(object):
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
-                    detail_inline=self.details_helper.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
+                    detail_inline=(
+                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
+                        if detail_inline else None
+                    )
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -809,4 +813,3 @@ class EntriesHelper(object):
             elif form.mode == 'update':
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
-

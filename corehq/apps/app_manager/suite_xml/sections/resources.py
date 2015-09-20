@@ -31,7 +31,7 @@ class FormResourceContributor(SectionContributor):
                     form_name=trans(form["name"], langs=[self.app.default_language])
                 )
             elif path == './user_registration.xml':
-                resource.descriptor=u"User Registration Form"
+                resource.descriptor = u"User Registration Form"
             this_list.append(resource)
         for x in first:
             yield x

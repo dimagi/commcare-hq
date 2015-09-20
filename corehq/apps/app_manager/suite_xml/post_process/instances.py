@@ -61,7 +61,7 @@ class EntryInstances(PostProcessor):
         instances = EntryInstances.get_required_instances(xpaths)
 
         entry.require_instance(*instances)
-        
+
     @staticmethod
     def get_required_instances(xpaths):
         instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
@@ -105,6 +105,7 @@ INSTANCE_BY_ID = {
     'casedb': Instance(id='casedb', src='jr://instance/casedb'),
     'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
 }
+
 
 @register_factory(*INSTANCE_BY_ID.keys())
 def preset_instances(instance_name):

@@ -209,9 +209,13 @@ class WorkflowHelper(PostProcessor):
 
                 target_frame_children = self.get_frame_children(target_form)
                 if link.datums:
-                    frame_children = WorkflowHelper.get_datums_matched_to_manual_values(target_frame_children, link.datums)
+                    frame_children = WorkflowHelper.get_datums_matched_to_manual_values(
+                        target_frame_children, link.datums
+                    )
                 else:
-                    frame_children = WorkflowHelper.get_datums_matched_to_source(target_frame_children, source_form_datums)
+                    frame_children = WorkflowHelper.get_datums_matched_to_source(
+                        target_frame_children, source_form_datums
+                    )
 
                 if target_module in module.get_child_modules():
                     parent_frame_children = self.get_frame_children(module.get_form(0), module_only=True)
@@ -369,8 +373,6 @@ class WorkflowHelper(PostProcessor):
                     datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
 
         return entries, datums
-
-
 
 
 class StackFrameMeta(object):

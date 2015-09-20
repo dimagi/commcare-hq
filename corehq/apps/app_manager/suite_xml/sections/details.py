@@ -21,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
-    
+
     def get_section_elements(self):
         r = []
         if not self.app.use_custom_suite:
@@ -77,7 +77,7 @@ class DetailContributor(SectionContributor):
                     d.fields = fields
                     r.append(d)
         return r
-    
+
     def build_detail(self, module, detail_type, detail, detail_column_infos,
                      tabs, id, title, start, end):
         """
@@ -202,7 +202,7 @@ class DetailContributor(SectionContributor):
 
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
         detail.action.stack.add_frame(frame)
-    
+
     def build_case_tile_detail(self, module, detail, detail_type):
         """
         Return a Detail node from an apps.app_manager.models.Detail that is

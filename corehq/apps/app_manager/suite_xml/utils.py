@@ -13,6 +13,7 @@ def get_select_chain(app, module, include_self=True):
             select_chain.append(current_module)
         return select_chain
 
+
 def get_select_chain_meta(app, module):
     """
         return list of dicts containing datum IDs and case types
@@ -55,4 +56,3 @@ def validate_suite(suite):
                   if field and field.sort_node]
         if not is_unique_list(orders):
             raise SuiteValidationError('field/sort/@order must be unique per detail')
-

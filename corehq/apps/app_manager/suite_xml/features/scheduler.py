@@ -1,11 +1,16 @@
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import SCHEDULE_DATE_CASE_OPENED, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
+from corehq.apps.app_manager.const import (
+    SCHEDULE_DATE_CASE_OPENED, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
+)
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import DetailVariable, ScheduleFixtureVisit, ScheduleFixture, Schedule
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    DetailVariable, ScheduleFixtureVisit,
+    ScheduleFixture, Schedule
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xpath import ScheduleFormXPath
 
@@ -97,4 +102,3 @@ def schedule_detail_variables(module, detail, detail_column_infos):
 
         if len(forms_due) != len(set(forms_due)):
             raise ScheduleError(_("Your app has multiple forms with the same schedule abbreviation"))
-

@@ -1,4 +1,7 @@
-from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
+from eulxml.xmlmap import (
+    StringField, XmlObject, IntegerField, NodeListField,
+    NodeField, load_xmlobject_from_string
+)
 from lxml import etree
 
 
@@ -270,7 +273,10 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline')
+    ORDER = (
+        'id', 'nodeset', 'value', 'function',
+        'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline'
+    )
 
     nodeset = XPathField('@nodeset')
     value = StringField('@value')

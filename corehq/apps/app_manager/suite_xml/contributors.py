@@ -39,4 +39,3 @@ class PostProcessor(BaseSuiteContributor):
     @abstractmethod
     def update_suite(self):
         pass
-
