@@ -204,18 +204,16 @@ class _Creator(object):
                 self.record_error(
                     _('Your spreadsheet has multiple groups called "%s" '
                       'and only the first was processed') % group_spec.group_name)
+            elif not group_spec.group_id and not group_spec.group_name:
+                self.record_error(
+                    _('Your spreadsheet has a group with no name or id '
+                      'and it has been ignored'))
             else:
                 group_names.add(group_spec.group_name)
                 good_group_specs.append(group_spec)
         return good_group_specs
 
     def _create_or_update_single_group(self, group_spec):
-
-        # check that there's a group_id or a group_name
-        if not group_spec.group_id and not group_spec.group_name:
-            self.record_error('Your spreadsheet has a group with no name or id and it has been ignored')
-            return
-
         try:
             if group_spec.group_id:
                 group = self.group_memoizer.get(group_spec.group_id)
