@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
-from corehq.db import DEFAULT_ENGINE_ID
+from corehq.db import UCR_ENGINE_ID
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
@@ -18,7 +18,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         self.assertEqual('CommCareCase', self.config.referenced_doc_type)
         self.assertEqual('CommBugz', self.config.display_name)
         self.assertEqual('sample', self.config.table_id)
-        self.assertEqual(DEFAULT_ENGINE_ID, self.config.engine_id)
+        self.assertEqual(UCR_ENGINE_ID, self.config.engine_id)
 
     def test_filters(self):
         # filters
