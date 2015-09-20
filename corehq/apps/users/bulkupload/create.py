@@ -35,6 +35,8 @@ class _Creator(object):
         self.task = task
         self.total = len(self.user_specs) + len(self.group_specs) + len(self.location_specs)
         self.group_memoizer = GroupMemoizer(self.domain)
+        self.errors_to_return = []
+        self.user_statuses_to_return = []
 
     def create(self):
         self.group_memoizer.load_all()
@@ -43,6 +45,12 @@ class _Creator(object):
     def _set_progress(self, progress):
         if self.task is not None:
             DownloadBase.set_progress(self.task, progress, self.total)
+
+    def record_error(self, error_string):
+        self.errors_to_return.append(error_string)
+
+    def record_user_update(self, record):
+        self.user_statuses_to_return.append(record)
 
     @property
     @memoized
@@ -54,13 +62,25 @@ class _Creator(object):
     def location_cache(self):
         return SiteCodeToLocationCache(self.domain)
 
+    @property
+    @memoized
+    def supports_multiple_locations_per_user(self):
+        return Domain.get_by_name(self.domain).supports_multiple_locations_per_user
+
     def create_or_update_users_groups_and_locations(self):
-        ret = {"errors": [], "rows": []}
 
-        self.create_or_update_groups(log=ret)
+        self.create_or_update_groups()
 
+        self.create_or_update_users()
+        if self.supports_multiple_locations_per_user:
+            self.create_or_update_locations()
+        self._set_progress(self.total)
+        return {'errors': self.errors_to_return,
+                'rows': self.user_statuses_to_return}
+
+    def create_or_update_users(self):
         try:
-            self._do_most_of_create_users(ret)
+            self._do_most_of_create_users()
         finally:
             try:
                 self.group_memoizer.save_all()
@@ -74,53 +94,51 @@ class _Creator(object):
                     'BulkSaveError saving groups. '
                     'User saw error message "%s". Errors: %s'
                 ) % (_error_message, e.errors))
-                ret['errors'].append(_error_message)
+                self.record_error(_error_message)
 
-        if Domain.get_by_name(self.domain).supports_multiple_locations_per_user:
-            self.create_or_update_locations(log=ret)
-        self._set_progress(self.total)
-        return ret
-
-    def create_or_update_groups(self, log):
+    def create_or_update_groups(self):
         group_names = set()
-        for row in self.group_specs:
-            group_id = row.get('id')
-            group_name = unicode(row.get('name') or '')
-            case_sharing = row.get('case-sharing')
-            reporting = row.get('reporting')
-            data = row.get('data')
+        for group_spec in self.group_specs:
+            self._create_or_update_single_group(group_spec, group_names)
 
-            # check that group_names are unique
-            if group_name in group_names:
-                log['errors'].append('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
-                return
+    def _create_or_update_single_group(self, group_spec, group_names):
+        group_id = group_spec.get('id')
+        group_name = unicode(group_spec.get('name') or '')
+        case_sharing = group_spec.get('case-sharing')
+        reporting = group_spec.get('reporting')
+        data = group_spec.get('data')
+
+        # check that group_names are unique
+        if group_name in group_names:
+            self.record_error('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+            return
+        else:
+            group_names.add(group_name)
+
+        # check that there's a group_id or a group_name
+        if not group_id and not group_name:
+            self.record_error('Your spreadsheet has a group with no name or id and it has been ignored')
+            return
+
+        try:
+            if group_id:
+                group = self.group_memoizer.get(group_id)
             else:
-                group_names.add(group_name)
+                group = self.group_memoizer.by_name(group_name)
+                if not group:
+                    group = self.group_memoizer.create(domain=self.domain, name=group_name)
+        except ResourceNotFound:
+            self.record_error('There are no groups on CommCare HQ with id "%s"' % group_id)
+        except MultipleResultsFound:
+            self.record_error("There are multiple groups on CommCare HQ named: %s" % group_name)
+        else:
+            if group_name:
+                self.group_memoizer.rename_group(group, group_name)
+            group.case_sharing = case_sharing
+            group.reporting = reporting
+            group.metadata = data
 
-            # check that there's a group_id or a group_name
-            if not group_id and not group_name:
-                log['errors'].append('Your spreadsheet has a group with no name or id and it has been ignored')
-                return
-
-            try:
-                if group_id:
-                    group = self.group_memoizer.get(group_id)
-                else:
-                    group = self.group_memoizer.by_name(group_name)
-                    if not group:
-                        group = self.group_memoizer.create(domain=self.domain, name=group_name)
-            except ResourceNotFound:
-                log["errors"].append('There are no groups on CommCare HQ with id "%s"' % group_id)
-            except MultipleResultsFound:
-                log["errors"].append("There are multiple groups on CommCare HQ named: %s" % group_name)
-            else:
-                if group_name:
-                    self.group_memoizer.rename_group(group, group_name)
-                group.case_sharing = case_sharing
-                group.reporting = reporting
-                group.metadata = data
-
-    def create_or_update_locations(self, log):
+    def create_or_update_locations(self):
         """
         This method should only be used when uploading multiple
         location per user situations. This is behind a feature
@@ -136,7 +154,7 @@ class _Creator(object):
             try:
                 username = normalize_username(username, self.domain)
             except ValidationError:
-                log['errors'].append(
+                self.record_error(
                     _("Username must be a valid email address: %s") % username
                 )
             else:
@@ -155,16 +173,17 @@ class _Creator(object):
         for username, mapping in users.iteritems():
             try:
                 messages = mapping.save()
-                log['errors'].extend(messages)
+                for message in messages:
+                    self.record_error(message)
             except UserUploadError as e:
-                log['errors'].append(
+                self.record_error(
                     _('Unable to update locations for {user} because {message}'.format(
                         user=username,
                         message=e
                     ))
                 )
 
-    def _do_most_of_create_users(self, log):
+    def _do_most_of_create_users(self):
         from corehq.apps.users.views.mobile import UserFieldsView
         custom_data_validator = UserFieldsView.get_validator(self.domain)
         usernames = set()
@@ -176,14 +195,13 @@ class _Creator(object):
             self._set_progress(starting_progress + i)
             self._import_single_user(
                 user_spec=user_spec,
-                log=log,
                 custom_data_validator=custom_data_validator,
                 usernames=usernames,
                 user_ids=user_ids,
                 allowed_group_names=allowed_group_names,
             )
 
-    def _import_single_user(self, user_spec, log, custom_data_validator,
+    def _import_single_user(self, user_spec, custom_data_validator,
                             usernames, user_ids, allowed_group_names):
         data = user_spec.get('data')
         email = user_spec.get('email')
@@ -204,7 +222,7 @@ class _Creator(object):
         except TypeError:
             username = None
         except ValidationError:
-            log['rows'].append({
+            self.record_user_update({
                 'username': username,
                 'row': user_spec,
                 'flag': _('username cannot contain spaces or symbols'),
@@ -220,7 +238,7 @@ class _Creator(object):
             try:
                 is_active = string_to_boolean(is_active)
             except ValueError:
-                log['rows'].append({
+                self.record_user_update({
                     'username': username,
                     'row': user_spec,
                     'flag': _("'is_active' column can only contain 'true' or 'false'"),
@@ -263,7 +281,7 @@ class _Creator(object):
                     status_row['flag'] = 'updated'
                 else:
                     if len(raw_username(username)) > CommCareAccountForm.max_len_username:
-                        log['rows'].append({
+                        self.record_user_update({
                             'username': username,
                             'row': user_spec,
                             'flag': _("username cannot contain greater than %d characters" %
@@ -322,7 +340,7 @@ class _Creator(object):
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = unicode(e)
 
-        log["rows"].append(status_row)
+        self.record_user_update(status_row)
 
 
 def _fmt_phone(phone_number):
