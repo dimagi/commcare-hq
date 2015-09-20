@@ -9,7 +9,8 @@ from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain, feature_previews
+from corehq import toggles, privileges, feature_previews
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
@@ -1073,16 +1074,16 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views import (
                 EditWebUserView,
-                get_web_user_list_view,
+                ListWebUsersView,
             )
             items.append((_('Project Users'), [
                 {
-                    'title': get_web_user_list_view(self._request).page_title,
-                    'url': reverse(get_web_user_list_view(self._request).urlname, args=[self.domain]),
+                    'title': ListWebUsersView.page_title,
+                    'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
                     'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                     'subpages': [
                         {
-                            'title': _("Invite Web User"),
+                            'title': _("Add Web User"),
                             'urlname': 'invite_web_user'
                         },
                         {

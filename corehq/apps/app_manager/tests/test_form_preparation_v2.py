@@ -416,7 +416,7 @@ class FormPreparationChildModules(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('child_module_adjusted_case_id_basic'), form.render_xform())
 
 
-class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
+class BaseIndexTest(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
 
     def setUp(self):
@@ -445,6 +445,9 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
 
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
+
+
+class SubcaseRepeatTestAdvanced(BaseIndexTest):
 
     def test_subcase(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
@@ -536,6 +539,25 @@ class SubcaseRepeatTestAdvanced(SimpleTestCase, TestFileMixin):
         self.form.actions.open_cases[1].open_condition.question = '/data/child/which_child'
         self.form.actions.open_cases[1].open_condition.answer = '2'
         self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
+
+
+class TestExtensionCase(BaseIndexTest):
+
+    def test_relationship_added_to_form(self):
+        self.form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type=self.parent_module.case_type,
+            case_tag='load_1',
+        ))
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='child1',
+            case_tag='open_1',
+            name_path='/data/mother_name',
+            case_indices=[CaseIndex(tag='load_1'),
+                          CaseIndex(tag='load_1', reference_id='host', relationship='extension')],
+            repeat_context="/data/child",
+        ))
+
+        self.assertXmlEqual(self.get_xml('extension-case'), self.form.render_xform())
 
 
 class TestXForm(SimpleTestCase, TestFileMixin):

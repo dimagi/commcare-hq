@@ -165,6 +165,20 @@ class IndexTest(TestCase):
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
 
+    def testRelationshipGetsSet(self):
+        user = User(user_id=USER_ID, username="", password="", date_joined="")
+        create_index = CaseBlock(
+            create=True,
+            case_id=self.CASE_ID,
+            user_id=USER_ID,
+            owner_id=USER_ID,
+            index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
+            version=V2
+        ).as_xml()
+
+        post_case_blocks([create_index])
+        check_user_has_case(self, user, create_index, version=V2)
+
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
 

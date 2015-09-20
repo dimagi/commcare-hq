@@ -1,4 +1,6 @@
+from datetime import datetime
 from xml.etree import ElementTree
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import (
@@ -50,7 +52,12 @@ class ReportFixturesProvider(object):
             return []
 
         root = ElementTree.Element('fixture', attrib={'id': self.id})
-        reports_elem = ElementTree.Element('reports')
+        reports_elem = ElementTree.Element(
+            'reports',
+            attrib={
+                'last_sync': datetime.utcnow().isoformat(),
+            },
+        )
         for report_config in report_configs:
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, user))

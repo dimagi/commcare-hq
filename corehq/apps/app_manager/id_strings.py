@@ -171,6 +171,11 @@ def report_description_header():
     return u'cchq.report_description_header'
 
 
+@pattern('cchq.report_data_table')
+def report_data_table():
+    return u'cchq.report_data_table'
+
+
 @pattern('cchq.reports.%s.headers.%s')
 def report_column_header(report_id, column):
     return u'cchq.reports.{report_id}.headers.{column}'.format(report_id=report_id, column=column)
@@ -179,6 +184,11 @@ def report_column_header(report_id, column):
 @pattern('cchq.reports.%s.name')
 def report_name(report_id):
     return u'cchq.reports.{report_id}.name'.format(report_id=report_id)
+
+
+@pattern('cchq.report_last_sync')
+def report_last_sync():
+    return u'cchq.report_last_sync'
 
 
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)

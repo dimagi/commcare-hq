@@ -265,6 +265,12 @@ class OPMCaseRow(object):
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
 
+        cash_html = '<span style="color: {color};">Rs. {amt}</span>'
+        self.cash = cash_html.format(
+            color="red" if self.cash_amt == 0 else "green",
+            amt=self.cash_amt,
+        )
+
         account = self.case_property('bank_account_number', None)
         if isinstance(account, Decimal):
             account = int(account)
@@ -698,14 +704,6 @@ class OPMCaseRow(object):
     @property
     def cash_amt(self):
         return self.month_amt + self.year_end_bonus_cash
-
-    @property
-    def cash(self):
-        cash_html = '<span style="color: {color};">Rs. {amt}</span>'
-        return cash_html.format(
-            color="red" if self.cash_amt == 0 else "green",
-            amt=self.cash_amt,
-        )
 
     @property
     def bp1(self):

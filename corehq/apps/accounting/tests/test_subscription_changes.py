@@ -1,4 +1,4 @@
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
