@@ -68,25 +68,33 @@ def create_or_update_users_groups_and_locations(domain, user_specs, group_specs,
 
 
 def normalize_user_spec(user_spec, domain):
-    password = user_spec.password
-    username = user_spec.username
-    is_active = user_spec.is_active
-    password = unicode(password) if password else None
-    try:
-        username = normalize_username(str(username), domain)
-    except TypeError:
-        username = None
-    except ValidationError:
-        raise BadUsername()
 
-    if isinstance(user_spec.is_active, basestring):
+    def _normalize_username(username):
         try:
-            is_active = string_to_boolean(is_active)
-        except ValueError:
-            raise BadIsActive()
+            return normalize_username(str(username), domain)
+        except TypeError:
+            return None
+        except ValidationError:
+            raise BadUsername()
+
+    def _normalize_password(password):
+        if password:
+            password = unicode(password)
+            if password[0] != '*':
+                return password
+        return None
+
+    def _normalize_is_active(is_active):
+        if isinstance(user_spec.is_active, basestring):
+            try:
+                return string_to_boolean(is_active)
+            except ValueError:
+                raise BadIsActive()
 
     return user_spec._replace(
-        username=username, password=password, is_active=is_active)
+        username=_normalize_username(user_spec.username),
+        password=_normalize_password(user_spec.password),
+        is_active=_normalize_is_active(user_spec.is_active))
 
 
 class _Creator(object):
@@ -303,14 +311,6 @@ class _Creator(object):
                 else:
                     user = CommCareUser.get_by_username(user_spec.username)
 
-                def is_password(password):
-                    if not password:
-                        return False
-                    for c in password:
-                        if c != "*":
-                            return True
-                    return False
-
                 if user:
                     if user.domain != self.domain:
                         raise UserUploadError(_(
@@ -319,7 +319,7 @@ class _Creator(object):
                         ) % {'username': user.username, 'domain': user.domain})
                     if user_spec.username and user.username != user_spec.username:
                         user.change_username(user_spec.username)
-                    if is_password(user_spec.password):
+                    if user_spec.password:
                         user.set_password(user_spec.password)
                     status_row['flag'] = 'updated'
                 else:
@@ -331,7 +331,7 @@ class _Creator(object):
                                       CommCareAccountForm.max_len_username)
                         })
                         return
-                    if not is_password(user_spec.password):
+                    if not user_spec.password:
                         raise UserUploadError(_("Cannot create a new user with a blank password"))
                     user = CommCareUser.create(self.domain, user_spec.username, user_spec.password, commit=False)
                     status_row['flag'] = 'created'
@@ -361,7 +361,7 @@ class _Creator(object):
                         # we want to avoid doing it if it isn't
                         # needed
                         user.set_location(loc)
-                if is_password(user_spec.password):
+                if user_spec.password:
                     # Without this line, digest auth doesn't work.
                     # With this line, digest auth works.
                     # Other than that, I'm not sure what's going on
