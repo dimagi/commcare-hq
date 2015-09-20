@@ -193,7 +193,7 @@ class _Creator(object):
         starting_progress = len(self.group_specs)
         for i, user_spec in enumerate(self.user_specs):
             self._set_progress(starting_progress + i)
-            self._import_single_user(
+            self._create_or_update_single_user(
                 user_spec=user_spec,
                 custom_data_validator=custom_data_validator,
                 usernames=usernames,
@@ -201,8 +201,8 @@ class _Creator(object):
                 allowed_group_names=allowed_group_names,
             )
 
-    def _import_single_user(self, user_spec, custom_data_validator,
-                            usernames, user_ids, allowed_group_names):
+    def _create_or_update_single_user(self, user_spec, custom_data_validator,
+                                      usernames, user_ids, allowed_group_names):
         data = user_spec.get('data')
         email = user_spec.get('email')
         group_names = map(unicode, user_spec.get('group') or [])
