@@ -696,7 +696,7 @@ def formdefs(request, domain, app_id):
     def get_questions(form):
         xform = XForm(form.source)
         prefix = '/%s/' % xform.data_node.tag_name
-        
+
         def remove_prefix(string):
             if string.startswith(prefix):
                 return string[len(prefix):]
@@ -711,7 +711,10 @@ def formdefs(request, domain, app_id):
             }
         return [transform_question(q) for q in xform.get_questions(langs)]
     formdefs = [{
-        'name': "%s, %s" % (f['form'].get_module().name['en'], f['form'].name['en']) if f['type'] == 'module_form' else 'User Registration',
+        'name': "%s, %s" % (
+            f['form'].get_module().name['en'],
+            f['form'].name['en']
+        ) if f['type'] == 'module_form' else 'User Registration',
         'columns': ['id', 'type', 'text'],
         'rows': get_questions(f['form'])
     } for f in app.get_forms(bare=False)]
@@ -722,7 +725,13 @@ def formdefs(request, domain, app_id):
         writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
         writer.write([(
             sheet['name'],
-            [FormattedRow([cell for (_, cell) in sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))]) for row in sheet['rows']]
+            [
+                FormattedRow([
+                    cell for (_, cell) in
+                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
+                ])
+                for row in sheet['rows']
+            ]
         ) for sheet in formdefs])
         writer.close()
         response = HttpResponse(f.getvalue(), content_type=Format.from_format('xlsx').mimetype)
