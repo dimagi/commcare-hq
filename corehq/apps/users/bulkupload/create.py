@@ -45,10 +45,20 @@ UserSpec = namedtuple('UserSpec', [
     'is_active',
 ])
 
+GroupSpec = namedtuple('GroupSpec', [
+    'group_id',
+    'group_name',
+    'case_sharing',
+    'reporting',
+    'data',
+])
+
 
 def create_or_update_users_groups_and_locations(domain, user_specs, group_specs, location_specs, task=None):
     user_specs_input = user_specs
+    group_specs_input = group_specs
     user_specs = []
+    group_specs = []
     for user_spec in user_specs_input:
         user_specs.append(UserSpec(
             data=user_spec.get('data'),
@@ -63,6 +73,14 @@ def create_or_update_users_groups_and_locations(domain, user_specs, group_specs,
             username=user_spec.get('username'),
             location_code=user_spec.get('location-sms-code', ''),
             is_active=user_spec.get('is_active'),
+        ))
+    for group_spec in group_specs_input:
+        group_specs.append(GroupSpec(
+            group_id=group_spec.get('id'),
+            group_name=unicode(group_spec.get('name') or ''),
+            case_sharing=group_spec.get('case-sharing'),
+            reporting=group_spec.get('reporting'),
+            data=group_spec.get('data'),
         ))
     return _Creator(domain, user_specs, group_specs, location_specs, task=task).create_or_update_users_groups_and_locations()
 
@@ -180,41 +198,35 @@ class _Creator(object):
             self._create_or_update_single_group(group_spec, group_names)
 
     def _create_or_update_single_group(self, group_spec, group_names):
-        group_id = group_spec.get('id')
-        group_name = unicode(group_spec.get('name') or '')
-        case_sharing = group_spec.get('case-sharing')
-        reporting = group_spec.get('reporting')
-        data = group_spec.get('data')
-
         # check that group_names are unique
-        if group_name in group_names:
-            self.record_error('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+        if group_spec.group_name in group_names:
+            self.record_error('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_spec.group_name)
             return
         else:
-            group_names.add(group_name)
+            group_names.add(group_spec.group_name)
 
         # check that there's a group_id or a group_name
-        if not group_id and not group_name:
+        if not group_spec.group_id and not group_spec.group_name:
             self.record_error('Your spreadsheet has a group with no name or id and it has been ignored')
             return
 
         try:
-            if group_id:
-                group = self.group_memoizer.get(group_id)
+            if group_spec.group_id:
+                group = self.group_memoizer.get(group_spec.group_id)
             else:
-                group = self.group_memoizer.by_name(group_name)
+                group = self.group_memoizer.by_name(group_spec.group_name)
                 if not group:
-                    group = self.group_memoizer.create(domain=self.domain, name=group_name)
+                    group = self.group_memoizer.create(domain=self.domain, name=group_spec.group_name)
         except ResourceNotFound:
-            self.record_error('There are no groups on CommCare HQ with id "%s"' % group_id)
+            self.record_error('There are no groups on CommCare HQ with id "%s"' % group_spec.group_id)
         except MultipleResultsFound:
-            self.record_error("There are multiple groups on CommCare HQ named: %s" % group_name)
+            self.record_error("There are multiple groups on CommCare HQ named: %s" % group_spec.group_name)
         else:
-            if group_name:
-                self.group_memoizer.rename_group(group, group_name)
-            group.case_sharing = case_sharing
-            group.reporting = reporting
-            group.metadata = data
+            if group_spec.group_name:
+                self.group_memoizer.rename_group(group, group_spec.group_name)
+            group.case_sharing = group_spec.case_sharing
+            group.reporting = group_spec.reporting
+            group.metadata = group_spec.data
 
     def create_or_update_locations(self):
         """
