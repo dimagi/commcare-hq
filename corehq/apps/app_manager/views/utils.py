@@ -26,6 +26,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     which then redirect to the main page.
 
     """
+    # TODO: Refactor this function. The length of the args matters :(
 
     page = None
     params = {}
@@ -55,7 +56,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             2: 'view_app',
             3: 'view_module',
             4: 'view_form',
-            }[len(args)]
+        }[len(args)]
 
     return HttpResponseRedirect(
         "%s%s" % (
@@ -66,7 +67,8 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
 
 
 def get_langs(request, app):
-    lang = request.GET.get('lang',
+    lang = request.GET.get(
+        'lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
     langs = None
