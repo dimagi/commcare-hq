@@ -269,32 +269,28 @@ class _Creator(object):
         starting_progress = len(self.group_specs)
         for i, user_spec in enumerate(self.user_specs):
             self._set_progress(starting_progress + i)
-            self._create_or_update_single_user(
+            message = self._create_or_update_single_user(
                 user_spec=user_spec,
                 custom_data_validator=custom_data_validator,
                 usernames=usernames,
                 user_ids=user_ids,
                 allowed_group_names=allowed_group_names,
             )
+            self.record_user_update(user_spec, message)
 
     def _create_or_update_single_user(self, user_spec, custom_data_validator,
                                       usernames, user_ids, allowed_group_names):
         try:
             user_spec = normalize_user_spec(user_spec, self.domain)
         except BadUsername:
-            self.record_user_update(
-                user_spec, _('username cannot contain spaces or symbols'))
-            return
+            return _('username cannot contain spaces or symbols')
         except BadIsActive:
-            self.record_user_update(
-                user_spec,
-                _("'is_active' column can only contain 'true' or 'false'"))
-            return
+            return _("'is_active' column can only contain 'true' or 'false'")
 
         if user_spec.username in usernames or user_spec.user_id in user_ids:
-            status_row_flag = 'repeat'
+            status_message = 'repeat'
         elif not user_spec.username and not user_spec.user_id:
-            status_row_flag = 'missing-data'
+            status_message = 'missing-data'
         else:
             try:
                 if user_spec.username:
@@ -315,19 +311,15 @@ class _Creator(object):
                         user.change_username(user_spec.username)
                     if user_spec.password:
                         user.set_password(user_spec.password)
-                    status_row_flag = 'updated'
+                    status_message = 'updated'
                 else:
                     if is_username_too_long(user_spec.username):
-                        self.record_user_update(
-                            user_spec,
-                            _("username cannot contain greater than %d characters")
-                            % CommCareAccountForm.max_len_username
-                        )
-                        return
+                        return _("username cannot contain greater than %d characters") \
+                               % CommCareAccountForm.max_len_username
                     if not user_spec.password:
                         raise UserUploadError(_("Cannot create a new user with a blank password"))
                     user = CommCareUser.create(self.domain, user_spec.username, user_spec.password, commit=False)
-                    status_row_flag = 'created'
+                    status_message = 'created'
                 if user_spec.phone_number:
                     user.add_phone_number(_fmt_phone(user_spec.phone_number), default=True)
                 if user_spec.name:
@@ -374,9 +366,9 @@ class _Creator(object):
                     self.group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
-                status_row_flag = unicode(e)
+                status_message = unicode(e)
 
-        self.record_user_update(user_spec, status_row_flag)
+        return status_message
 
 
 def _fmt_phone(phone_number):
