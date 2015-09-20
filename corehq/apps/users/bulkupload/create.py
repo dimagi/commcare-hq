@@ -161,16 +161,18 @@ class _Creator(object):
             try:
                 self.group_memoizer.save_all()
             except BulkSaveError as e:
-                _error_message = (
-                    "Oops! We were not able to save some of your group changes. "
-                    "Please make sure no one else is editing your groups "
-                    "and try again."
-                )
-                logging.exception((
-                    'BulkSaveError saving groups. '
-                    'User saw error message "%s". Errors: %s'
-                ) % (_error_message, e.errors))
-                self.record_error(_error_message)
+                self._log_bulk_save_error(e)
+
+    def _log_bulk_save_error(self, e):
+        _error_message = _(
+            "Oops! We were not able to save some of your group changes. "
+            "Please make sure no one else is editing your groups "
+            "and try again.")
+        logging.exception((
+            'BulkSaveError saving groups. '
+            'User saw error message "%s". Errors: %s'
+        ) % (_error_message, e.errors))
+        self.record_error(_error_message)
 
     def create_or_update_groups(self):
         group_names = set()
