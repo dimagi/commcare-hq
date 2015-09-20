@@ -18,7 +18,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
 from ..models import CommCareUser
-from ..views.mobile.custom_data_fields import UserFieldsView
 
 
 required_headers = set(['username'])
@@ -221,6 +220,8 @@ def parse_groups(groups):
 
 
 def dump_users_and_groups(response, domain):
+    from ..views.mobile.custom_data_fields import UserFieldsView
+
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
