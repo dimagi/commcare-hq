@@ -4,8 +4,8 @@ import os
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
-from corehq.apps.app_manager.const import RETURN_TO
 
+from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
@@ -20,7 +20,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class DetailContributor(SectionContributor):
-    section = 'details'
+    section_name = 'details'
     
     def get_section_elements(self):
         r = []
@@ -292,27 +292,6 @@ class DetailsHelper(object):
         )
         return detail_id if detail_id in self.active_details else None
 
-    def get_instances_for_module(self, module, additional_xpaths=None):
-        """
-        This method is used by CloudCare when filtering cases.
-        """
-        details = DetailContributor(None, self.app, self.modules).get_section_elements()
-        detail_mapping = {detail.id: detail for detail in details}
-        details_by_id = detail_mapping
-        detail_ids = [self.get_detail_id_safe(module, detail_type)
-                      for detail_type, detail, enabled in module.get_details()
-                      if enabled]
-        detail_ids = filter(None, detail_ids)
-        xpaths = set()
-
-        if additional_xpaths:
-            xpaths.update(additional_xpaths)
-
-        for detail_id in detail_ids:
-            xpaths.update(details_by_id[detail_id].get_all_xpaths())
-
-        return EntryInstances.get_required_instances(xpaths)
-    
 
 def get_default_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
@@ -374,3 +353,27 @@ def get_detail_column_infos(detail, include_sort):
         column = create_temp_sort_column(field, len(columns))
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
+
+
+def get_instances_for_module(app, module, additional_xpaths=None):
+        """
+        This method is used by CloudCare when filtering cases.
+        """
+        modules = app.get_modules()
+        helper = DetailsHelper(app, modules)
+        details = DetailContributor(None, app, modules).get_section_elements()
+        detail_mapping = {detail.id: detail for detail in details}
+        details_by_id = detail_mapping
+        detail_ids = [helper.get_detail_id_safe(module, detail_type)
+                      for detail_type, detail, enabled in module.get_details()
+                      if enabled]
+        detail_ids = filter(None, detail_ids)
+        xpaths = set()
+
+        if additional_xpaths:
+            xpaths.update(additional_xpaths)
+
+        for detail_id in detail_ids:
+            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+
+        return EntryInstances.get_required_instances(xpaths)

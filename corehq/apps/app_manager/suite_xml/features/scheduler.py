@@ -10,7 +10,9 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xpath import ScheduleFormXPath
 
 
-class SchedulerContributor(SectionContributor):
+class SchedulerFixtureContributor(SectionContributor):
+    section_name = 'fixtures'
+
     def get_section_elements(self):
         schedule_modules = (module for module in self.modules
                             if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)

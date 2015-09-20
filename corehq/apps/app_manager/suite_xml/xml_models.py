@@ -648,6 +648,7 @@ class Suite(OrderedXmlObject):
     ORDER = ('version', 'descriptor')
 
     version = IntegerField('@version')
+    descriptor = StringField('@descriptor')
 
     xform_resources = NodeListField('xform', XFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
@@ -658,4 +659,3 @@ class Suite(OrderedXmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
-    descriptor = StringField('@descriptor')

@@ -6,7 +6,7 @@ from corehq.apps.app_manager.util import languages_mapping
 
 
 class FormResourceContributor(SectionContributor):
-    section = 'xform_resources'
+    section_name = 'xform_resources'
 
     def get_section_elements(self):
         first = []
@@ -40,7 +40,7 @@ class FormResourceContributor(SectionContributor):
 
 
 class LocaleResourceContributor(SectionContributor):
-    section = 'locale_resources'
+    section_name = 'locale_resources'
 
     def get_section_elements(self):
         for lang in ["default"] + self.app.build_langs:

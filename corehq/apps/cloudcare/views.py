@@ -4,7 +4,8 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
@@ -14,7 +15,6 @@ from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
-from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
@@ -302,8 +302,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
 
-    xpath = SuiteGenerator.get_filter_xpath(module)
-    instances = DetailsHelper(app).get_instances_for_module(module, additional_xpaths=[xpath])
+    xpath = EntriesHelper.get_filter_xpath(module)
+    instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
     extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
 
     # touchforms doesn't like this to be escaped

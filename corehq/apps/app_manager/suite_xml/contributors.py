@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 
 class BaseSuiteContributor(object):
@@ -14,7 +14,10 @@ class BaseSuiteContributor(object):
 
 class SectionContributor(BaseSuiteContributor):
     __metaclass__ = ABCMeta
-    section = None
+
+    @abstractproperty
+    def section_name(self):
+        pass
 
     @abstractmethod
     def get_section_elements(self):

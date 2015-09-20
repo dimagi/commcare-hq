@@ -4,7 +4,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import Fixture
 
 
 class FixtureContributor(SectionContributor):
-    section = 'fixtures'
+    section_name = 'fixtures'
     
     def get_section_elements(self):
         if self.app.case_sharing:

@@ -3,10 +3,10 @@ import urllib
 from django.core.urlresolvers import reverse
 
 from corehq.apps.app_manager.exceptions import MediaResourceError
-from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor, DetailsHelper
+from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
 from corehq.apps.app_manager.suite_xml.features.careplan import CareplanMenuContributor
-from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerContributor
+from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtureContributor
 from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
@@ -25,31 +25,31 @@ class SuiteGenerator(object):
     def __init__(self, app):
         self.app = app
         self.modules = list(app.get_modules())
-        self.details_helper = DetailsHelper(self.app, self.modules)
-        self.suite = Suite(
-            version=self.app.version,
-            descriptor=self.descriptor,
-        )
+        self.suite = Suite(version=self.app.version, descriptor=self.descriptor)
 
-    def generate_suite(self):
-        contributors = [
-            FormResourceContributor(self.suite, self.app, self.modules),
-            LocaleResourceContributor(self.suite, self.app, self.modules),
-            DetailContributor(self.suite, self.app, self.modules)
-        ]
+    def _add_sections(self, contributors):
         for contributor in contributors:
-            section = contributor.section
+            section = contributor.section_name
             getattr(self.suite, section).extend(
                 contributor.get_section_elements()
             )
 
-        entries = EntriesContributor(self.suite, self.app, self.modules)
-        for module in self.modules:
-            self.suite.entries.extend(entries.get_module_contributions(module))
+    def generate_suite(self):
+        # Note: the order in which things happen in this function matters
 
+        self._add_sections([
+            FormResourceContributor(self.suite, self.app, self.modules),
+            LocaleResourceContributor(self.suite, self.app, self.modules),
+            DetailContributor(self.suite, self.app, self.modules),
+        ])
+
+        # by module
+        entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
         careplan_menus = CareplanMenuContributor(self.suite, self.app, self.modules)
         for module in self.modules:
+            self.suite.entries.extend(entries.get_module_contributions(module))
+
             self.suite.menus.extend(
                 careplan_menus.get_module_contributions(module)
             )
@@ -57,13 +57,12 @@ class SuiteGenerator(object):
                 menus.get_module_contributions(module)
             )
 
-        self.suite.fixtures.extend(
-            FixtureContributor(self.suite, self.app, self.modules).get_section_elements(),
-        )
-        self.suite.fixtures.extend(
-            SchedulerContributor(self.suite, self.app, self.modules).get_section_elements()
-        )
+        self._add_sections([
+            FixtureContributor(self.suite, self.app, self.modules),
+            SchedulerFixtureContributor(self.suite, self.app, self.modules),
+        ])
 
+        # post process
         if self.app.enable_post_form_workflow:
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
 
