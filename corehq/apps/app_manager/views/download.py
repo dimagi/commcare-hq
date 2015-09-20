@@ -37,12 +37,14 @@ def download_odk_profile(request, domain, app_id):
         content_type="commcare/profile"
     )
 
+
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
     )
+
 
 @safe_download
 def download_suite(request, domain, app_id):
@@ -55,6 +57,7 @@ def download_suite(request, domain, app_id):
     return HttpResponse(
         request.app.create_suite()
     )
+
 
 @safe_download
 def download_media_suite(request, domain, app_id):
@@ -131,6 +134,7 @@ def download_jad(request, domain, app_id):
     response["Content-Length"] = len(jad)
     return response
 
+
 @safe_download
 def download_jar(request, domain, app_id):
     """
@@ -156,6 +160,7 @@ def download_jar(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
     return response
 
+
 def download_test_jar(request):
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
         jar = f.read()
@@ -165,6 +170,7 @@ def download_test_jar(request):
     response['Content-Length'] = len(jar)
     response.write(jar)
     return response
+
 
 @safe_download
 def download_raw_jar(request, domain, app_id):
@@ -290,12 +296,12 @@ def download_profile(request, domain, app_id):
         request.app.create_profile()
     )
 
+
 @safe_download
 def download_media_profile(request, domain, app_id):
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
-
 
 
 @safe_download
@@ -363,4 +369,3 @@ def download_index_files(app):
         files = app.create_all_files().items()
 
     return sorted(files)
-
