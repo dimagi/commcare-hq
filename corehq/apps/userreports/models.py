@@ -232,10 +232,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @classmethod
+    def all_ids(cls):
+        return [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
+                                                       reduce=False, include_docs=False)]
+    @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
-                                                      reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
+        for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
 
