@@ -93,9 +93,6 @@ from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterF
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord
 from dimagi.utils.post import simple_post
-import cStringIO
-from PIL import Image
-
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
