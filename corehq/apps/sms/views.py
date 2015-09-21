@@ -14,6 +14,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
 from corehq import privileges
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
@@ -43,7 +44,7 @@ from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM)
+    DEFAULT, CUSTOM, SendRegistrationInviationsForm)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -63,6 +64,7 @@ from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.domain.models import Domain
+from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
@@ -1639,6 +1641,14 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
 
     @property
     @memoized
+    def invitations_form(self):
+        if self.request.method == 'POST':
+            return SendRegistrationInviationsForm(self.request.POST, domain=self.domain)
+        else:
+            return SendRegistrationInviationsForm(domain=self.domain)
+
+    @property
+    @memoized
     def project_timezone(self):
         return get_timezone_for_user(None, self.domain)
 
@@ -1648,7 +1658,11 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context.update({
+            'form': self.invitations_form,
+        })
+        return context
 
     @property
     def total(self):
@@ -1665,25 +1679,82 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             'Phone Type',
         ]
 
+    def format_status(self, invitation):
+        if invitation.status == SelfRegistrationInvitation.STATUS_REGISTERED:
+            registered_date = (ServerTime(invitation.registered_date)
+                               .user_time(self.project_timezone)
+                               .done()
+                               .strftime(SERVER_DATETIME_FORMAT))
+            return _("Registered on %(date)s") % {'date': registered_date}
+        else:
+            return {
+                SelfRegistrationInvitation.STATUS_PENDING: _("Pending"),
+                SelfRegistrationInvitation.STATUS_EXPIRED: _("Expired"),
+            }.get(invitation.status)
+
     @property
     def paginated_list(self):
         invitations = SelfRegistrationInvitation.objects.filter(
             domain=self.domain
         ).order_by('-created_date')
+        doc_info_cache = {}
         for invitation in invitations[self.skip:self.skip + self.limit]:
+            if invitation.app_id in doc_info_cache:
+                doc_info = doc_info_cache[invitation.app_id]
+            else:
+                doc_info = get_doc_info_by_id(self.domain, invitation.app_id)
+                doc_info_cache[invitation.app_id] = doc_info
             yield {
                 'itemData': {
                     'id': invitation.pk,
-                    'created_date': invitation.created_date,
-                    'phone_number': invitation.phone_number,
-                    'status': invitation.status,
-                    'expiration_date': invitation.expiration_date,
-                    'app_id': invitation.app_id,
-                    'phone_type': invitation.phone_type,
-                    'registered_date': invitation.registered_date,
+                    'created_date': (ServerTime(invitation.created_date)
+                                     .user_time(self.project_timezone)
+                                     .done()
+                                     .strftime(SERVER_DATETIME_FORMAT)),
+                    'phone_number': '+%s' % invitation.phone_number,
+                    'status': self.format_status(invitation),
+                    'expiration_date': invitation.expiration_date.strftime(SERVER_DATE_FORMAT),
+                    'app_name': doc_info.display,
+                    'app_link': doc_info.link,
+                    'phone_type': dict(SelfRegistrationInvitation.PHONE_TYPE_CHOICES).get(invitation.phone_type),
                 },
                 'template': 'invitations-template',
             }
 
     def post(self, *args, **kwargs):
-        return self.paginate_crud_response
+        if self.request.POST.get('action') == 'invite':
+            if self.invitations_form.is_valid():
+                phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
+                app_id = self.invitations_form.cleaned_data.get('app_id')
+                result = SelfRegistrationInvitation.initiate_workflow(
+                    self.domain,
+                    phone_numbers,
+                    app_id=app_id
+                )
+                success_numbers, invalid_format_numbers, numbers_in_use = result
+                if success_numbers:
+                    messages.success(
+                        self.request,
+                        _("Invitations sent to: %(phone_numbers)s") % {
+                            'phone_numbers': ','.join(success_numbers),
+                        }
+                    )
+                if invalid_format_numbers:
+                    messages.error(
+                        self.request,
+                        _("Invitations could not be sent to: %(phone_numbers)s. "
+                          "These number(s) are in an invalid format.") % {
+                            'phone_numbers': ','.join(invalid_format_numbers)
+                        }
+                    )
+                if numbers_in_use:
+                    messages.error(
+                        self.request,
+                        _("Invitations could not be sent to: %(phone_numbers)s. "
+                          "These number(s) are already in use.") % {
+                            'phone_numbers': ','.join(numbers_in_use)
+                        }
+                    )
+            return self.get(*args, **kwargs)
+        else:
+            return self.paginate_crud_response

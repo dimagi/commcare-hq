@@ -1,6 +1,7 @@
 {% extends 'style/bootstrap2/base_paginated_crud.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block pagination_templates %}
 <script type="text/html" id="invitations-template">
@@ -8,7 +9,15 @@
     <td data-bind="text: phone_number"></td>
     <td data-bind="text: status"></td>
     <td data-bind="text: expiration_date"></td>
-    <td data-bind="text: app_id"></td>
+    <td><a data-bind="text: app_name, attr: {href: app_link, target: '_blank'}"></a></td>
     <td data-bind="text: phone_type"></td>
 </script>
+{% endblock %}
+
+
+{% block main_column %}
+{{ block.super }}
+<div id="registration-invitation-form">
+    {% crispy form %}
+</div>
 {% endblock %}
