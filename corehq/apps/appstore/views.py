@@ -262,7 +262,7 @@ def copy_snapshot(request, domain):
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            new_domain_name = name_to_url(form.cleaned_data['hr_name'])
+            new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
                 try:
                     new_domain = dom.save_copy(new_domain_name,
