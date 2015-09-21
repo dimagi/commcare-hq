@@ -2,6 +2,7 @@
     "domains": ["up-nrhm"],
     "config": {
         "referenced_doc_type": "XFormInstance",
+        "engine_id": "default",
         "table_id": "asha_facilitators",
         "display_name": "ASHA Facilitators",
         "configured_filter":  {

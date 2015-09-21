@@ -504,7 +504,7 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
-                            stock_result = process_stock(instance, case_db)
+                            stock_result = process_stock(xforms, case_db)
                         except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't

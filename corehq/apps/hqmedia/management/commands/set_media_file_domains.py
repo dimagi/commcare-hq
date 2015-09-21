@@ -1,6 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 
 DOMS_TO_IGNORE = ['bug-reports']  # we don't care about updating media to include this domain
 class Command(BaseCommand):

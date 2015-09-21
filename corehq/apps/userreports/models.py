@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import json
+from corehq.db import UCR_ENGINE_ID
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -62,6 +63,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     Each data source can back an arbitrary number of reports.
     """
     domain = StringProperty(required=True)
+    engine_id = StringProperty(default=UCR_ENGINE_ID)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
@@ -230,10 +232,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @classmethod
+    def all_ids(cls):
+        return [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
+                                                       reduce=False, include_docs=False)]
+
+    @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
-                                                      reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
+        for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
 
@@ -426,7 +431,7 @@ class StaticReportConfiguration(JsonObject):
     def all(cls):
         for wrapped in StaticReportConfiguration._all():
             for domain in wrapped.domains:
-                doc = copy(wrapped.config)
+                doc = copy(wrapped.to_json()['config'])
                 doc['domain'] = domain
                 doc['_id'] = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
                 doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)

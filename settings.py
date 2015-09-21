@@ -367,12 +367,10 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
-    'soil',
     'custom.apps.crs_reports',
     'custom.m4change',
 
     # submodules with tests that run on travis
-    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -932,6 +930,7 @@ MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
+UCR_DATABASE_URL = None
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
@@ -944,6 +943,14 @@ DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
 
+# Supervisor RPC
+SUPERVISOR_RPC_ENABLED = False
+SUBSCRIPTION_USERNAME = None
+SUBSCRIPTION_PASSWORD = None
+
+ENVIRONMENT_HOSTS = {
+    'pillowtop': ['localhost']
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1005,6 +1012,10 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+if not UCR_DATABASE_URL or UNIT_TESTING:
+    # by default just use the reporting DB for UCRs
+    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -1032,9 +1043,11 @@ _dynamic_db_settings = get_dynamic_db_settings(
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = None
+
+
 COUCHDB_APPS = [
-    'adm',
-    'announcements',
     'api',
     'app_manager',
     'appstore',
@@ -1061,7 +1074,6 @@ COUCHDB_APPS = [
     'facilities',
     'fluff_filter',
     'fixtures',
-    'groups',
     'hqcase',
     'hqmedia',
     'hope',
@@ -1082,7 +1094,6 @@ COUCHDB_APPS = [
     'telerivet',
     'toggle',
     'translations',
-    'users',
     'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
@@ -1122,13 +1133,18 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting'
+    'tdhtesting',
+
+    # users and groups
+    ('groups', USERS_GROUPS_DB),
+    ('users', USERS_GROUPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
+                                             [NEW_USERS_GROUPS_DB])
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1287,7 +1303,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.RecapPassageFluffPillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
@@ -1454,7 +1470,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
+        'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
@@ -1483,3 +1499,9 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+
+if 'locmem' not in CACHES:
+    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+if 'dummy' not in CACHES:
+    CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}

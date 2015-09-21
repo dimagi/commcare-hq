@@ -5,8 +5,8 @@ from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
 import corehq.apps.style.utils as style_utils
-import corehq
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.tabs import MENU_TABS
 
 register = template.Library()
 
@@ -37,7 +37,7 @@ class MainMenuNode(template.Node):
         except (ValueError, AttributeError):
             module = None
 
-        tabs = getattr(module, 'TABS', corehq.TABS)
+        tabs = getattr(module, 'TABS', MENU_TABS)
         visible_tabs = []
         for tab_class in tabs:
             t = tab_class(

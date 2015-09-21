@@ -258,9 +258,7 @@ class Group(UndoableDocument):
 
     def __repr__(self):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
-                + "case_sharing={self.case_sharing!r}, users={users!r})"
-        ).format(self=self, users=self.get_users())
-
+                "case_sharing={self.case_sharing!r})").format(self=self)
 
 class UnsavableGroup(Group):
     def save(self, *args, **kwargs):

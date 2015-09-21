@@ -3,9 +3,11 @@
         "airs",
         "abtmali",
         "airsmadagascar",
+        "airsrwanda",
         "airsethiopia"
     ],
     "config": {
+        "engine_id": "default",
         "base_item_expression": {
             "type": "abt_supervisor"
         },

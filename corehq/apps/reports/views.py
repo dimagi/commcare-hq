@@ -1,11 +1,13 @@
 from StringIO import StringIO
 from copy import copy
+import unicodedata
 from corehq.apps.app_manager.const import USERCASE_TYPE
 import os
 import json
 import tempfile
 import re
 import itertools
+from corehq.apps.domain.models import Domain
 from corehq.util.spreadsheets.export import WorkBook
 import langcodes
 from datetime import datetime, timedelta, date
@@ -36,12 +38,13 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_http_methods, require_POST
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
-from django.http.response import HttpResponse, HttpResponseNotFound
+from django.http.response import HttpResponse, HttpResponseNotFound, \
+    StreamingHttpResponse
 from django.views.decorators.http import require_GET
 from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
-from corehq import toggles, Domain
+from corehq import toggles
 from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -51,12 +54,11 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
 import couchexport
-from couchexport import views as couchexport_views
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
 )
-from couchexport.models import FakeSavedExportSchema, SavedBasicExport
+from couchexport.models import DefaultExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
                                    export_response)
 from couchexport.tasks import rebuild_schemas
@@ -96,7 +98,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.reports.models import (
     ReportConfig,
     ReportNotification,
-    FakeFormExportSchema,
+    DefaultFormExportSchema,
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -262,6 +264,7 @@ def export_data(req, domain):
             next = export.ExcelExportReport.get_url(domain=domain)
         return HttpResponseRedirect(next)
 
+
 @require_form_export_permission
 @login_and_domain_required
 @datespan_default
@@ -276,10 +279,33 @@ def export_data_async(request, domain):
     except ValueError:
         return HttpResponseBadRequest()
     assert(export_tag[0] == domain)
+    format = request.GET.get("format", Format.XLS_2007)
+    filename = request.GET.get("filename", None)
+    previous_export_id = request.GET.get("previous_export", None)
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
 
-    return couchexport_views.export_data_async(request, filter=filter, type=export_type)
+    def _export_tag_or_bust(request):
+        export_tag = request.GET.get("export_tag", "")
+        if not export_tag:
+            raise Exception("You must specify a model to download!")
+        try:
+            # try to parse this like a compound json list
+            export_tag = json.loads(request.GET.get("export_tag", ""))
+        except ValueError:
+            pass  # assume it was a string
+        return export_tag
+
+    export_tag = _export_tag_or_bust(request)
+    export_object = DefaultExportSchema(index=export_tag)
+
+    return export_object.export_data_async(
+        filter=filter,
+        filename=filename,
+        previous_export_id=previous_export_id,
+        format=format
+    )
+
 
 
 @login_or_digest
@@ -358,10 +384,10 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         assert(export_tag[0] == domain)
         # hack - also filter instances here rather than mess too much with trying to make this
         # look more like a FormExportSchema
-        export_class = FakeSavedExportSchema
+        export_class = DefaultExportSchema
         if export_type == 'form':
             filter &= SerializableFunction(instances)
-            export_class = FakeFormExportSchema
+            export_class = DefaultFormExportSchema
 
         export_object = export_class(index=export_tag)
 
@@ -401,6 +427,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
             return HttpResponseRedirect(next)
 
+
 @login_or_digest
 @require_form_export_permission
 @require_GET
@@ -427,7 +454,17 @@ def hq_download_saved_export(req, domain, export_id):
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    return couchexport_views.download_saved_export(req, export_id)
+    export = SavedBasicExport.get(export_id)
+    content_type = Format.from_format(export.configuration.format).mimetype
+    payload = export.get_payload(stream=True)
+    response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
+    if export.configuration.format != 'html':
+        # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
+        normalized_filename = unicodedata.normalize(
+            'NFKD', unicode(export.configuration.filename),
+        ).encode('ascii', 'ignore')
+        response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
+    return response
 
 
 @login_or_digest

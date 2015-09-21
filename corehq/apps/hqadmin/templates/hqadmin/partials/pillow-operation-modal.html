@@ -1,0 +1,24 @@
+{% load i18n %}
+<div id="pillow_operation_modal" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3 data-bind="text: title"></h3>
+    </div>
+    <div class="modal-body">
+        <p>{% trans "Are you sure you want to continue?" %}</p>
+        <div class="alert">
+            <p><i class="icon-warning-sign"></i> {% trans "If this fails you may have to perform the operation manullay!" %}</p>
+            <p><i class="icon-warning-sign"></i> {% trans "This may invoke a huge indexing task that could slow down many parts of the site!" %}</p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-info" type="submit" data-bind="
+            click: go,
+            css: { disabled: pillow_model.operation_in_progress },
+            disable: pillow_model.operation_in_progress">
+            {% trans "Go!" %}
+            <i class="icon-refresh icon-spin" data-bind="visible: pillow_model.operation_in_progress"></i>
+        </button>
+        <a href="#" class="btn" data-dismiss="modal">{% trans "Close" %}</a>
+    </div>
+</div>

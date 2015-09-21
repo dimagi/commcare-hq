@@ -9,7 +9,7 @@ from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.users.models import WebUser, UserRole, Permissions
+from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, \
@@ -131,10 +131,6 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 
 class EWSApi(APISynchronization):
-    LOCATION_CUSTOM_FIELDS = [
-        {'name': 'created_at'},
-        {'name': 'supervised_by'}
-    ]
     SMS_USER_CUSTOM_FIELDS = [
         {'name': 'to'},
         {'name': 'backend'},
@@ -211,8 +207,6 @@ class EWSApi(APISynchronization):
             new_location.location_type = supply_point.type
             new_location.name = supply_point.name
             new_location.site_code = supply_point.code
-            if supply_point.supervised_by:
-                new_location.metadata['supervised_by'] = supply_point.supervised_by
             new_location.save()
             sql_loc = new_location.sql_location
             sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
@@ -221,13 +215,7 @@ class EWSApi(APISynchronization):
 
     def _create_supply_point_from_location(self, supply_point, location):
         if not SupplyPointCase.get_by_location(location):
-            if supply_point.supervised_by:
-                location.metadata['supervised_by'] = supply_point.supervised_by
-                location.save()
-                sql_loc = location.sql_location
-                sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
-                sql_loc.save()
-            return SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
+            return SupplyPointCase.get_or_create_by_location(Loc(_id=location.get_id,
                                                              name=supply_point.name,
                                                              external_id=str(supply_point.id),
                                                              domain=self.domain))
@@ -467,7 +455,10 @@ class EWSApi(APISynchronization):
         return loc_parent.get_id
 
     def _set_in_charges(self, ews_user_id, location):
-        sms_user = self.sms_user_sync(self.endpoint.get_smsuser(ews_user_id))
+        ews_sms_user = self.endpoint.get_smsuser(ews_user_id)
+        sms_user = CouchUser.get_by_username(self.get_username(ews_sms_user)[0])
+        if not sms_user:
+            sms_user = self.sms_user_sync(ews_sms_user)
         FacilityInCharge.objects.get_or_create(
             location=location,
             user_id=sms_user.get_id
@@ -618,7 +609,6 @@ class EWSApi(APISynchronization):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
             return None
-        sms_user.user_data['to'] = ews_smsuser.to
 
         if ews_smsuser.role:
             sms_user.user_data['role'] = [ews_smsuser.role]

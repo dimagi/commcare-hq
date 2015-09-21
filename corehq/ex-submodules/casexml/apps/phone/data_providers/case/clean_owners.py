@@ -8,7 +8,7 @@ from casexml.apps.phone.data_providers.case.load_testing import append_update_to
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
-from corehq.apps.hqcase.dbaccessors import get_open_case_ids
+from corehq.apps.hqcase.dbaccessors import get_open_case_ids, get_case_ids_in_domain_by_owner
 from corehq.apps.users.cases import get_owner_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -122,6 +122,8 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
+
+        _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
         # this is a shortcut to prune closed cases we just sent down before saving the sync log
         self.restore_state.current_sync_log.prune_dependent_cases()
         return response
@@ -185,3 +187,20 @@ def pop_ids(set_, how_many):
         except KeyError:
             pass
     return result
+
+
+def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state):
+    if not restore_state.is_initial:
+        removed_owners = (
+            set(restore_state.last_sync_log.owner_ids_on_phone) - set(restore_state.owner_ids)
+        )
+        if removed_owners:
+            # if we removed any owner ids, then any cases that belonged to those owners need
+            # to be moved to the dependent list
+            case_ids_to_try_purging = get_case_ids_in_domain_by_owner(
+                domain=restore_state.domain,
+                owner_id__in=list(removed_owners),
+            )
+            for to_purge in case_ids_to_try_purging:
+                if to_purge in restore_state.current_sync_log.case_ids_on_phone:
+                    restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
