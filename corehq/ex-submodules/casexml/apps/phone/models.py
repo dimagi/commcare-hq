@@ -660,7 +660,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # "latest" just means as this forms actions are played through
             if action is not None:
                 owner_id_from_action = action.updated_known_properties.get("owner_id")
-                if owner_id_from_action:
+                if owner_id_from_action is not None:
                     owner_id_map[case_id] = owner_id_from_action
             return owner_id_map.get(case_id, None)
 
@@ -675,7 +675,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = get_latest_owner_id(case._id, action)
-                case_update.is_live = not owner_id or owner_id in self.owner_ids_on_phone
+                case_update.is_live = owner_id is None or owner_id in self.owner_ids_on_phone
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
