@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -194,8 +195,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    name = form.cleaned_data['hr_name']
-    with CriticalSection([u'request_domain_name_{}'.format(name)]):
+    name = name_to_url(form.cleaned_data['hr_name'], "project")
+    with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
             name=name,
