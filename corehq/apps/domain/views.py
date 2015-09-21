@@ -99,7 +99,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -195,7 +195,7 @@ class LoginAndDomainMixin(object):
 
 class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
                                       DomainViewMixin):
-    page_title = ugettext_noop("Upgrade Required")
+    page_title = ugettext_lazy("Upgrade Required")
     template_name = "domain/insufficient_privilege_notification.html"
 
     @property
@@ -265,7 +265,7 @@ class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
 
 
 class BaseProjectSettingsView(BaseDomainView):
-    section_name = ugettext_noop("Project Settings")
+    section_name = ugettext_lazy("Project Settings")
     template_name = "settings/base_template.html"
 
     @property
@@ -338,7 +338,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
     urlname = 'domain_basic_info'
-    page_title = ugettext_noop("Basic")
+    page_title = ugettext_lazy("Basic")
 
     @property
     def can_user_see_meta(self):
@@ -412,7 +412,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
-    page_title = ugettext_noop("My Timezone")
+    page_title = ugettext_lazy("My Timezone")
 
     @property
     @memoized
@@ -457,7 +457,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 class EditDhis2SettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/dhis2_settings.html'
     urlname = 'dhis2_settings'
-    page_title = ugettext_noop("DHIS2 API settings")
+    page_title = ugettext_lazy("DHIS2 API settings")
 
     @property
     @memoized
@@ -574,7 +574,7 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
     template_name = 'domain/current_subscription.html'
-    page_title = ugettext_noop("Current Subscription")
+    page_title = ugettext_lazy("Current Subscription")
 
     @property
     def can_purchase_credits(self):
@@ -790,11 +790,11 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'domain_billing_statements'
-    page_title = ugettext_noop("Billing Statements")
+    page_title = ugettext_lazy("Billing Statements")
 
-    limit_text = ugettext_noop("statements per page")
-    empty_notification = ugettext_noop("No Billing Statements match the current criteria.")
-    loading_message = ugettext_noop("Loading statements...")
+    limit_text = ugettext_lazy("statements per page")
+    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
+    loading_message = ugettext_lazy("Loading statements...")
 
     @property
     def parameters(self):
@@ -1176,7 +1176,7 @@ class BillingStatementPdfView(View):
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     template_name = 'domain/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
-    page_title = ugettext_noop("Dimagi Internal Subscription Management")
+    page_title = ugettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
@@ -1246,10 +1246,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
-    page_title = ugettext_noop("Change Plan")
-    step_title = ugettext_noop("Select Plan")
+    page_title = ugettext_lazy("Change Plan")
+    step_title = ugettext_lazy("Select Plan")
     edition = None
-    lead_text = ugettext_noop("Please select a plan below that fits your organization's needs.")
+    lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
 
     @property
     def edition_name(self):
@@ -1308,7 +1308,7 @@ class SelectPlanView(DomainAccountingSettings):
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
-    page_title = ugettext_noop("Privacy and Security")
+    page_title = ugettext_lazy("Privacy and Security")
 
     @property
     @memoized
@@ -1337,7 +1337,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
 class SelectedEnterprisePlanView(SelectPlanView):
     template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
-    step_title = ugettext_noop("Contact Dimagi")
+    step_title = ugettext_lazy("Contact Dimagi")
     edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
@@ -1379,7 +1379,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
 class ConfirmSelectedPlanView(SelectPlanView):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
-    step_title = ugettext_noop("Confirm Plan")
+    step_title = ugettext_lazy("Confirm Plan")
 
     @property
     def steps(self):
@@ -1445,7 +1445,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
-    step_title = ugettext_noop("Confirm Billing Information")
+    step_title = ugettext_lazy("Confirm Billing Information")
     is_new = False
     async_handlers = [
         Select2BillingInfoHandler,
@@ -1553,12 +1553,12 @@ class SubscriptionMixin(object):
 
 class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
-    page_title = ugettext_noop("Renew Plan")
-    step_title = ugettext_noop("Renew or Change Plan")
+    page_title = ugettext_lazy("Renew Plan")
+    step_title = ugettext_lazy("Renew or Change Plan")
 
     @property
     def lead_text(self):
-        return ugettext_noop("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
+        return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
                              .format(plan=self.current_subscription.plan_version.plan.edition))
 
     @property
@@ -1586,7 +1586,7 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
 class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
-    page_title = ugettext_noop("Renew Plan")
+    page_title = ugettext_lazy("Renew Plan")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -1655,7 +1655,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
     urlname = 'domain_snapshot_settings'
-    page_title = ugettext_noop("CommCare Exchange")
+    page_title = ugettext_lazy("CommCare Exchange")
 
     @property
     def page_context(self):
@@ -1669,7 +1669,7 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     template_name = 'domain/create_snapshot.html'
     urlname = 'domain_create_snapshot'
-    page_title = ugettext_noop("Publish New Version")
+    page_title = ugettext_lazy("Publish New Version")
     strict_domain_fetching = True
 
     @property
@@ -1951,7 +1951,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
 class ManageProjectMediaView(BaseAdminProjectSettingsView):
     urlname = 'domain_manage_multimedia'
-    page_title = ugettext_noop("Multimedia Sharing")
+    page_title = ugettext_lazy("Multimedia Sharing")
     template_name = 'domain/admin/media_manager.html'
 
     @property
@@ -2006,7 +2006,7 @@ class RepeaterMixin(object):
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     urlname = 'domain_forwarding'
-    page_title = ugettext_noop("Data Forwarding")
+    page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
     @property
@@ -2027,7 +2027,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
 
 class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     urlname = 'add_repeater'
-    page_title = ugettext_noop("Forward Data")
+    page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
 
@@ -2117,7 +2117,7 @@ class AddFormRepeaterView(AddRepeaterView):
 class OrgSettingsView(BaseAdminProjectSettingsView):
     template_name = 'domain/orgs_settings.html'
     urlname = 'domain_org_settings'
-    page_title = ugettext_noop("Organization")
+    page_title = ugettext_lazy("Organization")
 
     @method_decorator(requires_privilege_with_fallback(privileges.CROSS_PROJECT_REPORTS))
     def dispatch(self, request, *args, **kwargs):
@@ -2171,7 +2171,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
-    page_title = ugettext_noop("Project Information")
+    page_title = ugettext_lazy("Project Information")
     template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
@@ -2263,7 +2263,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_calculations'
-    page_title = ugettext_noop("Calculated Properties")
+    page_title = ugettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
     @property
@@ -2347,7 +2347,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
 
 
 class ProBonoMixin():
-    page_title = ugettext_noop("Pro-Bono Application")
+    page_title = ugettext_lazy("Pro-Bono Application")
     is_submitted = False
 
     url_name = None
@@ -2416,7 +2416,7 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
 
 class FeaturePreviewsView(BaseAdminProjectSettingsView):
     urlname = 'feature_previews'
-    page_title = ugettext_noop("Feature Previews")
+    page_title = ugettext_lazy("Feature Previews")
     template_name = 'domain/admin/feature_previews.html'
 
     @memoized
@@ -2459,7 +2459,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
 class FeatureFlagsView(BaseAdminProjectSettingsView):
     urlname = 'domain_feature_flags'
-    page_title = ugettext_noop("Feature Flags")
+    page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
     @method_decorator(require_superuser)
@@ -2485,7 +2485,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
 
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
-    page_title = ugettext_noop("Transfer Project")
+    page_title = ugettext_lazy("Transfer Project")
     template_name = 'domain/admin/transfer_domain.html'
 
     @property
@@ -2627,7 +2627,7 @@ from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
 
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     urlname = 'public_sms_rates_view'
-    page_title = ugettext_noop("SMS Rate Calculator")
+    page_title = ugettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
@@ -2647,7 +2647,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     urlname = 'domain_sms_rates_view'
-    page_title = ugettext_noop("SMS Rate Calculator")
+    page_title = ugettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/sms_rates.html'
     async_handlers = [
         SMSRatesAsyncHandler,
