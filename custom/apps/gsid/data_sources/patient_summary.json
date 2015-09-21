@@ -2,6 +2,7 @@
     "domains": ["gsid", "gsid-demo"],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "engine_id": "default",
         "table_id": "patient_summary",
         "display_name": "Patient Summary",
         "configured_filter":  {
