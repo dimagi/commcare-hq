@@ -54,7 +54,7 @@ class LocationForm(forms.Form):
     location_type = forms.CharField(
         label=_('Organization Level'),
         required=False,
-        widget=LocTypeWidget(), 
+        widget=LocTypeWidget(),
     )
     coordinates = forms.CharField(
         label=_('Coordinates'),
