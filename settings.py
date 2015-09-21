@@ -151,6 +151,12 @@ PASSWORD_HASHERS = (
 
 ROOT_URLCONF = "urls"
 
+RIAKCS_KEY = ''
+RIAKCS_SECRET = ''
+RIAKCS_HOST = 'localhost'
+RIAKCS_PORT = 8080
+RIAKCS_DEFAULT_BUCKET = 'commcarehq'
+
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",

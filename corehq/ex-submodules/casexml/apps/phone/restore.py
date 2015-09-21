@@ -1,5 +1,7 @@
 from io import FileIO
 import os
+import boto
+import boto.s3.connection
 from uuid import uuid4
 import shutil
 import hashlib
@@ -11,6 +13,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
+from corehq.s3 import ObjectStore
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -184,6 +187,45 @@ class FileRestoreResponse(RestoreResponse):
     def get_http_response(self):
         headers = {'Content-Length': os.path.getsize(self.get_filename())}
         return stream_response(open(self.get_filename(), 'r'), headers)
+
+
+class ObjectRestoreResponse(FileRestoreResponse):
+    """
+    Restore response powered by RiakCS backend
+    """
+    def __init__(self, username=None, items=False, domain=None):
+        super(ObjectRestoreResponse, self).__init__(username, items)
+
+        self.object_store = ObjectStore(domain)
+
+    def finalize(self):
+        """
+        Creates the final file with start and ending tag
+        """
+        with open(self.get_filename(), 'w') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
+
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
+
+            response.write(self.closing_tag)
+            content_length = os.path.getsize(self.get_filename())
+
+        self.object_store.set(self.get_filename(), open(self.get_filename(), 'rb'), content_length)
+
+        self.finalized = True
+        self.close()
+
+    def get_http_response(self):
+        obj = self.object_store.get(self.get_filename())
+        headers = {'Content-Length': obj.get('ContentLength', None)}
+        return stream_response(obj['Body'], headers)
 
 
 class CachedPayload(object):
@@ -458,7 +500,7 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.project, self.user, self.params)
+        self.restore_state = get_restore_state_cls()(self.project, self.user, self.params)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -569,3 +611,7 @@ class RestoreConfig(object):
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
                 self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
+
+
+def get_restore_state_cls(domain):
+    return ObjectRestoreResponse if toggles.OBJECT_RESTORE.enabled(domain) else FileRestoreResponse

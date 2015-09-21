@@ -640,6 +640,12 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+OBJECT_RESTORE = StaticToggle(
+    'object_restore',
+    'Use RIAK CS as backend for restore',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
+)
 
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
