@@ -128,7 +128,6 @@ class PricingTableCategories(object):
                 f.ANDROID_GATEWAY,
                 f.SMS_DATA_COLLECTION,
                 f.INBOUND_SMS,
-                f.INCLUDED_SMS_DIMAGI,
                 f.INCLUDED_SMS_CUSTOM,
             ),
             cls.USER_MANAGEMENT_AND_SECURITY: (
@@ -175,7 +174,6 @@ class PricingTableFeatures(object):
     ANDROID_GATEWAY = 'android_gateway'
     SMS_DATA_COLLECTION = 'sms_data_collection'
     INBOUND_SMS = 'inbound_sms'
-    INCLUDED_SMS_DIMAGI = 'included_sms_dimagi'
     INCLUDED_SMS_CUSTOM = 'included_sms_custom'
 
     USER_GROUPS = 'user_groups'
@@ -229,7 +227,6 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: _("Android-based SMS Gateway"),
             cls.SMS_DATA_COLLECTION: _("SMS Data Collection"),
             cls.INBOUND_SMS: _("Inbound SMS (where available)"),
-            cls.INCLUDED_SMS_DIMAGI: _("Free Messages (Dimagi Gateway)**"),
             cls.INCLUDED_SMS_CUSTOM: _("Messages (Your Gateway)"),
             cls.USER_GROUPS: _("User Groups"),
             cls.DATA_SECURITY_PRIVACY: _("Data Security and Privacy"),
@@ -273,7 +270,6 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: (False, True, True, True, True),
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
-            cls.INCLUDED_SMS_DIMAGI: (False, _("100 /month"), _("500 /month"), _("1,000 /month"), _("2,000 /month")),
             cls.INCLUDED_SMS_CUSTOM: (False, _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS")),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
