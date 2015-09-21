@@ -1012,6 +1012,10 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+if not UCR_DATABASE_URL or UNIT_TESTING:
+    # by default just use the reporting DB for UCRs
+    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
