@@ -1355,15 +1355,33 @@ class SelfRegistrationInvitation(models.Model):
     @classmethod
     def get_app_odk_url(cls, domain, app_id):
         """
-        Get the latest starred build for the app and return it's
-        odk install url.
+        Get the latest starred build (or latest build if none are
+        starred) for the app and return it's odk install url.
         """
         app = get_app(domain, app_id, latest=True)
+
+        if not app.copy_of:
+            # If latest starred build is not found, use the latest build
+            app = get_app(domain, app_id, latest=True, target='build')
+
+        if not app.copy_of:
+            # If no build is found, return None
+            return None
+
         return app.get_short_odk_url(with_media=True)
 
     @classmethod
     def initiate_workflow(cls, domain, phone_numbers, app_id=None,
             days_until_expiration=30):
+        """
+        If app_id is passed in, then an additional SMS will be sent to Android
+        phones containing a link to the latest starred build (or latest
+        build if no starred build exists) for the app. Once ODK is installed,
+        it will automatically search for this SMS and install this app.
+
+        If app_id is left blank, the additional SMS is not sent, and once
+        ODK is installed it just skips the automatic app install step.
+        """
         success_numbers = []
         invalid_format_numbers = []
         numbers_in_use = []
