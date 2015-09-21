@@ -79,11 +79,13 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
 def _make_couchdb_tuple(row, couch_database_url):
 
     if isinstance(row, basestring):
-        app_label = row
-        return app_label, couch_database_url
+        app_label, postfix = row, None
     else:
         app_label, postfix = row
+    if postfix:
         return app_label, '%s__%s' % (couch_database_url, postfix)
+    else:
+        return app_label, couch_database_url
 
 
 def make_couchdb_tuples(config, couch_database_url):
@@ -95,7 +97,7 @@ def make_couchdb_tuples(config, couch_database_url):
     return [_make_couchdb_tuple(row, couch_database_url) for row in config]
 
 
-def get_extra_couchdbs(config, couch_database_url):
+def get_extra_couchdbs(config, couch_database_url, extra_db_names=()):
     """
     Create a mapping from database prefix to database url
 
@@ -103,10 +105,16 @@ def get_extra_couchdbs(config, couch_database_url):
     :param couch_database_url:  main database url
     """
     extra_dbs = {}
+    postfixes = []
     for row in config:
         if isinstance(row, tuple):
             _, postfix = row
-            extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
+            if postfix:
+                postfixes.append(postfix)
+
+    postfixes.extend(extra_db_names)
+    for postfix in postfixes:
+        extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
 
     return extra_dbs
 
