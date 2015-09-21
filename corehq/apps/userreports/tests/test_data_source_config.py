@@ -93,6 +93,9 @@ class DataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # todo figure out what test doesn't clean up after itself
+        for config in DataSourceConfiguration.all():
+            config.delete()
         DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
         DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
         DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
