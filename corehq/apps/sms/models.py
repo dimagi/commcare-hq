@@ -1293,11 +1293,15 @@ class SelfRegistrationInvitation(models.Model):
         )
 
         if self.odk_url:
+            url = str(self.odk_url).strip()
+            message = 'ccapp: %s signature: %s' % (url, sign(url))
+            message = base64.b64encode(message)
+            message = '[COMMCARE APP - DO NOT DELETE] %s' % message
             send_sms(
                 self.domain,
                 None,
                 self.phone_number,
-                'ccapp: %s, signature: %s' % (self.odk_url, base64.b64encode(sign(self.odk_url)))
+                message,
             )
 
     def expire(self):
