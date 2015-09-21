@@ -733,7 +733,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = ugettext_noop("Billing Contact Information")
+    page_title = ugettext_lazy("Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
