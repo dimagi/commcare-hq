@@ -16,9 +16,7 @@ from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
-    CaseExportInterface,
     CaseExportReport,
-    FormExportInterface,
     ExcelExportReport,
 )
 from corehq.apps.settings.views import BaseProjectDataView
@@ -31,7 +29,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
-from toggle import toggle_enabled
 
 require_form_export_permission = require_permission(
     Permissions.view_report,
@@ -80,11 +77,6 @@ class BaseExportView(BaseProjectDataView):
     @memoized
     def report_class(self):
         try:
-            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-                return {
-                    'form': FormExportInterface,
-                    'case': CaseExportInterface,
-                }[self.export_type]
             return {
                 'form': ExcelExportReport,
                 'case': CaseExportReport
