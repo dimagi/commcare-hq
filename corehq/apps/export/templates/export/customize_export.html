@@ -312,9 +312,7 @@
                                         index: column.index,
                                         display: column.display,
                                         transform: column.transform() || null, // it doesn't save '' well
-                                        is_sensitive: Boolean(is_sensitive),
-                                        show: ko.utils.unwrapObservable(column.selected),
-                                        selected: ko.utils.unwrapObservable(column.selected)
+                                        is_sensitive: Boolean(is_sensitive)
                                 };
                                 if (self.export_type() === 'form') {
                                     if (self.custom_export.split_multiselects() && column.allOptions()) {
