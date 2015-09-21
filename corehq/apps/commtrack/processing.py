@@ -6,8 +6,8 @@ from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.xform import is_device_report, CaseDbCache
 from casexml.apps.stock.models import StockTransaction, StockReport
-from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.parsing import unpack_commtrack
+from couchforms.util import is_deprecation
 from dimagi.utils.decorators.log_exception import log_exception
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml.parser import AbstractAction
@@ -43,7 +43,19 @@ class StockProcessingResult(object):
 
         # create the django models
         for stock_report_helper in self.stock_report_helpers:
-            create_models_for_stock_report(self.domain, stock_report_helper)
+            if stock_report_helper.deprecated:
+                delete_models_for_stock_report(self.domain, stock_report_helper)
+            else:
+                create_models_for_stock_report(self.domain, stock_report_helper)
+
+
+@transaction.atomic
+def delete_models_for_stock_report(domain, stock_report_helper):
+    """
+    Delete all stock reports and stock transaction models associated with the helper from the database.
+    """
+    assert stock_report_helper.domain == domain
+    StockReport.objects.filter(domain=domain, form_id=stock_report_helper.form_id).delete()
 
 
 @transaction.atomic
@@ -132,9 +144,17 @@ def _create_model_for_stock_transaction(report, transaction_helper):
     return txn
 
 
+CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
+StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
+
+
+def _empty_actions():
+    return StockFormActions([], [])
+
+
 def get_stock_actions(xform):
     if is_device_report(xform):
-        return [], []
+        return _empty_actions()
 
     stock_report_helpers = list(unpack_commtrack(xform))
     transaction_helpers = [
@@ -143,7 +163,7 @@ def get_stock_actions(xform):
         for transaction_helper in stock_report_helper.transactions
     ]
     if not transaction_helpers:
-        return [], []
+        return _empty_actions()
 
     # list of cases that had stock reports in the form
     case_ids = list(set(transaction_helper.case_id
@@ -151,48 +171,70 @@ def get_stock_actions(xform):
 
     user_id = xform.form['meta']['userID']
     submit_time = xform['received_on']
-    case_actions = []
-    for case_id in case_ids:
-        case_action = CommCareCaseAction.from_parsed_action(
-            submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
-        )
-        case_actions.append((case_id, case_action))
+    case_action_intents = []
 
-    return stock_report_helpers, case_actions
+    for case_id in case_ids:
+        if is_deprecation(xform):
+            case_action_intents.append(CaseActionIntent(
+                case_id=case_id, form_id=xform.orig_id, is_deprecation=True, action=None
+            ))
+        else:
+            case_action = CommCareCaseAction.from_parsed_action(
+                submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
+            )
+            case_action_intents.append(CaseActionIntent(
+                case_id=case_id, form_id=xform._id, is_deprecation=False, action=case_action
+            ))
+
+    return StockFormActions(stock_report_helpers, case_action_intents)
 
 
 @log_exception()
-def process_stock(xform, case_db=None):
+def process_stock(xforms, case_db=None):
     """
     process the commtrack xml constructs in an incoming submission
     """
     case_db = case_db or CaseDbCache()
     assert isinstance(case_db, CaseDbCache)
 
-    stock_report_helpers, case_actions = get_stock_actions(xform)
+    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    stock_report_helpers = []
+    case_action_intents = []
+    for xform in sorted_forms:
+        actions_for_form = get_stock_actions(xform)
+        stock_report_helpers += actions_for_form.stock_report_helpers
+        case_action_intents += actions_for_form.case_action_intents
+
     # omitted: normalize_transactions (used for bulk requisitions?)
 
-    # validate product ids
-    if any(transaction_helper.product_id in ('', None)
-            for stock_report_helper in stock_report_helpers
-            for transaction_helper in stock_report_helper.transactions):
-        raise MissingProductId(
-            _('Product IDs must be set for all ledger updates!'))
+    # validate the parsed transactions
+    for stock_report_helper in stock_report_helpers:
+        stock_report_helper.validate()
 
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
-    for case_id, case_action in case_actions:
-        case = case_db.get(case_id)
+    for action_intent in case_action_intents:
+        case_id = action_intent.case_id
+        case = case_db.get(action_intent.case_id)
         relevant_cases.append(case)
         if case is None:
             raise IllegalCaseId(
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        # hack: clear the sync log id so this modification always counts
-        # since consumption data could change server-side
-        case_action.sync_log_id = ''
-        case.actions.append(case_action)
+        if action_intent.is_deprecation:
+            # just remove the old stock actions for the form from the case
+            case.actions = [
+                a for a in case.actions if not
+                (a.xform_id == action_intent.form_id and a.action_type == CASE_ACTION_COMMTRACK)
+            ]
+        else:
+            case_action = action_intent.action
+            # hack: clear the sync log id so this modification always counts
+            # since consumption data could change server-side
+            case_action.sync_log_id = ''
+            case.actions.append(case_action)
+
         case_db.mark_changed(case)
 
     return StockProcessingResult(
@@ -275,7 +317,6 @@ def rebuild_stock_state(case_id, section_id, product_id):
     and the quantity and stock_on_hand fields of StockTransaction
     when they are calculated from previous state
     (as opposed to part of the explict transaction)
-
     """
 
     for action in plan_rebuild_stock_state(case_id, section_id, product_id):

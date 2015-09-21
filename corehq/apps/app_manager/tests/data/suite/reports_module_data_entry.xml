@@ -1,6 +1,5 @@
 <partial>
   <entry>
-    <form>fixmeclayton</form>
     <command id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i">
       <text>
         <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.name"/>
@@ -14,11 +13,6 @@
         value="./@id"
         detail-select="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select"
         detail-confirm="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary"/>
-      <datum
-        id="throwaway_ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i"
-        nodeset="instance('reports')/reports/report[@id='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i']/rows/row"
-        value="''"
-        detail-select="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data"/>
     </session>
   </entry>
 </partial>

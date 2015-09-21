@@ -23,7 +23,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import ConfigurableReport, privileges, Session, toggles
+from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
@@ -45,10 +45,12 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
+    StaticReportConfiguration,
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
@@ -58,6 +60,7 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.db import Session
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -73,7 +76,7 @@ from dimagi.utils.decorators.memoized import memoized
 def get_datasource_config_or_404(config_id, domain):
     try:
         return get_datasource_config(config_id, domain)
-    except DataSourceConfigurationNotFoundError:
+    except (DataSourceConfigurationNotFoundError, BadSpecError):
         raise Http404
 
 
@@ -93,8 +96,8 @@ def configurable_reports_home(request, domain):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_report(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
-    return _edit_report_shared(request, domain, config)
+    config, is_static = get_report_config_or_404(report_id, domain)
+    return _edit_report_shared(request, domain, config, read_only=is_static)
 
 
 @login_and_domain_required
@@ -327,15 +330,15 @@ class ConfigureWorkerReport(ConfigureChartReport):
         return ConfigureWorkerReportForm
 
 
-def _edit_report_shared(request, domain, config):
+def _edit_report_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, data=request.POST)
+        form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             form.save(commit=True)
             messages.success(request, _(u'Report "{}" saved!').format(config.title))
             return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
-        form = ConfigurableReportEditForm(domain, config)
+        form = ConfigurableReportEditForm(domain, config, read_only)
     context = _shared_context(domain)
     context.update({
         'form': form,
@@ -394,7 +397,7 @@ def import_report(request, domain):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
     return json_response(config)
 
@@ -445,10 +448,8 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
-
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
-
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
@@ -654,9 +655,10 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
-    custom_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
+    static_reports = list(StaticReportConfiguration.by_domain(domain))
+    static_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain),
-        'data_sources': DataSourceConfiguration.by_domain(domain) + custom_data_sources,
+        'reports': ReportConfiguration.by_domain(domain) + static_reports,
+        'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
     }

@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.test import TestCase
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct

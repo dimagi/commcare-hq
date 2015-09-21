@@ -1,9 +1,9 @@
 import datetime
 from decimal import Decimal
 from django.db import models
-from corehq import Domain
 import mock
 from django.core import mail
+from corehq.apps.domain.models import Domain
 
 from corehq.apps.accounting import generator, tasks
 from corehq.apps.accounting.generator import FakeStripeCard, FakeStripeCustomer

@@ -746,6 +746,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     case_row.five = ''
                     case_row.pay = '--'
                     case_row.payment_last_month = '--'
+                    case_row.cash = '--'
                     case_row.issue = _('Reporting period incomplete')
                     rows.append(case_row)
             except InvalidRow as e:

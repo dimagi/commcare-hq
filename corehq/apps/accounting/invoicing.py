@@ -7,9 +7,9 @@ from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
 from corehq.apps.accounting.utils import ensure_domain_instance
+from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq import Domain
 from corehq.apps.accounting.exceptions import (
     LineItemError,
     InvoiceError,

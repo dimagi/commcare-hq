@@ -67,6 +67,15 @@ class PreindexPlugin(object):
         )
 
 
+def get_dbs_from_app_label_and_map(app_label, app_db_map):
+    if app_db_map and app_label in app_db_map:
+        db_names = app_db_map[app_label]
+        if not isinstance(db_names, (list, tuple)):
+            db_names = [db_names]
+        return [get_db(db_name) for db_name in db_names]
+    return [get_db()]
+
+
 class CouchAppsPreindexPlugin(PreindexPlugin):
     """
     :param app_label:   The app label for the top level application.
@@ -75,13 +84,6 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
                         e.g. {'my_app': 'meta'} will result in 'my_app' being synced
                         to the '{main_db}__meta' database.
     """
-    def __init__(self, app_label, dir, app_db_map=None):
-        super(CouchAppsPreindexPlugin, self).__init__(app_label, dir, app_db_map)
-
-    def db(self, app_label):
-        if self.app_db_map and app_label in self.app_db_map:
-            return get_db(self.app_db_map[app_label])
-        return get_db()
 
     def get_couchapps(self):
         return [d for d in os.listdir(self.dir)
@@ -89,9 +91,28 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
 
     def get_designs(self):
         return [
-            DesignInfo(app_label=app_label, db=self.db(app_label), design_path=os.path.join(self.dir, app_label))
+            DesignInfo(app_label=app_label, db=db,
+                       design_path=os.path.join(self.dir, app_label))
             for app_label in self.get_couchapps()
+            for db in get_dbs_from_app_label_and_map(app_label, self.app_db_map)
         ]
+
+
+class ExtraPreindexPlugin(PreindexPlugin):
+
+    def get_designs(self):
+        return [
+            DesignInfo(
+                app_label=self.app_label,
+                db=db,
+                design_path=os.path.join(self.dir, "_design")
+            )
+            for db in get_dbs_from_app_label_and_map(self.app_label, self.app_db_map)
+        ]
+
+    @classmethod
+    def register(cls, app_label, file, db_names):
+        super(ExtraPreindexPlugin, cls).register(app_label, file, {app_label: db_names})
 
 
 def get_preindex_plugins():

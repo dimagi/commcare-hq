@@ -35,7 +35,7 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-class InvitationView():
+class InvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     inv_id = None
     inv_type = Invitation
@@ -43,7 +43,10 @@ class InvitationView():
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
 
     def added_context(self):
-        return {}
+        username = self.request.user.username
+        # Add zero-width space for better line breaking
+        username = username.replace("@", "&#x200b;@")
+        return {'formatted_username': username}
 
     def validate_invitation(self, invitation):
         pass
@@ -107,6 +110,7 @@ class InvitationView():
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
+        context = self.added_context()
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -137,7 +141,6 @@ class InvitationView():
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-                context = self.added_context()
                 context.update({
                     'mobile_user': mobile_user,
                     "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
@@ -163,12 +166,13 @@ class InvitationView():
                     form = NewWebUserRegistrationForm(initial={
                         'email': invitation.email,
                         'hr_name': domain.display_name() if domain else invitation.domain,
-                        'create_domain': False
+                        'create_domain': False,
                     })
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        return render(request, self.template, {"form": form})
+        context.update({"form": form})
+        return render(request, self.template, context)
 
 
 def get_bulk_upload_form(context, context_key="bulk_upload"):
@@ -201,7 +205,7 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
           [{'description': u'Grant other CommCare HQ users access
                             to your project and manage user roles.',
             'show_in_dropdown': True,
-            'subpages': [{'title': u'Invite Web User',
+            'subpages': [{'title': u'Add Web User',
                           'urlname': 'invite_web_user'},
                          {'title': <function web_username at 0x10982a9b0>,
                           'urlname': 'user_account'},

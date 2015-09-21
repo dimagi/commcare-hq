@@ -150,7 +150,8 @@ class EditCommCareUserView(BaseFullEditUserView):
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
-        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id})
+        program_id = self.editable_user.get_domain_membership(self.domain).program_id
+        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id, 'program_id': program_id})
 
     @property
     def page_context(self):
@@ -822,7 +823,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        task_ref = expose_cached_download(None, expiry=1*60*60, file_extension=None)
+        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),

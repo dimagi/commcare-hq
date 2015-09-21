@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from corehq import IndicatorAdminInterfaceDispatcher
+from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.views import (
     IndicatorAdminCRUDFormView,
     BulkCopyIndicatorsView,

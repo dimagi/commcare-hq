@@ -12,12 +12,12 @@ class AppFactory(object):
     >>> factory.form_opens_case(form1)
 
     >>> module2, form2 = factory.new_basic_module('update_case', 'person')
-    >>> factory.form_updates_case(form2, case_type='house')
+    >>> factory.form_requires_case(form2, case_type='house')
     >>> factory.form_opens_case(form2, is_subcase=True)
 
     >>> module3, form3 = factory.new_advanced_module('advanced', 'person')
-    >>> factory.form_updates_case(form3, case_type='house')
-    >>> factory.form_updates_case(form3, case_type='person', parent_case_type='house')
+    >>> factory.form_requires_case(form3, case_type='house')
+    >>> factory.form_requires_case(form3, case_type='person', parent_case_type='house')
     >>> factory.form_opens_case(form3, case_type='child', is_subcase=True)
     """
     def __init__(self, domain='test', name='Untitled Application', version=APP_V2, build_version=None):
@@ -66,7 +66,7 @@ class AppFactory(object):
         return form
 
     @staticmethod
-    def form_updates_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
+    def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
         if form.form_type == 'module_form':
             form.requires = 'case'
             if update:
@@ -102,10 +102,6 @@ class AppFactory(object):
             form.actions.load_update_cases.append(action)
 
     @staticmethod
-    def form_preloads_case(form, case_type=None, parent_case_type=None, preload=None):
-        return AppFactory.form_updates_case(form, case_type, parent_case_type, preload=preload)
-
-    @staticmethod
     def form_opens_case(form, case_type=None, is_subcase=False):
         if form.form_type == 'module_form':
             if is_subcase:
@@ -134,7 +130,7 @@ class AppFactory(object):
         factory = cls(build_version='2.9')
 
         case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
-        factory.form_updates_case(update_case_form)
+        factory.form_requires_case(update_case_form)
 
         register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
         factory.form_opens_case(register_form)

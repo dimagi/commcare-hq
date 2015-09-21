@@ -1,6 +1,6 @@
 from django.core.management.base import LabelCommand
 import sys
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 
 
 class Command(LabelCommand):

@@ -322,17 +322,6 @@ var COMMCAREHQ = (function () {
     };
 }());
 
-function setUpIeWarning() {
-    'use strict';
-    var $warning;
-    if ($.browser.msie) {
-        $warning = $('<div/>').addClass('ie-warning');
-        $('<span>This application does not work well on Microsoft Internet Explorer. ' +
-            'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
-        $('body').prepend($warning);
-    }
-}
-
 $(function () {
     'use strict';
     $('.delete_link').iconify('icon-remove');
@@ -344,7 +333,6 @@ $(function () {
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
     COMMCAREHQ.initBlock($("body"));
-    setUpIeWarning();
 
     $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 
