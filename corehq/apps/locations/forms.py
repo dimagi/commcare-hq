@@ -47,13 +47,17 @@ class LocationForm(forms.Form):
         required=False,
         widget=ParentLocWidget(),
     )
-    name = forms.CharField(max_length=100)
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=100,
+    )
     location_type = forms.CharField(
         label=_('Organization Level'),
         required=False,
         widget=LocTypeWidget(), 
     )
     coordinates = forms.CharField(
+        label=_('Coordinates'),
         max_length=30,
         required=False,
         help_text=_("enter as 'lat lon' or 'lat, lon' "
