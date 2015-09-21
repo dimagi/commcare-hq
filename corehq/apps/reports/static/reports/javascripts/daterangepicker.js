@@ -27,8 +27,22 @@ $(function() {
             separator: separator
         });
 
-	$('[name="daterangepicker_start"]').removeAttr("disabled");
-	$('[name="daterangepicker_end"]').removeAttr("disabled");
+        $('[name="daterangepicker_start"]').removeAttr("disabled");
+        $('[name="daterangepicker_end"]').removeAttr("disabled");
+
+        $('.daterangepicker_start_input').toggle($('.ranges ul li:nth-child(4)').attr('class'));
+        $('.daterangepicker_end_input').toggle($('.ranges ul li:nth-child(4)').attr('class'));
+
+        $('.ranges ul li:nth-child(4)').click(function() {
+            $('.daterangepicker_start_input').show();
+            $('.daterangepicker_end_input').show();
+        });
+
+        $('.ranges ul li:not(:nth-child(4))').click(function() {
+            $('.daterangepicker_start_input').hide();
+            $('.daterangepicker_end_input').hide();
+        });
+
     };
     $.fn.createDefaultDateRangePicker = function () {
         this.createDateRangePicker(
