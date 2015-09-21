@@ -128,7 +128,7 @@ class PricingTableCategories(object):
                 f.ANDROID_GATEWAY,
                 f.SMS_DATA_COLLECTION,
                 f.INBOUND_SMS,
-                f.INCLUDED_SMS_CUSTOM,
+                f.SMS_PRICING,
             ),
             cls.USER_MANAGEMENT_AND_SECURITY: (
                 f.USER_GROUPS,
@@ -174,7 +174,7 @@ class PricingTableFeatures(object):
     ANDROID_GATEWAY = 'android_gateway'
     SMS_DATA_COLLECTION = 'sms_data_collection'
     INBOUND_SMS = 'inbound_sms'
-    INCLUDED_SMS_CUSTOM = 'included_sms_custom'
+    SMS_PRICING = 'sms_pricing'
 
     USER_GROUPS = 'user_groups'
     DATA_SECURITY_PRIVACY = 'data_security_privacy'
@@ -227,7 +227,7 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: _("Android-based SMS Gateway"),
             cls.SMS_DATA_COLLECTION: _("SMS Data Collection"),
             cls.INBOUND_SMS: _("Inbound SMS (where available)"),
-            cls.INCLUDED_SMS_CUSTOM: _("Messages (Your Gateway)"),
+            cls.SMS_PRICING: _("SMS Pricing"),
             cls.USER_GROUPS: _("User Groups"),
             cls.DATA_SECURITY_PRIVACY: _("Data Security and Privacy"),
             cls.ADVANCED_ROLES: _("Advanced Role-Based Access"),
@@ -270,7 +270,7 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: (False, True, True, True, True),
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
-            cls.INCLUDED_SMS_CUSTOM: (False, _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS")),
+            cls.SMS_PRICING: (False, _("<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>"), _("<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>"), _("<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>"), _("<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>")),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
             cls.ADVANCED_ROLES: (False, True, True, True, True),
