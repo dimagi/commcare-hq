@@ -595,7 +595,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def test_create_relevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id=USER_ID, update={'owner_id': ''}, strict=False)
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        if isinstance(sync_log, SimplifiedSyncLog):
+            self.assertFalse(sync_log.phone_is_holding_case(case._id))
 
     @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
