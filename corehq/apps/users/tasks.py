@@ -26,6 +26,7 @@ logger = get_task_logger(__name__)
 
 @task(ErrorMail=SensitiveErrorMail)
 def bulk_upload_async(domain, user_specs, group_specs, location_specs):
+    print domain, user_specs, group_specs, location_specs
     from corehq.apps.users.bulkupload import create_or_update_users_groups_and_locations
     task = bulk_upload_async
     DownloadBase.set_progress(task, 0, 100)
