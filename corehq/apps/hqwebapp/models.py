@@ -647,7 +647,7 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "corehq.apps.app_manager.views.default"
+    view = "corehq.apps.app_manager.views.view_app"
 
     @property
     def title(self):

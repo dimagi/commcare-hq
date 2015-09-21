@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 import os
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.views import process_ui_translation_upload
+from corehq.apps.app_manager.views.translations import process_ui_translation_upload
 
 
 class BulkUiTranslation(SimpleTestCase):
