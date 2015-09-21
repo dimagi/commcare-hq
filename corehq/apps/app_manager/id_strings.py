@@ -171,6 +171,11 @@ def report_description_header():
     return u'cchq.report_description_header'
 
 
+@pattern('cchq.report_data_table')
+def report_data_table():
+    return u'cchq.report_data_table'
+
+
 @pattern('cchq.reports.%s.headers.%s')
 def report_column_header(report_id, column):
     return u'cchq.reports.{report_id}.headers.{column}'.format(report_id=report_id, column=column)

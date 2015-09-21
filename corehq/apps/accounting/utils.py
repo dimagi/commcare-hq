@@ -1,11 +1,14 @@
 import calendar
+from collections import namedtuple
 import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.template.loader import render_to_string
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import ugettext_lazy as _
+from corehq import privileges
 
-from corehq import Domain, privileges
+from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.apps.accounting.exceptions import (
     AccountingError,
@@ -81,6 +84,9 @@ def get_privileges(plan_version):
     return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
+ChangeStatusResult = namedtuple('ChangeStatusResult', ['adjustment_reason', 'downgraded_privs', 'upgraded_privs'])
+
+
 def get_change_status(from_plan_version, to_plan_version):
     from_privs = (
         get_privileges(from_plan_version)
@@ -101,7 +107,7 @@ def get_change_status(from_plan_version, to_plan_version):
             adjustment_reason = Reason.UPGRADE
         elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
             adjustment_reason = Reason.DOWNGRADE
-    return adjustment_reason, downgraded_privs, upgraded_privs
+    return ChangeStatusResult(adjustment_reason, downgraded_privs, upgraded_privs)
 
 
 def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
@@ -250,3 +256,11 @@ def make_anchor_tag(href, name, attrs={}):
         'attrs': attrs,
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
+
+
+def get_default_domain_url(domain):
+    from corehq.apps.domain.views import DefaultProjectSettingsView
+    return absolute_reverse(
+        DefaultProjectSettingsView.urlname,
+        args=[domain],
+    )

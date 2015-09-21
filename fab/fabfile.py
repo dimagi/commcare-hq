@@ -358,16 +358,6 @@ def webworkers():
 
 
 @task
-@roles(ROLES_ALL_SRC)
-@parallel
-def install_npm_packages():
-    """Install required NPM packages for server"""
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        with shell_env(HOME=env.home):
-            sudo("npm install")
-
-
-@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
@@ -453,8 +443,7 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch')
-        sudo("git submodule foreach 'git fetch'")
+        sudo('git fetch origin {}'.format(env.code_branch))
         sudo('git checkout %(code_branch)s' % env)
         sudo('git reset --hard origin/%(code_branch)s' % env)
         sudo('git submodule sync')
@@ -579,9 +568,6 @@ def _deploy_without_asking():
         if not done:
             raise PreindexNotFinished()
 
-        _execute_with_timing(install_npm_packages)
-        _execute_with_timing(update_touchforms)
-
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
@@ -632,7 +618,8 @@ def update_current(release=None):
     """
     Updates the current release to the one specified or to the code_root
     """
-    if not files.exists(env.code_root):
+    if ((not release and not files.exists(env.code_root)) or
+            (release and not files.exists(release))):
         utils.abort('About to update current to non-existant release')
 
     sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
@@ -728,7 +715,7 @@ def get_number_of_releases():
 def mark_last_release_unsuccessful():
     # Removes last line from RELEASE_RECORD file
     with cd(env.root):
-        sudo("sed -i .bak '$d' {}".format(RELEASE_RECORD))
+        sudo("sed -i '$d' {}".format(RELEASE_RECORD))
 
 
 @roles(ROLES_ALL_SRC)
@@ -838,15 +825,6 @@ def awesome_deploy(confirm="yes"):
     _deploy_without_asking()
 
 
-@task
-@roles(ROLES_ALL_SRC)
-@parallel
-def update_touchforms():
-    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        sudo('PATH=$(npm bin):$PATH grunt build --force')
-
-
 @roles(ROLES_ALL_SRC)
 @parallel
 def update_virtualenv():
@@ -930,6 +908,7 @@ def restart_services():
 
 
 @roles(ROLES_ALL_SERVICES)
+@parallel
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -952,6 +931,7 @@ def _migrate():
 
 
 @roles(ROLES_DB_ONLY)
+@parallel
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -963,18 +943,20 @@ def flip_es_aliases():
 @roles(ROLES_STATIC)
 def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env)
-    update_manifest(save=True)
+        sudo('{}/bin/python manage.py compress --force'.format(venv))
+    update_manifest(save=True, use_current_release=use_current_release)
 
 
 @parallel
 @roles(ROLES_STATIC)
 def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
+        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
 
 @roles(ROLES_DJANGO)
@@ -1151,6 +1133,7 @@ def stop_pillows():
 
 
 @roles(ROLES_CELERY)
+@parallel
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):

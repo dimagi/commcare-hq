@@ -7,10 +7,10 @@ from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
-from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
 from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
+
 
 class ExportConfiguration(object):
     """
@@ -119,6 +119,7 @@ def get_writer(format):
         }[format]()
     except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
+
 
 def export_from_tables(tables, file, format, max_column_size=2000):
     tables = FormattedRow.wrap_all_rows(tables)
@@ -264,14 +265,21 @@ def fit_to_schema(doc, schema):
             doc = unicode(doc)
         return doc
 
+
 def get_headers(schema, separator="|"):
-    return format_tables(
-        create_intermediate_tables(schema, schema),
+    return _format_tables(
+        _create_intermediate_tables(schema, schema),
         include_data=False,
         separator=separator,
     )
 
-def create_intermediate_tables(docs, schema):
+
+def get_formatted_rows(docs, schema, separator, include_headers=True):
+    return _format_tables(_create_intermediate_tables(docs, schema),
+                          separator=separator, include_headers=include_headers)
+
+
+def _create_intermediate_tables(docs, schema):
     """
     return {
         table_name: {
@@ -332,8 +340,6 @@ def create_intermediate_tables(docs, schema):
 
     return tables
 
-def nice(column_name):
-    return "/".join(column_name)
 
 class FormattedRow(object):
     """
@@ -403,10 +409,11 @@ class FormattedRow(object):
             )
         return ret
 
-def format_tables(tables, id_label='id', separator='.', include_headers=True,
-                  include_data=True):
+
+def _format_tables(tables, id_label='id', separator='.', include_headers=True,
+                   include_data=True):
     """
-    tables nested dict structure from create_intermediate_tables
+    tables nested dict structure from _create_intermediate_tables
     return [
         (table_name, [
             (FormattedRow(headers, [id_label], separator) if include_headers),

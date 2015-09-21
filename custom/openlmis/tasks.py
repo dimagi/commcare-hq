@@ -1,5 +1,5 @@
 from celery.task import task
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import bootstrap_domain, sync_requisition_from_openlmis
 from custom.requisitions.signals import send_notifications

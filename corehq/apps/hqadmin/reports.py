@@ -2,26 +2,19 @@ import copy
 from datetime import datetime
 import json
 from dimagi.utils.decorators.memoized import memoized
-from corehq import Domain
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
-    Subscription,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
-from corehq.toggles import IS_DEVELOPER
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
 
 
 INDICATOR_DATA = {

@@ -1,6 +1,6 @@
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import ApplicationBase
 
 

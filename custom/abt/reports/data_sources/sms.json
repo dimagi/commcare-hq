@@ -1,6 +1,7 @@
 {
     "domains": ["airs"],
     "config": {
+        "engine_id": "default",
         "base_item_expression": {},
         "configured_filter": {
             "expression": {

@@ -170,7 +170,7 @@ class RecouvrementFluff(fluff.IndicatorDocument):
 
 
 CouvertureFluffPillow = CouvertureFluff.pillow()
-RecapPassagePillow = RecapPassageFluff.pillow()
+RecapPassageFluffPillow = RecapPassageFluff.pillow()
 IntraHealthFluffPillow = IntraHealthFluff.pillow()
 TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()
 TauxDeRuptureFluffPillow = TauxDeRuptureFluff.pillow()

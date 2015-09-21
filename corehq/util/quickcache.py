@@ -1,13 +1,25 @@
 # coding=utf-8
+from collections import namedtuple
 import functools
 import hashlib
 import inspect
 from inspect import isfunction
 import logging
-from django.core.cache import get_cache
+from django.core.cache import caches as django_caches
 from corehq.util.soft_assert.api import soft_assert
 
 logger = logging.getLogger('quickcache')
+
+
+class CacheWithTimeout(namedtuple('CacheWithTimeout', ['cache', 'timeout'])):
+    def get(self, key, default=None):
+        return self.cache.get(key, default=default)
+
+    def set(self, key, value):
+        return self.cache.set(key, value, timeout=self.timeout)
+
+    def delete(self, key):
+        return self.cache.delete(key)
 
 
 class TieredCache(object):
@@ -274,10 +286,14 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
     memoize_timeout = memoize_timeout or 10
 
     if cache is None:
-        caches = [get_cache('django.core.cache.backends.locmem.LocMemCache',
-                            timeout=memoize_timeout)]
+        caches = [
+            CacheWithTimeout(
+                django_caches['locmem'],
+                timeout=memoize_timeout)]
         if timeout != 0:
-            caches.append(get_cache('default', timeout=timeout))
+            caches.append(
+                CacheWithTimeout(
+                    django_caches['default'], timeout=timeout))
         cache = TieredCache(caches)
 
     def decorator(fn):

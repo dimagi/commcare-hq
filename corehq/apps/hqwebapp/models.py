@@ -9,7 +9,8 @@ from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.core.cache import cache
 
-from corehq import toggles, privileges, Domain, feature_previews
+from corehq import toggles, privileges, feature_previews
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import (
@@ -646,7 +647,7 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "corehq.apps.app_manager.views.default"
+    view = "corehq.apps.app_manager.views.view_app"
 
     @property
     def title(self):
