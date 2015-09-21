@@ -2,9 +2,9 @@ from optparse import make_option
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
-from corehq.apps.app_manager import suite_xml
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.suite_xml.utils import validate_suite
 from corehq.apps.app_manager.xform import XForm
 from dimagi.utils.couch.database import iter_docs
 
@@ -49,7 +49,7 @@ def broken_suite_files(build):
         error = 'build has no attachment files/suite.xml'
     else:
         try:
-            suite_xml.validate_suite(suite)
+            validate_suite(suite)
         except SuiteValidationError as error:
             pass
     if error:

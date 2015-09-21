@@ -1,6 +1,6 @@
 from django.dispatch import receiver, Signal
 from casexml.apps.case.xform import get_case_updates
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.const import RequisitionStatus, SUPPLY_POINT_CASE_TYPE, is_supply_point_form
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program

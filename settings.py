@@ -1012,6 +1012,10 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+if not UCR_DATABASE_URL or UNIT_TESTING:
+    # by default just use the reporting DB for UCRs
+    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
 MVP_INDICATOR_DB = 'mvp-indicators'
 
 INDICATOR_CONFIG = {
@@ -1039,9 +1043,11 @@ _dynamic_db_settings = get_dynamic_db_settings(
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = None
+
+
 COUCHDB_APPS = [
-    'adm',
-    'announcements',
     'api',
     'app_manager',
     'appstore',
@@ -1068,7 +1074,6 @@ COUCHDB_APPS = [
     'facilities',
     'fluff_filter',
     'fixtures',
-    'groups',
     'hqcase',
     'hqmedia',
     'hope',
@@ -1089,7 +1094,6 @@ COUCHDB_APPS = [
     'telerivet',
     'toggle',
     'translations',
-    'users',
     'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
@@ -1129,13 +1133,18 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting'
+    'tdhtesting',
+
+    # users and groups
+    ('groups', USERS_GROUPS_DB),
+    ('users', USERS_GROUPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
+                                             [NEW_USERS_GROUPS_DB])
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1294,7 +1303,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.RecapPassageFluffPillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
@@ -1461,7 +1470,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
+        'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',

@@ -1380,7 +1380,7 @@ def edit_sms_languages(request, domain):
     with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
         create=True) as tdoc:
         try:
-            from corehq.apps.app_manager.views import validate_langs
+            from corehq.apps.app_manager.views.utils import validate_langs
             langs, rename, build = validate_langs(request, tdoc.langs,
                 validate_build=False)
         except AssertionError:

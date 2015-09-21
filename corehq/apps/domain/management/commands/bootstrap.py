@@ -1,5 +1,5 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from django.conf import settings
 
 

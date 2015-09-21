@@ -1,4 +1,4 @@
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number, PhoneNumberParseException
 from corehq.apps.smsbillables.models import SmsBillable
 from django.core.management.base import LabelCommand

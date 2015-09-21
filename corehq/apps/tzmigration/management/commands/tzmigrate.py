@@ -1,9 +1,12 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.tzmigration import set_migration_started, \
+    set_migration_complete, set_migration_not_started, get_migration_status, \
+    MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
-    prepare_case_json, FormJsonDiff
+    prepare_case_json, FormJsonDiff, commit_plan
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 
@@ -21,6 +24,9 @@ def _is_datetime(string):
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
+        make_option('--BEGIN', action='store_true', default=False),
+        make_option('--COMMIT', action='store_true', default=False),
+        make_option('--ABORT', action='store_true', default=False),
         make_option('--prepare', action='store_true', default=False),
         make_option('--prepare-case-json', action='store_true', default=False),
         make_option('--blow-away', action='store_true', default=False),
@@ -29,9 +35,21 @@ class Command(BaseCommand):
         make_option('--play', action='store_true', default=False),
     )
 
+    @staticmethod
+    def require_only_option(sole_option, options):
+        base_options = {option.dest for option in BaseCommand.option_list}
+        assert all(not value for key, value in options.items()
+                   if key not in base_options and key != sole_option)
+
     def handle(self, domain, **options):
         filepath = get_planning_db_filepath(domain)
         self.stdout.write('Using file {}\n'.format(filepath))
+        if options['BEGIN']:
+            self.require_only_option('BEGIN', options)
+            set_migration_started(domain)
+        if options['ABORT']:
+            self.require_only_option('ABORT', options)
+            set_migration_not_started(domain)
         if options['blow_away']:
             delete_planning_db(domain)
             self.stdout.write('Removed file {}\n'.format(filepath))
@@ -40,6 +58,13 @@ class Command(BaseCommand):
             self.stdout.write('Created and loaded file {}\n'.format(filepath))
         else:
             self.planning_db = get_planning_db(domain)
+
+        if options['COMMIT']:
+            self.require_only_option('COMMIT', options)
+            assert get_migration_status(domain, strict=True) == MigrationStatus.IN_PROGRESS
+            commit_plan(domain, self.planning_db)
+            set_migration_complete(domain)
+
         if options['prepare_case_json']:
             prepare_case_json(self.planning_db)
         if options['stats']:

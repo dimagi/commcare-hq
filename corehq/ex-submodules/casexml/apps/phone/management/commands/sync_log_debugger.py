@@ -76,7 +76,7 @@ class Command(BaseCommand):
                         print 'cases on {} and not {}: {}'.format(
                             log_names[i],
                             log_names[j],
-                            ', '.join(case_diff)
+                            ', '.join(sorted(case_diff))
                         )
 
         if options['debugger']:
@@ -86,9 +86,9 @@ class Command(BaseCommand):
             pdb.set_trace()
 
         if options['check_hash']:
-            log_to_check = logs[options['index']]
+            log_to_check = logs[int(options['index'])]
             result = _brute_force_search(
-                log_to_check.case_ids_on_phone, options['check_hash'], depth=options['depth']
+                log_to_check.case_ids_on_phone, options['check_hash'], depth=int(options['depth'])
             )
             if result:
                 print 'check successful - missing ids {}'.format(result)

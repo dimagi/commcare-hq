@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views import _clear_app_cache
+from corehq.apps.app_manager.views.apps import clear_app_cache
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -221,7 +221,7 @@ def import_app(request, domain):
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
         for app in full_apps:
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
-        _clear_app_cache(request, to_project_name)
+        clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
         from_project.save()
