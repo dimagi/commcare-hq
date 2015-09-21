@@ -74,7 +74,6 @@ class BaseStripePaymentHandler(object):
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         save_card = request.POST.get('saveCard') and not is_saved_card
         autopay = request.POST.get('autopayCard')
-        customer = self.payment_method.customer
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
@@ -91,6 +90,7 @@ class BaseStripePaymentHandler(object):
                 return {'success': True, 'removedCard': card, }
             if save_card:
                 card = self.payment_method.create_card(card, billing_account, autopay=autopay)
+                customer = self.payment_method.customer
 
             charge = self.create_charge(amount, card=card, customer=customer)
         except stripe.error.CardError as e:
