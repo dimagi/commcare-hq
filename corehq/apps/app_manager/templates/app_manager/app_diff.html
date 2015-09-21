@@ -1,0 +1,27 @@
+{#{% extends "style/bootstrap2/base.html" %}#}
+
+{% comment %}
+TODO:
+    - Style like the "view source files" page
+        - Add TOC (with line additions/deletions counts)
+        - Collapse/expand sections
+    - Display app versions (with links) at top of file
+    - Extend a base template
+{% endcomment %}
+
+<html lang="{{ LANGUAGE_CODE }}">
+    <head>
+        <meta charset="utf-8"/>
+        <title>
+            app diff
+        </title>
+    </head>
+    <body>
+        <div class="container-fluid">
+        {% for file_name, diff in diffs %}
+            <h3>{{ file_name }}</h3>
+            {{ diff|safe }}
+        {% endfor %}
+        </div>
+    </body>
+</html>

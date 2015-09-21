@@ -5,6 +5,7 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_app_translations,
 )
 from corehq.apps.app_manager.views.download import (
+    app_diff_view,
     download_app_strings,
     download_file,
     download_index,

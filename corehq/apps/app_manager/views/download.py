@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from StringIO import StringIO
@@ -9,11 +10,14 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+import ghdiff
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, \
+    require_deploy_apps
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
@@ -364,3 +368,44 @@ def download_index_files(app):
 
     return sorted(files)
 
+
+def _get_app_diff_files(app):
+    """
+    Return a dict of the files that an app build is comprised of. Return dict
+    also includes the app json.
+    """
+    files = dict(download_index_files(app))
+    files["app.json"] = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    return files
+
+
+def _get_app_diffs(first_app, second_app):
+    """
+    Return a list of tuples. The first value in each tuple is a file name,
+    the second value is an html snippet representing the diff of that file
+    in the two given apps.
+    """
+    first_app_files = _get_app_diff_files(first_app)
+    second_app_files = _get_app_diff_files(second_app)
+    file_names = set(first_app_files.keys()) | set(second_app_files.keys())
+    file_pairs = {
+        n: (first_app_files.get(n, ""), second_app_files.get(n, ""))
+        for n in file_names
+    }
+    diffs = sorted([(n, ghdiff.diff(files[0], files[1])) for n, files in
+                    file_pairs.iteritems()])
+    return diffs
+
+
+@require_deploy_apps
+def app_diff_view(request, domain, first_app_id, second_app_id):
+    try:
+        first_app = Application.get(first_app_id)
+        second_app = Application.get(second_app_id)
+    except ResourceNotFound:
+        raise Http404()
+
+    diffs = _get_app_diffs(first_app, second_app)
+    return render(request, "app_manager/app_diff.html", {'diffs': diffs})

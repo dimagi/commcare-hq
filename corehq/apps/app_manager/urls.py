@@ -148,5 +148,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
     url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
 
+    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', 'app_diff_view', name='app_diff'),
+
     url(r'^', include('custom.ucla.urls')),
 )
