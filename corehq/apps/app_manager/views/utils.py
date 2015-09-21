@@ -26,6 +26,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     which then redirect to the main page.
 
     """
+    # TODO: Refactor this function. The length of the args matters :(
 
     page = None
     params = {}
@@ -47,7 +48,6 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             if form_id is not None:
                 args.append(form_id)
 
-
     if page:
         view_name = page
     else:
@@ -56,16 +56,19 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             2: 'view_app',
             3: 'view_module',
             4: 'view_form',
-            }[len(args)]
+        }[len(args)]
 
-    return HttpResponseRedirect("%s%s" % (
-        reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
-        "?%s" % urlencode(params) if params else ""
-        ))
+    return HttpResponseRedirect(
+        "%s%s" % (
+            reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
+            "?%s" % urlencode(params) if params else ""
+        )
+    )
 
 
 def get_langs(request, app):
-    lang = request.GET.get('lang',
+    lang = request.GET.get(
+        'lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
     langs = None
@@ -112,4 +115,3 @@ def validate_langs(request, existing_langs, validate_build=True):
         assert sorted(build, key=lambda lang: langs.index(lang)) == build
 
     return (langs, rename, build)
-

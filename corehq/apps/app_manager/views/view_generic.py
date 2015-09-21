@@ -39,7 +39,8 @@ from django_prbac.utils import has_privilege
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False, copy_app_form=None):
+def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
+                 is_user_registration=False, copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -74,7 +75,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
         # don't fail hard.
-        return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
+        return HttpResponseRedirect(reverse(
+            "corehq.apps.app_manager.views.view_app", args=[domain, app.copy_of]
+        ))
 
     # grandfather in people who set commcare sense earlier
     if app and 'use_commcare_sense' in app:
@@ -95,7 +98,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
         context.update({"translations": app.translations.get(lang, {})})
 
     if form:
-        template, form_context = get_form_view_context_and_template(request, domain, form, context['langs'], is_user_registration)
+        template, form_context = get_form_view_context_and_template(
+            request, domain, form, context['langs'], is_user_registration
+        )
         context.update({
             'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
@@ -185,7 +190,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None, is_
     error = request.GET.get('error', '')
 
     context.update({
-        'error':error,
+        'error': error,
         'app': app,
     })
 

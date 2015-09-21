@@ -207,7 +207,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
 
-
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that

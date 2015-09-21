@@ -77,7 +77,9 @@ def delete_app(request, domain, app_id):
     app = get_app(domain, app_id)
     record = app.delete_app()
     messages.success(request,
-        'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_app', args=[domain, record.get_id]),
+        'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse(
+            'undo_delete_app', args=[domain, record.get_id]
+        ),
         extra_tags='html'
     )
     app.save()
@@ -156,7 +158,7 @@ def get_app_view_context(request, app):
     options = build_config.get_menu()
     if not request.user.is_superuser:
         options = [option for option in options if not option.superuser_only]
-    options_map = defaultdict(lambda:{"values": [], "value_names": []})
+    options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:
         builds = options_map[option.build.major_release()]
         builds["values"].append(option.build.to_string())
@@ -212,7 +214,7 @@ def clear_app_cache(request, domain):
     for is_active in True, False:
         key = make_template_fragment_key('header_tab', [
             domain,
-            None, # tab.org should be None for any non org page
+            None,  # tab.org should be None for any non org page
             ApplicationsTab.view,
             is_active,
             request.couch_user.get_id,
@@ -248,12 +250,18 @@ def get_apps_base_context(request, domain, app):
 
         v2_app = app.application_version == APP_V2
         context.update({
-            'show_care_plan': (v2_app
-                               and not app.has_careplan_module
-                               and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)),
-            'show_advanced': (v2_app
-                               and (toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
-                                    or getattr(app, 'commtrack_enabled', False))),
+            'show_care_plan': (
+                v2_app
+                and not app.has_careplan_module
+                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
+            ),
+            'show_advanced': (
+                v2_app
+                and (
+                    toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                    or getattr(app, 'commtrack_enabled', False)
+                )
+            ),
         })
 
     return context
@@ -423,8 +431,12 @@ def validate_language(request, domain, app_id):
     if term in [lang.lower() for lang in app.langs]:
         return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
     else:
-        return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
-
+        return HttpResponseRedirect(
+            "%s?%s" % (
+                reverse('langcodes.views.validate', args=[]),
+                django_urlencode({'term': term})
+            )
+        )
 
 
 @no_conflict_require_POST
@@ -537,7 +549,7 @@ def edit_app_attr(request, domain, app_id, attr):
         # RemoteApp only
         'profile_url',
         'manage_urls'
-        ]
+    ]
     if attr not in attributes:
         return HttpResponseBadRequest()
 
@@ -652,7 +664,7 @@ def rearrange(request, domain, app_id, key):
             try:
                 app.rearrange_forms(to_module_id, from_module_id, i, j)
             except ConflictingCaseTypeError:
-                messages.warning(request, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+                messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
@@ -684,11 +696,13 @@ def formdefs(request, domain, app_id):
     def get_questions(form):
         xform = XForm(form.source)
         prefix = '/%s/' % xform.data_node.tag_name
+
         def remove_prefix(string):
             if string.startswith(prefix):
                 return string[len(prefix):]
             else:
                 raise Exception()
+
         def transform_question(q):
             return {
                 'id': remove_prefix(q['value']),
@@ -697,7 +711,10 @@ def formdefs(request, domain, app_id):
             }
         return [transform_question(q) for q in xform.get_questions(langs)]
     formdefs = [{
-        'name': "%s, %s" % (f['form'].get_module().name['en'], f['form'].name['en']) if f['type'] == 'module_form' else 'User Registration',
+        'name': "%s, %s" % (
+            f['form'].get_module().name['en'],
+            f['form'].name['en']
+        ) if f['type'] == 'module_form' else 'User Registration',
         'columns': ['id', 'type', 'text'],
         'rows': get_questions(f['form'])
     } for f in app.get_forms(bare=False)]
@@ -708,7 +725,13 @@ def formdefs(request, domain, app_id):
         writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
         writer.write([(
             sheet['name'],
-            [FormattedRow([cell for (_, cell) in sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))]) for row in sheet['rows']]
+            [
+                FormattedRow([
+                    cell for (_, cell) in
+                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
+                ])
+                for row in sheet['rows']
+            ]
         ) for sheet in formdefs])
         writer.close()
         response = HttpResponse(f.getvalue(), content_type=Format.from_format('xlsx').mimetype)

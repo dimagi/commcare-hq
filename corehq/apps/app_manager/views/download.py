@@ -41,12 +41,14 @@ def download_odk_profile(request, domain, app_id):
         content_type="commcare/profile"
     )
 
+
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
     )
+
 
 @safe_download
 def download_suite(request, domain, app_id):
@@ -59,6 +61,7 @@ def download_suite(request, domain, app_id):
     return HttpResponse(
         request.app.create_suite()
     )
+
 
 @safe_download
 def download_media_suite(request, domain, app_id):
@@ -135,6 +138,7 @@ def download_jad(request, domain, app_id):
     response["Content-Length"] = len(jad)
     return response
 
+
 @safe_download
 def download_jar(request, domain, app_id):
     """
@@ -160,6 +164,7 @@ def download_jar(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
     return response
 
+
 def download_test_jar(request):
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
         jar = f.read()
@@ -169,6 +174,7 @@ def download_test_jar(request):
     response['Content-Length'] = len(jar)
     response.write(jar)
     return response
+
 
 @safe_download
 def download_raw_jar(request, domain, app_id):
@@ -294,12 +300,12 @@ def download_profile(request, domain, app_id):
         request.app.create_profile()
     )
 
+
 @safe_download
 def download_media_profile(request, domain, app_id):
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
-
 
 
 @safe_download
@@ -313,13 +319,17 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     try:
         files = download_index_files(request.app)
     except Exception:
-        messages.error(request, _(
+        messages.error(
+            request,
+            _(
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
                 "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
-        ), extra_tags='html')
+            ),
+            extra_tags='html'
+        )
     return render(request, template, {
         'app': request.app,
         'files': files,

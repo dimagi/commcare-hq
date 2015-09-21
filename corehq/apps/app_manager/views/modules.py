@@ -125,12 +125,15 @@ def _get_advanced_module_view_context(app, module):
             if not getattr(parent_module, 'root_module_id', None)
         ],
         'child_module_enabled': True,
-        'schedule_phases': [{
-                                'id': schedule.id,
-                                'anchor': schedule.anchor,
-                                'forms': [form.schedule_form_id for form in
-                                          schedule.get_forms()],
-                            } for schedule in module.get_schedule_phases()],
+        'schedule_phases': [
+            {
+                'id': schedule.id,
+                'anchor': schedule.anchor,
+                'forms': [
+                    form.schedule_form_id for form in schedule.get_forms()
+                ],
+            } for schedule in module.get_schedule_phases()
+        ],
     }
 
 
@@ -456,7 +459,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     return HttpResponse(json.dumps(resp))
 
 
-
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
@@ -490,8 +492,11 @@ def delete_module(request, domain, app_id, module_unique_id):
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
     if record is not None:
-        messages.success(request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse('undo_delete_module', args=[domain, record.get_id]),
+        messages.success(
+            request,
+            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
+                'undo_delete_module', args=[domain, record.get_id]
+            ),
             extra_tags='html'
         )
         app.save()
@@ -505,7 +510,6 @@ def undo_delete_module(request, domain, record_id):
     record.undo()
     messages.success(request, 'Module successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
-
 
 
 @no_conflict_require_POST
