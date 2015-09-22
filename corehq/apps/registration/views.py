@@ -71,13 +71,16 @@ def register_user(request, domain_type=None):
                 activate_new_user(form, ip=get_ip(request))
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
-                login(request, new_user)
-                track_workflow(new_user.email, "Requested new account")
+
                 meta = {
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
-                }
+                }  # request.META can't be pickled for use by the task, so we copy the pertinent properties
                 track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
+                track_workflow(new_user.email, "Requested new account")
+
+                login(request, new_user)
+
                 requested_domain = form.cleaned_data['hr_name']
                 if form.cleaned_data['create_domain']:
                     org = None
