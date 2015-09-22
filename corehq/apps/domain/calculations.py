@@ -16,7 +16,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users,
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
-    get_number_of_forms_in_domain
+    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -151,18 +151,8 @@ def sms_out_in_last(domain, days=None):
 
 
 def active(domain, *args):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return domain_has_submission_in_last_30_days(domain)
 
-    key = ['submission', domain]
-    row = get_db().view(
-        "reports_forms/all_forms",
-        startkey=key+[then],
-        endkey=key+[now],
-        limit=1
-    ).all()
-    return True if row else False
 
 def display_time(row, display=True):
     submission_time = row["key"][2]
