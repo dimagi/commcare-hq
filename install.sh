@@ -29,7 +29,7 @@ ES_VERSION=0.90.13
 if [ ! -d requirements  ]; then
     echo "Requirements haven't yet been downloaded"
     mkdir requirements && cd requirements
-    wget https://raw.github.com/dimagi/commcare-hq/master/requirements/apt-packages.txt
+    wget https://raw.githubusercontent.com/dimagi/commcare-hq/sheel-setup-changes/requirements/apt-packages.txt
     cd ..
 fi
 
