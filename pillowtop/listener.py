@@ -105,7 +105,6 @@ class BasicPillow(object):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
-        self.settings = settings
 
     def new_changes(self):
         """
@@ -143,7 +142,7 @@ class BasicPillow(object):
         self.new_changes()
 
     def _get_machine_id(self):
-        return get_machine_id(self.settings)
+        return get_machine_id()
 
     @memoized
     def get_name(self):
