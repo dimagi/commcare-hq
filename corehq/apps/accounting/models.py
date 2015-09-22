@@ -589,7 +589,7 @@ class DefaultProductPlan(models.Model):
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
-            raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
+            raise AccountingError("No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?")
 
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
