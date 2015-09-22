@@ -205,13 +205,6 @@ class BasicPillow(object):
     def get_db_seq(self):
         return self.couch_db.info()['update_seq']
 
-    def parsing_processor(self, change):
-        """
-        Processor that also parses the change to json - only for pre 0.6.0 couchdbkit,
-        as the change is passed as a string
-        """
-        self.processor(simplejson.loads(change))
-
     def processor(self, change, do_set_checkpoint=True):
         """
         Parent processsor for a pillow class - this should not be overridden.
