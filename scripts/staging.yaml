@@ -50,7 +50,7 @@ branches:
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
   - dummy-ben
-  - check-headers-impot # Cal 9/22
+  - sync-history-email # Cal 9/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
