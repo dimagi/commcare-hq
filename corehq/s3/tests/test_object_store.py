@@ -1,4 +1,3 @@
-import boto
 from mock import patch, Mock
 
 from django.test import SimpleTestCase

@@ -1,5 +1,4 @@
 from django.conf import settings
-from dimagi.utils.decorators.memoized import memoized
 
 import boto3
 from botocore.utils import fix_s3_host

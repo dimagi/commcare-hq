@@ -12,7 +12,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException,
 )
 from corehq.s3 import ObjectStore
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE, OBJECT_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
@@ -124,11 +124,12 @@ class FileRestoreResponse(RestoreResponse):
     BODY_TAG_SUFFIX = '-body'
     EXTENSION = 'xml'
 
-    def __init__(self, username=None, items=False):
+    def __init__(self, username=None, items=False, domain=None):
         super(FileRestoreResponse, self).__init__(username, items)
         self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
+        self.domain = domain
 
     def get_filename(self, suffix=None):
         return "{filename}{suffix}.{ext}".format(
@@ -138,10 +139,10 @@ class FileRestoreResponse(RestoreResponse):
         )
 
     def __add__(self, other):
-        if not isinstance(other, FileRestoreResponse):
+        if not isinstance(other, self.__class__):
             raise NotImplemented()
 
-        response = FileRestoreResponse(self.username, self.items)
+        response = self.__class__(self.username, self.items, self.domain)
         response.num_items = self.num_items + other.num_items
 
         self.response_body.seek(0)
@@ -169,7 +170,7 @@ class FileRestoreResponse(RestoreResponse):
             shutil.copyfileobj(self.response_body, response)
 
             response.write(self.closing_tag)
-        
+
         self.finalized = True
         self.close()
 
@@ -192,8 +193,7 @@ class ObjectRestoreResponse(FileRestoreResponse):
     Restore response powered by RiakCS backend
     """
     def __init__(self, username=None, items=False, domain=None):
-        super(ObjectRestoreResponse, self).__init__(username, items)
-
+        super(ObjectRestoreResponse, self).__init__(username, items, domain)
         self.object_store = ObjectStore(domain)
 
     def finalize(self):
@@ -215,7 +215,11 @@ class ObjectRestoreResponse(FileRestoreResponse):
             response.write(self.closing_tag)
             content_length = os.path.getsize(self.get_filename())
 
-        self.object_store.set(self.get_filename(), open(self.get_filename(), 'rb'), content_length)
+        self.object_store.set(
+            self.get_filename(),
+            open(self.get_filename(), 'rb'),
+            content_length,
+        )
 
         self.finalized = True
         self.close()
