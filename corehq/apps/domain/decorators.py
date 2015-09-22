@@ -7,9 +7,10 @@ import re
 # Django imports
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -18,8 +19,6 @@ from django.utils.translation import ugettext as _
 from django_digest.decorators import httpdigest
 from django_prbac.utils import has_privilege
 
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
