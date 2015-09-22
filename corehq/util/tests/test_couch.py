@@ -81,7 +81,7 @@ class GetDocMockTestCase(TestCase):
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 
-class LoggingDB(object):
+class TestLoggingDB(object):
     def __init__(self):
         self.docs_saved = []
         self.num_writes = 0
@@ -94,7 +94,7 @@ class LoggingDB(object):
 
 class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
-        db = LoggingDB()
+        db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
             all_docs = range(105)
             for doc in all_docs:
