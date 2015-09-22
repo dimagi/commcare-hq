@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login
+# from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
@@ -31,6 +31,8 @@ from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
+
+from two_factor.views import LoginView
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
@@ -217,7 +219,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    return LoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -346,10 +348,7 @@ def _login(req, domain_name, template_name):
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
-    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    return django_login(req, template_name=template_name,
-                        authentication_form=authentication_form,
-                        extra_context=context)
+    return LoginView.as_view()(req)
 
 
 def login(req, domain_type='commcare'):

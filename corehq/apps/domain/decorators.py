@@ -9,8 +9,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -18,7 +19,7 @@ from django.utils.translation import ugettext as _
 # External imports
 from django_digest.decorators import httpdigest
 from django_prbac.utils import has_privilege
-
+from django_otp.decorators import otp_required
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -80,7 +81,7 @@ def login_and_domain_required(view_func):
                     return view_func(req, domain_name, *args, **kwargs)
                 elif user.is_superuser and not domain.restrict_superusers:
                     # superusers can circumvent domain permissions.
-                    return view_func(req, domain_name, *args, **kwargs)
+                    return otp_required(view_func)(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
@@ -305,7 +306,32 @@ def require_superuser_or_developer(view_func):
     def _inner(request, *args, **kwargs):
         user = request.user
         if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
-            return view_func(request, *args, **kwargs)
+            if user.is_verified():
+                return view_func(request, *args, **kwargs)
+            else:
+                return TemplateResponse(
+                        request=request,
+                        template='two_factor/core/otp_required.html',
+                        status=403,
+                        )
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
+def require_superuser(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if user.is_superuser:
+            if user.is_verified():
+                return view_func(request, *args, **kwargs)
+            else:
+                return TemplateResponse(
+                        request=request,
+                        template='two_factor/core/otp_required.html',
+                        status=403,
+                        )
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
 
@@ -318,7 +344,6 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 
 ########################################################################################################
 # couldn't figure how to call reverse, so login_url is the actual url
-require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
