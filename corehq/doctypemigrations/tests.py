@@ -49,7 +49,7 @@ class TestDocTypeMigrations(TestCase):
         actual_docs = _get_non_design_docs(self.migration.target_db)
         self.assertEqual(actual_docs, self.docs)
         state = DocTypeMigrationState.objects.get(slug=self.migration.slug)
-        self.assertIsNotNone(state.original_seq)
+        self.assertTrue(state.original_seq)
 
 
 def _get_non_design_docs(db):
