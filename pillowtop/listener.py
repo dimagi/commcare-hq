@@ -159,7 +159,7 @@ class BasicPillow(object):
 
     @property
     def since(self):
-        self.checkpoint_manager.get_or_create_checkpoint()['seq']
+        return self.checkpoint_manager.get_or_create_checkpoint()['seq']
 
     def set_checkpoint(self, change):
         pillow_logging.info(
