@@ -1,4 +1,5 @@
 from django.conf import settings
+from dimagi.utils.decorators.memoized import memoized
 
 import boto3
 from botocore.utils import fix_s3_host
@@ -10,14 +11,15 @@ class ObjectStore(object):
         self.domain = domain
         self.resource = boto3.resource(
             's3',
-            use_ssl=RIAKCS_SSL,
+            use_ssl=settings.RIAKCS_SSL,
             endpoint_url='http://{}:{}'.format(settings.RIAKCS_HOST, settings.RIAKCS_PORT),
             aws_access_key_id=settings.RIAKCS_KEY,
             aws_secret_access_key=settings.RIAKCS_SECRET,
         )
 
         # boto3 automatically overwrites the endpoint url: https://github.com/boto/boto3/issues/259
-        resource.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
+        self.resource.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
+        self.bucket = self._init_bucket()
 
     @property
     def bucket_name(self):
@@ -25,7 +27,7 @@ class ObjectStore(object):
 
     @property
     @memoized
-    def bucket(self):
+    def _init_bucket(self):
         try:
             bucket = self.resource.Bucket(self.bucket_name)
         except botocore.exceptions.ClientError:

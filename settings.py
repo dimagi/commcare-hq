@@ -156,6 +156,7 @@ RIAKCS_SECRET = ''
 RIAKCS_HOST = 'localhost'
 RIAKCS_PORT = 8080
 RIAKCS_DEFAULT_BUCKET = 'commcarehq'
+RIAKCS_SSL = True
 
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
@@ -289,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
+    'corehq.s3',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',

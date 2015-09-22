@@ -1,7 +1,5 @@
 from io import FileIO
 import os
-import boto
-import boto.s3.connection
 from uuid import uuid4
 import shutil
 import hashlib
@@ -338,7 +336,6 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    restore_class = FileRestoreResponse
 
     def __init__(self, project, user, params):
         self.project = project
@@ -346,6 +343,7 @@ class RestoreState(object):
         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
         _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
 
+        self.restore_class = get_restore_cls(self.domain)
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -613,5 +611,5 @@ class RestoreConfig(object):
                 self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
 
 
-def get_restore_state_cls(domain):
+def get_restore_cls(domain):
     return ObjectRestoreResponse if toggles.OBJECT_RESTORE.enabled(domain) else FileRestoreResponse
