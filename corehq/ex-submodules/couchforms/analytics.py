@@ -1,4 +1,5 @@
 import datetime
+from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.models import XFormInstance
 
@@ -14,6 +15,7 @@ def domain_has_submission_in_last_30_days(domain):
         reduce=False,
         include_docs=False,
         limit=1,
+        stale=stale_ok(),
     ).all()
     # if there have been any submissions in the past 30 days
     if len(results) > 0:

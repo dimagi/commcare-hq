@@ -9,6 +9,7 @@ from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
 from dimagi.utils.chunked import chunked
 from dimagi.utils.requestskit import get_auth
+from django.conf import settings
 
 
 class DocumentNotFound(Exception):
@@ -252,3 +253,7 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
         print "deleted {} docs".format(len(results.deleted_ids))
         print "updated {} docs".format(len(results.updated_ids))
     return results
+
+
+def stale_ok():
+    return settings.COUCH_STALE_QUERY
