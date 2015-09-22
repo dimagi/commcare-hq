@@ -22,12 +22,14 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
+from pillowtop.checkpoints.manager import PillowCheckpointManager
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.couchdb import CachedCouchDB
 
 from couchdbkit.changes import ChangesStream
 from django import db
 from dateutil import parser
+from pillowtop.dao.couch import CouchDocumentStore
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -106,6 +108,10 @@ class BasicPillow(object):
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
 
+    @property
+    def checkpoint_manager(self):
+        return PillowCheckpointManager(CouchDocumentStore(self.couch_db))
+
     def new_changes(self):
         """
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
@@ -150,20 +156,10 @@ class BasicPillow(object):
         return construct_checkpoint_doc_id_from_name(self.get_name())
 
     def get_checkpoint(self, verify_unchanged=False):
-        doc_name = self.get_checkpoint_doc_name()
-
-        if self.couch_db.doc_exist(doc_name):
-            checkpoint_doc = self.couch_db.open_doc(doc_name)
-        else:
-            checkpoint_doc = {
-                "_id": doc_name,
-                "seq": "0"
-            }
-            self.couch_db.save_doc(checkpoint_doc)
-
+        checkpoint_doc_id = self.get_checkpoint_doc_name()
+        checkpoint_doc = self.checkpoint_manager.get_or_create_checkpoint(checkpoint_doc_id)
         if verify_unchanged and self._current_checkpoint and checkpoint_doc['seq'] != self._current_checkpoint['seq']:
             raise PillowtopCheckpointReset()
-
         self._current_checkpoint = checkpoint_doc
         return checkpoint_doc
 
