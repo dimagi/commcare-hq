@@ -41,7 +41,6 @@ from .models import (
     doc_types,
 )
 from .signals import (
-    ReceiverResult,
     successful_form_received,
 )
 from .xml import ResponseNature, OpenRosaResponse

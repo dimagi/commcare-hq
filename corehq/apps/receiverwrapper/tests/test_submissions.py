@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
@@ -36,7 +35,7 @@ class SubmissionTest(TestCase):
                 "xml_submission_file": f
             }, **extra)
 
-    def _test(self, form, response_contains, xmlns, msg=None):
+    def _test(self, form, xmlns):
 
         response = self._submit(form,
                                 HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
@@ -77,44 +76,33 @@ class SubmissionTest(TestCase):
             "submit_ip": "127.0.0.1",
             "xmlns": xmlns,
         })
-        self.assertIn(response_contains, str(response), msg)
 
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
         )
 
     def test_submit_bare_form(self):
         self._test(
             form='bare_form.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
-            msg="Bare form successfully parsed",
         )
 
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
-            response_contains="Thanks for registering! "
-                              "Your username is mealz@",
             xmlns='http://openrosa.org/user/registration',
-            msg="User registration form successfully parsed",
         )
 
     def test_submit_with_case(self):
         self._test(
             form='form_with_case.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
-            msg="Form with case successfully parsed",
         )
 
     def test_submit_with_namespaced_meta(self):
         self._test(
             form='namespace_in_meta.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
-            msg="Form with namespace in meta successfully parsed",
         )
