@@ -9,7 +9,6 @@ INSTALLED_APPS = (
     'coverage',
     'django.contrib.contenttypes',
     'django.contrib.auth',
-    'south'
 )
 
 DATABASES = {
