@@ -79,5 +79,5 @@ class TimingMiddleware(object):
     def process_response(self, request, response):
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
-            profile_logger.info('{} time {}'.format(request.path, duration), extras={'duration': duration})
+            profile_logger.info('{} time {}'.format(request.path, duration), extra={'duration': duration})
         return response
