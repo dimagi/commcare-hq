@@ -38,18 +38,20 @@ command -v apt-get > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     PM=apt-ubuntu
 
-    ## PPA to get latest versions of nodejs and npm
-    if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
+    # ## PPA to get latest versions of nodejs and npm
+    # if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
     
-        # Checks if add-apt-repository is available
-        # add-apt-repository is provided by the software-properties-common package
-        if [[ ! $(command -v add-apt-repository) ]]; then
-            sudo apt-get -y install software-properties-common
-        fi
+    #    # Checks if add-apt-repository is available
+    #    # add-apt-repository is provided by the software-properties-common package
+    #    if [[ ! $(command -v add-apt-repository) ]]; then
+    #        sudo apt-get -y install software-properties-common
+    #    fi
 
-        sudo add-apt-repository -y ppa:chris-lea/node.js
-    fi
+    #    sudo add-apt-repository -y ppa:chris-lea/node.js
+    # fi
+    curl -sL https://deb.nodesource.com/setup_0.10 | sudo -E bash -
     sudo apt-get update
+    sudo apt-get install -y nodejs
 
     ## Ignore packages that have the [travis_ignore] hashtag from the apt-packages.txt file if TRAVIS_INSTALL = yes
     if [ "$TRAVIS_INSTALL" == "y" ]; then
