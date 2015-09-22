@@ -53,3 +53,15 @@ class PillowCheckpointManagerInstanceTest(SimpleTestCase):
         self._dao.save_document(self._checkpoint_id, {'seq': '1'})
         with self.assertRaises(PillowtopCheckpointReset):
             self._manager.get_or_create_checkpoint(verify_unchanged=True)
+
+    def test_update(self):
+        self._manager.get_or_create_checkpoint()
+        for seq in ['1', '5', '22']:
+            self._manager.update_checkpoint(seq)
+            self.assertEqual(seq, self._manager.get_or_create_checkpoint()['seq'])
+
+    def test_update_verify_unchanged_fail(self):
+        self._manager.get_or_create_checkpoint()
+        self._dao.save_document(self._checkpoint_id, {'seq': '1'})
+        with self.assertRaises(PillowtopCheckpointReset):
+            self._manager.update_checkpoint('2')

@@ -161,14 +161,10 @@ class BasicPillow(object):
         self.checkpoint_manager.get_or_create_checkpoint()['seq']
 
     def set_checkpoint(self, change):
-        checkpoint = self.get_checkpoint(verify_unchanged=True)
-
         pillow_logging.info(
-            "(%s) setting checkpoint: %s" % (checkpoint['_id'], change['seq'])
+            "(%s) setting checkpoint: %s" % (self.checkpoint_manager.checkpoint_id, change['seq'])
         )
-        checkpoint['seq'] = change['seq']
-        checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
-        self.couch_db.save_doc(checkpoint)
+        self.checkpoint_manager.update_checkpoint(change['seq'])
 
     def get_db_seq(self):
         return self.couch_db.info()['update_seq']

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from dateutil import parser
 import pytz
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -25,6 +25,9 @@ class PillowCheckpointManager(object):
         checkpoint_doc['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self._dao.save_document(checkpoint_id, checkpoint_doc)
 
+    def update_checkpoint(self, checkpoint_id, checkpoint_doc):
+        self._dao.save_document(checkpoint_id, checkpoint_doc)
+
 
 class PillowCheckpointManagerInstance(object):
 
@@ -40,6 +43,13 @@ class PillowCheckpointManagerInstance(object):
 
         self._last_checkpoint = checkpoint
         return checkpoint
+
+    def update_checkpoint(self, seq):
+        checkpoint = self.get_or_create_checkpoint(verify_unchanged=True)
+        checkpoint['seq'] = seq
+        checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
+        self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
+        self._last_checkpoint = checkpoint
 
     def reset_checkpoint(self):
         return self._manager.reset_checkpoint(self.checkpoint_id)
