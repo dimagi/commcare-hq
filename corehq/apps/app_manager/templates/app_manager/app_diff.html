@@ -1,27 +1,81 @@
-{#{% extends "style/bootstrap2/base.html" %}#}
+{% extends "style/bootstrap3/base_section.html" %}
 
-{% comment %}
-TODO:
-    - Style like the "view source files" page
-        - Add TOC (with line additions/deletions counts)
-        - Collapse/expand sections
-    - Display app versions (with links) at top of file
-    - Extend a base template
-{% endcomment %}
+{#TODO: Move to own external file#}
+{% block stylesheets %}
+<style type="text/css">
+    .diff {
+        border: 1px solid #cccccc;
+        background: none repeat scroll 0 0 #f8f8f8;
+        font-family: 'Bitstream Vera Sans Mono','Courier',monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    .diff div:hover {
+        background-color:#ffc;
+    }
+    .diff .control {
+        background-color: #eaf2f5;
+        color: #999999;
+    }
+    .diff .insert {
+        background-color: #ddffdd;
+        color: #000000;
+    }
+    .diff .insert .highlight {
+        background-color: #aaffaa;
+        color: #000000;
+    }
+    .diff .delete {
+        background-color: #ffdddd;
+        color: #000000;
+    }
+    .diff .delete .highlight {
+        background-color: #ffaaaa;
+        color: #000000;
+    }
+</style>
+{% endblock %}
 
-<html lang="{{ LANGUAGE_CODE }}">
-    <head>
-        <meta charset="utf-8"/>
-        <title>
-            app diff
-        </title>
-    </head>
-    <body>
-        <div class="container-fluid">
-        {% for file_name, diff in diffs %}
-            <h3>{{ file_name }}</h3>
-            {{ diff|safe }}
+{% block content %}
+<div class="container-fluid">
+    <h1>{{ first_app.name }}: Build #{{ first_app.version }} vs #{{ second_app.version }}</h1>
+    <p>See <a href="{% url "view_app" first_app.domain first_app.copy_of|default_if_none:first_app.get_id %}">original app</a> for the latest work in progress.</p>
+
+    <h2>Resource Files</h2>
+
+    <table class="table table-condensed">
+        {% for file_name, diff, adds, dels in diffs %}
+            <tr>
+                <td class="col-md-3">
+                    <a class="toggle-next" href="#">{{ file_name }}</a>
+                </td>
+                {# TODO: use simpler styling on additions and subtractions #}
+                <td class="col-md-9">
+                    <span class="diff"><span class="insert">+{{ adds }}</span></span>
+                    /
+                    <span class="diff">
+                        <span class="delete">-{{ dels }}</span>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    {{ diff|safe }}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><th>No Files</th></tr>
         {% endfor %}
-        </div>
-    </body>
-</html>
+    </table>
+    <script>
+        $(function(){
+            $('.toggle-next').click(function(e){
+                e.preventDefault();
+                $(this).parents('tr').next('tr').toggle();
+            }).trigger('click');
+        });
+    </script>
+</div>
+{% endblock %}

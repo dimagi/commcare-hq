@@ -250,3 +250,4 @@ def update_build_comment(request, domain, app_id):
     build.build_comment = request.POST.get('comment')
     build.save()
     return json_response({'status': 'success'})
+

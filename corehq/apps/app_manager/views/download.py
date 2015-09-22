@@ -9,19 +9,22 @@ from django.core.urlresolvers import RegexURLResolver, Resolver404
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy as _, ugettext_noop
 import ghdiff
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import safe_download, \
-    require_deploy_apps
+from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
-from corehq.util.view_utils import set_file_download
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.style.decorators import use_bootstrap3
+from corehq.util.view_utils import set_file_download, reverse
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
 
@@ -391,6 +394,13 @@ def _get_app_diff_files(app):
     return files
 
 
+def _get_change_counts(html_diff):
+    diff_lines = html_diff.splitlines()
+    additions = sum(1 for line in diff_lines if line.startswith('<div class="insert">'))
+    deletions = sum(1 for line in diff_lines if line.startswith('<div class="delete">'))
+    return additions, deletions
+
+
 def _get_app_diffs(first_app, second_app):
     """
     Return a list of tuples. The first value in each tuple is a file name,
@@ -404,18 +414,52 @@ def _get_app_diffs(first_app, second_app):
         n: (first_app_files.get(n, ""), second_app_files.get(n, ""))
         for n in file_names
     }
-    diffs = sorted([(n, ghdiff.diff(files[0], files[1])) for n, files in
-                    file_pairs.iteritems()])
-    return diffs
+    diffs = []
+    for name, files in file_pairs.iteritems():
+        diff = ghdiff.diff(files[0], files[1], n=4, css=False)
+        additions, deletions = _get_change_counts(diff)
+        diffs.append((name, diff, additions, deletions))
+    return sorted(diffs)
 
 
-@require_deploy_apps
-def app_diff_view(request, domain, first_app_id, second_app_id):
-    try:
-        first_app = Application.get(first_app_id)
-        second_app = Application.get(second_app_id)
-    except ResourceNotFound:
-        raise Http404()
+class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+    urlname = 'diff'
+    page_title = ugettext_noop("App diff")
+    template_name = 'app_manager/app_diff.html'
 
-    diffs = _get_app_diffs(first_app, second_app)
-    return render(request, "app_manager/app_diff.html", {'diffs': diffs})
+    @method_decorator(use_bootstrap3())
+    def dispatch(self, request, *args, **kwargs):
+        self.first_app_id = self.kwargs.get("first_app_id", None)
+        self.second_app_id = self.kwargs.get("second_app_id", None)
+        try:
+            self.first_app = Application.get(self.first_app_id)
+            self.second_app = Application.get(self.second_app_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        return super(AppDiffView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def app_diffs(self):
+        return _get_app_diffs(self.first_app, self.second_app)
+
+    @property
+    def main_context(self):
+        # TODO: Why do I need to repeat this boilerplate? Do I even need to?
+        context = super(AppDiffView, self).main_context
+        context.update({
+            'domain': self.domain,
+        })
+        return context
+
+    @property
+    def page_context(self):
+        return {
+            "first_app": self.first_app,
+            "second_app": self.second_app,
+            "diffs": self.app_diffs
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
