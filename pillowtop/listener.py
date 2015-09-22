@@ -22,7 +22,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.util import get_machine_id
+from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.couchdb import CachedCouchDB
 
 from couchdbkit.changes import ChangesStream
@@ -150,7 +150,7 @@ class BasicPillow(object):
             self.__module__, self.__class__.__name__, self._get_machine_id())
 
     def get_checkpoint_doc_name(self):
-        return "pillowtop_%s" % self.get_name()
+        return construct_checkpoint_doc_id_from_name(self.get_name())
 
     def get_checkpoint(self, verify_unchanged=False):
         doc_name = self.get_checkpoint_doc_name()

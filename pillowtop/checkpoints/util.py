@@ -13,3 +13,7 @@ def get_machine_id():
     else:
         os_name = 'unknown_os'
     return os_name
+
+
+def construct_checkpoint_doc_id_from_name(name):
+    return "pillowtop_%s" % name
