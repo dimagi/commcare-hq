@@ -164,11 +164,7 @@ class BasicPillow(object):
         return checkpoint_doc
 
     def reset_checkpoint(self):
-        checkpoint_doc = self.get_checkpoint()
-        checkpoint_doc['old_seq'] = checkpoint_doc['seq']
-        checkpoint_doc['seq'] = "0"
-        checkpoint_doc['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
-        self.couch_db.save_doc(checkpoint_doc)
+        self.checkpoint_manager.reset_checkpoint(self.get_checkpoint_doc_name())
 
     @property
     def since(self):
