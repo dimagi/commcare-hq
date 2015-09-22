@@ -15,6 +15,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
+from couchforms.analytics import get_number_of_forms_per_domain
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -284,11 +285,10 @@ def dom_calc(calc_tag, dom, extra_arg=''):
         return _('no')
     return ans
 
+
 def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
-    form_counts = defaultdict(lambda: 0)
-    case_counts = defaultdict(lambda: 0)
 
     for row in get_db().view('users/by_domain', startkey=["active"],
                              endkey=["active", {}], group_level=3).all():
@@ -299,16 +299,8 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    key = make_form_couch_key(None)
-    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
-                                get_db().view("reports_forms/all_forms",
-                                    group=True,
-                                    group_level=2,
-                                    startkey=key,
-                                    endkey=key+[{}]
-                             ).all()]))
-
-    case_counts.update(get_number_of_cases_per_domain())
+    form_counts = get_number_of_forms_per_domain()
+    case_counts = get_number_of_cases_per_domain()
 
     return {"web_users": webuser_counts,
             "commcare_users": commcare_counts,

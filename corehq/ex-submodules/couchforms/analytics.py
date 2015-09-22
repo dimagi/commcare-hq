@@ -24,3 +24,19 @@ def domain_has_submission_in_last_30_days(domain):
         return datetime.datetime.utcnow() <= received_on + _30_days
     else:
         return False
+
+
+def get_number_of_forms_per_domain():
+    from corehq.apps.reports.util import make_form_couch_key
+    key = make_form_couch_key(None)
+    return {
+        row["key"][1]: row["value"]
+        for row in XFormInstance.get_db().view(
+            "reports_forms/all_forms",
+            group=True,
+            group_level=2,
+            startkey=key,
+            endkey=key+[{}],
+            stale=stale_ok(),
+        ).all()
+    }
