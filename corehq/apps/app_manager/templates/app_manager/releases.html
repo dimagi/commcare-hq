@@ -25,7 +25,7 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-            compare: 'diff/___/and/___',
+            compare: 'diff/___/___',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
@@ -271,9 +271,7 @@
                                     </a>
                                     <a href="#" class="btn btn-mini btn-success"
                                        data-bind="
-                                            click: function() {
-                                                window.alert($root.url('compare', $root.selectingVersion(), id()));
-                                            },
+                                            attr: {href: $root.url('compare', $root.selectingVersion(), id())},
                                             visible: $root.selectingVersion() && $root.selectingVersion() != id()">
                                         Compare
                                     </a>
