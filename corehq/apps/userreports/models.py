@@ -270,10 +270,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        try:
-            return get_datasource_config(self.config_id, self.domain)[0]
-        except DataSourceConfigurationNotFoundError:
-            raise BadSpecError(_('The data source referenced by this report could not be found.'))
+        return get_datasource_config(self.config_id, self.domain)[0]
 
     @property
     @memoized
@@ -465,16 +462,21 @@ class StaticReportConfiguration(JsonObject):
 
 
 def get_datasource_config(config_id, domain):
+    def _raise_not_found():
+        raise DataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
+
     is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
         if not config or config.domain != domain:
-            raise DataSourceConfigurationNotFoundError
+            _raise_not_found()
     else:
         try:
             config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
         except DocumentNotFound:
-            raise DataSourceConfigurationNotFoundError
+            _raise_not_found()
     return config, is_static
 
 

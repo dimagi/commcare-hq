@@ -38,7 +38,7 @@ class SortConfigurationError(UserReportsError):
     pass
 
 
-class DataSourceConfigurationNotFoundError(UserReportsError):
+class DataSourceConfigurationNotFoundError(BadSpecError):
     pass
 
 
