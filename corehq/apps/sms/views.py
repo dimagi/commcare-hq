@@ -1638,6 +1638,7 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     limit_text = ugettext_noop("invitations per page")
     empty_notification = ugettext_noop("No registration invitations sent yet.")
     loading_message = ugettext_noop("Loading invitations...")
+    strict_domain_fetching = True
 
     @property
     @memoized
@@ -1661,6 +1662,8 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
         context = self.pagination_context
         context.update({
             'form': self.invitations_form,
+            'sms_mobile_worker_registration_enabled':
+                self.domain_object.sms_mobile_worker_registration_enabled,
         })
         return context
 
@@ -1723,6 +1726,8 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
 
     def post(self, *args, **kwargs):
         if self.request.POST.get('action') == 'invite':
+            if not self.domain_object.sms_mobile_worker_registration_enabled:
+                return self.get(*args, **kwargs)
             if self.invitations_form.is_valid():
                 phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
                 app_id = self.invitations_form.cleaned_data.get('app_id')
@@ -1757,4 +1762,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
                     )
             return self.get(*args, **kwargs)
         else:
+            if not self.domain_object.sms_mobile_worker_registration_enabled:
+                raise Http404()
             return self.paginate_crud_response

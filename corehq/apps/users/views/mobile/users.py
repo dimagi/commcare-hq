@@ -941,9 +941,10 @@ def download_commcare_users(request, domain):
     return response
 
 
-class CommCareUserSelfRegistrationView(TemplateView):
+class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
+    strict_domain_fetching = True
 
     @property
     @memoized
@@ -954,16 +955,6 @@ class CommCareUserSelfRegistrationView(TemplateView):
     @memoized
     def invitation(self):
         return SelfRegistrationInvitation.by_token(self.token)
-
-    @property
-    @memoized
-    def domain(self):
-        return self.kwargs.get('domain')
-
-    @property
-    @memoized
-    def domain_obj(self):
-        return Domain.get_by_name(self.domain, strict=True)
 
     @property
     @memoized
@@ -987,7 +978,7 @@ class CommCareUserSelfRegistrationView(TemplateView):
         if (
             not self.invitation or
             self.invitation.domain != self.domain or
-            not self.domain_obj.sms_mobile_worker_registration_enabled
+            not self.domain_object.sms_mobile_worker_registration_enabled
         ):
             raise Http404()
 

@@ -16,8 +16,18 @@
 
 
 {% block main_column %}
+{% if sms_mobile_worker_registration_enabled %}
 {{ block.super }}
 <div id="registration-invitation-form">
     {% crispy form %}
 </div>
+{% else %}
+<div>
+    <p>
+        <i class="icon icon-info-sign"></i>
+        {% trans "In order to use this feature, you must first enable SMS Mobile Worker Registration. To do so, please" %}
+        <a href="{% url 'sms_settings' domain %}">{% trans "click here" %}</a>.
+    </p>
+</div>
+{% endif %}
 {% endblock %}
