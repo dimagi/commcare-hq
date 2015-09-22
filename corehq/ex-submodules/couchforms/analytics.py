@@ -1,4 +1,5 @@
 import datetime
+from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.models import XFormInstance
@@ -77,3 +78,20 @@ def get_last_form_submission_received(domain):
     else:
         submission_time = None
     return submission_time
+
+
+def app_has_been_submitted_to_in_last_30_days(domain, app_id):
+    now = datetime.datetime.utcnow()
+    _30_days = datetime.timedelta(days=30)
+    then = json_format_datetime(now - _30_days)
+    now = json_format_datetime(now)
+
+    key = ['submission app', domain, app_id]
+    row = XFormInstance.get_db().view(
+        "reports_forms/all_forms",
+        startkey=key + [then],
+        endkey=key + [now],
+        limit=1,
+        stale=stale_ok(),
+    ).all()
+    return True if row else False
