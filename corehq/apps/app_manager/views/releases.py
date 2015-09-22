@@ -278,11 +278,14 @@ def _get_change_counts(html_diff):
     return additions, deletions
 
 
-def _get_app_diffs(first_app, second_app):
+def _get_file_pairs(first_app, second_app):
     """
-    Return a list of tuples. The first value in each tuple is a file name,
-    the second value is an html snippet representing the diff of that file
-    in the two given apps.
+    :param first_app:
+    :param second_app:
+    :return: A dictionary mapping file name to tuple where the first element is
+     the corresponding file on the first app and the second is the corresponding
+     file on the second app.
+     "files" will be empty strings if the file does not exist on the app.
     """
     first_app_files = _get_app_diff_files(first_app)
     second_app_files = _get_app_diff_files(second_app)
@@ -291,11 +294,23 @@ def _get_app_diffs(first_app, second_app):
         n: (first_app_files.get(n, ""), second_app_files.get(n, ""))
         for n in file_names
     }
+    return file_pairs
+
+
+def _get_app_diffs(first_app, second_app):
+    """
+    Return a list of tuples. The first value in each tuple is a file name,
+    the second value is an html snippet representing the diff of that file
+    in the two given apps.
+    """
+    file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
     for name, files in file_pairs.iteritems():
-        diff = ghdiff.diff(files[0], files[1], n=4, css=False)
-        additions, deletions = _get_change_counts(diff)
-        diffs.append((name, diff, additions, deletions))
+        diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
+        additions, deletions = _get_change_counts(diff_html)
+        if additions == 0 and deletions == 0:
+            diff_html = ""
+        diffs.append((name, diff_html, additions, deletions))
     return sorted(diffs)
 
 
