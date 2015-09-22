@@ -151,8 +151,13 @@
                     {% endblocktrans %}
                 </label>
                 <label class="checkbox">
-                    <input type="checkbox" name="saveCard" />
+                    <input type="checkbox" name="saveCard" data-bind="checked: newSavedCard"/>
                     {% trans 'Save card for later' %}
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" name="autopayCard" data-bind="enable: newSavedCard,
+                                                                         checked: autopayCard"/>
+                    {% trans 'Use this card to autopay' %}
                 </label>
                 <span class="help-block">
                     <i class="icon-info-sign"></i>
