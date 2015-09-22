@@ -1,4 +1,4 @@
-├─┬ At.js#1.3.0 (latest is 1.3.2)
+├─┬ At.js#a6e89323e7
 │ ├─┬ Caret.js#0.2.2
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
