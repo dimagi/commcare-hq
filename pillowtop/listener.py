@@ -24,7 +24,6 @@ from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.couchdb import CachedCouchDB
-from .utils import import_settings
 
 from couchdbkit.changes import ChangesStream
 from django import db
@@ -106,7 +105,7 @@ class BasicPillow(object):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
-        self.settings = import_settings()
+        self.settings = settings
 
     def new_changes(self):
         """
