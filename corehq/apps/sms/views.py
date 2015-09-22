@@ -1674,12 +1674,12 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     @property
     def column_names(self):
         return [
-            'Created On',
-            'Phone Number',
-            'Status',
-            'Expiration Date',
-            'Application',
-            'Phone Type',
+            _('Created On'),
+            _('Phone Number'),
+            _('Status'),
+            _('Expiration Date'),
+            _('Application'),
+            _('Phone Type'),
         ]
 
     def format_status(self, invitation):

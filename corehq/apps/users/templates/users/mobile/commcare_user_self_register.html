@@ -1,32 +1,39 @@
 {% extends "style/bootstrap2/base_mobile.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+{% load i18n %}
 
-{% block title %}CommCareHQ Registration{% endblock %}
+{% block title %}{% trans "CommCareHQ Registration" %}{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>CommCareHQ Registration</h1>
+    <h1>{% trans "CommCareHQ Registration" %}</h1>
 </div>
 
 {% if invitation.already_registered %}
 <div>
     <p>
+        {% blocktrans with google_play_store_url=google_play_store_url %}
         Thank you for registering. Please <a href="{{ google_play_store_url }}">click here</a>
         to go to the Google Play store and download CommCare.
+        {% endblocktrans %}
     </p>
 </div>
 {% elif invitation.expired %}
 <div>
     <p>
+        {% blocktrans %}
         Your registration invitation has expired. Please contact your administrator.
+        {% endblocktrans %}
     </p>
 </div>
 {% elif not can_add_extra_mobile_workers %}
 <div>
     <p>
+        {% blocktrans %}
         ERROR: Cannot register another user because this project has exceeded its user
         limit. Please contact your administrator.
+        {% endblocktrans %}
     </p>
 </div>
 {% else %}
