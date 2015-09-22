@@ -5,6 +5,7 @@ libevent-1.4-2
 libevent-dev
 python-setuptools
 postgresql
+postgresql-server-dev-9.1
 gdebi-core
 apache2
 
