@@ -16,7 +16,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users,
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
-    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days
+    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
+    get_first_form_submission_received, get_last_form_submission_received
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -154,35 +155,22 @@ def active(domain, *args):
     return domain_has_submission_in_last_30_days(domain)
 
 
-def display_time(row, display=True):
-    submission_time = row["key"][2]
+def display_time(submission_time, display=True):
     if display:
         return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
     else:
         return submission_time
 
+
 def first_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        startkey=key,
-        endkey=key+[{}],
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    submission_time = get_first_form_submission_received(domain)
+    return display_time(submission_time, display) if submission_time else "No forms"
+
 
 def last_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        endkey=key,
-        startkey=key+[{}],
-        descending=True,
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    submission_time = get_last_form_submission_received(domain)
+    return display_time(submission_time, display) if submission_time else "No forms"
+
 
 def has_app(domain, *args):
     return bool(ApplicationBase.get_db().view(
@@ -191,6 +179,7 @@ def has_app(domain, *args):
         endkey=[domain, {}],
         limit=1
     ).first())
+
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)

@@ -52,3 +52,40 @@ def get_number_of_forms_in_domain(domain):
         stale=stale_ok(),
     ).one()
     return row["value"] if row else 0
+
+
+def get_first_form_submission_received(domain):
+    from corehq.apps.reports.util import make_form_couch_key
+    key = make_form_couch_key(domain)
+    row = XFormInstance.get_db().view(
+        "reports_forms/all_forms",
+        reduce=False,
+        startkey=key,
+        endkey=key + [{}],
+        limit=1,
+        stale=stale_ok(),
+    ).first()
+    if row:
+        submission_time = iso_string_to_datetime(row["key"][2])
+    else:
+        submission_time = None
+    return submission_time
+
+
+def get_last_form_submission_received(domain):
+    from corehq.apps.reports.util import make_form_couch_key
+    key = make_form_couch_key(domain)
+    row = XFormInstance.get_db().view(
+        "reports_forms/all_forms",
+        reduce=False,
+        endkey=key,
+        startkey=key + [{}],
+        descending=True,
+        limit=1,
+        stale=stale_ok(),
+    ).first()
+    if row:
+        submission_time = iso_string_to_datetime(row["key"][2])
+    else:
+        submission_time = None
+    return submission_time
