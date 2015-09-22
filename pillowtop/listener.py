@@ -22,6 +22,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
+from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.couchdb import CachedCouchDB
 from .utils import import_settings
 
@@ -143,13 +144,7 @@ class BasicPillow(object):
         self.new_changes()
 
     def _get_machine_id(self):
-        if hasattr(self.settings, 'PILLOWTOP_MACHINE_ID'):
-            os_name = getattr(self.settings, 'PILLOWTOP_MACHINE_ID')
-        elif hasattr(os, 'uname'):
-            os_name = os.uname()[1].replace('.', '_')
-        else:
-            os_name = 'unknown_os'
-        return os_name
+        return get_machine_id(self.settings)
 
     @memoized
     def get_name(self):
