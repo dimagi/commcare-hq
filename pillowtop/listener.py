@@ -141,13 +141,10 @@ class BasicPillow(object):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         self.new_changes()
 
-    def _get_machine_id(self):
-        return get_machine_id()
-
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self._get_machine_id())
+            self.__module__, self.__class__.__name__, get_machine_id())
 
     def get_checkpoint_doc_name(self):
         return construct_checkpoint_doc_id_from_name(self.get_name())
@@ -791,7 +788,7 @@ class AliasedElasticPillow(BulkPillow):
         class name and the hashed name representation.
         """
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.get_unique_id(), self._get_machine_id())
+            self.__module__, self.__class__.__name__, self.get_unique_id(), get_machine_id())
 
 
 class NetworkPillow(BasicPillow):
