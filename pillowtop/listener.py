@@ -22,13 +22,12 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.manager import PillowCheckpointManager
+from pillowtop.checkpoints.manager import PillowCheckpointManagerInstance
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.couchdb import CachedCouchDB
 
 from couchdbkit.changes import ChangesStream
 from django import db
-from dateutil import parser
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 
@@ -87,7 +86,6 @@ class BasicPillow(object):
     couch_db = None
     include_docs = True
     use_locking = False
-    _current_checkpoint = None
 
     def __init__(self, couch_db=None, document_class=None):
         if document_class:
@@ -107,7 +105,10 @@ class BasicPillow(object):
 
     @property
     def checkpoint_manager(self):
-        return PillowCheckpointManager(CouchDocumentStore(self.couch_db))
+        return PillowCheckpointManagerInstance(
+            CouchDocumentStore(self.couch_db),
+            construct_checkpoint_doc_id_from_name(self.get_name()),
+        )
 
     def new_changes(self):
         """
@@ -133,7 +134,7 @@ class BasicPillow(object):
                             notify_exception(None, u'processor error {}'.format(e))
                             raise
                     else:
-                        self.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
+                        self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
             except PillowtopCheckpointReset:
                 self.changes_seen = 0
 
@@ -149,24 +150,15 @@ class BasicPillow(object):
         return "%s.%s.%s" % (
             self.__module__, self.__class__.__name__, get_machine_id())
 
-    def get_checkpoint_doc_name(self):
-        return construct_checkpoint_doc_id_from_name(self.get_name())
-
     def get_checkpoint(self, verify_unchanged=False):
-        checkpoint_doc_id = self.get_checkpoint_doc_name()
-        checkpoint_doc = self.checkpoint_manager.get_or_create_checkpoint(checkpoint_doc_id)
-        if verify_unchanged and self._current_checkpoint and checkpoint_doc['seq'] != self._current_checkpoint['seq']:
-            raise PillowtopCheckpointReset()
-        self._current_checkpoint = checkpoint_doc
-        return checkpoint_doc
+        return self.checkpoint_manager.get_or_create_checkpoint(verify_unchanged=verify_unchanged)
 
     def reset_checkpoint(self):
-        self.checkpoint_manager.reset_checkpoint(self.get_checkpoint_doc_name())
+        self.checkpoint_manager.reset_checkpoint()
 
     @property
     def since(self):
-        checkpoint = self.get_checkpoint()
-        return checkpoint['seq']
+        self.checkpoint_manager.get_or_create_checkpoint()['seq']
 
     def set_checkpoint(self, change):
         checkpoint = self.get_checkpoint(verify_unchanged=True)
@@ -177,27 +169,6 @@ class BasicPillow(object):
         checkpoint['seq'] = change['seq']
         checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
         self.couch_db.save_doc(checkpoint)
-
-    def touch_checkpoint(self, min_interval=0):
-        """
-        Update the checkpoint timestamp without altering the sequence.
-        :param min_interval: minimum interval between timestamp updates
-        """
-        checkpoint = self.get_checkpoint(verify_unchanged=True)
-
-        now = datetime.now(tz=pytz.UTC)
-        previous = self._current_checkpoint.get('timestamp')
-        do_update = True
-        if previous:
-            diff = now - parser.parse(previous).replace(tzinfo=pytz.UTC)
-            do_update = diff.total_seconds() >= min_interval
-
-        if do_update:
-            pillow_logging.info(
-                "(%s) touching checkpoint" % checkpoint['_id']
-            )
-            checkpoint['timestamp'] = now.isoformat()
-            self.couch_db.save_doc(checkpoint)
 
     def get_db_seq(self):
         return self.couch_db.info()['update_seq']
