@@ -4,7 +4,6 @@ import logging
 import math
 import warnings
 
-from django.contrib import messages
 from django.http import Http404
 import pytz
 from django.conf import settings
@@ -18,7 +17,6 @@ from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
@@ -54,18 +52,6 @@ def make_form_couch_key(domain, by_submission_time=True,
             prefix.append('user')
             key.append(user_id)
     return [" ".join(prefix)] + key
-
-
-def all_xmlns_in_domain(domain):
-    # todo replace form_list with this
-    key = make_form_couch_key(domain, xmlns="")
-    domain_xmlns = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        group=True,
-        group_level=3,
-    ).all()
-    return [d['key'][-1] for d in domain_xmlns if d['key'][-1] is not None]
 
 
 def user_list(domain):
