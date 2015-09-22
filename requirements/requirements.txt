@@ -33,6 +33,7 @@ phonenumberslite==6.0.0a
 poster==0.8.1
 psycopg2==2.5.1
 psycogreen==1.0
+pycrypto==2.6.1
 py-KISSmetrics==1.0.1
 https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz
 python-dateutil==1.5

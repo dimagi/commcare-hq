@@ -633,6 +633,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
+    'mobile_worker_self_registration',
+    'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',

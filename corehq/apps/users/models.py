@@ -1039,6 +1039,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return CouchUser.view("users/by_username", include_docs=True, reduce=False)
 
     @classmethod
+    def username_exists(cls, username):
+        reduced = cls.view('users/by_username', key=username, reduce=True).all()
+        if reduced:
+            return reduced[0]['value'] > 0
+        return False
+
+    @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         flag = "active" if is_active else "inactive"
         doc_type = doc_type or cls.__name__

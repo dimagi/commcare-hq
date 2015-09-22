@@ -5,6 +5,7 @@ from corehq.apps.sms.views import (
     AddDomainGatewayView,
     EditDomainGatewayView,
     SMSSettingsView,
+    ManageRegistrationInvitationsView,
 )
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
@@ -38,6 +39,8 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^languages/edit/$', 'edit_sms_languages', name='edit_sms_languages'),
     url(r'^translations/download/$', 'download_sms_translations', name='download_sms_translations'),
     url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),
+    url(r'^invitations/$', ManageRegistrationInvitationsView.as_view(),
+        name=ManageRegistrationInvitationsView.urlname),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
