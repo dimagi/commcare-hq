@@ -25,7 +25,7 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-            compare: 'diff/___/___',
+            compare: '{% url "diff" domain '___' '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
@@ -55,7 +55,6 @@
     function track_deploy_type(type) {
         ga_track_event('App Manager', 'Deploy Type', type);
     }
-    // TODO: update analytics?
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
