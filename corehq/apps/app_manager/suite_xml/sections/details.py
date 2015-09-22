@@ -271,14 +271,15 @@ class DetailsHelper(object):
     def __init__(self, app, modules=None):
         self.app = app
         self._modules = modules
-        self.active_details = self._active_details()
 
     @property
     @memoized
     def modules(self):
         return self._modules or list(self.app.get_modules())
 
-    def _active_details(self):
+    @property
+    @memoized
+    def active_details(self):
         return {
             id_strings.detail(module, detail_type)
             for module in self.modules for detail_type, detail, enabled in module.get_details()
