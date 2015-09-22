@@ -15,7 +15,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
-from couchforms.analytics import get_number_of_forms_per_domain
+from couchforms.analytics import get_number_of_forms_per_domain, \
+    get_number_of_forms_in_domain
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -112,10 +113,9 @@ def inactive_cases_in_last(domain, days):
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
+
 def forms(domain, *args):
-    key = make_form_couch_key(domain)
-    row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
+    return get_number_of_forms_in_domain(domain)
 
 
 def _sms_helper(domain, direction=None, days=None):
@@ -276,6 +276,7 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
 }
+
 
 def dom_calc(calc_tag, dom, extra_arg=''):
     ans = CALC_FNS[calc_tag](dom, extra_arg) if extra_arg else CALC_FNS[calc_tag](dom)
