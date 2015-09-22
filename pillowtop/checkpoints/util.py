@@ -1,5 +1,7 @@
 import os
+from datetime import datetime
 from django.conf import settings
+import pytz
 
 
 def get_machine_id():
@@ -17,3 +19,7 @@ def get_machine_id():
 
 def construct_checkpoint_doc_id_from_name(name):
     return "pillowtop_%s" % name
+
+
+def get_formatted_current_timestamp():
+    return datetime.now(tz=pytz.UTC).isoformat()
