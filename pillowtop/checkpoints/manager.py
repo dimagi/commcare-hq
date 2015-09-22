@@ -35,7 +35,7 @@ class PillowCheckpointManagerInstance(object):
 
     def get_or_create_checkpoint(self, verify_unchanged=False):
         checkpoint = self._manager.get_or_create_checkpoint(self.checkpoint_id)
-        if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint ['seq']:
+        if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint['seq']:
             raise PillowtopCheckpointReset()
 
         self._last_checkpoint = checkpoint
