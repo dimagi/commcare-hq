@@ -1,11 +1,14 @@
 {% extends base_template %}
+{% load i18n %}
+
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
 {% endblock %}
+{% block title %}{% trans 'Build' %} #{{ app.version }}: {{ app.name }}{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <h1>Build #{{ app.version }}: {{ app.name }}</h1>
-    <p>See <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">original app</a> for the latest work in progress.</p>
+    <p>See <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">current app</a> for the latest work in progress.</p>
     <h2>Downloads</h2>
     <table class="table table-condensed">
         <tr>

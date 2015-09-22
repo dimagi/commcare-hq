@@ -25,12 +25,14 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
+            compare: 'diff/___/___',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
+            summary: '{% url "app_summary" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
@@ -53,6 +55,7 @@
     function track_deploy_type(type) {
         ga_track_event('App Manager', 'Deploy Type', type);
     }
+    // TODO: update analytics?
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
@@ -69,13 +72,19 @@
     .build.build-unreleased {
         color: #888;
     }
-    .build.build-released {
-    }
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
     .build.build-latest-release .build-is-released:after{
         content: "Latest";
+    }
+    .build .edit-comment-pencil {
+        display: none;
+        margin-left: 5px;
+        position: absolute;
+    }
+    .build:hover .edit-comment-pencil {
+        display: inline;
     }
     .nowrap {
         white-space: nowrap;
@@ -96,14 +105,6 @@
     .released {
         color: #ffff00;
         text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
-    }
-    .build .edit-comment-pencil {
-        display: none;
-        margin-left: 5px;
-        position: absolute;
-    }
-    .build:hover .edit-comment-pencil {
-        display: inline;
     }
 </style>
 {% endblock %}
@@ -142,7 +143,7 @@
                 <th>{% trans "CommCare Version" %}</th>
                 <th></th>
                 <th></th>
-                <th>{% trans "Comment" %}</th>
+                <th>{% trans "Changes" %}</th>
                 <th>
                     {% trans "Released" %}
                     <span class="hq-help-template"
@@ -251,6 +252,32 @@
                         <div data-bind="visible: comment_update_error()" class="alert alert-error">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
+                        {% if request.user.is_superuser %}
+                            <h6>
+                                {% blocktrans %}
+                                    View
+                                    <a data-bind="attr: {href: $root.url('summary', id)}">app summary</a>
+                                    or
+                                    <a data-bind="attr: {href: $root.url('source', id)}" class="view-source-files-link">source files</a>
+                                    <br />
+                                    <a href="#" data-bind="click: function() {
+                                            $root.selectingVersion(id());
+                                        }, visible: !$root.selectingVersion()">
+                                        Compare with another version
+                                    </a>
+                                    <a href="#"
+                                       data-bind="visible: $root.selectingVersion() === id(), click: function() {$root.selectingVersion('')}">
+                                        Cancel
+                                    </a>
+                                    <a href="#" class="btn btn-mini btn-success"
+                                       data-bind="
+                                            attr: {href: $root.url('compare', $root.selectingVersion(), id())},
+                                            visible: $root.selectingVersion() && $root.selectingVersion() != id()">
+                                        Compare
+                                    </a>
+                                {% endblocktrans %}
+                            </h6>
+                        {% endif %}
                     </td>
                     <td class="build-is-released">
                         <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
@@ -517,17 +544,6 @@
                                 <div class="accordion-inner">
                                     {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                 </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                    {% if request.user.is_superuser %}
-                        <div class="accordion-group">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle view-source-files-link" data-bind="
-                                    attr: {href: $root.url('source', id)},
-                                ">
-                                    {% trans "View Source Files" %}
-                                </a>
                             </div>
                         </div>
                     {% endif %}
