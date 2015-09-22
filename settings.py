@@ -6,6 +6,7 @@ import sys
 import os
 from urllib import urlencode
 from django.contrib import messages
+from django.core.urlresolvers import reverse_lazy
 
 # odd celery fix
 import djcelery
@@ -168,7 +169,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.raven",
 ]
 
-TEMPLATE_DIRS = []
+location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+TEMPLATE_DIRS =(
+    location('templates'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -404,7 +408,7 @@ DOMAIN_SELECT_URL = "/domain/select/"
 # in Django unexpectedly breaks without it.  When you need the login url, you
 # should use reverse('login', kwargs={'domain_type': domain_type}) in order to
 # maintain CommCare HQ/CommCare Supply distinction.
-LOGIN_URL = "/accounts/login/"
+LOGIN_URL = reverse_lazy('two_factor:login')
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
