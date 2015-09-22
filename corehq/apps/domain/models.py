@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.util.soft_assert import soft_assert
+from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -510,23 +511,7 @@ class Domain(Document, SnapshotMixin):
         return False
 
     def recent_submissions(self):
-        from corehq.apps.reports.util import make_form_couch_key
-        key = make_form_couch_key(self.name)
-        res = get_db().view(
-            'reports_forms/all_forms',
-            startkey=key + [{}],
-            endkey=key,
-            descending=True,
-            reduce=False,
-            include_docs=False,
-            limit=1
-        ).all()
-        # if there have been any submissions in the past 30 days
-        if len(res) > 0:
-            received_on = iso_string_to_datetime(res[0]['key'][2])
-            return datetime.utcnow() <= received_on + timedelta(days=30)
-        else:
-            return False
+        return domain_has_submission_in_last_30_days(self.name)
 
     @cached_property
     def languages(self):
