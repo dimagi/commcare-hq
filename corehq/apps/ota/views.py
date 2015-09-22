@@ -14,6 +14,7 @@ from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.view_utils import json_error
+from couchforms.dbaccessors import get_form_ids_for_user, get_form_xml_element
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from django_digest.decorators import *
@@ -85,15 +86,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
 def historical_forms(request, domain):
     assert request.couch_user.is_member_of(domain)
     user_id = request.couch_user.get_id
-    db = XFormInstance.get_db()
-    form_ids = {
-        f['id'] for f in db.view(
-            'reports_forms/all_forms',
-            startkey=["submission user", domain, user_id],
-            endkey=["submission user", domain, user_id, {}],
-            reduce=False,
-        )
-    }
+    form_ids = get_form_ids_for_user(domain, user_id)
 
     def data():
         yield (
@@ -103,9 +96,7 @@ def historical_forms(request, domain):
         )
 
         for form_id in form_ids:
-            # this is a hack to call this method
-            # Should only hit couch once per form, to get the attachment
-            xml = XFormInstance(_id=form_id).get_xml_element()
+            xml = get_form_xml_element(form_id)
             if xml:
                 yield '    {}'.format(etree.tostring(xml))
             else:
