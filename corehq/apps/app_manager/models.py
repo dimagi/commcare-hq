@@ -3724,7 +3724,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=['roman', 'native', 'custom-keys', 'qwerty'],
         default="roman"
     )
-    success_message = DictProperty()
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
