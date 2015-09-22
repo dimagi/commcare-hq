@@ -1,0 +1,5 @@
+
+
+class PillowtopCheckpointReset(Exception):
+    pass
+

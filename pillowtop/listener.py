@@ -30,6 +30,7 @@ from couchdbkit.changes import ChangesStream
 from django import db
 from dateutil import parser
 from pillowtop.dao.couch import CouchDocumentStore
+from pillowtop.exceptions import PillowtopCheckpointReset
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -61,10 +62,6 @@ class PillowtopIndexingError(Exception):
 
 
 class PillowtopNetworkError(Exception):
-    pass
-
-
-class PillowtopCheckpointReset(Exception):
     pass
 
 
