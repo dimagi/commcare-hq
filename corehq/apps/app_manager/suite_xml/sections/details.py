@@ -271,14 +271,15 @@ class DetailsHelper(object):
     def __init__(self, app, modules=None):
         self.app = app
         self._modules = modules
-        self.active_details = self._active_details()
 
     @property
     @memoized
     def modules(self):
-        return self._modules or self.app.get_modules()
+        return self._modules or list(self.app.get_modules())
 
-    def _active_details(self):
+    @property
+    @memoized
+    def active_details(self):
         return {
             id_strings.detail(module, detail_type)
             for module in self.modules for detail_type, detail, enabled in module.get_details()
@@ -359,7 +360,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
         """
         This method is used by CloudCare when filtering cases.
         """
-        modules = app.get_modules()
+        modules = list(app.get_modules())
         helper = DetailsHelper(app, modules)
         details = DetailContributor(None, app, modules).get_section_elements()
         detail_mapping = {detail.id: detail for detail in details}
