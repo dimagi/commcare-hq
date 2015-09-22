@@ -8,15 +8,28 @@ import logging
 from optparse import make_option
 
 # Django imports
+from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
-from corehq.apps.accounting.models import (SoftwarePlan, SoftwareProductType, SoftwarePlanEdition,
-                                           SoftwarePlanVisibility, SoftwareProduct, SoftwareProductRate, Feature,
-                                           FeatureRate, FeatureType, SoftwarePlanVersion, DefaultProductPlan,
-                                           Subscription)
 from django_prbac.models import Role
 
+# Use current models
+DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
+Feature = apps.get_model('accounting', 'Feature')
+SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+FeatureRate = apps.get_model('accounting', 'FeatureRate')
+SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
+SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
+SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
+Subscription = apps.get_model('accounting', 'Subscription')
+
+from corehq.apps.accounting.models import (
+    SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
+)
+
+
 logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
