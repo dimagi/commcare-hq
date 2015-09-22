@@ -155,21 +155,9 @@ class BasicPillow(object):
         if self.couch_db.doc_exist(doc_name):
             checkpoint_doc = self.couch_db.open_doc(doc_name)
         else:
-            # legacy check
-            # split doc and see if non_hostname setup exists.
-            legacy_name = '.'.join(doc_name.split('.')[0:-1])
-            starting_seq = "0"
-            if self.couch_db.doc_exist(legacy_name):
-                pillow_logging.info("hostname specific checkpoint not found, searching legacy")
-                legacy_checkpoint = self.couch_db.open_doc(legacy_name)
-                if not isinstance(legacy_checkpoint['seq'], int):
-                    #if it's not an explicit integer, copy it over directly
-                    pillow_logging.info("Legacy checkpoint set")
-                    starting_seq = legacy_checkpoint['seq']
-
             checkpoint_doc = {
                 "_id": doc_name,
-                "seq": starting_seq
+                "seq": "0"
             }
             self.couch_db.save_doc(checkpoint_doc)
 
@@ -177,7 +165,6 @@ class BasicPillow(object):
             raise PillowtopCheckpointReset()
 
         self._current_checkpoint = checkpoint_doc
-
         return checkpoint_doc
 
     def reset_checkpoint(self):
