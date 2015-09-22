@@ -19,7 +19,11 @@
         {% for file_name, diff, adds, dels in diffs %}
             <tr>
                 <td class="col-md-3">
-                    <a class="toggle-next" href="#">{{ file_name }}</a>
+                    {% if diff %}
+                        <a class="toggle-next" href="#">{{ file_name }}</a>
+                    {% else %}
+                        {{ file_name }}
+                    {% endif %}
                 </td>
                 {# TODO: use simpler styling on additions and subtractions #}
                 <td class="col-md-9">
@@ -28,11 +32,13 @@
                     <span class="diff"><span class="delete">-{{ dels }}</span></span>
                 </td>
             </tr>
+            {% if diff %}
             <tr>
                 <td colspan="2">
                     {{ diff|safe }}
                 </td>
             </tr>
+            {% endif %}
         {% empty %}
             <tr><th>No Files</th></tr>
         {% endfor %}
