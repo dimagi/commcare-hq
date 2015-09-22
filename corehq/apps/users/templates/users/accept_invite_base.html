@@ -67,6 +67,7 @@
                         {% if create_domain %}
                             <legend>{% trans 'New user information' %}</legend>
                         {% endif %}
+                        {% include "users/partial/field.html" with field=form.full_name %}
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}

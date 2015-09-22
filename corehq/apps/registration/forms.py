@@ -46,6 +46,9 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
+    full_name = forms.CharField(label=_('Full Name'),
+                                max_length=User._meta.get_field('first_name').max_length +
+                                           User._meta.get_field('last_name').max_length + 1)
     email = forms.EmailField(label=_('Email Address'),
                              max_length=User._meta.get_field('email').max_length,
                              help_text=_('You will use this email to log in.'))
@@ -70,6 +73,10 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
         data_create_domain = self.data.get('create_domain', "True")
         if not initial_create_domain or data_create_domain == "False":
             self.fields['hr_name'].widget = forms.HiddenInput()
+
+    def clean_full_name(self):
+        data = self.cleaned_data['full_name'].split()
+        return [data.pop(0)] + [' '.join(data)]
 
     def clean_email(self):
         data = self.cleaned_data['email'].strip().lower()
