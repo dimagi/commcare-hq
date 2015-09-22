@@ -5,7 +5,6 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_app_translations,
 )
 from corehq.apps.app_manager.views.download import (
-    AppDiffView,
     download_app_strings,
     download_file,
     download_index,
@@ -102,6 +101,7 @@ from corehq.apps.app_manager.views.multimedia import (
     multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
+    AppDiffView,
     current_app_version,
     delete_copy,
     odk_install,

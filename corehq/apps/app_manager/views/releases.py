@@ -1,6 +1,8 @@
 import json
 
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
@@ -8,7 +10,9 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from couchdbkit.resource import ResourceNotFound
 from django.contrib import messages
+import ghdiff
 from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.download import download_index_files
 
 from corehq.apps.app_manager.views.utils import back_to_main, encode_if_unicode, \
     get_langs
@@ -18,7 +22,10 @@ from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
     ModuleIdMissingException,
 )
+from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
+from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import json_response
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -251,3 +258,84 @@ def update_build_comment(request, domain, app_id):
     build.save()
     return json_response({'status': 'success'})
 
+
+def _get_app_diff_files(app):
+    """
+    Return a dict of the files that an app build is comprised of. Return dict
+    also includes the app json.
+    """
+    files = dict(download_index_files(app))
+    files["app.json"] = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    return files
+
+
+def _get_change_counts(html_diff):
+    diff_lines = html_diff.splitlines()
+    additions = sum(1 for line in diff_lines if line.startswith('<div class="insert">'))
+    deletions = sum(1 for line in diff_lines if line.startswith('<div class="delete">'))
+    return additions, deletions
+
+
+def _get_app_diffs(first_app, second_app):
+    """
+    Return a list of tuples. The first value in each tuple is a file name,
+    the second value is an html snippet representing the diff of that file
+    in the two given apps.
+    """
+    first_app_files = _get_app_diff_files(first_app)
+    second_app_files = _get_app_diff_files(second_app)
+    file_names = set(first_app_files.keys()) | set(second_app_files.keys())
+    file_pairs = {
+        n: (first_app_files.get(n, ""), second_app_files.get(n, ""))
+        for n in file_names
+    }
+    diffs = []
+    for name, files in file_pairs.iteritems():
+        diff = ghdiff.diff(files[0], files[1], n=4, css=False)
+        additions, deletions = _get_change_counts(diff)
+        diffs.append((name, diff, additions, deletions))
+    return sorted(diffs)
+
+
+class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+    urlname = 'diff'
+    page_title = ugettext_lazy("App diff")
+    template_name = 'app_manager/app_diff.html'
+
+    @method_decorator(use_bootstrap3())
+    def dispatch(self, request, *args, **kwargs):
+        self.first_app_id = self.kwargs.get("first_app_id", None)
+        self.second_app_id = self.kwargs.get("second_app_id", None)
+        try:
+            self.first_app = Application.get(self.first_app_id)
+            self.second_app = Application.get(self.second_app_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        return super(AppDiffView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def app_diffs(self):
+        return _get_app_diffs(self.first_app, self.second_app)
+
+    @property
+    def main_context(self):
+        context = super(AppDiffView, self).main_context
+        context.update({
+            'domain': self.domain,
+        })
+        return context
+
+    @property
+    def page_context(self):
+        return {
+            "first_app": self.first_app,
+            "second_app": self.second_app,
+            "diffs": self.app_diffs
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
