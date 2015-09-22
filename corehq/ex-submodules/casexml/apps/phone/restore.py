@@ -498,7 +498,7 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = get_restore_state_cls()(self.project, self.user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.params)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -612,4 +612,6 @@ class RestoreConfig(object):
 
 
 def get_restore_cls(domain):
-    return ObjectRestoreResponse if toggles.OBJECT_RESTORE.enabled(domain) else FileRestoreResponse
+    if not settings.RIAKCS_ENABLED:
+        return FileRestoreResponse
+    return ObjectRestoreResponse if OBJECT_RESTORE.enabled(domain) else FileRestoreResponse

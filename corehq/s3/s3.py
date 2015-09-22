@@ -3,6 +3,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 import boto3
 from botocore.utils import fix_s3_host
+from botocore.exceptions import ClientError
 
 
 class ObjectStore(object):
@@ -25,25 +26,24 @@ class ObjectStore(object):
     def bucket_name(self):
         return self.domain or settings.RIAKCS_DEFAULT_BUCKET
 
-    @property
-    @memoized
     def _init_bucket(self):
+        bucket = self.resource.Bucket(self.bucket_name)
         try:
-            bucket = self.resource.Bucket(self.bucket_name)
-        except botocore.exceptions.ClientError:
+            bucket.load()
+        except ClientError, e:
             error_code = int(e.response['Error']['Code'])
             if error_code == 404:
-                bucket = self.conn.create_bucket(self.bucket_name)
+                bucket = self.resource.create_bucket(Bucket=self.bucket_name)
             else:
                 raise
 
         return bucket
 
-    def set(key, value, content_length=None):
-        return boto3.s3.Object(self.bucket_name, key).put(
+    def set(self, key, value, content_length=None):
+        return self.bucket.Object(key=key).put(
             Body=value,
             ContentLength=content_length,
         )
 
-    def get(key):
-        return boto3.s3.Object(self.bucket_name, key).get()
+    def get(self, key):
+        return self.bucket.Object(key=key).get()

@@ -157,6 +157,7 @@ RIAKCS_HOST = 'localhost'
 RIAKCS_PORT = 8080
 RIAKCS_DEFAULT_BUCKET = 'commcarehq'
 RIAKCS_SSL = True
+RIAKCS_ENABLED = True
 
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",

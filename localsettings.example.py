@@ -51,6 +51,11 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
+RIAKCS_KEY = ''
+RIAKCS_SECRET = ''
+RIAKCS_SSL = False
+RIAKCS_ENABLED = False
+
 ####### Log/debug setup ########
 
 DEBUG = True
