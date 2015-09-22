@@ -38,6 +38,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -440,6 +441,8 @@ def system_info(request):
     context['current_system'] = socket.gethostname()
     context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
+    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
+
     context.update(check_redis())
     context.update(check_rabbitmq())
     context.update(check_celery_health())
@@ -513,6 +516,29 @@ def pillow_operation_api(request):
             response.update(get_pillow_json(pillow))
         return json_response(response)
 
+    @any_toggle_enabled(SUPPORT)
+    def reset_pillow(request):
+        pillow.reset_checkpoint()
+        if supervisor.restart_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response("Checkpoint reset but failed to restart pillow. "
+                                "Restart manually to complete reset.")
+
+    @any_toggle_enabled(SUPPORT)
+    def start_pillow(request):
+        if supervisor.start_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    @any_toggle_enabled(SUPPORT)
+    def stop_pillow(request):
+        if supervisor.stop_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
     if pillow:
         try:
             supervisor = PillowtopSupervisorApi()
@@ -521,22 +547,11 @@ def pillow_operation_api(request):
 
         try:
             if operation == 'reset_checkpoint':
-                pillow.reset_checkpoint()
-                if supervisor.restart_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response("Checkpoint reset but failed to restart pillow. "
-                                        "Restart manually to complete reset.")
+                reset_pillow(request)
             if operation == 'start':
-                if supervisor.start_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response('Unknown error')
+                start_pillow(request)
             if operation == 'stop':
-                if supervisor.stop_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response('Unknown error')
+                stop_pillow(request)
             if operation == 'refresh':
                 return get_response()
         except SupervisorException as e:
