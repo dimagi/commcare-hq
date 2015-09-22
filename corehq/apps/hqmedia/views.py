@@ -647,7 +647,7 @@ def iter_index_files(app):
     errors = []
 
     def _encode_if_unicode(s):
-        s.encode('utf-8') if isinstance(s, unicode) else s
+        return s.encode('utf-8') if isinstance(s, unicode) else s
 
     def _files(files):
         for name, f in files:
