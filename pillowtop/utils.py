@@ -7,10 +7,6 @@ import importlib
 import pytz
 
 
-class PillowtopConfigurationException(Exception):
-    pass
-
-
 def import_settings():
     try:
         from django.conf import settings
