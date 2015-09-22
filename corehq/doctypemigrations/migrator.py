@@ -25,3 +25,4 @@ class Migrator(object):
     def record_seq(self, seq):
         state, _ = DocTypeMigrationState.objects.get_or_create(slug=self.slug)
         state.original_seq = seq
+        state.save()
