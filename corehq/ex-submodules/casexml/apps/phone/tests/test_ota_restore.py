@@ -1,8 +1,6 @@
 from django.test import TestCase, SimpleTestCase
 import os
 import time
-from corehq.toggles import OBJECT_RESTORE, NAMESPACE_DOMAIN
-from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
 from django.test.utils import override_settings
 from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
@@ -291,16 +289,3 @@ class OtaRestoreTest(TestCase):
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
-
-
-class ObjectOtaRestoreTest(OtaRestoreTest):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ObjectOtaRestoreTest, cls).setUpClass()
-        update_toggle_cache(OBJECT_RESTORE.slug, cls.project.name, True, NAMESPACE_DOMAIN)
-
-    @classmethod
-    def tearDownClass(cls):
-        super(ObjectOtaRestoreTest, cls).tearDownClass()
-        clear_toggle_cache(OBJECT_RESTORE.slug, cls.project.name, namespace=NAMESPACE_DOMAIN)
