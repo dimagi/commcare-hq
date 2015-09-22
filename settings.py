@@ -953,7 +953,7 @@ ENVIRONMENT_HOSTS = {
 }
 
 # Override with the PEM export of an RSA private key, for use with any
-# encryption or signing that HQ does.
+# encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
 try:
