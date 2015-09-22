@@ -494,7 +494,6 @@ def iter_app_files(app, include_multimedia_files, include_index_files):
         app.remove_unused_mappings()
         file_iterator, errors = iter_media_files(app.get_media_objects())
     if include_index_files:
-        from corehq.apps.app_manager.views import iter_index_files
         index_files, index_file_errors = iter_index_files(app)
         if index_file_errors:
             errors.extend(index_file_errors)
