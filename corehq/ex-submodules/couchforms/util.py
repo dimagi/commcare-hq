@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import
 import hashlib
 import datetime
@@ -639,7 +640,7 @@ class SubmissionPost(object):
         else:
             # default to something generic
             response = OpenRosaResponse(
-                message="Thanks for submitting!",
+                message=u'✓',
                 nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
             ).response()
