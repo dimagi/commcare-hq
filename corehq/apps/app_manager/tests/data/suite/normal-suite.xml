@@ -144,9 +144,7 @@
     </field>
     <field>
         <header width="0">
-            <text>
-                <locale id="m0.case_short.case_invisible_7.header"/>
-            </text>
+            <text/>
         </header>
         <template width="0">
             <text>
@@ -156,9 +154,7 @@
     </field>
     <field>
         <header width="0">
-            <text>
-                <locale id="m0.case_short.case_address_9.header"/>
-            </text>
+            <text/>
         </header>
         <template width="0" form="address">
             <text>
