@@ -23,7 +23,7 @@ class TestReportData(ReportDataSource):
     title = "Test Report"
     slug = "test_report"
     filters = [
-        DatespanFilter(name='datespan', required=False),
+        DatespanFilter(name='datespan'),
     ]
 
     def columns(self):
