@@ -119,16 +119,12 @@ class BasicPillow(object):
             extra_couch_view_params=self.extra_args
         )
 
-    def iter_changes(self, since, forever):
-        for change in self.get_change_feed().iter_changes(since=since, forever=forever):
-            yield change
-
     def process_changes(self, since, forever):
         """
         Process changes from the changes stream.
         """
         try:
-            for change in self.iter_changes(since, forever=forever):
+            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
                     try:
                         self.processor(change)
