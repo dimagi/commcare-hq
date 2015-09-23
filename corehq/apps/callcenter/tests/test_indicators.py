@@ -216,6 +216,22 @@ class CallCenterTests(BaseCCTests):
                 include_totals=True,
                 case_types=[])
         )
+
+    def test_standard_indicators_load_config_from_db(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config.save()
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(include_legacy=False))
         
     def test_standard_indicators_case_dog_only(self):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
