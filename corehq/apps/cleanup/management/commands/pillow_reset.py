@@ -23,7 +23,7 @@ class Command(LabelCommand):
         with open(file_path) as f:
             config = PillowResetConfig.wrap(json.loads(f.read()))
             for pillow in config.pillows:
-                checkpoint_doc_name = pillow.get_checkpoint_doc_name()
+                checkpoint_doc_name = pillow.checkpoint_manager.checkpoint_id
                 try:
                     checkpoint_doc = db.get(checkpoint_doc_name)
                 except ResourceNotFound:
