@@ -4,10 +4,8 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
 from psycopg2._psycopg import InterfaceError
-import pytz
 from datetime import datetime
 import hashlib
-import os
 import traceback
 import math
 import time
