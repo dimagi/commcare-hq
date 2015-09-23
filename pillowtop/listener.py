@@ -128,20 +128,19 @@ class BasicPillow(object):
         """
         Process changes from the changes stream.
         """
-        change_gen = self.iter_changes(since, forever=forever)
-        while True:
-            try:
-                for change in change_gen:
-                    if change:
-                        try:
-                            self.processor(change)
-                        except Exception as e:
-                            notify_exception(None, u'processor error {}'.format(e))
-                            raise
-                    else:
-                        self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
-            except PillowtopCheckpointReset:
-                self.changes_seen = 0
+        try:
+            for change in self.iter_changes(since, forever=forever):
+                if change:
+                    try:
+                        self.processor(change)
+                    except Exception as e:
+                        notify_exception(None, u'processor error {}'.format(e))
+                        raise
+                else:
+                    self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
+        except PillowtopCheckpointReset:
+            self.changes_seen = 0
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def run(self):
         """
