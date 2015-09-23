@@ -164,6 +164,7 @@ class SyncHistoryReport(DeploymentsReport):
     MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
+    emailable = True
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
 
     @property
