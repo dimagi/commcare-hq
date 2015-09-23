@@ -5,7 +5,8 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_number_of_forms_per_domain, get_number_of_forms_in_domain, \
     get_first_form_submission_received, get_last_form_submission_received, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
-    get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted
+    get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
+    get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from couchforms.models import XFormInstance
 
 
@@ -73,3 +74,8 @@ class CouchformsAnalyticsTest(TestCase):
     def test_get_all_user_ids_submitted(self):
         self.assertEqual(
             get_all_user_ids_submitted(self.domain), {self.user_id})
+
+    def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
+        self.assertEqual(
+            get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
+            {(self.xmlns, self.app_id)})

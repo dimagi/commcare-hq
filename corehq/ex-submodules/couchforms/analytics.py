@@ -131,3 +131,15 @@ def get_all_user_ids_submitted(domain):
         group_level=3
     ).all()
     return {user['key'][2] for user in submitted}
+
+
+def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
+    key = ["submission xmlns app", domain]
+    results = XFormInstance.get_db().view(
+        'reports_forms/all_forms',
+        startkey=key,
+        endkey=key + [{}],
+        group=True,
+        group_level=4,
+    ).all()
+    return {(result['key'][-2], result['key'][-1]) for result in results}
