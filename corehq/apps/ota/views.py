@@ -82,32 +82,6 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
     return restore_config.get_response()
 
 
-@login_or_digest_ex(allow_cc_users=True)
-def historical_forms(request, domain):
-    assert request.couch_user.is_member_of(domain)
-    user_id = request.couch_user.get_id
-    form_ids = get_form_ids_for_user(domain, user_id)
-
-    def data():
-        yield (
-            '<OpenRosaResponse xmlns="http://openrosa.org/http/response" '
-            'items="{}">\n    <message nature="success"/>\n'
-            .format(len(form_ids))
-        )
-
-        for form_id in form_ids:
-            xml = get_form_xml_element(form_id)
-            if xml:
-                yield '    {}'.format(etree.tostring(xml))
-            else:
-                yield '    <XFormNotFound/>'
-            yield '\n'
-        yield '</OpenRosaResponse>\n'
-
-    # to make this not stream, just call list on data()
-    return HttpResponse(data(), content_type='application/xml')
-
-
 class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
     page_title = ugettext_noop("Prime Restore Cache")
     section_name = ugettext_noop("Project Settings")

@@ -90,16 +90,6 @@ def clear_forms_in_domain(domain):
         item.delete()
 
 
-def get_form_ids_for_user(domain, user_id):
-    # todo: add pagination
-    for result in XFormInstance.get_db().view(
-            'reports_forms/all_forms',
-            startkey=["submission user", domain, user_id],
-            endkey=["submission user", domain, user_id, {}],
-            reduce=False):
-        yield result['id']
-
-
 def get_number_of_forms_all_domains_in_couch():
     """
     Return number of non-error, non-log forms total across all domains
