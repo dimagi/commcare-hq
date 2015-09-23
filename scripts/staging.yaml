@@ -51,6 +51,7 @@ branches:
   - billing/post-pay # Farid 9/3
   - dummy-ben
   - sync-history-email # Cal 9/22
+  - export-device-logs # Jenny 9/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
