@@ -76,7 +76,7 @@ class IndicatorPillowTests(TestCase):
             xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
         )
         form_alias.save()
-        self.form_pillow.run_burst()
+        self.form_pillow.process_changes(since=None, forever=False)
 
         indicator_form = IndicatorXForm.get(form_id)
         self.assertNotEqual(
@@ -100,7 +100,7 @@ class IndicatorPillowTests(TestCase):
         )
         forgotten_property.save()
 
-        self.case_pillow.run_burst()
+        self.case_pillow.process_changes(since=None, forever=False)
 
         indicator_case = IndicatorCase.get(case_id)
 
