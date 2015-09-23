@@ -1,3 +1,4 @@
+import logging
 from optparse import make_option
 from couchdbkit.exceptions import BulkSaveError
 from corehq.util.couch import categorize_bulk_save_errors
@@ -9,18 +10,18 @@ def bulk_delete(db, docs):
     if not docs:
         return
 
-    print("Deleting {} doc revisions".format(len(docs)))
+    logging.info("Deleting {} doc revisions".format(len(docs)))
     try:
         db.bulk_delete(docs)
     except BulkSaveError as e:
         errors = categorize_bulk_save_errors(e)
         successes = errors.pop(None, [])
         conflicts = errors.pop('conflict', [])
-        print("BulkSaveError: {} successful, {} conflicts".format(len(successes), len(conflicts)))
+        logging.error("BulkSaveError: {} successful, {} conflicts".format(len(successes), len(conflicts)))
         for error, results in errors.items():
-            print(results)
+            logging.error(results)
     else:
-        print('{} doc revisions deleted'.format(len(docs)))
+        logging.info('{} doc revisions deleted'.format(len(docs)))
 
 
 class Command(BaseCommand):
@@ -42,14 +43,15 @@ class Command(BaseCommand):
             results = db.view('doc_conflicts/conflicts', reduce=False, limit=options['batch'], include_docs=True, conflicts=True)
             total = results.total_rows
             if not total:
+                logging.info('Document conflict deletion complete')
                 return
-            print('Processing {} of {} docs'.format(len(results), total))
+            logging.info('Processing {} of {} docs'.format(len(results), total))
             to_delete = []
             for row in results:
                 doc = row['doc']
                 conflicts = doc.get('_conflicts', [])
                 doc_id = doc['_id']
-                print('Deleting {} conflicts for doc: {}'.format(len(conflicts), doc_id))
+                logging.info('Deleting {} conflicts for doc: {}'.format(len(conflicts), doc_id))
                 for rev in conflicts:
                     to_delete.append({
                         '_id': doc_id,
