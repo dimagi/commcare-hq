@@ -35,6 +35,12 @@ class Change(object):
     def __contains__(self, item):
         return item in self._dict
 
+    def get(self, key, default):
+        return self._dict.get(key, default)
+
+    def pop(self, key, default):
+        raise NotImplemented('This is a read-only dictionary!')
+
 
 class ChangeFeed(object):
     """

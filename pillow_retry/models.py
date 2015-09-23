@@ -74,7 +74,7 @@ class PillowError(models.Model):
     def get_or_create(cls, change, pillow, change_meta=None):
         pillow_path = path_from_object(pillow)
 
-        change.pop('doc', None)
+        change.get('doc', None)
         doc_id = change['id']
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
