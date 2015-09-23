@@ -1,11 +1,9 @@
 import logging
 from django.core.mail import send_mail
-from django.core.management.base import  BaseCommand
+from django.core.management.base import BaseCommand
 
 CHUNK_SIZE=500
 POOL_SIZE = 15
-
-
 
 
 class ReindexCommand(BaseCommand):
@@ -61,9 +59,6 @@ class ReindexCommand(BaseCommand):
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
         pillow_instance.set_checkpoint({ 'seq': pillow_instance.couch_db.info()['update_seq'] } )
-        def do_index(item):
-            print "Processing: %s" % item['id']
-            pillow_instance.processor(item, do_set_checkpoint=False)
 
         try:
             while len(chunk) > 0:
@@ -80,4 +75,3 @@ class ReindexCommand(BaseCommand):
                       'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
         except Exception, ex:
             logging.exception("%s pillowtop fast reindex failed: %s" % (self.pillow_name, ex))
-
