@@ -3,7 +3,7 @@ from corehq.util.couch import IterDB
 from corehq.util.couch_helpers import paginate_view
 
 
-def _get_all_docs_with_doc_types(db, doc_types):
+def get_all_docs_with_doc_types(db, doc_types):
     for doc_type in doc_types:
         results = paginate_view(
             db, 'all_docs/by_doc_type',
@@ -16,7 +16,7 @@ def _get_all_docs_with_doc_types(db, doc_types):
 def bulk_migrate(source_db, target_db, doc_types, filename):
 
     with open(filename, 'w') as f:
-        for doc in _get_all_docs_with_doc_types(source_db, doc_types):
+        for doc in get_all_docs_with_doc_types(source_db, doc_types):
             f.write('{}\n'.format(json.dumps(doc)))
 
     with open(filename, 'r') as f:

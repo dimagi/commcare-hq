@@ -1,6 +1,7 @@
 from copy import deepcopy
 from django.test import TestCase
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
+from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.migrator import Migrator
 from corehq.doctypemigrations.models import DocTypeMigrationState
 from dimagi.utils.couch.bulk import get_docs
@@ -18,6 +19,7 @@ class TestDocTypeMigrations(TestCase):
                 'CommCareUser',
             )
         )
+        delete_all_docs_by_doc_type(self.migration.source_db, self.migration.doc_types)
         self.docs = [
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
             {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
