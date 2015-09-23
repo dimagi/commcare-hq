@@ -32,7 +32,8 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     def from_case_index_update(cls, index):
         return cls(identifier=index.identifier,
                    referenced_type=index.referenced_type,
-                   referenced_id=index.referenced_id)
+                   referenced_id=index.referenced_id,
+                   relationship=index.relationship,)
 
     def __unicode__(self):
         return "%(identifier)s ref: (type: %(ref_type)s, id: %(ref_id)s)" % \
@@ -134,12 +135,14 @@ class IndexHoldingMixIn(object):
                     index = self.get_index(index_update.identifier)
                     index.referenced_type = index_update.referenced_type
                     index.referenced_id = index_update.referenced_id
+                    index.relationship = index_update.relationship
             else:
                 # no id, no index
                 if index_update.referenced_id:
                     self.indices.append(CommCareCaseIndex(identifier=index_update.identifier,
                                                           referenced_type=index_update.referenced_type,
-                                                          referenced_id=index_update.referenced_id))
+                                                          referenced_id=index_update.referenced_id,
+                                                          relationship=index_update.relationship,))
 
     def remove_index_by_ref_id(self, doc_id):
         index = self.get_index_by_ref_id(doc_id)

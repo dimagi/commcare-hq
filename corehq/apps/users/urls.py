@@ -6,10 +6,18 @@ from .views import (DefaultProjectUserSettingsView, DomainRequestView, EditWebUs
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
     BulkSMSVerificationView)
-from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
-    ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
-    ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
-    MobileWorkerListView, CreateCommCareUserModal)
+from .views.mobile.users import (
+    AsyncListCommCareUsersView,
+    ConfirmBillingAccountForExtraUsersView,
+    CreateCommCareUserView,
+    CommCareUserSelfRegistrationView,
+    CreateCommCareUserModal,
+    EditCommCareUserView,
+    ListCommCareUsersView,
+    MobileWorkerListView,
+    UploadCommCareUsers,
+    UserUploadStatusView,
+)
 
 
 urlpatterns = patterns('corehq.apps.users.views',
@@ -76,6 +84,8 @@ patterns("corehq.apps.users.views.mobile.users",
         name=CreateCommCareUserModal.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
+    url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
+        name=CommCareUserSelfRegistrationView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),

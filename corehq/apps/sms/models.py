@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+import base64
 import logging
+import uuid
 from dimagi.ext.couchdbkit import *
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import models
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -13,11 +16,17 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
+    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    apply_leniency)
 from corehq.apps.sms import util as smsutil
+from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
+    get_message)
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -1203,3 +1212,216 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
+
+
+class SelfRegistrationInvitation(models.Model):
+    PHONE_TYPE_ANDROID = 'android'
+    PHONE_TYPE_OTHER = 'other'
+    PHONE_TYPE_CHOICES = (
+        (PHONE_TYPE_ANDROID, ugettext_lazy('Android')),
+        (PHONE_TYPE_OTHER, ugettext_lazy('Other')),
+    )
+
+    STATUS_PENDING = 'pending'
+    STATUS_REGISTERED = 'registered'
+    STATUS_EXPIRED = 'expired'
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    phone_number = models.CharField(max_length=30, null=False, db_index=True)
+    token = models.CharField(max_length=126, null=False, unique=True, db_index=True)
+    app_id = models.CharField(max_length=126, null=True)
+    expiration_date = models.DateField(null=False)
+    created_date = models.DateTimeField(null=False)
+    odk_url = models.CharField(max_length=126, null=True)
+    phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
+    registered_date = models.DateTimeField(null=True)
+
+    @property
+    def already_registered(self):
+        return self.registered_date is not None
+
+    @property
+    def expired(self):
+        """
+        The invitation is valid until 11:59pm UTC on the expiration date.
+        """
+        return datetime.utcnow().date() > self.expiration_date
+
+    @property
+    def status(self):
+        if self.already_registered:
+            return self.STATUS_REGISTERED
+        elif self.expired:
+            return self.STATUS_EXPIRED
+        else:
+            return self.STATUS_PENDING
+
+    def completed(self):
+        self.registered_date = datetime.utcnow()
+        self.save()
+
+    def send_step1_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_INVITATION_START)
+        )
+
+    def send_step2_java_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,))
+        )
+
+    def send_step2_android_sms(self):
+        from corehq.apps.hqwebapp.utils import sign
+        from corehq.apps.sms.api import send_sms
+        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
+
+        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token])
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,))
+        )
+
+        if self.odk_url:
+            url = str(self.odk_url).strip()
+            message = 'ccapp: %s signature: %s' % (url, sign(url))
+            message = base64.b64encode(message)
+            message = '[COMMCARE APP - DO NOT DELETE] %s' % message
+            send_sms(
+                self.domain,
+                None,
+                self.phone_number,
+                message,
+            )
+
+    def expire(self):
+        self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
+        self.save()
+
+    @classmethod
+    def get_unexpired_invitations(cls, phone_number):
+        current_date = datetime.utcnow().date()
+        return cls.objects.filter(
+            phone_number=phone_number,
+            expiration_date__gte=current_date,
+            registered_date__isnull=True
+        )
+
+    @classmethod
+    def expire_invitations(cls, phone_number):
+        """
+        Expire all invitations for the given phone number that have not
+        yet expired.
+        """
+        for invitation in cls.get_unexpired_invitations(phone_number):
+            invitation.expire()
+
+    @classmethod
+    def by_token(cls, token):
+        try:
+            return cls.objects.get(token=token)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def by_phone(cls, phone_number, expire_duplicates=True):
+        """
+        Look up the unexpired invitation for the given phone number.
+        In the case of duplicates, only the most recent invitation
+        is returned.
+        If expire_duplicates is True, then any duplicates are automatically
+        expired.
+        Returns the invitation, or None if no unexpired invitations exist.
+        """
+        phone_number = apply_leniency(phone_number)
+        result = cls.get_unexpired_invitations(phone_number).order_by('-created_date')
+
+        if len(result) == 0:
+            return None
+
+        invitation = result[0]
+        if expire_duplicates and len(result) > 1:
+            for i in result[1:]:
+                i.expire()
+
+        return invitation
+
+    @classmethod
+    def get_app_odk_url(cls, domain, app_id):
+        """
+        Get the latest starred build (or latest build if none are
+        starred) for the app and return it's odk install url.
+        """
+        app = get_app(domain, app_id, latest=True)
+
+        if not app.copy_of:
+            # If latest starred build is not found, use the latest build
+            app = get_app(domain, app_id, latest=True, target='build')
+
+        if not app.copy_of:
+            # If no build is found, return None
+            return None
+
+        return app.get_short_odk_url(with_media=True)
+
+    @classmethod
+    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
+            days_until_expiration=30):
+        """
+        If app_id is passed in, then an additional SMS will be sent to Android
+        phones containing a link to the latest starred build (or latest
+        build if no starred build exists) for the app. Once ODK is installed,
+        it will automatically search for this SMS and install this app.
+
+        If app_id is left blank, the additional SMS is not sent, and once
+        ODK is installed it just skips the automatic app install step.
+        """
+        success_numbers = []
+        invalid_format_numbers = []
+        numbers_in_use = []
+
+        odk_url = None
+        if app_id:
+            odk_url = cls.get_app_odk_url(domain, app_id)
+
+        for phone_number in phone_numbers:
+            phone_number = apply_leniency(phone_number)
+            try:
+                CommCareMobileContactMixin.validate_number_format(phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(phone_number)
+                continue
+
+            if VerifiedNumber.by_phone(phone_number, include_pending=True):
+                numbers_in_use.append(phone_number)
+                continue
+
+            cls.expire_invitations(phone_number)
+
+            expiration_date = (datetime.utcnow().date() +
+                timedelta(days=days_until_expiration))
+
+            invitation = cls.objects.create(
+                domain=domain,
+                phone_number=phone_number,
+                token=uuid.uuid4().hex,
+                app_id=app_id,
+                expiration_date=expiration_date,
+                created_date=datetime.utcnow(),
+                odk_url=odk_url,
+            )
+
+            invitation.send_step1_sms()
+            success_numbers.append(phone_number)
+
+        return (success_numbers, invalid_format_numbers, numbers_in_use)

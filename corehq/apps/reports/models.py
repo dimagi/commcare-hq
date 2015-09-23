@@ -1,20 +1,23 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
+import functools
 import logging
 from urllib import urlencode
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from couchforms.filters import instances
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
+from corehq.apps.reports.dbaccessors import stale_get_exports_json
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from dimagi.ext.couchdbkit import *
@@ -24,7 +27,7 @@ from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
@@ -162,6 +165,9 @@ class TempCommCareUser(CommCareUser):
 
     class Meta:
         app_label = 'reports'
+
+
+ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -339,12 +345,24 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def view_kwargs(self):
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
+    def url_kwargs(self):
+        kwargs = {
+            'domain': self.domain,
+            'report_slug': self.report_slug,
+        }
 
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
+
+        return kwargs
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        kwargs = self.url_kwargs
+
+        if not self.is_configurable_report:
+            kwargs['permissions_check'] = self._dispatcher.permissions_check
 
         return kwargs
 
@@ -356,9 +374,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if self.is_configurable_report:
-                url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
+                url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+                url_base = reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
@@ -427,89 +445,92 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         """
         try:
             if self.report is None:
-                return _("The report used to create this scheduled report is no"
-                         " longer available on CommCare HQ.  Please delete this"
-                         " scheduled report and create a new one using an available"
-                         " report."), None
+                return ReportContent(
+                    _("The report used to create this scheduled report is no"
+                      " longer available on CommCare HQ.  Please delete this"
+                      " scheduled report and create a new one using an available"
+                      " report."),
+                    None,
+                )
         except Exception:
             pass
 
         from django.http import HttpRequest, QueryDict
-        request = HttpRequest()
-        request.couch_user = self.owner
-        request.user = self.owner.get_django_user()
-        request.domain = self.domain
-        request.couch_user.current_domain = self.domain
-        request.couch_user.language = lang
+        mock_request = HttpRequest()
+        mock_request.couch_user = self.owner
+        mock_request.user = self.owner.get_django_user()
+        mock_request.domain = self.domain
+        mock_request.couch_user.current_domain = self.domain
+        mock_request.couch_user.language = lang
 
-        request.GET = QueryDict(
-            self.query_string
-            + '&filterSet=true'
-            + ('&'
-               + urlencode(self.filters, True)
-               + '&'
-               + urlencode(self.get_date_range(), True)
-               if self.is_configurable_report else '')
-        )
+        mock_query_string_parts = [self.query_string, 'filterSet=true']
+        if self.is_configurable_report:
+            mock_query_string_parts.append(urlencode(self.filters, True))
+            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
+        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
-        CCHQPRBACMiddleware.apply_prbac(request)
+        CCHQPRBACMiddleware.apply_prbac(mock_request)
 
         try:
-            if self.is_configurable_report:
-                response = self._dispatcher.dispatch(
-                    request,
-                    self.subreport_slug,
-                    render_as='email',
-                    **self.view_kwargs
+            dispatch_func = functools.partial(self._dispatcher.dispatch, mock_request, **self.view_kwargs)
+            email_response = dispatch_func(render_as='email')
+            if email_response.status_code == 302:
+                return ReportContent(
+                    _(
+                        "We are sorry, but your saved report '%(config_name)s' "
+                        "is no longer accessible because the owner %(username)s "
+                        "is no longer active."
+                    ) % {
+                        'config_name': self.name,
+                        'username': self.owner.username
+                    },
+                    None,
                 )
-            else:
-                response = self._dispatcher.dispatch(
-                    request,
-                    render_as='email',
-                    permissions_check=self._dispatcher.permissions_check,
-                    **self.view_kwargs
-                )
-            if attach_excel is True:
-                if self.is_configurable_report:
-                    file_obj = self._dispatcher.dispatch(
-                        request, self.subreport_slug,
-                        render_as='excel',
-                        **self.view_kwargs
-                    )
-                else:
-                    file_obj = self._dispatcher.dispatch(
-                        request,
-                        render_as='excel',
-                        permissions_check=self._dispatcher.permissions_check,
-                        **self.view_kwargs
-                    )
-            else:
-                file_obj = None
-            return json.loads(response.content)['report'], file_obj
+            return ReportContent(
+                json.loads(email_response.content)['report'],
+                dispatch_func(render_as='excel') if attach_excel else None,
+            )
         except PermissionDenied:
-            return _(
-                "We are sorry, but your saved report '%(config_name)s' "
-                "is no longer accessible because your subscription does "
-                "not allow Custom Reporting. Please talk to your Project "
-                "Administrator about enabling Custom Reports. If you "
-                "want CommCare HQ to stop sending this message, please "
-                "visit %(saved_reports_url)s to remove this "
-                "Emailed Report."
-            ) % {
-                'config_name': self.name,
-                'saved_reports_url': absolute_reverse('saved_reports',
-                                                      args=[request.domain]),
-            }, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer accessible because your subscription does "
+                    "not allow Custom Reporting. Please talk to your Project "
+                    "Administrator about enabling Custom Reports. If you "
+                    "want CommCare HQ to stop sending this message, please "
+                    "visit %(saved_reports_url)s to remove this "
+                    "Emailed Report."
+                ) % {
+                    'config_name': self.name,
+                    'saved_reports_url': absolute_reverse(
+                        'saved_reports', args=[mock_request.domain]
+                    ),
+                },
+                None,
+            )
         except Http404:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "can not be generated since you do not have the correct permissions. "
-                     "Please talk to your Project Administrator about getting permissions for this"
-                     "report.") % {'config_name': self.name}, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "can not be generated since you do not have the correct permissions. "
+                    "Please talk to your Project Administrator about getting permissions for this"
+                    "report."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
         except UnsupportedSavedReportError:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "is no longer available. If you think this is a mistake, please report an issue."
-                     ) % {'config_name': self.name}, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer available. If you think this is a mistake, please report an issue."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
@@ -517,7 +538,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report': self.report_slug,
                 'report config': self.get_id
             })
-            return _("An error occurred while generating this report."), None
+            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_configurable_report(self):
@@ -753,12 +774,21 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+    @classmethod
+    def get_stale_exports(cls, domain):
+        return [
+            cls.wrap(export)
+            for export in stale_get_exports_json(domain)
+            if export['type'] == cls._default_type
+        ]
+
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
     split_multiselects = BooleanProperty(default=False)
+    _default_type = 'form'
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
@@ -815,9 +845,10 @@ class FormExportSchema(HQExportSchema):
 
         f = SerializableFunction(_top_level_filter)
         if self.app_id is not None:
-            f.add(reports.util.app_export_filter, app_id=self.app_id)
+            from corehq.apps.reports import util as reports_util
+            f.add(reports_util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
-            f.add(couchforms.filters.instances)
+            f.add(instances)
         actual = SerializableFunction(default_form_filter, filter=f)
         return actual
 
@@ -883,6 +914,7 @@ class FormDeidExportSchema(FormExportSchema):
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
+    _default_type = 'case'
 
     @property
     def filter(self):
@@ -915,7 +947,7 @@ class CaseExportSchema(HQExportSchema):
         return props
 
 
-class FakeFormExportSchema(FakeSavedExportSchema):
+class DefaultFormExportSchema(DefaultExportSchema):
 
     def remap_tables(self, tables):
         # kill the weird confusing stuff, and rename the main table to something sane

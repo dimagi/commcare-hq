@@ -1,5 +1,6 @@
 from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
 from corehq.apps.products.models import SQLProduct
+from phonelog.models import DeviceReportEntry
 
 
 def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):
@@ -19,6 +20,7 @@ def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):
         # StockState objects are "derived" and get created by StockTransaction post_save signal.
         # We may want to directly port these over in the future.
         # (StockState, 'case_id'),
+        (DeviceReportEntry, 'xform_id'),
     ]
     for model, doc_field in postgres_models:
         query_set = model.objects.using(remote_postgres_slug).filter(

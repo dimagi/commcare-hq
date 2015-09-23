@@ -494,7 +494,6 @@ def iter_app_files(app, include_multimedia_files, include_index_files):
         app.remove_unused_mappings()
         file_iterator, errors = iter_media_files(app.get_media_objects())
     if include_index_files:
-        from corehq.apps.app_manager.views import iter_index_files
         index_files, index_file_errors = iter_index_files(app)
         if index_file_errors:
             errors.extend(index_file_errors)
@@ -637,3 +636,34 @@ class ViewMultimediaFile(View):
             data = buffer.getvalue()
             content_type = metadata['content_type']
         return HttpResponse(data, content_type=content_type)
+
+
+def iter_index_files(app):
+    from corehq.apps.app_manager.views.download import download_index_files
+    skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+    text_extensions = ('.xml', '.ccpr', '.txt')
+    get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+    files = []
+    errors = []
+
+    def _encode_if_unicode(s):
+        return s.encode('utf-8') if isinstance(s, unicode) else s
+
+    def _files(files):
+        for name, f in files:
+            if name not in skip_files:
+                # TODO: make RemoteApp.create_all_files not return media files
+                extension = os.path.splitext(name)[1]
+                data = _encode_if_unicode(f) if extension in text_extensions else f
+                yield (get_name(name), data)
+    try:
+        files = download_index_files(app)
+    except Exception:
+        errors = _(
+            "We were unable to get your files "
+            "because your Application has errors. "
+            "Please click Make New Version under Deploy "
+            "for feedback on how to fix these errors."
+        )
+
+    return _files(files), errors

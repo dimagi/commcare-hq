@@ -5,7 +5,8 @@ import urllib
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from corehq import Domain, privileges, toggles
+from corehq import privileges
+from corehq.apps.domain.models import Domain, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView

@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import csv
+from datetime import datetime
 import io
 
 from couchdbkit import ResourceNotFound
@@ -20,7 +21,7 @@ from django.http import HttpResponseRedirect, HttpResponse,\
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.contrib import messages
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import privileges
@@ -49,8 +50,13 @@ from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
 
 from couchexport.models import Format
 from corehq.apps.users.forms import (
-    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
-    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm
+    CommCareAccountForm,
+    CommtrackUserForm,
+    ConfirmExtraUserChargesForm,
+    MultipleSelectionForm,
+    NewMobileWorkerForm,
+    SelfRegistrationForm,
+    UpdateCommCareUserInfoForm,
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
@@ -58,6 +64,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -156,7 +163,8 @@ class EditCommCareUserView(BaseFullEditUserView):
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
-        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id})
+        program_id = self.editable_user.get_domain_membership(self.domain).program_id
+        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id, 'program_id': program_id})
 
     @property
     def page_context(self):
@@ -635,8 +643,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
     @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
-            return CommCareAccountForm(self.request.POST)
-        return CommCareAccountForm()
+            return CommCareAccountForm(self.request.POST, domain=self.domain)
+        return CommCareAccountForm(domain=self.domain)
 
     @property
     def page_context(self):
@@ -935,9 +943,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     def new_commcare_user_form(self):
         if self.request.method == "POST":
             data = self.request.POST.dict()
-            data['domain'] = self.domain
-            return CommCareAccountForm(data)
-        return CommCareAccountForm()
+            return CommCareAccountForm(data, domain=self.domain)
+        return CommCareAccountForm(domain=self.domain)
 
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
@@ -1048,7 +1055,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        task_ref = expose_cached_download(None, expiry=1*60*60, file_extension=None)
+        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
             list(self.user_specs),
@@ -1162,3 +1169,71 @@ def download_commcare_users(request, domain):
         )
 
     return response
+
+
+class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
+    template_name = "users/mobile/commcare_user_self_register.html"
+    urlname = "commcare_user_self_register"
+    strict_domain_fetching = True
+
+    @property
+    @memoized
+    def token(self):
+        return self.kwargs.get('token')
+
+    @property
+    @memoized
+    def invitation(self):
+        return SelfRegistrationInvitation.by_token(self.token)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return SelfRegistrationForm(self.request.POST, domain=self.domain)
+        else:
+            return SelfRegistrationForm(domain=self.domain)
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
+        context.update({
+            'form': self.form,
+            'invitation': self.invitation,
+            'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),
+            'google_play_store_url': 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en',
+        })
+        return context
+
+    def validate_request(self):
+        if (
+            not self.invitation or
+            self.invitation.domain != self.domain or
+            not self.domain_object.sms_mobile_worker_registration_enabled
+        ):
+            raise Http404()
+
+    def get(self, request, *args, **kwargs):
+        self.validate_request()
+        return super(CommCareUserSelfRegistrationView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.validate_request()
+        if (
+            not self.invitation.expired and
+            not self.invitation.already_registered and
+            self.form.is_valid()
+        ):
+            user = CommCareUser.create(
+                self.domain,
+                self.form.cleaned_data.get('username'),
+                self.form.cleaned_data.get('password'),
+                phone_number=self.invitation.phone_number,
+                device_id='Generated from HQ',
+            )
+            # Since the user is being created by following the link and token
+            # we sent to their phone by SMS, we can verify their phone number
+            user.save_verified_number(self.domain, self.invitation.phone_number, True)
+
+            self.invitation.registered_date = datetime.utcnow()
+            self.invitation.save()
+        return self.get(request, *args, **kwargs)

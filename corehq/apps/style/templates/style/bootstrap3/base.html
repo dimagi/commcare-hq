@@ -49,6 +49,19 @@
         {% if request.use_select2 %}
         {% compress css %}
             <link type="text/css"
+                   rel="stylesheet"
+                   media="all"
+                   href="{% new_static 'style/lib/select2/select2.css' %}" />
+            <link type="text/css"
+                   rel="stylesheet"
+                   media="all"
+                   href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2_v4 %}
+        {% compress css %}
+            <link type="text/css"
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/lib/select2-4.0/dist/css/select2.min.css' %}" />
@@ -281,6 +294,12 @@
         {% endcompress %}
 
         {% if request.use_select2 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2_v4 %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}

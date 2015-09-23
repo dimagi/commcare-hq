@@ -51,12 +51,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
-        self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
-        self.suite_xml_is_usercase_in_use_mock.return_value = True
 
     def tearDown(self):
-        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -663,7 +659,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
             app.create_suite(),
-            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
@@ -727,7 +723,9 @@ class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.suite_xml.sections.menus.is_usercase_in_use'
+        )
         self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
         self.factory = AppFactory(build_version='2.9')
 

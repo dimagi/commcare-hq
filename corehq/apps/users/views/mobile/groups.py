@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.sms.verify import (

@@ -38,6 +38,9 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
+    pillow_supervisor_status
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
@@ -89,6 +92,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
+from pillowtop.utils import get_pillow_json
 
 
 @require_superuser
@@ -385,7 +389,11 @@ def system_ajax(request):
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
-        return json_response(get_all_pillows_json())
+        pillow_meta = get_all_pillows_json()
+        supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
+        for meta in pillow_meta:
+            meta.update(supervisor_status[meta['name']])
+        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
     elif type == 'stale_pillows':
         es_index_status = [
             check_case_es_index(interval=3),
@@ -432,6 +440,8 @@ def system_info(request):
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
     context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+
+    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
 
     context.update(check_redis())
     context.update(check_rabbitmq())
@@ -489,12 +499,65 @@ def db_comparisons(request):
 
 @require_POST
 @require_superuser_or_developer
-def reset_pillow_checkpoint(request):
-    pillow = get_pillow_by_name(request.POST["pillow_name"])
-    if pillow:
-        pillow.reset_checkpoint()
+def pillow_operation_api(request):
+    pillow_name = request.POST["pillow_name"]
+    operation = request.POST["operation"]
+    pillow = get_pillow_by_name(pillow_name)
 
-    return redirect("system_info")
+    def get_response(error=None):
+        response = {
+            'pillow_name': pillow_name,
+            'operation': operation,
+            'success': error is None,
+            'message': error,
+        }
+        response.update(pillow_supervisor_status(pillow_name))
+        if pillow:
+            response.update(get_pillow_json(pillow))
+        return json_response(response)
+
+    @any_toggle_enabled(SUPPORT)
+    def reset_pillow(request):
+        pillow.reset_checkpoint()
+        if supervisor.restart_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response("Checkpoint reset but failed to restart pillow. "
+                                "Restart manually to complete reset.")
+
+    @any_toggle_enabled(SUPPORT)
+    def start_pillow(request):
+        if supervisor.start_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    @any_toggle_enabled(SUPPORT)
+    def stop_pillow(request):
+        if supervisor.stop_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    if pillow:
+        try:
+            supervisor = PillowtopSupervisorApi()
+        except Exception as e:
+            return get_response(str(e))
+
+        try:
+            if operation == 'reset_checkpoint':
+                reset_pillow(request)
+            if operation == 'start':
+                start_pillow(request)
+            if operation == 'stop':
+                stop_pillow(request)
+            if operation == 'refresh':
+                return get_response()
+        except SupervisorException as e:
+                return get_response(str(e))
+    else:
+        return get_response("No pillow found with name '{}'".format(pillow_name))
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
@@ -818,7 +881,7 @@ def callcenter_test(request):
         }
 
     if user or user_case:
-        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        custom_cache = None if enable_caching else cache.caches['dummy']
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,

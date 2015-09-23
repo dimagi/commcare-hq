@@ -5,6 +5,7 @@ from sqlalchemy.orm.session import sessionmaker
 from django.core import signals
 
 DEFAULT_ENGINE_ID = 'default'
+UCR_ENGINE_ID = 'ucr'
 
 
 def create_engine(connection_string=None):
@@ -81,10 +82,9 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        # for now this just always returns the same connection string for any
-        # engine_id, but in the future we could make this function more complicated
         return {
-            DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL
+            DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
+            UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
         }.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
 
 

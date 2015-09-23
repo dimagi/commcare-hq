@@ -10,7 +10,7 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_3,
     CT_LEDGER_STOCK,
@@ -506,18 +506,18 @@ def prefix_usercase_properties(properties):
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
-    datums = SuiteGenerator.get_new_case_id_datums_meta(form)
-    session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
+    datums = EntriesHelper.get_new_case_id_datums_meta(form)
+    session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
-            extra_datums = SuiteGenerator.get_extra_case_id_datums(form)
+            extra_datums = EntriesHelper.get_extra_case_id_datums(form)
         except SuiteError as err:
             _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
-            if SuiteGenerator.any_usercase_datums(extra_datums):
+            if EntriesHelper.any_usercase_datums(extra_datums):
                 usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
                 if usercase:
                     session_data[USERCASE_ID] = usercase.get_id

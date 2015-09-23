@@ -3,7 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN

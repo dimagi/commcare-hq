@@ -14,6 +14,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+        var CKEDITOR_BASEPATH = "{% static 'app_manager/js/vellum/lib/ckeditor/' %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
@@ -40,7 +41,8 @@
                     "meta/username",
                     "meta/userID",
                     "meta/timeStart",
-                    "meta/timeEnd"
+                    "meta/timeEnd",
+                    "meta/location"
                 ],
                 onFormSave: function (data) {
                     COMMCAREHQ.app_manager.updateDOM(data.update);

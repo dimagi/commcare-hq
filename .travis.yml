@@ -45,3 +45,6 @@ services:
   - postgresql
   - couchdb
   - redis-server
+notifications:
+  slack:
+    secure: QROh5w8THwXzuj2fDB3GujwwGyHd1O5wPkZ2qUzNofbpQhOLK+Ayul/UPSmJuUtlTgtip6sBwrtI0E7ujRLyWIa9EJMMfiGdM8wr+Y1w08P6LbDqlmj8dGhUZznWb7rptJ2GeTx6jp4a6MUpc9LfKJMbDZ2Ro5Qe1jdp9wx1zdw=

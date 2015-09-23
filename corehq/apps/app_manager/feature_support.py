@@ -96,4 +96,14 @@ class CommCareFeatureSupportMixin(object):
         """
         In 2.22 and higher, case list icon column is sized based on actual image width.
         """
-        return self._require_minimum_version('2.22')
+        # temporarily disabled due to issue on mobile side handling exact pixel widths.
+        # will look into it when there is a little more time. @orangejenny
+        # return self._require_minimum_version('2.22')
+        return False
+
+    @property
+    def enable_image_resize(self):
+        """
+        Image resize only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')

@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
-from corehq import toggle_enabled, toggles
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -16,9 +16,7 @@ from corehq.apps.export.forms import CreateFormExportForm, CreateCaseExportForm
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.standard.export import (
-    CaseExportInterface,
     CaseExportReport,
-    FormExportInterface,
     ExcelExportReport,
 )
 from corehq.apps.settings.views import BaseProjectDataView
@@ -79,11 +77,6 @@ class BaseExportView(BaseProjectDataView):
     @memoized
     def report_class(self):
         try:
-            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-                return {
-                    'form': FormExportInterface,
-                    'case': CaseExportInterface,
-                }[self.export_type]
             return {
                 'form': ExcelExportReport,
                 'case': CaseExportReport

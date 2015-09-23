@@ -1,5 +1,5 @@
 import logging
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.locations.models import SQLLocation
@@ -253,13 +253,17 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
-                      first_name='', last_name=''):
+    def get_username(self, ilsgateway_smsuser, username_part=None):
         domain_part = "%s.commcarehq.org" % self.domain
+
         if not username_part:
             username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(),
                                       ilsgateway_smsuser.id)
-        username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+        return "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part), username_part
+
+    def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
+                      first_name='', last_name=''):
+        username, username_part = self.get_username(ilsgateway_smsuser, username_part)
         # sanity check
         assert len(username) <= 128
         user = CouchUser.get_by_username(username)

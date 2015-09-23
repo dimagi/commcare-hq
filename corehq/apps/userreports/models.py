@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import json
+from corehq.db import UCR_ENGINE_ID
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -62,6 +63,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     Each data source can back an arbitrary number of reports.
     """
     domain = StringProperty(required=True)
+    engine_id = StringProperty(default=UCR_ENGINE_ID)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
@@ -230,10 +232,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @classmethod
+    def all_ids(cls):
+        return [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
+                                                       reduce=False, include_docs=False)]
+
+    @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
-                                                      reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
+        for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
 
@@ -265,10 +270,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        try:
-            return get_datasource_config(self.config_id, self.domain)[0]
-        except DataSourceConfigurationNotFoundError:
-            raise BadSpecError(_('The data source referenced by this report could not be found.'))
+        return get_datasource_config(self.config_id, self.domain)[0]
 
     @property
     @memoized
@@ -426,7 +428,7 @@ class StaticReportConfiguration(JsonObject):
     def all(cls):
         for wrapped in StaticReportConfiguration._all():
             for domain in wrapped.domains:
-                doc = copy(wrapped.config)
+                doc = copy(wrapped.to_json()['config'])
                 doc['domain'] = domain
                 doc['_id'] = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
                 doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
@@ -460,16 +462,21 @@ class StaticReportConfiguration(JsonObject):
 
 
 def get_datasource_config(config_id, domain):
+    def _raise_not_found():
+        raise DataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
+
     is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
         if not config or config.domain != domain:
-            raise DataSourceConfigurationNotFoundError
+            _raise_not_found()
     else:
         try:
             config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
         except DocumentNotFound:
-            raise DataSourceConfigurationNotFoundError
+            _raise_not_found()
     return config, is_static
 
 

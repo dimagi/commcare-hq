@@ -3,7 +3,7 @@ Cython==0.17.4
 restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.0
-jsonobject-couchdbkit==0.7.0.0
+jsonobject-couchdbkit==0.7.0.1
 celery==3.1.17
 decorator==3.3.2
 django==1.7.10
@@ -33,6 +33,7 @@ phonenumberslite==6.0.0a
 poster==0.8.1
 psycopg2==2.5.1
 psycogreen==1.0
+pycrypto==2.6.1
 py-KISSmetrics==1.0.1
 https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz
 python-dateutil==1.5

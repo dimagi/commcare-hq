@@ -2,7 +2,7 @@ import logging
 from zipfile import ZipFile
 from django.core.servers.basehttp import FileWrapper
 from couchexport.files import TempBase
-from couchexport.models import FakeSavedExportSchema, SavedExportSchema
+from couchexport.models import DefaultExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
@@ -25,7 +25,7 @@ def export_data_shared(export_tag, format=None, filename=None,
     if not filename:
         filename = export_tag
 
-    files = FakeSavedExportSchema(index=export_tag).get_export_files(
+    files = DefaultExportSchema(index=export_tag).get_export_files(
         format=format,
         previous_export_id=previous_export_id,
         filter=filter,
