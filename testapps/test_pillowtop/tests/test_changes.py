@@ -42,7 +42,6 @@ class ChangeFeedDbTest(TestCase):
             pillow.process_changes(forever=False)
 
         change = self._extract_change_from_call_args(pillow.processor.call_args)
-        print change
         self.assertEqual(doc_id, change['id'])
         self.assertTrue('doc' not in change)
 
