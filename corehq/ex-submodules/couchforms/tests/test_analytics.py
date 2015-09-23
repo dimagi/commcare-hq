@@ -23,9 +23,11 @@ class CouchformsAnalyticsTest(TestCase):
         cls.user_id = uuid.uuid4().hex
         cls.forms = [
             XFormInstance(domain=cls.domain, received_on=cls.now,
-                          app_id=cls.app_id, xmlns=cls.xmlns, form={'meta': {'userID': cls.user_id, 'username': 'francis'}}),
+                          app_id=cls.app_id, xmlns=cls.xmlns,
+                          form={'meta': {'userID': cls.user_id, 'username': 'francis'}}),
             XFormInstance(domain=cls.domain, received_on=cls.now - cls._60_days,
-                          app_id=cls.app_id, xmlns=cls.xmlns, form={'meta': {'userID': cls.user_id, 'username': 'frank'}}),
+                          app_id=cls.app_id, xmlns=cls.xmlns,
+                          form={'meta': {'userID': cls.user_id, 'username': 'frank'}}),
         ]
         for form in cls.forms:
             form.save()

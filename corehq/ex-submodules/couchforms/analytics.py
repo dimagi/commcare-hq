@@ -1,5 +1,4 @@
 import datetime
-from dimagi.utils.couch.database import get_db
 
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
@@ -35,7 +34,7 @@ def get_number_of_forms_per_domain():
             group=True,
             group_level=2,
             startkey=key,
-            endkey=key+[{}],
+            endkey=key + [{}],
             stale=stale_ok(),
         ).all()
     }
@@ -47,7 +46,7 @@ def get_number_of_forms_in_domain(domain):
     row = XFormInstance.get_db().view(
         "reports_forms/all_forms",
         startkey=key,
-        endkey=key+[{}],
+        endkey=key + [{}],
         stale=stale_ok(),
     ).one()
     return row["value"] if row else 0
