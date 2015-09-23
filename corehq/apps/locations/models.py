@@ -76,7 +76,7 @@ class LocationType(models.Model):
     name = models.CharField(max_length=255)
     code = models.SlugField(db_index=False, null=True)
     parent_type = models.ForeignKey('self', null=True)
-    administrative = models.BooleanField(default=False)
+    administrative = models.BooleanField(default=True)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
