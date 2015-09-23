@@ -345,12 +345,21 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def view_kwargs(self):
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
+    def url_kwargs(self):
+        kwargs = {
+            'domain': self.domain,
+            'report_slug': self.report_slug,
+        }
 
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
+
+        return kwargs
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        kwargs = self.url_kwargs
 
         if not self.is_configurable_report:
             kwargs['permissions_check'] = self._dispatcher.permissions_check
@@ -367,7 +376,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if self.is_configurable_report:
                 url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+                url_base = reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
