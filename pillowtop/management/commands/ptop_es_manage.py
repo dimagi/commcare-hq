@@ -65,7 +65,7 @@ class Command(LabelCommand):
                 for pillow in aliased_pillows:
                     pillow.delete_index()
                     print 'deleted elastic index: {}'.format(pillow.es_index)
-                    checkpoint_id = pillow.get_checkpoint_doc_name()
+                    checkpoint_id = pillow.checkpoint_manager.checkpoint_id
                     if pillow.couch_db.doc_exist(checkpoint_id):
                         pillow.couch_db.delete_doc(checkpoint_id)
                         print 'deleted checkpoint: {}'.format(checkpoint_id)

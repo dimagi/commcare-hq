@@ -1,21 +1,11 @@
-from unittest2 import TestCase
+from django.test import override_settings, SimpleTestCase
 from pillowtop import get_all_pillows
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 
 
-def import_settings():
-    class MockSettings(object):
-        PILLOWTOPS = {'test': ['pillowtop.tests.FakePillow']}
-
-    return MockSettings()
-
-
-class PillowTopTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        import pillowtop.run_pillowtop
-        pillowtop.utils.import_settings = import_settings
+@override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
+class PillowTopTestCase(SimpleTestCase):
 
     def test_import_pillows_class_only(self):
         pillows = get_all_pillows(instantiate=False)
