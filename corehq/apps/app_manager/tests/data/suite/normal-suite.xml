@@ -133,10 +133,8 @@
         </template>
     </field>
     <field>
-        <header width="0">
-            <text>
-                <locale id="m0.case_short.case_late-flag_6.header"/>
-            </text>
+        <header width="11%">
+            <text/>
         </header>
         <template width="11%">
             <text>

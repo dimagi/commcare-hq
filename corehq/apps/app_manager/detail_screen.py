@@ -236,9 +236,15 @@ class FormattedDetailColumn(object):
 class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
-    def header_width(self):
+    def header(self):
         if self.detail.display == 'short':
-            return 0
+            header = sx.Header(
+                text=sx.Text(),
+                width=self.template_width
+            )
+        else:
+            header = super(HideShortHeaderColumn, self).header
+        return header
 
 
 class HideShortColumn(HideShortHeaderColumn):
@@ -350,7 +356,6 @@ class EnumImage(Enum):
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
-
     template_width = "11%"
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
