@@ -37,7 +37,7 @@ class ChangeFeedDbTest(TestCase):
 
         change = self._extract_change_from_call_args(pillow.processor.call_args)
         self.assertEqual(doc_id, change['id'])
-        self.assertTrue('doc' not in change)
+        self.assertTrue(change.get('doc', None) is None)
 
     def test_couch_filter(self):
         pillow = BasicPillow(couch_db=self.couch_db)
