@@ -1364,15 +1364,15 @@ def _form_instance_to_context_url(domain, instance):
     except ResourceNotFound:
         raise Http404(_('Application not found.'))
 
-    for module in build.get_modules():
-        for form in module.get_forms():
-            if form.xmlns == instance.xmlns:
-                return reverse(
-                    'cloudcare_form_context',
-                    args=[domain, instance.build_id, module.id, form.id],
-                    params={'instance_id': instance._id}
-                )
-    raise Http404(_('Missing module or form information!'))
+    form = build.get_form_by_xmlns(instance.xmlns)
+    if not form:
+        raise Http404(_('Missing module or form information!'))
+
+    return reverse(
+        'cloudcare_form_context',
+        args=[domain, instance.build_id, form.get_module().id, form.id],
+        params={'instance_id': instance._id}
+    )
 
 
 @require_form_view_permission
