@@ -271,7 +271,7 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: (False, True, True, True, True),
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
-            cls.SMS_PRICING: (False, _ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>'), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>'), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>')),
+            cls.SMS_PRICING: (False, ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>'), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>'), _('<a href="https://www.commcarehq.org/messaging-pricing" target="_blank">Click Here</a>')),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
             cls.ADVANCED_ROLES: (False, True, True, True, True),
