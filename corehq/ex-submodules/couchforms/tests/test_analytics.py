@@ -6,7 +6,8 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_first_form_submission_received, get_last_form_submission_received, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
-    get_all_xmlns_app_id_pairs_submitted_to_in_domain
+    get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
+    get_last_form_submission_for_user_for_app
 from couchforms.models import XFormInstance
 
 
@@ -79,3 +80,12 @@ class CouchformsAnalyticsTest(TestCase):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
             {(self.xmlns, self.app_id)})
+
+    def test_get_last_form_submission_for_user_for_app(self):
+        self.assert_docs_equal(
+            get_last_form_submission_for_user_for_app(self.domain, self.user_id, self.app_id),
+            self.forms[0])
+
+    def assert_docs_equal(self, doc1, doc2):
+        self.assertEqual(type(doc1), type(doc2))
+        self.assertEqual(doc1.to_json(), doc2.to_json())

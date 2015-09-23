@@ -19,6 +19,7 @@ from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
+from couchforms.analytics import get_last_form_submission_for_user_for_app
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -93,22 +94,13 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
+        selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
         for user in self.users:
             last_seen = last_sync = app_name = None
 
-            key = make_form_couch_key(self.domain, user_id=user.user_id,
-                                      app_id=selected_app or None)
-            xform = XFormInstance.view(
-                "reports_forms/all_forms",
-                startkey=key+[{}],
-                endkey=key,
-                include_docs=True,
-                descending=True,
-                reduce=False,
-                limit=1,
-            ).first()
+            xform = get_last_form_submission_for_user_for_app(
+                self.domain, user.user_id, selected_app)
 
             if xform:
                 last_seen = xform.received_on
