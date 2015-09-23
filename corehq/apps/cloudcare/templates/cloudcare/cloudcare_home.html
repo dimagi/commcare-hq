@@ -60,7 +60,7 @@
         deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
         deleteSuccess: "{% trans "Form was deleted." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
-        dirty: "{% trans "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
+        dirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}"
     };
 
     $(function () {
@@ -96,6 +96,7 @@
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled
         });
+
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
 
