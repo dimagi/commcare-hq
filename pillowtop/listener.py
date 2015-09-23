@@ -30,6 +30,7 @@ from couchdbkit.changes import ChangesStream
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.utils import get_current_seq
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -120,7 +121,7 @@ class BasicPillow(object):
             db=self.couch_db,
             feed='continuous',
             heartbeat=True,
-            since=self.since,
+            since=self.get_last_checkpoint_sequence(),
             filter=self.couch_filter,
             include_docs=self.include_docs,
             **self.extra_args
@@ -157,9 +158,13 @@ class BasicPillow(object):
     def reset_checkpoint(self):
         self.checkpoint_manager.reset_checkpoint()
 
+    def get_last_checkpoint_sequence(self):
+        return self.checkpoint_manager.get_or_create_checkpoint()['seq']
+
     @property
     def since(self):
-        return self.checkpoint_manager.get_or_create_checkpoint()['seq']
+        # todo: see if we can remove this. It is hard to search for.
+        return self.get_last_checkpoint_sequence()
 
     def set_checkpoint(self, change):
         pillow_logging.info(
@@ -168,7 +173,7 @@ class BasicPillow(object):
         self.checkpoint_manager.update_checkpoint(change['seq'])
 
     def get_db_seq(self):
-        return self.couch_db.info()['update_seq']
+        return get_current_seq(self.couch_db)
 
     def processor(self, change, do_set_checkpoint=True):
         """

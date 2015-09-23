@@ -95,3 +95,7 @@ def get_pillow_json(pillow_or_class_or_name):
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+
+def get_current_seq(couch_db):
+    return couch_db.info()['update_seq']
