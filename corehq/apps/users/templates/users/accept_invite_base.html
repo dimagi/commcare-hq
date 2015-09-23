@@ -64,12 +64,20 @@
                         </div>
                     {% endfor %}
                     <fieldset>
-                        <legend>{% trans 'New User Information' %}</legend>
+                        {% if create_domain %}
+                            <legend>{% trans 'New user information' %}</legend>
+                        {% endif %}
                         {% include "users/partial/field.html" with field=form.full_name %}
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
-                        {% include "users/partial/field.html" with field=form.hr_name %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}
+                        {% if create_domain %}
+                            <legend>{% trans "Create your first project" %}</legend>
+                            {% include "registration/partials/field.html" with field=form.hr_name %}
+                        {% endif %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
                     </fieldset>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large">{% trans 'Create Account' %}</button>
