@@ -112,24 +112,28 @@ class BasicPillow(object):
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
-    def process_changes(self, forever):
-        """
-        Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
-        http://couchdbkit.org/docs/changes.html
-        """
+    def iter_changes(self, since, forever):
         extra_args = {'feed': 'continuous'} if forever else {}
         extra_args.update(self.extra_args)
         changes_stream = ChangesStream(
             db=self.couch_db,
             heartbeat=True,
-            since=self.get_last_checkpoint_sequence(),
+            since=since,
             filter=self.couch_filter,
             include_docs=self.include_docs,
             **extra_args
         )
+        for change in changes_stream:
+            yield change
+
+    def process_changes(self, forever):
+        """
+        Process changes from the changes stream.
+        """
+        change_gen = self.iter_changes(self.self.get_last_checkpoint_sequence(), forever=forever)
         while True:
             try:
-                for change in changes_stream:
+                for change in change_gen:
                     if change:
                         try:
                             self.processor(change)
