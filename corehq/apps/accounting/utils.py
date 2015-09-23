@@ -200,17 +200,16 @@ def fmt_dollar_amount(decimal_value):
 
 def get_customer_cards(account, username, domain):
     from corehq.apps.accounting.models import (
-        PaymentMethod, PaymentMethodType,
+        StripePaymentMethod, PaymentMethodType,
     )
-    from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
     try:
-        payment_method = PaymentMethod.objects.get(
+        payment_method = StripePaymentMethod.objects.get(
             web_user=username,
             method_type=PaymentMethodType.STRIPE
         )
-        stripe_customer = get_or_create_stripe_customer(payment_method)
+        stripe_customer = payment_method.customer
         return stripe_customer.cards
-    except (PaymentMethod.DoesNotExist):
+    except (StripePaymentMethod.DoesNotExist):
         pass
     return None
 

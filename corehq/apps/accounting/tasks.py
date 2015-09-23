@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
@@ -29,6 +30,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
@@ -406,3 +408,9 @@ def weekly_digest():
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
+
+
+@periodic_task(run_every=crontab(hour=01, minute=0,))
+def pay_autopay_invoices():
+    """ Check for autopayable invoices every day and pay them """
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
