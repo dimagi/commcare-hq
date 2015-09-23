@@ -160,3 +160,19 @@ def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
         group_level=4,
     ).all()
     return {(result['key'][-2], result['key'][-1]) for result in results}
+
+
+def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
+                              by_submission_time=True):
+    from corehq.apps.reports.util import make_form_couch_key
+    key = make_form_couch_key(domain, user_id=user_id, xmlns=xmlns,
+                              by_submission_time=by_submission_time,
+                              app_id=app_id)
+    data = XFormInstance.get_db().view(
+        'reports_forms/all_forms',
+        reduce=True,
+        startkey=key + [json_format_datetime(start)],
+        endkey=key + [json_format_datetime(end)],
+        stale=stale_ok(),
+    ).first()
+    return data['value'] if data else 0
