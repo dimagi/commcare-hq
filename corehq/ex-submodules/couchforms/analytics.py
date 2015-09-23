@@ -5,6 +5,14 @@ from corehq.util.dates import iso_string_to_datetime
 from couchforms.models import XFormInstance
 
 
+def update_analytics_indexes():
+    """
+    Mostly for testing; wait until analytics data sources are up to date
+    so that calls to analytics functions return up-to-date
+    """
+    XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
+
+
 def domain_has_submission_in_last_30_days(domain):
     last_submission = get_last_form_submission_received(domain)
     # if there have been any submissions in the past 30 days
