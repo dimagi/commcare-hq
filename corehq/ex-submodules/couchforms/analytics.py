@@ -123,10 +123,12 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
 
 
 def get_all_user_ids_submitted(domain):
+    key = ["submission user", domain]
     submitted = XFormInstance.get_db().view(
-        'reports_forms/all_submitted_users',
-        startkey=[domain],
-        endkey=[domain, {}],
+        'reports_forms/all_forms',
+        startkey=key,
+        endkey=key + [{}],
         group=True,
+        group_level=3
     ).all()
-    return {user['key'][1] for user in submitted}
+    return {user['key'][2] for user in submitted}
