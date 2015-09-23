@@ -18,7 +18,7 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_all_user_ids_submitted, \
-    get_username_in_last_form_user_id_submitted
+    get_username_in_last_form_user_id_submitted, get_first_form_submission_received
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
@@ -399,28 +399,14 @@ def numcell(text, value=None, convert='int', raw=None):
             value = text
     return format_datatables_data(text=text, sort_key=value, raw=raw)
 
-def datespan_from_beginning(domain, default_days, timezone):
+
+def datespan_from_beginning(domain, timezone):
     now = datetime.utcnow()
-    def extract_date(x):
-        try:
-            def clip_timezone(datestring):
-                return datestring[:len('yyyy-mm-ddThh:mm:ss')]
-            return string_to_datetime(clip_timezone(x['key'][2]))
-        except Exception:
-            logging.error("Tried to get a date from this, but it didn't work: %r" % x)
-            return None
-    key = make_form_couch_key(domain)
-    startdate = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        limit=1,
-        descending=False,
-        reduce=False,
-        wrapper=extract_date,
-    ).one() #or now - timedelta(days=default_days - 1)
+    startdate = get_first_form_submission_received(domain)
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan
+
 
 def get_installed_custom_modules():
 

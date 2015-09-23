@@ -67,7 +67,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
     @property
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
+        return datespan_from_beginning(self.domain, self.timezone)
 
     def _es_extra_filters(self):
         if FormsByApplicationFilter.has_selections(self.request):
