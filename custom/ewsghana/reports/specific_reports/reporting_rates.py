@@ -140,7 +140,7 @@ class SummaryReportingRates(ReportingRatesData):
 
     @property
     def headers(self):
-        if self.location_id:
+        if self.location_id and self.get_locations:
             return DataTablesHeader(
                 DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
@@ -154,7 +154,7 @@ class SummaryReportingRates(ReportingRatesData):
     @property
     def rows(self):
         rows = []
-        if self.location_id:
+        if self.location_id and self.get_locations:
             for location_name, values in self.config['summary_reporting_rates'].iteritems():
                 url = make_url(
                     ReportingRatesReport,
