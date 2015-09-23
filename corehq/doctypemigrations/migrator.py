@@ -4,6 +4,8 @@ from dimagi.utils.couch.database import get_db
 
 
 class Migrator(object):
+    instances = {}
+
     def __init__(self, doc_types, source_db_name, target_db_name, slug):
         assert doc_types
         self.doc_types = list(doc_types)
@@ -13,6 +15,8 @@ class Migrator(object):
         self.target_db_name = target_db_name
         self.target_db = get_db(target_db_name)
         self.data_dump_filename = '{}.log'.format(self.slug)
+        # shared by the class
+        self.instances[self.slug] = self
 
     def phase_1_bulk_migrate(self):
         self.record_seq(self.source_db.info()['committed_update_seq'])

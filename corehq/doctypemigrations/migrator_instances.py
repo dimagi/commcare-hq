@@ -18,3 +18,7 @@ users_migration = Migrator(
         'OrgRemovalRecord',
     )
 )
+
+
+def get_migrator_by_slug(slug):
+    return Migrator.instances[slug]
