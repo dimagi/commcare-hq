@@ -19,7 +19,7 @@ class Migrator(object):
         self.instances[self.slug] = self
 
     def phase_1_bulk_migrate(self):
-        self.record_seq(self.source_db.info()['committed_update_seq'])
+        self.record_seq(self._get_latest_source_seq(self.source_db))
         bulk_migrate(self.source_db, self.target_db, self.doc_types,
                      filename=self.data_dump_filename)
 
@@ -30,3 +30,7 @@ class Migrator(object):
         state, _ = DocTypeMigrationState.objects.get_or_create(slug=self.slug)
         state.original_seq = seq
         state.save()
+
+    @staticmethod
+    def _get_latest_source_seq(db):
+        return db.info()['update_seq']
