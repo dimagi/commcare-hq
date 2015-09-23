@@ -1,4 +1,6 @@
 import datetime
+from dimagi.utils.couch.database import get_db
+
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
@@ -103,3 +105,28 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
         stale=stale_ok(),
     ).all()
     return True if row else False
+
+
+def get_username_in_last_form_user_id_submitted(domain, user_id):
+    assert domain
+    user_info = XFormInstance.get_db().view(
+        'reports_forms/all_forms',
+        startkey=["submission user", domain, user_id],
+        limit=1,
+        descending=True,
+        reduce=False
+    ).one()
+    try:
+        return user_info['value']['username']
+    except KeyError:
+        return None
+
+
+def get_all_user_ids_submitted(domain):
+    submitted = XFormInstance.get_db().view(
+        'reports_forms/all_submitted_users',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+    ).all()
+    return {user['key'][1] for user in submitted}

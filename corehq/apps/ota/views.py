@@ -4,8 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required, \
-    login_or_digest_or_basic
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -14,13 +13,9 @@ from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.view_utils import json_error
-from couchforms.dbaccessors import get_form_ids_for_user, get_form_xml_element
-from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from lxml import etree
 from soil import DownloadBase
 
 

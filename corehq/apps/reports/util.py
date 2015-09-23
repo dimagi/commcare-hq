@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 import logging
 import math
 import warnings
+from importlib import import_module
 
 from django.http import Http404
 import pytz
 from django.conf import settings
-from importlib import import_module
 from django.utils import html, safestring
 
 from corehq.apps.groups.models import Group
@@ -17,6 +17,8 @@ from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.util import SerializableFunction
+from couchforms.analytics import get_all_user_ids_submitted, \
+    get_username_in_last_form_user_id_submitted
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
@@ -98,7 +100,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not user_filter:
             user_filter = HQUserType.all()
         users = []
-        submitted_user_ids = get_all_userids_submitted(domain)
+        submitted_user_ids = get_all_user_ids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
             registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
@@ -129,34 +131,17 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
     return users
 
 
-def get_all_userids_submitted(domain):
-    submitted = get_db().view('reports_forms/all_submitted_users',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-    ).all()
-    return [user['key'][1] for user in submitted]
-
-
 def get_username_from_forms(domain, user_id):
-    key = make_form_couch_key(domain, user_id=user_id)
-    user_info = get_db().view(
-        'reports_forms/all_forms',
-        startkey=key,
-        limit=1,
-        reduce=False
-    ).one()
-    username = HQUserType.human_readable[HQUserType.ADMIN]
-    try:
-        possible_username = user_info['value']['username']
-        if not possible_username == 'none':
-            username = possible_username
-        return username
-    except KeyError:
-        possible_username = user_id_to_username(user_id)
+
+    def possible_usernames():
+        yield get_username_in_last_form_user_id_submitted(domain, user_id)
+        yield user_id_to_username(user_id)
+
+    for possible_username in possible_usernames():
         if possible_username:
-            username = possible_username
-    return username
+            return possible_username
+    else:
+        return HQUserType.human_readable[HQUserType.ADMIN]
 
 
 def namedtupledict(name, fields):
