@@ -85,7 +85,6 @@ class ApplicationDataSourceUIHelper(object):
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
-            value: source,
             options: sourcesMap[application()][sourceType()],
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value}
