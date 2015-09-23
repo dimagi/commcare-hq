@@ -18,10 +18,15 @@ class TypedIndicator(BasicIndicator):
     type = StringProperty()
 
 
-class ByTypeIndicator(BasicIndicator):
+class ByTypeIndicator(DocumentSchema):
+    include_legacy = BooleanProperty()
     total = SchemaProperty(BasicIndicator)
     all_types = BooleanProperty()  # same date ranges as 'total'
     types = SchemaListProperty(TypedIndicator)
+
+    @property
+    def active(self):
+        return self.total.active or self.all_types or any(type_.active for type_ in self.types)
 
     def types_by_date_range(self):
         types_list = sorted([
@@ -62,8 +67,6 @@ class CallCenterIndicatorConfig(Document):
 
         def default_typed():
             return ByTypeIndicator(
-                active=True,
-                date_ranges=DATE_RANGES,
                 total=default_basic(),
                 all_types=True,
                 include_legacy=include_legacy
