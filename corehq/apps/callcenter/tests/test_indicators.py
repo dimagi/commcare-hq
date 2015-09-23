@@ -219,7 +219,7 @@ class CallCenterTests(BaseCCTests):
         
     def test_standard_indicators_case_dog_only(self):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_updated.active = False
+        config.forms_submitted.active = False
 
         def dog_only(conf):
             conf.total.active = False
@@ -251,7 +251,7 @@ class CallCenterTests(BaseCCTests):
 
     def test_standard_indicators_case_week1_only(self):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_updated.date_ranges = [WEEK1]
+        config.forms_submitted.date_ranges = [WEEK1]
         config.cases_total.total.date_ranges = [WEEK1]
         config.cases_opened.total.date_ranges = [WEEK1]
         config.cases_closed.total.date_ranges = [WEEK1]

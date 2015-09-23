@@ -37,7 +37,7 @@ class ByTypeIndicator(BasicIndicator):
 
 class CallCenterIndicatorConfig(Document):
     domain = StringProperty()
-    forms_updated = SchemaProperty(BasicIndicator)
+    forms_submitted = SchemaProperty(BasicIndicator)
     cases_total = SchemaProperty(ByTypeIndicator)
     cases_active = SchemaProperty(ByTypeIndicator)
     cases_opened = SchemaProperty(ByTypeIndicator)
@@ -71,7 +71,7 @@ class CallCenterIndicatorConfig(Document):
 
         return cls(
             domain=domain,
-            forms_updated=default_basic(),
+            forms_submitted=default_basic(),
             cases_total=default_typed(),
             cases_active=default_typed(),
             cases_opened=default_typed(),

@@ -459,8 +459,8 @@ class CallCenterIndicators(object):
             if self.config.cases_total.active and self.config.cases_total.include_legacy:
                 self.add_case_total_legacy()
 
-            if self.config.forms_updated.active:
-                self.add_form_data(self.config.forms_updated)
+            if self.config.forms_submitted.active:
+                self.add_form_data(self.config.forms_submitted)
 
             if self.config.cases_total.active:
                 self.add_case_data(self._cases_total_query, CASES_TOTAL, self.config.cases_total)
