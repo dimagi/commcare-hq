@@ -41,6 +41,7 @@ CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
+
 INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "merge.policy.merge_factor": 20,
                                     "store.throttle.max_bytes_per_sec": "1mb",
@@ -120,7 +121,7 @@ class BasicPillow(object):
 
     def iter_changes(self, since, forever):
         for change in self.get_change_feed().iter_changes(since=since, forever=forever):
-            yield change.to_legacy_dict()
+            yield change
 
     def process_changes(self, since, forever):
         """

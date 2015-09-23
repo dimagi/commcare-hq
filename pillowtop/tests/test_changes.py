@@ -16,6 +16,5 @@ class TestCouchChange(SimpleTestCase):
         self.assertEqual(couch_row['doc'], change.document)
         self.assertEqual('21', change.sequence_id)
         self.assertEqual(False, change.deleted)
-        couch_row_back = change.to_legacy_dict()
         for key in couch_row:
-            self.assertEqual(couch_row[key], couch_row_back[key])
+            self.assertEqual(couch_row[key], change[key])
