@@ -24,7 +24,7 @@ class Migrator(object):
         bulk_migrate(self.source_db, self.target_db, self.doc_types,
                      filename=self.data_dump_filename)
 
-    def phase_2_replicate_continuously(self):
+    def phase_2_continuous_migrate(self):
         pass
 
     def record_seq(self, seq):

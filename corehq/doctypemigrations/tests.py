@@ -2,6 +2,7 @@ from copy import deepcopy
 from django.test import TestCase
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
+from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type
 from corehq.doctypemigrations.migrator import Migrator
 from corehq.doctypemigrations.models import DocTypeMigrationState
 from dimagi.utils.couch.bulk import get_docs
@@ -53,6 +54,13 @@ class TestDocTypeMigrations(TestCase):
         self.assertEqual(actual_docs, self.docs)
         state = DocTypeMigrationState.objects.get(slug=self.migration.slug)
         self.assertTrue(state.original_seq)
+
+    def test_filter_doc_ids_by_doc_type(self):
+        expected_doc_ids = {doc['_id'] for doc in self.docs}
+        input_doc_ids = expected_doc_ids ^ {'other', 'random', 'ids'}
+        actual_doc_ids = set(filter_doc_ids_by_doc_type(
+            self.migration.source_db, input_doc_ids, self.migration.doc_types))
+        self.assertEqual(expected_doc_ids, actual_doc_ids)
 
 
 def _get_non_design_docs(db):
