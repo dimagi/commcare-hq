@@ -1,5 +1,4 @@
 [proxy]
-hqproxy4.internal.commcarehq.org
 hqproxy5.internal.commcarehq.org
 
 [webworkers]
