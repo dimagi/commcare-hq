@@ -126,11 +126,11 @@ class BasicPillow(object):
         for change in changes_stream:
             yield change
 
-    def process_changes(self, forever):
+    def process_changes(self, since, forever):
         """
         Process changes from the changes stream.
         """
-        change_gen = self.iter_changes(self.self.get_last_checkpoint_sequence(), forever=forever)
+        change_gen = self.iter_changes(since, forever=forever)
         while True:
             try:
                 for change in change_gen:
@@ -150,7 +150,7 @@ class BasicPillow(object):
         Couch changes stream creation
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-        self.process_changes(forever=True)
+        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     @memoized
     def get_name(self):
