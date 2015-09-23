@@ -132,6 +132,10 @@ class AWCHealthStatus(object):
          _("Received ORS and Zinc treatment for diarrhoea"),
          _("Registered children who received ORS and Zinc treatment if he/she contracts diarrhoea"),
          'has_diarhea'),
+        ('incidence_of_diarrhea',
+         _("Incidence of diarrhea"),
+         _("Incidence of diarrhea"),
+         'beneficiaries'),
         ('child_breastfed',
          _("Exclusively breastfed for first 6 months"),
          _("Registered children (6 months old) who have been exclusively breastfed for first 6 months"),
@@ -522,3 +526,7 @@ class AWCHealthStatus(object):
     def closed_children(self):
         return sum([c.num_children for c in self.primary_cases
                     if c.status == 'mother' and c.closed_in_reporting_month])
+
+    @property
+    def incidence_of_diarrhea(self):
+        return len([c for c in self.all_cases if c.child_has_diarhea])
