@@ -6,10 +6,6 @@ from pillowtop.listener import BasicPillow
 from pillowtop.utils import get_current_seq
 
 
-class ExpectedProcessingError(Exception):
-    pass
-
-
 class ChangeFeedDbTest(TestCase):
 
     def setUp(self):
@@ -22,8 +18,7 @@ class ChangeFeedDbTest(TestCase):
         self._apply_mocks_to_pillow(pillow)
         doc_id = uuid.uuid4().hex
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
-        with self.assertRaises(ExpectedProcessingError):
-            pillow.process_changes(forever=False)
+        pillow.process_changes(since=self.update_seq, forever=False)
 
         change = self._extract_change_from_call_args(pillow.processor.call_args)
         # validate the structure of the change. some implicit asserts here
@@ -38,8 +33,7 @@ class ChangeFeedDbTest(TestCase):
         self._apply_mocks_to_pillow(pillow)
         doc_id = uuid.uuid4().hex
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
-        with self.assertRaises(ExpectedProcessingError):
-            pillow.process_changes(forever=False)
+        pillow.process_changes(since=self.update_seq, forever=False)
 
         change = self._extract_change_from_call_args(pillow.processor.call_args)
         self.assertEqual(doc_id, change['id'])
@@ -53,16 +47,14 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': uuid.uuid4().hex, 'property': 'property_value'})
         form = XFormInstance(domain='test-domain')
         form.save()
-        with self.assertRaises(ExpectedProcessingError):
-            pillow.process_changes(forever=False)
+        pillow.process_changes(since=self.update_seq, forever=False)
 
         change = self._extract_change_from_call_args(pillow.processor.call_args)
         self.assertEqual(form._id, change['id'])
         self.assertEqual(form.domain, change['doc']['domain'])
 
     def _apply_mocks_to_pillow(self, pillow):
-        pillow.processor = MagicMock(side_effect=ExpectedProcessingError('No processor allowed!'))
-        pillow.get_last_checkpoint_sequence = MagicMock(return_value=self.update_seq)
+        pillow.processor = MagicMock(return_value=True)
 
     def _extract_change_from_call_args(self, call_args):
         ordered_args, keyword_args = call_args
