@@ -111,7 +111,7 @@ class BasicPillow(object):
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
-    def new_changes(self):
+    def process_changes_forever(self):
         """
         Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
         http://couchdbkit.org/docs/changes.html
@@ -144,7 +144,7 @@ class BasicPillow(object):
         Couch changes stream creation
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-        self.new_changes()
+        self.process_changes_forever()
 
     @memoized
     def get_name(self):
