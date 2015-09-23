@@ -35,3 +35,10 @@ hqdjango1-staging.internal.commcarehq.org elasticsearch_node_name=hqdjango1-stag
 
 [shared_dir_host]
 hqdb0-staging.internal.commcarehq.org
+
+[stanchion]
+hqdjango1-staging.internal.commcarehq.org
+
+[riakcs]
+hqdb0-staging.internal.commcarehq.org
+hqdjango0-staging.internal.commcarehq.org
