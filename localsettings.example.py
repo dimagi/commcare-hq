@@ -316,3 +316,6 @@ INTERNAL_DATA = {
                 "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
                 "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
 }
+
+TWO_FACTOR_CALL_GATEWAY = 'two_factor.gateways.fake.Fake'
+TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.fake.Fake'

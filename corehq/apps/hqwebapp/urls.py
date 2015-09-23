@@ -1,5 +1,7 @@
 from django.conf.urls import *
 from corehq.apps.domain.views import PublicSMSRatesView
+from two_factor.urls import urlpatterns as tf_urls
+from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -27,7 +29,7 @@ urlpatterns = patterns(
     url(r'^jserror/$', 'jserror', name='jserror'),
     url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'dropbox_upload',
         name='dropbox_upload'),
-    url(r'', include('two_factor.urls', 'two_factor')),
+    url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
 )
 
 urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
