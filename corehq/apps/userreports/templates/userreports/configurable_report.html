@@ -30,6 +30,8 @@
                             $('#built-warning').addClass('hide');
                             if (retrying){
                                 location.reload();
+                            } else if ($('#report-filters').find('.control-label').length === 0) {
+                                $('#report-filters').submit();
                             }
                         } else {
                             retrying = true;
