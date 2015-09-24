@@ -55,8 +55,7 @@ class CallCenterIndicatorConfig(Document):
             "domain/docs",
             key=[domain, cls.__name__, None],
             reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap)
+            include_docs=True).all()
 
         return res[0] if len(res) else cls.default_config(domain)
 
