@@ -41,7 +41,8 @@
                     "meta/username",
                     "meta/userID",
                     "meta/timeStart",
-                    "meta/timeEnd"
+                    "meta/timeEnd",
+                    "meta/location"
                 ],
                 onFormSave: function (data) {
                     COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -57,7 +58,10 @@
                     }
                 },
                 {% endif %}
-                sessionid: {{ sessionid|JSON }}
+                sessionid: {{ sessionid|JSON }},
+                externalLinks: {
+                    changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
+                }
             },
             intents: {
                 templates: {{ app_callout_templates|JSON }}

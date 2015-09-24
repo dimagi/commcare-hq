@@ -105,3 +105,19 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
     wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
     return filter(remote_app_filter, wrapped_apps)
+
+
+def get_built_app_ids(domain):
+    """
+    Returns the app ids of all apps in the domain that have at least one build.
+    """
+    from .models import Application
+    result = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+    )
+    app_ids = [data.get('value', {}).get('copy_of') for data in result]
+    app_ids = list(set(app_ids))
+    return [app_id for app_id in app_ids if app_id]

@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, SMS)
+    PhoneNumber, SMS, SelfRegistrationInvitation)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
@@ -249,24 +249,69 @@ def random_password():
 
 
 def process_username(username, domain):
-    """
-    Loosely based on code from apps/users/forms.py:255
-    """
-    from corehq.apps.users.forms import validate_username
+    from corehq.apps.users.forms import (clean_mobile_worker_username,
+        get_mobile_worker_max_username_length)
 
-    max_len_username = 80
-    if len(username) > max_len_username:
-        raise forms.ValidationError(get_message(MSG_USERNAME_TOO_LONG, context=(username, max_len_username)))
-    # Check if the username contains invalid characters w/ django checker
-    validate_username('%s@commcarehq.org' % username)
-    username = format_username(username, domain)
-    num_couch_users = len(CouchUser.view("users/by_username",
-                                         key=username,
-                                         reduce=False))
-    if num_couch_users > 0:
-        raise forms.ValidationError(get_message(MSG_DUPLICATE_USERNAME, context=(username,)))
+    max_length = get_mobile_worker_max_username_length(domain)
 
-    return username
+    return clean_mobile_worker_username(
+        domain,
+        username,
+        name_too_long_message=get_message(MSG_USERNAME_TOO_LONG, context=(username, max_length)),
+        name_exists_message=get_message(MSG_DUPLICATE_USERNAME, context=(username,))
+    )
+
+
+def is_registration_text(text):
+    keywords = text.strip().upper().split()
+    if len(keywords) == 0:
+        return False
+
+    return keywords[0] in REGISTRATION_KEYWORDS
+
+
+def process_pre_registration(msg):
+    """
+    Returns True if this message was part of the SMS pre-registration
+    workflow (see corehq.apps.sms.models.SelfRegistrationInvitation).
+    Returns False if it's not part of the pre-registration workflow or
+    if the workflow has already been completed.
+    """
+    invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
+    if not invitation:
+        return False
+
+    domain = Domain.get_by_name(invitation.domain, strict=True)
+    if not domain.sms_mobile_worker_registration_enabled:
+        return False
+
+    text = msg.text.strip()
+    if is_registration_text(text):
+        # Return False to let the message be processed through the SMS
+        # registration workflow
+        return False
+    elif invitation.phone_type:
+        # If the user has already indicated what kind of phone they have,
+        # but is still replying with sms, then just resend them the
+        # appropriate registration instructions
+        if invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_ANDROID:
+            invitation.send_step2_android_sms()
+        elif invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_OTHER:
+            invitation.send_step2_java_sms()
+        return True
+    elif text == '1':
+        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_ANDROID
+        invitation.save()
+        invitation.send_step2_android_sms()
+        return True
+    elif text == '2':
+        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_OTHER
+        invitation.save()
+        invitation.send_step2_java_sms()
+        return True
+    else:
+        invitation.send_step1_sms()
+        return True
 
 
 def process_sms_registration(msg):
@@ -303,7 +348,7 @@ def process_sms_registration(msg):
     keyword3 = text_words[2] if len(text_words) > 2 else ""
     keyword4 = text_words[3] if len(text_words) > 3 else ""
     cleaned_phone_number = strip_plus(msg.phone_number)
-    if keyword1 in REGISTRATION_KEYWORDS and keyword2 != "":
+    if is_registration_text(msg.text) and keyword2 != "":
         domain = Domain.get_by_name(keyword2, strict=True)
         if domain is not None:
             if domain_has_privilege(domain, privileges.INBOUND_SMS):
@@ -320,6 +365,10 @@ def process_sms_registration(msg):
                         new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
                         new_user.save()
                         registration_processed = True
+
+                        invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
+                        if invitation:
+                            invitation.completed()
                     except ValidationError as e:
                         send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
 
@@ -454,7 +503,12 @@ def process_incoming(msg, delay=True):
                 if was_handled:
                     break
     else:
-        if not process_sms_registration(msg):
+        handled = process_pre_registration(msg)
+
+        if not handled:
+            handled = process_sms_registration(msg)
+
+        if not handled:
             import verify
             verify.process_verification(msg.phone_number, msg)
 

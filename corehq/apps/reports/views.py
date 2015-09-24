@@ -1,7 +1,6 @@
 from StringIO import StringIO
 from copy import copy
 import unicodedata
-from corehq.apps.app_manager.const import USERCASE_TYPE
 import os
 import json
 import tempfile
@@ -15,6 +14,8 @@ from urllib2 import URLError
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -28,7 +29,6 @@ from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.servers.basehttp import FileWrapper
-from django.core.urlresolvers import reverse
 from django.http import (HttpResponseRedirect, HttpResponseBadRequest, Http404,
                          HttpResponseForbidden)
 from django.shortcuts import render
@@ -51,7 +51,7 @@ from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
-from corehq.util.view_utils import absolute_reverse
+from corehq.util.view_utils import absolute_reverse, reverse
 
 import couchexport
 from couchexport.exceptions import (
@@ -1358,6 +1358,23 @@ def download_form(request, domain, instance_id):
     return couchforms_views.download_form(request, instance_id)
 
 
+def _form_instance_to_context_url(domain, instance):
+    try:
+        build = Application.get(instance.build_id)
+    except ResourceNotFound:
+        raise Http404(_('Application not found.'))
+
+    form = build.get_form_by_xmlns(instance.xmlns)
+    if not form:
+        raise Http404(_('Missing module or form information!'))
+
+    return reverse(
+        'cloudcare_form_context',
+        args=[domain, instance.build_id, form.get_module().id, form.id],
+        params={'instance_id': instance._id}
+    )
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
@@ -1370,23 +1387,6 @@ def edit_form_instance(request, domain, instance_id):
     if not instance.app_id or not instance.build_id:
         messages.error(request, _('Could not detect the application/form for this submission.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
-
-    form_meta = FormType(domain, instance.xmlns, instance.app_id).metadata
-
-    def _form_meta_to_context_url(form_meta, instance_id=None):
-        # todo: this might break if the form has moved. right now fixing that is out of scope,
-        # but it wouldn't be too much work to do a more complicated lookup to infer the module/form ID
-        # based on the XMLNS using the actual build of the app
-        try:
-            url = reverse(
-                'cloudcare_form_context',
-                args=[domain, instance.build_id, form_meta['module']['id'], form_meta['form']['id']])
-        except (KeyError, AttributeError):
-            raise Http404(_('Missing app, module or form information!'))
-
-        if instance:
-            url = '{}?instance_id={}'.format(url, instance_id)
-        return url
 
     user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
     edit_session_data = get_user_contributions_to_touchforms_session(user)
@@ -1414,7 +1414,7 @@ def edit_form_instance(request, domain, instance_id):
         'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
         'form_name': _('Edit Submission'),  # used in breadcrumbs
         'edit_context': {
-            'formUrl': _form_meta_to_context_url(form_meta, instance_id),
+            'formUrl': _form_instance_to_context_url(domain, instance),
             'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
             'sessionData': edit_session_data,
             'returnUrl': reverse('render_form_data', args=[domain, instance_id]),

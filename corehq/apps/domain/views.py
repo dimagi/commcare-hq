@@ -489,8 +489,9 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
+    format = request.POST['format']
     form = GenericRepeaterForm(
-        {"url": url},
+        {"url": url, "format": format},
         domain=domain,
         repeater_class=receiverwrapper.models.repeater_types[repeater_type]
     )

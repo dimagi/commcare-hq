@@ -45,11 +45,15 @@
 trunk: master
 name: autostaging
 branches:
+  - migrate-users-db  # Danny 9/23
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
-  - update-signup # Jenny 9/9
+  - sync-history-email # Cal 9/22
+  - export-device-logs # Jenny 9/23
+  - changes-refactor  # cz 9/23
+  - activate-email-revamp # bb 9/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -65,7 +69,8 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches:
+      - changes-refactor  # cz 9/23
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:

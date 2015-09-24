@@ -628,7 +628,7 @@ class Domain(Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
 
-        name = name_to_url(hr_name)
+        name = name_to_url(hr_name, "project")
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):

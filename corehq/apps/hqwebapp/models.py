@@ -31,7 +31,6 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
@@ -731,15 +730,20 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.can_access_reminders or self.can_access_sms) and (
+        return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
         ) and self.couch_user.can_edit_data()
 
     @property
     @memoized
-    def can_access_sms(self):
+    def can_use_outbound_sms(self):
         return has_privilege(self._request, privileges.OUTBOUND_SMS)
+
+    @property
+    @memoized
+    def can_use_inbound_sms(self):
+        return has_privilege(self._request, privileges.INBOUND_SMS)
 
     @property
     @memoized
@@ -747,42 +751,33 @@ class MessagingTab(UITab):
         return has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
 
     @property
-    def sidebar_items(self):
-        from corehq.apps.reports.standard.sms import MessageLogReport
-
-        def reminder_subtitle(form=None, **context):
-            return form['nickname'].value
-
+    @memoized
+    def reminders_urls(self):
         reminders_urls = []
+
         if self.can_access_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
+                CreateComplexScheduledReminderView,
                 RemindersListView,
-                BroadcastListView,
-                CreateBroadcastView,
-                EditBroadcastView,
-                CopyBroadcastView,
             )
-            reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
-            edit_reminder_urlname = EditScheduledReminderView.urlname
-            new_reminder_urlname = CreateScheduledReminderView.urlname
             reminders_urls.extend([
                 {
                     'title': _("Reminders"),
-                    'url': reminders_list_url,
+                    'url': reverse(RemindersListView.urlname, args=[self.domain]),
                     'subpages': [
                         {
-                            'title': reminder_subtitle,
-                            'urlname': edit_reminder_urlname
+                            'title': _("Edit Reminder"),
+                            'urlname': EditScheduledReminderView.urlname,
                         },
                         {
                             'title': _("Schedule Reminder"),
-                            'urlname': new_reminder_urlname,
+                            'urlname': CreateScheduledReminderView.urlname,
                         },
                         {
                             'title': _("Schedule Multi Event Reminder"),
-                            'urlname': 'create_complex_reminder_schedule',
+                            'urlname': CreateComplexScheduledReminderView.urlname,
                         },
                     ],
                     'show_in_dropdown': True,
@@ -794,17 +789,15 @@ class MessagingTab(UITab):
                 },
             ])
 
-        can_use_survey = can_use_survey_reminders(self._request)
-        if can_use_survey:
+        if self.can_use_inbound_sms:
             from corehq.apps.reminders.views import (
                 KeywordsListView, AddNormalKeywordView,
                 AddStructuredKeywordView, EditNormalKeywordView,
                 EditStructuredKeywordView,
             )
-            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
             reminders_urls.append({
                 'title': _("Keywords"),
-                'url': keyword_list_url,
+                'url': reverse(KeywordsListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
                         'title': AddNormalKeywordView.page_title,
@@ -826,22 +819,34 @@ class MessagingTab(UITab):
             })
 
         if self.can_access_reminders:
-
             reminders_urls.append({
                 'title': _("Reminders in Error"),
                 'url': reverse('reminders_in_error', args=[self.domain]),
                 'show_in_dropdown': True,
             })
-        items = []
+
+        return reminders_urls
+
+    @property
+    @memoized
+    def messages_urls(self):
         messages_urls = []
-        if self.can_access_sms:
+
+        if self.can_use_outbound_sms:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
+
         if self.can_access_reminders:
+            from corehq.apps.reminders.views import (
+                BroadcastListView,
+                CreateBroadcastView,
+                EditBroadcastView,
+                CopyBroadcastView,
+            )
             messages_urls.extend([
                 {
                     'title': _("Broadcast Messages"),
@@ -863,7 +868,9 @@ class MessagingTab(UITab):
                     'show_in_dropdown': True,
                 },
             ])
-        if self.can_access_sms:
+
+        if self.can_use_outbound_sms:
+            from corehq.apps.reports.standard.sms import MessageLogReport
             messages_urls.extend([
                 {
                     'title': _('Message Log'),
@@ -871,75 +878,97 @@ class MessagingTab(UITab):
                     'show_in_dropdown': True,
                 },
             ])
-        if messages_urls:
-            items.append((_("Messages"), messages_urls))
-        if reminders_urls:
-            items.append((_("Data Collection and Reminders"), reminders_urls))
+
+        return messages_urls
+
+    @property
+    @memoized
+    def performance_urls(self):
+        performance_urls = []
         if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            # add performance URLs
-            items.append((_("Performance Messaging"), [
+            performance_urls.append(
                 {
                     'title': _('Configure Performance Messages'),
                     'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
                     'show_in_dropdown': True,
-                },
-            ]))
+                }
+            )
+        return performance_urls
+
+    @property
+    @memoized
+    def supply_urls(self):
+        supply_urls = []
 
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
-            items.append(
-                (_("CommCare Supply"), [
-                    {'title': ugettext_lazy("Subscribe to SMS Reports"),
-                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
-                ])
+            supply_urls.append(
+                {'title': ugettext_lazy("Subscribe to SMS Reports"),
+                 'url': reverse(SubscribeSMSView.urlname, args=[self.domain])}
+            )
+
+        return supply_urls
+
+    @property
+    @memoized
+    def contacts_urls(self):
+        contacts_urls = []
+
+        if toggles.MOBILE_WORKER_SELF_REGISTRATION.enabled(self.domain):
+            from corehq.apps.sms.views import ManageRegistrationInvitationsView
+            contacts_urls.append(
+                {'title': _("Mobile Worker Registration"),
+                 'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
             )
 
         if self.couch_user.is_previewer():
-            items[0][1].append(
+            contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.project.survey_management_enabled and can_use_survey:
-            def sample_title(form=None, **context):
-                return form['name'].value
+        return contacts_urls
 
-            def survey_title(form=None, **context):
-                return form['name'].value
+    @property
+    @memoized
+    def survey_urls(self):
+        survey_urls = []
 
-            items.append(
-                (_("Survey Management"), [
-                    {'title': _("Samples"),
-                     'url': reverse('sample_list', args=[self.domain]),
-                     'subpages': [
-                         {'title': sample_title,
-                          'urlname': 'edit_sample'},
-                         {'title': _("New Sample"),
-                          'urlname': 'add_sample'},
-                    ]},
-                    {'title': _("Surveys"),
-                     'url': reverse('survey_list', args=[self.domain]),
-                     'subpages': [
-                         {'title': survey_title,
-                          'urlname': 'edit_survey'},
-                         {'title': _("New Survey"),
-                          'urlname': 'add_survey'},
-                    ]},
-                ])
-            )
+        if self.project.survey_management_enabled and self.can_use_inbound_sms:
+            survey_urls.extend([
+                {'title': _("Samples"),
+                 'url': reverse('sample_list', args=[self.domain]),
+                 'subpages': [
+                     {'title': _("Edit Sample"),
+                      'urlname': 'edit_sample'},
+                     {'title': _("New Sample"),
+                      'urlname': 'add_sample'},
+                ]},
+                {'title': _("Surveys"),
+                 'url': reverse('survey_list', args=[self.domain]),
+                 'subpages': [
+                     {'title': _("Edit Survey"),
+                      'urlname': 'edit_survey'},
+                     {'title': _("New Survey"),
+                      'urlname': 'add_survey'},
+                ]},
+            ])
 
-        settings_pages = []
-        if self.can_access_sms:
+        return survey_urls
+
+    @property
+    @memoized
+    def settings_urls(self):
+        settings_urls = []
+
+        if self.can_use_outbound_sms:
             from corehq.apps.sms.views import (
                 DomainSmsGatewayListView, AddDomainGatewayView,
                 EditDomainGatewayView,
             )
-            sms_connectivity_url = reverse(
-                DomainSmsGatewayListView.urlname, args=[self.domain]
-            )
-            settings_pages.append({
+            settings_urls.append({
                 'title': _('SMS Connectivity'),
-                'url': sms_connectivity_url,
+                'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
                         'title': _("Add Connection"),
@@ -951,17 +980,32 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
-            settings_pages.append(
+            settings_urls.extend([
                 {'title': ugettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
-            )
-            settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
-                 'url': reverse('sms_languages', args=[self.domain])}
-            )
-        if settings_pages:
-            items.append((_("Settings"), settings_pages))
+                 'url': reverse('sms_languages', args=[self.domain])},
+            ])
+
+        return settings_urls
+
+    @property
+    def sidebar_items(self):
+        items = []
+
+        for title, urls in (
+            (_("Messages"), self.messages_urls),
+            (_("Data Collection and Reminders"), self.reminders_urls),
+            (_("Performance Messaging"), self.performance_urls),
+            (_("CommCare Supply"), self.supply_urls),
+            (_("Contacts"), self.contacts_urls),
+            (_("Survey Management"), self.survey_urls),
+            (_("Settings"), self.settings_urls)
+        ):
+            if urls:
+                items.append((title, urls))
 
         return items
 
@@ -1144,7 +1188,7 @@ class ProjectUsersTab(UITab):
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 })
-            items.append((_('Locations'), locations_config))
+            items.append((_('Organization'), locations_config))
 
         return items
 

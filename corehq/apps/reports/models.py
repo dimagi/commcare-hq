@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from couchforms.filters import instances
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
@@ -344,12 +345,21 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def view_kwargs(self):
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
+    def url_kwargs(self):
+        kwargs = {
+            'domain': self.domain,
+            'report_slug': self.report_slug,
+        }
 
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
+
+        return kwargs
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        kwargs = self.url_kwargs
 
         if not self.is_configurable_report:
             kwargs['permissions_check'] = self._dispatcher.permissions_check
@@ -366,7 +376,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if self.is_configurable_report:
                 url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+                url_base = reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
@@ -835,9 +845,10 @@ class FormExportSchema(HQExportSchema):
 
         f = SerializableFunction(_top_level_filter)
         if self.app_id is not None:
-            f.add(reports.util.app_export_filter, app_id=self.app_id)
+            from corehq.apps.reports import util as reports_util
+            f.add(reports_util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
-            f.add(couchforms.filters.instances)
+            f.add(instances)
         actual = SerializableFunction(default_form_filter, filter=f)
         return actual
 

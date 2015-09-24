@@ -9,17 +9,21 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
-    FieldWithHelpBubble, HiddenFieldWithErrors)
+    FieldWithHelpBubble, HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids
+from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import get_available_backends, validate_phone_number
+from corehq.apps.sms.util import (get_available_backends, validate_phone_number,
+    strip_plus)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.django.fields import TrimmedCharField
+from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
 
 FORWARDING_CHOICES = (
@@ -794,6 +798,75 @@ class BackendMapForm(Form):
             return None
         else:
             return value
+
+
+class SendRegistrationInviationsForm(Form):
+    phone_numbers = TrimmedCharField(
+        label=ugettext_lazy("Phone Number(s)"),
+        required=True,
+        widget=forms.Textarea,
+    )
+
+    app_id = ChoiceField(
+        label=ugettext_lazy("Application"),
+        required=True,
+    )
+
+    action = CharField(
+        initial='invite',
+        widget=forms.HiddenInput(),
+    )
+
+    def set_app_id_choices(self):
+        app_ids = get_built_app_ids(self.domain)
+        choices = []
+        for app_doc in iter_docs(Application.get_db(), app_ids):
+            # This will return both Application and RemoteApp docs, but
+            # they both have a name attribute
+            choices.append((app_doc['_id'], app_doc['name']))
+        choices.sort(key=lambda x: x[1])
+        self.fields['app_id'].choices = choices
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain')
+
+        super(SendRegistrationInviationsForm, self).__init__(*args, **kwargs)
+        self.set_app_id_choices()
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = crispy.Layout(
+            FieldsetAccordionGroup(
+                _("Send Registration Invitation"),
+                crispy.Field('app_id'),
+                crispy.Field(
+                    'phone_numbers',
+                    placeholder=_("Enter phone number(s) in international "
+                        "format. Example: +27..., +91...,"),
+                ),
+                InlineField('action'),
+                FormActions(
+                    StrictButton(
+                        _("Send Invitation"),
+                        type="submit",
+                        css_class="btn-primary",
+                    ),
+                ),
+                active=len(args) > 0,
+            )
+        )
+
+    def clean_phone_numbers(self):
+        value = self.cleaned_data.get('phone_numbers', '')
+        phone_list = [strip_plus(s.strip()) for s in value.split(',')]
+        phone_list = [phone for phone in phone_list if phone]
+        if len(phone_list) == 0:
+            raise ValidationError(_("This field is required."))
+        for phone_number in phone_list:
+            validate_phone_number(phone_number)
+        return list(set(phone_list))
 
 
 class InitiateAddSMSBackendForm(Form):

@@ -340,6 +340,10 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.guinea_backup',
+
+    # tests only
+    # todo: figure out how to not put these into INSTALLED_APPS, TEST_APPS doesn't seem to work
+    'testapps.test_pillowtop',
 )
 
 TEST_APPS = ()
@@ -952,6 +956,10 @@ SUBSCRIPTION_PASSWORD = None
 ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
+
+# Override with the PEM export of an RSA private key, for use with any
+# encryption or signing workflows.
+HQ_PRIVATE_KEY = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
