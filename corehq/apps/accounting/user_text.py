@@ -273,10 +273,10 @@ class PricingTableFeatures(object):
             cls.INBOUND_SMS: (False, False, True, True, True),
             cls.SMS_PRICING: (
                 False, 
-                ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},))
+                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
+                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
+                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
+                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},))
             ),
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
