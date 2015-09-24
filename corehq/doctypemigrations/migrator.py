@@ -1,9 +1,13 @@
+from collections import namedtuple
 from corehq.doctypemigrations.changes import stream_changes_forever
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
 from dimagi.utils.decorators.memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.models import DocTypeMigration, DocTypeMigrationCheckpoint
 from dimagi.utils.couch.database import get_db
+
+StatusUpdate = namedtuple('StatusUpdate',
+                          ['changes_read', 'last_seq', 'caught_up'])
 
 
 class Migrator(object):
@@ -28,13 +32,26 @@ class Migrator(object):
                      filename=self.data_dump_filename)
         self._record_seq(self.original_seq)
 
-    def phase_2_continuous_migrate(self):
+    def phase_2_continuous_migrate_interactive(self):
+        last_seq = self.last_seq
         replicator = ContinuousReplicator(self.source_db, self.target_db, self.doc_types)
-        for change in stream_changes_forever(db=self.source_db, since=self.last_seq):
-            replicator.replicate_change(change)
-            if replicator.should_commit():
-                replicator.commit()
-                self._record_seq(change.seq)
+        changes = stream_changes_forever(db=self.source_db, since=last_seq)
+        count = 0
+        for change in changes:
+            if change is Ellipsis:
+                # all caught up
+                if last_seq != self.last_seq:
+                    replicator.commit()
+                    self._record_seq(last_seq)
+                yield StatusUpdate(changes_read=count, last_seq=last_seq, caught_up=True)
+            else:
+                count += 1
+                last_seq = change.seq
+                replicator.replicate_change(change)
+                if replicator.should_commit():
+                    replicator.commit()
+                    self._record_seq(last_seq)
+                    yield StatusUpdate(changes_read=count, last_seq=last_seq, caught_up=False)
 
     def _record_original_seq(self, seq):
         self._migration_model.original_seq = seq
@@ -60,5 +77,11 @@ class Migrator(object):
 
     @property
     def last_seq(self):
-        return (DocTypeMigrationCheckpoint.filter(migration=self._migration_model)
-                .order_by('-timestamp')[0]).seq
+        checkpoints = (
+            DocTypeMigrationCheckpoint.objects
+            .filter(migration=self._migration_model).order_by('-timestamp'))[:1]
+        try:
+            checkpoint, = checkpoints
+        except ValueError:
+            return None
+        return checkpoint.seq
