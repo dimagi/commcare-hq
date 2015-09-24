@@ -478,6 +478,9 @@ class AttachmentXpathGenerator(BaseXpathGenerator):
 class PropertyXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
+        if self.column.model == 'product':
+            return self.column.field
+
         parts = self.column.field.split('/')
         if self.column.model == 'case':
             parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
