@@ -38,21 +38,7 @@
         };
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-            COMMCAREHQ.appView.settings.enableSuccessMessage = function () {
-                var properties = COMMCAREHQ.appView.settings.settingsIndex.properties;
-                if (properties) {
-                    var cc_send_unsent = properties['cc-send-unsent'];
-                    return cc_send_unsent.value() === 'cc-su-man';
-                } else {
-                    return true;
-                }
-            };
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
-
-            {% if not app.is_remote_app %}
-            ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
-            {% endif %}
-
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);

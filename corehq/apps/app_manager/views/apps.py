@@ -31,7 +31,6 @@ from corehq.apps.app_manager.const import (
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
 )
-from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import (
     get_settings_values,
 )
@@ -242,12 +241,6 @@ def get_apps_base_context(request, domain, app):
     }
 
     if app:
-        for _lang in app.langs:
-            try:
-                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
-            except Exception as e:
-                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-
         v2_app = app.application_version == APP_V2
         context.update({
             'show_care_plan': (
@@ -536,7 +529,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     attributes = [
         'all',
-        'recipients', 'name', 'success_message', 'use_commcare_sense',
+        'recipients', 'name', 'use_commcare_sense',
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
@@ -589,10 +582,6 @@ def edit_app_attr(request, domain, app_id, attr):
             '.variable-app_name': name,
             '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
         })
-
-    if should_edit("success_message"):
-        success_message = hq_settings['success_message']
-        app.success_message[lang] = success_message
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release

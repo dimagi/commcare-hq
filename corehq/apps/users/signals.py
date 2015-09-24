@@ -5,11 +5,11 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.elastic import es_wrapper, send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch
 
-from corehq.apps.users import xml
-from couchforms.signals import successful_form_received, ReceiverResult, Certainty
+from couchforms.signals import successful_form_received
 from casexml.apps.phone.xml import VALID_USER_REGISTRATION_XMLNSES
+
 
 @receiver(user_logged_in)
 def set_language(sender, **kwargs):
@@ -51,6 +51,7 @@ If so, we need to check for a user created via Case 3 and link them to this acco
 automatically
 """
 
+
 def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     # this comes in as xml that looks like:
@@ -64,15 +65,11 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     if xform.xmlns not in VALID_USER_REGISTRATION_XMLNSES:
         return False
-    
+
     try:
-        couch_user, created = CommCareUser.create_or_update_from_xform(xform)
+        CommCareUser.create_or_update_from_xform(xform)
     except Exception, e:
-        #import traceback, sys
-        #exc_type, exc_value, exc_traceback = sys.exc_info()
-        #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
         logging.exception(e)
         raise
-    return ReceiverResult(xml.get_response(couch_user, created), Certainty.CERTAIN)
 
 successful_form_received.connect(create_user_from_commcare_registration)
