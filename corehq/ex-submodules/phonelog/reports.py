@@ -285,6 +285,8 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         return logs
 
     def _filter_query_by_slug(self, slug):
-        current_query = self.request.META['QUERY_STRING'].split('&')
-        return "&".join([query_item for query_item in current_query
-                         if not query_item.startswith(slug)])
+        from urllib import urlencode
+        return urlencode({k:v for (k,v) in self.request.GET.iteritems() if not k.startswith(slug)})
+        #current_query = self.request.META['QUERY_STRING'].split('&')
+        #return "&".join([query_item for query_item in current_query
+        #                 if not query_item.startswith(slug)])
