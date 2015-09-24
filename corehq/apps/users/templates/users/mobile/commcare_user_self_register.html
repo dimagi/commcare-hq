@@ -13,9 +13,18 @@
 {% if invitation.already_registered %}
 <div>
     <p>
-        {% blocktrans with google_play_store_url=google_play_store_url %}
-        Thank you for registering. Please <a href="{{ google_play_store_url }}">click here</a>
-        to go to the Google Play store and download CommCare.
+        {% blocktrans with odk_url=invitation.odk_url %}
+        Thank you for registering. To complete CommCare installation you will have to:
+        <ol>
+            <li>Install CommCare.</li>
+            <li>Install a CommCare Application for collecting data.</li>
+        </ol>
+
+        Please do the following:
+        <ol>
+            <li>Please <a target="_blank" href="{{ google_play_store_url }}">click here</a> to go to the Google Play store, and then download and install CommCare.</li>
+            <li><strong>After</strong> installing CommCare, <a target="_blank" href="{{ odk_url }}">click here</a> to install the Application for collecting data.</li>
+        </ol>
         {% endblocktrans %}
     </p>
 </div>
