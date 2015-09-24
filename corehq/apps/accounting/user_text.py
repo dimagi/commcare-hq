@@ -85,11 +85,7 @@ class PricingTableCategories(object):
             cls.MOBILE: _("Mobile"),
             cls.WEB: _("Web"),
             cls.ANALYTICS: _("Analytics"),
-            cls.SMS: {
-                Product.COMMCARE: _("SMS (CommConnect)"),
-                Product.COMMCONNECT: _("SMS"),
-                Product.COMMTRACK: _("SMS"),
-            }[product],
+            cls.SMS: _("SMS"),
             cls.USER_MANAGEMENT_AND_SECURITY: _("User Management and Security"),
             cls.SUPPORT: _("Support"),
         }.get(category)
