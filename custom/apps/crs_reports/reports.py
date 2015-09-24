@@ -13,6 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from corehq.util.timezones.conversions import PhoneTime
+from dimagi.utils.dates import force_to_date
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
@@ -190,8 +191,12 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     def date_to_json(self, date):
         if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string('%d-%m-%Y'))
+            try:
+                date = force_to_date(date)
+                return (PhoneTime(date, self.timezone).user_time(self.timezone)
+                        .ui_string('%d-%m-%Y'))
+            except ValueError:
+                return ''
         else:
             return ''
 
