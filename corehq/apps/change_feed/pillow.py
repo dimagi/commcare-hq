@@ -2,7 +2,7 @@ import json
 from kafka import KafkaClient, KeyedProducer
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.producer import ChangeMeta
+from corehq.apps.change_feed.models import ChangeMeta
 from couchforms.models import all_known_formlike_doc_types
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
