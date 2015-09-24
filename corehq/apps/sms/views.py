@@ -1496,6 +1496,19 @@ class SMSSettingsView(BaseMessagingSectionView):
     def previewer(self):
         return self.request.couch_user.is_previewer()
 
+    def get_welcome_message_recipient(self, domain_obj):
+        if (
+            domain_obj.enable_registration_welcome_sms_for_case and
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+        ):
+            return WELCOME_RECIPIENT_ALL
+        elif domain_obj.enable_registration_welcome_sms_for_case:
+            return WELCOME_RECIPIENT_CASE
+        elif domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+            return WELCOME_RECIPIENT_MOBILE_WORKER
+        else:
+            return WELCOME_RECIPIENT_NONE
+
     @property
     @memoized
     def form(self):
@@ -1555,14 +1568,7 @@ class SMSSettingsView(BaseMessagingSectionView):
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
-                    (WELCOME_RECIPIENT_ALL
-                     if (domain_obj.enable_registration_welcome_sms_for_case and
-                         domain_obj.enable_registration_welcome_sms_for_mobile_worker)
-                     else WELCOME_RECIPIENT_CASE
-                     if domain_obj.enable_registration_welcome_sms_for_case
-                     else WELCOME_RECIPIENT_MOBILE_WORKER
-                     if domain_obj.enable_registration_welcome_sms_for_mobile_worker
-                     else WELCOME_RECIPIENT_NONE)
+                    self.get_welcome_message_recipient(domain_obj),
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
