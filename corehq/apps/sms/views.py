@@ -44,7 +44,9 @@ from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM, SendRegistrationInviationsForm)
+    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -1552,6 +1554,15 @@ class SMSSettingsView(BaseMessagingSectionView):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "registration_welcome_message":
+                    (WELCOME_RECIPIENT_ALL
+                     if (domain_obj.enable_registration_welcome_sms_for_case and
+                         domain_obj.enable_registration_welcome_sms_for_mobile_worker)
+                     else WELCOME_RECIPIENT_CASE
+                     if domain_obj.enable_registration_welcome_sms_for_case
+                     else WELCOME_RECIPIENT_MOBILE_WORKER
+                     if domain_obj.enable_registration_welcome_sms_for_mobile_worker
+                     else WELCOME_RECIPIENT_NONE)
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1619,6 +1630,12 @@ class SMSSettingsView(BaseMessagingSectionView):
                     "sms_case_registration_user_id"]
             else:
                 domain_obj.sms_case_registration_enabled = False
+
+            domain_obj.enable_registration_welcome_sms_for_case = \
+                form.enable_registration_welcome_sms_for_case
+
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker = \
+                form.enable_registration_welcome_sms_for_mobile_worker
 
             domain_obj.save()
             messages.success(request, _("Changes Saved."))

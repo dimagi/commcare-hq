@@ -69,6 +69,18 @@ TIME_BEFORE = "BEFORE"
 TIME_AFTER = "AFTER"
 TIME_BETWEEN = "BETWEEN"
 
+WELCOME_RECIPIENT_NONE = 'NONE'
+WELCOME_RECIPIENT_CASE = 'CASE'
+WELCOME_RECIPIENT_MOBILE_WORKER = 'MOBILE_WORKER'
+WELCOME_RECIPIENT_ALL = 'ALL'
+
+WELCOME_RECIPIENT_CHOICES = (
+    (WELCOME_RECIPIENT_NONE, ugettext_lazy('Nobody')),
+    (WELCOME_RECIPIENT_CASE, ugettext_lazy('Cases only')),
+    (WELCOME_RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Workers only')),
+    (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
+)
+
 
 class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
@@ -219,11 +231,14 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Registration Submitter"),
     )
-
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
         label=ugettext_noop("SMS Mobile Worker Registration"),
+    )
+    registration_welcome_message = ChoiceField(
+        choices=WELCOME_RECIPIENT_CHOICES,
+        label=ugettext_lazy("Send registration welcome message to"),
     )
 
 
@@ -319,6 +334,14 @@ class SettingsForm(Form):
                     "[project] worker [username]' (where [project] is your "
                     " project space and [username] is an optional username)"
                     ", and the system will add them as a mobile worker."),
+            ),
+            FieldWithHelpBubble(
+                'registration_welcome_message',
+                help_bubble_text=_("Choose whether to send an automatic "
+                    "welcome message to cases, mobile workers, or both, "
+                    "after they self-register. The welcome message can be "
+                    "configured in the SMS languages and translations page "
+                    "(Messaging -> Languages -> Messaging Translations)."),
             ),
         ]
         return crispy.Fieldset(
@@ -473,6 +496,16 @@ class SettingsForm(Form):
             "remove_window_method": "$parent.removeSMSConversationTime",
             "add_window_method": "addSMSConversationTime",
         }
+
+    @property
+    def enable_registration_welcome_sms_for_case(self):
+        return (self.cleaned_data.get('registration_welcome_message') in
+                (WELCOME_RECIPIENT_CASE, WELCOME_RECIPIENT_ALL))
+
+    @property
+    def enable_registration_welcome_sms_for_mobile_worker(self):
+        return (self.cleaned_data.get('registration_welcome_message') in
+                (WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL))
 
     @property
     def current_values(self):
