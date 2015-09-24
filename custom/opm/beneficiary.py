@@ -846,8 +846,14 @@ class ConditionsMet(OPMCaseRow):
                                             "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "बच्चे का वज़न लिया गया",
                                             "बच्चे का वज़न लिया गया", self.child_growth_calculated)
-            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक लिया",
-                                              "बच्चे को दस्त नहीं हुआ", self.child_received_ors)
+            if self.child_has_diarhea and self.child_received_ors:
+                self.three = self.img_elem % (ORSZNTREAT_Y, "दस्त होने पर ओ.आर.एस एवं जिंक लिया")
+            elif self.child_has_diarhea and not self.child_received_ors:
+                self.three = self.img_elem % (ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक नहीं लिया")
+            elif not self.child_has_diarhea:
+                self.three = self.img_elem % (ORSZNTREAT_Y, "बच्चे को दस्त नहीं हुआ")
+            else:
+                self.three = ""
             if self.child_condition_four is not None:
                 self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1],
                                                  self.child_image_four[2], self.child_image_four[3],
