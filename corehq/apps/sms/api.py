@@ -16,7 +16,8 @@ from corehq.apps.sms.util import (clean_phone_number, clean_text,
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
     PhoneNumber, SMS, SelfRegistrationInvitation)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
-    MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG)
+    MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
+    MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -369,6 +370,10 @@ def process_sms_registration(msg):
                         invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
                         if invitation:
                             invitation.completed()
+
+                        if domain.enable_registration_welcome_sms_for_mobile_worker:
+                            send_sms(domain.name, None, cleaned_phone_number,
+                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER))
                     except ValidationError as e:
                         send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
 
@@ -378,11 +383,14 @@ def process_sms_registration(msg):
                         case_type=domain.sms_case_registration_type,
                         case_name="unknown",
                         user_id=domain.sms_case_registration_user_id,
-                        contact_phone_number=strip_plus(msg.phone_number),
+                        contact_phone_number=cleaned_phone_number,
                         contact_phone_number_is_verified="1",
                         owner_id=domain.sms_case_registration_owner_id,
                     )
                     registration_processed = True
+                    if domain.enable_registration_welcome_sms_for_case:
+                        send_sms(domain.name, None, cleaned_phone_number,
+                                 get_message(MSG_REGISTRATION_WELCOME_CASE))
             msg.domain = domain.name
             msg.save()
 

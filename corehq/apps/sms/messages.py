@@ -32,6 +32,8 @@ MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
 MSG_MOBILE_WORKER_INVITATION_START = "sms.invitation.mobile.start"
 MSG_MOBILE_WORKER_ANDROID_INVITATION = "sms.invitation.mobile.android"
 MSG_MOBILE_WORKER_JAVA_INVITATION = "sms.invitation.mobile.java"
+MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
+MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -69,7 +71,10 @@ _MESSAGES = {
     MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please follow this link to register: {0}"),
     MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Please reply with an SMS saying 'join {0} worker "
         "[username]', entering your requested username in place of [username]"),
+    MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
 }
+
 
 def get_message(msg_id, verified_number=None, context=None):
     default_msg = _MESSAGES.get(msg_id, "")
