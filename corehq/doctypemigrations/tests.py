@@ -1,12 +1,10 @@
 from copy import deepcopy
-from couchdbkit import BulkSaveError
 from django.test import TestCase
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type, \
     copy_docs, delete_docs
 from corehq.doctypemigrations.migrator import Migrator
-from corehq.doctypemigrations.models import DocTypeMigrationState
 from dimagi.utils.couch.bulk import get_docs
 from django.conf import settings
 
@@ -56,8 +54,7 @@ class TestDocTypeMigrations(TestCase):
     def test_phase_1_bulk_migrate(self):
         self.migration.phase_1_bulk_migrate()
         self.assert_in_sync()
-        state = DocTypeMigrationState.objects.get(slug=self.migration.slug)
-        self.assertTrue(state.original_seq)
+        self.assertTrue(self.migration._migration_model.original_seq)
 
     def test_filter_doc_ids_by_doc_type(self):
         expected_doc_ids = {doc['_id'] for doc in self.docs}
