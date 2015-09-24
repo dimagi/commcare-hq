@@ -35,19 +35,16 @@ $(function() {
 
         //the custom range button is the 4th li, but has no other
         //defining class or id to select it
-        $('.ranges ul li:nth-child(4)').click(function() {
+        $('.ranges ul li:last').click(function() {
             $('.ranges .applyBtn').show();
             $('.ranges .cancelBtn').show();
         });
 
-        $('.ranges ul li:not(:nth-child(4))').click(function() {
+        $('.ranges ul li:not(:last)').click(function() {
             $('.ranges .applyBtn').hide();
             $('.ranges .cancelBtn').hide();
         });
 
-        $('#filter_range').change(function() {
-            $('.ranges .applyBtn').click();
-        });
     };
     $.fn.createDefaultDateRangePicker = function () {
         this.createDateRangePicker(
