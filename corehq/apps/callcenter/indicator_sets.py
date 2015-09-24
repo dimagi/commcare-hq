@@ -361,6 +361,7 @@ class CallCenterIndicators(object):
 
         q_type_exclude = {type_column: self.cc_case_type}
         if include_total and include_types and not limit_types:
+            logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.total.date_ranges)
             for range_name in indicator_config.total.date_ranges:
                 lower, upper = self.date_ranges[range_name]
                 results = query_fn(['case_owner', 'type'], ~Q(**q_type_exclude), lower, upper)
@@ -368,6 +369,7 @@ class CallCenterIndicators(object):
                 self._add_case_data_by_type(results, slug, range_name)
         else:
             if include_total:
+                logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.total.date_ranges)
                 for range_name in indicator_config.total.date_ranges:
                     lower, upper = self.date_ranges[range_name]
                     total_results = query_fn(['case_owner'], ~Q(**q_type_exclude), lower, upper)
@@ -375,6 +377,7 @@ class CallCenterIndicators(object):
 
             if include_types:
                 for range_name, types in indicator_config.types_by_date_range().items():
+                    logger.debug('Adding case_data %s: types: %s, %s', slug, range_name, types)
                     q_type_in = {'{}__in'.format(type_column): types}
                     lower, upper = self.date_ranges[range_name]
                     type_results = query_fn(['case_owner', 'type'], Q(**q_type_in), lower, upper)
@@ -384,6 +387,7 @@ class CallCenterIndicators(object):
         """
         Count of cases per user that are currently open (legacy indicator).
         """
+        logger.debug('Adding legacy totals')
         results = CaseData.objects \
             .values('user_id') \
             .exclude(type=self.cc_case_type) \
@@ -425,6 +429,10 @@ class CallCenterIndicators(object):
         """
         Count of forms submitted by each user during the period (upper to lower)
         """
+        logger.debug('Adding forms submitted stats: %s', indicator_config.date_ranges)
+        if indicator_config.include_legacy:
+            logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
+
         for range_name in indicator_config.date_ranges:
             lower, upper = self.date_ranges[range_name]
             results = FormData.objects \
@@ -456,6 +464,7 @@ class CallCenterIndicators(object):
     def get_data(self):
         final_data = {}
         if self.users_needing_data:
+            logger.debug('Adding data for users: %s', self.users_needing_data)
             if self.config.cases_total.active and self.config.cases_total.include_legacy:
                 self.add_case_total_legacy()
 
