@@ -1266,7 +1266,7 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION_START)
+            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
         )
 
     def send_step2_java_sms(self):
@@ -1275,7 +1275,7 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,))
+            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
     def send_step2_android_sms(self):
@@ -1289,7 +1289,7 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,))
+            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
         )
 
         if self.odk_url:
