@@ -547,7 +547,8 @@ class SMSNotificationTestCase(TestCase):
     def setUp(self):
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.user = bootstrap_user(
-            username='test', domain=self.TEST_DOMAIN, phone_number='+4444', user_data={'sms_notifications': True},
+            username='test', domain=self.TEST_DOMAIN, phone_number='+4444',
+            user_data={'sms_notifications': "True"},
             home_loc=self.district
         )
         self.notification = Notification(self.user, 'test')
@@ -582,7 +583,7 @@ class SMSNotificationTestCase(TestCase):
 
     def test_opt_out(self):
         """No message will be sent if the user has opted out of the notifications."""
-        self.user.user_data['sms_notifications'] = False
+        self.user.user_data['sms_notifications'] = "False"
         with mock.patch('custom.ewsghana.alerts.alert.send_sms_to_verified_number') as send:
             self.notification.send()
             self.assertFalse(send.called)

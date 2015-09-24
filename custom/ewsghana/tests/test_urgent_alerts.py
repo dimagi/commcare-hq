@@ -42,7 +42,7 @@ class TestUrgentAlerts(TestCase):
             first_name='test', last_name='test1',
             user_data={
                 'role': [],
-                'sms_notifications': True
+                'sms_notifications': "True"
             }
         )
 

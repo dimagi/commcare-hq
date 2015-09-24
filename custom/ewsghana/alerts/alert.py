@@ -1,5 +1,6 @@
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.sms.api import send_sms_to_verified_number
+from custom.ewsghana.utils import should_receive_notifications
 
 
 class Notification(object):
@@ -10,7 +11,7 @@ class Notification(object):
 
     def send(self):
         verified_number = self.user.get_verified_number()
-        if verified_number and self.user.user_data.get('sms_notifications', False):
+        if verified_number and should_receive_notifications(self.user):
             send_sms_to_verified_number(verified_number, self.message)
 
 

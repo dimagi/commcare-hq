@@ -2,6 +2,7 @@ import datetime
 from corehq.apps.users.models import WebUser
 from custom.ewsghana.reminders import WEB_REMINDER
 from custom.ewsghana.reminders.reminder import Reminder
+from custom.ewsghana.utils import should_receive_notifications
 
 
 class VisitWebsiteReminder(Reminder):
@@ -14,7 +15,7 @@ class VisitWebsiteReminder(Reminder):
         if not sql_location.location_type.administrative:
             return False
         date = datetime.datetime.utcnow() - datetime.timedelta(weeks=13)
-        return user.last_login < date and user.user_data.get('sms_notifications', False)
+        return user.last_login < date and should_receive_notifications(user)
 
     def get_message(self, recipient):
         return WEB_REMINDER % {'name': recipient.owner.full_name}

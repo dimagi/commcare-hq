@@ -52,6 +52,7 @@ class SMSUser(JsonObject):
     family_name = StringProperty()
     to = StringProperty()
     language = StringProperty()
+    sms_notifications = BooleanProperty(default=False)
 
 
 class EWSUser(JsonObject):
@@ -67,7 +68,7 @@ class EWSUser(JsonObject):
     date_joined = StringProperty()
     location = IntegerProperty()
     supply_point = IntegerProperty()
-    sms_notifications = BooleanProperty()
+    sms_notifications = BooleanProperty(default=False)
     organization = StringProperty()
     groups = ListProperty(item_type=Group)
     contact = ObjectProperty(item_type=SMSUser, default=None)
@@ -141,6 +142,12 @@ class EWSApi(APISynchronization):
             ],
             'label': 'roles',
             'is_multiple_choice': True
+        },
+        {
+            'name': 'sms_notifications',
+            'choices': ['True', 'False'],
+            'label': 'sms notifications',
+            'is_multiple_choice': False
         }
     ]
     PRODUCT_CUSTOM_FIELDS = []
@@ -538,6 +545,13 @@ class EWSApi(APISynchronization):
                     self._set_in_charges(in_charge, sql_location)
         return location
 
+    def _create_contact(self, contact, sql_location, sms_notifications):
+        contact.sms_notifications = sms_notifications
+        contact = self.sms_user_sync(contact)
+        if sql_location:
+            contact.set_location(sql_location.couch_location)
+        contact.save()
+
     def web_user_sync(self, ews_webuser):
         username = ews_webuser.email.lower()
         if not username:
@@ -583,10 +597,7 @@ class EWSApi(APISynchronization):
             dm.location_id = location_id
 
         if ews_webuser.contact:
-            contact = self.sms_user_sync(ews_webuser.contact)
-            if sql_location:
-                contact.set_location(sql_location.couch_location)
-                contact.save()
+            self._create_contact(ews_webuser.contact, sql_location, ews_webuser.sms_notifications)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
@@ -613,7 +624,9 @@ class EWSApi(APISynchronization):
         if ews_smsuser.role:
             sms_user.user_data['role'] = [ews_smsuser.role]
 
+        sms_user.user_data['sms_notifications'] = str(ews_smsuser.sms_notifications)
         sms_user.save()
+
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
                 sp = get_supply_point_case_by_domain_external_id(self.domain, ews_smsuser.supply_point.id)
