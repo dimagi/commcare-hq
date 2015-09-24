@@ -32,21 +32,6 @@ class MVPIndicatorPillowBase(BasicPillow):
     def _deleted_doc_types(self):
         return get_deleted_doc_types(self._main_doc_type)
 
-    def run_burst(self):
-        """
-        Use this for testing pillows. Will run through the changes stream once.
-        """
-        changes_stream = ChangesStream(
-            db=self.couch_db,
-            since=self.since,
-            filter=self.couch_filter,
-            include_docs=self.include_docs,
-            **self.extra_args
-        )
-        for change in changes_stream:
-            if change:
-                self.processor(change)
-
     def change_transform(self, doc_dict):
         from corehq.apps.indicators.utils import get_namespaces
         doc_type = doc_dict.get('doc_type')
