@@ -1,3 +1,5 @@
+from corehq.doctypemigrations.changes import stream_changes_forever
+from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
 from dimagi.utils.decorators.memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.models import DocTypeMigration, DocTypeMigrationCheckpoint
@@ -24,9 +26,15 @@ class Migrator(object):
         self._record_original_seq(self._get_latest_source_seq(self.source_db))
         bulk_migrate(self.source_db, self.target_db, self.doc_types,
                      filename=self.data_dump_filename)
+        self._record_seq(self.original_seq)
 
     def phase_2_continuous_migrate(self):
-        pass
+        replicator = ContinuousReplicator(self.source_db, self.target_db, self.doc_types)
+        for change in stream_changes_forever(db=self.source_db, since=self.last_seq):
+            replicator.replicate_change(change)
+            if replicator.should_commit():
+                replicator.commit()
+                self._record_seq(change.seq)
 
     def _record_original_seq(self, seq):
         self._migration_model.original_seq = seq
@@ -49,3 +57,8 @@ class Migrator(object):
     @property
     def original_seq(self):
         return self._migration_model.original_seq
+
+    @property
+    def last_seq(self):
+        return (DocTypeMigrationCheckpoint.filter(migration=self._migration_model)
+                .order_by('-timestamp')[0]).seq

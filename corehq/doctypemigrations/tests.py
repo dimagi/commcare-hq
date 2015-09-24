@@ -1,9 +1,10 @@
 from copy import deepcopy
 from django.test import TestCase
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
+from corehq.doctypemigrations.changes import CouchChange
 from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type, \
-    copy_docs, delete_docs
+    copy_docs, delete_docs, ContinuousReplicator
 from corehq.doctypemigrations.migrator import Migrator
 from dimagi.utils.couch.bulk import get_docs
 from django.conf import settings
@@ -44,6 +45,10 @@ class TestDocTypeMigrations(TestCase):
         actual_docs = _get_non_design_docs(self.migration.target_db)
         self.assertEqual(actual_docs, self.docs)
 
+    def assert_no_docs_in_target_db(self):
+        actual_docs = _get_non_design_docs(self.migration.target_db)
+        self.assertEqual(actual_docs, [])
+
     def test_bulk_migrate(self):
         bulk_migrate(
             self.migration.source_db, self.migration.target_db,
@@ -71,15 +76,28 @@ class TestDocTypeMigrations(TestCase):
     def test_delete_docs(self):
         doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs]
         delete_docs(self.migration.target_db, doc_id_rev_pairs)
-        actual_docs = _get_non_design_docs(self.migration.target_db)
-        self.assertEqual(actual_docs, [])
+        self.assert_no_docs_in_target_db()
 
     def test_delete_docs_non_existent(self):
         doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs] + [
             ('unknown_id', '8-unknown_rev')]
         delete_docs(self.migration.target_db, doc_id_rev_pairs)
-        actual_docs = _get_non_design_docs(self.migration.target_db)
-        self.assertEqual(actual_docs, [])
+        self.assert_no_docs_in_target_db()
+
+    def test_continuous_replicator(self):
+        replicator = ContinuousReplicator(
+            self.migration.source_db, self.migration.target_db, self.migration.doc_types)
+        for i, doc in enumerate(self.docs):
+            change = CouchChange(seq=i, id=doc['_id'], rev=doc['_rev'], deleted=False)
+            replicator.replicate_change(change)
+        replicator.commit()
+        self.assert_in_sync()
+
+        for i, doc in enumerate(self.docs):
+            change = CouchChange(seq=i, id=doc['_id'], rev=doc['_rev'], deleted=True)
+            replicator.replicate_change(change)
+        replicator.commit()
+        self.assert_no_docs_in_target_db()
 
 
 def _get_non_design_docs(db):
