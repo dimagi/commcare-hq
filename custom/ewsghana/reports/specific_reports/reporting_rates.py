@@ -130,7 +130,7 @@ class SummaryReportingRates(ReportingRatesData):
 
     @property
     @memoized
-    def get_locations(self):
+    def locations(self):
         return SQLLocation.objects.filter(
             domain=self.domain,
             parent__location_id=self.config['location_id'],
@@ -140,9 +140,9 @@ class SummaryReportingRates(ReportingRatesData):
 
     @property
     def headers(self):
-        if self.location_id and self.get_locations:
+        if self.location_id and self.locations:
             return DataTablesHeader(
-                DataTablesColumn(_(self.get_locations[0].location_type.name.title())),
+                DataTablesColumn(_(self.locations[0].location_type.name.title())),
                 DataTablesColumn(_('# Sites')),
                 DataTablesColumn(_('# Reporting')),
                 DataTablesColumn(_('Reporting Rate')),
@@ -154,7 +154,7 @@ class SummaryReportingRates(ReportingRatesData):
     @property
     def rows(self):
         rows = []
-        if self.location_id and self.get_locations:
+        if self.location_id and self.locations:
             for location_name, values in self.config['summary_reporting_rates'].iteritems():
                 url = make_url(
                     ReportingRatesReport,
