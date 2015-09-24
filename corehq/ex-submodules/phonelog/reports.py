@@ -286,4 +286,4 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         return logs
 
     def _filter_query_by_slug(self, slug):
-        return urlencode({k:v for (k,v) in self.request.GET.iteritems() if not k.startswith(slug)})
+        return urlencode({k: v for (k, v) in self.request.GET.iteritems() if not k.startswith(slug)})
