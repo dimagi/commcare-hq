@@ -413,3 +413,7 @@ def get_supply_points(domain, location_id):
                 location_type__administrative=False,
             ).order_by('name').exclude(supply_point_id__isnull=True)
     return supply_points
+
+
+def should_receive_notifications(user):
+    return user.user_data.get('sms_notifications', False) in ['True', True]

@@ -2,6 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.users.models import WebUser
 from custom.ewsghana.reminders import STOCKOUT_REPORT
 from custom.ewsghana.reminders.reminder import Reminder
+from custom.ewsghana.utils import should_receive_notifications
 
 
 class StockoutReminder(Reminder):
@@ -10,7 +11,7 @@ class StockoutReminder(Reminder):
         return WebUser.by_domain(self.domain)
 
     def recipients_filter(self, user):
-        return user.user_data.get('sms_notifications', False) and user.get_verified_number()
+        return should_receive_notifications(user) and user.get_verified_number()
 
     def _get_stockouts(self, case_id):
         return StockState.objects.filter(

@@ -81,6 +81,7 @@ class WebUsersSyncTest(TestCase):
         sms_user = sms_users[0]
 
         self.assertEqual(sms_user.location_id, location.location_id)
+        self.assertEqual(sms_user.user_data['sms_notifications'], 'False')
 
     def test_create_web_reporter(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:

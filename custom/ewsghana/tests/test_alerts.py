@@ -41,7 +41,7 @@ class TestAlerts(TestCase):
             first_name='test', last_name='test1',
             user_data={
                 'role': [],
-                'sms_notifications': True
+                'sms_notifications': "True"
             }
         )
 
@@ -50,7 +50,7 @@ class TestAlerts(TestCase):
             first_name='test', last_name='test2',
             user_data={
                 'role': [],
-                'sms_notifications': True
+                'sms_notifications': "True"
             }
         )
 
@@ -59,7 +59,7 @@ class TestAlerts(TestCase):
             first_name='test', last_name='test4',
             user_data={
                 'role': [],
-                'sms_notifications': True
+                'sms_notifications': "True"
             }
         )
 

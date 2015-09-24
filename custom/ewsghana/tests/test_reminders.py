@@ -89,7 +89,7 @@ class TestReminders(TestCase):
             username='testwebuser',
             password='dummy',
             email='test@example.com',
-            user_data={'sms_notifications': True},
+            user_data={'sms_notifications': "True"},
             location=cls.loc2,
             phone_number='5555'
         )
@@ -99,7 +99,7 @@ class TestReminders(TestCase):
             username='testwebuser2',
             password='dummy',
             email='test2@example.com',
-            user_data={'sms_notifications': True},
+            user_data={'sms_notifications': "True"},
             location=cls.region,
             phone_number='6666'
         )
@@ -270,7 +270,7 @@ class TestReminders(TestCase):
             }
         )
 
-        self.web_user.user_data['sms_notifications'] = False
+        self.web_user.user_data['sms_notifications'] = "False"
         self.web_user.save()
 
         now = datetime.utcnow()
@@ -298,7 +298,7 @@ class TestReminders(TestCase):
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
 
-        self.web_user2.user_data['sms_notifications'] = False
+        self.web_user2.user_data['sms_notifications'] = "False"
         self.web_user2.save()
 
         now = datetime.utcnow()
