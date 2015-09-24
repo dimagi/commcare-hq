@@ -8,7 +8,8 @@ class Migrator(object):
 
     def __init__(self, doc_types, source_db_name, target_db_name, slug):
         assert doc_types
-        self.doc_types = list(doc_types)
+        doc_types = list(doc_types)
+        self.doc_types = doc_types + [doc_type + '-Deleted' for doc_type in doc_types]
         self.slug = slug
         self.source_db_name = source_db_name
         self.source_db = get_db(source_db_name)

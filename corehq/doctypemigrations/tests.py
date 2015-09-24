@@ -24,6 +24,7 @@ class TestDocTypeMigrations(TestCase):
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
             {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
             {'doc_type': 'Group', 'name': 'User Group'},
+            {'doc_type': 'Group-Deleted', 'name': 'Deleted User Group'},
         ]
         results = self.migration.source_db.bulk_save(self.docs)
         for doc, result in zip(self.docs, results):
