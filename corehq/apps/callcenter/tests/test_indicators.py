@@ -221,6 +221,8 @@ class CallCenterTests(BaseCCTests):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
         config.save()
 
+        self.addCleanup(config.delete)
+
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
             self.cc_domain.default_timezone,
