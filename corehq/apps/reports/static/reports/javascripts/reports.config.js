@@ -47,7 +47,8 @@ var HQReport = function (options) {
                                 data: getReportParams(undefined, true),
                                 type: "POST",
                                 success: function() {
-                                    alert("Your requested excel report will be sent to the email address defined in your account settings.");
+                                    alert_user("Your requested excel report will be sent to the email address " +
+                                               "defined in your account settings.", "success");
                                 }
                             })
                         } else {
