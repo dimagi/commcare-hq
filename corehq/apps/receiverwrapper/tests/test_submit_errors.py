@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -44,14 +45,14 @@ class SubmissionErrorTest(TestCase):
         file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
         with open(file) as f:
             res = self.client.post(self.url, {
-                    "xml_submission_file": f
+                "xml_submission_file": f
             })
             self.assertEqual(201, res.status_code)
-            self.assertIn("Thanks for submitting", res.content)
-        
+            self.assertIn(u"✓", res.content)
+
         with open(file) as f:
             res = self.client.post(self.url, {
-                    "xml_submission_file": f
+                "xml_submission_file": f
             })
             self.assertEqual(201, res.status_code)
             self.assertIn("Form is a duplicate", res.content)
