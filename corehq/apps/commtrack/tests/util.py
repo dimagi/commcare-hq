@@ -6,10 +6,8 @@ from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
@@ -181,15 +179,7 @@ class CommTrackTest(TestCase):
         self.backend.delete()
         for u in self.users:
             u.delete()
-        self.domain.delete() # domain delete cascades to everything else
-
-    def get_commtrack_forms(self, domain):
-        return XFormInstance.view('reports_forms/all_forms',
-            startkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS],
-            endkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS, {}],
-            reduce=False,
-            include_docs=True
-        )
+        self.domain.delete()  # domain delete cascades to everything else
 
 
 def get_ota_balance_xml(project, user):

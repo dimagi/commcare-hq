@@ -23,6 +23,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from couchforms.analytics import get_number_of_submissions
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
@@ -412,16 +413,10 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         return rows
 
     def _get_num_submissions(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
-                                  by_submission_time=self.by_submission_time,
-                                  app_id=app_id)
-        data = get_db().view(
-            'reports_forms/all_forms',
-            reduce=True,
-            startkey=key + [self.datespan.startdate_param_utc],
-            endkey=key + [self.datespan.enddate_param_utc],
-        ).first()
-        return data['value'] if data else 0
+        return get_number_of_submissions(
+            self.domain, user_id=user_id, xmlns=xmlns,
+            by_submission_time=self.by_submission_time, app_id=app_id,
+            start=self.datespan.startdate_utc, end=self.datespan.enddate_utc)
 
     @memoized
     def forms_per_user(self, app_id, xmlns):

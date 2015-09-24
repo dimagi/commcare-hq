@@ -121,41 +121,6 @@ def get_hqadmin_base_context(request):
 
 
 @require_superuser
-def active_users(request):
-    keys = []
-    number_threshold = 15
-    date_threshold_days_ago = 90
-    date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    key = make_form_couch_key(None, user_id="")
-    for line in get_db().view("reports_forms/all_forms",
-        startkey=key,
-        endkey=key+[{}],
-        group_level=3):
-        if line['value'] >= number_threshold:
-            keys.append(line["key"])
-
-    final_count = defaultdict(int)
-
-    def is_valid_user_id(user_id):
-        if not user_id: return False
-        try:
-            get_db().get(user_id)
-            return True
-        except Exception:
-            return False
-
-    for time_type, domain, user_id in keys:
-        if get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=[time_type, domain, user_id, date_threshold],
-            limit=1):
-            if True or is_valid_user_id(user_id):
-                final_count[domain] += 1
-
-    return json_response({"break_down": final_count, "total": sum(final_count.values())})
-
-
-@require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
     menu = CommCareBuildConfig.fetch().menu

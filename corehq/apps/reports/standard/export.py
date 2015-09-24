@@ -70,7 +70,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
+        return datespan_from_beginning(self.domain, self.timezone)
 
     def get_filter_params(self):
         params = self.request.GET.copy()
