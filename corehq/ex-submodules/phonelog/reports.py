@@ -25,6 +25,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
+from urllib import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -285,8 +286,4 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         return logs
 
     def _filter_query_by_slug(self, slug):
-        from urllib import urlencode
         return urlencode({k:v for (k,v) in self.request.GET.iteritems() if not k.startswith(slug)})
-        #current_query = self.request.META['QUERY_STRING'].split('&')
-        #return "&".join([query_item for query_item in current_query
-        #                 if not query_item.startswith(slug)])
