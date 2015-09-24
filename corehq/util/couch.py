@@ -1,3 +1,4 @@
+from functools import partial
 import traceback
 import requests
 import json
@@ -77,8 +78,11 @@ class IterDB(object):
 
         iter_db.error_ids  # docs that errored
         iter_db.saved_ids  # docs that saved correctly
+
+    `new_edits` param will be passed directly to db.bulk_save
     """
-    def __init__(self, database, chunksize=100, throttle_secs=None):
+    def __init__(self, database, chunksize=100, throttle_secs=None,
+                 new_edits=None):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
@@ -86,6 +90,7 @@ class IterDB(object):
         self.deleted_ids = set()
         self.error_ids = set()
         self.errors_by_type = defaultdict(list)
+        self.new_edits = new_edits
 
     def __enter__(self):
         self.to_save = []
@@ -108,7 +113,8 @@ class IterDB(object):
         return success_ids
 
     def _commit_save(self):
-        success_ids = self._write(self.db.bulk_save, self.to_save)
+        bulk_save = partial(self.db.bulk_save, new_edits=self.new_edits)
+        success_ids = self._write(bulk_save, self.to_save)
         self.saved_ids.update(success_ids)
         self.to_save = []
 
