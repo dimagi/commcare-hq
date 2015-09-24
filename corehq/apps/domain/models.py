@@ -296,6 +296,8 @@ class Domain(Document, SnapshotMixin):
     # Set to True to allow sending sms and all-label surveys to cases whose
     # phone number is duplicated with another contact
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
+    enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
+    enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
