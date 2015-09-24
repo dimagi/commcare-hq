@@ -1,6 +1,7 @@
 # Stub models file
 from collections import namedtuple
 import itertools
+from django.conf import settings
 from corehq.apps.callcenter.const import DATE_RANGES
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.ext.couchdbkit import *
@@ -49,8 +50,8 @@ class CallCenterIndicatorConfig(Document):
     cases_closed = SchemaProperty(ByTypeIndicator)
 
     @classmethod
-    @skippable_quickcache(['domain'], skip_arg='skip_cache')
-    def for_domain(cls, domain, skip_cache=False):
+    @skippable_quickcache(['domain'], lambda _: settings.UNIT_TESTING)
+    def for_domain(cls, domain):
         res = cls.view(
             "domain/docs",
             key=[domain, cls.__name__, None],
