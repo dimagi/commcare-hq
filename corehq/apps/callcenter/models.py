@@ -50,7 +50,7 @@ class CallCenterIndicatorConfig(Document):
     cases_closed = SchemaProperty(ByTypeIndicator)
 
     @classmethod
-    @skippable_quickcache(['domain'], lambda _: settings.UNIT_TESTING)
+    @skippable_quickcache(['domain'], lambda *_: settings.UNIT_TESTING)
     def for_domain(cls, domain):
         res = cls.view(
             "domain/docs",
@@ -80,6 +80,10 @@ class CallCenterIndicatorConfig(Document):
             cases_opened=default_typed(),
             cases_closed=default_typed(),
         )
+
+    def save(self, **params):
+        super(CallCenterIndicatorConfig, self).save(**params)
+        CallCenterIndicatorConfig.for_domain.clear(self.__class__, self.domain)
 
 
 from .signals import *
