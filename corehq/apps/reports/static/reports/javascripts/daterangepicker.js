@@ -33,18 +33,14 @@ $(function() {
         $('.ranges .applyBtn').hide();
         $('.ranges .cancelBtn').hide();
 
-        $('.ranges ul li:nth-child(4)').click(function() {
+        $('.ranges ul li:last').click(function() {
             $('.ranges .applyBtn').show();
             $('.ranges .cancelBtn').show();
         });
 
-        $('.ranges ul li:not(:nth-child(4))').click(function() {
+        $('.ranges ul li:not(:last)').click(function() {
             $('.ranges .applyBtn').hide();
             $('.ranges .cancelBtn').hide();
-        });
-
-        $('#filter_range').change(function() {
-            $('.ranges .applyBtn').click();
         });
 
     };
