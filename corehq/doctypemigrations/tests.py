@@ -1,8 +1,10 @@
 from copy import deepcopy
+from couchdbkit import BulkSaveError
 from django.test import TestCase
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
-from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type
+from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type, \
+    copy_docs, delete_docs
 from corehq.doctypemigrations.migrator import Migrator
 from corehq.doctypemigrations.models import DocTypeMigrationState
 from dimagi.utils.couch.bulk import get_docs
@@ -35,23 +37,25 @@ class TestDocTypeMigrations(TestCase):
 
     def tearDown(self):
         # have to copy because deleted_docs modifies the docs param in place
-        d1 = deepcopy(self.docs)
-        d2 = deepcopy(self.docs)
-        self.migration.source_db.delete_docs(d1)
-        self.migration.target_db.delete_docs(d2)
+        docs = deepcopy(self.docs)
+        self.migration.source_db.delete_docs(docs)
+        self.migration.target_db.delete_docs(
+            _get_non_design_docs(self.migration.target_db))
+
+    def assert_in_sync(self):
+        actual_docs = _get_non_design_docs(self.migration.target_db)
+        self.assertEqual(actual_docs, self.docs)
 
     def test_bulk_migrate(self):
         bulk_migrate(
             self.migration.source_db, self.migration.target_db,
             self.migration.doc_types,
             self.migration.data_dump_filename)
-        actual_docs = _get_non_design_docs(self.migration.target_db)
-        self.assertEqual(actual_docs, self.docs)
+        self.assert_in_sync()
 
     def test_phase_1_bulk_migrate(self):
         self.migration.phase_1_bulk_migrate()
-        actual_docs = _get_non_design_docs(self.migration.target_db)
-        self.assertEqual(actual_docs, self.docs)
+        self.assert_in_sync()
         state = DocTypeMigrationState.objects.get(slug=self.migration.slug)
         self.assertTrue(state.original_seq)
 
@@ -61,6 +65,24 @@ class TestDocTypeMigrations(TestCase):
         actual_doc_ids = set(filter_doc_ids_by_doc_type(
             self.migration.source_db, input_doc_ids, self.migration.doc_types))
         self.assertEqual(expected_doc_ids, actual_doc_ids)
+
+    def test_copy_docs(self):
+        doc_ids = [doc['_id'] for doc in self.docs]
+        copy_docs(self.migration.source_db, self.migration.target_db, doc_ids)
+        self.assert_in_sync()
+
+    def test_delete_docs(self):
+        doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs]
+        delete_docs(self.migration.target_db, doc_id_rev_pairs)
+        actual_docs = _get_non_design_docs(self.migration.target_db)
+        self.assertEqual(actual_docs, [])
+
+    def test_delete_docs_non_existent(self):
+        doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs] + [
+            ('unknown_id', '8-unknown_rev')]
+        delete_docs(self.migration.target_db, doc_id_rev_pairs)
+        actual_docs = _get_non_design_docs(self.migration.target_db)
+        self.assertEqual(actual_docs, [])
 
 
 def _get_non_design_docs(db):
