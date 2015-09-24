@@ -373,7 +373,7 @@ def process_sms_registration(msg):
 
                         if domain.enable_registration_welcome_sms_for_mobile_worker:
                             send_sms(domain.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER))
+                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain.name))
                     except ValidationError as e:
                         send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
 
@@ -390,7 +390,7 @@ def process_sms_registration(msg):
                     registration_processed = True
                     if domain.enable_registration_welcome_sms_for_case:
                         send_sms(domain.name, None, cleaned_phone_number,
-                                 get_message(MSG_REGISTRATION_WELCOME_CASE))
+                                 get_message(MSG_REGISTRATION_WELCOME_CASE, domain=domain.name))
             msg.domain = domain.name
             msg.save()
 

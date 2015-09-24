@@ -76,10 +76,23 @@ _MESSAGES = {
 }
 
 
-def get_message(msg_id, verified_number=None, context=None):
+def get_message(msg_id, verified_number=None, context=None, domain=None):
+    """
+    Translates the message according to the user's and domain's preferences.
+
+    msg_id - one of the MSG_* constants above
+    verified_number - pass in the verified number of a contact in order to
+                      use this contact's domain and language to translate
+    context - some messages require additional parameters; pass them as a
+              tuple or list
+    domain - if the contact doesn't have a verified number, pass the domain
+             in here to use this domain's translation doc
+    """
     default_msg = _MESSAGES.get(msg_id, "")
 
-    if verified_number:
+    if domain:
+        tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
+    elif verified_number:
         tdoc = StandaloneTranslationDoc.get_obj(verified_number.domain, "sms")
     else:
         tdoc = None
@@ -130,4 +143,3 @@ def get_message(msg_id, verified_number=None, context=None):
         msg = msg.format(*context)
 
     return msg
-
