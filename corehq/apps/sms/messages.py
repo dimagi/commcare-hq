@@ -68,7 +68,7 @@ _MESSAGES = {
     MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
     MSG_MOBILE_WORKER_INVITATION_START: ugettext_noop("Welcome to CommCareHQ! What type of phone are you "
         "using? Reply 1 for Android, 2 for other."),
-    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please follow this link to register: {0}"),
+    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please register here: {0}"),
     MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Please reply with an SMS saying 'join {0} worker "
         "[username]', entering your requested username in place of [username]"),
     MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
