@@ -251,7 +251,7 @@
                         <div data-bind="visible: comment_update_error()" class="alert alert-error">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
-                        {% if request.user.is_superuser %}
+                        {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
                             <h6>
                                 {% blocktrans %}
                                     View
