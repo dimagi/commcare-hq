@@ -10,3 +10,4 @@ class ChangeMeta(jsonobject.JsonObject):
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
     _allow_dynamic_properties = False
+
