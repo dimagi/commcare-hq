@@ -450,6 +450,14 @@ var StripeCard = function () {
     self.isTestMode = ko.observable(false);
     self.isProcessing = ko.observable(false);
     self.agreedToPrivacyPolicy = ko.observable(false);
+    self.newSavedCard = ko.observable(false);
+
+    self.autopayCard = ko.computed(function(){
+        if (!self.newSavedCard){
+            return false;
+        }
+    });
+
     self.showCardData = ko.computed(function () {
        return ! self.isProcessing();
     });
@@ -471,6 +479,7 @@ var StripeCard = function () {
     self.cardName = ko.computed(function () {
         return self.cardType() + ' ' + self.number() + ' exp ' + self.expMonth() + '/' + self.expYear();
     });
+
 
     self.loadSavedData = function (data) {
         self.number('************' + data.last4);
