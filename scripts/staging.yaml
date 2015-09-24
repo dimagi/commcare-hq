@@ -53,7 +53,6 @@ branches:
   - sync-history-email # Cal 9/22
   - export-device-logs # Jenny 9/23
   - changes-refactor  # cz 9/23
-  - activate-email-revamp # bb 9/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
