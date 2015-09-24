@@ -1,4 +1,5 @@
 import json
+from django.conf import settings
 from kafka import KafkaClient, KeyedProducer
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
@@ -15,7 +16,7 @@ class ChangeFeedPillow(PythonPillow):
         # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
         couch_db = couch_db or CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db)
-        self._kafka = KafkaClient('localhost:9092')
+        self._kafka = KafkaClient(settings.KAFKA_URL)
         self._producer = KeyedProducer(self._kafka)
 
     def get_db_name(self):
