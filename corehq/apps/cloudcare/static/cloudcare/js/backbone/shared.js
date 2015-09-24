@@ -24,7 +24,7 @@ var Selectable = Backbone.View.extend({
         }
         if (this.selected) {
             if (window.mainView.router.view.dirty) {
-                var dialog = confirm(translatedStrings.dirty);
+                var dialog = confirm(translatedStrings.sidebarDirty);
                 if (dialog == true) {
                     this.deselect();
                     this.trigger("deselected");
@@ -34,7 +34,14 @@ var Selectable = Backbone.View.extend({
                 this.trigger("deselected");
             }
         } else {
-            this.select();
+            if (window.mainView.router.view.dirty) {
+                var dialog = confirm(translatedStrings.sidebarDirty);
+                if (dialog == true) {
+                    this.select();
+                }
+            } else {
+                this.select();
+            }
         }
     },
     select: function (options) {
