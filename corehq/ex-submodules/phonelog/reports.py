@@ -171,24 +171,10 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
             )
             return self._create_rows(logs, matching_id=log.id)
         else:
-            logs = DeviceReportEntry.objects.filter(
-                date__range=[self.datespan.startdate_param_utc,
-                             self.datespan.enddate_param_utc],
-                domain__exact=self.domain,
-            )
-            if self.errors_only:
-                logs = logs.filter(type__in=TAGS['error'] + TAGS['warning'])
-            elif 'tag' in self.filters:
-                logs = logs.filter(type__in=self.selected_tags)
-
-            if 'user' in self.filters:
-                user_q = Q(username__in=self.device_log_users)
-                if None in self.device_log_users:
-                    user_q |= Q(username=None)
-                logs = logs.filter(user_q)
-            if 'device' in self.filters:
-                logs = logs.filter(device_id__in=self.selected_devices)
-            return self._create_rows(logs)
+            logs = self._filter_logs()
+            range = slice(self.pagination.start,
+                          self.pagination.start + self.pagination.count + 1)
+            return self._create_rows(logs, range=range)
 
     @property
     def ordering(self):
@@ -196,6 +182,89 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         return '-' + by if direction == 'desc' else by
 
     def get_all_rows(self):
+        logs = self._filter_logs()
+        return self._create_rows(logs)
+
+    def _create_rows(self, logs, matching_id=None, range=None):
+        _device_users_by_xform = memoized(device_users_by_xform)
+        row_set = []
+        user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
+        device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
+
+        self.total_records = logs.count()
+        logs = logs.order_by(self.ordering)
+        if range:
+            logs = logs[range]
+        for log in logs:
+            ui_date = (ServerTime(log.date)
+                        .user_time(self.timezone).ui_string())
+
+            username = log.username
+            username_fmt = '<a href="%(url)s">%(username)s</a>' % {
+                "url": "%s?%s=%s&%s" % (
+                    self.get_url(domain=self.domain),
+                    DeviceLogUsersFilter.slug,
+                    DeviceLogUsersFilter.value_to_param(username),
+                    user_query,
+                ),
+                "username": (
+                    username if username
+                    else '<span class="label label-info">Unknown</span>'
+                )
+            }
+
+            device_users = _device_users_by_xform(log.xform_id)
+            device_users_fmt = ', '.join([
+                '<a href="%(url)s">%(username)s</a>' % {
+                    "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
+                                            DeviceLogUsersFilter.slug,
+                                            username,
+                                            user_query),
+                    "username": username,
+                }
+                for username in device_users
+            ])
+
+            log_tag = log.type or 'unknown'
+            tag_classes = ["label"]
+            if log_tag in self.tag_labels:
+                tag_classes.append(self.tag_labels[log_tag])
+
+            log_tag_format = (
+                '<a href="%(url)s" class="%(classes)s"%(extra_params)s '
+                'data-datatable-tooltip="right" '
+                'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>'
+            ) % {
+                "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
+                                       html.escape(json.dumps(log.id))),
+                "classes": " ".join(tag_classes),
+                "text": log_tag,
+                "extra_params": (' data-datatable-highlight-closest="tr"'
+                                 if log.id == matching_id else ''),
+                "tooltip": "Show the surrounding 100 logs."
+            }
+
+            device = log.device_id
+            device_fmt = '<a href="%(url)s">%(device)s</a>' % {
+                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
+                                        DeviceLogDevicesFilter.slug,
+                                        device,
+                                        device_query),
+                "device": device
+            }
+
+            version = log.app_version or "unknown"
+            ver_format = (
+                '%s <a href="#" data-datatable-tooltip="left" '
+                'data-datatable-tooltip-text="%s">'
+                '<i class="icon icon-info-sign"></i></a>'
+            ) % (version.split(' ')[0], html.escape(version))
+
+            row_set.append([ui_date, log_tag_format, username_fmt,
+                            device_users_fmt, device_fmt, log.msg, ver_format])
+        return row_set
+
+    def _filter_logs(self):
         logs = DeviceReportEntry.objects.filter(
             date__range=[self.datespan.startdate_param_utc,
                          self.datespan.enddate_param_utc],
@@ -213,159 +282,7 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
             logs = logs.filter(user_q)
         if 'device' in self.filters:
             logs = logs.filter(device_id__in=self.selected_devices)
-
-        _device_users_by_xform = memoized(device_users_by_xform)
-        row_set = []
-        user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
-        device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
-
-        self.total_records = logs.count()
-        for log in logs.order_by(self.ordering):
-            ui_date = (ServerTime(log.date)
-                        .user_time(self.timezone).ui_string())
-
-            username = log.username
-            username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (
-                    self.get_url(domain=self.domain),
-                    DeviceLogUsersFilter.slug,
-                    DeviceLogUsersFilter.value_to_param(username),
-                    user_query,
-                ),
-                "username": (
-                    username if username
-                    else '<span class="label label-info">Unknown</span>'
-                )
-            }
-
-            device_users = _device_users_by_xform(log.xform_id)
-            device_users_fmt = ', '.join([
-                '<a href="%(url)s">%(username)s</a>' % {
-                    "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                            DeviceLogUsersFilter.slug,
-                                            username,
-                                            user_query),
-                    "username": username,
-                }
-                for username in device_users
-            ])
-
-            log_tag = log.type or 'unknown'
-            tag_classes = ["label"]
-            if log_tag in self.tag_labels:
-                tag_classes.append(self.tag_labels[log_tag])
-
-            log_tag_format = (
-                '<a href="%(url)s" class="%(classes)s"%(extra_params)s '
-                'data-datatable-tooltip="right" '
-                'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>'
-            ) % {
-                "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
-                                       html.escape(json.dumps(log.id))),
-                "classes": " ".join(tag_classes),
-                "text": log_tag,
-                "extra_params": (' data-datatable-highlight-closest="tr"'
-                                 if log.id == matching_id else ''),
-                "tooltip": "Show the surrounding 100 logs."
-            }
-
-            device = log.device_id
-            device_fmt = '<a href="%(url)s">%(device)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                        DeviceLogDevicesFilter.slug,
-                                        device,
-                                        device_query),
-                "device": device
-            }
-
-            version = log.app_version or "unknown"
-            ver_format = (
-                '%s <a href="#" data-datatable-tooltip="left" '
-                'data-datatable-tooltip-text="%s">'
-                '<i class="icon icon-info-sign"></i></a>'
-            ) % (version.split(' ')[0], html.escape(version))
-
-            row_set.append([ui_date, log_tag_format, username_fmt,
-                            device_users_fmt, device_fmt, log.msg, ver_format])
-        return row_set
-
-    def _create_rows(self, logs, matching_id=None):
-        _device_users_by_xform = memoized(device_users_by_xform)
-        row_set = []
-        user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
-        device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
-        paged = slice(self.pagination.start,
-                      self.pagination.start + self.pagination.count + 1)
-
-        self.total_records = logs.count()
-        for log in logs.order_by(self.ordering)[paged]:
-            ui_date = (ServerTime(log.date)
-                        .user_time(self.timezone).ui_string())
-
-            username = log.username
-            username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (
-                    self.get_url(domain=self.domain),
-                    DeviceLogUsersFilter.slug,
-                    DeviceLogUsersFilter.value_to_param(username),
-                    user_query,
-                ),
-                "username": (
-                    username if username
-                    else '<span class="label label-info">Unknown</span>'
-                )
-            }
-
-            device_users = _device_users_by_xform(log.xform_id)
-            device_users_fmt = ', '.join([
-                '<a href="%(url)s">%(username)s</a>' % {
-                    "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                            DeviceLogUsersFilter.slug,
-                                            username,
-                                            user_query),
-                    "username": username,
-                }
-                for username in device_users
-            ])
-
-            log_tag = log.type or 'unknown'
-            tag_classes = ["label"]
-            if log_tag in self.tag_labels:
-                tag_classes.append(self.tag_labels[log_tag])
-
-            log_tag_format = (
-                '<a href="%(url)s" class="%(classes)s"%(extra_params)s '
-                'data-datatable-tooltip="right" '
-                'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>'
-            ) % {
-                "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
-                                       html.escape(json.dumps(log.id))),
-                "classes": " ".join(tag_classes),
-                "text": log_tag,
-                "extra_params": (' data-datatable-highlight-closest="tr"'
-                                 if log.id == matching_id else ''),
-                "tooltip": "Show the surrounding 100 logs."
-            }
-
-            device = log.device_id
-            device_fmt = '<a href="%(url)s">%(device)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                        DeviceLogDevicesFilter.slug,
-                                        device,
-                                        device_query),
-                "device": device
-            }
-
-            version = log.app_version or "unknown"
-            ver_format = (
-                '%s <a href="#" data-datatable-tooltip="left" '
-                'data-datatable-tooltip-text="%s">'
-                '<i class="icon icon-info-sign"></i></a>'
-            ) % (version.split(' ')[0], html.escape(version))
-
-            row_set.append([ui_date, log_tag_format, username_fmt,
-                            device_users_fmt, device_fmt, log.msg, ver_format])
-        return row_set
+        return logs
 
     def _filter_query_by_slug(self, slug):
         current_query = self.request.META['QUERY_STRING'].split('&')
