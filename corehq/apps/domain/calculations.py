@@ -15,6 +15,9 @@ from corehq.apps.hqadmin.reporting.reports import (
     USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
+from couchforms.analytics import get_number_of_forms_per_domain, \
+    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
+    get_first_form_submission_received, get_last_form_submission_received
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -111,10 +114,9 @@ def inactive_cases_in_last(domain, days):
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
+
 def forms(domain, *args):
-    key = make_form_couch_key(domain)
-    row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
+    return get_number_of_forms_in_domain(domain)
 
 
 def _sms_helper(domain, direction=None, days=None):
@@ -150,48 +152,25 @@ def sms_out_in_last(domain, days=None):
 
 
 def active(domain, *args):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return domain_has_submission_in_last_30_days(domain)
 
-    key = ['submission', domain]
-    row = get_db().view(
-        "reports_forms/all_forms",
-        startkey=key+[then],
-        endkey=key+[now],
-        limit=1
-    ).all()
-    return True if row else False
 
-def display_time(row, display=True):
-    submission_time = row["key"][2]
+def display_time(submission_time, display=True):
     if display:
         return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
     else:
         return submission_time
 
+
 def first_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        startkey=key,
-        endkey=key+[{}],
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    submission_time = get_first_form_submission_received(domain)
+    return display_time(submission_time, display) if submission_time else "No forms"
+
 
 def last_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        endkey=key,
-        startkey=key+[{}],
-        descending=True,
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    submission_time = get_last_form_submission_received(domain)
+    return display_time(submission_time, display) if submission_time else "No forms"
+
 
 def has_app(domain, *args):
     return bool(ApplicationBase.get_db().view(
@@ -200,6 +179,7 @@ def has_app(domain, *args):
         endkey=[domain, {}],
         limit=1
     ).first())
+
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
@@ -276,6 +256,7 @@ CALC_FNS = {
     'uses_reminders': uses_reminders,
 }
 
+
 def dom_calc(calc_tag, dom, extra_arg=''):
     ans = CALC_FNS[calc_tag](dom, extra_arg) if extra_arg else CALC_FNS[calc_tag](dom)
     if ans is True:
@@ -284,11 +265,10 @@ def dom_calc(calc_tag, dom, extra_arg=''):
         return _('no')
     return ans
 
+
 def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
-    form_counts = defaultdict(lambda: 0)
-    case_counts = defaultdict(lambda: 0)
 
     for row in get_db().view('users/by_domain', startkey=["active"],
                              endkey=["active", {}], group_level=3).all():
@@ -299,16 +279,8 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    key = make_form_couch_key(None)
-    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
-                                get_db().view("reports_forms/all_forms",
-                                    group=True,
-                                    group_level=2,
-                                    startkey=key,
-                                    endkey=key+[{}]
-                             ).all()]))
-
-    case_counts.update(get_number_of_cases_per_domain())
+    form_counts = get_number_of_forms_per_domain()
+    case_counts = get_number_of_cases_per_domain()
 
     return {"web_users": webuser_counts,
             "commcare_users": commcare_counts,

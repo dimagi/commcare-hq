@@ -228,18 +228,6 @@ class ExportWriter(object):
     def _close(self):
         raise NotImplementedError
 
-    @classmethod
-    def get_data(cls, row):
-        """
-        Get around the fact that row can be either an iterable or
-        a FormattedRow
-
-        """
-        try:
-            return row.get_data()
-        except AttributeError:
-            return row
-
 
 class OnDiskExportWriter(ExportWriter):
     """
@@ -261,7 +249,7 @@ class OnDiskExportWriter(ExportWriter):
 
         def _encode_if_needed(val):
             return val.encode("utf8") if isinstance(val, unicode) else val
-        row = map(_encode_if_needed, self.get_data(row))
+        row = map(_encode_if_needed, row)
 
         self.tables[sheet_index].write_row(row)
 
@@ -367,7 +355,7 @@ class Excel2007ExportWriter(ExportWriter):
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(map(get_write_value, self.get_data(row)))
+        sheet.append(map(get_write_value, row))
 
     def _close(self):
         """
@@ -393,7 +381,7 @@ class Excel2003ExportWriter(ExportWriter):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
-        for i, val in enumerate(self.get_data(row)):
+        for i, val in enumerate(row):
             sheet.write(row_index,i,unicode(val))
         self.table_indices[sheet_index] = row_index + 1
 
@@ -416,8 +404,7 @@ class InMemoryExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
         table = self.tables[sheet_index]
         # have to deal with primary ids
-        row_data = [val for val in self.get_data(row)]
-        table.append(row_data)
+        table.append(list(row))
 
     def _close(self):
         pass

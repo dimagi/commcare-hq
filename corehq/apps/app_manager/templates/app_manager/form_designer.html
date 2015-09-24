@@ -58,7 +58,10 @@
                     }
                 },
                 {% endif %}
-                sessionid: {{ sessionid|JSON }}
+                sessionid: {{ sessionid|JSON }},
+                externalLinks: {
+                    changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
+                }
             },
             intents: {
                 templates: {{ app_callout_templates|JSON }}

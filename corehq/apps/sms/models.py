@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
-import base64
 import logging
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -1266,7 +1265,7 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION_START)
+            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
         )
 
     def send_step2_java_sms(self):
@@ -1275,12 +1274,12 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,))
+            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
     def send_step2_android_sms(self):
-        from corehq.apps.hqwebapp.utils import sign
         from corehq.apps.sms.api import send_sms
+        from corehq.apps.sms.views import InvitationAppInfoView
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
@@ -1289,14 +1288,13 @@ class SelfRegistrationInvitation(models.Model):
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,))
+            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
         )
 
         if self.odk_url:
-            url = str(self.odk_url).strip()
-            message = 'ccapp: %s signature: %s' % (url, sign(url))
-            message = base64.b64encode(message)
-            message = '[COMMCARE APP - DO NOT DELETE] %s' % message
+            app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
+                args=[self.domain, self.token])
+            message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
                 None,

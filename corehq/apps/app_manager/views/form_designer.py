@@ -58,9 +58,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
-    vellum_plugins = ["modeliteration"]
-    if domain_has_privilege(domain, privileges.LOOKUP_TABLES):
-        vellum_plugins.append("itemset")
+    vellum_plugins = ["modeliteration", "itemset"]
     if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
@@ -73,6 +71,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
+        'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
     })
 
     if domain_has_privilege(domain, privileges.TEMPLATED_INTENTS):
@@ -180,7 +179,7 @@ def _app_callout_templates():
     """
     path = os.path.join(
         os.path.dirname(__file__),
-        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+        '..', 'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
     )
     if os.path.exists(path):
         with open(path) as f:
