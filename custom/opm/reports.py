@@ -579,6 +579,11 @@ class CaseReportMixin(object):
     @property
     @memoized
     def cases(self):
+        if 'debug_case' in self.request.GET:
+            case = CommCareCase.get(self.request.GET['debug_case'])
+            assert case.domain == DOMAIN
+            return [case]
+
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
