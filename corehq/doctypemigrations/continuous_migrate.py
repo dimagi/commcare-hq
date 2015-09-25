@@ -10,7 +10,7 @@ def filter_doc_ids_by_doc_type(db, doc_ids, doc_types):
         keys = [[doc_type, doc_id]
                 for doc_id in doc_ids_chunk
                 for doc_type in doc_types]
-        results = db.view('all_docs/by_doc_type', keys=keys)
+        results = db.view('all_docs/by_doc_type', keys=keys, reduce=False)
         for result in results:
             yield result['id']
 
