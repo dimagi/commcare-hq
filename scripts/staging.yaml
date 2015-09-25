@@ -49,6 +49,7 @@ branches:
   - migrate-users-db  # Danny 9/23
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
+  - djangobower+new-mobile-workers # Ben 9/25
   - new-mobile-workers # Biyeun 8/25
   - billing/post-pay # Farid 9/3
   - sync-history-email # Cal 9/22
