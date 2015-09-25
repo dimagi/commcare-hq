@@ -64,6 +64,8 @@ class Migrator(object):
             logging.warning('tried to remove file {}, but it was not there'
                             .format(self.data_dump_filename))
         delete_all_docs_by_doc_type(self.source_db, self.doc_types)
+        self._migration_model.cleanup_complete = True
+        self._migration_model.save()
 
     def get_doc_counts(self):
         source_counts = get_doc_counts_per_doc_type(self.source_db, self.doc_types)
@@ -102,3 +104,7 @@ class Migrator(object):
         except ValueError:
             return None
         return checkpoint.seq
+
+    @property
+    def cleanup_complete(self):
+        return self._migration_model.cleanup_complete

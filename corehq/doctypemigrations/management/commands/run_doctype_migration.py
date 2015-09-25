@@ -30,6 +30,16 @@ Run
 to do a bulk migrate before continuous replication.
 """
 
+CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP = """You have already run cleanup for this migration.
+You cannot run --continuous after --cleanup.
+
+This is actually very important: if you were to run --continuous again, that would
+replicate changes from the source db to the target db
+resulting in the docs deleted in cleanup also being deleted from the target db!
+
+You're welcome.
+"""
+
 
 class Command(BaseCommand):
     """
@@ -80,6 +90,8 @@ class Command(BaseCommand):
         if continuous:
             if not migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
+            if migrator.cleanup_complete:
+                raise CommandError(CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP)
             self.handle_continuous(migrator)
         if cleanup:
             confirmation = raw_input(
