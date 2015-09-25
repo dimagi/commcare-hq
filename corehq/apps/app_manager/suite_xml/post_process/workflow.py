@@ -168,22 +168,28 @@ class WorkflowHelper(PostProcessor):
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
 
-        def frame_children_for_module(module_):
+        def frame_children_for_module(module_, include_user_selections=True):
             frame_children = []
             if module_.root_module:
                 frame_children.extend(frame_children_for_module(module_.root_module))
 
-            this_module_children = self.get_frame_children(module_.get_form(0), module_only=True)
-            for child in this_module_children:
-                if child not in frame_children:
-                    frame_children.append(child)
+            if include_user_selections:
+                this_module_children = self.get_frame_children(module_.get_form(0), module_only=True)
+                for child in this_module_children:
+                    if child not in frame_children:
+                        frame_children.append(child)
+            else:
+                module_command = id_strings.menu_id(module_)
+                if module_command != id_strings.ROOT:
+                    frame_children.append(CommandId(module_command))
+
             return frame_children
 
         stack_frames = []
         if form.post_form_workflow == WORKFLOW_ROOT:
             stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
         elif form.post_form_workflow == WORKFLOW_MODULE:
-            frame_children = frame_children_for_module(module)
+            frame_children = frame_children_for_module(module, include_user_selections=False)
             stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
         elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             root_module = module.root_module

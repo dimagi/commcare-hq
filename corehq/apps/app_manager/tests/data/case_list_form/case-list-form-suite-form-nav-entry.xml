@@ -20,7 +20,6 @@
             </create>
             <create if="count(instance('commcaresession')/session/data/return_to) = 0">
               <command value="'m1'"/>
-              <datum id="case_id_new_suite_test_0" value="uuid()"/>
             </create>
         </stack>
     </entry>
