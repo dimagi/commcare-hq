@@ -665,7 +665,8 @@ def copy_tf_localsettings():
 @parallel
 @roles(ROLES_ALL_SRC)
 def copy_components():
-    sudo('cp -r {}/components {}/components'.format(env.code_current, env.code_root))
+    if files.exists('{}/components'.format(env.code_current)):
+        sudo('cp -r {}/components {}/components'.format(env.code_current, env.code_root))
 
 
 def copy_release_files():
