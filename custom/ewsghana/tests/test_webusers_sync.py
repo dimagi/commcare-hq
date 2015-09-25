@@ -5,6 +5,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
+from corehq.apps.programs.models import Program
 from custom.ewsghana.api import EWSUser, EWSApi, Product, Location
 
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
@@ -54,11 +55,15 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(webuser.is_active, ewsghana_webuser.is_active)
         self.assertEqual(False, ewsghana_webuser.is_superuser)
         self.assertEqual(False, ewsghana_webuser.is_staff)
-        self.assertIsNone(ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id)
+
+        membership = ewsghana_webuser.get_domain_membership(TEST_DOMAIN)
+        self.assertIsNotNone(membership.program_id)
+        self.assertEqual(Program.get(membership.program_id).code, 'hiv')
+        self.assertIsNone(membership.location_id)
         domain_name = ewsghana_webuser.get_domains()[0]
         self.assertEqual(TEST_DOMAIN, domain_name)
         self.assertEqual(UserRole.get_read_only_role_by_domain(TEST_DOMAIN)._id,
-                         ewsghana_webuser.get_domain_membership(TEST_DOMAIN).role_id)
+                         membership.role_id)
         ewsghana_webuser.delete()
 
     def test_create_facility_manager(self):

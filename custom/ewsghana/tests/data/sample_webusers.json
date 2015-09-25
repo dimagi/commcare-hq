@@ -8,6 +8,7 @@
     "is_superuser": false,
     "last_login": "2013-08-22T15:29:46.076977",
     "last_name": "Test1",
+    "program": "hiv",
     "location": null,
     "organization": "TestOrg1",
     "password": "sha1$4b8dd$8acea54703614eea2fbb4bf7fd6ee9465a67ff53",
