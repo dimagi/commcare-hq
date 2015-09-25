@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.xml import V2
-from corehq.apps.app_manager.tests import TestFileMixin
+from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
 from corehq.apps.hqcase.tasks import explode_cases
@@ -90,7 +90,7 @@ class mock_fetch_case_attachment(object):
         CommCareCase.fetch_case_attachment = self.old_fetch_case_attachment
 
 
-class ExplodeCasesTest(SimpleTestCase, TestFileMixin):
+class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
     maxDiff = 1000000
 
     def test_make_creating_casexml(self):

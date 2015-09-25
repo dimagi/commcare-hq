@@ -28,7 +28,7 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
+from corehq.apps.app_manager.tests.util import TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     UserCaseXPath,
@@ -44,7 +44,7 @@ import commcare_translations
 from mock import patch
 
 
-class SuiteTest(SimpleTestCase, TestFileMixin):
+class SuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -733,7 +733,7 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case, None),
 
 
-class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
+class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):

@@ -1,11 +1,11 @@
 # coding=utf-8
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
     WrappedNode
 
 
-class XFormParsingTest(SimpleTestCase, TestFileMixin):
+class XFormParsingTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):
