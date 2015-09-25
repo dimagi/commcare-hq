@@ -86,7 +86,9 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'components')
+# Do not change, there's a weird bug with Django 1.7 that requires this to be bower_components when using
+# collectstatic
+BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
 
 BOWER_INSTALLED_APPS = (
     'jquery#1.11.1',
