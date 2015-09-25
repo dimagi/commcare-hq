@@ -19,20 +19,21 @@ var Selectable = Backbone.View.extend({
         "click": "toggle"
     },
     toggle: function () {
+        var dialog = true;
         if (this.disabled) {
             return;
         }
-        if (this.selected) {
-            if (window.mainView.router.view.dirty) {
-                var dialog = confirm(translatedStrings.dirty);
-                if (dialog == true) {
-                    this.deselect();
-                    this.trigger("deselected");
-                }
+        if (window.mainView.router.view && window.mainView.router.view.dirty) {
+            dialog = confirm(translatedStrings.sidebarDirty);
+            if (dialog) {
+                window.mainView.router.view.dirty = false;
             } else {
-                this.deselect();
-                this.trigger("deselected");
+                return;
             }
+        }
+        if (this.selected) {
+            this.deselect();
+            this.trigger("deselected");
         } else {
             this.select();
         }

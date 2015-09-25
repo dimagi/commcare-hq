@@ -924,7 +924,7 @@ def audit_logs(request, domain):
     data = {}
     for username in usernames:
         data[username] = []
-        for doc in get_db().view('auditcare/urlpath_by_user_date',
+        for doc in get_db('auditcare').view('auditcare/urlpath_by_user_date',
             startkey=[username],
             endkey=[username, {}],
             include_docs=True,

@@ -1,6 +1,7 @@
 # Stub models file
 from collections import namedtuple
 import itertools
+from django.conf import settings
 from corehq.apps.callcenter.const import DATE_RANGES
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.ext.couchdbkit import *
@@ -18,10 +19,15 @@ class TypedIndicator(BasicIndicator):
     type = StringProperty()
 
 
-class ByTypeIndicator(BasicIndicator):
+class ByTypeIndicator(DocumentSchema):
+    include_legacy = BooleanProperty()
     total = SchemaProperty(BasicIndicator)
     all_types = BooleanProperty()  # same date ranges as 'total'
     types = SchemaListProperty(TypedIndicator)
+
+    @property
+    def active(self):
+        return self.total.active or self.all_types or any(type_.active for type_ in self.types)
 
     def types_by_date_range(self):
         types_list = sorted([
@@ -37,21 +43,20 @@ class ByTypeIndicator(BasicIndicator):
 
 class CallCenterIndicatorConfig(Document):
     domain = StringProperty()
-    forms_updated = SchemaProperty(BasicIndicator)
+    forms_submitted = SchemaProperty(BasicIndicator)
     cases_total = SchemaProperty(ByTypeIndicator)
     cases_active = SchemaProperty(ByTypeIndicator)
     cases_opened = SchemaProperty(ByTypeIndicator)
     cases_closed = SchemaProperty(ByTypeIndicator)
 
     @classmethod
-    @skippable_quickcache(['domain'], skip_arg='skip_cache')
-    def for_domain(cls, domain, skip_cache=False):
+    @skippable_quickcache(['domain'], lambda *_: settings.UNIT_TESTING)
+    def for_domain(cls, domain):
         res = cls.view(
-            "domain/docs",
-            key=[domain, cls.__name__, None],
+            "callcenter/config_by_domain",
+            key=domain,
             reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap)
+            include_docs=True).all()
 
         return res[0] if len(res) else cls.default_config(domain)
 
@@ -62,8 +67,6 @@ class CallCenterIndicatorConfig(Document):
 
         def default_typed():
             return ByTypeIndicator(
-                active=True,
-                date_ranges=DATE_RANGES,
                 total=default_basic(),
                 all_types=True,
                 include_legacy=include_legacy
@@ -71,12 +74,16 @@ class CallCenterIndicatorConfig(Document):
 
         return cls(
             domain=domain,
-            forms_updated=default_basic(),
+            forms_submitted=default_basic(),
             cases_total=default_typed(),
             cases_active=default_typed(),
             cases_opened=default_typed(),
             cases_closed=default_typed(),
         )
+
+    def save(self, **params):
+        super(CallCenterIndicatorConfig, self).save(**params)
+        CallCenterIndicatorConfig.for_domain.clear(self.__class__, self.domain)
 
 
 from .signals import *
