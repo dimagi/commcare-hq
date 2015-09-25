@@ -247,9 +247,7 @@ class AWCHealthStatus(object):
     @property
     @memoized
     def beneficiaries(self):
-        # if len(self.all_cases) != self.pregnancies + self.children:
-            # raise ValueError("Hey wait a sec, that doesn't make sense!")
-        return len(self.all_cases)
+        return self.pregnancies + self.children
 
     @property
     @memoized
