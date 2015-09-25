@@ -14,7 +14,7 @@ from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from couchforms.filters import instances
-from corehq.apps.userreports.util import localize as ucr_localize
+from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
@@ -249,13 +249,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             'filters': {}
         }
 
-    def to_complete_json(self):
+    def to_complete_json(self, lang=None):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
             'report_name': self.report_name,
             'date_description': self.date_description,
-            'datespan_filters': self.datespan_filters,
+            'datespan_filters': self.datespan_filter_choices(
+                self.datespan_filters,
+                lang or ucr_default_language()
+            ),
             'has_ucr_datespan': self.has_ucr_datespan,
         })
         return result
