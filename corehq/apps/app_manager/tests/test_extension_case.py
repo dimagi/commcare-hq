@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     LoadUpdateAction,
     PreloadAction,
 )
-from corehq.apps.app_manager.tests import TestFileMixin
+from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
@@ -20,7 +20,7 @@ from django.test import SimpleTestCase
 from mock import patch
 
 
-class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
+class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -82,7 +82,7 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         self.skipTest('TODO: Write this test')
 
 
-class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
+class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -133,7 +133,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
         self.skipTest('TODO: Write this test')
 
 
-class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
+class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):

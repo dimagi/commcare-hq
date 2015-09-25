@@ -2,7 +2,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 import xml.etree.ElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
@@ -10,7 +10,7 @@ from corehq import toggles
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
-class ProfileTest(SimpleTestCase, TestFileMixin):
+class ProfileTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):

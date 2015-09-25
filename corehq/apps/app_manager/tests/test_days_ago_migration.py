@@ -1,9 +1,9 @@
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from django.test import SimpleTestCase
 
 
-class DaysAgoMigrationTest(SimpleTestCase, TestFileMixin):
+class DaysAgoMigrationTest(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
 
     def setUp(self):
