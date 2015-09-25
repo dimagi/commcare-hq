@@ -1,5 +1,7 @@
 from corehq.apps.callcenter.const import WEEK1, WEEK0, MONTH0
-from corehq.apps.callcenter.models import TypedIndicator, ByTypeIndicator, CallCenterIndicatorConfig, BasicIndicator
+from corehq.apps.callcenter.models import (
+    TypedIndicator, ByTypeIndicator, CallCenterIndicatorConfig, BasicIndicator
+)
 from django.test import SimpleTestCase
 
 
@@ -74,4 +76,3 @@ class ModelTests(SimpleTestCase):
             'cases_total_beneficiary_month0',
             'cases_active_beneficiary_month0'
         })
-
