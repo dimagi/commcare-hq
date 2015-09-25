@@ -53,18 +53,26 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
         ),
+        make_option(
+            '--stats',
+            action='store_true',
+            default=False,
+        ),
     )
 
     def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
-               **options):
+               stats=None, **options):
         try:
             migrator = get_migrator_by_slug(migrator_slug)
         except KeyError:
             raise CommandError(USAGE)
-        if not any((initial, continuous, cleanup)):
-            raise CommandError('initial, continuous, or cleanup must be set')
+        if not any((initial, continuous, cleanup, stats)):
+            raise CommandError('initial, continuous, cleanup, or stats must be set')
         if cleanup and (initial or continuous):
             raise CommandError('cleanup must be run alone')
+
+        if stats:
+            self.handle_stats(migrator)
         if initial:
             if migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_CONTINUOUS.format(migrator_slug))
@@ -96,3 +104,14 @@ class Command(BaseCommand):
 
     def handle_cleanup(self, migrator):
         migrator.phase_3_clean_up()
+
+    def handle_stats(self, migrator):
+        [(source_db, source_counts),
+         (target_db, target_counts)] = migrator.get_doc_counts()
+        self.stdout.write('Source DB: {}\n'.format(source_db.uri))
+        self.stdout.write('Target DB: {}\n'.format(target_db.uri))
+        self.stdout.write('{:^30}\tSource\tTarget\n'.format('doc_type'))
+        for doc_type in sorted(migrator.doc_types):
+            self.stdout.write(
+                '{:<30}\t{}\t{}\n'
+                .format(doc_type, source_counts[doc_type], target_counts[doc_type]))

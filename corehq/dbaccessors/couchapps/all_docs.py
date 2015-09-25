@@ -24,3 +24,14 @@ def get_all_doc_ids_for_domain_grouped_by_db(domain):
             reduce=False,
         )
         yield (db, (result['id'] for result in results))
+
+
+def get_doc_count_by_type(db, doc_type):
+    key = [doc_type]
+    result = db.view(
+        'all_docs/by_doc_type', startkey=key, endkey=key + [{}], reduce=True,
+        group_level=1).one()
+    if result:
+        return result['value']
+    else:
+        return 0

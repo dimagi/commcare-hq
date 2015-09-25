@@ -4,6 +4,7 @@ import os
 from corehq.doctypemigrations.changes import stream_changes_forever
 from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
+from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.decorators.memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.models import DocTypeMigration, DocTypeMigrationCheckpoint
@@ -63,6 +64,11 @@ class Migrator(object):
             logging.warning('tried to remove file {}, but it was not there'
                             .format(self.data_dump_filename))
         delete_all_docs_by_doc_type(self.source_db, self.doc_types)
+
+    def get_doc_counts(self):
+        source_counts = get_doc_counts_per_doc_type(self.source_db, self.doc_types)
+        target_counts = get_doc_counts_per_doc_type(self.target_db, self.doc_types)
+        return [(self.source_db, source_counts), (self.target_db, target_counts)]
 
     def _record_original_seq(self, seq):
         self._migration_model.original_seq = seq

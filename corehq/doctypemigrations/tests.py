@@ -6,6 +6,7 @@ from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type, \
     copy_docs, delete_docs, ContinuousReplicator
 from corehq.doctypemigrations.migrator import Migrator
+from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.couch.bulk import get_docs
 from django.conf import settings
 
@@ -98,6 +99,22 @@ class TestDocTypeMigrations(TestCase):
             replicator.replicate_change(change)
         replicator.commit()
         self.assert_no_docs_in_target_db()
+
+    def test_get_doc_counts_per_doc_type(self):
+        doc_types = self.migration.doc_types
+        self.assertEqual(
+            get_doc_counts_per_doc_type(self.migration.source_db, doc_types),
+            {'CommCareUser': 2, 'CommCareUser-Deleted': 0, 'Group': 1, 'Group-Deleted': 1})
+        self.assertEqual(
+            get_doc_counts_per_doc_type(self.migration.target_db, doc_types),
+            {'CommCareUser': 0, 'CommCareUser-Deleted': 0, 'Group': 0, 'Group-Deleted': 0})
+        self.migration.phase_1_bulk_migrate()
+        self.assertEqual(
+            get_doc_counts_per_doc_type(self.migration.source_db, doc_types),
+            {'CommCareUser': 2, 'CommCareUser-Deleted': 0, 'Group': 1, 'Group-Deleted': 1})
+        self.assertEqual(
+            get_doc_counts_per_doc_type(self.migration.target_db, doc_types),
+            {'CommCareUser': 2, 'CommCareUser-Deleted': 0, 'Group': 1, 'Group-Deleted': 1})
 
 
 def _get_non_design_docs(db):
