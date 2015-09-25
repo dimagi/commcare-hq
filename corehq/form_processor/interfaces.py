@@ -28,25 +28,25 @@ class FormProcessorInterface(object):
     def get_attachment(xform_id, attachment_name):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
 
-    @staticmethod
-    def archive_xform(xform_generic, user=None):
-        xform = FormProcessorInterface._get_xform(xform_generic.id)
+    @classmethod
+    def archive_xform(cls, xform_generic, user=None):
+        xform = cls._get_xform(xform_generic.id)
         return xform.archive(user=user)
 
-    @staticmethod
-    def unarchive_xform(xform_generic, user=None):
-        xform = FormProcessorInterface._get_xform(xform_generic.id)
+    @classmethod
+    def unarchive_xform(cls, xform_generic, user=None):
+        xform = cls._get_xform(xform_generic.id)
         return xform.unarchive(user=user)
 
-    @staticmethod
-    def get_xml_element(xform_generic):
-        xform = FormProcessorInterface._get_xform(xform_generic.id)
+    @classmethod
+    def get_xml_element(cls, xform_generic):
+        xform = cls._get_xform(xform_generic.id)
         return xform.get_xml_element()
 
-    @staticmethod
+    @classmethod
     @to_generic
-    def get_xform(xform_id):
-        return FormProcessorInterface._get_xform(xform_id)
+    def get_xform(cls, xform_id):
+        return cls._get_xform(xform_id)
 
     @staticmethod
     def _get_xform(xform_id):
@@ -74,10 +74,10 @@ class FormProcessorInterface(object):
             include_docs=True,
         ).all()
 
-    @staticmethod
+    @classmethod
     @to_generic
-    def update_properties(xform_generic, **properties):
-        xform = FormProcessorInterface._get_xform(xform_generic.id)
+    def update_properties(cls, xform_generic, **properties):
+        xform = cls._get_xform(xform_generic.id)
         for prop, value in properties.iteritems():
             setattr(xform, prop, value)
         xform.save()
