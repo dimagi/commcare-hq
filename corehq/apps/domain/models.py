@@ -675,12 +675,15 @@ class Domain(Document, SnapshotMixin):
                 )
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
-                  ignore=None, copy_by_id=None):
+                  copy_by_id=None, share_reminders=True,
+                  share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
-
-        ignore = ignore if ignore is not None else []
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+        from corehq.apps.fixtures.models import FixtureDataType
+        from corehq.apps.users.models import UserRole
 
         db = Domain.get_db()
         new_id = db.copy_doc(self.get_id)['id']
@@ -711,38 +714,45 @@ class Domain(Document, SnapshotMixin):
                 if hasattr(new_domain, field):
                     delattr(new_domain, field)
 
-            new_comps = {}  # a mapping of component's id to it's copy
+            new_app_components = {}  # a mapping of component's id to its copy
 
             def copy_data_items(old_type_id, new_type_id):
                 for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-                    comp = self.copy_component(item.doc_type, item._id,
-                                               new_domain_name, user=user)
+                    comp = self.copy_component(
+                        item.doc_type, item._id, new_domain_name, user=user)
                     comp.data_type_id = new_type_id
                     comp.save()
 
-            for res in db.view('domain/related_to_domain', key=[self.name, True]):
-                if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                    res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                                 'FixtureDataType')):
-                    continue
-                if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-                    app = get_app(self.name, res['value']['_id']).get_latest_saved()
-                    if app:
-                        comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
-                    else:
-                        comp = self.copy_component(res['value']['doc_type'],
-                                                   res['value']['_id'],
-                                                   new_domain_name,
-                                                   user=user)
-                elif res['value']['doc_type'] not in ignore:
-                    comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                    if res['value']['doc_type'] == 'FixtureDataType':
-                        copy_data_items(res['value']['_id'], comp._id)
-                else:
-                    comp = None
+            def get_lastest_app_id(doc_id):
+                app = get_app(self.name, doc_id).get_latest_saved()
+                if app:
+                    return app._id, app.doc_type
 
-                if comp:
-                    new_comps[res['value']['_id']] = comp
+            for app in get_apps_in_domain(self.name):
+                doc_id, doc_type = app.get_id, app.doc_type
+                original_doc_id = doc_id
+                if copy_by_id and doc_id not in copy_by_id:
+                    continue
+                if not self.is_snapshot:
+                    doc_id, doc_type = get_lastest_app_id(doc_id) or (doc_id, doc_type)
+                component = self.copy_component(doc_type, doc_id, new_domain_name, user=user)
+                if component:
+                    new_app_components[original_doc_id] = component
+
+            for doc_id in get_doc_ids_in_domain_by_type(self.name, FixtureDataType):
+                if copy_by_id and doc_id not in copy_by_id:
+                    continue
+                component = self.copy_component(
+                    'FixtureDataType', doc_id, new_domain_name, user=user)
+                copy_data_items(doc_id, component._id)
+
+            if share_reminders:
+                for doc_id in get_doc_ids_in_domain_by_type(self.name, CaseReminderHandler):
+                    self.copy_component(
+                        'CaseReminderHandler', doc_id, new_domain_name, user=user)
+            if share_user_roles:
+                for doc_id in get_doc_ids_in_domain_by_type(self.name, UserRole):
+                    self.copy_component('UserRole', doc_id, new_domain_name, user=user)
 
             new_domain.save()
 
@@ -762,14 +772,14 @@ class Domain(Document, SnapshotMixin):
                 form = FormBase.get_form(event.form_unique_id)
                 form_app = form.get_app()
                 m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_comps[form_app._id].get_module(m_index).get_form(f_index)
+                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
                 event.form_unique_id = form_copy.unique_id
 
         def update_for_copy(handler):
             handler.active = False
             update_events(handler)
 
-        if 'CaseReminderHandler' not in ignore:
+        if share_reminders:
             for handler in CaseReminderHandler.get_handlers(new_domain_name):
                 apply_update(handler, update_for_copy)
 
@@ -833,12 +843,14 @@ class Domain(Document, SnapshotMixin):
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self, ignore=None, copy_by_id=None):
+    def save_snapshot(self, share_reminders, copy_by_id=None):
         if self.is_snapshot:
             return self
         else:
             try:
-                copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
+                copy = self.save_copy(
+                    copy_by_id=copy_by_id, share_reminders=share_reminders,
+                    share_user_roles=False)
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
