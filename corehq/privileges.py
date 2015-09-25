@@ -97,7 +97,7 @@ class Titles(object):
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
             LOCATIONS: _("Locations"),
             REPORT_BUILDER: _('User Configurable Report Builder'),
-            TEMPLATED_INTENTS: _('Templated Intents'),
-            CUSTOM_INTENTS: _('Custom Intents'),
+            TEMPLATED_INTENTS: _('Built-in Integration'),
+            CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),
         }.get(privilege, privilege)
