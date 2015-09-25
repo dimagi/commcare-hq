@@ -105,6 +105,7 @@ BOWER_INSTALLED_APPS = (
     'backbone#0.9.1',
 )
 
+BOWER_PATH = '/usr/bin/bower'
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
