@@ -533,9 +533,7 @@ def setup_release():
     _execute_with_timing(update_code)
     _execute_with_timing(update_virtualenv)
 
-    # Update localsettings
-    _execute_with_timing(copy_localsettings)
-    _execute_with_timing(copy_tf_localsettings)
+    _execute_with_timing(copy_release_files)
 
 
 def _deploy_without_asking():
@@ -648,11 +646,13 @@ def create_code_dir():
     sudo('mkdir -p {}'.format(env.code_root))
 
 
+@parallel
 @roles(ROLES_ALL_SRC)
 def copy_localsettings():
     sudo('cp {}/localsettings.py {}/localsettings.py'.format(env.code_current, env.code_root))
 
 
+@parallel
 @roles(ROLES_TOUCHFORMS)
 def copy_tf_localsettings():
     sudo(
@@ -660,6 +660,18 @@ def copy_tf_localsettings():
         '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
             env.code_current, env.code_root
         ))
+
+
+@parallel
+@roles(ROLES_ALL_SRC)
+def copy_components():
+    sudo('cp -r {}/components {}/components'.format(env.code_current, env.code_root))
+
+
+def copy_release_files():
+    execute(copy_localsettings)
+    execute(copy_tf_localsettings)
+    execute(copy_components)
 
 
 @task
@@ -955,6 +967,7 @@ def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
+        sudo('{}/bin/python manage.py bower install'.format(venv))
         sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
