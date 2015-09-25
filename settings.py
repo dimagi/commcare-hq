@@ -1064,7 +1064,6 @@ COUCHDB_APPS = [
     'builds',
     'case',
     'casegroups',
-    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -1143,6 +1142,7 @@ COUCHDB_APPS = [
     ('m4change', 'm4change'),
     ('export', 'meta'),
     'tdhtesting',
+    ('callcenter', 'meta'),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
