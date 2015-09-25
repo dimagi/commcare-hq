@@ -159,7 +159,7 @@ function LocationTypeModel(data, root) {
             pk: this.pk,
             name: this.name(),
             parent_type: this.parent_type() || null,
-            administrative: !this.tracks_stock(),
+            administrative: COMMTRACK_ENABLED ? !this.tracks_stock() : true,
             shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true
         };
