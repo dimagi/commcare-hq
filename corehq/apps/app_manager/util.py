@@ -3,7 +3,9 @@ from copy import deepcopy
 import functools
 import json
 import itertools
+import os
 import uuid
+import yaml
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -551,3 +553,24 @@ def update_unique_ids(app_source):
                 jsonpath_update(reference, id_changes[reference.value])
 
     return app_source
+
+
+def _app_callout_templates():
+    """Load app callout templates from config file on disk
+
+    Generator function defers file access until needed, acts like a
+    constant thereafter.
+    """
+    path = os.path.join(
+        os.path.dirname(__file__),
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+    )
+    if os.path.exists(path):
+        with open(path) as f:
+            data = yaml.load(f)
+    else:
+        logger.info("not found: %s", path)
+        data = []
+    while True:
+        yield data
+app_callout_templates = _app_callout_templates()
