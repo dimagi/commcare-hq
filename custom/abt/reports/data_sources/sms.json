@@ -1,5 +1,12 @@
 {
-    "domains": ["airs"],
+    "domains": [
+        "airs",
+        "airszambia",
+        "airsrwanda",
+        "airsethiopia",
+        "abtmali",
+        "airsmadagascar"
+    ],
     "config": {
         "engine_id": "default",
         "base_item_expression": {},
@@ -14,438 +21,1095 @@
             "type": "boolean_expression"
         },
         "configured_indicators": [
-            {
-                "column_id": "country",
-                "datatype": "string",
-                "display_name": "country",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "country",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "level_1",
-                "datatype": "string",
-                "display_name": "level_1",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": "string",
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "level_1_name",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "level_2",
-                "datatype": "string",
-                "display_name": "level_2",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": "string",
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "level_2_name",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "level_3",
-                "datatype": "string",
-                "display_name": "level_3",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": "string",
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "level_3_name",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "level_4",
-                "datatype": "string",
-                "display_name": "level_4",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": "string",
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "level_4_name",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "worker_code",
-                "datatype": "string",
-                "display_name": "worker_code",
-                "expression": {
-                    "doc_id_expression": {
-                        "datatype": "string",
-                        "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                        ],
-                        "type": "property_path"
-                    },
-                    "related_doc_type": "CommCareCase",
-                    "type": "related_doc",
-                    "value_expression": {
-                        "datatype": null,
-                        "property_name": "external_id",
-                        "type": "property_name"
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
-            },
-            {
-                "column_id": "structures_found",
-                "datatype": "integer",
-                "display_name": "structures_found",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
+          {
+            "display_name": "country",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "country",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "country"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": null,
+                "type": "property_path",
                 "property_path": [
-                    "form",
-                    "structures_found"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "structures_sprayed",
-                "datatype": "integer",
-                "display_name": "structures_sprayed",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "structures_sprayed"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "total_sprayers",
-                "datatype": "integer",
-                "display_name": "total_sprayers",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "total_sprayers"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "insecticide_used",
-                "datatype": "integer",
-                "display_name": "insecticide_used",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "insecticide_used"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "date_of_data_collection",
-                "datatype": "date",
-                "display_name": "date_of_data_collection",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "date_of_data_collection"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "structures_per_sprayer",
-                "datatype": "decimal",
-                "display_name": "structures_per_sprayer",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "structures_per_sprayer"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "structures_per_IU",
-                "datatype": "decimal",
-                "display_name": "structures_per_IU",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "structures_per_IU"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "spray_coverage",
-                "datatype": "decimal",
-                "display_name": "spray_coverage",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "spray_coverage"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "username",
-                "datatype": "string",
-                "display_name": "username",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "meta",
-                    "username"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "timeEnd",
-                "datatype": "datetime",
-                "display_name": "timeEnd",
-                "is_nullable": true,
-                "is_primary_key": false,
-                "property_name": null,
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "type": "raw"
-            },
-            {
-                "column_id": "target_number",
-                "datatype": "integer",
-                "display_name": "target_number",
-                "expression": {
-                    "expression_if_false": {
-                        "expression_if_false": {
-                            "expression_if_false": {
-                                "expression_if_false": {
-                                    "constant": 0,
-                                    "type": "constant"
-                                },
-                                "expression_if_true": {
-                                    "constant": 85891,
-                                    "type": "constant"
-                                },
-                                "test": {
-                                    "expression": {
-                                        "doc_id_expression": {
-                                            "datatype": null,
-                                            "property_path": [
-                                                "form",
-                                                "case",
-                                                "@case_id"
-                                            ],
-                                            "type": "property_path"
-                                        },
-                                        "related_doc_type": "CommCareCase",
-                                        "type": "related_doc",
-                                        "value_expression": {
-                                            "datatype": null,
-                                            "property_name": "level_2_data",
-                                            "type": "property_name"
-                                        }
-                                    },
-                                    "operator": "eq",
-                                    "property_value": "nioro",
-                                    "type": "boolean_expression"
-                                },
-                                "type": "conditional"
-                            },
-                            "expression_if_true": {
-                                "constant": 45733,
-                                "type": "constant"
-                            },
-                            "test": {
-                                "expression": {
-                                    "doc_id_expression": {
-                                        "datatype": null,
-                                        "property_path": [
-                                            "form",
-                                            "case",
-                                            "@case_id"
-                                        ],
-                                        "type": "property_path"
-                                    },
-                                    "related_doc_type": "CommCareCase",
-                                    "type": "related_doc",
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "property_name": "level_2_data",
-                                        "type": "property_name"
-                                    }
-                                },
-                                "operator": "eq",
-                                "property_value": "koungheul",
-                                "type": "boolean_expression"
-                            },
-                            "type": "conditional"
-                        },
-                        "expression_if_true": {
-                            "constant": 5304,
-                            "type": "constant"
-                        },
-                        "test": {
-                            "expression": {
-                                "doc_id_expression": {
-                                    "datatype": null,
-                                    "property_path": [
-                                        "form",
-                                        "case",
-                                        "@case_id"
-                                    ],
-                                    "type": "property_path"
-                                },
-                                "related_doc_type": "CommCareCase",
-                                "type": "related_doc",
-                                "value_expression": {
-                                    "datatype": null,
-                                    "property_name": "level_2_data",
-                                    "type": "property_name"
-                                }
-                            },
-                            "operator": "eq",
-                            "property_value": "malem_hodar",
-                            "type": "boolean_expression"
-                        },
-                        "type": "conditional"
-                    },
-                    "expression_if_true": {
-                        "constant": 45118,
-                        "type": "constant"
-                    },
-                    "test": {
-                        "expression": {
-                            "doc_id_expression": {
-                                "datatype": null,
-                                "property_path": [
-                                    "form",
-                                    "case",
-                                    "@case_id"
-                                ],
-                                "type": "property_path"
-                            },
-                            "related_doc_type": "CommCareCase",
-                            "type": "related_doc",
-                            "value_expression": {
-                                "datatype": null,
-                                "property_name": "level_2_data",
-                                "type": "property_name"
-                            }
-                        },
-                        "operator": "eq",
-                        "property_value": "koumpentoum",
-                        "type": "boolean_expression"
-                    },
-                    "type": "conditional"
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
             }
-        ],
+          },
+          {
+            "display_name": "level_1",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "level_1",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "level_1_name"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
+            }
+          },
+          {
+            "display_name": "level_2",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "level_2",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "level_2_name"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
+            }
+          },
+          {
+            "display_name": "level_3",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "level_3",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "level_3_name"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
+            }
+          },
+          {
+            "display_name": "level_4",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "level_4",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "level_4_name"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
+            }
+          },
+          {
+            "display_name": "worker_code",
+            "transform": {},
+            "datatype": "string",
+            "type": "expression",
+            "is_primary_key": false,
+            "is_nullable": true,
+            "column_id": "worker_code",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "external_id"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "case",
+                  "@case_id"
+                ]
+              }
+            }
+          },
+          {
+            "display_name": "structures_found",
+            "property_path": [
+              "form",
+              "structures_found"
+            ],
+            "datatype": "integer",
+            "is_primary_key": false,
+            "column_id": "structures_found",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "structures_sprayed",
+            "property_path": [
+              "form",
+              "structures_sprayed"
+            ],
+            "datatype": "integer",
+            "is_primary_key": false,
+            "column_id": "structures_sprayed",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "total_sprayers",
+            "property_path": [
+              "form",
+              "total_sprayers"
+            ],
+            "datatype": "integer",
+            "is_primary_key": false,
+            "column_id": "total_sprayers",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "insecticide_used",
+            "property_path": [
+              "form",
+              "insecticide_used"
+            ],
+            "datatype": "integer",
+            "is_primary_key": false,
+            "column_id": "insecticide_used",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "date_of_data_collection",
+            "property_path": [
+              "form",
+              "date_of_data_collection"
+            ],
+            "datatype": "date",
+            "is_primary_key": false,
+            "column_id": "date_of_data_collection",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "structures_per_sprayer",
+            "property_path": [
+              "form",
+              "structures_per_sprayer"
+            ],
+            "datatype": "decimal",
+            "is_primary_key": false,
+            "column_id": "structures_per_sprayer",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "structures_per_IU",
+            "property_path": [
+              "form",
+              "structures_per_IU"
+            ],
+            "datatype": "decimal",
+            "is_primary_key": false,
+            "column_id": "structures_per_IU",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "spray_coverage",
+            "property_path": [
+              "form",
+              "spray_coverage"
+            ],
+            "datatype": "decimal",
+            "is_primary_key": false,
+            "column_id": "spray_coverage",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "username",
+            "property_path": [
+              "form",
+              "meta",
+              "username"
+            ],
+            "datatype": "string",
+            "is_primary_key": false,
+            "column_id": "username",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "timeEnd",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ],
+            "datatype": "datetime",
+            "is_primary_key": false,
+            "column_id": "timeEnd",
+            "is_nullable": true,
+            "type": "raw",
+            "property_name": null
+          },
+          {
+            "display_name": "level_1_target_number",
+            "datatype": "integer",
+            "type": "expression",
+            "is_primary_key": false,
+            "transform": {},
+            "is_nullable": true,
+            "expression": {
+              "default": {
+                "constant": 0,
+                "type": "constant"
+              },
+              "cases": {
+                "Senegal": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Kaolack": {
+                      "constant": 31816,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_1_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Rwanda": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Kirehe": {
+                      "constant": 80192,
+                      "type": "constant"
+                    },
+                    "Nyagatare": {
+                      "constant": 33861,
+                      "type": "constant"
+                    },
+                    "Bugesera": {
+                      "constant": 74639,
+                      "type": "constant"
+                    },
+                    "Gisagara": {
+                      "constant": 24638,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_1_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Zambia": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "central": {
+                      "constant": 15750,
+                      "type": "constant"
+                    },
+                    "eastern": {
+                      "constant": 174841,
+                      "type": "constant"
+                    },
+                    "luapula": {
+                      "constant": 166161,
+                      "type": "constant"
+                    },
+                    "muchinga": {
+                      "constant": 65903,
+                      "type": "constant"
+                    },
+                    "northern": {
+                      "constant": 116693,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_1_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                }
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "country"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "case",
+                    "@case_id"
+                  ]
+                }
+              }
+            },
+            "column_id": "level_1_target_number"
+          },
+          {
+            "display_name": "level_2_target_number",
+            "datatype": "integer",
+            "type": "expression",
+            "is_primary_key": false,
+            "transform": {},
+            "is_nullable": true,
+            "expression": {
+              "default": {
+                "constant": 0,
+                "type": "constant"
+              },
+              "cases": {
+                "Senegal": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Nioro": {
+                      "constant": 31816,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_2_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Rwanda": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Mwogo": {
+                      "constant": 4813,
+                      "type": "constant"
+                    },
+                    "Nyamugali": {
+                      "constant": 8878,
+                      "type": "constant"
+                    },
+                    "Shyara": {
+                      "constant": 3700,
+                      "type": "constant"
+                    },
+                    "Kamabuye": {
+                      "constant": 4821,
+                      "type": "constant"
+                    },
+                    "Kigina": {
+                      "constant": 6321,
+                      "type": "constant"
+                    },
+                    "Ngeruka": {
+                      "constant": 7058,
+                      "type": "constant"
+                    },
+                    "Mimuri": {
+                      "constant": 6497,
+                      "type": "constant"
+                    },
+                    "Ntarama": {
+                      "constant": 3489,
+                      "type": "constant"
+                    },
+                    "Mareba": {
+                      "constant": 4897,
+                      "type": "constant"
+                    },
+                    "Gashora": {
+                      "constant": 4841,
+                      "type": "constant"
+                    },
+                    "Nasho": {
+                      "constant": 6189,
+                      "type": "constant"
+                    },
+                    "Mahama": {
+                      "constant": 5531,
+                      "type": "constant"
+                    },
+                    "Rilima": {
+                      "constant": 5101,
+                      "type": "constant"
+                    },
+                    "Musaza": {
+                      "constant": 5960,
+                      "type": "constant"
+                    },
+                    "Nyamata": {
+                      "constant": 5989,
+                      "type": "constant"
+                    },
+                    "Mayange": {
+                      "constant": 6858,
+                      "type": "constant"
+                    },
+                    "Gatore": {
+                      "constant": 6264,
+                      "type": "constant"
+                    },
+                    "Kirehe": {
+                      "constant": 5497,
+                      "type": "constant"
+                    },
+                    "Karangazi": {
+                      "constant": 11232,
+                      "type": "constant"
+                    },
+                    "Mushikiri": {
+                      "constant": 6509,
+                      "type": "constant"
+                    },
+                    "Nyagatare": {
+                      "constant": 8033,
+                      "type": "constant"
+                    },
+                    "Kigarama": {
+                      "constant": 7256,
+                      "type": "constant"
+                    },
+                    "Ruhuha": {
+                      "constant": 5727,
+                      "type": "constant"
+                    },
+                    "Mpanga": {
+                      "constant": 7804,
+                      "type": "constant"
+                    },
+                    "Nyarubuye": {
+                      "constant": 4524,
+                      "type": "constant"
+                    },
+                    "Mukindo": {
+                      "constant": 6350,
+                      "type": "constant"
+                    },
+                    "Gikonko": {
+                      "constant": 5906,
+                      "type": "constant"
+                    },
+                    "Gahara": {
+                      "constant": 9459,
+                      "type": "constant"
+                    },
+                    "Nyarugenge": {
+                      "constant": 5081,
+                      "type": "constant"
+                    },
+                    "Rweru": {
+                      "constant": 5497,
+                      "type": "constant"
+                    },
+                    "Musenyi": {
+                      "constant": 6766,
+                      "type": "constant"
+                    },
+                    "Mamba": {
+                      "constant": 7754,
+                      "type": "constant"
+                    },
+                    "Katabagyemu": {
+                      "constant": 8099,
+                      "type": "constant"
+                    },
+                    "Nyanza": {
+                      "constant": 4628,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_2_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Zambia":{
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+        "chitambo": {"type": "constant", "constant": 1867},
+        "luano": {"type": "constant", "constant": 957},
+        "mkushi": {"type": "constant", "constant": 8424},
+        "serenje": {"type": "constant", "constant": 4502},
+        "chadiza": {"type": "constant", "constant": 14432},
+        "chipata": {"type": "constant", "constant": 40981},
+        "katete": {"type": "constant", "constant": 25407},
+        "lundazi": {"type": "constant", "constant": 26101},
+        "mambwe": {"type": "constant", "constant": 8528},
+        "nyimba": {"type": "constant", "constant": 14168},
+        "petauke": {"type": "constant", "constant": 33123},
+        "sinda": {"type": "constant", "constant": 6639},
+        "vubwi": {"type": "constant", "constant": 5462},
+        "chembe": {"type": "constant", "constant": 5366},
+        "chiengi": {"type": "constant", "constant": 31683},
+        "chipili": {"type": "constant", "constant": 1328},
+        "kawambwa": {"type": "constant", "constant": 16133},
+        "mansa": {"type": "constant", "constant": 23624},
+        "milenge": {"type": "constant", "constant": 2381},
+        "mwansabombwe": {"type": "constant", "constant": 8720},
+        "mwense": {"type": "constant", "constant": 19970},
+        "nchelenge": {"type": "constant", "constant": 26169},
+        "samfya": {"type": "constant", "constant": 30787},
+        "chama": {"type": "constant", "constant": 17293},
+        "chinsali": {"type": "constant", "constant": 7018},
+        "isoka": {"type": "constant", "constant": 6134},
+        "mafinga": {"type": "constant", "constant": 6341},
+        "mpika": {"type": "constant", "constant": 12001},
+        "nakonde": {"type": "constant", "constant": 12115},
+        "shiwangandu": {"type": "constant", "constant": 5001},
+        "chilubi": {"type": "constant", "constant": 17995},
+        "kaputa": {"type": "constant", "constant": 10854},
+        "kasama": {"type": "constant", "constant": 17769},
+        "luwingu": {"type": "constant", "constant": 16127},
+        "mbala": {"type": "constant", "constant": 12895},
+        "mporokoso": {"type": "constant", "constant": 10746},
+        "mpulungu": {"type": "constant", "constant": 9184},
+        "mungwi": {"type": "constant", "constant": 11890},
+        "nsama": {"type": "constant", "constant": 9233}
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_2_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Mali": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "baroueli": {
+                      "constant": 73226,
+                      "type": "constant"
+                    },
+                    "koulikoro": {
+                        "constant": 62491,
+                        "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_2_data"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                }
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "country"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "case",
+                    "@case_id"
+                  ]
+                }
+              }
+            },
+            "column_id": "level_2_target_number"
+          },
+          {
+            "display_name": "level_3_target_number",
+            "datatype": "integer",
+            "type": "expression",
+            "is_primary_key": false,
+            "transform": {},
+            "is_nullable": true,
+            "expression": {
+              "default": {
+                "constant": 0,
+                "type": "constant"
+              },
+              "cases": {
+                "Senegal": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Keur Tapha": {
+                      "constant": 5742,
+                      "type": "constant"
+                    },
+                    "Porokhane 2": {
+                      "constant": 5173,
+                      "type": "constant"
+                    },
+                    "Keur Maba 1": {
+                      "constant": 4442,
+                      "type": "constant"
+                    },
+                    "Keur Maba 2": {
+                      "constant": 4588,
+                      "type": "constant"
+                    },
+                    "Keur Moussa": {
+                      "constant": 6349,
+                      "type": "constant"
+                    },
+                    "Porokhane 1": {
+                      "constant": 5522,
+                      "type": "constant"
+                    }
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_3_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Ethiopia": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                        "Diga": {"type": "constant", "constant": 13304},
+                        "Sasisga": {"type": "constant", "constant": 17562},
+                        "Gida Ayana": {"type": "constant", "constant": 20243},
+                        "Boneya Boshe": {"type": "constant", "constant": 11126},
+                        "Wama_Agalo": {"type": "constant", "constant": 17215},
+                        "Guto Gida": {"type": "constant", "constant": 16406},
+                        "Gobu Sayo": {"type": "constant", "constant": 11910},
+                        "Limu": {"type": "constant", "constant": 11593},
+                        "Wayu Tuka": {"type": "constant", "constant": 15408},
+                        "Menesibu": {"type": "constant", "constant": 32426},
+                        "Kondala": {"type": "constant", "constant": 18571},
+                        "Begi": {"type": "constant", "constant": 16790},
+                        "Guliso": {"type": "constant", "constant": 12206},
+                        "Kiltu Kara": {"type": "constant", "constant": 12162},
+                        "Nejo": {"type": "constant", "constant": 19530},
+                        "Babo Gambela": {"type": "constant", "constant": 19277},
+                        "Dendi": {"type": "constant", "constant": 12639},
+                        "Dano": {"type": "constant", "constant": 19205},
+                        "Nono": {"type": "constant", "constant": 14728},
+                        "Illu Gelan": {"type": "constant", "constant": 19561},
+                        "Bako Tibe": {"type": "constant", "constant": 19370},
+                        "Sokoru": {"type": "constant", "constant": 20599},
+                        "Omo Nada": {"type": "constant", "constant": 32984},
+                        "Tiro Afeta": {"type": "constant", "constant": 24455},
+                        "Kersa": {"type": "constant", "constant": 27624},
+                        "Seka Chekorsa": {"type": "constant", "constant": 22699},
+                        "Shebe Sombo": {"type": "constant", "constant": 16665},
+                        "Lalo Kilie": {"type": "constant", "constant": 13380},
+                        "Dale Sadi": {"type": "constant", "constant": 17522},
+                        "Dale Wabera": {"type": "constant", "constant": 18836},
+                        "Hawa Gelan": {"type": "constant", "constant": 31441},
+                        "Sayo": {"type": "constant", "constant": 15256},
+                        "Chewaka": {"type": "constant", "constant": 32041},
+                        "Borecha": {"type": "constant", "constant": 22313},
+                        "Dedesa": {"type": "constant", "constant": 13113},
+                        "Bedele": {"type": "constant", "constant": 10143}
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_3_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Madagascar": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                        "Ambalatany": {"type": "constant", "constant": 2429},
+                        "Ambalavato Nord": {"type": "constant", "constant": 1399},
+                        "Evato": {"type": "constant", "constant": 3765},
+                        "Iaborano Namahora": {"type": "constant", "constant": 1158},
+                        "Mahafasa": {"type": "constant", "constant": 2279},
+                        "Mahavelo": {"type": "constant", "constant": 2255},
+                        "Sahamadio": {"type": "constant", "constant": 3605},
+                        "Tangainony": {"type": "constant", "constant": 3114},
+                        "Ambalavato Sud": {"type": "constant", "constant": 974},
+                        "Ankarana": {"type": "constant", "constant": 2182},
+                        "Antseranambe": {"type": "constant", "constant": 1169},
+                        "Efatsy": {"type": "constant", "constant": 1522},
+                        "Fenoarivo": {"type": "constant", "constant": 1323},
+                        "Iabohazo": {"type": "constant", "constant": 1258},
+                        "Ihorombe": {"type": "constant", "constant": 1784},
+                        "Ivandrika": {"type": "constant", "constant": 1207},
+                        "Mahabo Mananivo": {"type": "constant", "constant": 1850},
+                        "Manambotra": {"type": "constant", "constant": 870},
+                        "Vohitromby": {"type": "constant", "constant": 708},
+                        "Amporoforo": {"type": "constant", "constant": 2509},
+                        "Anosivelo": {"type": "constant", "constant": 3601},
+                        "Anosy Tsararafara": {"type": "constant", "constant": 4488},
+                        "Marovandrika": {"type": "constant", "constant": 2205},
+                        "Vohilengo": {"type": "constant", "constant": 2681},
+                        "Farafangana": {"type": "constant", "constant": 6974},
+                        "Ambohigogo": {"type": "constant", "constant": 2430},
+                        "Ambohimandroso": {"type": "constant", "constant": 2790},
+                        "Bevoay": {"type": "constant", "constant": 1538},
+                        "Etrotroka": {"type": "constant", "constant": 4311},
+                        "Maheriraty": {"type": "constant", "constant": 1312},
+                        "Tovona": {"type": "constant", "constant": 1195},
+                        "Vohimasy": {"type": "constant", "constant": 1239},
+                        "Ambalarondra": {"type": "constant", "constant": 4215},
+                        "Ambinaninony": {"type": "constant", "constant": 3344},
+                        "Ampasimbe": {"type": "constant", "constant": 3817},
+                        "Andovoranto": {"type": "constant", "constant": 4180},
+                        "Anjahamana": {"type": "constant", "constant": 1556},
+                        "Brickaville": {"type": "constant", "constant": 7953},
+                        "Mahatsara": {"type": "constant", "constant": 7537},
+                        "Ranomafana Est": {"type": "constant", "constant": 5487},
+                        "Vohitranivona": {"type": "constant", "constant": 2932},
+                        "Ambatoharanana": {"type": "constant", "constant": 5026},
+                        "Ambodimanga II": {"type": "constant", "constant": 7948},
+                        "Ampasimbe manasatrana": {"type": "constant", "constant": 6544},
+                        "Ampasina maningory": {"type": "constant", "constant": 13750},
+                        "Antsiatsiaka": {"type": "constant", "constant": 3342},
+                        "Fenerive Est": {"type": "constant", "constant": 9785},
+                        "Mahambo": {"type": "constant", "constant": 9285},
+                        "Mahanoro": {"type": "constant", "constant": 2348},
+                        "Miorimivalana": {"type": "constant", "constant": 735},
+                        "Saranambana": {"type": "constant", "constant": 1788},
+                        "Vohilengo": {"type": "constant", "constant": 3589},
+                        "Vohipeno": {"type": "constant", "constant": 3355},
+                        "Ambodilazana": {"type": "constant", "constant": 4144},
+                        "Ambodirina": {"type": "constant", "constant": 1594},
+                        "Amboditandroho": {"type": "constant", "constant": 2582},
+                        "Ampasimadinika": {"type": "constant", "constant": 1572},
+                        "Ampasimbe Onibe": {"type": "constant", "constant": 6236},
+                        "Andondabe": {"type": "constant", "constant": 5080},
+                        "Andranobolahy": {"type": "constant", "constant": 2981},
+                        "Antetezambaro": {"type": "constant", "constant": 4962},
+                        "Fanandrana": {"type": "constant", "constant": 3428},
+                        "Foulpoint mahavelona": {"type": "constant", "constant": 6486},
+                        "Sahambala": {"type": "constant", "constant": 4853},
+                        "Tamatave II": {"type": "constant", "constant": 5572}
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_3_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                }
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "country"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "case",
+                    "@case_id"
+                  ]
+                }
+              }
+            },
+            "column_id": "level_3_target_number"
+          },
+          {
+            "display_name": "country_target_number",
+            "datatype": "integer",
+            "type": "expression",
+            "is_primary_key": false,
+            "transform": {},
+            "is_nullable": true,
+            "expression": {
+              "default": {
+                "constant": 0,
+                "type": "constant"
+              },
+              "cases": {
+                "Senegal": {
+                  "constant": 31816,
+                  "type": "constant"
+                },
+                "Rwanda": {
+                  "constant": 213329,
+                  "type": "constant"
+                },
+                "Zambia": {
+                    "constant": 539348,
+                    "type": "constant"
+                },
+                "Ethiopia": {
+                    "constant": 670303,
+                    "type": "constant"
+                },
+                "Mali": {
+                    "type": "constant",
+                    "constant": 135717
+                },
+                "Madagascar": {
+                    "type": "constant",
+                    "constant": 72120
+                }
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "country"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "case",
+                    "@case_id"
+                  ]
+                }
+              }
+            },
+            "column_id": "country_target_number"
+          }
+],
         "description": "",
-        "display_name": "SMS Indicators",
+        "display_name": "SMS Indicators (static)",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "static-sms-indicators"
+        "table_id": "static-sms-indicators-001"
     }
 }
