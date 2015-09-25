@@ -53,8 +53,8 @@ class CallCenterIndicatorConfig(Document):
     @skippable_quickcache(['domain'], lambda *_: settings.UNIT_TESTING)
     def for_domain(cls, domain):
         res = cls.view(
-            "domain/docs",
-            key=[domain, cls.__name__, None],
+            "callcenter/config_by_domain",
+            key=domain,
             reduce=False,
             include_docs=True).all()
 
