@@ -25,10 +25,10 @@
 
         {# this should eventually be moved to the end of the page #}
         {% if formdesigner %}
-        <script src="{% static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
         <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         {% else %}
-        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
         {% endif %}
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>
@@ -377,8 +377,8 @@
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
         <script src="{% static 'style/js/hq.helpers.js' %}"></script>
-        <script src="{% static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
+        <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
         <script src="{% new_static 'style/js/uv.widget.js' %}"></script>

@@ -70,12 +70,11 @@
 
         {# Core Libraries #}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/underscore/underscore-1.6.0.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'jquery-form/jquery.form.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'jquery.cookie/jquery.cookie.js' %}"></script>
         {% endcompress %}
 
         {% if formdesigner %}
