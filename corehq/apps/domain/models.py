@@ -9,6 +9,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
+from corehq.dbaccessors.couchapps.all_docs import \
+    get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -971,14 +973,8 @@ class Domain(Document, SnapshotMixin):
                     u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
                 )
         # delete all associated objects
-        db = self.get_db()
-        related_doc_ids = [row['id'] for row in db.view('all_docs/by_domain_doc_type',
-            startkey=[self.name],
-            endkey=[self.name, {}],
-            include_docs=False,
-            reduce=False,
-        )]
-        iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
+            iter_bulk_delete(db, related_doc_ids, chunksize=500)
         self._delete_web_users_from_domain()
         self._delete_sql_objects()
         super(Domain, self).delete()
