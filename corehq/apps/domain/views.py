@@ -1694,7 +1694,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         if self.published_snapshot:
             for app in self.published_snapshot.full_applications():
                 base_app_id = app.copy_of if self.domain_object == self.published_snapshot else app.copied_from.copy_of
-                published_apps[base_app_id] = app
+                if base_app_id:
+                    published_apps[base_app_id] = app
         return published_apps
 
     @property
