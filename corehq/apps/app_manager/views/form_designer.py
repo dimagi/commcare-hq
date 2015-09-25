@@ -71,6 +71,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
+        'markdown_in_groups': app.enable_markdown_in_groups,
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
     })
 
