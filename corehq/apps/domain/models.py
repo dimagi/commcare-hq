@@ -972,10 +972,11 @@ class Domain(Document, SnapshotMixin):
                 )
         # delete all associated objects
         db = self.get_db()
-        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
+        related_doc_ids = [row['id'] for row in db.view('all_docs/by_domain_doc_type',
             startkey=[self.name],
             endkey=[self.name, {}],
             include_docs=False,
+            reduce=False,
         )]
         iter_bulk_delete(db, related_doc_ids, chunksize=500)
         self._delete_web_users_from_domain()
