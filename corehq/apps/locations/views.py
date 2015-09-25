@@ -164,10 +164,7 @@ class LocationTypesView(BaseLocationView):
             if loc_type is None:
                 loc_type = LocationType(domain=self.domain)
             loc_type.name = name
-            # only CommTrack domains should have non-administrative locations
-            loc_type.administrative = (administrative
-                                       if self.domain_object.commtrack_enabled
-                                       else True)
+            loc_type.administrative = administrative
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
