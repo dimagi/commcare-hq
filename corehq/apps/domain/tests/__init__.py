@@ -7,3 +7,4 @@ from .test_domain_transfer import *
 from .test_delete_domain import *
 from .test_guess_phone_type import *
 from .test_domain_copy import *
+from .test_dbaccessors import *
