@@ -71,16 +71,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
+        'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
+        'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
     })
-
-    if domain_has_privilege(domain, privileges.TEMPLATED_INTENTS):
-        vellum_features.update({
-            'templated_intents': True
-        })
-    if domain_has_privilege(domain, privileges.CUSTOM_INTENTS):
-        vellum_features.update({
-            'custom_intents': True
-        })
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
