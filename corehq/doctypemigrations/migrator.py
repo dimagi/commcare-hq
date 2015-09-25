@@ -1,5 +1,8 @@
 from collections import namedtuple
+import logging
+import os
 from corehq.doctypemigrations.changes import stream_changes_forever
+from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
 from dimagi.utils.decorators.memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
@@ -52,6 +55,14 @@ class Migrator(object):
                     replicator.commit()
                     self._record_seq(last_seq)
                     yield StatusUpdate(changes_read=count, last_seq=last_seq, caught_up=False)
+
+    def phase_3_clean_up(self):
+        try:
+            os.remove(self.data_dump_filename)
+        except OSError:
+            logging.warning('tried to remove file {}, but it was not there'
+                            .format(self.data_dump_filename))
+        delete_all_docs_by_doc_type(self.source_db, self.doc_types)
 
     def _record_original_seq(self, seq):
         self._migration_model.original_seq = seq

@@ -48,16 +48,23 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
         ),
+        make_option(
+            '--cleanup',
+            action='store_true',
+            default=False,
+        ),
     )
 
-    def handle(self, migrator_slug=None, initial=None, continuous=None, **options):
+    def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
+               **options):
         try:
             migrator = get_migrator_by_slug(migrator_slug)
         except KeyError:
-            return
-        if not initial and not continuous:
-            raise CommandError('initial or continuous must be set')
-
+            raise CommandError(USAGE)
+        if not any((initial, continuous, cleanup)):
+            raise CommandError('initial, continuous, or cleanup must be set')
+        if cleanup and (initial or continuous):
+            raise CommandError('cleanup must be run alone')
         if initial:
             if migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_CONTINUOUS.format(migrator_slug))
@@ -66,6 +73,13 @@ class Command(BaseCommand):
             if not migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
             self.handle_continuous(migrator)
+        if cleanup:
+            confirmation = raw_input(
+                "Cleanup will remove doc_types ({}) from db {}\n"
+                "Are you sure you want to proceed? [y/n]"
+                .format(', '.join(migrator.doc_types), migrator.source_db))
+            if confirmation == 'y':
+                self.handle_cleanup(migrator)
 
     @staticmethod
     def handle_initial(migrator):
@@ -79,3 +93,6 @@ class Command(BaseCommand):
                 status_update.changes_read, status_update.last_seq))
             if status_update.caught_up:
                 self.stdout.write('All caught up!\n')
+
+    def handle_cleanup(self, migrator):
+        migrator.phase_3_clean_up()
