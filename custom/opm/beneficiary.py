@@ -671,10 +671,15 @@ class OPMCaseRow(object):
             # app supports up to three children only
             num_children = min(self.num_children, 3)
             if num_children > 1:
-                extra_child_objects = [
-                    self.__class__(self.case, self.report, child_index=num + 2, is_secondary=True)
-                    for num in range(num_children - 1)
-                ]
+                extra_child_objects = []
+                for num in range(num_children - 1):
+                    try:
+                        extra_child_objects.append(
+                            self.__class__(self.case, self.report,
+                                           child_index=num + 2, is_secondary=True)
+                        )
+                    except InvalidRow:
+                        pass
                 self.report.set_extra_row_objects(extra_child_objects)
 
     @property
