@@ -561,13 +561,14 @@ class AddSavedReportConfigView(View):
             if field in update_config_data:
                 setattr(self.config, field, update_config_data[field])
 
-        # remove start and end date if the date range is "last xx days"
+        # remove start and end date if the date range is "last xx days" or none
         if self.saved_report_config_form.cleaned_data['date_range'] in [
             'last30',
             'last7',
             'lastn',
             'lastmonth',
             'lastyear',
+            None,
         ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")
