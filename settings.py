@@ -86,10 +86,31 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
+BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'components')
+
+BOWER_INSTALLED_APPS = (
+    'jquery#1.11.1',
+    'jquery-1.7.1-legacy=jquery#1.7.1',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
+    'jquery-form#3.45.0',
+    'jquery.cookie#1.4.1',
+    'jquery-timeago#1.2.0',
+    'angular#1.4.4',
+    'angular-route#1.4.4',
+    'angular-resource#1.4.4',
+    'angular-messages#1.4.4',
+    'angular-cookies#1.4.4',
+    'less#1.7.3',
+    'backbone#0.9.1',
+)
+
+
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
+    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = ()
@@ -181,6 +202,7 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
+    'djangobower',
     'djkombu',
     'djangular',
     'couchdbkit.ext.django',
