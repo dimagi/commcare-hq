@@ -2,6 +2,7 @@ import datetime
 from corehq.util.couch import IterDB
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.chunked import chunked
+import logging
 
 
 def filter_doc_ids_by_doc_type(db, doc_ids, doc_types):
@@ -23,6 +24,9 @@ def copy_docs(source_db, target_db, doc_ids):
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc in iter_docs(source_db, doc_ids, attachments=True):
             iter_db.save(doc)
+    if iter_db.errors_by_type:
+        logging.error('errors bulk saving in copy_docs: {!r}'
+                      .format(iter_db.errors_by_type))
 
 
 def delete_docs(target_db, doc_id_rev_pairs):
@@ -32,6 +36,9 @@ def delete_docs(target_db, doc_id_rev_pairs):
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc_id, doc_rev in doc_id_rev_pairs:
             iter_db.delete({'_id': doc_id, '_rev': doc_rev})
+    if iter_db.errors_by_type:
+        logging.error('errors bulk saving in delete_docs: {!r}'
+                      .format(iter_db.errors_by_type))
 
 
 class ContinuousReplicator(object):
