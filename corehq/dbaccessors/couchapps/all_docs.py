@@ -1,4 +1,6 @@
 from corehq.preindex import get_preindex_plugin
+from corehq.util.couch_helpers import paginate_view
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
 
 
@@ -35,3 +37,18 @@ def get_doc_count_by_type(db, doc_type):
         return result['value']
     else:
         return 0
+
+
+def get_all_docs_with_doc_types(db, doc_types):
+    for doc_type in doc_types:
+        results = paginate_view(
+            db, 'all_docs/by_doc_type',
+            chunk_size=100, startkey=[doc_type], endkey=[doc_type, {}],
+            attachments=True, include_docs=True, reduce=False)
+        for result in results:
+            yield result['doc']
+
+
+def delete_all_docs_by_doc_type(db, doc_types):
+    for chunk in chunked(get_all_docs_with_doc_types(db, doc_types), 100):
+        db.bulk_delete(chunk)

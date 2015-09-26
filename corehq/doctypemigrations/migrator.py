@@ -1,8 +1,8 @@
 from collections import namedtuple
 import logging
 import os
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.changes import stream_changes_forever
-from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
 from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.decorators.memoized import memoized

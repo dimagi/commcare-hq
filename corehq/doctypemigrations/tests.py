@@ -1,8 +1,8 @@
 from copy import deepcopy
 from django.test import TestCase
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.changes import CouchChange
-from corehq.doctypemigrations.cleanup import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.continuous_migrate import filter_doc_ids_by_doc_type, \
     copy_docs, delete_docs, ContinuousReplicator
 from corehq.doctypemigrations.migrator import Migrator
