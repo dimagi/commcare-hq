@@ -918,27 +918,6 @@ def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 
-@require_superuser
-def audit_logs(request, domain):
-    usernames = [user.username for user in WebUser.by_domain(domain)]
-    data = {}
-    for username in usernames:
-        data[username] = []
-        for doc in get_db('auditcare').view('auditcare/urlpath_by_user_date',
-            startkey=[username],
-            endkey=[username, {}],
-            include_docs=True,
-            wrapper=lambda r: r['doc']
-        ).all():
-            try:
-                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
-                if d == domain:
-                    data[username].append(doc)
-            except Exception:
-                pass
-    return json_response(data)
-
-
 @domain_admin_required
 @require_POST
 def location_restriction_for_users(request, domain):
