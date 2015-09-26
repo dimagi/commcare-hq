@@ -20,7 +20,7 @@ class FakeFile(object):
         return self.data
 
 
-class _AuthTest(TestCase):
+class _AuthTest(object):
 
     def setUp(self):
         self._set_up_domain()
@@ -178,7 +178,7 @@ class _AuthTest(TestCase):
         )
 
 
-class AuthTest(_AuthTest):
+class AuthTest(_AuthTest, TestCase):
 
     domain = 'my-crazy-domain'
 
@@ -188,7 +188,7 @@ class AuthTest(_AuthTest):
         project.save()
 
 
-class InsecureAuthTest(_AuthTest):
+class InsecureAuthTest(_AuthTest, TestCase):
 
     domain = 'my-crazy-insecure-domain'
 

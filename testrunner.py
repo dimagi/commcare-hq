@@ -92,7 +92,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             pass
 
     def get_all_test_labels(self):
-        return [self._strip(app) for app in settings.INSTALLED_APPS
+        return [app for app in settings.INSTALLED_APPS
                 if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
                 and not app.startswith('django.')]
 
