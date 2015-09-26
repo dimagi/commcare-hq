@@ -109,10 +109,10 @@ class Command(BaseCommand):
         self.stderr.write("Starting continuous replication...")
         migration = migrator.phase_2_continuous_migrate_interactive()
         for status_update in migration:
-            self.stdout.write('Read {} changes, saved seq {}\n'.format(
+            self.stdout.write('Read {} changes, saved seq {}'.format(
                 status_update.changes_read, status_update.last_seq))
             if status_update.caught_up:
-                self.stdout.write('All caught up!\n')
+                self.stdout.write('All caught up!')
 
     def handle_cleanup(self, migrator):
         migrator.phase_3_clean_up()
@@ -120,10 +120,11 @@ class Command(BaseCommand):
     def handle_stats(self, migrator):
         [(source_db, source_counts),
          (target_db, target_counts)] = migrator.get_doc_counts()
-        self.stdout.write('Source DB: {}\n'.format(source_db.uri))
-        self.stdout.write('Target DB: {}\n'.format(target_db.uri))
-        self.stdout.write('{:^30}\tSource\tTarget\n'.format('doc_type'))
+        self.stdout.write('Source DB: {}'.format(source_db.uri))
+        self.stdout.write('Target DB: {}'.format(target_db.uri))
+        self.stdout.write('')
+        self.stdout.write('{:^30}\tSource\tTarget'.format('doc_type'))
         for doc_type in sorted(migrator.doc_types):
             self.stdout.write(
-                '{:<30}\t{}\t{}\n'
+                '{:<30}\t{}\t{}'
                 .format(doc_type, source_counts[doc_type], target_counts[doc_type]))
