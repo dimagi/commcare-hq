@@ -1,7 +1,7 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
 
-{% block content %}
+{% block focus-content %}
   <h1>{% block title %}{% trans "Add Backup Phone" %}{% endblock %}</h1>
 
   {% if wizard.steps.current == 'setup' %}
