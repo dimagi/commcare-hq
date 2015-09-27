@@ -463,18 +463,19 @@ def _pull_latest():
     sudo("git submodule foreach --recursive 'git checkout master; git pull origin master'")
 
 
-def _update_git_repo():
-    sudo('git remote prune origin')
-    sudo('git fetch')
-    sudo("git submodule foreach 'git fetch'")
-    sudo('git checkout %(code_branch)s' % env)
-    sudo('git reset --hard origin/%(code_branch)s' % env)
-    sudo('git submodule sync')
-    sudo('git submodule update --init --recursive')
+def _update_git_repo(code_branch, local_repo=False):
+    exec_fn = local if local_repo else sudo
+    exec_fn('git remote prune origin')
+    exec_fn('git fetch')
+    exec_fn("git submodule foreach 'git fetch'")
+    exec_fn('git checkout {}'.format(code_branch))
+    exec_fn('git reset --hard origin/{}'.format(code_branch))
+    exec_fn('git submodule sync')
+    exec_fn('git submodule update --init --recursive')
     # remove all untracked files, including submodules
-    sudo("git clean -ffd")
+    exec_fn("git clean -ffd")
     # remove all .pyc files in the project
-    sudo("find . -name '*.pyc' -delete")
+    exec_fn("find . -name '*.pyc' -delete")
 
 
 @roles(ROLES_ALL_SRC)
@@ -508,7 +509,7 @@ def update_code(use_current_release=False):
                 sudo('git clone {} {}'.format(env.code_repo, env.code_root))
 
     with cd(env.code_root if not use_current_release else env.code_current):
-        _update_git_repo()
+        _update_git_repo(env.code_branch)
 
 
 @roles(ROLES_DB_ONLY)
