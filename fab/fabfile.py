@@ -206,7 +206,7 @@ def load_env(env_name):
         else:
             raise Exception("Environment file not found: {}".format(path))
 
-    env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
+    env_dict = get_env_dict(os.path.join(PROJECT_ROOT, 'environments.yml'))
     env.update(env_dict['base'])
     env.update(env_dict[env_name])
 
@@ -214,7 +214,7 @@ def load_env(env_name):
 @task
 def india():
     init_code_branch()
-    env.inventory = os.path.join('fab', 'inventory', 'india')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'india')
     load_env('india')
     execute(env_common)
 
@@ -252,7 +252,7 @@ def zambia():
 def localhost():
     init_code_branch()
     load_env('localhost')
-    env.inventory = os.path.join('fab', 'inventory', 'local')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'local')
     execute(env_common)
 
 
@@ -269,7 +269,7 @@ def production():
             utils.abort('Action aborted.')
 
     load_env('production')
-    env.inventory = os.path.join('fab', 'inventory', 'production')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'production')
     execute(env_common)
 
 
@@ -281,7 +281,7 @@ def staging():
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
-    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'staging')
     load_env('staging')
     execute(env_common)
 
@@ -295,7 +295,7 @@ def preview():
 
     """
     init_code_branch()
-    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'preview')
     load_env('preview')
     execute(env_common)
 
