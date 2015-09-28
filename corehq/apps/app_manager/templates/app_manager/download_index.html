@@ -20,13 +20,15 @@
     </table>
     <h2>Resource Files</h2>
     <table class="table table-condensed">
-        {% for path, source in files %}
+        {% for path, source, include_download_link in files %}
             <tr>
                 <td class="span3">
                     <a class="toggle-next" href="#">{{ path }}</a>
                 </td>
                 <td class="span9">
-                    <a href="{{ path }}" target="_blank"><i class="icon icon-external-link"></i></a>
+                    {% if include_download_link %}
+                        <a href="{{ path }}" target="_blank"><i class="icon icon-external-link"></i></a>
+                    {% endif %}
                 </td>
             </tr>
             <tr>

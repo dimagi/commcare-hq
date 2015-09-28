@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from StringIO import StringIO
@@ -311,9 +312,18 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
+    def include_download_link(path):
+        return path != "app.json"
+        # The download_index template adds an external link to a view that
+        # basically looks for the path in the app's attachments. Since app.json
+        # isn't an attachment, it makes the view (download_file) a bit more
+        # complex. I've added app.json here for convenience, I don't want
+        # to make download_file any more complex, so I'm just removing that
+        # link instead of modifying download_file.
+
     files = None
     try:
-        files = download_index_files(request.app)
+        files = source_files(request.app)
     except Exception:
         messages.error(
             request,
@@ -326,6 +336,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
             ),
             extra_tags='html'
         )
+    files = [(path, file, include_download_link(path)) for path, file in files]
     return render(request, template, {
         'app': request.app,
         'files': files,
@@ -372,4 +383,19 @@ def download_index_files(app):
     else:
         files = app.create_all_files().items()
 
+    return sorted(files)
+
+
+def source_files(app):
+    """
+    Return the app's source files, including the app json.
+    Return format is a list of tuples where the first item in the tuple is a
+    file name and the second is the file contents.
+    """
+    files = download_index_files(app)
+    files.append(
+        ("app.json", json.dumps(
+            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+        ))
+    )
     return sorted(files)
