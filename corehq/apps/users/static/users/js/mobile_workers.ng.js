@@ -39,7 +39,7 @@
     var STATUS = {
         NEW: 'new',
         PENDING: 'pending',
-        ERROR: 'error',
+        WARNING: 'warning',
         SUCCESS: 'success',
         RETRIED: 'retried'
     };
@@ -57,6 +57,7 @@
     var MobileWorker = function (data) {
         var self = this;
         self.creationStatus = STATUS.NEW;
+
 
         self.username = data.username || '';
         self.first_name = data.first_name || '';
@@ -157,7 +158,7 @@
         $scope.$watch(
             function(scope) {
                 var errorWorkers = _.filter(scope.workers, function (worker) {
-                    return worker.creationStatus === STATUS.ERROR;
+                    return worker.creationStatus === STATUS.WARNING;
                 });
                 return errorWorkers.length > 0;
             },
@@ -189,7 +190,7 @@
                 }
             })
             .error(function () {
-                newWorker.creationStatus = STATUS.ERROR;
+                newWorker.creationStatus = STATUS.WARNING;
                 deferred.reject(
                     "Sorry, there was an issue communicating with the server."
                 );
