@@ -1,23 +1,4 @@
-$(function() {
-    var model = new LocationSettingsViewModel();
-    $('#settings').submit(function() {
-        return model.presubmit();
-    });
-
-    model.load(settings);
-    ko.applyBindings(model, $('#settings').get(0));
-
-    $("form#settings").on("change input", function() {
-        $(this).find(":submit").enable();
-    });
-
-    $("form#settings button").on("click", function() {
-        $("form#settings").find(":submit").enable();
-    });
-});
-
-
-function LocationSettingsViewModel() {
+function LocationSettingsViewModel(commtrack_enabled) {
     this.loc_types = ko.observableArray();
 
     this.json_payload = ko.observable();
@@ -26,7 +7,7 @@ function LocationSettingsViewModel() {
 
     this.load = function(data) {
         this.loc_types($.map(data.loc_types, function(e) {
-            return new LocationTypeModel(e);
+            return new LocationTypeModel(e, commtrack_enabled);
         }));
     };
 
@@ -44,7 +25,7 @@ function LocationSettingsViewModel() {
 
     this.new_loctype = function() {
         var parent_pk = (_.last(settings.loc_types()) || {}).pk;
-        var new_loctype = new LocationTypeModel({parent_type: parent_pk}, this);
+        var new_loctype = new LocationTypeModel({parent_type: parent_pk}, commtrack_enabled);
         new_loctype.onBind = function() {
             var $inp = $(this.$e).find('.loctype_name');
             $inp.focus();
@@ -132,7 +113,7 @@ var get_fake_pk = function () {
     };
 }();
 
-function LocationTypeModel(data, root) {
+function LocationTypeModel(data, commtrack_enabled) {
     var name = data.name || '';
     var self = this;
     this.pk = data.pk || get_fake_pk();
@@ -159,7 +140,7 @@ function LocationTypeModel(data, root) {
             pk: this.pk,
             name: this.name(),
             parent_type: this.parent_type() || null,
-            administrative: COMMTRACK_ENABLED ? !this.tracks_stock() : true,
+            administrative: commtrack_enabled ? !this.tracks_stock() : true,
             shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true
         };
