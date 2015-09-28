@@ -268,12 +268,13 @@ class PricingTableFeatures(object):
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
             cls.SMS_PRICING: (
-                False, 
-                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},)), 
-                ugettext_noop(mark_safe(_('<a target="_blank" href="%(url)s">Click Here</a>.') % {'url': (reverse(PublicSMSRatesView.urlname)),},))
-            ),
+                False,
+            ) + (
+                mark_safe('<a target="_blank" href="%(url)s">%(click_here)s</a>.' % {
+                    'url': reverse(PublicSMSRatesView.urlname),
+                    'click_here': _('Click Here'),
+                }),
+            ) * 4,
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
             cls.ADVANCED_ROLES: (False, True, True, True, True),
