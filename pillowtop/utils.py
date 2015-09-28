@@ -8,13 +8,6 @@ from django.conf import settings
 import pytz
 
 
-def import_pillows(instantiate=True):
-    warnings.warn('pillowtop.utils.import_pillows deprecated, '
-                  'please use pillowtop.get_all_pillows instead.',
-                  DeprecationWarning)
-    return get_all_pillows(instantiate=instantiate)
-
-
 def import_pillow_string(full_class_str, instantiate=True):
     mod_path, pillow_class_name = full_class_str.rsplit('.', 1)
     try:
