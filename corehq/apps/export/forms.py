@@ -110,6 +110,7 @@ class CreateCaseExportTagForm(forms.Form):
 
 
 class FilterExportDownloadForm(forms.Form):
+    _export_type = 'all'  # should be form or case
 
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
@@ -157,7 +158,7 @@ class FilterExportDownloadForm(forms.Form):
         ) % {
             'timezone': self.timezone,
         }
-        default_datespan = datespan_from_beginning(self.domain, 7, self.timezone)
+        default_datespan = datespan_from_beginning(self.domain, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
@@ -233,10 +234,28 @@ class FilterExportDownloadForm(forms.Form):
         if group:
             return Group.get(group)
 
+    def get_edit_url(self, export):
+        """Gets the edit url for the specified export.
+        :param export: FormExportSchema instance or CaseExportSchema instance
+        :return: url to edit the export
+        """
+        raise NotImplementedError("must implement get_edit_url")
+
+    def format_export_data(self, export):
+        return {
+            'domain': self.domain,
+            'sheet_name': export.name,
+            'export_id': export.get_id,
+            'export_type': self._export_type,
+            'name': export.name,
+            'edit_url': self.get_edit_url(export),
+        }
+
 
 class FilterFormExportDownloadForm(FilterExportDownloadForm):
     """The filters for Form Export Download
     """
+    _export_type = 'form'
 
     def _get_user_or_group_filter(self):
         group = self._get_group()
@@ -266,20 +285,21 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
         form_filter &= self._get_user_or_group_filter()
         return form_filter
 
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditCustomFormExportView
+        return reverse(EditCustomFormExportView.urlname,
+                       args=(self.domain, export.get_id))
 
     def format_export_data(self, export):
-        from corehq.apps.export.views import EditCustomFormExportView
-        return {
-            'export_id': export.get_id,
+        export_data = super(FilterFormExportDownloadForm, self).format_export_data(export)
+        export_data.update({
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
-            'export_type': 'form',
-            'name': export.name,
-            'edit_url': reverse(EditCustomFormExportView.urlname,
-                                args=(self.domain, export.get_id)),
-        }
+        })
+        return export_data
 
 
 class FilterCaseExportDownloadForm(FilterExportDownloadForm):
+    _export_type = 'case'
 
     def get_case_filter(self):
         group = self._get_group()
@@ -291,12 +311,7 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
                                     users=self._get_filtered_users(),
                                     groups=case_sharing_groups)
 
-    def format_export_data(self, export):
+    def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomCaseExportView
-        return {
-            'export_id': export.get_id,
-            'export_type': 'case',
-            'name': export.name,
-            'edit_url': reverse(EditCustomCaseExportView.urlname,
-                                args=(self.domain, export.get_id)),
-        }
+        return reverse(EditCustomCaseExportView.urlname,
+                       args=(self.domain, export.get_id))
