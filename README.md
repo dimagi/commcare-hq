@@ -10,14 +10,27 @@ A couchdb listening framework to transform and process changes.
 Django Config
 =============
 
-In your settings file, add a  PILLOWTOPS = [] array
+In your settings file, add a `PILLOWTOPS = {}` dictionary
 
-Fill the array with the fully qualified class names of your pillows, for example:
+Fill the array with categories mapping the fully qualified class names of your pillows, for example:
 
-    'corehq.pillows.CasePillow',
-    'corehq.pillows.AuditcarePillow',
-    'corehq.pillows.CouchlogPillow',
-    'corehq.pillows.DevicelogPillow',
+```python
+PILLOWTOPS = {
+    'core': [
+        'corehq.pillows.case.CasePillow',
+        'corehq.pillows.xform.XFormPillow',
+    ],
+    'core_ext': [
+        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
+        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
+    ],
+    'phonelog': [
+        'corehq.pillows.log.PhoneLogPillow',
+    ],
+}
+```
+
+See CommCare HQ's `settings.py`for a complete example.
 
 The pillows depending on their config, need the following:
 
