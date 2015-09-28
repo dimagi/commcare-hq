@@ -38,7 +38,7 @@
         self._maxColumnSize = maxColumnSize;
         $scope.formData = {};
         $scope.exportList = _.map(exportList, function (exportData) {
-            exportData['filename'] = encodeURIComponent(exportData['name']);
+            exportData.filename = encodeURIComponent(exportData.name);
             return exportData;
         });
 
