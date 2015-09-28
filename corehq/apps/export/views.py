@@ -46,8 +46,7 @@ from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
-import couchexport
-from couchexport.models import SavedExportSchema, ExportSchema, Format
+from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
@@ -57,7 +56,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
-from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
@@ -192,7 +190,8 @@ class BaseCreateCustomExportView(BaseExportView):
             schema = create_basic_form_checkpoint(export_tag)
 
         if request.GET.get('minimal', False):
-            # minimal mode is a HACK so that some large domains can load this page. halp.
+            # minimal mode is a HACK so that some large domains can
+            # load this page. halp.
             messages.warning(request,
                 _("Warning you are using minimal mode, some things may not be functional"))
 
@@ -214,9 +213,12 @@ class BaseCreateCustomExportView(BaseExportView):
 
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
-        messages.warning(request, _('<strong>No data found to export '
-                                    '"%s".</strong> Please submit data before creating this export.') %
-                         xmlns_to_name(self.domain, export_tag[1], app_id=None), extra_tags="html")
+        messages.warning(
+            request, _(
+                '<strong>No data found to export "%s".</strong> '
+                'Please submit data before creating this export.'
+            ) % xmlns_to_name(
+                self.domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(self.export_home_url)
 
 
