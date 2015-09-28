@@ -309,6 +309,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             element = _to_xml_element(decoded_payload)
 
             # in this scenario resave the attachment properly in case future calls circumvent this method
+            self.save()
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
 
