@@ -72,7 +72,9 @@ class BaseExportView(BaseProjectDataView):
     @property
     def parent_pages(self):
         return [{
-            'title': self.report_class.name,
+            'title': (self.report_class.page_title
+                      if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS)
+                      else self.report_class.name),
             'url': self.export_home_url,
         }]
 
