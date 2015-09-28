@@ -25,7 +25,6 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormExportDownloadForm,
     FilterCaseExportDownloadForm,
-    ExportFormValidationException,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
