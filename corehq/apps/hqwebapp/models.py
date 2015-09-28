@@ -609,6 +609,72 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
+        if self.can_export_data and toggle_enabled(self._request,
+                                                   toggles.REVAMPED_EXPORTS):
+            from corehq.apps.export.views import (
+                FormExportListView,
+                CaseExportListView,
+                CreateCustomFormExportView,
+                CreateCustomCaseExportView,
+                DownloadFormExportView,
+                DownloadCaseExportView,
+                BulkDownloadFormExportView,
+                BulkDownloadCaseExportView,
+                EditCustomFormExportView,
+                EditCustomCaseExportView,
+            )
+            items.append([
+                _("Export Data [New - IN UAT/QA]"),
+                [
+                    {
+                        'title': FormExportListView.page_title,
+                        'url': reverse(FormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'subpages': [
+                            {
+                                'title': CreateCustomFormExportView.page_title,
+                                'urlname': CreateCustomFormExportView.urlname,
+                            },
+                            {
+                                'title': BulkDownloadFormExportView.page_title,
+                                'urlname': BulkDownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadFormExportView.page_title,
+                                'urlname': DownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': EditCustomFormExportView.page_title,
+                                'urlname': EditCustomFormExportView.urlname,
+                            },
+                        ]
+                    },
+                    {
+                        'title': CaseExportListView.page_title,
+                        'url': reverse(CaseExportListView.urlname,
+                                       args=(self.domain,)),
+                        'subpages': [
+                            {
+                                'title': CreateCustomCaseExportView.page_title,
+                                'urlname': CreateCustomCaseExportView.urlname,
+                            },
+                            {
+                                'title': BulkDownloadCaseExportView.page_title,
+                                'urlname': BulkDownloadCaseExportView.urlname,
+                            },
+                            {
+                                'title': DownloadCaseExportView.page_title,
+                                'urlname': DownloadCaseExportView.urlname,
+                            },
+                            {
+                                'title': EditCustomCaseExportView.page_title,
+                                'urlname': EditCustomCaseExportView.urlname,
+                            },
+                        ]
+                    },
+                ]
+            ])
+
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher \
                 import DataInterfaceDispatcher
