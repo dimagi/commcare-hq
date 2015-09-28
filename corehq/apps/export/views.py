@@ -334,6 +334,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     def dispatch(self, *args, **kwargs):
         return super(BaseDownloadExportView, self).dispatch(*args, **kwargs)
 
+
     @property
     @memoized
     def timezone(self):
@@ -355,6 +356,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
         return {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
+            'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
             'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
                 'startdate': self.default_datespan.startdate.strftime('%Y-%m-%d'),
@@ -364,16 +366,20 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
         }
 
     @property
+    def export_list_url(self):
+        """Should return a the URL for the export list view"""
+        raise NotImplementedError("You must implement export_list_url")
+
+    @property
     def download_export_form(self):
         """Should return a memoized instance that is a subclass of
         FilterExportDownloadForm.
         """
         raise NotImplementedError("You must implement download_export_form.")
 
-    @property
-    @memoized
-    def export(self):
-        return SavedExportSchema.get(self.export_id)
+    @staticmethod
+    def get_export_schema(export_id):
+        return SavedExportSchema.get(export_id)
 
     @property
     def export_id(self):
@@ -385,7 +391,19 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     def export_list(self):
-        return [self.download_export_form.format_export_data(self.export)]
+        exports = []
+        if (self.request.method == 'POST'
+            and 'export_list' in self.request.POST
+            and not self.request.is_ajax()
+        ):
+            raw_export_list = json.loads(self.request.POST['export_list'])
+            exports = map(lambda e: self.download_export_form.format_export_data(
+                self.get_export_schema(e['id'])
+            ), raw_export_list)
+        elif self.export_id:
+            exports = [self.download_export_form.format_export_data(
+                self.get_export_schema(self.export_id))]
+        return exports
 
     @property
     def max_column_size(self):
@@ -520,6 +538,14 @@ class DownloadFormExportView(BaseDownloadExportView):
     urlname = 'export_download_forms'
     page_title = ugettext_noop("Download Form Export")
 
+    @staticmethod
+    def get_export_schema(export_id):
+        return FormExportSchema.get(export_id)
+
+    @property
+    def export_list_url(self):
+        return reverse(FormExportListView.urlname, args=(self.domain,))
+
     @property
     @memoized
     def download_export_form(self):
@@ -557,6 +583,14 @@ class DownloadCaseExportView(BaseDownloadExportView):
     """
     urlname = 'export_download_cases'
     page_title = ugettext_noop("Download Case Export")
+
+    @staticmethod
+    def get_export_schema(export_id):
+        return CaseExportSchema.get(export_id)
+
+    @property
+    def export_list_url(self):
+        return reverse(CaseExportListView.urlname, args=(self.domain,))
 
     @property
     @memoized
@@ -611,6 +645,29 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         """Returns the create saved export form.
         """
         raise NotImplementedError("must implement create_export_form")
+    @allow_remote_invocation
+    def get_exports_list(self, in_data):
+        """Called by the ANGULAR.JS controller ListExports controller in
+        exports/list_exports.ng.js on initialization of that controller.
+        :param in_data: dict passed by the  angular js controller.
+        :return: {
+            'success': True,
+            'exports': map(self.fmt_export_data, self.get_saved_exports()),
+        }
+        """
+        try:
+            saved_exports = self.get_saved_exports()
+            saved_exports = map(self.fmt_export_data, saved_exports)
+        except Exception as e:
+            return format_angular_error(
+                _("Issue fetching list of exports: %s") % e.message,
+                log_error=True,
+                exception=e,
+                request=self.request,
+            )
+        return format_angular_success({
+            'exports': saved_exports,
+        })
 
     @property
     def create_export_form_title(self):
