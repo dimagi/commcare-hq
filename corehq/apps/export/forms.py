@@ -206,7 +206,6 @@ class FilterExportDownloadForm(forms.Form):
 
     def _get_filtered_users(self):
         user_types = self.cleaned_data['user_types']
-        # this STUPID. todo fix
         user_filter_toggles = [
             self._USER_MOBILE in user_types,
             self._USER_DEMO in user_types,
@@ -214,6 +213,7 @@ class FilterExportDownloadForm(forms.Form):
             self._USER_UNKNOWN in user_types,
             self._USER_SUPPLY in user_types
         ]
+        # todo refactor HQUserType
         user_filters = HQUserType._get_manual_filterset(
             (True,) * HQUserType.count,
             user_filter_toggles
