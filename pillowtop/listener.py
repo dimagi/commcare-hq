@@ -628,7 +628,9 @@ class AliasedElasticPillow(BasicPillow):
         return self.calc_meta()
 
     def calc_meta(self):
-        raise NotImplementedError("Need to implement your own meta calculator")
+        # todo: we should get rid of this and have subclasses override get_unique_id
+        # instead of calc_meta
+        raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
 
     def bulk_builder(self, changes):
         """
