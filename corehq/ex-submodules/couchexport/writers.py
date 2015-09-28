@@ -433,6 +433,31 @@ class JsonExportWriter(InMemoryExportWriter):
         self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
 
 
+class PythonDictWriter(InMemoryExportWriter):
+
+    class ConstantEncoder(json.JSONEncoder):
+
+        def default(self, obj):
+            from dimagi.utils.web import json_handler
+            from couchexport.export import Constant
+            if isinstance(obj, Constant):
+                return obj.message
+            else:
+                return json_handler(obj)
+
+    def get_preview(self):
+        new_tables = []
+        for tablename, data in self.tables.items():
+            new_tables.append({
+                'table_name': self.table_names[tablename],
+                'headers': data[0],
+                'rows': data[1:],
+            })
+        dumps = json.dumps(new_tables, cls=self.ConstantEncoder)
+        loads = json.loads(dumps)
+        return loads
+
+
 class HtmlExportWriter(OnDiskExportWriter):
     """
     Write tables to a single HTML file.
