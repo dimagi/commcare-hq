@@ -5,7 +5,7 @@ import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
 from corehq.apps.es import filters
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -1094,9 +1094,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 
-    def es_case_queries(self, date_field, user_field='user_id', datespan=None):
+    def es_case_queries(self, date_field, user_field, datespan=None):
         datespan = datespan or self.datespan
-        case_query = CaseES() \
+        case_query = case_es.CaseES() \
             .domain(self.domain) \
             .filter(filters.date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())) \
             .terms_facet(user_field, user_field, size=100000) \
@@ -1107,44 +1107,28 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return case_query.run()
 
-    def es_active_cases(self, datespan=None, dict_only=False):
-        """
-            Open cases that haven't been modified within time range
-        """
-        datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"nested": {
-                            "path": "actions",
-                            "query": {
-                                "range": {
-                                    "actions.date": {
-                                        "from": datespan.startdate_param,
-                                        "to": datespan.enddate_display,
-                                        "include_upper": True}}}}}]}}}
+    def _case_count_query(self):
+        q = (case_es.CaseES()
+             .domain(self.domain)
+             .opened_range(lte=self.datespan.enddate)
+             .NOT(case_es.closed_range(lt=self.datespan.startdate))
+             .terms_facet('owner_id', 'owner_id')
+             .size(0))
 
         if self.case_types_filter:
-            q["query"]["bool"]["must"].append(self.case_types_filter)
+            q = q.filter(self.case_types_filter)
 
-        facets = ['owner_id']
-        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+        return q
 
-    def es_total_cases(self, datespan=None, dict_only=False):
-        datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lte": datespan.enddate_display}}}],
-                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
+    def get_active_cases_by_owner(self):
+        q = (self._case_count_query()
+             .active_in_range(gte=self.datespan.startdate,
+                              lte=self.datespan.enddate))
+        return q.run().facets.owner_id.counts_by_term()
 
-        if self.case_types_filter:
-            q["query"]["bool"]["must"].append(self.case_types_filter)
-
-        facets = ['owner_id']
-        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+    def get_total_cases_by_owner(self):
+        q = self._case_count_query()
+        return q.run().facets.owner_id.counts_by_term()
 
     @property
     def rows(self):
@@ -1179,17 +1163,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             t["term"].lower(): t["count"]
             for t in case_closure_data.facet("closed_by", "terms")
         }
-        active_case_data = self.es_active_cases()
-        actives_by_owner = {
-            t["term"].lower(): t["count"]
-            for t in active_case_data["facets"]["owner_id"]["terms"]
-        }
-
-        total_case_data = self.es_total_cases()
-        totals_by_owner = {
-            t["term"].lower(): t["count"]
-            for t in total_case_data["facets"]["owner_id"]["terms"]
-        }
+        actives_by_owner = self.get_active_cases_by_owner()
+        totals_by_owner = self.get_total_cases_by_owner()
 
         def dates_for_linked_reports(case_list=False):
             start_date = self.datespan.startdate_param
