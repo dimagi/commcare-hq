@@ -508,7 +508,10 @@ class SubscriptionForm(forms.Form):
                 domain_field,
                 'salesforce_contract_id',
                 crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
-                crispy.Div(crispy.Field('no_invoice_reason', data_bind="attr: {required: noInvoice}"), data_bind="visible: noInvoice"),
+                crispy.Div(
+                    crispy.Field(
+                        'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
+                    data_bind="visible: noInvoice"),
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status'
