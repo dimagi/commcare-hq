@@ -354,11 +354,18 @@ def create_basic_form_checkpoint(index):
 
 class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
+    http_method_names = ['get', 'post']
 
     @method_decorator(use_bootstrap3())
     @method_decorator(use_select2())
     def dispatch(self, *args, **kwargs):
         return super(BaseDownloadExportView, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not request.is_ajax():
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
+        return super(BaseDownloadExportView, self).post(request, *args, **kwargs)
 
 
     @property
@@ -506,26 +513,46 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
         context['is_poll_successful'] = True
         return context
 
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        """Uses the current exports download framework (with some nasty filters)
-        to return the current download id to POLL for the download status.
-        A successful request returns:
-        {
-            'success': True,
-            'download_id': '<some uuid>',
-        }
-        """
-        # todo
-        # - eventually combine users + group field, but to do that exports
-        #   might need a revamp, so leaving that for later.
+    def _get_bulk_download_task(self, export_specs, export_filter):
+        export_helper = CustomBulkExportHelper(domain=self.domain)
+        return export_helper.get_download_task(export_specs, export_filter)
+
+    def _get_download_task(self, export_specs, export_filter, max_column_size=2000):
         try:
-            exports = in_data['exports']
+            export_data = export_specs[0]
+            export_object = self.get_export_object(export_data['export_id'])
+        except (KeyError, IndexError):
+            raise ExportAsyncException(
+                _("You need to pass a list of at least one export schema.")
+            )
+        export_object.update_schema()
+
+        # if the export is de-identified (is_safe), check that
+        # the requesting domain has access to the deid feature.
+        if export_object.is_safe and not self.can_view_deid:
+            raise ExportAsyncException(
+                _("You do not have permission to export this "
+                  "De-Identified export.")
+            )
+
+        return export_object.get_download_task(
+            filter=export_filter,
+            filename="{}{}".format(export_object.name,
+                                   date.today().isoformat()),
+            previous_export_id=None,
+            max_column_size=max_column_size,
+        )
+
+    def _process_filters_and_specs(self, in_data):
+        """Returns a the export filters and a list of JSON export specs
+        """
+        try:
+            export_specs = in_data['exports']
             filter_form_data = in_data['form_data']
         except (KeyError, TypeError):
-            return {
-                'error': ("Request requires a list of exports and filters."),
-            }
+            raise ExportAsyncException(
+                _("Request requires a list of exports and filters.")
+            )
 
         if filter_form_data['type_or_group'] != 'group':
             # make double sure that group is none
@@ -534,40 +561,44 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
         try:
             export_filter = self.get_filters(filter_form_data)
         except ExportFormValidationException:
-            return {
-                'error': _("Form did not validate."),
-            }
+            raise ExportAsyncException(
+                _("Form did not validate.")
+            )
 
-        export_data = exports[0]
-        export_object = self.get_export_object(export_data['export_id'])
-        export_object.update_schema()
+        return export_filter, export_specs
 
-        # if the export is de-identified (is_safe), check that
-        # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.can_view_deid:
-            return {
-                'error': _(
-                    "You do not have permission to download de-identified "
-                    "exports."
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        """Uses the current exports download framework (with some nasty filters)
+        to return the current download id to POLL for the download status.
+        :param in_data: dict passed by the  angular js controller.
+        :return: {
+            'success': True,
+            'download_id': '<some uuid>',
+        }
+        """
+        try:
+            export_filter, export_specs = self._process_filters_and_specs(in_data)
+            if len(export_specs) > 1:
+                download = self._get_bulk_download_task(export_specs, export_filter)
+            else:
+                max_column_size = int(in_data.get('max_column_size', 2000))
+                download = self._get_download_task(
+                    export_specs, export_filter, max_column_size
                 )
-            }
+        except ExportAsyncException as e:
+            return format_angular_error(e.message)
+        except Exception as e:
+            return format_angular_error(
+                e.message,
+                log_error=True,
+                exception=e,
+                request=self.request,
+            )
+        return format_angular_success({
+            'download_id': download.download_id,
+        })
 
-        max_column_size = int(in_data.get('max_column_size', 2000))
-
-        filename = export_data.get('filename', export_object.name)
-        filename += ' ' + date.today().isoformat()
-
-        download = DownloadBase()
-        download.set_task(couchexport.tasks.export_async.delay(
-            export_object,
-            download.download_id,
-            format=export_object.default_format,
-            filter=export_filter,
-            filename=filename,
-            previous_export_id=None,
-            max_column_size=max_column_size,
-        ))
-        return {
             'success': True,
             'download_id': download.download_id,
         }
@@ -619,6 +650,18 @@ class DownloadFormExportView(BaseDownloadExportView):
         return FormExportSchema.get(export_id)
 
 
+class BulkDownloadFormExportView(DownloadFormExportView):
+    """View to download a Bulk Form Export with filters.
+    """
+    urlname = 'export_bulk_download_forms'
+    page_title = ugettext_noop("Download Form Exports")
+
+    def get_filters(self, filter_form_data):
+        filters = super(BulkDownloadFormExportView, self).get_filters(filter_form_data)
+        filters &= SerializableFunction(instances)
+        return filters
+
+
 class DownloadCaseExportView(BaseDownloadExportView):
     """View to download a SINGLE Case Export with Filters
     """
@@ -662,6 +705,13 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return CaseExportSchema.get(export_id)
 
 
+class BulkDownloadCaseExportView(DownloadCaseExportView):
+    """View to download a Bulk Case Export with filters.
+    """
+    urlname = 'bulk_download_cases'
+    page_title = ugettext_noop("Download Case Exports")
+
+
 class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
 
@@ -671,12 +721,29 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         return super(BaseExportListView, self).dispatch(*args, **kwargs)
 
     @property
+    def page_context(self):
+        return {
+            'create_export_form': self.create_export_form,
+            'create_export_form_title': self.create_export_form_title,
+            'bulk_download_url': self.bulk_download_url,
+        }
+
+    @property
     def can_view_deid(self):
         return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+    @property
+    def bulk_download_url(self):
+        """Returns url for bulk download
+        """
+        raise NotImplementedError('must implement bulk_download_url')
+
     @memoized
     def get_saved_exports(self):
-        """Returns a list of saved exports
+        """The source of the data that will be processed by fmt_export_data
+        for use in the template.
+        :return A list of saved exports that are lists of FormExportSchema
+        or CaseExportSchema.
         """
         raise NotImplementedError("must implement get_saved_exports")
 
