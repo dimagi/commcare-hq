@@ -17,7 +17,7 @@ import urllib
 from dateutil import parser
 from dateutil.rrule import MONTHLY, rrule
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
@@ -581,7 +581,8 @@ class CaseReportMixin(object):
     def cases(self):
         if 'debug_case' in self.request.GET:
             case = CommCareCase.get(self.request.GET['debug_case'])
-            assert case.domain == DOMAIN
+            if case.domain != DOMAIN:
+                raise Http404()
             return [case]
 
         query = case_es.CaseES().domain(self.domain)\
