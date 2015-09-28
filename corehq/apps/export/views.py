@@ -39,6 +39,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
+from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -458,28 +459,43 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
 
     @allow_remote_invocation
     def get_group_options(self, in_data):
+        """Returns list of groups for the group filters
+        :param in_data: dict passed by the  angular js controller.
+        :return: {
+            'success': True,
+            'groups': [<..list of groups..>],
+        }
+        """
         groups = map(
             lambda g: {'id': g._id, 'text': g.name},
             Group.get_reporting_groups(self.domain)
         )
-        return {
-            'success': True,
+        return format_angular_success({
             'groups': groups,
-        }
+        })
 
     @allow_remote_invocation
     def poll_custom_export_download(self, in_data):
+        """Polls celery to see how the export download task is going.
+        :param in_data: dict passed by the  angular js controller.
+        :return: final response: {
+            'success': True,
+            'dropbox_url': '<url>',
+            'download_url: '<url>',
+            <task info>
+        }
+        """
         try:
             download_id = in_data['download_id']
         except KeyError:
-            return {
-                'error': _("Requires a download id")
-            }
+            return format_angular_error(_("Requires a download id"))
         try:
             context = get_download_context(download_id, check_state=True)
-        except TaskFailedError as e:
-            print e
-            context = {'error': list(e)}
+        except TaskFailedError:
+            return format_angular_error(
+                _("Download Task Failed to Start. It seems that the server "
+                  "might be under maintenance.")
+            )
         if context.get('is_ready', False):
             context.update({
                 'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
@@ -737,23 +753,22 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         try:
             form_data = in_data['createFormData']
         except KeyError:
-            return {
-                'error': _("The form's data was not correctly formatted.")
-            }
+            return format_angular_error(
+                _("The form's data was not correctly formatted.")
+            )
         try:
             create_url = self.get_create_export_url(form_data)
         except ExportFormValidationException:
-            return {
-                'error': _("The form did not validate.")
-            }
+            return format_angular_error(
+                _("The form did not validate.")
+            )
         except Exception as e:
-            return {
-                'error': _("Problem getting link to custom export form: %s") % e.message,
-            }
-        return {
-            'success': True,
+            return format_angular_error(
+                _("Problem getting link to custom export form: %s") % e.message,
+            )
+        return format_angular_success({
             'url': create_url,
-        }
+        })
 
 
 class FormExportListView(BaseExportListView):
@@ -825,11 +840,10 @@ class FormExportListView(BaseExportListView):
                     app.get_forms(bare=False)
                 )
         except Exception as e:
-            return {
-                'error': _("Problem getting Create Export Form: %s") % e.message,
-            }
-        return {
-            'success': True,
+            return format_angular_error(
+                _("Problem getting Create Export Form: %s") % e.message,
+            )
+        return format_angular_success({
             'apps': app_choices,
             'modules': modules,
             'forms': forms,
@@ -838,7 +852,7 @@ class FormExportListView(BaseExportListView):
                 'module': _("Select Module"),
                 'form': _("Select Form"),
             }
-        }
+        })
 
     def get_create_export_url(self, form_data):
         create_form = CreateFormExportForm(form_data)
@@ -907,18 +921,20 @@ class CaseExportListView(BaseExportListView):
                         for module in app.modules if module.case_type
                     ]
         except Exception as e:
-            return {
-                'error': _("Problem getting Create Export Form: %s") % e.message,
-            }
-        return {
-            'success': True,
+            return format_angular_error(
+                _("Problem getting Create Export Form: %s") % e.message,
+                log_error=True,
+                exception=e,
+                request=self.request,
+            )
+        return format_angular_success({
             'apps': app_choices,
             'case_types': case_types,
             'placeholders': {
                 'application': _("Select Application"),
                 'case_types': _("select Case Type"),
             },
-        }
+        })
 
     def get_create_export_url(self, form_data):
         create_form = CreateCaseExportForm(form_data)
