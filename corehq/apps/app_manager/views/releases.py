@@ -12,7 +12,7 @@ from couchdbkit.resource import ResourceNotFound
 from django.contrib import messages
 import ghdiff
 from corehq.apps.app_manager.views.apps import get_apps_base_context
-from corehq.apps.app_manager.views.download import source_files
+from corehq.apps.app_manager.views.download import download_index_files
 
 from corehq.apps.app_manager.views.utils import back_to_main, encode_if_unicode, \
     get_langs
@@ -259,6 +259,18 @@ def update_build_comment(request, domain, app_id):
     return json_response({'status': 'success'})
 
 
+def _get_app_diff_files(app):
+    """
+    Return a dict of the files that an app build is comprised of. Return dict
+    also includes the app json.
+    """
+    files = dict(download_index_files(app))
+    files["app.json"] = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    return files
+
+
 def _get_change_counts(html_diff):
     diff_lines = html_diff.splitlines()
     additions = sum(1 for line in diff_lines if line.startswith('<div class="insert">'))
@@ -275,8 +287,8 @@ def _get_file_pairs(first_app, second_app):
      file on the second app.
      "files" will be empty strings if the file does not exist on the app.
     """
-    first_app_files = dict(source_files(first_app))
-    second_app_files = dict(source_files(second_app))
+    first_app_files = _get_app_diff_files(first_app)
+    second_app_files = _get_app_diff_files(second_app)
     file_names = set(first_app_files.keys()) | set(second_app_files.keys())
     file_pairs = {
         n: (first_app_files.get(n, ""), second_app_files.get(n, ""))
