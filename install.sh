@@ -89,7 +89,7 @@ else
 fi fi fi
 
 ## Install system-wide Python and Node packages
-# sudo npm install npm
+sudo npm install npm
 #sudo npm install less uglify-js -g
 
 sudo pip install --upgrade pip
