@@ -66,10 +66,24 @@
                         </p>
                     </div>
                     <div class="alert alert-info"
-                         ng-show="_.isEmpty(exports) && !!hasLoaded">
+                         ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
                         <p>
                             {% trans 'No Exports Created Yet.' %}
                         </p>
+                    </div>
+                    <div class="alert alert-warning"
+                         ng-show="!!exportsListError">
+                        <strong ng-if="exportsListError === 'default'">
+                            {% trans "Issue fetching list of exports. Please check your Internet connection." %}
+                        </strong>
+                        <strong ng-if="exportsListError !== 'default'">
+                            {% angularjs %}{{ exportsListError }}{% endangularjs %}
+                        </strong>
+                        {% blocktrans %}
+                            If this problem persists, please
+                            <a href="#reportIssueModal"
+                               data-toggle="modal">Report an Issue</a>.
+                        {% endblocktrans %}
                     </div>
                     {% include 'export/partial/export_bulk_notice.html' %}
                     <table class="table table-striped"
