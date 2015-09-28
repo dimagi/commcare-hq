@@ -1,8 +1,9 @@
+from collections import namedtuple
 import logging
 from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import Application
-from dimagi.utils.couch.database import iter_docs
+from corehq.util.couch import iter_update, DocUpdate
 
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
@@ -21,10 +22,7 @@ def get_all_app_ids(include_builds=False):
     ).all()}
 
 
-def bulk_save(apps):
-    Application.get_db().bulk_save(apps)
-    for app in apps:
-        logger.info("Migration on app {id} complete.".format(id=app.id))
+SaveError = namedtuple('SaveError', 'id error reason')
 
 
 class AppMigrationCommandBase(BaseCommand):
@@ -42,36 +40,33 @@ class AppMigrationCommandBase(BaseCommand):
 
     def handle(self, *args, **options):
         self.options = options
-
-        def _migrate_app_ids(app_ids):
-            to_save = []
-            count = len(app_ids)
-            logger.info('migrating {} apps'.format(count))
-            for i, app_doc in enumerate(iter_docs(Application.get_db(), app_ids)):
-                try:
-                    if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                        migrated_app = self.migrate_app(app_doc)
-                        if migrated_app:
-                            to_save.append(migrated_app)
-                            if len(to_save) > 25:
-                                bulk_save(to_save)
-                                to_save = []
-                except Exception, e:
-                    logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
-                    if options['failfast']:
-                        raise e
-
-                if i % 100 == 0 or i == count:
-                    logger.info('processed {}/{} apps'.format(i, count))
-            if to_save:
-                bulk_save(to_save)
-
-        logger.info('migrating applications')
-        _migrate_app_ids(self.get_app_ids())
+        app_ids = self.get_app_ids()
+        logger.info('migrating {} apps'.format(len(app_ids)))
+        results = iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True)
+        self.results_callback(results)
         logger.info('done')
+
+    def _migrate_app(self, app_doc):
+        try:
+            if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+                migrated_app = self.migrate_app(app_doc)
+                if migrated_app:
+                    return DocUpdate(migrated_app)
+        except Exception, e:
+            logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
+            if self.options['failfast']:
+                raise e
 
     def get_app_ids(self):
         return get_all_app_ids(self.include_builds)
 
     def migrate_app(self, app):
         raise NotImplementedError()
+
+    def results_callback(self, results):
+        """
+        Override this to do custom result handling.
+        :param results:  an object with the following properties:
+                        'ignored_ids', 'not_found_ids', 'deleted_ids', 'updated_ids', 'error_ids'
+        """
+        pass
