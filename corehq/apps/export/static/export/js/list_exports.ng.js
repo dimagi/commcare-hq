@@ -21,6 +21,32 @@
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.hasLoaded = false;
         $scope.exports = [];
+        $scope.exportsListError = null;
+
+        self._numTries = 0;
+        self._getExportsList = function () {
+            // The method below lives in the subclasses of
+            // BaseExportListView.
+            djangoRMI.get_exports_list({})
+                .success(function (data) {
+                    if (data.success) {
+                        $scope.exports = data.exports;
+                    } else {
+                        $scope.exportsListError = data.error;
+                    }
+                    $scope.hasLoaded = true;
+                })
+                .error(function () {
+                    // Retry in case the connection was flaky.
+                    if (self._numTries > 3) {
+                        $scope.hasLoaded = true;
+                        $scope.exportsListError = 'default';
+                    }
+                    self._numTries ++;
+                    self._getExportsList();
+                });
+        };
+        self._getExportsList();
         $scope.showBulkExportDownload = false;
 
         $scope.updateBulkStatus = function () {
@@ -40,19 +66,6 @@
             });
             $scope.updateBulkStatus();
         };
-
-        djangoRMI.get_exports_list({})
-            .success(function (data) {
-                if (data.success) {
-                    $scope.exports = data.exports;
-                    $scope.hasLoaded = true;
-                } else {
-                    // todo deal with error
-                }
-            })
-            .error(function () {
-                // todo deal with error
-            });
     };
 
     exportsControllers.CreateExportController = function (
