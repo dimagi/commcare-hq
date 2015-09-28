@@ -176,7 +176,8 @@ $(function () {
             {% angularjs %}
 
             <div class="panel panel-info"
-                 ng-show="workers.length > 0">
+                 ng-show="workers.length > 0"
+                 ng-cloak>
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         {% trans 'New Mobile Workers' %}
@@ -230,7 +231,9 @@ $(function () {
             </div>
             {% endangularjs %}
         </div>
-        <div class="panel panel-default" ng-controller="PaginatedListController">
+        <div class="panel panel-default"
+             ng-controller="PaginatedListController"
+             ng-cloak>
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
             </div>
