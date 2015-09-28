@@ -56,8 +56,8 @@ _indiacloud5
 [shared_dir_host:children]
 _indiacloud3
 
-[riakcs]
+[riakcs:children]
 _indiacloud4
 
-[stanchion]
+[stanchion:children]
 _indiacloud5
