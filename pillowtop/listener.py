@@ -620,7 +620,6 @@ class AliasedElasticPillow(BasicPillow):
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
-
     def get_unique_id(self):
         """
         a unique identifier for the pillow - typically the hash associated with the index
