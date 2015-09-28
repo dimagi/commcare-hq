@@ -24,6 +24,10 @@ from dimagi.utils.dates import DateSpan
 
 
 class CreateFormExportTagForm(forms.Form):
+    """The information necessary to create an export tag to begin creating a
+    Form Export. This form interacts with CreateExportController in
+    list_exports.ng.js
+    """
     application = forms.CharField(required=False)
     module = forms.CharField(required=False)
     form = forms.CharField(required=False)
@@ -63,6 +67,10 @@ class CreateFormExportTagForm(forms.Form):
 
 
 class CreateCaseExportTagForm(forms.Form):
+    """The information necessary to create an export tag to begin creating a
+    Case Export. This form interacts with CreateExportController in
+    list_exports.ng.js
+    """
     application = forms.CharField(required=False)
     case_type = forms.CharField(
         required=False,
