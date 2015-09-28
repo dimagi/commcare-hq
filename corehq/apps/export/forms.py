@@ -23,13 +23,13 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
-class CreateFormExportForm(forms.Form):
+class CreateFormExportTagForm(forms.Form):
     application = forms.CharField(required=False)
     module = forms.CharField(required=False)
     form = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
-        super(CreateFormExportForm, self).__init__(*args, **kwargs)
+        super(CreateFormExportTagForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -62,7 +62,7 @@ class CreateFormExportForm(forms.Form):
         )
 
 
-class CreateCaseExportForm(forms.Form):
+class CreateCaseExportTagForm(forms.Form):
     application = forms.CharField(required=False)
     case_type = forms.CharField(
         required=False,
@@ -76,7 +76,7 @@ class CreateCaseExportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        super(CreateCaseExportForm, self).__init__(*args, **kwargs)
+        super(CreateCaseExportTagForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_tag = False
