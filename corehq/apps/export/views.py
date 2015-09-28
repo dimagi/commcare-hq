@@ -86,36 +86,40 @@ class BaseExportView(BaseProjectDataView):
     def export_helper(self):
         raise NotImplementedError("You must implement export_helper!")
 
-    def redirect_url(self, export_id):
-        if self.request.body:
-            preview = json.loads(self.request.body).get('preview')
-            if preview:
-                return reverse(
-                    'export_custom_data',
-                    args=[self.domain, export_id],
-                ) + '?format=html&limit=50&type=%(type)s' % {
-                    'type': self.export_type,
-                }
-        return self.export_home_url
-
     @property
     def export_home_url(self):
+        if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+            return reverse(self.report_class.urlname, args=(self.domain,))
         return self.report_class.get_url(domain=self.domain)
 
     @property
     @memoized
     def report_class(self):
         try:
-            return {
-                'form': ExcelExportReport,
-                'case': CaseExportReport
-            }[self.export_type]
+            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
+                base_views = {
+                    'form': FormExportListView,
+                    'case': CaseExportListView,
+                }
+            else:
+                base_views = {
+                    'form': ExcelExportReport,
+                    'case': CaseExportReport,
+                }
+            return base_views[self.export_type]
         except KeyError:
             raise SuspiciousOperation
 
     @property
     def page_context(self):
-        return self.export_helper.get_context()
+        # It's really bad that the export_helper also handles a bunch of the view
+        # interaction data. This should probably be rewritten as it's not exactly
+        # clear what this view specifically needs to render.
+        context = self.export_helper.get_context()
+        context.update({
+            'export_home_url': self.export_home_url,
+        })
+        return context
 
     def commit(self, request):
         raise NotImplementedError('Subclasses must implement a commit method.')
@@ -140,9 +144,9 @@ class BaseExportView(BaseProjectDataView):
         else:
             if self.is_async:
                 return json_response({
-                    'redirect': self.redirect_url(export_id),
+                    'redirect': self.export_home_url,
                 })
-            return HttpResponseRedirect(self.redirect_url(export_id))
+            return HttpResponseRedirect(self.export_home_url)
 
 
 class BaseCreateCustomExportView(BaseExportView):
