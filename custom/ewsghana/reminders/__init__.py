@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 REGISTER_HELP = _("Sorry, I didn't understand. To register, send register <name> <facility code>. "
                   "Example: register john dwdh'")
