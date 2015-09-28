@@ -49,9 +49,9 @@ if [ $? -eq 0 ]; then
 
     #    sudo add-apt-repository -y ppa:chris-lea/node.js
     # fi
-    curl -sL https://deb.nodesource.com/setup_0.10 | sudo -E bash -
-    sudo apt-get update
-    sudo apt-get install -y nodejs
+    #curl -sL https://deb.nodesource.com/setup_0.10 | sudo -E bash -
+    #sudo apt-get update
+    #sudo apt-get install -y nodejs
 
     ## Ignore packages that have the [travis_ignore] hashtag from the apt-packages.txt file if TRAVIS_INSTALL = yes
     if [ "$TRAVIS_INSTALL" == "y" ]; then
