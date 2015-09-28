@@ -77,8 +77,8 @@ $(function () {
             template: '<tr>'
                         + '<th class="col-xs-3">{% trans "Username" %}</th>'
                         + '<th class="col-xs-3">{% trans "First Name" %}</th>'
-                        + '<th class="col-xs-4">{% trans "Last Name" %}</th>'
-                        + '<th class="col-xs-2">{% trans "Action" %}</th>'
+                        + '<th class="col-xs-3">{% trans "Last Name" %}</th>'
+                        + '<th class="col-xs-3">{% trans "Status" %}</th>'
                     + '</tr>'
         }
     });
@@ -176,36 +176,9 @@ $(function () {
             {% angularjs %}
 
             <div class="panel panel-info"
-                 ng-show="hasPending">
+                 ng-show="workers.length > 0">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <i class="fa fa-circle-o-notch fa-spin"></i>
-                        {% trans 'Pending Mobile Workers' %}
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <table class="table table-striped">
-                        <thead workertable-header></thead>
-                        <tbody>
-                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'pending'}">
-                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
-                                <td>{{ worker.first_name }}</td>
-                                <td>{{ worker.last_name }}</td>
-                                <td>
-                                    <i class="fa fa-circle-o-notch fa-spin"></i>
-                                    {% trans 'Pending...' %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="panel panel-success"
-                 ng-show="hasSuccess">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        <i class="fa fa-check"></i>
                         {% trans 'New Mobile Workers' %}
                     </h3>
                 </div>
@@ -213,40 +186,42 @@ $(function () {
                     <table class="table table-striped">
                         <thead workertable-header></thead>
                         <tbody>
-                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'success'}">
-                                <td><a href="{{ worker.editUrl }}"><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></a></td>
-                                <td>{{ worker.first_name }}</td>
-                                <td>{{ worker.last_name }}</td>
-                                <td><i class="fa fa-check"></i> {% trans 'NEW' %}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="panel panel-danger"
-                 ng-show="hasError">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        {% trans 'Errors Creating Workers' %}
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <table class="table table-striped">
-                        <thead workertable-header></thead>
-                        <tbody>
-                            <tr ng-repeat="worker in workers | filter: {creationStatus: 'error'}">
-                                <td><i class="fa fa-user"></i><strong> {{ worker.username }}</strong></td>
-                                <td>{{ worker.first_name }}</td>
-                                <td>{{ worker.last_name }}</td>
-                                <td>
-                                    <button type="button"
-                                            class="btn btn-default"
-                                            data-toggle="modal"
-                                            data-target="#newMobileWorkerModal"
-                                            ng-click="initializeMobileWorker(worker); usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE; usernameStatusMessage = 'Username is available.'">
-                                        {% trans 'Retry' %}
-                                    </button>
+                            <tr ng-repeat="worker in workers">
+                                <td class="{{ worker.creationStatus }}">
+                                    <span ng-if="!worker.editUrl">
+                                        <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+                                    </span>
+                                    <a href="{{ worker.editUrl }}"
+                                       ng-show="!!worker.editUrl">
+                                        <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+                                    </a>
+                                </td>
+                                <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
+                                <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
+                                <td class="{{ worker.creationStatus }}">
+                                    <div ng-show="worker.creationStatus==='pending'">
+                                        <i class="fa fa-circle-o-notch fa-spin"></i>
+                                        {% trans 'Pending...' %}
+                                    </div>
+                                    <div ng-show="worker.creationStatus==='success'">
+                                        <span class="text-success">
+                                            <i class="fa fa-check"></i> {% trans 'NEW' %}
+                                        </span>
+                                    </div>
+                                    <div ng-show="worker.creationStatus==='warning'">
+                                        <span class="text-warning">
+                                            <i class="fa fa-exclamation-triangle"></i>
+                                            {% trans "ERROR" %}
+                                        </span>
+                                        <button type="button"
+                                                class="btn btn-default"
+                                                data-toggle="modal"
+                                                data-target="#newMobileWorkerModal"
+                                                ng-click="initializeMobileWorker(worker); usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE; usernameStatusMessage = 'Username is available.'">
+                                            {% trans 'Retry' %}
+                                        </button>
+                                    </div>
+
                                 </td>
                             </tr>
                         </tbody>
